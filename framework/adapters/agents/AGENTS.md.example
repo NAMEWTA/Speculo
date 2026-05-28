@@ -1,0 +1,12 @@
+# AGENTS.md
+
+本项目使用 **Speculo 框架** 驱动 AI Coding 工作流。
+
+[TODO: 完整的 Speculo 接入指令，应包含以下章节：
+- 项目概览
+- 关键目录速查（workflows/ commands/ skills/ .speculo/）
+- 强制约束（指向 .speculo/.config/RULES.md）
+- 入口推荐（不知道做什么时跑 workflows/<cat>/00-INDEX.md）
+- 状态查看（跑 commands/status.md）
+- 归档（跑 commands/archive.md）
+]
