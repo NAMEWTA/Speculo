@@ -1,0 +1,47 @@
+{
+  "name": "2026-05-28-smoke-dev",
+  "category": "dev",
+  "change_status": "active",
+  "execution_mode": "full",
+  "created_at": "2026-05-28T10:00:00Z",
+  "updated_at": "2026-05-29T09:30:00Z",
+  "current_phase": "design-api",
+  "phase_history": [
+    {
+      "phase": "prd-core",
+      "entered_at": "2026-05-28T10:00:00Z",
+      "completed_at": "2026-05-28T10:45:00Z",
+      "status": "completed"
+    },
+    {
+      "phase": "prd-review",
+      "entered_at": "2026-05-28T10:45:00Z",
+      "completed_at": "2026-05-28T11:00:00Z",
+      "status": "completed"
+    },
+    {
+      "phase": "design-arch",
+      "entered_at": "2026-05-28T11:00:00Z",
+      "completed_at": "2026-05-28T11:50:00Z",
+      "status": "completed"
+    },
+    {
+      "phase": "design-api",
+      "entered_at": "2026-05-28T11:50:00Z",
+      "completed_at": null,
+      "status": "in-progress"
+    }
+  ],
+  "stakeholders": [
+    {"name": "PM-Alice", "role": "product"},
+    {"name": "Eng-Bob", "role": "engineering"}
+  ],
+  "priority": "P1",
+  "prd_review_decision": "通过",
+  "clarifications_open": 0,
+  "arch_decisions": [
+    {"id": "ADR-1", "title": "选用 JWT + refresh token 的双 token 鉴权方案", "decided_at": "2026-05-28T11:30:00Z"},
+    {"id": "ADR-2", "title": "Session 存储采用 Redis 而非内存", "decided_at": "2026-05-28T11:40:00Z"}
+  ],
+  "api_endpoints_count": null
+}

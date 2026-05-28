@@ -1,0 +1,22 @@
+{
+  "name": "2026-05-28-smoke-ops",
+  "category": "ops",
+  "change_status": "active",
+  "execution_mode": "standard",
+  "created_at": "2026-05-28T14:00:00Z",
+  "updated_at": "2026-05-29T09:30:00Z",
+  "current_phase": "checklist",
+  "phase_history": [
+    {
+      "phase": "checklist",
+      "entered_at": "2026-05-28T14:00:00Z",
+      "completed_at": null,
+      "status": "in-progress"
+    }
+  ],
+  "version": "v1.4.0",
+  "tag": null,
+  "changelog_path": "CHANGELOG.md#1-4-0",
+  "release_artifact_count": null,
+  "prereq_checklist_passed": false
+}
