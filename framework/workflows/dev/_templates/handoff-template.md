@@ -10,4 +10,4 @@
 [TODO: 用表格列出 ops/01-release 五项前置（评审/测试/安全/changelog/依赖锁）的 dev 侧证据；任一未就绪需在备注列说明。]
 
 ## 归档准备
-[TODO: 待归档目录路径 `../../../.speculo/dev/<change-name>/`；归档时机（纯 dev change 立即可归档 / 涉及发版需等观测窗口结束）；调用 `framework/commands/archive.md` 触发。]
+[TODO: 待归档目录路径 `../../../.speculo/dev/<change-name>/`；归档时机（纯 dev change 立即可归档 / 涉及发版需等观测窗口结束）；调用 `../../../commands/archive.md` 触发。]

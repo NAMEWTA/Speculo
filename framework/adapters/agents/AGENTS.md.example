@@ -2,11 +2,24 @@
 
 本项目使用 **Speculo 框架** 驱动 AI Coding 工作流。
 
-[TODO: 完整的 Speculo 接入指令，应包含以下章节：
-- 项目概览
-- 关键目录速查（workflows/ commands/ skills/ .speculo/）
-- 强制约束（指向 .speculo/.config/RULES.md）
-- 入口推荐（不知道做什么时跑 workflows/<cat>/00-INDEX.md）
-- 状态查看（跑 commands/status.md）
-- 归档（跑 commands/archive.md）
-]
+## 项目约定
+
+- `workflows/` 是多阶段工作流入口，按 `dev` / `doc` / `ops` 分类。
+- `commands/` 是一次性命令入口，目前内置 `status.md` 与 `archive.md`。
+- `skills/` 预留可复用原子能力目录；skill 不直接写 `.speculo/`。
+- `.speculo/` 是状态与产物骨架，作为项目内持久化区。
+- `.speculo/.config/*.md` 是项目级规则输入；执行前优先读取已激活的非 `.example` 文件。
+
+## 默认入口
+
+- 不确定做什么：先读 `workflows/<cat>/00-INDEX.md`，根据用户意图选择 `dev`、`doc` 或 `ops`。
+- 查看全局状态：执行 `commands/status.md`。
+- 归档 completed change：执行 `commands/archive.md`，但必须先列清单并取得用户确认。
+
+## 强制约束
+
+- 遵守 `.speculo/.config/RULES.md`；该文件只能由用户维护，AI 不得自动修改。
+- 工作流产物写入 `.speculo/<cat>/<change-name>/`，每个 change 必须有 `.status.json`。
+- 更新 workflow 进度时同步维护对应 `.speculo/<cat>-status.json`。
+- 不创建物理 `STATUS.json`；全局状态由 `commands/status.md` 聚合。
+- 模板中的 `[TODO: ...]` 是用户填写占位符；生成产物时必须整块覆盖，不残留。

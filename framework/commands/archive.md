@@ -20,16 +20,16 @@ keywords: [archive, 归档, 清理]
 
 ## 执行步骤
 
-[TODO: 详细执行步骤：
-1. 扫描 `../.speculo/<cat>/*/.status.json`，找出 `change_status: completed` 的变更
-2. 列出待归档清单（默认筛选条件由用户或参数控制，如 `--before=YYYY-MM-DD`）
-3. 向用户展示清单 + 询问确认
-4. 用户确认后：
-   - `mv` 每个 change 目录到 `../.speculo/archive/<cat>/<YYYY-MM>/<change-name>/`
-   - 从对应 `../.speculo/<cat>-status.json` 的 `active` 段完全移除
-   - 把本次归档操作记录写入 `../.speculo/commands/<YYYY-MM-DD>-archive-<topic>/report.md`
-5. 报告归档结果
-]
+1. 扫描 `../.speculo/{dev,doc,ops}/*/.status.json`，仅选择 `change_status: completed` 的 change。
+2. 排除已经位于 `../.speculo/archive/` 下的目录；若目标归档路径已存在，标记为冲突并停止，不覆盖。
+3. 列出待归档清单：源路径、目标路径、当前分类、`updated_at`、最后 phase、是否仍在 `<cat>-status.json active[]`。
+4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。
+5. 用户确认后逐项执行：
+   - 创建 `../.speculo/archive/<cat>/<YYYY-MM>/`
+   - 移动 change 目录到 `../.speculo/archive/<cat>/<YYYY-MM>/<change-name>/`
+   - 从对应 `../.speculo/<cat>-status.json` 的 `active[]` 删除该 change
+   - 写入本次命令报告 `../.speculo/commands/<YYYY-MM-DD>-archive-<topic>/report.md`
+6. 若任一移动失败，停止后续移动，报告已完成与未完成清单；不要回滚已经成功移动的目录，除非用户明确要求。
 
 ## 产物模板（report.md）
 

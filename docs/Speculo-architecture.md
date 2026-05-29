@@ -15,7 +15,7 @@ Speculo 是一个 **SDD（Specification-Driven Development for AI）** 框架：
 ### 四个核心原则
 
 1. **工具无关（Tool-agnostic）** — 框架本体不依赖任何 AI Coding 工具的私有规则。通过 `adapters/` 层提供工具适配，核心目录（`workflows/` `commands/` `skills/`）零工具耦合。
-2. **即插即用（Plug-and-play）** — 用户复制 `framework/*` 到自己项目即可使用，单一目录复制单元，无需安装、无脚本依赖。
+2. **即插即用（Plug-and-play）** — 用户复制 `framework/.` 到自己项目即可使用，单一目录复制单元，无需安装、无脚本依赖。
 3. **薄契约 + workflow 自治（Thin contract, workflow autonomy）** — 框架仅规定最小机器契约（目录骨架、`.status.json` 元字段、frontmatter 必填字段）。每个 workflow 自行规定阶段、产物、扩展字段。
 4. **产物持久化（Persistent artifacts）** — 每次执行产生的结构化产物以变更（change）为单位归档于 `.speculo/`，可追溯、可索引、可归档。
 
@@ -57,8 +57,8 @@ Speculo/                             # 仓库根（不复制给用户）
 ### 用户接入一句话
 
 ```bash
-cp -r Speculo/framework/* my-project/
-cp -r Speculo/framework/adapters/claude-code/.claude my-project/.claude   # 按所用工具选 adapter
+cp -R Speculo/framework/. my-project/
+cp my-project/adapters/agents/AGENTS.md.example my-project/AGENTS.md
 ```
 
 ---
@@ -305,13 +305,13 @@ keywords: [prd, 需求, feature] # 可选：adapter 触发匹配关键词
 - 规范：`prd-core.md`
 - 模板：`../_templates/prd-template.md`
 - 产物：`prd.md`
-- 完成准则：[TODO]
+- 完成准则：`prd.md` 无残留占位符，验收标准可测试
 
 ### 2. Review — 评审
 - 规范：`prd-review.md`
 - 模板：`../_templates/prd-review-template.md`
 - 产物：`prd-review.md`
-- 完成准则：[TODO]
+- 完成准则：评审决议已写入 `.status.json`
 
 ## 依赖
 - 软依赖（推荐先做）：无
@@ -399,7 +399,7 @@ description: 结构化代码审查
 ```
 
 - **格式**：`[TODO: 具体填写指引]`
-- **每个占位符必须包含"填什么"的提示**（不允许裸 `[TODO]`）
+- **每个占位符必须包含"填什么"的提示**（不允许无说明的 TODO 占位符）
 - **填写时整块覆盖**，不留残骸
 - **可检测**：用 `grep -r "\[TODO:" .speculo/` 一键扫描未完成模板
 

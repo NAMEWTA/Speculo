@@ -135,6 +135,28 @@
 | temp/project/oh-my-claudecode/CLAUDE.md | Commit Trailer 中 Directive / Not-tested 等指令保留 | ops/_templates/postmortem-template.md "对未来修改者的指令"段 | 用模板段而非提交 trailer 沉淀 |
 | temp/project/flow-kit/prompts/6-review.md | 复盘阶段双轮审查（合规 + 质量） | ops/05-postmortem/postmortem-checklist.md "复盘必含项"清单 | 完全采纳双视角检查 |
 
+### doc/ workflows
+
+| 源路径 | 借鉴点 | Speculo 落地位置 | 差异说明 |
+|--------|--------|-----------------|---------|
+| temp/project/OpenSpec/docs/getting-started.md | 新用户先给可执行接入路径，再给概念解释 | docs/adopting.md + doc/01-readme/readme-structure.md | 我们保留纯 Markdown 框架，不引入 CLI 安装步骤 |
+| temp/project/OpenSpec/docs/commands.md | 命令入口与用途集中列出，便于工具发现 | docs/quick-reference.md + framework/commands/status.md | Speculo 命令仍是文档命令，不是二进制 CLI |
+| temp/project/gstack/document-release/SKILL.md | 发版后同步 changelog/API docs/migration guide | doc/02-changelog + doc/03-api-doc | migration guide 暂不独立成 phase，破坏性变更写入 changelog/API docs |
+| temp/project/spec-kit/templates/spec-template.md | 用户可见条目优先，避免内部流水账 | doc/02-changelog/changelog-format.md | 用 changelog 分组承载用户影响，不复制 spec-kit 文件拆分 |
+| temp/project/flow-kit/templates/SUMMARY.md | 总结文档必须事实可追溯，缺失信息显式标注 | doc/01-readme/readme-structure.md | README 缺失事实写"未指定"，不让 AI 猜测 |
+| temp/project/OpenSpec/docs/multi-language.md | 面向多工具/多环境的文档入口说明 | docs/quick-reference.md | Speculo 用 adapter 表而非多语言部署文档 |
+
+### commands 与 adapters
+
+| 源路径 | 借鉴点 | Speculo 落地位置 | 差异说明 |
+|--------|--------|-----------------|---------|
+| temp/project/OpenSpec/AGENTS.md | 用 AGENTS.md 作为跨工具入口，减少工具专有规则漂移 | framework/adapters/agents/AGENTS.md.example | Speculo 保持最小规则，只指向 workflows/commands/.speculo |
+| temp/project/oh-my-claudecode/CLAUDE.md | Claude 专有入口透传到共享规则，避免双写 | framework/adapters/claude-code/CLAUDE.md.example | 不引入 oh-my-claudecode 的 agent 编排，只保留透传策略 |
+| temp/project/oh-my-claudecode/commands/verify.md | 命令作为快捷入口，实际行为由下层 skill/doc 定义 | framework/adapters/claude-code/.claude/commands/speculo-*.md | Speculo 命令只转发到 Markdown 规范，不调用脚本 |
+| temp/project/flow-kit/templates/STATE.md | 状态快照从活动 change 汇总，而非维护全局真相文件 | framework/commands/status.md | Speculo 明确不创建物理 STATUS.json |
+| temp/project/OpenSpec/openspec/changes/ | archive 是显式动作，移动目录前要有可审计清单 | framework/commands/archive.md | Speculo 要求用户确认后才移动目录 |
+| temp/project/gstack/guard/SKILL.md | 破坏性操作前先列影响面并等待确认 | framework/commands/archive.md | 作为 command 规则内联，不新增独立 guard skill |
+
 ---
 
 ## 3. 决策记录（含拒绝项）
@@ -156,6 +178,8 @@
 - **拒绝 superpowers-zh 的"PR 模板 + 94% 拒绝率守卫"**：理由——Speculo 不参与 PR 评审流程，由项目 RULES.md / CONVENTIONS.md 配置。
 - **拒绝 OpenSpec 的"独立 proposal.md"文档**：理由——dev/01-prd 单文档 PRD 已能承载 propose 语义；引入 proposal.md 会与 prd.md 内容重叠。
 - **拒绝 flow-kit 的"清窗触发四信号"机械化协议**：理由——Speculo 工作流的"上下文管理"由调用方工具负责；workflow 仅声明 phase 边界，不规定 token 行为。落地方式：完成准则中加入"每 phase 完成立即更新 .status.json"，让 phase 切分本身成为自然清窗点。
+- **拒绝 oh-my-claudecode 的完整命令库复制**：理由——Speculo 的 command 是规范入口，不是工具集合；复制大量命令会破坏"零运行时、零依赖"原则。落地方式：仅保留 `/speculo-*` 快捷入口并转发到 `commands/` 与 `workflows/`。
+- **拒绝把 smoke change 保留在框架骨架里**：理由——用户复制 framework 后应得到空 active 状态，而不是带示例 change 的项目。落地方式：`.speculo/{dev,doc,ops}-status.json` 初始 `active` 为空，示例材料只保留在文档说明中。
 
 ### 跨 workflow 共享决策
 

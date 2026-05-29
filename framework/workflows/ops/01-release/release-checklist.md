@@ -48,7 +48,7 @@
 
 ## 三、与 doc/02-changelog 的衔接
 
-本工作流**不生成 changelog 内容**（那是 `framework/workflows/doc/02-changelog/` 的职责）。本阶段只验证：
+本工作流**不生成 changelog 内容**（那是 `../../doc/02-changelog/` 的职责）。本阶段只验证：
 - 项目 `CHANGELOG.md` 已含本版本条目
 - 条目格式与项目约定一致
 

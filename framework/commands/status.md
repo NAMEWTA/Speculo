@@ -19,16 +19,15 @@ keywords: [status, 状态, 进度]
 
 ## 执行步骤
 
-[TODO: 详细执行步骤：
-1. 读 `../.speculo/dev-status.json`、`../.speculo/doc-status.json`、`../.speculo/ops-status.json` 三个索引
-2. 读每个 active change 的 `../.speculo/<cat>/<change>/.status.json` 获取详细 phase 信息
-3. 聚合输出全局状态报告：
-   - 按分类汇总 active changes 数量
-   - 列出最近更新的 5 个 change
-   - 列出"已 completed 但未 archived"待归档数量
-   - 列出超过 N 天未更新的"可能僵尸"change（提醒用户）
-4. 报告可选写入 `../.speculo/commands/<YYYY-MM-DD>-status-<topic>/snapshot.md`
-]
+1. 读取 `../.speculo/dev-status.json`、`../.speculo/doc-status.json`、`../.speculo/ops-status.json`。缺失任一文件时报告缺失路径，并建议按 `docs/adopting.md` 重新复制 `.speculo` 骨架或创建空索引 `{"active":[]}`。
+2. 对每个索引的 `active[]` 条目，读取 `../.speculo/<cat>/<change>/.status.json`。读取失败时把该 change 标记为 `broken-index`，不要擅自删除索引项。
+3. 扫描 `../.speculo/{dev,doc,ops}/*/.status.json`，找出 `change_status: completed` 且尚未位于 `../.speculo/archive/` 的待归档 change。
+4. 聚合输出：
+   - 各分类 active 数量、completed 待归档数量、broken-index 数量
+   - 最近更新的 5 个 change（按 `updated_at` 倒序）
+   - 当前可能阻塞项：`phase_history` 最后一项为 `blocked`，或 `updated_at` 超过 14 天未变化
+   - 推荐下一步：优先处理 broken-index，其次处理 blocked，再推荐继续最近 active change 的 `current_phase`
+5. 用户要求持久化快照时，把报告写入 `../.speculo/commands/<YYYY-MM-DD>-status-<topic>/snapshot.md`；否则只在对话中返回。
 
 ## 产物模板（snapshot.md，可选）
 
@@ -39,7 +38,7 @@ keywords: [status, 状态, 进度]
 # Status Snapshot
 
 ## 快照时间
-[TODO]
+[TODO: ISO 8601 时间戳。]
 
 ## 分类汇总
 [TODO: dev/doc/ops 各自 active 数量、completed 待归档数量]

@@ -31,12 +31,12 @@
 ### 归档准备
 - **待归档路径**：`../../../.speculo/dev/<change-name>/`
 - **归档时机**：通常在 `ops/05-postmortem`（如有）完成后；纯 dev change 在本 phase 完成后立即可归档
-- **归档命令**：由 `framework/commands/archive.md` 触发；不在本 phase 自动执行
+- **归档命令**：由 `../../../commands/archive.md` 触发；不在本 phase 自动执行
 - **不归档情形**：若发版后观测期发现需回滚或事故，待 `ops/04-incident` + `ops/05-postmortem` 完成后再决定
 
 ## 三、与 doc/02-changelog 的边界
 
-- 本工作流**不直接写 changelog 内容**（那是 `framework/workflows/doc/02-changelog/` 的职责）
+- 本工作流**不直接写 changelog 内容**（那是 `../../doc/02-changelog/` 的职责）
 - 本工作流**确认 changelog 已就绪**，并提供事实清单（公开 API 变更、破坏性变更）作为输入
 - 若 doc workflow 已完成 changelog，handoff.md 引用其位置即可
 
