@@ -16,8 +16,11 @@ cp -R adapters/claude-code/.claude/commands .claude/
 ## 验证
 
 - 在 Claude Code 中运行 `/speculo-status`，应读取 `commands/status.md`。
-- 运行 `/speculo-dev`、`/speculo-doc`、`/speculo-ops`，应分别进入对应 `00-INDEX.md` 导航。
+- 运行 `/speculo-dev`，应读取 `workflows/dev/00-INDEX.md` 并识别 `dev/01`、`dev/02`、`dev/03`、`dev/I`、`dev/H`。
+- 运行 `/speculo-dev-i` 或 `/speculo-dev-h`，应分别进入垂直切片和 diagnose 入口。
+- 运行 `/speculo-doc`、`/speculo-ops`，应进入当前预留的 doc/ops `00-INDEX.md`。
 - 运行 `/speculo-archive` 时，Claude 必须先列待归档清单并等待用户确认。
+- 运行 `/speculo-caveman`、`/speculo-grill-me`、`/speculo-handoff`、`/speculo-write-skill`、`/speculo-scaffold-exercises`，应读取对应 `commands/*.md`。
 
 ## 卸载
 

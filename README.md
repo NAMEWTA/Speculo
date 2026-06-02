@@ -32,8 +32,8 @@ Speculo/
 └── framework/                   # 用户复制单元
     ├── adapters/                # 工具适配层
     ├── commands/                # 一次性独立命令
-    ├── workflows/               # dev / doc / ops 多阶段工作流
-    ├── skills/                  # 原子能力预留目录
+    ├── workflows/               # dev 多阶段工作流 + doc/ops 预留入口
+    ├── skills/                  # Speculo skill wrapper + 原始 skill source
     └── .speculo/                # 项目状态与产物骨架
 ```
 
@@ -82,10 +82,16 @@ mv RULES.md.example RULES.md
 ## 内置入口
 
 - `framework/workflows/dev/00-INDEX.md`：开发工作流导航
-- `framework/workflows/doc/00-INDEX.md`：文档工作流导航
-- `framework/workflows/ops/00-INDEX.md`：运维工作流导航
+- `framework/workflows/dev/01-grill-with-docs/01-grill-with-docs.md`：领域澄清与决策拷问
+- `framework/workflows/dev/02-prd/02-prd.md`：全景理解与 PRD
+- `framework/workflows/dev/03-tdd/03-tdd.md`：TDD 实现
+- `framework/workflows/dev/04-to-issues/04-to-issues.md`：`dev/I` 垂直切片分解
+- `framework/workflows/dev/05-diagnose/05-diagnose.md`：`dev/H` hotfix / diagnose
+- `framework/workflows/doc/00-INDEX.md`：文档工作流预留入口
+- `framework/workflows/ops/00-INDEX.md`：运维工作流预留入口
 - `framework/commands/status.md`：聚合当前状态
 - `framework/commands/archive.md`：归档 completed change（强制确认）
+- `framework/commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令
 
 ---
 

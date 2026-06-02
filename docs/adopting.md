@@ -33,8 +33,8 @@ my-project/
 ├── .claude/commands/          # 仅 Claude Code 需要
 ├── workflows/
 │   ├── dev/
-│   ├── doc/
-│   └── ops/
+│   ├── doc/                    # 预留入口
+│   └── ops/                    # 预留入口
 ├── commands/
 ├── skills/
 └── .speculo/
@@ -53,9 +53,9 @@ my-project/
 
 1. 不确定从哪开始：让 AI 读取 `workflows/dev/00-INDEX.md`、`workflows/doc/00-INDEX.md` 或 `workflows/ops/00-INDEX.md`。
 2. 查看当前状态：让 AI 执行 `commands/status.md`。
-3. 做开发任务：通常从 `workflows/dev/01-prd/01-prd.md` 开始。
-4. 写文档：从 `workflows/doc/00-INDEX.md` 进入。
-5. 发版/部署/事故：从 `workflows/ops/00-INDEX.md` 进入。
+3. 做开发任务：从 `workflows/dev/00-INDEX.md` 进入，按 `dev/01`、`dev/02`、`dev/03`、`dev/I`、`dev/H` 推荐下一步。
+4. 写文档：从 `workflows/doc/00-INDEX.md` 进入；当前 doc 分类为预留入口，可按 `docs/workflow-authoring.md` 扩展。
+5. 发版/部署/事故：从 `workflows/ops/00-INDEX.md` 进入；当前 ops 分类为预留入口，可按 `docs/workflow-authoring.md` 扩展。
 6. 归档完成的 change：执行 `commands/archive.md`；AI 必须先列清单并等待用户确认。
 
 ## 常见问题

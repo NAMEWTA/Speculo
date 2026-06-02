@@ -1,52 +1,52 @@
 ---
 id: dev/index
-type: navigator
 category: dev
-name: Dev Workflows Index
-description: dev 分类智能导航 + 实时状态汇报 + 下一步推荐
-keywords: [dev, 导航, 状态, 开发]
+name: Dev Workflow Index
+description: 开发工作流导航、状态汇报与下一步推荐入口
+keywords: [dev, 开发, workflow, index, 状态]
 ---
 
-# Dev 工作流导航
+# Dev Workflow Index
 
-本文件作为"活跃命令"，AI 在用户不确定从哪开始时调用，应执行以下能力：
+本文件是 dev 分类的导航入口。进入时先读取 `../../.speculo/dev-status.json`，再按其中 active change 读取 `../../.speculo/dev/<change>/.status.json`，根据用户意图推荐下一步。
 
-1. 扫描 `../../.speculo/dev-status.json` 索引 + 各 `../../.speculo/dev/*/.status.json`。
-2. 列出当前 active changes、各自 `current_phase`、`updated_at`。
-3. 列出"已 completed 但未 archived"的待归档清单。
-4. 根据用户意图 + 当前状态，推荐下一步执行哪个 workflow 的哪个 phase。
-5. 检查硬依赖是否满足（如 `01-prd` 软依赖 `02-design`、`05-review` 软依赖 `04-test`），未满足则报错并提示先跑前置。
+## 入口别名
 
-## 内置工作流清单
+| 别名 | 入口 | 用途 |
+|------|------|------|
+| `dev/01` | `01-grill-with-docs/01-grill-with-docs.md` | 领域术语、CONTEXT、ADR 与方案拷问 |
+| `dev/02` | `02-prd/02-prd.md` | zoom-out 全景理解与 PRD 综合 |
+| `dev/03` | `03-tdd/03-tdd.md` | 垂直切片 TDD 实现 |
+| `dev/I` | `04-to-issues/04-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow |
+| `dev/H` | `05-diagnose/05-diagnose.md` | hotfix / bug / 性能回退诊断 |
 
-| 编号 | 名称 | 用途 | 入口 |
-|------|------|------|------|
-| 01 | prd | 需求定义与评审 | `01-prd/01-prd.md` |
-| 02 | design | 架构与 API 设计 | `02-design/02-design.md` |
-| 03 | implement | 编码实现（可拆 tasks/） | `03-implement/03-implement.md` |
-| 04 | test | 单元 / 端到端测试 | `04-test/04-test.md` |
-| 05 | review | 代码 / 安全评审 | `05-review/05-review.md` |
-| 06 | handoff | 交接 doc/ops + 归档准备 | `06-handoff/06-handoff.md` |
+## 进入协议
 
-## 执行模式（execution_mode）
+1. 若用户未指定 change，扫描 `../../.speculo/dev-status.json` 和 `../../.speculo/dev/*/.status.json`，列出 active changes。
+2. 若只有一个 active change，默认继续该 change；若有多个 active change，要求用户选择。
+3. 若没有 active change，按用户意图创建新的 change 目录，并初始化 `.status.json` 与 `../../.speculo/dev-status.json`。
+4. 推荐入口时优先使用用户显式别名；没有别名时按执行模式推荐。
+5. 执行任何 workflow 前，读取该 workflow 入口文件、阶段文件、模板和被调用 skill wrapper。
 
-- `full`：`01-prd` → `02-design` → `03-implement` → `04-test` → `05-review` → `06-handoff`（新功能完整链路）
-- `hotfix`：`03-implement` → `04-test` → `05-review`（紧急修复，跳过 prd 与 design）
-- `refactor`：`02-design` → `03-implement` → `04-test` → `05-review`（重构）
-- `doc-only`：仅涉及文档变更，转 `doc/` 分类
-- `internal-handoff`：跑完 `06-handoff` 即归档（无 ops 流程的内部交付）
+## 执行模式
 
-## 跨工作流硬依赖速查
+- `full`：`dev/01` -> `dev/02` -> `dev/I` -> `dev/03`。
+- `planning-only`：`dev/01` -> `dev/02` -> `dev/I`，不进入实现。
+- `implementation-only`：已有 PRD、issue 或明确任务时，从 `dev/03` 开始。
+- `hotfix`：Bug、异常、性能回退时，从 `dev/H` 开始；修复阶段可嵌入 `dev/03` 的 TDD 回归循环。
 
-| 当前 | 硬依赖 |
-|------|--------|
-| `01-prd` | 无 |
-| `02-design` | 无（软依赖 `01-prd`） |
-| `03-implement` | 无（软依赖 `02-design`） |
-| `04-test` | 无（软依赖 `03-implement`） |
-| `05-review` | 无（软依赖 `04-test`） |
-| `06-handoff` | 无（软依赖 `05-review`；完成准则隐式要求评审通过） |
+## 状态汇报
 
-## LESSONS 闭环
+输出 dev 状态时至少包含：
 
-`05-review` 的"完成与状态更新"段强制要求把抽象失败模式追加到 `../../.speculo/.config/LESSONS.md`，与 `../ops/04-incident` 和 `../ops/05-postmortem` 的 LESSONS 写回闭环统一，形成跨 change / 跨 category 的失败知识库。
+- active change 数量与每个 change 的 `current_phase`
+- 最近更新的 change，按 `updated_at` 倒序
+- `phase_history` 最后一项为 `blocked` 或 `updated_at` 超过 14 天未变化的 change
+- 推荐下一步入口和原因
+
+## 完成与状态更新
+
+- 所有 dev workflow 必须维护同一 change 的 `.status.json`。
+- 进入 phase 时更新 `current_phase`，并在 `phase_history` 追加 `in-progress` 记录。
+- phase 完成时写入 `completed_at` 和 `status: completed`。
+- 只有完成当前 change 的最终交付边界时，才把 `change_status` 置为 `completed`。

@@ -14,4 +14,5 @@ cp adapters/agents/AGENTS.md.example AGENTS.md
 
 - 打开任意支持 `AGENTS.md` 的 AI Coding 工具，询问“当前 Speculo 状态是什么”。
 - 正确行为：AI 先读取 `commands/status.md`，再读取 `.speculo/*-status.json`。
+- 做开发任务时，AI 应先读取 `workflows/dev/00-INDEX.md`，再按 `dev/01`、`dev/02`、`dev/03`、`dev/I`、`dev/H` 选择入口。
 - 若工具未自动读取 `AGENTS.md`，在会话开头显式要求“请先读取项目根 AGENTS.md”。
