@@ -17,8 +17,8 @@ keywords: [dev, 开发, workflow, index, 状态]
 | `dev/01` | `01-grill-with-docs/01-grill-with-docs.md` | 领域术语、CONTEXT、ADR 与方案拷问 |
 | `dev/02` | `02-prd/02-prd.md` | zoom-out 全景理解与 PRD 综合 |
 | `dev/03` | `03-tdd/03-tdd.md` | 垂直切片 TDD 实现 |
-| `dev/I` | `04-to-issues/04-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow |
-| `dev/H` | `05-diagnose/05-diagnose.md` | hotfix / bug / 性能回退诊断 |
+| `dev/I` | `I-to-issues/I-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow |
+| `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断 |
 
 ## 进入协议
 

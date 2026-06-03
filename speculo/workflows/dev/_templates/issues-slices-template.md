@@ -1,4 +1,4 @@
-> **服务工作流：** `../04-to-issues/`
+> **服务工作流：** `../I-to-issues/`
 > **产物文件名：** `slices.md`
 
 # Vertical Slices

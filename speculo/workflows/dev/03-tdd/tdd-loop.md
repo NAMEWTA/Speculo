@@ -4,11 +4,11 @@
 
 - `tdd-plan.md`
 - `slices.md` 或用户确认的切片顺序
-- Skill wrapper：`../../../skills/tdd/SKILL.md`
+- `03-tdd.md` 中的内置 TDD 指引和同目录辅助文档
 
 ## 产物
 
-- `implementation-log.md`，由 `../_templates/tdd-log-template.md` 填写
+- `.speculo/dev/<change>/implementation-log.md`，由 `../_templates/tdd-log-template.md` 填写
 - 可选：`tasks/00-INDEX.md` 与 `tasks/TNN.md`，由 workflow 自治创建
 
 ## 填写引导
@@ -18,6 +18,7 @@
 3. GREEN：写最少实现使当前测试通过。
 4. REFACTOR：只在绿色状态下整理设计。
 5. 每轮记录测试名、失败信号、实现摘要、重构摘要和验证命令。
+6. 每轮检查：测试描述行为而非实现；测试只使用公共接口；测试能经受内部重构；代码是当前测试的最少实现；没有添加推测性功能。
 
 ## 边界
 

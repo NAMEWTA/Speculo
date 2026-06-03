@@ -8,7 +8,19 @@ keywords: [prd, zoom-out, 需求, 计划]
 
 # PRD 工作流执行指引
 
-本工作流用于把已知上下文综合为 Speculo change 内的 PRD。核心能力来自 `../../../skills/zoom-out/SKILL.md` 与 `../../../skills/to-prd/SKILL.md`。
+本工作流用于把已知上下文综合为当前 Speculo change 内的 overview 和 PRD。zoom-out 全景理解与 PRD 综合能力已内置在本 workflow 目录中。
+
+## 内置指引
+
+### Zoom Out
+
+当 agent 对某段代码或业务区域不熟悉，需要先建立全局视角再继续 PRD、设计、诊断或实现时使用。用项目领域术语表给出相关模块、调用者、关键边界、上下游依赖和需要进一步确认的问题。
+
+### PRD Synthesis
+
+当 dev workflow 已完成足够上下文探索，需要把当前对话和代码理解沉淀成 PRD 时使用。不要重复访谈已明确的信息；综合当前对话、代码库事实、领域术语、ADR、模块候选和测试目标。
+
+PRD 只写入 `.speculo/dev/<change>/prd.md`，overview 只写入 `.speculo/dev/<change>/overview.md`。不写项目根下的任意规划文档，不默认发布外部 issue。只有 tracker 已配置且用户明确要求时，才进入外部发布动作。
 
 ## 阶段
 
@@ -39,7 +51,7 @@ keywords: [prd, zoom-out, 需求, 计划]
 本工作流需在同 change 的 `.status.json` 追加：
 
 - `dev_entry` (string) — 固定为 `dev/02`
-- `source_skills` (array) — 包含 `zoom-out`、`to-prd`
+- `embedded_guides` (array) — 包含 `zoom-out`、`to-prd`
 - `prd_slug` (string) — PRD 短 slug
 - `module_candidates` (array) — 候选模块或边界
 - `test_targets` (array) — 用户确认的测试目标
@@ -48,5 +60,5 @@ keywords: [prd, zoom-out, 需求, 计划]
 ## 完成与状态更新
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
-- 默认把 PRD 写入当前 change 的 `prd.md`；不默认写 `docs/plan/`。
-- 本 workflow 完成后不自动完成 change；默认移交 `../04-to-issues/04-to-issues.md` 或 `../03-tdd/03-tdd.md`。
+- 默认把 PRD 写入当前 change 的 `prd.md`；不默认写项目根下的任意规划文档。
+- 本 workflow 完成后不自动完成 change；默认移交 `../I-to-issues/I-to-issues.md` 或 `../03-tdd/03-tdd.md`。

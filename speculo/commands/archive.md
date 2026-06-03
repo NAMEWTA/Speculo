@@ -20,7 +20,7 @@ keywords: [archive, 归档, 清理]
 
 ## 执行步骤
 
-1. 扫描 `../.speculo/{dev,doc,ops}/*/.status.json`，仅选择 `change_status: completed` 的 change。
+1. 扫描 `../.speculo/dev/*/.status.json`，仅选择 `change_status: completed` 的 change。
 2. 排除已经位于 `../.speculo/archive/` 下的目录；若目标归档路径已存在，标记为冲突并停止，不覆盖。
 3. 列出待归档清单：源路径、目标路径、当前分类、`updated_at`、最后 phase、是否仍在 `<cat>-status.json active[]`。
 4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。

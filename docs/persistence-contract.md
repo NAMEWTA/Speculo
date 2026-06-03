@@ -55,7 +55,7 @@
 
 ## 4. Frontmatter 极简原则
 
-Frontmatter **仅承载发现元数据**——让 AI 和 adapter 能扫描出"这是什么、叫什么、关于什么"。
+Frontmatter **仅承载发现元数据**——让 AI 或轻量工具能扫描出"这是什么、叫什么、关于什么"。
 
 所有结构化引用（phases / 模板 / 依赖 workflow / 调用 skill / 状态扩展字段 / 入口协议）一律放在 **Markdown 正文**里，通过相对路径链接和小标题做物理渐进披露。
 
@@ -67,7 +67,7 @@ id: <category>/<name>        # 必填：全局唯一
 category: dev | doc | ops    # 必填
 name: <人类可读名>            # 必填
 description: <一句话>         # 必填
-keywords: [...]              # 可选：adapter 触发匹配
+keywords: [...]              # 可选：工具或 AI 触发匹配
 ---
 ```
 
@@ -139,9 +139,8 @@ description: <一句话>         # 必填
 
 | 文件 | 用户可写 | AI 可写 |
 |------|---------|---------|
-| `.speculo/.config/*.md` | ✅ | ⚠️ 需用户审批 |
-| `.speculo/.config/RULES.md` | ✅ | ❌ 严禁自动改 |
+| `.speculo/.config/RULES.md` | ✅ | ❌ |
+| `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
 | `.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
 | `.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
 | `.speculo/*-status.json` | ❌ | ✅ |
-| `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |

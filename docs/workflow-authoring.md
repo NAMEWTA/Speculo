@@ -66,7 +66,7 @@ Frontmatter 仅承载发现元数据：
 | `category` | 是 | `dev` / `doc` / `ops` |
 | `name` | 是 | 人类可读名 |
 | `description` | 是 | 一句话用途 |
-| `keywords` | 否 | adapter 匹配关键词 |
+| `keywords` | 否 | 工具或 AI 匹配关键词 |
 
 禁止在 frontmatter 中写 `phases`、`template`、`uses_skills`、`depends_on`、`status_extensions`。这些结构化信息全部写入正文。
 

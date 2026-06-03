@@ -1,0 +1,27 @@
+{
+  "name": "speculo",
+  "version": "0.1.0",
+  "description": "Speculo workflow asset installer and updater.",
+  "type": "module",
+  "bin": {
+    "speculo": "./dist/src/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/test/*.test.js",
+    "pretest": "pnpm build",
+    "prepack": "pnpm build"
+  },
+  "files": [
+    "dist/src",
+    "speculo"
+  ],
+  "packageManager": "pnpm@11.1.3",
+  "engines": {
+    "node": "22.22.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3"
+  }
+}
