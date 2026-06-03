@@ -1,14 +1,14 @@
 # Workflow 编写指南（开发者向）
 
-本文档面向**框架扩展者**：你想在 `framework/workflows/<cat>/` 下新增一个多阶段 workflow。
+本文档面向**框架扩展者**：你想在 `speculo/workflows/<cat>/` 下新增一个多阶段 workflow。
 
 ## 创建步骤
 
 ```bash
-mkdir -p framework/workflows/<cat>/NN-<name>
-touch framework/workflows/<cat>/NN-<name>/NN-<name>.md
-touch framework/workflows/<cat>/NN-<name>/<name>-<phase>.md
-touch framework/workflows/<cat>/_templates/<name>-<artifact>-template.md
+mkdir -p speculo/workflows/<cat>/NN-<name>
+touch speculo/workflows/<cat>/NN-<name>/NN-<name>.md
+touch speculo/workflows/<cat>/NN-<name>/<name>-<phase>.md
+touch speculo/workflows/<cat>/_templates/<name>-<artifact>-template.md
 ```
 
 `<cat>` 必须是 `dev`、`doc` 或 `ops`。文件夹使用 `NN-<kebab-name>`，入口文件名必须与文件夹同名。
@@ -78,7 +78,7 @@ Frontmatter 仅承载发现元数据：
 
 ## 模板存放
 
-- 模板放在 `framework/workflows/<cat>/_templates/`
+- 模板放在 `speculo/workflows/<cat>/_templates/`
 - 命名：`<name>-<artifact>-template.md`
 - 模板顶部只写归属说明，然后是标题、章节、`[TODO: 具体填写指引]`
 

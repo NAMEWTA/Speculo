@@ -5,8 +5,8 @@
 ## 创建步骤
 
 ```bash
-mkdir -p framework/skills/<name>/{references,scripts,examples}
-touch framework/skills/<name>/SKILL.md
+mkdir -p speculo/skills/<name>/{references,scripts,examples}
+touch speculo/skills/<name>/SKILL.md
 ```
 
 ## 强制约束
@@ -58,4 +58,4 @@ description: <一句话能力说明>
 
 ## 复制即可用合格线
 
-复制 `framework/skills/<name>/` 到任何项目后，任何 AI 工具只读 `SKILL.md` 就能判断是否使用、需要哪些输入、会产生什么输出。
+复制 `speculo/skills/<name>/` 到任何项目后，任何 AI 工具只读 `SKILL.md` 就能判断是否使用、需要哪些输入、会产生什么输出。

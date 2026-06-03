@@ -5,9 +5,9 @@
 ## 快速接入
 
 ```bash
-# 1. 复制 framework。使用 framework/. 才会包含 .speculo/ 点目录。
+# 1. 复制 speculo。使用 speculo/. 才会包含 .speculo/ 点目录。
 mkdir -p my-project
-cp -R Speculo/framework/. my-project/
+cp -R Speculo/speculo/. my-project/
 
 # 2. 复制通用 AGENTS.md 规则
 cp my-project/adapters/agents/AGENTS.md.example my-project/AGENTS.md
@@ -40,11 +40,7 @@ my-project/
 └── .speculo/
     ├── .config/
     ├── dev-status.json
-    ├── doc-status.json
-    ├── ops-status.json
     ├── dev/
-    ├── doc/
-    ├── ops/
     ├── commands/
     └── archive/
 ```
@@ -60,14 +56,14 @@ my-project/
 
 ## 常见问题
 
-### 为什么不能用 `cp -R framework/* my-project/`？
+### 为什么不能用 `cp -R speculo/* my-project/`？
 
-因为 shell 的 `*` 默认不包含 `.speculo/` 这样的点目录。必须复制 `framework/.`，否则状态骨架不会进入项目。
+因为 shell 的 `*` 默认不包含 `.speculo/` 这样的点目录。必须复制 `speculo/.`，否则状态骨架不会进入项目。
 
 ### 要不要把 `docs/` 复制到业务项目？
 
-通常不用。`docs/` 是 Speculo 框架维护文档；业务项目只需要复制 `framework/` 的内容。
+通常不用。`docs/` 是 Speculo 框架维护文档；业务项目只需要复制 `speculo/` 的内容。
 
 ### 可以只使用 AGENTS.md，不用 Claude adapter 吗？
 
-可以。Claude adapter 只是给 Claude Code 增加 `/speculo-*` 快捷命令；核心规则在 `AGENTS.md` 与 `framework/` 文档中。
+可以。Claude adapter 只是给 Claude Code 增加 `/speculo-*` 快捷命令；核心规则在 `AGENTS.md` 与 `speculo/` 文档中。

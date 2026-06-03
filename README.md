@@ -29,7 +29,7 @@ Speculo/
 │   ├── workflow-authoring.md    # workflow 编写指南
 │   ├── skill-authoring.md       # skill 编写指南
 │   └── command-authoring.md     # command 编写指南
-└── framework/                   # 用户复制单元
+└── speculo/                   # 用户复制单元
     ├── adapters/                # 工具适配层
     ├── commands/                # 一次性独立命令
     ├── workflows/               # dev 多阶段工作流 + doc/ops 预留入口
@@ -42,9 +42,9 @@ Speculo/
 ## 三分钟接入
 
 ```bash
-# 1. 复制框架资产。注意：framework/. 会包含 .speculo/ 点目录。
+# 1. 复制框架资产。注意：speculo/. 会包含 .speculo/ 点目录。
 mkdir -p my-project
-cp -R Speculo/framework/. my-project/
+cp -R Speculo/speculo/. my-project/
 
 # 2. 复制通用 AI 指令
 cp my-project/adapters/agents/AGENTS.md.example my-project/AGENTS.md
@@ -81,17 +81,17 @@ mv RULES.md.example RULES.md
 
 ## 内置入口
 
-- `framework/workflows/dev/00-INDEX.md`：开发工作流导航
-- `framework/workflows/dev/01-grill-with-docs/01-grill-with-docs.md`：领域澄清与决策拷问
-- `framework/workflows/dev/02-prd/02-prd.md`：全景理解与 PRD
-- `framework/workflows/dev/03-tdd/03-tdd.md`：TDD 实现
-- `framework/workflows/dev/04-to-issues/04-to-issues.md`：`dev/I` 垂直切片分解
-- `framework/workflows/dev/05-diagnose/05-diagnose.md`：`dev/H` hotfix / diagnose
-- `framework/workflows/doc/00-INDEX.md`：文档工作流预留入口
-- `framework/workflows/ops/00-INDEX.md`：运维工作流预留入口
-- `framework/commands/status.md`：聚合当前状态
-- `framework/commands/archive.md`：归档 completed change（强制确认）
-- `framework/commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令
+- `speculo/workflows/dev/00-INDEX.md`：开发工作流导航
+- `speculo/workflows/dev/01-grill-with-docs/01-grill-with-docs.md`：领域澄清与决策拷问
+- `speculo/workflows/dev/02-prd/02-prd.md`：全景理解与 PRD
+- `speculo/workflows/dev/03-tdd/03-tdd.md`：TDD 实现
+- `speculo/workflows/dev/04-to-issues/04-to-issues.md`：`dev/I` 垂直切片分解
+- `speculo/workflows/dev/05-diagnose/05-diagnose.md`：`dev/H` hotfix / diagnose
+- `speculo/workflows/doc/00-INDEX.md`：文档工作流预留入口
+- `speculo/workflows/ops/00-INDEX.md`：运维工作流预留入口
+- `speculo/commands/status.md`：聚合当前状态
+- `speculo/commands/archive.md`：归档 completed change（强制确认）
+- `speculo/commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令
 
 ---
 

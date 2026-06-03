@@ -14,7 +14,7 @@ description: 创建新的 Agent skill 结构和说明；当 command/write-a-skil
 ## 输入
 
 - 技能覆盖的任务、触发条件、输入输出、示例和脚本需求
-- 目标项目或 framework 的 skill authoring 约束
+- 目标项目或 speculo 的 skill authoring 约束
 
 ## 输出
 
@@ -23,7 +23,7 @@ description: 创建新的 Agent skill 结构和说明；当 command/write-a-skil
 ## 执行步骤
 
 1. 读取并严格遵循 `source/SKILL.md`。
-2. 若用于 Speculo framework，额外遵守 `docs/skill-authoring.md` 的 frontmatter 和自包含约束。
+2. 若用于 Speculo speculo，额外遵守 `docs/skill-authoring.md` 的 frontmatter 和自包含约束。
 3. 修改或创建目标文件前，按调用方 command 的确认策略执行。
 
 ## 渐进披露

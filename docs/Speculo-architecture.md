@@ -1,4 +1,4 @@
-# Speculo Framework
+# Speculo speculo
 
 > 以结构化文档驱动 AI Coding 的标准化赋能体系
 
@@ -15,7 +15,7 @@ Speculo 是一个 **SDD（Specification-Driven Development for AI）** 框架：
 ### 四个核心原则
 
 1. **工具无关（Tool-agnostic）** — 框架本体不依赖任何 AI Coding 工具的私有规则。通过 `adapters/` 层提供工具适配，核心目录（`workflows/` `commands/` `skills/`）零工具耦合。
-2. **即插即用（Plug-and-play）** — 用户复制 `framework/.` 到自己项目即可使用，单一目录复制单元，无需安装、无脚本依赖。
+2. **即插即用（Plug-and-play）** — 用户复制 `speculo/.` 到自己项目即可使用，单一目录复制单元，无需安装、无脚本依赖。
 3. **薄契约 + workflow 自治（Thin contract, workflow autonomy）** — 框架仅规定最小机器契约（目录骨架、`.status.json` 元字段、frontmatter 必填字段）。每个 workflow 自行规定阶段、产物、扩展字段。
 4. **产物持久化（Persistent artifacts）** — 每次执行产生的结构化产物以变更（change）为单位归档于 `.speculo/`，可追溯、可索引、可归档。
 
@@ -28,7 +28,7 @@ Speculo 仓库本身分**两类内容**，物理上严格分离：
 | 类型 | 路径 | 用户是否复制 | 说明 |
 |------|------|------------|------|
 | **框架自身文档** | `README.md` / `docs/` / `CHANGELOG.md` / `LICENSE` | ❌ 不复制 | 给框架维护者和评估者看 |
-| **框架资产** | `framework/**` | ✅ 整体复制 | 用户的即插即用单元 |
+| **框架资产** | `speculo/**` | ✅ 整体复制 | 用户的即插即用单元 |
 
 ### 仓库根目录全景
 
@@ -46,7 +46,7 @@ Speculo/                             # 仓库根（不复制给用户）
 │   ├── skill-authoring.md           # 开发者向：如何写新 skill
 │   └── command-authoring.md         # 开发者向：如何写新 command
 │
-└── framework/                       # 用户复制单元
+└── speculo/                       # 用户复制单元
     ├── adapters/                    # 工具适配层
     ├── commands/                    # 一次性独立命令（平铺单文件）
     ├── workflows/                   # 多阶段编排工作流（按分类）
@@ -57,16 +57,16 @@ Speculo/                             # 仓库根（不复制给用户）
 ### 用户接入一句话
 
 ```bash
-cp -R Speculo/framework/. my-project/
+cp -R Speculo/speculo/. my-project/
 cp my-project/adapters/agents/AGENTS.md.example my-project/AGENTS.md
 ```
 
 ---
 
-## 三、`framework/` 完整目录结构
+## 三、`speculo/` 完整目录结构
 
 ```
-framework/
+speculo/
 ├── adapters/                                 # 工具适配层（用户按需取用）
 │   ├── claude-code/
 │   │   ├── CLAUDE.md.example                 # 一行透传："see AGENTS.md"
@@ -169,9 +169,9 @@ framework/
 
 ### Skill 的"复制即可用"合格线
 
-**复制 `framework/skills/<name>/` 整个目录到任何项目，任何 AI 工具读 `SKILL.md` 就能用——这是 skill 的合格线。**
+**复制 `speculo/skills/<name>/` 整个目录到任何项目，任何 AI 工具读 `SKILL.md` 就能用——这是 skill 的合格线。**
 
-- ❌ skill 内禁止引用 `framework/` 其他位置的相对路径
+- ❌ skill 内禁止引用 `speculo/` 其他位置的相对路径
 - ❌ skill 禁止写 `.speculo/`（持久化责任永远在调用者）
 - ❌ skill 禁止写 `.status.json`（skill 不持有状态）
 
@@ -469,7 +469,7 @@ description: 结构化代码审查
 
 ### 9.4 新增 adapter
 
-社区可在 `framework/adapters/` 下添加 `<new-tool>/` 子目录，对框架核心**零影响**。
+社区可在 `speculo/adapters/` 下添加 `<new-tool>/` 子目录，对框架核心**零影响**。
 
 ---
 
@@ -477,15 +477,15 @@ description: 结构化代码审查
 
 ### 新增 workflow
 → 见 `docs/workflow-authoring.md`
-要点：建 `framework/workflows/<cat>/NN-<name>/`，写入口 .md（带 frontmatter）+ 阶段子文件，模板放 `<cat>/_templates/`。
+要点：建 `speculo/workflows/<cat>/NN-<name>/`，写入口 .md（带 frontmatter）+ 阶段子文件，模板放 `<cat>/_templates/`。
 
 ### 新增 skill
 → 见 `docs/skill-authoring.md`
-要点：建 `framework/skills/<name>/`，写 `SKILL.md`（带 frontmatter）+ `references/scripts/examples/`，**严守"零跨目录引用"**。
+要点：建 `speculo/skills/<name>/`，写 `SKILL.md`（带 frontmatter）+ `references/scripts/examples/`，**严守"零跨目录引用"**。
 
 ### 新增 command
 → 见 `docs/command-authoring.md`
-要点：建 `framework/commands/<name>.md`（单文件），frontmatter + 内联模板，复杂场景升级为 workflow。
+要点：建 `speculo/commands/<name>.md`（单文件），frontmatter + 内联模板，复杂场景升级为 workflow。
 
 ---
 
@@ -511,5 +511,5 @@ description: 结构化代码审查
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-05-25 | 初始架构（五层 commands/workflows/templates/skills/.speculo） |
-| v2.0 | 2026-05-28 | 重大重构：仓库分 `docs/` + `framework/` 两层；模板下沉到 workflow 分类内 `_templates/`；引入 adapters/ 工具适配层；定义 frontmatter 契约；定义 `.status.json` 元字段；明确三类构件边界与判据；`.speculo/.config/` 配置区与产物区分家；明确归档触发与索引规则；模板格式收敛到 .md + `[TODO:]` 占位符 |
+| v2.0 | 2026-05-28 | 重大重构：仓库分 `docs/` + `speculo/` 两层；模板下沉到 workflow 分类内 `_templates/`；引入 adapters/ 工具适配层；定义 frontmatter 契约；定义 `.status.json` 元字段；明确三类构件边界与判据；`.speculo/.config/` 配置区与产物区分家；明确归档触发与索引规则；模板格式收敛到 .md + `[TODO:]` 占位符 |
 | v2.1 | 2026-05-28 | Frontmatter 极简化：仅保留发现元数据（id/name/description/keywords/category/type）；phases/depends_on/status_extensions/uses_skills/template 等结构化引用全部移至 Markdown 正文，通过相对路径链接和小标题做物理渐进披露；模板不再使用 frontmatter，改为顶部引用说明 |
