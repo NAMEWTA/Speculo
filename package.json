@@ -1,7 +1,7 @@
 {
-  "name": "speculo",
+  "name": "@namewta/speculo",
   "version": "0.1.0",
-  "description": "Speculo workflow asset installer and updater.",
+  "description": "Speculo — specification-driven development framework assets, with a CLI to install and update them across AI coding tools.",
   "type": "module",
   "bin": {
     "speculo": "./dist/src/cli.js"
@@ -10,12 +10,39 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test dist/test/*.test.js",
     "pretest": "pnpm build",
-    "prepack": "pnpm build"
+    "check": "pnpm build && pnpm test",
+    "verify-bin": "node scripts/verify-bin.mjs",
+    "prepack": "pnpm build",
+    "prepublishOnly": "pnpm build && pnpm test"
   },
   "files": [
     "dist/src",
     "speculo"
   ],
+  "keywords": [
+    "speculo",
+    "sdd",
+    "spec-driven-development",
+    "ai-coding",
+    "workflows",
+    "skills",
+    "cli",
+    "scaffolding"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NAMEWTA/Speculo.git"
+  },
+  "homepage": "https://github.com/NAMEWTA/Speculo#readme",
+  "bugs": {
+    "url": "https://github.com/NAMEWTA/Speculo/issues"
+  },
+  "license": "MIT",
+  "author": "wta",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "packageManager": "pnpm@11.1.3",
   "engines": {
     "node": "22.22.3"
