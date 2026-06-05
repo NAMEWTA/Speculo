@@ -3,7 +3,7 @@
 > 以结构化文档驱动 AI Coding 的标准化赋能体系  
 > **SDD (Specification-Driven Development for AI)**
 
-**版本：** v2.2  
+**版本：** v2.3  
 **核心原则：** 工具无关 · CLI 接入 · workflow 自治
 
 ## 这是什么
@@ -52,6 +52,9 @@ speculo update my-project
 - `workflows/dev/03-tdd/03-tdd.md`：TDD 实现
 - `workflows/dev/I-to-issues/I-to-issues.md`：`dev/I` 垂直切片分解
 - `workflows/dev/H-diagnose/H-diagnose.md`：`dev/H` hotfix / diagnose
+- `workflows/dev/R-review/R-review.md`：`dev/R` 双维度 diff 审查
+- `workflows/dev/D-docs-sync/D-docs-sync.md`：`dev/D` git diff 驱动文档同步
+- `workflows/doc/00-INDEX.md`：文档写作 workflow 导航
 - `commands/status.md`：聚合当前状态
 - `commands/archive.md`：归档 completed change
 - `commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令

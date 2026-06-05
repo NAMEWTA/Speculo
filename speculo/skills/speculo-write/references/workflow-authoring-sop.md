@@ -1,0 +1,130 @@
+# Workflow Authoring SOP
+
+## 入口结构
+
+workflow 放在 `speculo/workflows/<cat>/`，`<cat>` 只能是 `dev`、`doc`、`ops`。
+
+目录和入口文件必须同名：
+
+```text
+speculo/workflows/<cat>/<entry>/<entry>.md
+```
+
+主线 workflow 使用数字前缀，如 `01-grill-with-docs`。横向 workflow 使用字母前缀，如 `H-diagnose`、`R-review`、`D-docs-sync`。
+
+## Frontmatter
+
+入口 frontmatter 只承载发现元数据：
+
+```yaml
+---
+id: <cat>/<name>
+category: <cat>
+name: <人类可读名>
+description: <一句话用途>
+keywords: [<关键词>]
+---
+```
+
+禁止把 phases、模板、依赖、状态字段写进 frontmatter。
+
+## 正文必备章节
+
+入口正文必须包含：
+
+- `## 阶段`
+- `## 依赖`
+- `## 状态扩展字段`
+- `## 完成与状态更新`
+
+阶段条目必须写清：
+
+- 规范 phase 文件
+- 模板路径
+- 产物文件名
+- 完成准则
+
+## Phase 文件
+
+phase 文件不需要 frontmatter。每个 phase 文件写清：
+
+- 输入
+- 产物
+- 填写引导
+- 边界
+- 完成准则
+
+phase 文件只放该阶段执行所需内容，不重复入口文件的全局说明。
+
+## 模板
+
+模板放在：
+
+```text
+speculo/workflows/<cat>/_templates/
+```
+
+命名：
+
+```text
+<name>-<artifact>-template.md
+```
+
+模板不写 frontmatter，顶部用归属说明：
+
+```markdown
+> **服务工作流：** `../<entry>/<entry>.md`
+> **产物文件名：** `<artifact>.md`
+```
+
+模板占位符必须使用 `[TODO: ...]`。
+
+## 持久化路径
+
+workflow 产物写入：
+
+```text
+.speculo/<cat>/<change>/
+```
+
+当前 change 的状态写入：
+
+```text
+.speculo/<cat>/<change>/.status.json
+```
+
+顶层 active 索引写入：
+
+```text
+.speculo/<cat>-status.json
+```
+
+项目级规则、经验、上下文和 ADR 使用：
+
+```text
+.speculo/.config/RULES.md
+.speculo/.config/LESSONS.md
+.speculo/.config/context/
+.speculo/.config/adr/
+```
+
+不要把新状态放到项目根目录。`.status.json` 元字段、顶层索引 schema 和写入责任表见 `persistence-contract-sop.md`。
+
+## 索引与文档同步
+
+新增 workflow 后检查：
+
+- 对应分类的 `00-INDEX.md` 是否需要新增别名
+- `.speculo/<cat>-status.json` 和 `.speculo/<cat>/.gitkeep` 是否存在
+- `.speculo/archive/<cat>/.gitkeep` 是否存在
+- 项目若有 `docs/quick-reference.md` 等入口索引，是否需要新增条目
+- CLI tests 是否需要断言复制新入口
+
+## 完成线
+
+- 入口 frontmatter 合规
+- 正文必备章节齐全
+- 所有跨文件引用使用相对路径
+- 非模板文件不残留无说明 TODO
+- 模板只保留 `[TODO: ...]` 占位符
+- `pnpm test` 通过或记录无法运行原因

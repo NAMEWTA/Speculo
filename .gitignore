@@ -8,3 +8,4 @@ coverage/
 *.tmp
 *.bak
 *.swp
+.nezha/

@@ -30,15 +30,20 @@ speculo update my-project
 ```text
 my-project/
 ├── workflows/
-│   └── dev/
+│   ├── dev/
+│   └── doc/
 ├── commands/
 ├── skills/
 └── .speculo/
     ├── .config/
     │   ├── RULES.md
-    │   └── LESSONS.md
+    │   ├── LESSONS.md
+    │   ├── context/
+    │   └── adr/
     ├── dev-status.json
+    ├── doc-status.json
     ├── dev/
+    ├── doc/
     ├── commands/
     └── archive/
 ```
@@ -47,8 +52,9 @@ my-project/
 
 1. 不确定从哪开始：让 AI 读取 `workflows/dev/00-INDEX.md`。
 2. 查看当前状态：让 AI 执行 `commands/status.md`。
-3. 做开发任务：从 `workflows/dev/00-INDEX.md` 进入，按 `dev/01`、`dev/02`、`dev/I`、`dev/03`、`dev/H` 推荐下一步。
-4. 归档完成的 change：执行 `commands/archive.md`；AI 必须先列清单并等待用户确认。
+3. 做开发任务：从 `workflows/dev/00-INDEX.md` 进入，按 `dev/01`、`dev/02`、`dev/I`、`dev/03`、`dev/H`、`dev/R`、`dev/D` 推荐下一步。
+4. 做文档写作任务：从 `workflows/doc/00-INDEX.md` 进入，按 `doc/F`、`doc/B`、`doc/S`、`doc/E` 推荐横向 workflow。
+5. 归档完成的 change：执行 `commands/archive.md`；AI 必须先列清单并等待用户确认。
 
 ## 项目规则
 
@@ -56,4 +62,4 @@ my-project/
 
 `.speculo/.config/LESSONS.md` 用于记录跨任务可复用的经验。workflow 收尾时，如果发现对后续任务有价值的经验，可以在用户允许或项目规则允许的情况下追加。
 
-当前分发包只保留这两个轻量配置文件；架构、数据模型、目录结构等长期文档由项目自行决定放置位置。
+当前分发包默认提供轻量规则、经验、上下文和 ADR 目录。项目级术语表和 ADR 使用 `.speculo/.config/context/` 与 `.speculo/.config/adr/`；workflow 只有在用户确认后才写入这些路径。

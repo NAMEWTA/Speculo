@@ -20,7 +20,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 - 用户提出的计划、需求、设计或变更意图
 - `.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
-- 仓库中的 `CONTEXT.md`、`CONTEXT-MAP.md`、`docs/adr/` 和相关代码
+- `.speculo/.config/context/CONTEXT.md`、`.speculo/.config/context/CONTEXT-MAP.md`、`.speculo/.config/adr/` 和相关代码
 - 当前 change 目录：`.speculo/dev/<change>/`
 
 ### 输出
@@ -36,7 +36,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 每次只问一个问题，等待用户对当前问题的反馈后再继续。如果某个问题可以通过探索代码库来回答，就直接探索代码库。
 
-需要格式约定时读取同目录 `CONTEXT-FORMAT.md` 或 `ADR-FORMAT.md`。项目 `CONTEXT.md` 或 ADR 的创建、修改必须符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
+需要格式约定时读取同目录 `CONTEXT-FORMAT.md` 或 `ADR-FORMAT.md`。项目 CONTEXT 或 ADR 的创建、修改必须写入 `.speculo/.config/` 下，并符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
 
 ## 阶段
 
@@ -54,7 +54,7 @@ keywords: [grill, context, adr, 术语, 决策]
 - 产物：`decision-log.md`
 - 完成准则：
   - 关键决策均有结论、推荐答案或开放问题
-  - 需要写入项目 `CONTEXT.md` 或 ADR 的内容已获用户确认，或记录为候选
+  - 需要写入 `.speculo/.config/context/` 或 `.speculo/.config/adr/` 的内容已获用户确认，或记录为候选
   - `decision-log.md` 无残留 `[TODO:]`
 
 ## 依赖

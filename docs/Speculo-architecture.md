@@ -1,7 +1,7 @@
 # Speculo Architecture
 
-**版本：** v2.2  
-**更新日期：** 2026-06-03  
+**版本：** v2.3  
+**更新日期：** 2026-06-05  
 **核心原则：** 工具无关 · CLI 接入 · workflow 自治
 
 ## 设计理念
@@ -69,9 +69,9 @@ my-project/
 | 文件形态 | 单 `.md` 文件 | 文件夹 + 阶段文件 + 模板 | 文件夹 + `SKILL.md` + 渐进披露子目录 |
 | 适用场景 | 一次性独立动作 | 多阶段业务交付 | command 可调用的复用能力 |
 | 持久化责任 | 写 `.speculo/commands/` | 写 `.speculo/<cat>/<change>/` | 不直接写 `.speculo/` |
-| 当前内置 | status/archive/生产力命令 | dev 主流程 | command 使用的能力 |
+| 当前内置 | status/archive/生产力命令 | dev + doc 工作流 | command / workflow 可调用的能力 |
 
-dev workflow 曾使用的 `grill-with-docs`、`zoom-out`、`to-prd`、`tdd`、`to-issues`、`diagnose` 已融合进各自 workflow 目录，不再作为根 skill 分发。
+dev workflow 曾使用的 `grill-with-docs`、`zoom-out`、`to-prd`、`tdd`、`to-issues`、`diagnose` 已融合进各自 workflow 目录，不再作为根 skill 分发。GitHub / npm 发布与运营保留为 `skills/github-npm-ops/` 原子能力，供 command 或 workflow 按需调用。
 
 ## Dev Workflow
 
@@ -83,6 +83,8 @@ workflows/dev/
 ├── 03-tdd/
 ├── I-to-issues/
 ├── H-diagnose/
+├── R-review/
+├── D-docs-sync/
 └── _templates/
 ```
 
@@ -93,6 +95,8 @@ workflows/dev/
 - `dev/I`：垂直切片 issue 分解
 - `dev/03`：TDD 实现
 - `dev/H`：Bug、异常、性能回退诊断
+- `dev/R`：Standards / Spec 双维度 diff 审查
+- `dev/D`：基于 git diff 的对外文档同步
 
 默认执行模式：
 
@@ -100,6 +104,27 @@ workflows/dev/
 - `planning-only`：`dev/01` -> `dev/02` -> `dev/I`
 - `implementation-only`：已有 PRD、issue 或明确任务时，从 `dev/03` 开始
 - `hotfix`：从 `dev/H` 开始，修复阶段可嵌入 `dev/03`
+- `review`：从 `dev/R` 开始
+- `docs-sync`：从 `dev/D` 开始
+
+## Doc Workflow
+
+```text
+workflows/doc/
+├── 00-INDEX.md
+├── F-writing-fragments/
+├── B-writing-beats/
+├── S-writing-shape/
+├── E-edit-article/
+└── _templates/
+```
+
+入口别名：
+
+- `doc/F`：追问式访谈采集 fragment 素材
+- `doc/B`：逐个 beat 推进文章旅程
+- `doc/S`：读取素材堆并塑造成文章
+- `doc/E`：章节确认后逐节编辑文章
 
 ## 持久化模型
 
@@ -107,6 +132,7 @@ workflows/dev/
 
 ```text
 .speculo/dev/2026-06-03-user-auth/.status.json
+.speculo/doc/2026-06-05-article-draft/.status.json
 ```
 
 顶层索引只保存 active 摘要：
@@ -131,14 +157,18 @@ workflows/dev/
 |------|--------|------|
 | `.speculo/.config/RULES.md` | 用户 | 项目硬约束，AI 不自动修改 |
 | `.speculo/.config/LESSONS.md` | 用户 / workflow | 跨任务经验库，workflow 末尾可追加 |
+| `.speculo/.config/context/` | 用户 / workflow | 项目术语表和上下文映射，需用户确认后写入 |
+| `.speculo/.config/adr/` | 用户 / workflow | 项目 ADR，需用户确认后写入 |
 | `.speculo/<cat>/<change>/*.md` | workflow | 当前 change 产物 |
 | `.speculo/<cat>/<change>/.status.json` | workflow | 当前 change 状态 |
 | `.speculo/*-status.json` | workflow/command | active 索引 |
+| `.speculo/dev/docs-sync-state.json` | `dev/D-docs-sync` | 对外文档同步的 git diff 基线 |
 | `.speculo/archive/` | `commands/archive.md` | 已完成 change 归档 |
 
 ## 版本记录
 
 | 版本 | 日期 | 摘要 |
 |------|------|------|
+| v2.3 | 2026-06-05 | 新增 doc 横向工作流；新增 dev/R review 与 dev/D docs-sync；新增 github-npm-ops 原子 skill；CONTEXT、ADR 与 docs-sync state 收敛到 `.speculo/` |
 | v2.2 | 2026-06-03 | 移除工具适配层；新增 CLI `init` / `update`；dev workflow-only skills 深度融合进 workflow；`dev/I`、`dev/H` 改为横向字母入口；`.speculo/.config` 收敛为 `RULES.md` 与 `LESSONS.md` |
 | v2.1 | 2026-05-28 | 定义 frontmatter 契约、`.status.json` 元字段和 workflow 自治 |

@@ -21,6 +21,18 @@
 | `dev/tdd` | `workflows/dev/03-tdd/03-tdd.md` | `dev/03`：垂直切片 TDD 实现 |
 | `dev/I-to-issues` | `workflows/dev/I-to-issues/I-to-issues.md` | `dev/I`：垂直切片 issue 分解，可嵌入其他 dev workflow |
 | `dev/H-diagnose` | `workflows/dev/H-diagnose/H-diagnose.md` | `dev/H`：hotfix / bug / 性能回退诊断 |
+| `dev/R-review` | `workflows/dev/R-review/R-review.md` | `dev/R`：Standards / Spec 双维度 diff 审查 |
+| `dev/D-docs-sync` | `workflows/dev/D-docs-sync/D-docs-sync.md` | `dev/D`：基于 git diff 同步对外文档 |
+
+### doc
+
+| ID | 入口 | 一句话用途 |
+|----|------|----------|
+| `doc/index` | `workflows/doc/00-INDEX.md` | 文档写作、塑形、编辑与素材管理导航 |
+| `doc/writing-fragments` | `workflows/doc/F-writing-fragments/F-writing-fragments.md` | `doc/F`：追问式访谈采集 fragment 素材 |
+| `doc/writing-beats` | `workflows/doc/B-writing-beats/B-writing-beats.md` | `doc/B`：逐个 beat 推进文章旅程 |
+| `doc/writing-shape` | `workflows/doc/S-writing-shape/S-writing-shape.md` | `doc/S`：读取素材堆并塑造成文章 |
+| `doc/edit-article` | `workflows/doc/E-edit-article/E-edit-article.md` | `doc/E`：重组章节并逐节编辑文章 |
 
 ## Commands
 
@@ -36,7 +48,7 @@
 
 ## Skills
 
-根 `skills/` 只保留 command 会直接调用的可复用能力。dev workflow 使用到的原子方法已经融合进各自 workflow 目录。
+根 `skills/` 保留 command 或 workflow 需要直接调用的可复用原子能力。dev workflow 专属方法已经融合进各自 workflow 目录。
 
 | ID | 入口 | 一句话用途 |
 |----|------|----------|
@@ -45,3 +57,5 @@
 | `handoff` | `skills/handoff/SKILL.md` | 生成交接文档 |
 | `write-a-skill` | `skills/write-a-skill/SKILL.md` | 创建 Agent skill |
 | `scaffold-exercises` | `skills/scaffold-exercises/SKILL.md` | 创建练习目录骨架 |
+| `github-npm-ops` | `skills/github-npm-ops/SKILL.md` | GitHub 运营、npm 发布、release workflow 与失败恢复 |
+| `speculo-write` | `skills/speculo-write/SKILL.md` | 创建或改造 Speculo workflow、skill、command |

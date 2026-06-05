@@ -19,6 +19,8 @@ keywords: [dev, 开发, workflow, index, 状态]
 | `dev/03` | `03-tdd/03-tdd.md` | 垂直切片 TDD 实现 |
 | `dev/I` | `I-to-issues/I-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow |
 | `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断 |
+| `dev/R` | `R-review/R-review.md` | Standards / Spec 双维度 diff 审查 |
+| `dev/D` | `D-docs-sync/D-docs-sync.md` | 基于 git diff 同步 README、CHANGELOG、AGENTS 等对外文档 |
 
 ## 进入协议
 
@@ -34,6 +36,8 @@ keywords: [dev, 开发, workflow, index, 状态]
 - `planning-only`：`dev/01` -> `dev/02` -> `dev/I`，不进入实现。
 - `implementation-only`：已有 PRD、issue 或明确任务时，从 `dev/03` 开始。
 - `hotfix`：Bug、异常、性能回退时，从 `dev/H` 开始；修复阶段可嵌入 `dev/03` 的 TDD 回归循环。
+- `review`：已有 fixed point 或用户要求审查时，从 `dev/R` 开始。
+- `docs-sync`：需要基于 git 差异刷新对外文档时，从 `dev/D` 开始。
 
 ## 状态汇报
 

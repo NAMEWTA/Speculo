@@ -2,9 +2,9 @@
 
 本辅助文档只定义项目 ADR 的写法。默认产物仍写入 `.speculo/dev/<change>/decision-log.md`；只有用户明确确认时，才按本格式创建项目 ADR。
 
-ADR 存放在 `docs/adr/` 目录下，使用顺序编号：`0001-slug.md`、`0002-slug.md`，以此类推。
+ADR 存放在 `.speculo/.config/adr/` 目录下，使用顺序编号：`0001-slug.md`、`0002-slug.md`，以此类推。
 
-`docs/adr/` 目录按需创建——只在第一个 ADR 需要时才创建。
+`.speculo/.config/adr/` 目录由 Speculo 初始化提供；如果目标项目缺失该目录，按需创建。
 
 ## 模板
 
@@ -26,7 +26,7 @@ ADR 存放在 `docs/adr/` 目录下，使用顺序编号：`0001-slug.md`、`000
 
 ## 编号
 
-扫描 `docs/adr/` 找到已有的最大编号，然后加一。
+扫描 `.speculo/.config/adr/` 找到已有的最大编号，然后加一。
 
 ## 何时提议创建 ADR
 

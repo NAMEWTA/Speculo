@@ -141,6 +141,9 @@ description: <一句话>         # 必填
 |------|---------|---------|
 | `.speculo/.config/RULES.md` | ✅ | ❌ |
 | `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
+| `.speculo/.config/context/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
+| `.speculo/.config/adr/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
 | `.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
 | `.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
 | `.speculo/*-status.json` | ❌ | ✅ |
+| `.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入 |

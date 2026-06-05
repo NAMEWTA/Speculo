@@ -21,14 +21,24 @@ describe("speculo CLI operations", () => {
 
       assert.deepEqual(result.copied, [".speculo", "commands", "skills", "workflows"]);
       assert.equal(await pathExists(join(target, ".speculo", "dev-status.json")), true);
+      assert.equal(await pathExists(join(target, ".speculo", "doc-status.json")), true);
+      assert.equal(await pathExists(join(target, ".speculo", "dev", "docs-sync-state.json")), true);
       assert.equal(await pathExists(join(target, ".speculo", ".config", "RULES.md")), true);
       assert.equal(await pathExists(join(target, ".speculo", ".config", "LESSONS.md")), true);
+      assert.equal(await pathExists(join(target, ".speculo", ".config", "context")), true);
+      assert.equal(await pathExists(join(target, ".speculo", ".config", "adr")), true);
       const removedConfigTemplate = "ARCHITECTURE" + ".md.example";
       assert.equal(await pathExists(join(target, ".speculo", ".config", removedConfigTemplate)), false);
       assert.equal(await pathExists(join(target, "commands", "status.md")), true);
       assert.equal(await pathExists(join(target, "skills", "caveman", "SKILL.md")), true);
+      assert.equal(await pathExists(join(target, "skills", "github-npm-ops", "SKILL.md")), true);
+      assert.equal(await pathExists(join(target, "skills", "speculo-write", "SKILL.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "I-to-issues", "I-to-issues.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "dev", "R-review", "R-review.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "doc", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);
       assert.equal(await pathExists(join(target, "adapters")), false);
     } finally {
       await rm(target, { recursive: true, force: true });
@@ -60,6 +70,7 @@ describe("speculo CLI operations", () => {
       await writeFile(join(target, "skills", "local-skill.md"), "remove me");
       await writeFile(join(target, "workflows", "local-workflow.md"), "remove me");
       await writeFile(join(target, ".speculo", "state.txt"), "keep me");
+      await writeFile(join(target, ".speculo", "doc-status.json"), "keep doc status");
 
       const result = await updateSpeculo(target, { packageRoot });
 
@@ -68,6 +79,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(target, "skills", "local-skill.md")), false);
       assert.equal(await pathExists(join(target, "workflows", "local-workflow.md")), false);
       assert.equal(await readFile(join(target, ".speculo", "state.txt"), "utf8"), "keep me");
+      assert.equal(await readFile(join(target, ".speculo", "doc-status.json"), "utf8"), "keep doc status");
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -81,7 +93,9 @@ describe("speculo CLI operations", () => {
       execFileSync(process.execPath, [cliPath, "init", target], { stdio: "pipe" });
 
       assert.equal(await pathExists(join(target, ".speculo", "dev-status.json")), true);
+      assert.equal(await pathExists(join(target, ".speculo", "doc-status.json")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "doc", "00-INDEX.md")), true);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

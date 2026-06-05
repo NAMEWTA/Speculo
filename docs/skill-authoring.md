@@ -1,6 +1,7 @@
 # Skill 编写指南（开发者向）
 
 本文档面向**框架扩展者**：你想新增一个可复用的原子能力。
+`write-a-skill` skill（`speculo/skills/write-a-skill/`）按本规范执行，本文是它遵循的契约。
 
 ## 创建步骤
 
@@ -23,34 +24,11 @@ touch speculo/skills/<name>/SKILL.md
 id: <name>
 type: skill
 name: <人类可读名>
-description: <一句话能力说明>
+description: <一句话能力说明；含触发场景，第三人称，可与相近 skill 区分>
 ---
-
-# <Skill Name>
-
-## 何时使用
-
-<触发场景。>
-
-## 输入
-
-- <输入 1>
-- <输入 2>
-
-## 输出
-
-- <输出形态>
-
-## 执行步骤
-
-1. <步骤>
-2. <步骤>
-
-## 渐进披露
-
-- `<relative-reference>.md`：<何时读取>
-- `scripts/<script>`：<何时运行>
 ```
+
+正文固定章节：`## 何时使用`、`## 输入`、`## 输出`、`## 执行步骤`、`## 渐进披露`。完整模板与写作要点见 `speculo/skills/write-a-skill/references/`。
 
 ## 渐进披露策略
 
