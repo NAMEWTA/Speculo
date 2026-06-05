@@ -88,13 +88,13 @@ npm view "<package-name>" dist-tags
 
 ## Phase 6 — 推进 docs-sync 基线
 
-仅当 Phase 1-5 全绿时执行。
+仅当 Phase 1-5 全绿时执行。本 skill 不直接写 `.speculo/`；把基线推进交给调用方的 release workflow 或 `workflows/dev/D-docs-sync/D-docs-sync.md`，只向其提供以下取值：
 
-- 将 `.speculo/dev/docs-sync-state.json#last_sync_sha` 推进到 `RELEASE_COMMIT_SHA`。
+- `last_sync_sha` 推进到 `RELEASE_COMMIT_SHA`。
 - `previous_sync_sha` 使用推进前的 `last_sync_sha`。
 - `synced_docs` 使用 Phase 2 实际修改的文档列表；空同步为 `[]`。
-- 原子写入：先写 `.speculo/dev/docs-sync-state.json.tmp`，再 rename。
-- 将 state 推进作为 release tag 之后的普通 docs commit；tag 不移动。
+
+调用方把 state 推进作为 release tag 之后的普通 docs commit，tag 不移动；写入机制（原子写、schema 校验）由 D-docs-sync workflow 负责。
 
 ## 完成报告
 

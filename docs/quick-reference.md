@@ -55,7 +55,6 @@
 | `caveman` | `skills/caveman/SKILL.md` | 超压缩沟通模式 |
 | `grill-me` | `skills/grill-me/SKILL.md` | 逐问式压力测试 |
 | `handoff` | `skills/handoff/SKILL.md` | 生成交接文档 |
-| `write-a-skill` | `skills/write-a-skill/SKILL.md` | 创建 Agent skill |
 | `scaffold-exercises` | `skills/scaffold-exercises/SKILL.md` | 创建练习目录骨架 |
 | `github-npm-ops` | `skills/github-npm-ops/SKILL.md` | GitHub 运营、npm 发布、release workflow 与失败恢复 |
 | `speculo-write` | `skills/speculo-write/SKILL.md` | 创建或改造 Speculo workflow、skill、command |

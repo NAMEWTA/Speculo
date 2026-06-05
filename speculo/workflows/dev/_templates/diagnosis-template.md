@@ -1,4 +1,4 @@
-> **服务工作流：** `../H-diagnose/`
+> **服务工作流：** `../H-diagnose/H-diagnose.md`
 > **产物文件名：** `diagnosis.md`
 
 # Diagnosis

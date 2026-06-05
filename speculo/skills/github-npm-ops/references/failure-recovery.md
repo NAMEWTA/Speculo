@@ -106,7 +106,7 @@ git push origin vX.Y.Z
 #    在 [X.Y.(Z+1)] 段落开头加一句 "supersedes vX.Y.Z due to <根因>"
 ```
 
-**错误码映射**：场景 D 通常是上游错误溢出（场景 B/C 处理不当后果），不单独列 E 码；流程上要求**事后复盘**，把可复用根因落到 `.speculo/.config/LESSONS.md`。
+**错误码映射**：场景 D 通常是上游错误溢出（场景 B/C 处理不当后果），不单独列 E 码；流程上要求**事后复盘**，把可复用根因输出给调用方 workflow，由其追加到 `.speculo/.config/LESSONS.md`（本 skill 不直接写 `.speculo/`）。
 
 ---
 

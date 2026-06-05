@@ -14,11 +14,11 @@ keywords: [skill, create, write, 技能]
 
 ## 调用的 skills
 
-- `../skills/write-a-skill/SKILL.md` — 用户要求创建、审查或改进可复用 skill 时读取。
+- `../skills/speculo-write/SKILL.md` — 用户要求创建、审查或改进可复用 skill 时读取；该 skill 自带 skill authoring 规范。
 
 ## 执行步骤
 
-1. 读取 `../skills/write-a-skill/SKILL.md` 和项目内适用的 skill authoring 规范。
+1. 读取 `../skills/speculo-write/SKILL.md`，并按其 `references/skill-authoring-sop.md` 内化 skill 规范。
 2. 先收集技能用途、触发条件、输入输出、脚本需求和示例需求。
 3. 写文件前列出将创建或修改的路径，并等待用户明确确认。
 4. 用户确认后，按 Speculo 契约创建 `../skills/<name>/SKILL.md` 及可选 `references/`、`scripts/`、`examples/`。

@@ -1,4 +1,4 @@
-> **服务工作流：** `../03-tdd/`
+> **服务工作流：** `../03-tdd/03-tdd.md`
 > **产物文件名：** `verification.md`
 
 # Verification

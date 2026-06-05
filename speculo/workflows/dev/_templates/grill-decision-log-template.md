@@ -1,4 +1,4 @@
-> **服务工作流：** `../01-grill-with-docs/`
+> **服务工作流：** `../01-grill-with-docs/01-grill-with-docs.md`
 > **产物文件名：** `decision-log.md`
 
 # Decision Log
