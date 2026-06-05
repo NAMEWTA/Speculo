@@ -3,6 +3,11 @@
 > 以结构化文档驱动 AI Coding 的标准化赋能体系  
 > **SDD (Specification-Driven Development for AI)**
 
+[![CI](https://github.com/NAMEWTA/Speculo/actions/workflows/ci.yml/badge.svg)](https://github.com/NAMEWTA/Speculo/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@namewta/speculo.svg)](https://www.npmjs.com/package/@namewta/speculo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Node](https://img.shields.io/node/v/@namewta/speculo.svg)](./package.json)
+
 **版本：** v2.3  
 **核心原则：** 工具无关 · CLI 接入 · workflow 自治
 
@@ -33,7 +38,10 @@ Speculo/
 ## 三分钟接入
 
 ```bash
-# 已安装 CLI 后
+# 全局安装 CLI（npm 包名为 @namewta/speculo，命令名为 speculo）
+npm install -g @namewta/speculo
+
+# 安装框架资产到目标项目
 speculo init my-project
 
 # 更新框架资产，不覆盖 .speculo 状态
@@ -78,4 +86,4 @@ pnpm test
 
 ## License
 
-未指定。
+[MIT](./LICENSE) © wta
