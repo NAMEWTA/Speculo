@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.1.0] — 2026-06-05
+
 ### Added
 
 - **CLI**：`speculo init [target]` 安装框架资产（冲突即失败，不覆盖），`speculo update [target]` 覆盖 `commands/` / `skills/` / `workflows/` 并保留 `.speculo/` 状态。
@@ -25,4 +29,5 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/commits/main)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.0...HEAD)
+- [0.1.0](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.0)
