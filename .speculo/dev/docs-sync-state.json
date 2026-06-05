@@ -6,15 +6,14 @@
     "README.md",
     "CHANGELOG.md"
   ],
-  "last_sync_sha": "4c1ff575c720e50fb4b01b6f8dc750990f7fc79a",
-  "last_sync_short": "4c1ff57",
-  "last_sync_commit_subject": "ci: add CI and npm release pipelines",
-  "last_sync_commit_date": "2026-06-05T18:57:15+08:00",
-  "last_sync_run_at": "2026-06-05T10:57:23Z",
-  "previous_sync_sha": null,
-  "total_syncs": 1,
+  "last_sync_sha": "18c20ff9b59a24c45f23e7c93a2d2fd7c417cb5e",
+  "last_sync_short": "18c20ff",
+  "last_sync_commit_subject": "chore(release): v0.1.0",
+  "last_sync_commit_date": "2026-06-05T19:28:41+08:00",
+  "last_sync_run_at": "2026-06-05T11:30:57Z",
+  "previous_sync_sha": "4c1ff575c720e50fb4b01b6f8dc750990f7fc79a",
+  "total_syncs": 2,
   "synced_docs": [
-    "README.md",
     "CHANGELOG.md"
   ]
 }
