@@ -81,6 +81,7 @@ workflows/dev/
 ├── 01-grill-with-docs/
 ├── 02-prd/
 ├── 03-tdd/
+├── 04-finalize/
 ├── I-to-issues/
 ├── H-diagnose/
 ├── R-review/
@@ -94,17 +95,19 @@ workflows/dev/
 - `dev/02`：全景理解与 PRD
 - `dev/I`：垂直切片 issue 分解
 - `dev/03`：TDD 实现
+- `dev/04`：完成前验证、状态收尾与归档
 - `dev/H`：Bug、异常、性能回退诊断
-- `dev/R`：Standards / Spec 双维度 diff 审查
+- `dev/R`：Spec / Engineering / Standards 三维度 diff 审查
 - `dev/D`：基于 git diff 的对外文档同步
 
 默认执行模式：
 
-- `full`：`dev/01` -> `dev/02` -> `dev/I` -> `dev/03`
+- `full`：`dev/01` -> `dev/02` -> `dev/I` -> `dev/03` -> `dev/04`
 - `planning-only`：`dev/01` -> `dev/02` -> `dev/I`
 - `implementation-only`：已有 PRD、issue 或明确任务时，从 `dev/03` 开始
 - `hotfix`：从 `dev/H` 开始，修复阶段可嵌入 `dev/03`
 - `review`：从 `dev/R` 开始
+- `finalize`：实现完成需验证收尾与归档时，从 `dev/04` 开始
 - `docs-sync`：从 `dev/D` 开始
 
 ## Doc Workflow
@@ -163,12 +166,13 @@ workflows/doc/
 | `.speculo/<cat>/<change>/.status.json` | workflow | 当前 change 状态 |
 | `.speculo/*-status.json` | workflow/command | active 索引 |
 | `.speculo/dev/docs-sync-state.json` | `dev/D-docs-sync` | 对外文档同步的 git diff 基线 |
-| `.speculo/archive/` | `commands/archive.md` | 已完成 change 归档 |
+| `.speculo/archive/` | `commands/archive.md` / `dev/04-finalize` | 已完成 change 归档 |
 
 ## 版本记录
 
 | 版本 | 日期 | 摘要 |
 |------|------|------|
+| v2.4 | 2026-06-06 | 新增 dev/04 finalize 收尾归档工作流（内化完成前验证铁律）；dev/R review 升级为 Spec / Engineering / Standards 三维度 + P0–P3 严重度 + 裁决，融合 code-review-expert 深度清单 |
 | v2.3 | 2026-06-05 | 新增 doc 横向工作流；新增 dev/R review 与 dev/D docs-sync；新增 github-npm-ops 原子 skill；CONTEXT、ADR 与 docs-sync state 收敛到 `.speculo/` |
 | v2.2 | 2026-06-03 | 移除工具适配层；新增 CLI `init` / `update`；dev workflow-only skills 深度融合进 workflow；`dev/I`、`dev/H` 改为横向字母入口；`.speculo/.config` 收敛为 `RULES.md` 与 `LESSONS.md` |
 | v2.1 | 2026-05-28 | 定义 frontmatter 契约、`.status.json` 元字段和 workflow 自治 |

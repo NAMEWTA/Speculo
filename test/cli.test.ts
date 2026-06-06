@@ -33,9 +33,12 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(target, "skills", "caveman", "SKILL.md")), true);
       assert.equal(await pathExists(join(target, "skills", "github-npm-ops", "SKILL.md")), true);
       assert.equal(await pathExists(join(target, "skills", "speculo-write", "SKILL.md")), true);
+      assert.equal(await pathExists(join(target, "skills", "worktree-isolation", "SKILL.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "I-to-issues", "I-to-issues.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "R-review", "R-review.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "dev", "R-review", "security-checklist.md")), true);
+      assert.equal(await pathExists(join(target, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "doc", "00-INDEX.md")), true);
       assert.equal(await pathExists(join(target, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);

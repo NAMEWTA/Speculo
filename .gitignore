@@ -9,3 +9,4 @@ coverage/
 *.bak
 *.swp
 .nezha/
+.worktree/

@@ -52,9 +52,9 @@ my-project/
 
 1. 不确定从哪开始：让 AI 读取 `workflows/dev/00-INDEX.md`。
 2. 查看当前状态：让 AI 执行 `commands/status.md`。
-3. 做开发任务：从 `workflows/dev/00-INDEX.md` 进入，按 `dev/01`、`dev/02`、`dev/I`、`dev/03`、`dev/H`、`dev/R`、`dev/D` 推荐下一步。
+3. 做开发任务：从 `workflows/dev/00-INDEX.md` 进入，按 `dev/01`、`dev/02`、`dev/I`、`dev/03`、`dev/04`、`dev/H`、`dev/R`、`dev/D` 推荐下一步。
 4. 做文档写作任务：从 `workflows/doc/00-INDEX.md` 进入，按 `doc/F`、`doc/B`、`doc/S`、`doc/E` 推荐横向 workflow。
-5. 归档完成的 change：执行 `commands/archive.md`；AI 必须先列清单并等待用户确认。
+5. 收尾并归档单个 change：从 `dev/04`（`workflows/dev/04-finalize/04-finalize.md`）进入，先完成前验证再归档；批量归档多个已完成 change 用 `commands/archive.md`。AI 执行归档前必须先列清单并等待用户确认。
 
 ## 项目规则
 

@@ -15,10 +15,18 @@
 
 [TODO: 粘贴或摘要 `git log <fixed-point>..HEAD --oneline`。]
 
-## Standards Sources
+## Scope
 
-[TODO: 列出已发现的规则、上下文、ADR、贡献指南或配置文件。]
+[TODO: 记录 `--stat` 规模、是否大 diff、分批策略；无变更时记录处理方式。]
+
+## Critical Paths
+
+[TODO: 列出 diff 触及的关键路径：auth / 支付 / 数据写入 / 网络 / 并发。]
 
 ## Spec Sources
 
-[TODO: 列出 PRD、issue、slices、用户路径或 `no spec available`。]
+[TODO: 列出 PRD、issue、slices、用户路径；缺失写 `no spec available`。]
+
+## Standards Sources
+
+[TODO: 列出已发现的规则、上下文、ADR、贡献指南或配置文件；无成文标准时记录覆盖空白。]

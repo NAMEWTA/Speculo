@@ -19,9 +19,10 @@
 | `dev/grill-with-docs` | `workflows/dev/01-grill-with-docs/01-grill-with-docs.md` | `dev/01`：领域术语、CONTEXT、ADR 与方案拷问 |
 | `dev/prd` | `workflows/dev/02-prd/02-prd.md` | `dev/02`：zoom-out 全景理解与 PRD 综合 |
 | `dev/tdd` | `workflows/dev/03-tdd/03-tdd.md` | `dev/03`：垂直切片 TDD 实现 |
+| `dev/finalize` | `workflows/dev/04-finalize/04-finalize.md` | `dev/04`：完成前验证、状态收尾与归档 |
 | `dev/I-to-issues` | `workflows/dev/I-to-issues/I-to-issues.md` | `dev/I`：垂直切片 issue 分解，可嵌入其他 dev workflow |
 | `dev/H-diagnose` | `workflows/dev/H-diagnose/H-diagnose.md` | `dev/H`：hotfix / bug / 性能回退诊断 |
-| `dev/R-review` | `workflows/dev/R-review/R-review.md` | `dev/R`：Standards / Spec 双维度 diff 审查 |
+| `dev/R-review` | `workflows/dev/R-review/R-review.md` | `dev/R`：Spec / Engineering / Standards 三维度 diff 审查 |
 | `dev/D-docs-sync` | `workflows/dev/D-docs-sync/D-docs-sync.md` | `dev/D`：基于 git diff 同步对外文档 |
 
 ### doc
