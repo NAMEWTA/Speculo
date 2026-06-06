@@ -1,7 +1,10 @@
 > **服务工作流：** `../03-tdd/03-tdd.md`
-> **产物文件名：** `tdd-plan.md`
+> **产物文件名：** `tdd/<phase-id>/tdd-plan.md`
 
 # TDD Plan
+
+## 阶段标识
+[TODO: 本阶段 `<phase-id>`。多阶段 roadmap 须与 roadmap `<phase>` 的 `id` 一致（如 `phase0-node-base`）；单阶段 change 用描述性切片 slug。产物落 `tdd/<phase-id>/`。]
 
 ## 切片来源
 [TODO: 记录来自 PRD、slices、diagnosis 还是用户直接请求。]

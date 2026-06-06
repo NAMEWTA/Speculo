@@ -1,7 +1,10 @@
 > **服务工作流：** `../03-tdd/03-tdd.md`
-> **产物文件名：** `verification.md`
+> **产物文件名：** `tdd/<phase-id>/verification.md`
 
 # Verification
+
+## 阶段标识
+[TODO: 本阶段 `<phase-id>`（与同目录 `tdd-plan.md` 一致）。]
 
 ## 已运行命令
 [TODO: 列出实际运行的测试、类型检查、lint 或构建命令及结果。]

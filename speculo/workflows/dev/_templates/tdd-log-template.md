@@ -1,7 +1,10 @@
 > **服务工作流：** `../03-tdd/03-tdd.md`
-> **产物文件名：** `implementation-log.md`
+> **产物文件名：** `tdd/<phase-id>/implementation-log.md`
 
 # Implementation Log
+
+## 阶段标识
+[TODO: 本阶段 `<phase-id>`（与同目录 `tdd-plan.md` 一致）。]
 
 ## 循环记录
 [TODO: 对每轮 RED/GREEN/REFACTOR 记录切片、行为、测试、实现摘要、重构摘要和验证结果。]

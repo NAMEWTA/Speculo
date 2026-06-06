@@ -8,8 +8,8 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/implementation-log.md`，由 `../_templates/tdd-log-template.md` 填写
-- 可选：`tasks/00-INDEX.md` 与 `tasks/TNN.md`，由 workflow 自治创建
+- `.speculo/dev/<change>/tdd/<phase-id>/implementation-log.md`，由 `../_templates/tdd-log-template.md` 填写
+- 可选：`tdd/<phase-id>/tasks/00-INDEX.md` 与 `tdd/<phase-id>/tasks/TNN.md`，由 workflow 自治创建
 
 ## 填写引导
 

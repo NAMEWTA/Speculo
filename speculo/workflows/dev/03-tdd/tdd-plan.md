@@ -8,7 +8,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/tdd-plan.md`，由 `../_templates/tdd-plan-template.md` 填写
+- `.speculo/dev/<change>/tdd/<phase-id>/tdd-plan.md`，由 `../_templates/tdd-plan-template.md` 填写（`<phase-id>` 见 `03-tdd.md`「TDD 产物目录与阶段标识」）
 
 ## 填写引导
 
@@ -26,5 +26,6 @@
 
 ## 完成准则
 
+- 产物顶部「阶段标识」段已填写 `<phase-id>`（多阶段 roadmap 须与 `<phase>` 的 `id` 一致）
 - `tdd-plan.md` 无残留 `[TODO:]`
 - `.status.json` 的 `implementation_status` 为 `planned`

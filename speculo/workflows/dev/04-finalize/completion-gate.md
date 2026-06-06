@@ -4,7 +4,7 @@
 
 ## 输入
 
-- 当前 change 目录：`.speculo/dev/<change>/` 下的实现产物（`implementation-log.md`、`verification.md` 等）
+- 当前 change 目录：`.speculo/dev/<change>/` 下的实现产物（多阶段在 `tdd/<phase-id>/` 下的 `implementation-log.md`、`verification.md` 等）
 - 来源：PRD、issue、slices、诊断结论或用户明确任务
 - 项目的测试 / 类型检查 / lint / 构建命令
 - 变更 diff（VCS）
@@ -37,4 +37,5 @@
 - 需求清单逐项核对完成，含来源引用
 - 调试残留已清理或明确说明
 - `completion-verification.md` 无残留 `[TODO:]`
+- 多阶段 roadmap：本阶段对应的 `<phase>` 状态已由 `已实现` 置为 `已验证`（无 roadmap 则不适用）
 - `.status.json` 写入 `verification_commands`、`requirements_checklist`、`verification_status`
