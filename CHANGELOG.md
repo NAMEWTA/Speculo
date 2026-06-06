@@ -10,6 +10,18 @@
 
 ---
 
+## [0.1.2] — 2026-06-06
+
+### Fixed
+
+- **CLI**：`speculo init` / `speculo update` 现在把资产安装到目标项目的 `speculo/` 目录下（`speculo/{.speculo,commands,skills,workflows}/`），不再把 `.speculo/` / `commands/` / `skills/` / `workflows/` 散落到项目根目录。冲突检测、`update` 保留 `.speculo/` 的行为同步收敛到该 `speculo/` 子目录。
+
+### Docs
+
+- 同步 `adopting` / `quick-reference` 与 `CLAUDE.md`，反映安装到 `speculo/` 子目录的新布局。
+
+---
+
 ## [0.1.1] — 2026-06-06
 
 ### Added
@@ -49,6 +61,7 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.1...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.2...HEAD)
+- [0.1.2](https://github.com/NAMEWTA/Speculo/compare/v0.1.1...v0.1.2)
 - [0.1.1](https://github.com/NAMEWTA/Speculo/compare/v0.1.0...v0.1.1)
 - [0.1.0](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.0)

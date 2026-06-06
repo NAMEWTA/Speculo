@@ -6,8 +6,8 @@
 
 | 命令 | 用途 |
 |------|------|
-| `speculo init [target]` | 安装 `.speculo/`、`commands/`、`skills/`、`workflows/`；冲突时失败，不覆盖 |
-| `speculo update [target]` | 覆盖 `commands/`、`skills/`、`workflows/`；保留 `.speculo/` 状态和配置 |
+| `speculo init [target]` | 安装到 `speculo/` 目录下（`speculo/{.speculo,commands,skills,workflows}/`）；冲突时失败，不覆盖 |
+| `speculo update [target]` | 覆盖 `speculo/` 下的 `commands/`、`skills/`、`workflows/`；保留 `speculo/.speculo/` 状态和配置 |
 
 ## Workflows
 

@@ -10,8 +10,8 @@ function usage(): string {
     "  speculo update [target]",
     "",
     "Commands:",
-    "  init    Copy .speculo, commands, skills, and workflows. Fails on conflicts.",
-    "  update  Replace commands, skills, and workflows. Keeps .speculo untouched."
+    "  init    Install .speculo, commands, skills, and workflows under speculo/. Fails on conflicts.",
+    "  update  Replace commands, skills, and workflows under speculo/. Keeps .speculo untouched."
   ].join("\n");
 }
 
