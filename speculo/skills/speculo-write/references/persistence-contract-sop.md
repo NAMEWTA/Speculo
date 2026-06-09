@@ -13,6 +13,8 @@
 
 `<cat>` 只能是 `dev`、`doc`、`ops`。
 
+命令产生的持久化报告、快照、handoff 和一次性操作记录必须统一写入 `.speculo/commands/<YYYY-MM-DD>-<cmd-name>-<topic>/`。`temp/`、系统临时目录和项目根目录只允许作为不保留的执行中间位置，禁止作为 Speculo 持久化产物位置。
+
 ## `.status.json` 元字段（框架强制）
 
 每个 change 的状态写在 `.speculo/<cat>/<change>/.status.json`：
@@ -106,11 +108,13 @@ description: <一句话>    # 必填
 | `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
 | `.speculo/.config/context/*` | ⚠️ 用户确认后 | ✅ 仅在用户确认后写入 |
 | `.speculo/.config/adr/*` | ⚠️ 用户确认后 | ✅ 仅在用户确认后写入 |
+| `.speculo/commands/<command-run>/*` | ⚠️ | ✅ command 按内联模板写入 |
 | `.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
 | `.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
 | `.speculo/*-status.json` | ❌ | ✅ |
+| `.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入 |
 
-**skill 不在此表**：skill 不直接写任何 `.speculo/` 或 `.status.json`，持久化由调用它的 workflow 或 command 负责。
+**skill 不拥有独立持久化根目录**：skill 需要生成持久化文件时，必须使用调用方 command / workflow 声明的 `.speculo/...` 规范目标路径，或返回内容由调用方写入。禁止 skill 自行选择 `temp/`、系统临时目录、项目根目录或额外 state 文件作为持久化位置。
 
 ## 新分类骨架
 

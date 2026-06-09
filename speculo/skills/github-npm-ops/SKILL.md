@@ -31,7 +31,7 @@ description: GitHub 仓库运营与 npm 发布原子能力；用于 issue/PR/CI/
 
 1. 先判定任务类型：日常治理、发布基础设施搭建、正式发版、失败恢复。
 2. 发布类任务先执行只读前置检查：分支、工作区、远端、`gh auth`、Node/包管理器、`release.yml`、tag 冲突、docs-sync state。
-3. 需要同步对外文档时，交给调用方读取 `../workflows/dev/D-docs-sync/D-docs-sync.md`；本 skill 不直接写 `.speculo/` 或 `.status.json`。
+3. 需要同步对外文档时，交给调用方读取 `../workflows/dev/D-docs-sync/D-docs-sync.md`；本 skill 不自行选择持久化目录，只把结果交给调用方写入其声明的 `.speculo/...` 规范路径。
 4. 正式发版必须保证 release commit 同时包含版本 bump 与 CHANGELOG 迁移，并且 tag 精确指向 release commit。
 5. release workflow 必须包含 tag/package version 校验、质量闸、可选 npm publish、CHANGELOG release notes 注入、GitHub Release 创建。
 6. 发布完成后做三端验证：workflow success、GitHub Release 非 draft 且正文非空、如流水线包含 npm publish 则 `npm view` 版本与 dist-tag 一致。

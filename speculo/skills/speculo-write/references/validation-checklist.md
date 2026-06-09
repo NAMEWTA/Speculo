@@ -33,13 +33,14 @@
 - [ ] 输入、输出、执行步骤清晰
 - [ ] 大段细节放入 `references/`
 - [ ] 自包含：不引用 `docs/` 或仓库外文件，复制后只读 `SKILL.md` 即可用
-- [ ] skill 不直接写 `.speculo/` 或 `.status.json`
-- [ ] 如果需要持久化，明确由调用方 workflow 或 command 负责
+- [ ] skill 没有自选持久化目录；文件型产物由调用方写入或写入调用方声明的 `.speculo/...` 路径
+- [ ] 如果需要持久化，明确归档到 `.speculo/commands/`、`.speculo/<cat>/<change>/` 或 `.speculo/.config/` 的哪类规范位置
 
 ## Command 检查
 
 - [ ] 归档路径位于 `.speculo/commands/`
 - [ ] 调用 skill 使用相对路径
+- [ ] 被调用 skill 没有把持久化产物写到 `temp/`、系统临时目录或项目根目录
 - [ ] 破坏性操作要求用户确认
 - [ ] 产物模板内联且使用 `[TODO: ...]`
 

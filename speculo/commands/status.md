@@ -10,7 +10,15 @@ keywords: [status, 状态, 进度]
 
 ## 归档路径模式
 
-可选产物归档至：`../.speculo/commands/<YYYY-MM-DD>-status-<topic>/`
+可选产物目录：`../.speculo/commands/<YYYY-MM-DD>-status-<topic>/`
+
+快照文件：`../.speculo/commands/<YYYY-MM-DD>-status-<topic>/snapshot.md`
+
+- `<YYYY-MM-DD>` 使用当前日期。
+- `<topic>` 从状态范围或用户主题提取，使用小写 kebab-case；无法判断时使用 `snapshot`。
+- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-status-<topic>/snapshot.md`。
+- 禁止把状态快照写入 `temp/`、系统临时目录或工作区内其他非规范位置。
+
 （若仅是回显报告、不需要持久化时可不归档）
 
 ## 调用的 skills

@@ -12,7 +12,14 @@ keywords: [archive, 归档, 清理]
 
 ## 归档路径模式
 
-产物归档至：`../.speculo/commands/<YYYY-MM-DD>-archive-<topic>/`
+产物目录：`../.speculo/commands/<YYYY-MM-DD>-archive-<topic>/`
+
+报告文件：`../.speculo/commands/<YYYY-MM-DD>-archive-<topic>/report.md`
+
+- `<YYYY-MM-DD>` 使用当前日期。
+- `<topic>` 从归档范围或用户主题提取，使用小写 kebab-case；无法判断时使用 `changes`。
+- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-archive-<topic>/report.md`。
+- 禁止把命令报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
 ## 调用的 skills
 

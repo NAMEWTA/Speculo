@@ -37,18 +37,21 @@ git push origin vX.Y.Z
 **恢复**：**不要**重发 npm（同版本号永久不可重发），仅手动补 GitHub Release。
 
 ```bash
+notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"
+trap 'rm -f "$notes_file"' EXIT
+
 # 1. 抽取 CHANGELOG 段落作为 Release notes
 awk -v v="X.Y.Z" '
   $0 ~ "^## \\["v"\\]" { found=1; print; next }
   found && /^## \[/ { exit }
   found && /^---[[:space:]]*$/ { next }
   found { print }
-' CHANGELOGS.md > /tmp/notes.md
+' CHANGELOGS.md > "$notes_file"
 
 # 2. 手动创建 GitHub Release
 gh release create vX.Y.Z \
   --title "Release vX.Y.Z" \
-  --notes-file /tmp/notes.md \
+  --notes-file "$notes_file" \
   --latest
 
 # 3. 三端再次校验
@@ -106,7 +109,7 @@ git push origin vX.Y.Z
 #    在 [X.Y.(Z+1)] 段落开头加一句 "supersedes vX.Y.Z due to <根因>"
 ```
 
-**错误码映射**：场景 D 通常是上游错误溢出（场景 B/C 处理不当后果），不单独列 E 码；流程上要求**事后复盘**，把可复用根因输出给调用方 workflow，由其追加到 `.speculo/.config/LESSONS.md`（本 skill 不直接写 `.speculo/`）。
+**错误码映射**：场景 D 通常是上游错误溢出（场景 B/C 处理不当后果），不单独列 E 码；流程上要求**事后复盘**，把可复用根因输出给调用方 workflow，由其追加到 `.speculo/.config/LESSONS.md`（本 skill 不自行选择持久化目录）。
 
 ---
 

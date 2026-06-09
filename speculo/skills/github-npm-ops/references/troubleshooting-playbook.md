@@ -216,14 +216,16 @@ Full Changelog: v0.0.9...v0.0.10
 
 ```bash
 VERSION="0.0.10"
+notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"
+trap 'rm -f "$notes_file"' EXIT
+
 awk -v v="$VERSION" '
   $0 ~ "^## \\["v"\\]" { found=1; print; next }
   found && /^## \[/ { exit }
   found && /^---[[:space:]]*$/ { next }
   found { print }
-' CHANGELOGS.md > /tmp/notes.md && \
-  gh release edit "v$VERSION" --notes-file /tmp/notes.md && \
-  rm /tmp/notes.md
+' CHANGELOGS.md > "$notes_file" && \
+  gh release edit "v$VERSION" --notes-file "$notes_file"
 ```
 
 **诊断**：

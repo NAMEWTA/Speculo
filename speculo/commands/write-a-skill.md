@@ -10,7 +10,14 @@ keywords: [skill, create, write, 技能]
 
 ## 归档路径模式
 
-产物归档至：`../.speculo/commands/<YYYY-MM-DD>-write-a-skill-<topic>/`
+产物目录：`../.speculo/commands/<YYYY-MM-DD>-write-a-skill-<topic>/`
+
+报告文件：`../.speculo/commands/<YYYY-MM-DD>-write-a-skill-<topic>/report.md`
+
+- `<YYYY-MM-DD>` 使用当前日期。
+- `<topic>` 从 skill 名称或用户主题提取，使用小写 kebab-case；无法判断时使用 `skill`。
+- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-write-a-skill-<topic>/report.md`。
+- 禁止把命令报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
 ## 调用的 skills
 

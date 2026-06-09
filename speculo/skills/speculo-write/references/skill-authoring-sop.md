@@ -165,19 +165,26 @@ reference 文件用 kebab-case，**按任务而非来源**命名（`workflow-aut
 - 旧目录布局
 - 旧 state 路径
 - 不符合 Speculo frontmatter 的元数据
-- 直接写 `.speculo/` 的行为描述
+- 脱离调用方的持久化路径、`temp/` 输出、项目根目录 state 和其它散落写入行为
 
 多个源技能融合为一个原子 skill 时：入口 `SKILL.md` 只留统一触发与主流程，源技能细节按主题拆进 `references/`，合并重复铁律并保留更严格者。
 
 ## 持久化边界
 
-skill **禁止**直接写：
+skill **禁止自行选择**持久化位置，包括：
 
 - `.speculo/<cat>/<change>/`
+- `.speculo/commands/`
 - `.speculo/*-status.json`
 - `.status.json`
+- `temp/`、系统临时目录或项目根目录
 
-如果某能力需要持久化，把写入责任交给调用它的 workflow 或 command，并在 skill 输出里提供可归档摘要。完整写入责任表见 `persistence-contract-sop.md`。
+如果某能力需要生成文件型持久化产物，必须满足其一：
+
+- 调用方 workflow / command 声明规范目标路径，skill 只写入该路径。
+- skill 返回内容、摘要和建议文件名，由调用方写入 `.speculo/...`。
+
+无论哪种方式，持久化产物都不得落到 `temp/`、系统临时目录、项目根目录或其它非 Speculo 规范位置。完整写入责任表见 `persistence-contract-sop.md`。
 
 ## 审查清单
 
@@ -188,7 +195,7 @@ skill **禁止**直接写：
 - [ ] `SKILL.md` 含五个固定章节，整体精简（细节已外移）
 - [ ] reference 单层引用，按任务命名
 - [ ] **自包含**：不引用 `docs/` 或仓库外文件
-- [ ] skill 不直接写 `.speculo/` 或 `.status.json`，持久化交给调用方
+- [ ] skill 没有自选持久化目录；文件型产物由调用方写入或写入调用方声明的 `.speculo/...` 路径
 - [ ] 没有 README / INSTALLATION / CHANGELOG 等冗余文件
 - [ ] 没有时效性信息、旧项目路径、旧工具名或绝对路径绑定
 - [ ] 术语一致、含具体示例、引用只有一层深度

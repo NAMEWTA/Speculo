@@ -28,7 +28,7 @@
 - 是 command 或 workflow 可复用的原子能力
 - 复制到其他项目仍能工作
 - 需要 `references/` 渐进披露
-- 不拥有持久化责任，不直接写 `.speculo/` 或 `.status.json`
+- 不拥有独立持久化根目录；文件型持久化由调用方提供 `.speculo/...` 目标路径，或返回内容给调用方写入
 - 是工具集成、领域知识、决策 SOP 或可复用操作手册
 
 ### 做 Command
@@ -49,7 +49,7 @@
 ## 反例
 
 - 不要把多阶段、有状态的流程塞进 skill。
-- 不要让 skill 直接写 `.speculo/`。
+- 不要让 skill 自行选择 `.speculo/`、`temp/`、系统临时目录或项目根目录作为持久化位置。
 - 不要为一次性命令创建 workflow。
 - 不要把 workflow-only 方法保留为根 skill，除非会被多个入口复用。
 

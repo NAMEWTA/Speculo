@@ -12,6 +12,8 @@
 | Command 产物目录 | `YYYY-MM-DD-<cmd-name>-<topic>` | `2026-05-28-debug-login-500` |
 | 归档目录 | `archive/<cat>/<YYYY-MM>/<change-name>/` | `archive/dev/2026-05/2026-05-20-payment-flow/` |
 
+命令产生的持久化报告、快照、handoff 和一次性操作记录必须统一写入 `.speculo/commands/<YYYY-MM-DD>-<cmd-name>-<topic>/`。`temp/`、系统临时目录和项目根目录只允许作为不保留的执行中间位置，禁止作为 Speculo 持久化产物位置。
+
 ## 2. `.status.json` 元字段（框架强制）
 
 ```jsonc
@@ -143,6 +145,7 @@ description: <一句话>         # 必填
 | `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
 | `.speculo/.config/context/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
 | `.speculo/.config/adr/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
+| `.speculo/commands/<command-run>/*` | ⚠️ | ✅ command 按内联模板写入 |
 | `.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
 | `.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
 | `.speculo/*-status.json` | ❌ | ✅ |

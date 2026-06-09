@@ -34,6 +34,6 @@
 
 ## 边界
 
-- 不写 `.speculo/` 或 `.status.json`；字段值返回给调用方 workflow 写入。
+- 不自行选择持久化目录；字段值返回给调用方 workflow 写入 `.speculo/<cat>/<change>/.status.json`。
 - 分支或工作树已存在时不覆盖、不复用，停止报告。
 - 非 git 仓库 / 工作区不可用 / `.speculo/` 未被跟踪时降级为非 worktree 模式。

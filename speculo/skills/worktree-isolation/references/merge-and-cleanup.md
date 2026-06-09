@@ -40,4 +40,4 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
 
 - `verification_status` 非 `verified` 不合并。
 - 未获用户确认不执行任何合并 / 删除 / 移除。
-- 不写 `.speculo/` 或 `.status.json`；`worktree_status` 由调用方写入。
+- 不自行选择持久化目录；`worktree_status` 由调用方写入 `.speculo/<cat>/<change>/.status.json`。

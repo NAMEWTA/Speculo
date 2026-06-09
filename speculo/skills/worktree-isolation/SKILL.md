@@ -29,7 +29,7 @@ description: 在独立 git worktree 中隔离推进一个 change 的原子能力
 ## 输出
 
 - git 状态变更：隔离分支、`.worktree/<change>/` 工作树、合并与清理结果
-- **供调用方持久化的状态字段集**（本 skill 不写 `.speculo/`，由调用方 workflow 写入同一 change 的 `.status.json`）：
+- **供调用方持久化的状态字段集**（本 skill 不自行选择持久化目录，由调用方 workflow 写入同一 change 的 `.status.json`）：
 
   | 字段 | 类型 | 含义 |
   |------|------|------|

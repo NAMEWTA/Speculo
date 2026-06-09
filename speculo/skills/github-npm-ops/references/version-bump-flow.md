@@ -180,15 +180,20 @@ git push origin v0.0.10
 
 npm 已上线 → **不要**改版本号,只补后续动作。
 
+下面的 `notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留发布摘要或 release notes，由调用方写入 `.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`。
+
 ```bash
+notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"
+trap 'rm -f "$notes_file"' EXIT
+
 # 抽取 CHANGELOG 段落
-awk -v v="0.0.10" '...' CHANGELOGS.md > /tmp/notes.md
+awk -v v="0.0.10" '...' CHANGELOGS.md > "$notes_file"
 
 # 手动创建 GitHub Release
-gh release create v0.0.10 --notes-file /tmp/notes.md --latest
+gh release create v0.0.10 --notes-file "$notes_file" --latest
 
 # 或编辑已有 Release(如果 action 半成品创建过空 Release)
-gh release edit v0.0.10 --notes-file /tmp/notes.md
+gh release edit v0.0.10 --notes-file "$notes_file"
 ```
 
 ### 8.3 publish 失败但 npm 上其实有了(罕见)
