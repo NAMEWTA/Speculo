@@ -34,7 +34,11 @@ describe("speculo CLI operations", () => {
       const removedConfigTemplate = "ARCHITECTURE" + ".md.example";
       assert.equal(await pathExists(join(root, ".speculo", ".config", removedConfigTemplate)), false);
       assert.equal(await pathExists(join(root, "commands", "status.md")), true);
+      assert.equal(await pathExists(join(root, "commands", "retro.md")), true);
       assert.equal(await pathExists(join(root, "skills", "caveman", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "references", "friction-taxonomy.md")), true);
+      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "references", "issue-drafting-sop.md")), true);
       assert.equal(await pathExists(join(root, "skills", "github-npm-ops", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "speculo-write", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "worktree-isolation", "SKILL.md")), true);

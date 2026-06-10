@@ -45,6 +45,7 @@
 | `grill-me` | `commands/grill-me.md` | 对计划或设计进行逐问式压力测试 |
 | `handoff` | `commands/handoff.md` | 生成脱敏交接文档 |
 | `write-a-skill` | `commands/write-a-skill.md` | 创建或审查新的 Speculo skill 草稿 |
+| `retro` | `commands/retro.md` | 复盘 Speculo 使用痛点，确认后用 gh 提改进 issue |
 | `scaffold-exercises` | `commands/scaffold-exercises.md` | 创建课程练习目录骨架并运行练习 lint |
 
 ## Skills
@@ -59,3 +60,4 @@
 | `scaffold-exercises` | `skills/scaffold-exercises/SKILL.md` | 创建练习目录骨架 |
 | `github-npm-ops` | `skills/github-npm-ops/SKILL.md` | GitHub 运营、npm 发布、release workflow 与失败恢复 |
 | `speculo-write` | `skills/speculo-write/SKILL.md` | 创建或改造 Speculo workflow、skill、command |
+| `speculo-retro` | `skills/speculo-retro/SKILL.md` | 复盘 Speculo 使用痛点并产出 issue-ready 改进提案 |

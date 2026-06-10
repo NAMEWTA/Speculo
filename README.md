@@ -66,6 +66,7 @@ speculo update my-project
 - `commands/status.md`：聚合当前状态
 - `commands/archive.md`：归档 completed change
 - `commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令
+- `commands/retro.md`：复盘 Speculo 使用痛点并经确认提改进 issue
 
 ## 开发
 
