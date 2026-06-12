@@ -26,6 +26,6 @@
 
 ## 完成准则
 
-- 产物顶部「阶段标识」段已填写 `<phase-id>`（多阶段 roadmap 须与 `<phase>` 的 `id` 一致）
+- 产物顶部「阶段标识」段已填写 `<phase-id>`（多阶段 slices 须与 `<phase>` 的 `id` 一致）
 - `tdd-plan.md` 无残留 `[TODO:]`
 - `.status.json` 的 `implementation_status` 为 `planned`

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "skill": "docs-sync",
+  "state_path": ".speculo/dev/docs-sync-state.json",
+  "tracked_docs": [
+    "README.md",
+    "CHANGELOG.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/adopting.md",
+    "docs/quick-reference.md",
+    "docs/Speculo-architecture.md"
+  ],
+  "last_sync_sha": "b04432d339250cdf8f66d3f4b8dc1aad0dd49ea9",
+  "last_sync_short": "b04432d",
+  "last_sync_commit_subject": "fix: update version to 0.1.4 in package.json",
+  "last_sync_commit_date": "2026-06-10",
+  "last_sync_run_at": "2026-06-12T00:00:00Z",
+  "previous_sync_sha": null,
+  "total_syncs": 1,
+  "synced_docs": [
+    "README.md",
+    "CHANGELOG.md",
+    "docs/quick-reference.md",
+    "docs/Speculo-architecture.md"
+  ],
+  "sync_range": "git diff HEAD (uncommitted working tree changes; first run baseline at b04432d)",
+  "docs_sync_status": "synced",
+  "change_dir": ".speculo/dev/2026-06-12-docs-sync"
+}

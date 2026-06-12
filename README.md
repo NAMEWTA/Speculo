@@ -60,7 +60,7 @@ speculo update my-project
 - `workflows/dev/03-tdd/03-tdd.md`：TDD 实现
 - `workflows/dev/I-to-issues/I-to-issues.md`：`dev/I` 垂直切片分解
 - `workflows/dev/H-diagnose/H-diagnose.md`：`dev/H` hotfix / diagnose
-- `workflows/dev/R-review/R-review.md`：`dev/R` 双维度 diff 审查
+- `workflows/dev/R-review/R-review.md`：`dev/R` Spec / Engineering / Standards 三维度 diff 审查
 - `workflows/dev/D-docs-sync/D-docs-sync.md`：`dev/D` git diff 驱动文档同步
 - `workflows/doc/00-INDEX.md`：文档写作 workflow 导航
 - `commands/status.md`：聚合当前状态
@@ -77,6 +77,13 @@ pnpm test
 ```
 
 运行环境锁定为 Node `22.22.3`、pnpm `11.1.3`。
+
+## 致谢 / Acknowledgements
+
+Speculo 的设计受益于以下项目的理念与实践：
+
+- **[Matt Pocock / skills](https://github.com/mattpocock/skills)** — 技能封装与渐进披露模式的重要参考
+- **[NAMEWTA / specforge](https://github.com/NAMEWTA/specforge)** — 同属 SDD 工具链的兄弟项目，规格生成与验证的互补实践
 
 ## 文档导航
 

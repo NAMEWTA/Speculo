@@ -126,7 +126,7 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
 - 完成验证后写入 `verification_commands`、`requirements_checklist`、`verification_status`。
-- 多阶段 roadmap：完成前验证为 `verified` 后，把 roadmap 中该阶段 `<phase id="<phase-id>">` 的 `status` 由 `已实现` 置为 `已验证`（承接 `../03-tdd/03-tdd.md`「roadmap 阶段状态（XML 契约）」的最后一跳；无 roadmap 则跳过）。
+- 多阶段 slices：完成前验证为 `verified` 后，把 slices 中该阶段 `<phase id="<phase-id>">` 的 `status` 由 `已实现` 置为 `已验证`（承接 `../03-tdd/03-tdd.md`「phase 阶段状态（XML 契约）」的最后一跳；无 slices 则跳过）。
 - 验证为 `blocked` 时停在本工作流，回到 `../03-tdd/03-tdd.md` 或 `../H-diagnose/H-diagnose.md` 修复，不归档。
 - 验证为 `verified` 且用户确认后：
   - **worktree 模式**：先执行 Phase 2，自动把 change 分支合并回 `base_branch` 并清理工作树与隔离分支（`worktree_status: merged` → `removed`，冲突即停），再在 base 分支上归档；非 worktree 模式跳过 Phase 2。

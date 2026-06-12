@@ -8,6 +8,21 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **workflows**：dev 工作流全线术语统一 `roadmap` → `slices`（`03-tdd`、`04-finalize`、`I-to-issues`、模板）。原 `roadmap.md` 的 scope/architecture/phases/cross-cutting/dependency 五段结构融入 `slices.md`，每切片携带 `<phase id="...">` XML 状态契约供 TDD 阶段直接引用。
+- **workflows**：`I-to-issues` 切片格式增强为五段结构（战略锚点 / IN-REUSE-OUT / 架构上下文 / 切片·含 phase id / 横切关注点 / 依赖顺序），增加 IN/REUSE/OUT 三列边界表与 ASCII 依赖链。
+
+### Added
+
+- **workflows**：新增 `doc/T`（T-teach）交互式课程设计工作流入口，支持使命→资源→课程→参考→记录的教学设计流程。
+
+### Docs
+
+- **README**：新增「致谢 / Acknowledgements」小节，列入 Matt Pocock/skills 与 NAMEWTA/specforge 参考项目链接。
+- **docs/quick-reference**：同步 `doc/T` workflow 行。
+- **docs/Speculo-architecture**：修正安装后目录布局为 `speculo/` 前缀形式（与 v0.1.2 CLI 行为一致）。
+
 ---
 
 ## [0.1.2] — 2026-06-06

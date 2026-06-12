@@ -29,38 +29,39 @@ Speculo/
     └── .speculo/
 ```
 
-`speculo/` 是 CLI 的资产源。安装到用户项目后，目录会位于项目根：
+`speculo/` 是 CLI 的资产源。安装到用户项目后，资产统一收纳在目标项目根目录的 `speculo/` 子目录下：
 
 ```text
 my-project/
-├── commands/
-├── workflows/
-├── skills/
-└── .speculo/
+└── speculo/
+    ├── commands/
+    ├── workflows/
+    ├── skills/
+    └── .speculo/
 ```
 
 ## CLI 契约
 
 ### `speculo init [target]`
 
-复制包内资产到目标项目：
+复制包内资产到目标项目的 `speculo/` 子目录：
 
-- `speculo/.speculo` -> `<target>/.speculo`
-- `speculo/commands` -> `<target>/commands`
-- `speculo/skills` -> `<target>/skills`
-- `speculo/workflows` -> `<target>/workflows`
+- `speculo/.speculo` -> `<target>/speculo/.speculo`
+- `speculo/commands` -> `<target>/speculo/commands`
+- `speculo/skills` -> `<target>/speculo/skills`
+- `speculo/workflows` -> `<target>/speculo/workflows`
 
 若目标路径已存在，命令失败并列出冲突，不覆盖。
 
 ### `speculo update [target]`
 
-覆盖目标项目的框架资产：
+覆盖目标项目 `speculo/` 下的框架资产：
 
-- `<target>/commands`
-- `<target>/skills`
-- `<target>/workflows`
+- `<target>/speculo/commands`
+- `<target>/speculo/skills`
+- `<target>/speculo/workflows`
 
-`update` 不复制 `.speculo`，不修改用户项目根目录下的任意文档，也不删除 `.speculo/` 状态、产物或配置。
+`update` 不复制 `.speculo`，不修改用户项目根目录下的任意文档，也不删除 `speculo/.speculo/` 状态、产物或配置。
 
 ## 构件边界
 
