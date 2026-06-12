@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.1.5] — 2026-06-12
+
 ### Changed
 
 - **workflows**：dev 工作流全线术语统一 `roadmap` → `slices`（`03-tdd`、`04-finalize`、`I-to-issues`、模板）。原 `roadmap.md` 的 scope/architecture/phases/cross-cutting/dependency 五段结构融入 `slices.md`，每切片携带 `<phase id="...">` XML 状态契约供 TDD 阶段直接引用。
@@ -76,7 +80,10 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.2...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.5...HEAD)
+- [0.1.5](https://github.com/NAMEWTA/Speculo/compare/v0.1.4...v0.1.5)
+- [0.1.4](https://github.com/NAMEWTA/Speculo/compare/v0.1.3...v0.1.4)
+- [0.1.3](https://github.com/NAMEWTA/Speculo/compare/v0.1.2...v0.1.3)
 - [0.1.2](https://github.com/NAMEWTA/Speculo/compare/v0.1.1...v0.1.2)
 - [0.1.1](https://github.com/NAMEWTA/Speculo/compare/v0.1.0...v0.1.1)
 - [0.1.0](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.0)
