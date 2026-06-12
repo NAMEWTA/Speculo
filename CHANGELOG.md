@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- **workflows**：新增 `doc/M`（M-mao-zedong-cognitive-os）毛泽东认知操作系统工作流，将原 skill 格式改造为符合 doc/ 规范的 workflow，按 M- 前缀命名，拆分为入口文件 + 5 个 phase 文件（activate / diagnose / strategize / mobilize / deliver），新增咨询输出模板。
+
+---
+
+## [0.1.6] — 2026-06-12
+
+### Added
+
+- **workflows**：新增 `doc/M`（M-mao-zedong-cognitive-os）毛泽东认知操作系统工作流，将原 skill 格式改造为符合 doc/ 规范的 workflow，按 M- 前缀命名，拆分为入口文件 + 5 个 phase 文件（activate / diagnose / strategize / mobilize / deliver），新增咨询输出模板。
+
 ---
 
 ## [0.1.5] — 2026-06-12
