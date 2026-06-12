@@ -5,7 +5,7 @@
 command 是单个 Markdown 文件：
 
 ```text
-speculo/commands/<name>.md
+template/commands/<name>.md
 ```
 
 只要需要多阶段状态机、多个子规范或跨天交付，就升级为 workflow。

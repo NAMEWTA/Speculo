@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { initSpeculo, updateSpeculo } from "./index.js";
+import { initSpeculo } from "./index.js";
 
 function usage(): string {
   return [
     "Usage:",
     "  speculo init [target]",
-    "  speculo update [target]",
     "",
     "Commands:",
-    "  init    Install .speculo, commands, skills, and workflows under speculo/. Fails on conflicts.",
-    "  update  Replace commands, skills, and workflows under speculo/. Keeps .speculo untouched."
+    "  init    Install speculo assets under speculo/. If speculo/ does not exist,",
+    "          copies .speculo, commands, skills, and workflows with conflict detection.",
+    "          If speculo/ already exists, refreshes commands, skills, and workflows",
+    "          while preserving .speculo/ user state."
   ].join("\n");
 }
 
@@ -35,15 +36,23 @@ async function main(argv: string[]): Promise<number> {
   try {
     if (command === "init") {
       const result = await initSpeculo(target, { packageRoot });
-      console.log(`Speculo initialized in ${result.target}`);
-      for (const copied of result.copied ?? []) {
-        console.log(`copied ${copied}`);
+      if (result.mode === 'init') {
+        console.log(`Speculo initialized in ${result.target}`);
+        for (const copied of result.copied ?? []) {
+          console.log(`copied ${copied}`);
+        }
+      } else {
+        console.log(`Speculo updated in ${result.target}`);
+        for (const updated of result.updated ?? []) {
+          console.log(`updated ${updated}`);
+        }
       }
       return 0;
     }
 
     if (command === "update") {
-      const result = await updateSpeculo(target, { packageRoot });
+      console.error("Warning: `speculo update` is deprecated. Use `speculo init` instead.");
+      const result = await initSpeculo(target, { packageRoot });
       console.log(`Speculo updated in ${result.target}`);
       for (const updated of result.updated ?? []) {
         console.log(`updated ${updated}`);

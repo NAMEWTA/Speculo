@@ -27,7 +27,7 @@
 skill 放在：
 
 ```text
-speculo/skills/<name>/SKILL.md
+template/skills/<name>/SKILL.md
 ```
 
 目录名用 lowercase kebab-case。整个 skill 目录必须**自包含**：复制到任何项目、只读 `SKILL.md` 即可判断是否使用、需要哪些输入、产生什么输出，不依赖本仓库的 `docs/` 或任何外部文件。

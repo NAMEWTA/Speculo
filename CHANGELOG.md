@@ -6,6 +6,19 @@
 
 ---
 
+## [0.1.8] — 2026-06-13
+
+### Changed
+
+- **CLI**：`speculo init` 与 `speculo update` 合并为统一的 `speculo init` 命令。若目标项目 `speculo/` 目录不存在则全新安装全部 4 项资产（冲突检测）；若已存在则自动进入更新模式，覆盖 `commands/`、`skills/`、`workflows/` 并保留 `.speculo/` 用户状态。
+- **仓库**：框架资产源目录 `speculo/` 重命名为 `template/`，明确语义——这是模版开发目录，`speculo init` 将其内容复制到目标项目的 `speculo/`。
+
+### Deprecated
+
+- **CLI**：`speculo update` 子命令已弃用，保留兼容并输出警告，将在未来主版本移除。请改用 `speculo init`。
+
+---
+
 ## [0.1.7] — 2026-06-12
 
 ### Added

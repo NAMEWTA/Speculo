@@ -4,6 +4,7 @@ import { pathExists } from "./utils.js";
 
 export type SpeculoCommandResult = {
   target: string;
+  mode: 'init' | 'update';
   copied?: string[];
   updated?: string[];
 };
@@ -20,7 +21,7 @@ const UPDATE_ASSETS = ["commands", "skills", "workflows"] as const;
 const INSTALL_SUBDIR = "speculo";
 
 function assetRoot(packageRoot: string): string {
-  return join(packageRoot, "speculo");
+  return join(packageRoot, "template");
 }
 
 function installRoot(target: string): string {
@@ -30,7 +31,7 @@ function installRoot(target: string): string {
 async function ensureAssetSource(packageRoot: string, asset: string): Promise<string> {
   const source = join(assetRoot(packageRoot), asset);
   if (!(await pathExists(source))) {
-    throw new Error(`Missing packaged Speculo asset: speculo/${asset}`);
+    throw new Error(`Missing packaged Speculo asset: template/${asset}`);
   }
   return source;
 }
@@ -46,7 +47,7 @@ async function collectConflicts(root: string, assets: readonly string[]): Promis
   return conflicts;
 }
 
-export async function initSpeculo(
+async function initFresh(
   targetArg = ".",
   options: SpeculoOptions = {}
 ): Promise<SpeculoCommandResult> {
@@ -74,10 +75,10 @@ export async function initSpeculo(
     copied.push(asset);
   }
 
-  return { target, copied };
+  return { target, mode: 'init', copied };
 }
 
-export async function updateSpeculo(
+async function initOverwrite(
   targetArg = ".",
   options: SpeculoOptions = {}
 ): Promise<SpeculoCommandResult> {
@@ -96,5 +97,21 @@ export async function updateSpeculo(
     updated.push(asset);
   }
 
-  return { target, updated };
+  return { target, mode: 'update', updated };
+}
+
+export async function initSpeculo(
+  targetArg = ".",
+  options: SpeculoOptions = {}
+): Promise<SpeculoCommandResult> {
+  const target = resolve(targetArg);
+  const root = installRoot(target);
+
+  if (await pathExists(root)) {
+    const result = await initOverwrite(targetArg, options);
+    return { ...result, mode: 'update' };
+  }
+
+  const result = await initFresh(targetArg, options);
+  return { ...result, mode: 'init' };
 }

@@ -1,13 +1,13 @@
 # Skill 编写指南（开发者向）
 
 本文档面向**框架扩展者**：你想新增一个可复用的原子能力。
-`speculo-write` skill（`speculo/skills/speculo-write/`）按本规范执行，完整内化规范见其 `references/skill-authoring-sop.md`，本文是它遵循的契约。
+`speculo-write` skill（`template/skills/speculo-write/`）按本规范执行，完整内化规范见其 `references/skill-authoring-sop.md`，本文是它遵循的契约。
 
 ## 创建步骤
 
 ```bash
-mkdir -p speculo/skills/<name>/{references,scripts,examples}
-touch speculo/skills/<name>/SKILL.md
+mkdir -p template/skills/<name>/{references,scripts,examples}
+touch template/skills/<name>/SKILL.md
 ```
 
 ## 强制约束
@@ -28,7 +28,7 @@ description: <一句话能力说明；含触发场景，第三人称，可与相
 ---
 ```
 
-正文固定章节：`## 何时使用`、`## 输入`、`## 输出`、`## 执行步骤`、`## 渐进披露`。完整模板与写作要点见 `speculo/skills/speculo-write/references/skill-authoring-sop.md`。
+正文固定章节：`## 何时使用`、`## 输入`、`## 输出`、`## 执行步骤`、`## 渐进披露`。完整模板与写作要点见 `template/skills/speculo-write/references/skill-authoring-sop.md`。
 
 ## 渐进披露策略
 
@@ -36,4 +36,4 @@ description: <一句话能力说明；含触发场景，第三人称，可与相
 
 ## 复制即可用合格线
 
-复制 `speculo/skills/<name>/` 到任何项目后，任何 AI 工具只读 `SKILL.md` 就能判断是否使用、需要哪些输入、会产生什么输出。
+复制 `template/skills/<name>/` 到任何项目后，任何 AI 工具只读 `SKILL.md` 就能判断是否使用、需要哪些输入、会产生什么输出。

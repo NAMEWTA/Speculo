@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { initSpeculo, updateSpeculo } from "../src/index.js";
+import { initSpeculo } from "../src/index.js";
 import { pathExists } from "../src/utils.js";
 
 const packageRoot = process.cwd();
@@ -20,6 +20,7 @@ describe("speculo CLI operations", () => {
     try {
       const result = await initSpeculo(target, { packageRoot });
 
+      assert.equal(result.mode, "init");
       assert.deepEqual(result.copied, [".speculo", "commands", "skills", "workflows"]);
       // Assets nest under <target>/speculo/, not the target root.
       assert.equal(await pathExists(join(target, ".speculo")), false);
@@ -57,38 +58,42 @@ describe("speculo CLI operations", () => {
     }
   });
 
-  it("init fails on existing asset paths without overwriting", async () => {
+  it("init detects existing speculo/ and enters update mode", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
       await mkdir(root, { recursive: true });
       await writeFile(join(root, "commands"), "existing");
 
-      await assert.rejects(
-        initSpeculo(target, { packageRoot }),
-        /refused to overwrite existing paths/
-      );
+      const result = await initSpeculo(target, { packageRoot });
 
-      assert.equal(await readFile(join(root, "commands"), "utf8"), "existing");
-      assert.equal(await pathExists(join(root, ".speculo")), false);
+      assert.equal(result.mode, "update");
+      assert.deepEqual(result.updated, ["commands", "skills", "workflows"]);
+      // The stale `commands` file was replaced by the `commands` directory from the package.
+      assert.equal(await pathExists(join(root, "commands", "status.md")), true);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("update overwrites commands, skills, and workflows but preserves .speculo", async () => {
+  it("init re-run overwrites commands, skills, and workflows but preserves .speculo", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
-      await initSpeculo(target, { packageRoot });
+      // First call: fresh install.
+      const first = await initSpeculo(target, { packageRoot });
+      assert.equal(first.mode, "init");
+
       await writeFile(join(root, "commands", "status.md"), "local edit");
       await writeFile(join(root, "skills", "local-skill.md"), "remove me");
       await writeFile(join(root, "workflows", "local-workflow.md"), "remove me");
       await writeFile(join(root, ".speculo", "state.txt"), "keep me");
       await writeFile(join(root, ".speculo", "doc-status.json"), "keep doc status");
 
-      const result = await updateSpeculo(target, { packageRoot });
+      // Second call: auto-detects existing speculo/ and enters update mode.
+      const result = await initSpeculo(target, { packageRoot });
 
+      assert.equal(result.mode, "update");
       assert.deepEqual(result.updated, ["commands", "skills", "workflows"]);
       assert.match(await readFile(join(root, "commands", "status.md"), "utf8"), /# Status 命令/);
       assert.equal(await pathExists(join(root, "skills", "local-skill.md")), false);
@@ -103,15 +108,22 @@ describe("speculo CLI operations", () => {
   it("compiled CLI resolves package assets from the package root", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
+    const cliPath = join(process.cwd(), "dist", "src", "cli.js");
     try {
-      const cliPath = join(process.cwd(), "dist", "src", "cli.js");
-
+      // First call: fresh init.
       execFileSync(process.execPath, [cliPath, "init", target], { stdio: "pipe" });
 
       assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
       assert.equal(await pathExists(join(root, ".speculo", "doc-status.json")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "doc", "00-INDEX.md")), true);
+
+      // Second call: speculo/ exists, should enter update mode without error.
+      execFileSync(process.execPath, [cliPath, "init", target], { stdio: "pipe" });
+
+      // .speculo still intact after update.
+      assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

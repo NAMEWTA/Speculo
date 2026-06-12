@@ -1,11 +1,11 @@
 # Command 编写指南（开发者向）
 
-本文档面向**框架扩展者**：你想在 `speculo/commands/` 下新增一个单步 command。
+本文档面向**框架扩展者**：你想在 `template/commands/` 下新增一个单步 command。
 
 ## 创建步骤
 
 ```bash
-touch speculo/commands/<name>.md
+touch template/commands/<name>.md
 ```
 
 Command 必须是单文件。只要需要多阶段状态机、多个子规范或跨天交付，就升级为 workflow。

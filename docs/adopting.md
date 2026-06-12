@@ -10,20 +10,20 @@ speculo init my-project
 
 `init` 会把以下资产复制到目标项目的 `speculo/` 目录下（统一收纳在一个 `speculo/` 目录里，不散落到项目根目录）：
 
-- `speculo/.speculo/`
-- `speculo/commands/`
-- `speculo/skills/`
-- `speculo/workflows/`
+- `template/.speculo/`
+- `template/commands/`
+- `template/skills/`
+- `template/workflows/`
 
 如果目标项目的 `speculo/` 下已有同名文件或目录，`init` 会失败并列出冲突路径，不会覆盖。
 
 ## 更新框架资产
 
 ```bash
-speculo update my-project
+speculo init my-project
 ```
 
-`update` 只覆盖目标项目 `speculo/` 下的 `commands/`、`skills/`、`workflows/`。它不会覆盖 `speculo/.speculo/`，因此当前 change 状态和历史产物会保留。
+当 `speculo/` 目录已存在时，`init` 会自动进入更新模式：只覆盖 `commands/`、`skills/`、`workflows/`，不会覆盖 `speculo/.speculo/`，因此当前 change 状态和历史产物会保留。
 
 ## 接入后的目录
 

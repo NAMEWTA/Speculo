@@ -17,8 +17,7 @@ Speculo 是一套结构化文档框架。它通过可复制的 `commands/`、`wo
 
 仓库同时提供一个很小的 CLI：
 
-- `speculo init [target]`：把框架资产安装到目标项目；遇到已有文件冲突时失败，不覆盖。
-- `speculo update [target]`：覆盖目标项目的 `commands/`、`skills/`、`workflows/`；保留 `.speculo/` 下的状态和产物。
+- `speculo init [target]`：把框架资产安装到目标项目。若 `speculo/` 不存在则全新安装全部资产（冲突时失败）；若已存在则自动更新 `commands/`、`skills/`、`workflows/` 并保留 `.speculo/` 状态和产物。
 
 ## 仓库布局
 
@@ -28,7 +27,7 @@ Speculo/
 ├── docs/                       # 框架文档
 ├── src/                        # speculo CLI
 ├── test/                       # CLI 测试
-└── speculo/                    # 包内框架资产源
+└── template/                   # 包内框架资产源
     ├── commands/               # 一次性独立命令
     ├── workflows/              # 多阶段工作流
     ├── skills/                 # command 可调用的可复用 skill
@@ -41,14 +40,14 @@ Speculo/
 # 全局安装 CLI（npm 包名为 @namewta/speculo，命令名为 speculo）
 npm install -g @namewta/speculo
 
-# 安装框架资产到目标项目
+# 安装框架资产到目标项目（首次）
 speculo init my-project
 
-# 更新框架资产，不覆盖 .speculo 状态
-speculo update my-project
+# 后续更新框架资产（speculo/ 已存在时自动进入更新模式，不覆盖 .speculo 状态）
+speculo init my-project
 ```
 
-`init` 会带上 `.speculo/.config/RULES.md` 和 `.speculo/.config/LESSONS.md` 作为最小项目规则/经验库；`update` 不会覆盖它们。
+首次 `init` 会带上 `.speculo/.config/RULES.md` 和 `.speculo/.config/LESSONS.md` 作为最小项目规则/经验库；后续执行不会覆盖它们。
 
 详见 [docs/adopting.md](docs/adopting.md)。
 

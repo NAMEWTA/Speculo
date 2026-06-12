@@ -2,7 +2,7 @@
 
 ## 结构检查
 
-- [ ] 新 asset 路径符合 `speculo/workflows/`、`speculo/skills/` 或 `speculo/commands/` 约定
+- [ ] 新 asset 路径符合 `template/workflows/`、`template/skills/` 或 `template/commands/` 约定
 - [ ] workflow 入口文件名与目录名一致
 - [ ] skill 入口命名为 `SKILL.md`
 - [ ] command 是单个 `.md` 文件

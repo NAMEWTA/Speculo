@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Speculo — specification-driven development framework assets, with a CLI to install and update them across AI coding tools.",
   "type": "module",
   "bin": {
@@ -17,7 +17,7 @@
   },
   "files": [
     "dist/src",
-    "speculo"
+    "template"
   ],
   "keywords": [
     "speculo",
