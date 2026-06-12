@@ -6,11 +6,19 @@
 
 ---
 
-## [Unreleased]
+## [0.1.7] — 2026-06-12
 
 ### Added
 
-- **workflows**：新增 `doc/M`（M-mao-zedong-cognitive-os）毛泽东认知操作系统工作流，将原 skill 格式改造为符合 doc/ 规范的 workflow，按 M- 前缀命名，拆分为入口文件 + 5 个 phase 文件（activate / diagnose / strategize / mobilize / deliver），新增咨询输出模板。
+- **docs**：新增 `docs/persistence-contract.md` §0「命名铁律」——所有 change 目录、command 产物目录、归档路径必须以 `YYYY-MM-DD-` 开头，不带日期的目录名视为无效（`malformed`）。
+- **workflows**：dev/doc 的 `00-INDEX.md` 全线植入命名铁律引用，扫描 active change 时自动检测并报告 malformed 目录。
+- **workflows**：Mao 认知操作系统工作流内置《毛泽东选集》全文知识库（`books/`，229 篇），无需联网即可检索原文、精确引用。
+
+### Changed
+
+- **workflows**：Mao 认知操作系统工作流——外挂知识库改为内置本地 `books/`，删除外部 GitHub 仓库引用与 `$MAOXUAN_KB_PATH` 环境变量路径发现。
+- **workflows**：dev/doc 全线模板（`_templates/`）产物路径、占位符统一更新。
+- **docs**：`Speculo-architecture.md`、`persistence-contract.md` 补充命名铁律与归档路径说明。
 
 ---
 

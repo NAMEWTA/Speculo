@@ -136,12 +136,16 @@ workflows/doc/
 
 ## 持久化模型
 
-每个 change 有一份真相源：
+每个 change 有一份真相源。**Change 目录名必须为 `YYYY-MM-DD-<kebab-name>`**（权威定义见 `docs/persistence-contract.md` §0）：
 
 ```text
 .speculo/dev/2026-06-03-user-auth/.status.json
 .speculo/doc/2026-06-05-article-draft/.status.json
 ```
+
+不带日期前缀的目录名是无效的——AI 代理扫描时将其标记为 `malformed` 并汇报用户。
+
+Command 产物目录同理，必须为 `YYYY-MM-DD-<cmd-name>-<topic>`；归档目标必须为 `archive/<cat>/<YYYY-MM>/<change-name>/`。
 
 顶层索引只保存 active 摘要：
 

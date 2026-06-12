@@ -1,5 +1,6 @@
 > **服务工作流：** `../D-docs-sync/D-docs-sync.md`
 > **产物文件名：** `docs-sync-report.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Docs Sync Report
 

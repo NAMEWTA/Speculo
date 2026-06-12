@@ -1,5 +1,6 @@
 > **服务工作流：** `../R-review/R-review.md`
 > **产物文件名：** `review-verdict.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Review Verdict
 

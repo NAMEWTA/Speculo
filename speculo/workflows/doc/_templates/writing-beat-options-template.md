@@ -1,5 +1,6 @@
 > **服务工作流：** `../B-writing-beats/B-writing-beats.md`
 > **产物文件名：** `beat-log.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Beat Log
 

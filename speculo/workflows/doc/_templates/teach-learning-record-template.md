@@ -1,5 +1,6 @@
 > **服务工作流：** `../T-teach/T-teach.md`
 > **产物文件名：** `learning-records/<编号>.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 学习记录使用顺序编号：`0001-<slug>.md`、`0002-<slug>.md`。首次写入时创建目录。
 

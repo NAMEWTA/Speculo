@@ -1,5 +1,6 @@
 > **服务工作流：** `../01-grill-with-docs/01-grill-with-docs.md`
 > **产物文件名：** `decision-log.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Decision Log
 

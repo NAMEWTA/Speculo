@@ -32,7 +32,7 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `.speculo/dev/<change>/tdd/<phase-id>/`（见下「TDD 产物目录与阶段标识」）。下文产物路径均相对该 change 目录。
+> **产物目录：** 本工作流所有产物写入 `.speculo/dev/<change>/tdd/<phase-id>/`（见下「TDD 产物目录与阶段标识」）。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-user-auth`）。
 
 ### 1. TDD Plan — 行为与接口计划
 - 规范：`tdd-plan.md`
@@ -64,6 +64,7 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 ## TDD 产物目录与阶段标识
 
 - 本工作流所有产物集中在 `.speculo/dev/<change>/tdd/<phase-id>/`，与 change 根目录的 PRD / slices 等产物分离，便于多阶段并行与回溯。
+- `<change>` 为当前 change 目录名（`YYYY-MM-DD-<kebab-name>`）。
 - `<phase-id>` 标识：
   - change 来自**多阶段 slices** 时，用 slices 阶段标识（与 slices `<phase id="...">` 的 `id` 严格一致），如 `phase0-node-base`、`phase1-templates`。
   - change 为**单阶段**（无 slices 分期）时，用一个描述性切片 slug，如 `phase0-<slug>`。

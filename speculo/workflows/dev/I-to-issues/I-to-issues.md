@@ -18,13 +18,15 @@ keywords: [issues, slices, vertical, AFK, HITL, 切片]
 
 - PRD、计划、设计记录、bug 诊断结论或当前对话上下文
 - 用户明确提供的 issue tracker 配置和标签词汇表（如果存在）
-- 当前 change 目录：`.speculo/dev/<change>/`
+- 当前 change 目录：`.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-user-auth`）
 
 ### 输出
 
 - `.speculo/dev/<change>/slices.md`
 - 垂直切片清单、依赖关系、HITL/AFK 标记和验收标准
 - 可选的外部 issue 引用
+
+（`<change>` 格式：`YYYY-MM-DD-<kebab-name>`）
 
 ### 垂直切片规则
 

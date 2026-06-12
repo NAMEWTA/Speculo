@@ -10,6 +10,8 @@ keywords: [edit, article, revise, clarity, draft, 编辑, 修订]
 
 本工作流用于编辑已有文章草稿。先按标题和信息依赖确认章节顺序，再逐节重写，提升清晰度、连贯性和流畅度。
 
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-edit-article`）。产物写入 `.speculo/doc/<change>/`。
+
 ## 内置指引
 
 ### 何时使用
@@ -20,7 +22,7 @@ keywords: [edit, article, revise, clarity, draft, 编辑, 修订]
 
 - 用户提供的文章草稿路径，或 `.speculo/doc/<change>/article.md`
 - 用户明确的发布目标、语气偏好或约束
-- 当前 doc change 目录：`.speculo/doc/<change>/`
+- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-edit-article`）
 
 ### 输出
 

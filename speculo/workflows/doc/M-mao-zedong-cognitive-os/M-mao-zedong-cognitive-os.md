@@ -20,6 +20,8 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 **局限**：聚焦思维方法论的迁移，不评判政治立场；涉及 1949 年后争议历史只取思维方法论侧面并标注边界。
 
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-mao-strategy-consult`）。产物写入 `.speculo/doc/<change>/`。
+
 ## 内置指引
 
 ### 角色扮演规则
@@ -97,7 +99,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。
+> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-mao-strategy-consult`）。
 
 ### 1. 激活与问诊 — Activate
 - 规范：`activate.md`
@@ -187,12 +189,12 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 | 表达风格要全量句式/比喻库/范式 | `references/research/14-voice-and-dialogue.md` |
 | 要引用原文金句、查篇目编号映射 | `references/research/15-quote-bank.md` |
 
-## 外挂知识库（可选）
+## 内置知识库
 
-本工作流可挂载《毛泽东选集》全文数字化版本（开源库 [weiyinfu/MaoZeDongAnthology](https://github.com/weiyinfu/MaoZeDongAnthology)），用于检索原文、精确引用。
+本工作流内置《毛泽东选集》全文数字化版本（229 篇，编号 000–228），位于工作流目录下的 `books/`，无需联网即可检索原文、精确引用。
 
-**路径发现**（按序尝试）：环境变量 `$MAOXUAN_KB_PATH` → `~/MaoZeDongAnthology/` → `./MaoZeDongAnthology/` → `../MaoZeDongAnthology/`。均未命中则静默跳过，仅用内置框架。
+**知识库路径**：`./books/`（即本工作流目录下的 `books/` 子目录）。
 
-**知识库结构**：文章原文 `src/NNN-标题.md`（229 篇，编号 000–228），层级目录 `src/目录.md`。
+**知识库结构**：文章原文 `books/src/NNN-标题.md`（229 篇，编号 000–228），层级目录 `books/src/目录.md`，卷次索引 `books/README.md`。
 
 **引用纪律**：引金句必带篇目名与编号；区分逐字原文（加引号）与概括转述（标注"转述/大意"）；建国后争议文本只引方法论句并附边界提示。

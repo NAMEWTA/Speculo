@@ -1,5 +1,6 @@
 > **服务工作流：** `../M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md`
 > **产物文件名：** `consultation-output.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # 咨询输出
 

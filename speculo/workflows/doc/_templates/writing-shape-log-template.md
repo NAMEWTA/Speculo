@@ -1,5 +1,6 @@
 > **服务工作流：** `../S-writing-shape/S-writing-shape.md`
 > **产物文件名：** `shape-log.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Shape Log
 

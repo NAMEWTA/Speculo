@@ -76,7 +76,7 @@ keywords: [teach, lesson, learning, glossary, 教学, 课程, 术语, 学习]
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。
+> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-teach-react-basics`）。
 
 ### 1. Mission Setup — 确立学习使命
 - 规范：`teach-mission.md`

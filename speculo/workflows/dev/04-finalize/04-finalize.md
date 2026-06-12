@@ -10,6 +10,8 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
 
 本工作流是 `dev/04` 入口，是开发主线的收尾环节（`dev/01` → `dev/02` → `dev/I` → `dev/03` → `dev/04`）。它在 change 的实现完成后，**先用证据证明"真的完成了"，再改变状态并归档**。
 
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-user-auth`）。归档目标为 `.speculo/archive/dev/<YYYY-MM>/<change>/`，`<YYYY-MM>` 从 change 目录名中的日期提取。
+
 ## 内置指引
 
 ### 核心原则

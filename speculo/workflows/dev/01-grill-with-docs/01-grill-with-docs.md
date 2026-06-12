@@ -21,7 +21,7 @@ keywords: [grill, context, adr, 术语, 决策]
 - 用户提出的计划、需求、设计或变更意图
 - `.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
 - `.speculo/.config/context/CONTEXT.md`、`.speculo/.config/context/CONTEXT-MAP.md`、`.speculo/.config/adr/` 和相关代码
-- 当前 change 目录：`.speculo/dev/<change>/`
+- 当前 change 目录：`.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-user-auth`）
 
 ### 输出
 
@@ -29,6 +29,8 @@ keywords: [grill, context, adr, 术语, 决策]
 - `.speculo/dev/<change>/decision-log.md`
 - 已确认的术语、决策、开放问题和 ADR 候选
 - 需要用户进一步决策的问题，每次只问一个
+
+（`<change>` 为当前 change 目录名，格式 `YYYY-MM-DD-<kebab-name>`）
 
 ### 执行原则
 

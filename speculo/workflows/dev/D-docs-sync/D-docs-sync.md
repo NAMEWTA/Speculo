@@ -23,13 +23,15 @@ keywords: [docs-sync, changelog, readme, agents, documentation, 文档同步]
 - `.speculo/dev/docs-sync-state.json`
 - 当前 git `HEAD`
 - state 中的 `tracked_docs` 列表
-- 当前 change 目录：`.speculo/dev/<change>/`
+- 当前 change 目录：`.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-docs-sync`）
 
 ### 输出
 
 - `.speculo/dev/<change>/docs-sync-report.md`
 - 更新后的 tracked docs
 - 更新后的 `.speculo/dev/docs-sync-state.json`
+
+（`<change>` 格式：`YYYY-MM-DD-<kebab-name>`）
 
 ### 渐进披露
 

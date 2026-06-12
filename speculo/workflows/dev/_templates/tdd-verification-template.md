@@ -1,5 +1,6 @@
 > **服务工作流：** `../03-tdd/03-tdd.md`
 > **产物文件名：** `tdd/<phase-id>/verification.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Verification
 

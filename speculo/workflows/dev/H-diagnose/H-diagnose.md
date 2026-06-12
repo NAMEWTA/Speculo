@@ -19,7 +19,7 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 ### 输入
 
 - 用户描述的失败现象、日志、复现步骤或性能症状
-- 当前 change 目录：`.speculo/dev/<change>/`
+- 当前 change 目录：`.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-fix-login-bug`）
 - 可运行的测试、脚本、服务或其他反馈循环
 
 ### 输出
@@ -28,6 +28,8 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 - `.speculo/dev/<change>/regression.md`
 - 诊断记录、假设列表、插桩结果、修复与回归验证结论
 - 若缺少可信反馈循环，输出已尝试方法和需要用户提供的材料
+
+（`<change>` 格式：`YYYY-MM-DD-<kebab-name>`）
 
 ### 执行原则
 

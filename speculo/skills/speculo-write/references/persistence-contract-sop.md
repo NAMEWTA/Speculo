@@ -3,6 +3,46 @@
 `.status.json` schema、目录命名、frontmatter 最小集与写入责任的内化规范。
 本文把 Speculo 持久化契约内化进本 skill，编写资产时**不读仓库 `docs/`**。
 
+## 命名铁律
+
+> ⚠️ **所有 change 目录、command 产物目录、归档路径必须以 `YYYY-MM-DD-` 开头。无一例外。**
+
+不带日期的目录名是**无效的**。
+
+### 谁必须带日期
+
+| 必须带 | 规则 | 谁创建 |
+|--------|------|--------|
+| Change 目录 | `YYYY-MM-DD-<kebab-name>` | Workflow（AI 按用户意图创建） |
+| Command 产物目录 | `YYYY-MM-DD-<cmd-name>-<topic>` | Command（AI 执行命令时创建） |
+| 归档目标目录 | `archive/<cat>/<YYYY-MM>/<change-name>/` | `archive` 命令或 `dev/04` 工作流 |
+
+### 谁不需要带日期
+
+| 不需要带 | 原因 |
+|----------|------|
+| Workflow 阶段目录（如 `01-grill-with-docs/`） | 框架资产，非运行时产物 |
+| Skill 目录（如 `caveman/`） | 框架资产，非运行时产物 |
+| Command 文件（如 `archive.md`） | 框架资产，非运行时产物 |
+| 模板文件（`_templates/`） | 框架资产，非运行时产物 |
+| `.config/`、`adr/`、`context/` | 项目配置目录 |
+
+### 反例
+
+| ❌ 错误 | ✅ 正确 |
+|---------|---------|
+| `user-auth` | `2026-06-12-user-auth` |
+| `fix-bug` | `2026-06-12-fix-login-bug` |
+| `prd-draft` | `2026-06-12-prd-user-flow` |
+| `status-snapshot/` | `2026-06-12-status-snapshot/` |
+
+### AI 代理执行规则
+
+1. **创建 change 目录时**：必须从当前日期生成 `YYYY-MM-DD-<kebab-name>`，`<kebab-name>` 从用户意图提取。
+2. **创建 command 产物目录时**：必须从当前日期生成 `YYYY-MM-DD-<cmd-name>-<topic>`。
+3. **扫描已有 change 时**：不符合 `YYYY-MM-DD-<kebab-name>` 的目录视为 `malformed`，必须汇报用户。
+4. **归档时**：目标路径必须包含 `archive/<cat>/<YYYY-MM>/`，`<YYYY-MM>` 从 change 目录名中的日期提取。
+
 ## 目录命名
 
 | 类别 | 模式 | 例 |
@@ -89,6 +129,7 @@ description: <一句话>    # 必填
 ```markdown
 > **服务工作流：** `<相对路径>`
 > **产物文件名：** `<filename>`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # <标题>
 
@@ -125,3 +166,18 @@ description: <一句话>    # 必填
 - `.speculo/archive/<cat>/.gitkeep`
 
 项目级长期资料放 `.speculo/.config/`（`RULES.md`、`LESSONS.md`、`context/`、`adr/`），不要新增项目根 state 文件。
+
+## 命名校验清单
+
+### 创建时
+
+- [ ] change 目录名匹配 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`
+- [ ] command 产物目录名匹配 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+-[a-z0-9]+(-[a-z0-9]+)*$`
+- [ ] 日期部分使用**当前日期**（`YYYY-MM-DD`）
+- [ ] `<kebab-name>` 从用户意图中提取
+
+### 扫描时
+
+- [ ] 仅处理符合日期命名规范的目录
+- [ ] 不符合规范的目录标记为 `malformed`，必须汇报
+- [ ] 不自动删除、重命名或忽略 malformed 目录

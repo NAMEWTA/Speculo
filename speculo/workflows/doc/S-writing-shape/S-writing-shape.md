@@ -10,6 +10,8 @@ keywords: [shape, article, markdown, draft, writing, 塑形]
 
 本工作流用于把一份原始素材 Markdown 文件塑造成独立文章。素材堆只读；文章产物默认写入当前 doc change 的 `article.md`。
 
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-shape-article`）。产物写入 `.speculo/doc/<change>/`。
+
 ## 内置指引
 
 ### 何时使用
@@ -20,7 +22,7 @@ keywords: [shape, article, markdown, draft, writing, 塑形]
 
 - 用户提供的原始素材 Markdown 路径，或 `.speculo/doc/<change>/fragments.md`
 - 当前文章文件：默认 `.speculo/doc/<change>/article.md`
-- 当前 doc change 目录：`.speculo/doc/<change>/`
+- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-shape-article`）
 
 ### 输出
 

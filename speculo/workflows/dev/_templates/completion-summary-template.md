@@ -1,5 +1,6 @@
 > **服务工作流：** `../04-finalize/04-finalize.md`
 > **产物文件名：** `completion-summary.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # Completion Summary
 

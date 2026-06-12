@@ -1,5 +1,6 @@
 > **服务工作流：** `../02-prd/02-prd.md`
 > **产物文件名：** `prd.md`
+> **父目录规则：** 本模板产物写入 `YYYY-MM-DD-<kebab-name>/` change 目录内
 
 # PRD
 
