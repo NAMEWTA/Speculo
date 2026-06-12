@@ -19,14 +19,14 @@ keywords: [grill, context, adr, 术语, 决策]
 ### 输入
 
 - 用户提出的计划、需求、设计或变更意图
-- `.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
-- `.speculo/.config/context/CONTEXT.md`、`.speculo/.config/context/CONTEXT-MAP.md`、`.speculo/.config/adr/` 和相关代码
-- 当前 change 目录：`.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-user-auth`）
+- `speculo/.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
+- `speculo/.speculo/.config/context/CONTEXT.md`、`speculo/.speculo/.config/context/CONTEXT-MAP.md`、`speculo/.speculo/.config/adr/` 和相关代码
+- 当前 change 目录：`speculo/.speculo/dev/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-user-auth`）
 
 ### 输出
 
-- `.speculo/dev/<change>/context-map.md`
-- `.speculo/dev/<change>/decision-log.md`
+- `speculo/.speculo/dev/<change>/context-map.md`
+- `speculo/.speculo/dev/<change>/decision-log.md`
 - 已确认的术语、决策、开放问题和 ADR 候选
 - 需要用户进一步决策的问题，每次只问一个
 
@@ -38,7 +38,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 每次只问一个问题，等待用户对当前问题的反馈后再继续。如果某个问题可以通过探索代码库来回答，就直接探索代码库。
 
-需要格式约定时读取同目录 `CONTEXT-FORMAT.md` 或 `ADR-FORMAT.md`。项目 CONTEXT 或 ADR 的创建、修改必须写入 `.speculo/.config/` 下，并符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
+需要格式约定时读取同目录 `CONTEXT-FORMAT.md` 或 `ADR-FORMAT.md`。项目 CONTEXT 或 ADR 的创建、修改必须写入 `speculo/.speculo/.config/` 下，并符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
 
 ### Worktree 隔离（条件）
 
@@ -46,7 +46,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 - 用户未请求隔离时，**不读取**该 skill，跳过 Phase 0，按既有流程在当前分支推进，行为零变化。
 - 启用后，本 change 的代码与全部 Speculo 产物都落在隔离分支 `speculo/dev/<change>` 与 `.worktree/<change>/` 工作树内，原分支不被污染；状态里记录 `base_branch` 与 `change_branch`，供 review、finalize 跨阶段跟进。
-- 隔离前置不满足（非 git 仓库 / 工作区不净 / `.speculo/` 未被 git 跟踪）时由该 skill 降级为非 worktree 模式并报告，不强行创建。
+- 隔离前置不满足（非 git 仓库 / 工作区不净 / `speculo/.speculo/` 未被 git 跟踪）时由该 skill 降级为非 worktree 模式并报告，不强行创建。
 
 ## 阶段
 
@@ -73,7 +73,7 @@ keywords: [grill, context, adr, 术语, 决策]
 - 产物：`decision-log.md`
 - 完成准则：
   - 关键决策均有结论、推荐答案或开放问题
-  - 需要写入 `.speculo/.config/context/` 或 `.speculo/.config/adr/` 的内容已获用户确认，或记录为候选
+  - 需要写入 `speculo/.speculo/.config/context/` 或 `speculo/.speculo/.config/adr/` 的内容已获用户确认，或记录为候选
   - `decision-log.md` 无残留 `[TODO:]`
 
 ## 依赖

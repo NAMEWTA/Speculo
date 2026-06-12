@@ -2,12 +2,12 @@
 
 ## 输入
 
-- `.speculo/dev/<change>/review-report.md`（三维度 findings）
+- `speculo/.speculo/dev/<change>/review-report.md`（三维度 findings）
 - `.status.json` 的 `severity_summary`
 
 ## 产物
 
-- `.speculo/dev/<change>/review-verdict.md`，由 `../_templates/review-verdict-template.md` 填写
+- `speculo/.speculo/dev/<change>/review-verdict.md`，由 `../_templates/review-verdict-template.md` 填写
 
 ## 填写引导
 

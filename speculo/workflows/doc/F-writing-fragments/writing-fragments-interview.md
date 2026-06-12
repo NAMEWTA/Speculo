@@ -3,12 +3,12 @@
 ## 输入
 
 - 用户的主题、初始 prompt 或已有素材
-- `.speculo/doc/<change>/fragments.md` 的当前内容；若不存在，按模板创建
+- `speculo/.speculo/doc/<change>/fragments.md` 的当前内容；若不存在，按模板创建
 - 当前对话中出现的主张、小场景、锋利句子、半成形想法、引用或观察
 
 ## 产物
 
-- `.speculo/doc/<change>/fragments.md`，由 `../_templates/writing-fragments-template.md` 填写或追加
+- `speculo/.speculo/doc/<change>/fragments.md`，由 `../_templates/writing-fragments-template.md` 填写或追加
 
 ## 填写引导
 

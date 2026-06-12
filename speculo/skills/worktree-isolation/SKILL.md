@@ -43,10 +43,10 @@ description: 在独立 git worktree 中隔离推进一个 change 的原子能力
 
 ## 执行步骤
 
-1. **判定可隔离性**：确认 (a) 在 git 仓库内，(b) 工作区干净或变更可接受，(c) 目标项目 `.speculo/` 被 git 跟踪（产物需随分支合并）。任一不满足 → **不创建**，向调用方报告原因并降级为非 worktree 模式。
+1. **判定可隔离性**：确认 (a) 在 git 仓库内，(b) 工作区干净或变更可接受，(c) 目标项目 `speculo/.speculo/` 被 git 跟踪（产物需随分支合并）。任一不满足 → **不创建**，向调用方报告原因并降级为非 worktree 模式。
 2. **命名**：base = 当前分支；`change_branch = speculo/<cat>/<change>`；`worktree_path = .worktree/<change>`。
 3. **创建**：见 `references/create-worktree.md`。完成后返回 `base_branch / change_branch / worktree_path` 与 `worktree_status: active` 供调用方写入。
-4. **隔离推进**：此后该 change 的全部工作（代码 + `.speculo/<cat>/<change>/` 产物）都在 `worktree_path` 内、`change_branch` 上进行。
+4. **隔离推进**：此后该 change 的全部工作（代码 + `speculo/.speculo/<cat>/<change>/` 产物）都在 `worktree_path` 内、`change_branch` 上进行。
 5. **审查全树**（review 时）：见 `references/audit-branch-tree.md`，覆盖 `base..change_branch` 的每个 commit。
 6. **合并回收**（finalize 时）：见 `references/merge-and-cleanup.md`，合并回 base、删分支、删 worktree。
 

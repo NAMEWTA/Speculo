@@ -10,13 +10,12 @@ keywords: [handoff, 交接, summary, resume]
 
 ## 归档路径模式
 
-产物目录：`../.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`
+产物目录：`speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`
 
-交接文件：`../.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`
+交接文件：`speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`
 
 - `<YYYY-MM-DD>` 使用当前日期。
 - `<topic>` 从用户目标或交接主题提取，使用小写 kebab-case；无法判断时使用 `session`。
-- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
 - 禁止把交接文档写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
 ## 调用的 skills
@@ -27,8 +26,8 @@ keywords: [handoff, 交接, summary, resume]
 
 1. 读取 `../skills/handoff/SKILL.md`。
 2. 按 `../skills/handoff/SKILL.md` 要求，生成脱敏交接文档。
-3. 创建规范命令产物目录 `../.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`。
-4. 把交接正文写入 `../.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
+3. 创建规范命令产物目录 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`。
+4. 把交接正文写入 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
 5. 删除 API key、密码、PII 和其他敏感信息；不要复制 PRD、计划、ADR、issue、commit、diff 或其他已有产物正文。
 6. 返回 `handoff.md` 路径、3-5 条摘要和推荐技能清单。
 

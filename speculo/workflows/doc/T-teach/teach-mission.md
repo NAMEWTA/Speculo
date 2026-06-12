@@ -4,11 +4,11 @@
 
 - 用户声明的学习主题或模糊兴趣
 - 用户对「为什么想学这个」的任何初始表述
-- 当前 doc change 目录：`.speculo/doc/<change>/`
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`
 
 ## 产物
 
-- `.speculo/doc/<change>/mission.md`，由 `../_templates/teach-mission-template.md` 填写
+- `speculo/.speculo/doc/<change>/mission.md`，由 `../_templates/teach-mission-template.md` 填写
 
 ## 填写引导
 

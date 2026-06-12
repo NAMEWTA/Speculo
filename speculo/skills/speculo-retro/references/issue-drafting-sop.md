@@ -14,7 +14,7 @@
   "area":         "string|null, 例 area:commands / area:workflows / area:skills / area:cli / area:contract",
   "body":         "string, 见正文结构",
   "affected":     ["相对路径，例 speculo/commands/archive.md"],
-  "evidence":     ["证据出处，例 .speculo/dev/<change>/.status.json#phase_history"],
+  "evidence":     ["证据出处，例 speculo/.speculo/dev/<change>/.status.json#phase_history"],
   "disposition":  "file-issue | record-lesson | drop",
   "dup_of":       "number|null, 疑似重复的已存在 issue 编号"
 }
@@ -49,7 +49,7 @@
 [一句话说清痛点 / 不符合预期的行为。]
 
 ## 证据
-[引用具体出处：对话节点、`.speculo/...` 产物路径、`.status.json` 字段、文档段落。可附最小复现。]
+[引用具体出处：对话节点、`speculo/.speculo/...` 产物路径、`.status.json` 字段、文档段落。可附最小复现。]
 
 ## 根因
 [判断是 asset 设计 / 持久化契约 / 文档 / 工具问题，指明根因而非表象。]
@@ -74,4 +74,4 @@
 
 ## 交接契约
 
-本 skill 只返回上面的结构化提案清单 + 丢弃/合并说明，**不写文件、不调用 `gh`、不创建 issue**。落盘到 `.speculo/commands/<run>/report.md` 与实际 `gh issue create` 由调用方 command 在用户确认后执行。
+本 skill 只返回上面的结构化提案清单 + 丢弃/合并说明，**不写文件、不调用 `gh`、不创建 issue**。落盘到 `speculo/.speculo/commands/<run>/report.md` 与实际 `gh issue create` 由调用方 command 在用户确认后执行。

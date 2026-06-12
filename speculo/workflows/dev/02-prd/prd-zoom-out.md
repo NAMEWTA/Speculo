@@ -8,7 +8,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/overview.md`，由 `../_templates/prd-overview-template.md` 填写
+- `speculo/.speculo/dev/<change>/overview.md`，由 `../_templates/prd-overview-template.md` 填写
 
 ## 填写引导
 

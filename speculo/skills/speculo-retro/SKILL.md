@@ -23,9 +23,9 @@ description: 复盘 Speculo commands/workflows 使用过程中的痛点、问题
 ## 输入
 
 - 当前对话上下文：本次会话用了哪些 command / workflow、卡在哪、绕了什么弯、重复了哪些动作
-- `.speculo/commands/<run>/` 下的历史命令产物（report、snapshot、handoff）
-- `.speculo/<cat>/<change>/` 下的 change 产物与 `.status.json`（`phase_history` 里的 `revisited`、`blocked`、长时间停滞都是摩擦信号）
-- `.speculo/.config/LESSONS.md`（已沉淀的教训，用于去重与佐证）
+- `speculo/.speculo/commands/<run>/` 下的历史命令产物（report、snapshot、handoff）
+- `speculo/.speculo/<cat>/<change>/` 下的 change 产物与 `.status.json`（`phase_history` 里的 `revisited`、`blocked`、长时间停滞都是摩擦信号）
+- `speculo/.speculo/.config/LESSONS.md`（已沉淀的教训，用于去重与佐证）
 - 可选：调用方提供的已存在 issue 列表或目标仓库上下文，用于跨提案去重
 - 本 skill 自带分析与 issue 起草规范，已内化到 `references/`，分析时**不外读仓库 `docs/`**
 
@@ -35,11 +35,11 @@ description: 复盘 Speculo commands/workflows 使用过程中的痛点、问题
 - 提案清单，按优先级倒序排列
 - 被合并或丢弃的低信号项说明（哪些重复、哪些更适合记入 `LESSONS.md` 而非提 issue）
 - 每条标注「建议提 issue」或「仅记教训」的处置建议
-- 全部以**返回内容**形式交给调用方写入其声明的 `.speculo/...` 路径；本 skill 不挑选持久化位置
+- 全部以**返回内容**形式交给调用方写入其声明的 `speculo/.speculo/...` 路径；本 skill 不挑选持久化位置
 
 ## 执行步骤
 
-1. **收集信号** —— 按 `references/friction-taxonomy.md` 的来源清单，扫描对话上下文、`.speculo/` 产物与 `LESSONS.md`，列出原始摩擦点。
+1. **收集信号** —— 按 `references/friction-taxonomy.md` 的来源清单，扫描对话上下文、`speculo/.speculo/` 产物与 `LESSONS.md`，列出原始摩擦点。
 2. **归类与去重** —— 按 taxonomy 把每个摩擦点归到类型（bug / friction / missing-capability / doc-gap / ergonomics），合并语义重复项。
 3. **深度分析** —— 对每条做根因判断（是 asset 设计、持久化契约、文档还是工具问题），评估影响面与发生频率，按 `references/friction-taxonomy.md` 的优先级评分。
 4. **过滤噪声** —— 只保留高信号、可行动项；低信号或一次性项标注为丢弃，或归入「仅记教训」。

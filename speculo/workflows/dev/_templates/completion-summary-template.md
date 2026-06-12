@@ -22,4 +22,4 @@
 
 ## 归档记录
 
-[TODO: 归档时间、源路径 → `.speculo/archive/dev/<YYYY-MM>/<change>/`、用户确认记录。]
+[TODO: 归档时间、源路径 → `speculo/.speculo/archive/dev/<YYYY-MM>/<change>/`、用户确认记录。]

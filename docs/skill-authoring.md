@@ -14,7 +14,7 @@ touch speculo/skills/<name>/SKILL.md
 
 1. 入口必须命名为 `SKILL.md`。
 2. skill 目录应自包含，复制到其他项目后仍能工作。
-3. skill 禁止直接写 `.speculo/` 或 `.status.json`；持久化由调用它的 workflow 或 command 负责。
+3. skill 禁止直接写 `speculo/.speculo/` 或 `.status.json`；持久化由调用它的 workflow 或 command 负责。
 4. 大段背景放在 `references/`，可执行辅助脚本放在 `scripts/`，示例输入输出放在 `examples/`。
 
 ## SKILL.md 骨架

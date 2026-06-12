@@ -20,7 +20,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 **局限**：聚焦思维方法论的迁移，不评判政治立场；涉及 1949 年后争议历史只取思维方法论侧面并标注边界。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-mao-strategy-consult`）。产物写入 `.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-mao-strategy-consult`）。产物写入 `speculo/.speculo/doc/<change>/`。
 
 ## 内置指引
 
@@ -99,7 +99,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-mao-strategy-consult`）。
+> **产物目录：** 本工作流所有产物写入 `speculo/.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-mao-strategy-consult`）。
 
 ### 1. 激活与问诊 — Activate
 - 规范：`activate.md`
@@ -174,7 +174,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 - 每完成一个分析/战略/行动模块，追加对应的 `models_applied`、`frameworks_applied`、`methods_applied`。
 - 每次引用毛泽东原文时追加 `quotes_cited`。
 - 用户确认综合咨询输出后，`change_status` 置为 `completed`。
-- 如有可沉淀的方法论洞察，在用户允许时追加到 `.speculo/.config/LESSONS.md`。
+- 如有可沉淀的方法论洞察，在用户允许时追加到 `speculo/.speculo/.config/LESSONS.md`。
 
 ## 参考文档导航
 

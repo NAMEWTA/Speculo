@@ -84,28 +84,28 @@ speculo/workflows/<cat>/_templates/
 workflow 产物写入：
 
 ```text
-.speculo/<cat>/<change>/
+speculo/.speculo/<cat>/<change>/
 ```
 
 当前 change 的状态写入：
 
 ```text
-.speculo/<cat>/<change>/.status.json
+speculo/.speculo/<cat>/<change>/.status.json
 ```
 
 顶层 active 索引写入：
 
 ```text
-.speculo/<cat>-status.json
+speculo/.speculo/<cat>-status.json
 ```
 
 项目级规则、经验、上下文和 ADR 使用：
 
 ```text
-.speculo/.config/RULES.md
-.speculo/.config/LESSONS.md
-.speculo/.config/context/
-.speculo/.config/adr/
+speculo/.speculo/.config/RULES.md
+speculo/.speculo/.config/LESSONS.md
+speculo/.speculo/.config/context/
+speculo/.speculo/.config/adr/
 ```
 
 不要把新状态放到项目根目录。`.status.json` 元字段、顶层索引 schema 和写入责任表见 `persistence-contract-sop.md`。
@@ -115,8 +115,8 @@ workflow 产物写入：
 新增 workflow 后检查：
 
 - 对应分类的 `00-INDEX.md` 是否需要新增别名
-- `.speculo/<cat>-status.json` 和 `.speculo/<cat>/.gitkeep` 是否存在
-- `.speculo/archive/<cat>/.gitkeep` 是否存在
+- `speculo/.speculo/<cat>-status.json` 和 `speculo/.speculo/<cat>/.gitkeep` 是否存在
+- `speculo/.speculo/archive/<cat>/.gitkeep` 是否存在
 - 项目若有 `docs/quick-reference.md` 等入口索引，是否需要新增条目
 - CLI tests 是否需要断言复制新入口
 

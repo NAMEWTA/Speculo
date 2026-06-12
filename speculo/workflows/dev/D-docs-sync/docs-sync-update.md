@@ -2,7 +2,7 @@
 
 ## 输入
 
-- `.speculo/dev/<change>/docs-sync-report.md`
+- `speculo/.speculo/dev/<change>/docs-sync-report.md`
 - state 中的 `tracked_docs`
 - git 差异素材
 - 按需读取的 contract 文件
@@ -10,7 +10,7 @@
 ## 产物
 
 - 更新后的 tracked docs
-- `.speculo/dev/<change>/docs-sync-report.md`
+- `speculo/.speculo/dev/<change>/docs-sync-report.md`
 
 ## 填写引导
 

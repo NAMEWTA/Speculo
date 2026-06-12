@@ -10,7 +10,7 @@ keywords: [shape, article, markdown, draft, writing, 塑形]
 
 本工作流用于把一份原始素材 Markdown 文件塑造成独立文章。素材堆只读；文章产物默认写入当前 doc change 的 `article.md`。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-shape-article`）。产物写入 `.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-shape-article`）。产物写入 `speculo/.speculo/doc/<change>/`。
 
 ## 内置指引
 
@@ -20,14 +20,14 @@ keywords: [shape, article, markdown, draft, writing, 塑形]
 
 ### 输入
 
-- 用户提供的原始素材 Markdown 路径，或 `.speculo/doc/<change>/fragments.md`
-- 当前文章文件：默认 `.speculo/doc/<change>/article.md`
-- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-shape-article`）
+- 用户提供的原始素材 Markdown 路径，或 `speculo/.speculo/doc/<change>/fragments.md`
+- 当前文章文件：默认 `speculo/.speculo/doc/<change>/article.md`
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-shape-article`）
 
 ### 输出
 
-- `.speculo/doc/<change>/article.md`
-- `.speculo/doc/<change>/shape-log.md`
+- `speculo/.speculo/doc/<change>/article.md`
+- `speculo/.speculo/doc/<change>/shape-log.md`
 - 已确认的开头、论点顺序、格式选择和缺口
 
 ### 执行原则

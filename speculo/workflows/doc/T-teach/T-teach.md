@@ -40,7 +40,7 @@ keywords: [teach, lesson, learning, glossary, 教学, 课程, 术语, 学习]
 
 ### Lesson 铁律
 
-一节 lesson 是自包含的单个 HTML 文件，保存为 `.speculo/doc/<change>/lessons/<编号>.html`。它必须：
+一节 lesson 是自包含的单个 HTML 文件，保存为 `speculo/.speculo/doc/<change>/lessons/<编号>.html`。它必须：
 
 - **漂亮** — 干净、可读的排版和布局，用户以后会回来复习
 - **短** — 在几分钟内可完成
@@ -76,7 +76,7 @@ keywords: [teach, lesson, learning, glossary, 教学, 课程, 术语, 学习]
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-teach-react-basics`）。
+> **产物目录：** 本工作流所有产物写入 `speculo/.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-teach-react-basics`）。
 
 ### 1. Mission Setup — 确立学习使命
 - 规范：`teach-mission.md`
@@ -143,5 +143,5 @@ keywords: [teach, lesson, learning, glossary, 教学, 课程, 术语, 学习]
 - Phase 3-4 为循环：每次完成一节课程和收尾后，更新 `lesson_count`、`reference_count`、`glossary_term_count`。
 - 每次捕捉到学习洞察时追加 `learning_record_count`。
 - 用户声明学习目标全部达成后，可把 `change_status` 置为 `completed`。
-- 如有可沉淀教学经验，在用户允许时追加到 `.speculo/.config/LESSONS.md`。
+- 如有可沉淀教学经验，在用户允许时追加到 `speculo/.speculo/.config/LESSONS.md`。
 - NOTES.md 作为教学偏好暂存区，AI 在后续课程设计中应参考其中记录。

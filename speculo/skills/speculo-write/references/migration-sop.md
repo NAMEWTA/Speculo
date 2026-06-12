@@ -36,12 +36,12 @@
 
 把旧路径改成当前 Speculo 路径：
 
-- change 产物：`.speculo/<cat>/<change>/`
-- command 产物：`.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`
-- 项目规则：`.speculo/.config/RULES.md`
-- 项目经验：`.speculo/.config/LESSONS.md`
-- 项目上下文：`.speculo/.config/context/`
-- 项目 ADR：`.speculo/.config/adr/`
+- change 产物：`speculo/.speculo/<cat>/<change>/`
+- command 产物：`speculo/.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`
+- 项目规则：`speculo/.speculo/.config/RULES.md`
+- 项目经验：`speculo/.speculo/.config/LESSONS.md`
+- 项目上下文：`speculo/.speculo/.config/context/`
+- 项目 ADR：`speculo/.speculo/.config/adr/`
 
 不要创建新的项目根 state 文件，除非当前规范明确允许。
 
@@ -85,8 +85,8 @@
 迁移完成后同步：
 
 - 分类 `00-INDEX.md`
-- `.speculo/<cat>-status.json` 初始骨架
-- `.speculo/archive/<cat>/.gitkeep`
+- `speculo/.speculo/<cat>-status.json` 初始骨架
+- `speculo/.speculo/archive/<cat>/.gitkeep`
 - 项目若有 docs quick reference / architecture / adopting 等索引，按需更新
 - CLI tests 的 asset copying 断言
 

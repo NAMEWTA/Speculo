@@ -4,16 +4,16 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/mission.md` — 教学使命
-- `.speculo/doc/<change>/resources.md` — 可信资源
-- `.speculo/doc/<change>/GLOSSARY.md` — 已有术语（若存在）
-- `.speculo/doc/<change>/learning-records/` — 已有学习记录
-- `.speculo/doc/<change>/NOTES.md` — 用户教学偏好（若存在）
-- `.speculo/doc/<change>/lessons/` — 已有课程（判断最近发展区）
+- `speculo/.speculo/doc/<change>/mission.md` — 教学使命
+- `speculo/.speculo/doc/<change>/resources.md` — 可信资源
+- `speculo/.speculo/doc/<change>/GLOSSARY.md` — 已有术语（若存在）
+- `speculo/.speculo/doc/<change>/learning-records/` — 已有学习记录
+- `speculo/.speculo/doc/<change>/NOTES.md` — 用户教学偏好（若存在）
+- `speculo/.speculo/doc/<change>/lessons/` — 已有课程（判断最近发展区）
 
 ## 产物
 
-- `.speculo/doc/<change>/lessons/<编号>.html`，按 `T-teach.md` 内置指引中的课程结构模板创建
+- `speculo/.speculo/doc/<change>/lessons/<编号>.html`，按 `T-teach.md` 内置指引中的课程结构模板创建
 - 编号规则：扫描 `lessons/` 下已有最高编号 +1，起始 `0001`
 
 ## 填写引导

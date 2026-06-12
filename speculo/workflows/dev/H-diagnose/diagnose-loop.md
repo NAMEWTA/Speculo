@@ -9,7 +9,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/diagnosis.md`，由 `../_templates/diagnosis-template.md` 填写
+- `speculo/.speculo/dev/<change>/diagnosis.md`，由 `../_templates/diagnosis-template.md` 填写
 
 ## 填写引导
 

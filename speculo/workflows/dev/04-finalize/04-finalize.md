@@ -10,7 +10,7 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
 
 本工作流是 `dev/04` 入口，是开发主线的收尾环节（`dev/01` → `dev/02` → `dev/I` → `dev/03` → `dev/04`）。它在 change 的实现完成后，**先用证据证明"真的完成了"，再改变状态并归档**。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-user-auth`）。归档目标为 `.speculo/archive/dev/<YYYY-MM>/<change>/`，`<YYYY-MM>` 从 change 目录名中的日期提取。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-user-auth`）。归档目标为 `speculo/.speculo/archive/dev/<YYYY-MM>/<change>/`，`<YYYY-MM>` 从 change 目录名中的日期提取。
 
 ## 内置指引
 
@@ -103,8 +103,8 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
   - `verification_status` 为 `verified`（`blocked` 时不得归档）
   - worktree 模式下，归档在 `base_branch` 上进行（change 目录已随 Phase 2 合并到达 base）
   - `change_status` 先置 `completed`，再随归档置 `archived`
-  - change 目录已移动到 `.speculo/archive/dev/<YYYY-MM>/<change>/`
-  - 已从 `.speculo/dev-status.json` 的 `active[]` 移除该 change
+  - change 目录已移动到 `speculo/.speculo/archive/dev/<YYYY-MM>/<change>/`
+  - 已从 `speculo/.speculo/dev-status.json` 的 `active[]` 移除该 change
   - `completion-summary.md` 无残留 `[TODO:]`
 
 ## 依赖
@@ -132,5 +132,5 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
 - 验证为 `blocked` 时停在本工作流，回到 `../03-tdd/03-tdd.md` 或 `../H-diagnose/H-diagnose.md` 修复，不归档。
 - 验证为 `verified` 且用户确认后：
   - **worktree 模式**：先执行 Phase 2，自动把 change 分支合并回 `base_branch` 并清理工作树与隔离分支（`worktree_status: merged` → `removed`，冲突即停），再在 base 分支上归档；非 worktree 模式跳过 Phase 2。
-  - 置 `change_status: completed` → 执行归档 → 置 `change_status: archived`、`archived: true`、写 `archive_path`，并从 `.speculo/dev-status.json` 移除。
-- 如有可沉淀经验，在用户或项目规则允许时追加到 `.speculo/.config/LESSONS.md`。
+  - 置 `change_status: completed` → 执行归档 → 置 `change_status: archived`、`archived: true`、写 `archive_path`，并从 `speculo/.speculo/dev-status.json` 移除。
+- 如有可沉淀经验，在用户或项目规则允许时追加到 `speculo/.speculo/.config/LESSONS.md`。

@@ -19,7 +19,7 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
    ```
 
    - 合并冲突 → **停止**，报告冲突文件，交回用户解决，不强推、不 `--force`。
-   - 合并成功 → 置 `worktree_status: merged`。合并后 base 分支已包含代码与 `.speculo/<cat>/<change>/` 产物。
+   - 合并成功 → 置 `worktree_status: merged`。合并后 base 分支已包含代码与 `speculo/.speculo/<cat>/<change>/` 产物。
 3. **清理工作树与分支**：
 
    ```bash
@@ -40,4 +40,4 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
 
 - `verification_status` 非 `verified` 不合并。
 - 未获用户确认不执行任何合并 / 删除 / 移除。
-- 不自行选择持久化目录；`worktree_status` 由调用方写入 `.speculo/<cat>/<change>/.status.json`。
+- 不自行选择持久化目录；`worktree_status` 由调用方写入 `speculo/.speculo/<cat>/<change>/.status.json`。

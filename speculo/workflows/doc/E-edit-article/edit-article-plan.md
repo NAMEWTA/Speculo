@@ -2,12 +2,12 @@
 
 ## 输入
 
-- 用户提供的文章草稿路径，或 `.speculo/doc/<change>/article.md`
+- 用户提供的文章草稿路径，或 `speculo/.speculo/doc/<change>/article.md`
 - 用户明确的语气、长度、发布目标和不可改变的主张
 
 ## 产物
 
-- `.speculo/doc/<change>/edit-plan.md`，由 `../_templates/edit-article-plan-template.md` 填写
+- `speculo/.speculo/doc/<change>/edit-plan.md`，由 `../_templates/edit-article-plan-template.md` 填写
 
 ## 填写引导
 

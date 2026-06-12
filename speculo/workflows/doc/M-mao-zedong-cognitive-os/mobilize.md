@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
-- `.speculo/doc/<change>/analysis.md`（Phase 2 产物）
-- `.speculo/doc/<change>/strategy.md`（Phase 3 产物）
+- `speculo/.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/doc/<change>/analysis.md`（Phase 2 产物）
+- `speculo/.speculo/doc/<change>/strategy.md`（Phase 3 产物）
 
 ## 产物
 
-- `.speculo/doc/<change>/action-plan.md`
+- `speculo/.speculo/doc/<change>/action-plan.md`
 
 ## 核心命题
 

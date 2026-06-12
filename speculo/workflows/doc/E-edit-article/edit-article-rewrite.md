@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/edit-plan.md`
+- `speculo/.speculo/doc/<change>/edit-plan.md`
 - 用户确认后的章节顺序
 - 原始草稿
 
 ## 产物
 
-- `.speculo/doc/<change>/edited-article.md`，由 `../_templates/edit-article-template.md` 填写
+- `speculo/.speculo/doc/<change>/edited-article.md`，由 `../_templates/edit-article-template.md` 填写
 
 ## 填写引导
 

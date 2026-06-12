@@ -3,13 +3,13 @@
 ## 输入
 
 - 用户提出的计划、需求、设计或问题
-- `.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
-- `.speculo/.config/context/CONTEXT.md`、`.speculo/.config/context/CONTEXT-MAP.md`、`.speculo/.config/adr/` 和相关代码
+- `speculo/.speculo/.config/RULES.md` 和用户明确指出的项目规则、设计约束或长期文档
+- `speculo/.speculo/.config/context/CONTEXT.md`、`speculo/.speculo/.config/context/CONTEXT-MAP.md`、`speculo/.speculo/.config/adr/` 和相关代码
 - 本 workflow 入口文件中的内置领域拷问指引
 
 ## 产物
 
-- `.speculo/dev/<change>/context-map.md`，由 `../_templates/grill-context-map-template.md` 填写
+- `speculo/.speculo/dev/<change>/context-map.md`，由 `../_templates/grill-context-map-template.md` 填写
 
 ## 填写引导
 
@@ -17,11 +17,11 @@
 2. 记录存在的领域术语来源、ADR 来源、关键模块和调用者。
 3. 标出缺失的术语表、缺失 ADR 或与用户描述冲突的代码事实。
 4. 只记录事实和待确认项，不在本阶段做方案裁决。
-5. 若 `.speculo/.config/context/CONTEXT-MAP.md` 存在，先读取它以判断涉及哪个上下文；若只有 `.speculo/.config/context/CONTEXT.md`，按单上下文处理；若都不存在，只记录“缺少术语表”，不在本阶段创建。
+5. 若 `speculo/.speculo/.config/context/CONTEXT-MAP.md` 存在，先读取它以判断涉及哪个上下文；若只有 `speculo/.speculo/.config/context/CONTEXT.md`，按单上下文处理；若都不存在，只记录“缺少术语表”，不在本阶段创建。
 
 ## 边界
 
-- 不直接修改 `.speculo/.config/context/` 或 `.speculo/.config/adr/`；修改动作留到 Decision Grill 阶段确认后执行。
+- 不直接修改 `speculo/.speculo/.config/context/` 或 `speculo/.speculo/.config/adr/`；修改动作留到 Decision Grill 阶段确认后执行。
 - 不创建实现计划或 PRD。
 
 ## 完成准则

@@ -2,14 +2,14 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
-- `.speculo/doc/<change>/analysis.md`（Phase 2 产物）
-- `.speculo/doc/<change>/strategy.md`（Phase 3 产物）
-- `.speculo/doc/<change>/action-plan.md`（Phase 4 产物）
+- `speculo/.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/doc/<change>/analysis.md`（Phase 2 产物）
+- `speculo/.speculo/doc/<change>/strategy.md`（Phase 3 产物）
+- `speculo/.speculo/doc/<change>/action-plan.md`（Phase 4 产物）
 
 ## 产物
 
-- `.speculo/doc/<change>/consultation-output.md`（由模板 `../_templates/mao-consultation-output-template.md` 填写）
+- `speculo/.speculo/doc/<change>/consultation-output.md`（由模板 `../_templates/mao-consultation-output-template.md` 填写）
 
 ## 填写引导
 

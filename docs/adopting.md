@@ -1,6 +1,6 @@
 # 接入 Speculo（使用者向）
 
-本文档面向框架使用者：你想把 Speculo 接入自己的项目，让 AI Coding 工具按统一 workflow、command 和 `.speculo/` 状态契约工作。
+本文档面向框架使用者：你想把 Speculo 接入自己的项目，让 AI Coding 工具按统一 workflow、command 和 `speculo/.speculo/` 状态契约工作。
 
 ## 快速接入
 
@@ -35,7 +35,7 @@ my-project/
     │   └── doc/
     ├── commands/
     ├── skills/
-    └── .speculo/
+    └── speculo/.speculo/
         ├── .config/
         │   ├── RULES.md
         │   ├── LESSONS.md

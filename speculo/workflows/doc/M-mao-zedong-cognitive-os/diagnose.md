@@ -2,12 +2,12 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
 - Module A 的 8 大分析模型（见下方）
 
 ## 产物
 
-- `.speculo/doc/<change>/analysis.md`
+- `speculo/.speculo/doc/<change>/analysis.md`
 
 ## 认知主线
 

@@ -10,7 +10,7 @@ keywords: [fragments, ideate, raw material, writing, 写作素材]
 
 本工作流用于在强加结构之前发展想法。它围绕用户想写的主题持续追问，捕捉 fragment，并把素材追加到当前 doc change 的 `fragments.md`。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-collect-ideas`）。产物写入 `.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-collect-ideas`）。产物写入 `speculo/.speculo/doc/<change>/`。
 
 ## 内置指引
 
@@ -22,12 +22,12 @@ keywords: [fragments, ideate, raw material, writing, 写作素材]
 
 - 用户给出的主题、初始 prompt 或已有素材
 - 用户在会话中补充的主张、小场景、锋利句子、半成形想法
-- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-collect-ideas`）
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-collect-ideas`）
 
 ### 输出
 
-- `.speculo/doc/<change>/fragments.md`
-- `.speculo/doc/<change>/interview-log.md`
+- `speculo/.speculo/doc/<change>/fragments.md`
+- `speculo/.speculo/doc/<change>/interview-log.md`
 - 可继续用于 `../B-writing-beats/B-writing-beats.md` 或 `../S-writing-shape/S-writing-shape.md` 的素材堆
 
 ### 执行原则

@@ -10,7 +10,7 @@ keywords: [beats, narrative, article, writing, 叙事, 文章]
 
 本工作流用于把文章塑造成一段由 beat 组成的旅程。用户从原始素材中选择起始 beat；执行者只写当前 beat，然后给出下一步转向选项，直到文章自然结束。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-article-notes`）。产物写入 `.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-article-notes`）。产物写入 `speculo/.speculo/doc/<change>/`。
 
 ## 内置指引
 
@@ -21,13 +21,13 @@ keywords: [beats, narrative, article, writing, 叙事, 文章]
 ### 输入
 
 - 用户提供的原始素材 Markdown 路径，或同 change 的 `fragments.md`
-- 当前文章文件：默认 `.speculo/doc/<change>/article.md`
-- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-article-notes`）
+- 当前文章文件：默认 `speculo/.speculo/doc/<change>/article.md`
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-article-notes`）
 
 ### 输出
 
-- `.speculo/doc/<change>/article.md`
-- `.speculo/doc/<change>/beat-log.md`
+- `speculo/.speculo/doc/<change>/article.md`
+- `speculo/.speculo/doc/<change>/beat-log.md`
 - 每轮 2-3 个候选下一个 beat
 
 ### 执行原则

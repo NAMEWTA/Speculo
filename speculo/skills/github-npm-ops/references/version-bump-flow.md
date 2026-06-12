@@ -46,7 +46,7 @@ head -30 CHANGELOGS.md
  - [0.0.9](https://github.com/owner/repo/releases/tag/v0.0.9)
 ```
 
-完整 CHANGELOG 契约见 [docs-sync skill](../../docs-sync/SKILL.md) 或 docs-sync 的 changelog-contract.md。
+完整 CHANGELOG 契约见 `../../../workflows/dev/D-docs-sync/changelog-contract.md`。
 
 ## 2. bump package.json
 
@@ -180,7 +180,7 @@ git push origin v0.0.10
 
 npm 已上线 → **不要**改版本号,只补后续动作。
 
-下面的 `notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留发布摘要或 release notes，由调用方写入 `.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`。
+下面的 `notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留发布摘要或 release notes，由调用方写入 `speculo/.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`。
 
 ```bash
 notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"

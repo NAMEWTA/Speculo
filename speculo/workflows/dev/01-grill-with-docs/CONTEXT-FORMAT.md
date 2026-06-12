@@ -1,6 +1,6 @@
 # CONTEXT.md 格式
 
-本辅助文档只定义项目术语表的写法。默认产物仍写入 `.speculo/dev/<change>/context-map.md` 和 `.speculo/dev/<change>/decision-log.md`；只有用户明确确认时，才按本格式创建或更新 `.speculo/.config/context/CONTEXT.md` / `.speculo/.config/context/CONTEXT-MAP.md`。
+本辅助文档只定义项目术语表的写法。默认产物仍写入 `speculo/.speculo/dev/<change>/context-map.md` 和 `speculo/.speculo/dev/<change>/decision-log.md`；只有用户明确确认时，才按本格式创建或更新 `speculo/.speculo/.config/context/CONTEXT.md` / `speculo/.speculo/.config/context/CONTEXT-MAP.md`。
 
 ## 结构
 
@@ -36,9 +36,9 @@ _避免使用_：Client、buyer、account
 
 ## 单上下文与多上下文仓库
 
-**单上下文（大多数仓库）：** `.speculo/.config/context/CONTEXT.md` 记录项目级术语表。
+**单上下文（大多数仓库）：** `speculo/.speculo/.config/context/CONTEXT.md` 记录项目级术语表。
 
-**多上下文：** `.speculo/.config/context/CONTEXT-MAP.md` 列出所有上下文、它们的位置以及它们之间的关系：
+**多上下文：** `speculo/.speculo/.config/context/CONTEXT-MAP.md` 列出所有上下文、它们的位置以及它们之间的关系：
 
 ```md
 # 上下文映射
@@ -58,8 +58,8 @@ _避免使用_：Client、buyer、account
 
 技能会自动推断适用哪种结构：
 
-- 如果 `.speculo/.config/context/CONTEXT-MAP.md` 存在，读取它以查找上下文
-- 如果只有 `.speculo/.config/context/CONTEXT.md`，则为单上下文
-- 如果都不存在，在第一个术语确定时按需创建 `.speculo/.config/context/CONTEXT.md`
+- 如果 `speculo/.speculo/.config/context/CONTEXT-MAP.md` 存在，读取它以查找上下文
+- 如果只有 `speculo/.speculo/.config/context/CONTEXT.md`，则为单上下文
+- 如果都不存在，在第一个术语确定时按需创建 `speculo/.speculo/.config/context/CONTEXT.md`
 
 当存在多个上下文时，推断当前主题与哪个上下文相关。如果不确定，就问。

@@ -10,13 +10,12 @@ keywords: [grill, 追问, pressure-test, 方案]
 
 ## 归档路径模式
 
-可选产物目录：`../.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/`
+可选产物目录：`speculo/.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/`
 
-报告文件：`../.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/report.md`
+报告文件：`speculo/.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/report.md`
 
 - `<YYYY-MM-DD>` 使用当前日期。
 - `<topic>` 从被压力测试的计划或决策主题提取，使用小写 kebab-case；无法判断时使用 `decision`。
-- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/report.md`。
 - 禁止把命令报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
 ## 调用的 skills
@@ -28,7 +27,7 @@ keywords: [grill, 追问, pressure-test, 方案]
 1. 读取 `../skills/grill-me/SKILL.md`。
 2. 先探索可从仓库确认的事实。
 3. 对无法从仓库确认且会改变决策树的问题，每次只问一个。
-4. 用户要求持久化时，把已确认决策和开放问题写入 `../.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/report.md`。
+4. 用户要求持久化时，把已确认决策和开放问题写入 `speculo/.speculo/commands/<YYYY-MM-DD>-grill-me-<topic>/report.md`。
 
 ## 产物模板（report.md，可选）
 

@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/dev/docs-sync-state.json`
+- `speculo/.speculo/dev/docs-sync-state.json`
 - `LAST_SYNC_SHA`
 - 当前 `HEAD`
 
 ## 产物
 
-- `.speculo/dev/<change>/docs-sync-report.md`，由 `../_templates/docs-sync-report-template.md` 填写或追加
+- `speculo/.speculo/dev/<change>/docs-sync-report.md`，由 `../_templates/docs-sync-report-template.md` 填写或追加
 
 ## 填写引导
 

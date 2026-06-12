@@ -5,7 +5,7 @@
 ## Iron Law
 
 - 禁止提交破坏构建的代码；release 前必须运行仓库声明的 lint / test / build 或等价质量闸。
-- docs-sync 必须由调用方按 `workflows/dev/D-docs-sync/D-docs-sync.md` 执行，基于 `.speculo/dev/docs-sync-state.json#last_sync_sha..HEAD` 的 git diff。
+- docs-sync 必须由调用方按 `workflows/dev/D-docs-sync/D-docs-sync.md` 执行，基于 `speculo/.speculo/dev/docs-sync-state.json#last_sync_sha..HEAD` 的 git diff。
 - tag 必须精确指向 release commit，即包含 `package.json` version bump 与 CHANGELOG 迁移的 commit；禁止指向后续 docs / state commit。
 - npm 已成功上传后，同一 version 不可重发；不要通过删 tag 或 unpublish 试图覆盖。
 
@@ -18,7 +18,7 @@
 - Node 与包管理器满足仓库声明
 - `.github/workflows/release.yml` 存在
 - 已确定 `PUBLISH_TO_NPM=true | false`
-- `.speculo/dev/docs-sync-state.json` 存在且可解析；不存在时转 `dev/D-docs-sync` 首次运行流程
+- `speculo/.speculo/dev/docs-sync-state.json` 存在且可解析；不存在时转 `dev/D-docs-sync` 首次运行流程
 - 目标 tag `vX.Y.Z` 不存在，除非正在执行明确的失败恢复
 
 任一项不通过就停止，输出修复建议。

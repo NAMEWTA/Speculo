@@ -3,12 +3,12 @@
 ## 输入
 
 - 用户选定的开头与当前文章
-- 原始素材 Markdown，或 `.speculo/doc/<change>/fragments.md`
-- `.speculo/doc/<change>/shape-log.md`
+- 原始素材 Markdown，或 `speculo/.speculo/doc/<change>/fragments.md`
+- `speculo/.speculo/doc/<change>/shape-log.md`
 
 ## 产物
 
-- `.speculo/doc/<change>/article.md`，由 `../_templates/writing-article-template.md` 填写或追加
+- `speculo/.speculo/doc/<change>/article.md`，由 `../_templates/writing-article-template.md` 填写或追加
 
 ## 填写引导
 

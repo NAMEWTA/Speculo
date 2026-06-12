@@ -1,6 +1,6 @@
 # state 文件 Schema（docs-sync 持久化状态）
 
-**默认存储位置**：`.speculo/dev/docs-sync-state.json`
+**默认存储位置**：`speculo/.speculo/dev/docs-sync-state.json`
 
 本 workflow 在首次运行时会按默认路径创建；后续读写均以同一路径为准。不要把 docs-sync state 放到仓库根目录。
 
@@ -9,7 +9,7 @@
 - docs-sync workflow **唯一**的跨 change 持久化状态
 - 每次成功同步后原子化写入
 - 必须跟随仓库提交到 git（作为同步基线的事实来源）
-- **不放在 workflow 资产目录内**：workflow 目录是只读知识资产，状态属于项目 `.speculo/`
+- **不放在 workflow 资产目录内**：workflow 目录是只读知识资产，状态属于项目 `speculo/.speculo/`
 
 **初始化模板**：`../_templates/docs-sync-state-template.json`
 
@@ -45,7 +45,7 @@
 {
   "schema_version": 1,
   "skill": "docs-sync",
-  "state_path": ".speculo/dev/docs-sync-state.json",
+  "state_path": "speculo/.speculo/dev/docs-sync-state.json",
   "tracked_docs": [],
   "last_sync_sha": null,
   "last_sync_short": null,
@@ -64,7 +64,7 @@
 {
   "schema_version": 1,
   "skill": "docs-sync",
-  "state_path": ".speculo/dev/docs-sync-state.json",
+  "state_path": "speculo/.speculo/dev/docs-sync-state.json",
   "tracked_docs": ["README.md", "CHANGELOG.md"],
   "last_sync_sha": "2d16d7a4d7f5da165c565b9aa3265824be133214",
   "last_sync_short": "2d16d7a",
@@ -83,7 +83,7 @@
 {
   "schema_version": 1,
   "skill": "docs-sync",
-  "state_path": ".speculo/dev/docs-sync-state.json",
+  "state_path": "speculo/.speculo/dev/docs-sync-state.json",
   "tracked_docs": ["README.md", "CHANGELOG.md"],
   "last_sync_sha": "abc1234def5678...",
   "last_sync_short": "abc1234",
@@ -102,7 +102,7 @@
 {
   "schema_version": 1,
   "skill": "docs-sync",
-  "state_path": ".speculo/dev/docs-sync-state.json",
+  "state_path": "speculo/.speculo/dev/docs-sync-state.json",
   "tracked_docs": ["README.md", "CHANGELOG.md"],
   "last_sync_sha": "ffe9876abc5432...",
   "last_sync_short": "ffe9876",
@@ -126,7 +126,7 @@
 
 读取 state 文件时按以下降级链处理：
 
-1. 文件不存在 → 首次运行流程：复制 `../_templates/docs-sync-state-template.json` 到 `.speculo/dev/docs-sync-state.json`，基线设为当前 HEAD，请用户确认 `tracked_docs`
+1. 文件不存在 → 首次运行流程：复制 `../_templates/docs-sync-state-template.json` 到 `speculo/.speculo/dev/docs-sync-state.json`，基线设为当前 HEAD，请用户确认 `tracked_docs`
 2. JSON 解析失败 → 报错退出，要求用户手动修复或删除
 3. `schema_version > 1` → 报错退出，提示技能版本过旧
 4. `last_sync_sha` 不是 40 字符十六进制且不为 `null` → 视为损坏，回退到首次运行
@@ -152,4 +152,4 @@
 - 不要手动编辑 `last_sync_sha`（除非在修复损坏状态）
 - 不要把敏感信息、机器信息、用户信息写入
 - 不要让 `total_syncs` 回退
-- 不要把 state 文件放回 workflow 资产目录——它属于项目 `.speculo/` 状态，不属于 framework 资产
+- 不要把 state 文件放回 workflow 资产目录——它属于项目 `speculo/.speculo/` 状态，不属于 framework 资产

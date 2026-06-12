@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/fragments.md`
+- `speculo/.speculo/doc/<change>/fragments.md`
 - 本轮访谈对话
 - 用户明确指出的删除、重写、合并或保留偏好
 
 ## 产物
 
-- `.speculo/doc/<change>/interview-log.md`，由 `../_templates/writing-interview-log-template.md` 填写
+- `speculo/.speculo/doc/<change>/interview-log.md`，由 `../_templates/writing-interview-log-template.md` 填写
 
 ## 填写引导
 

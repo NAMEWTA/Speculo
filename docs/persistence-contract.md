@@ -2,6 +2,17 @@
 
 所有 `.status.json` schema、目录命名规则、frontmatter 必填字段集合**唯一权威**文档。AI / 工具集成者 / 自动化脚本以本文档为准。
 
+> # ⚠️ 持久化铁律
+>
+> **Speculo 框架的所有运行时产物，必须且只能存放在 `speculo/.speculo/` 目录中。**
+>
+> - Workflow 产物 → `speculo/.speculo/<cat>/<change>/`
+> - Command 产物 → `speculo/.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`
+> - Skill **不自行持久化** → 由调用方写入 `speculo/.speculo/...` 或返回内容
+> - **绝对禁止** → `temp/`、系统临时目录、项目根目录的裸 `.speculo/`（即与 `speculo/` 平级的 `.speculo/` 目录）
+>
+> 任何偏离本文档的持久化行为均为实现错误。
+
 ---
 
 ## 0. 命名铁律
@@ -55,7 +66,7 @@
 | Command 产物目录 | `YYYY-MM-DD-<cmd-name>-<topic>` | `2026-05-28-debug-login-500` |
 | 归档目录 | `archive/<cat>/<YYYY-MM>/<change-name>/` | `archive/dev/2026-05/2026-05-20-payment-flow/` |
 
-命令产生的持久化报告、快照、handoff 和一次性操作记录必须统一写入 `.speculo/commands/<YYYY-MM-DD>-<cmd-name>-<topic>/`。`temp/`、系统临时目录和项目根目录只允许作为不保留的执行中间位置，禁止作为 Speculo 持久化产物位置。
+命令产生的持久化报告、快照、handoff 和一次性操作记录必须统一写入 `speculo/.speculo/commands/<YYYY-MM-DD>-<cmd-name>-<topic>/`。`temp/`、系统临时目录和项目根目录只允许作为不保留的执行中间位置，禁止作为 Speculo 持久化产物位置。
 
 ## 2. `.status.json` 元字段（框架强制）
 
@@ -82,7 +93,7 @@
 ## 3. 顶层索引 schema（薄）
 
 ```jsonc
-// .speculo/<cat>-status.json
+// speculo/.speculo/<cat>-status.json
 {
   "active": [
     {
@@ -95,7 +106,7 @@
 ```
 
 - 归档后变更**必须从 active 段移除**
-- 索引可重建：扫 `.speculo/<cat>/*/.status.json` 重建即可
+- 索引可重建：扫 `speculo/.speculo/<cat>/*/.status.json` 重建即可
 - 全局 `STATUS.json` **不物理存在**
 
 ## 4. Frontmatter 极简原则
@@ -184,15 +195,15 @@ description: <一句话>         # 必填
 
 | 文件 | 用户可写 | AI 可写 |
 |------|---------|---------|
-| `.speculo/.config/RULES.md` | ✅ | ❌ |
-| `.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
-| `.speculo/.config/context/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
-| `.speculo/.config/adr/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
-| `.speculo/commands/<command-run>/*` | ⚠️ | ✅ command 按内联模板写入 |
-| `.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
-| `.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
-| `.speculo/*-status.json` | ❌ | ✅ |
-| `.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入 |
+| `speculo/.speculo/.config/RULES.md` | ✅ | ❌ |
+| `speculo/.speculo/.config/LESSONS.md` | ⚠️ 可追加 | ✅ workflow 末尾追加 |
+| `speculo/.speculo/.config/context/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
+| `speculo/.speculo/.config/adr/*` | ⚠️ 用户确认后可写 | ✅ 仅在 workflow 获得用户确认后写入 |
+| `speculo/.speculo/commands/<command-run>/*` | ⚠️ | ✅ command 按内联模板写入 |
+| `speculo/.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
+| `speculo/.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
+| `speculo/.speculo/*-status.json` | ❌ | ✅ |
+| `speculo/.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入 |
 
 ## 11. 命名校验清单
 

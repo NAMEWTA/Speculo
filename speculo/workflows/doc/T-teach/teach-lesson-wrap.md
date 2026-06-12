@@ -4,17 +4,17 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/lessons/<编号>.html` — 刚完成的课程
-- `.speculo/doc/<change>/GLOSSARY.md` — 已有术语表（若不存在则创建）
-- `.speculo/doc/<change>/learning-records/` — 已有学习记录
-- `.speculo/doc/<change>/NOTES.md` — 用户教学偏好
+- `speculo/.speculo/doc/<change>/lessons/<编号>.html` — 刚完成的课程
+- `speculo/.speculo/doc/<change>/GLOSSARY.md` — 已有术语表（若不存在则创建）
+- `speculo/.speculo/doc/<change>/learning-records/` — 已有学习记录
+- `speculo/.speculo/doc/<change>/NOTES.md` — 用户教学偏好
 
 ## 产物
 
-- `.speculo/doc/<change>/reference/<编号>.html` — 本节课程的压缩参考文档
-- `.speculo/doc/<change>/GLOSSARY.md` — 更新后的术语表
-- `.speculo/doc/<change>/learning-records/<编号>.md` — 可选，仅当产生了非显而易见的洞察
-- `.speculo/doc/<change>/NOTES.md` — 可选，仅当用户表达了新的教学偏好
+- `speculo/.speculo/doc/<change>/reference/<编号>.html` — 本节课程的压缩参考文档
+- `speculo/.speculo/doc/<change>/GLOSSARY.md` — 更新后的术语表
+- `speculo/.speculo/doc/<change>/learning-records/<编号>.md` — 可选，仅当产生了非显而易见的洞察
+- `speculo/.speculo/doc/<change>/NOTES.md` — 可选，仅当用户表达了新的教学偏好
 
 ## 填写引导
 

@@ -23,7 +23,7 @@ description: 启用或关闭超压缩沟通模式以降低 token 消耗；当用
 
 - 保留技术准确性的压缩回复风格
 - 必要时对安全风险、不可逆操作或多步骤顺序使用完整清晰表达
-- 不产生 `.speculo/` 或 `.status.json` 持久化产物
+- 不产生 `speculo/.speculo/` 或 `.status.json` 持久化产物
 
 ## 执行步骤
 

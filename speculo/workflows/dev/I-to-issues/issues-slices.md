@@ -13,7 +13,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/slices.md`，由 `../_templates/issues-slices-template.md` 填写
+- `speculo/.speculo/dev/<change>/slices.md`，由 `../_templates/issues-slices-template.md` 填写
 
 ## `slices.md` 格式规范（五段结构）
 

@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/dev/<change>/overview.md`
+- `speculo/.speculo/dev/<change>/overview.md`
 - 可选的 `context-map.md`、`decision-log.md`、用户故事或 issue
 - `02-prd.md` 中的 PRD Synthesis 内置指引
 
 ## 产物
 
-- `.speculo/dev/<change>/prd.md`，由 `../_templates/prd-template.md` 填写
+- `speculo/.speculo/dev/<change>/prd.md`，由 `../_templates/prd-template.md` 填写
 
 ## 填写引导
 

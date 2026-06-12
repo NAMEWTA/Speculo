@@ -4,14 +4,14 @@
 
 ## 输入
 
-- 当前 change 目录：`.speculo/dev/<change>/` 下的实现产物（多阶段在 `tdd/<phase-id>/` 下的 `implementation-log.md`、`verification.md` 等）
+- 当前 change 目录：`speculo/.speculo/dev/<change>/` 下的实现产物（多阶段在 `tdd/<phase-id>/` 下的 `implementation-log.md`、`verification.md` 等）
 - 来源：PRD、issue、slices、诊断结论或用户明确任务
 - 项目的测试 / 类型检查 / lint / 构建命令
 - 变更 diff（VCS）
 
 ## 产物
 
-- `.speculo/dev/<change>/completion-verification.md`，由 `../_templates/completion-verification-template.md` 填写
+- `speculo/.speculo/dev/<change>/completion-verification.md`，由 `../_templates/completion-verification-template.md` 填写
 
 ## 填写引导
 
@@ -29,7 +29,7 @@
 - 不夸大、不用"应该""大概""似乎"等措辞；信心 ≠ 证据。
 - 不依赖上一轮的旧结果或部分检查。
 - `blocked` 时不进入归档；回到 `../03-tdd/03-tdd.md` 或 `../H-diagnose/H-diagnose.md` 修复后重跑本阶段。
-- 不修改 `.speculo/.config/RULES.md` 或用户未授权的项目规则文档。
+- 不修改 `speculo/.speculo/.config/RULES.md` 或用户未授权的项目规则文档。
 
 ## 完成准则
 

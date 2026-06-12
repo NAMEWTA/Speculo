@@ -2,7 +2,7 @@
 
 ## 输入
 
-- `.speculo/dev/<change>/review-sources.md`
+- `speculo/.speculo/dev/<change>/review-sources.md`
 - `git diff <fixed-point>...HEAD`
 - spec 来源文件或 `no spec available`
 - standards 来源文件或覆盖空白说明
@@ -10,7 +10,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/review-report.md`，由 `../_templates/review-report-template.md` 填写
+- `speculo/.speculo/dev/<change>/review-report.md`，由 `../_templates/review-report-template.md` 填写
 
 ## 填写引导
 

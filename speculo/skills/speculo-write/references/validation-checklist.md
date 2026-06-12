@@ -33,24 +33,24 @@
 - [ ] 输入、输出、执行步骤清晰
 - [ ] 大段细节放入 `references/`
 - [ ] 自包含：不引用 `docs/` 或仓库外文件，复制后只读 `SKILL.md` 即可用
-- [ ] skill 没有自选持久化目录；文件型产物由调用方写入或写入调用方声明的 `.speculo/...` 路径
-- [ ] 如果需要持久化，明确归档到 `.speculo/commands/`、`.speculo/<cat>/<change>/` 或 `.speculo/.config/` 的哪类规范位置
+- [ ] skill 没有自选持久化目录；文件型产物由调用方写入或写入调用方声明的 `speculo/.speculo/...` 路径
+- [ ] 如果需要持久化，明确归档到 `speculo/.speculo/commands/`、`speculo/.speculo/<cat>/<change>/` 或 `speculo/.speculo/.config/` 的哪类规范位置
 
 ## Command 检查
 
-- [ ] 归档路径位于 `.speculo/commands/`
+- [ ] 归档路径位于 `speculo/.speculo/commands/`
 - [ ] 调用 skill 使用相对路径
 - [ ] 被调用 skill 没有把持久化产物写到 `temp/`、系统临时目录或项目根目录
 - [ ] 破坏性操作要求用户确认
 - [ ] 产物模板内联且使用 `[TODO: ...]`
 
-## `.speculo/` 检查
+## `speculo/.speculo/` 检查
 
-- [ ] 新分类有 `.speculo/<cat>-status.json`
-- [ ] 新分类有 `.speculo/<cat>/.gitkeep`
-- [ ] 新分类有 `.speculo/archive/<cat>/.gitkeep`
-- [ ] 项目级长期上下文写入 `.speculo/.config/context/`
-- [ ] 项目级 ADR 写入 `.speculo/.config/adr/`
+- [ ] 新分类有 `speculo/.speculo/<cat>-status.json`
+- [ ] 新分类有 `speculo/.speculo/<cat>/.gitkeep`
+- [ ] 新分类有 `speculo/.speculo/archive/<cat>/.gitkeep`
+- [ ] 项目级长期上下文写入 `speculo/.speculo/.config/context/`
+- [ ] 项目级 ADR 写入 `speculo/.speculo/.config/adr/`
 - [ ] 没有新增项目根 state 文件
 
 ## 文档与测试

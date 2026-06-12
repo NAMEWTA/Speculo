@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `.speculo/doc/<change>/mission.md`（已确认的使命）
+- `speculo/.speculo/doc/<change>/mission.md`（已确认的使命）
 - 用户的社区偏好（是否愿意加入线上/线下社区）
-- 当前 doc change 目录：`.speculo/doc/<change>/`
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`
 
 ## 产物
 
-- `.speculo/doc/<change>/resources.md`，由 `../_templates/teach-resources-template.md` 填写
+- `speculo/.speculo/doc/<change>/resources.md`，由 `../_templates/teach-resources-template.md` 填写
 
 ## 填写引导
 

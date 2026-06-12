@@ -10,7 +10,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/regression.md`，由 `../_templates/regression-template.md` 填写
+- `speculo/.speculo/dev/<change>/regression.md`，由 `../_templates/regression-template.md` 填写
 
 ## 填写引导
 
@@ -25,7 +25,7 @@
 
 - 不提交未验证修复。
 - 不自动归档 change。
-- 不修改 `.speculo/.config/RULES.md` 或用户未明确授权的项目规则文档。
+- 不修改 `speculo/.speculo/.config/RULES.md` 或用户未明确授权的项目规则文档。
 
 ## 完成准则
 

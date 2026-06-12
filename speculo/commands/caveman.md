@@ -10,13 +10,12 @@ keywords: [caveman, brief, tokens, 简洁]
 
 ## 归档路径模式
 
-可选产物目录：`../.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/`
+可选产物目录：`speculo/.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/`
 
-模式报告：`../.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/mode.md`
+模式报告：`speculo/.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/mode.md`
 
 - `<YYYY-MM-DD>` 使用当前日期。
 - `<topic>` 从用户请求提取，使用小写 kebab-case；无法判断时使用 `mode`。
-- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/mode.md`。
 - 禁止把模式报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
 （通常只改变对话风格，不需要持久化。）
@@ -30,7 +29,7 @@ keywords: [caveman, brief, tokens, 简洁]
 1. 读取 `../skills/caveman/SKILL.md`。
 2. 根据用户意图启用或关闭压缩沟通模式。
 3. 若用户只要求启用模式，在对话中确认当前模式即可，不写文件。
-4. 若用户要求记录模式切换，把报告写入 `../.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/mode.md`。
+4. 若用户要求记录模式切换，把报告写入 `speculo/.speculo/commands/<YYYY-MM-DD>-caveman-<topic>/mode.md`。
 
 ## 产物模板（mode.md，可选）
 

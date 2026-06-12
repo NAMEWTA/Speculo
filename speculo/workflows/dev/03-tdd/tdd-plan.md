@@ -8,7 +8,7 @@
 
 ## 产物
 
-- `.speculo/dev/<change>/tdd/<phase-id>/tdd-plan.md`，由 `../_templates/tdd-plan-template.md` 填写（`<phase-id>` 见 `03-tdd.md`「TDD 产物目录与阶段标识」）
+- `speculo/.speculo/dev/<change>/tdd/<phase-id>/tdd-plan.md`，由 `../_templates/tdd-plan-template.md` 填写（`<phase-id>` 见 `03-tdd.md`「TDD 产物目录与阶段标识」）
 
 ## 填写引导
 

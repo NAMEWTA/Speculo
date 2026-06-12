@@ -26,4 +26,4 @@
 
 ## State
 
-[TODO: 记录 `.speculo/dev/docs-sync-state.json` 的 old/new baseline。]
+[TODO: 记录 `speculo/.speculo/dev/docs-sync-state.json` 的 old/new baseline。]

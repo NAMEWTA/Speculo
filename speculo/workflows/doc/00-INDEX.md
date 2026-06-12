@@ -8,9 +8,11 @@ keywords: [doc, writing, article, fragments, edit, 文档, 写作]
 
 # Doc Workflow Index
 
-本文件是 doc 分类的导航入口。进入时先读取 `../../.speculo/doc-status.json`，再按其中 active change 读取 `../../.speculo/doc/<change>/.status.json`，根据用户意图推荐横向 workflow。
+> ⚠️ **持久化铁律：本文件及所有 doc workflow 的全部产物，必须且只能写入 `speculo/.speculo/doc/<change>/`。绝对禁止写入项目根目录的 `.speculo/`、`temp/` 或其他任何非规范位置。**
 
-> **命名铁律：** 所有 change 目录必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-article-draft`）。不符合此格式的目录视为 `malformed`，仅汇报不自动操作。详见 `../../docs/persistence-contract.md` §0。
+本文件是 doc 分类的导航入口。进入时先读取 `speculo/.speculo/doc-status.json`，再按其中 active change 读取 `speculo/.speculo/doc/<change>/.status.json`，根据用户意图推荐横向 workflow。
+
+> **命名铁律：** 所有 change 目录必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-article-draft`）。不符合此格式的目录视为 `malformed`，仅汇报不自动操作。
 
 ## 入口别名
 
@@ -25,10 +27,10 @@ keywords: [doc, writing, article, fragments, edit, 文档, 写作]
 
 ## 进入协议
 
-1. 若用户未指定 change，扫描 `../../.speculo/doc-status.json` 和 `../../.speculo/doc/*/.status.json`，列出 active changes。
+1. 若用户未指定 change，扫描 `speculo/.speculo/doc-status.json` 和 `speculo/.speculo/doc/*/.status.json`，列出 active changes。
    - **命名校验**：扫描时仅处理符合 `YYYY-MM-DD-<kebab-name>` 格式的目录。不符合的目录标记为 `malformed`，单独列出路径并提示用户修复或手动清理，不自动删除或重命名。
 2. 若只有一个 active change，默认继续该 change；若有多个 active change，要求用户选择。
-3. 若没有 active change，按用户意图创建新的 doc change 目录，**目录名必须为 `YYYY-MM-DD-<kebab-name>`**（使用当前日期，`<kebab-name>` 从用户意图提取），并初始化 `.status.json` 与 `../../.speculo/doc-status.json`。
+3. 若没有 active change，按用户意图创建新的 doc change 目录，**目录名必须为 `YYYY-MM-DD-<kebab-name>`**（使用当前日期，`<kebab-name>` 从用户意图提取），并初始化 `.status.json` 与 `speculo/.speculo/doc-status.json`。
 4. 推荐入口时优先使用用户显式别名；没有别名时按用户意图推荐一个横向 workflow。
 5. 执行任何 workflow 前，读取该 workflow 入口文件、阶段文件和模板。
 

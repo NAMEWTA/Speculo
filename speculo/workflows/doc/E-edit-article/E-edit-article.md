@@ -10,7 +10,7 @@ keywords: [edit, article, revise, clarity, draft, 编辑, 修订]
 
 本工作流用于编辑已有文章草稿。先按标题和信息依赖确认章节顺序，再逐节重写，提升清晰度、连贯性和流畅度。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-edit-article`）。产物写入 `.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-edit-article`）。产物写入 `speculo/.speculo/doc/<change>/`。
 
 ## 内置指引
 
@@ -20,14 +20,14 @@ keywords: [edit, article, revise, clarity, draft, 编辑, 修订]
 
 ### 输入
 
-- 用户提供的文章草稿路径，或 `.speculo/doc/<change>/article.md`
+- 用户提供的文章草稿路径，或 `speculo/.speculo/doc/<change>/article.md`
 - 用户明确的发布目标、语气偏好或约束
-- 当前 doc change 目录：`.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-edit-article`）
+- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`（`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`，例：`2026-06-12-edit-article`）
 
 ### 输出
 
-- `.speculo/doc/<change>/edit-plan.md`
-- `.speculo/doc/<change>/edited-article.md`
+- `speculo/.speculo/doc/<change>/edit-plan.md`
+- `speculo/.speculo/doc/<change>/edited-article.md`
 - 已确认的章节顺序、依赖关系和逐节编辑结果
 
 ### 执行原则

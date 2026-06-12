@@ -2,12 +2,12 @@
 
 ## 输入
 
-- 原始素材 Markdown，或 `.speculo/doc/<change>/fragments.md`
-- `.speculo/doc/<change>/article.md` 的当前内容；如果不存在，视为空文章
+- 原始素材 Markdown，或 `speculo/.speculo/doc/<change>/fragments.md`
+- `speculo/.speculo/doc/<change>/article.md` 的当前内容；如果不存在，视为空文章
 
 ## 产物
 
-- `.speculo/doc/<change>/shape-log.md`，由 `../_templates/writing-shape-log-template.md` 填写或追加
+- `speculo/.speculo/doc/<change>/shape-log.md`，由 `../_templates/writing-shape-log-template.md` 填写或追加
 
 ## 填写引导
 

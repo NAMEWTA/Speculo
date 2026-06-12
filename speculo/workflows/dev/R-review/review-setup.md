@@ -4,11 +4,11 @@
 
 - 用户提供的 fixed point；如果缺失，先询问
 - 当前 git 仓库
-- 当前 change 目录：`.speculo/dev/<change>/`
+- 当前 change 目录：`speculo/.speculo/dev/<change>/`
 
 ## 产物
 
-- `.speculo/dev/<change>/review-sources.md`，由 `../_templates/review-sources-template.md` 填写
+- `speculo/.speculo/dev/<change>/review-sources.md`，由 `../_templates/review-sources-template.md` 填写
 
 ## 填写引导
 
@@ -22,12 +22,12 @@
 5. 寻找 spec 来源，顺序为：
    - commit message 中的 issue / PR 引用
    - 用户作为参数传入的路径
-   - `.speculo/dev/<change>/prd.md`、`slices.md`、`decision-log.md`
+   - `speculo/.speculo/dev/<change>/prd.md`、`slices.md`、`decision-log.md`
    - 仓库中与分支名或功能匹配的规格文档
 6. 寻找 standards 来源，常见路径包括：
-   - `.speculo/.config/RULES.md`
-   - `.speculo/.config/context/`
-   - `.speculo/.config/adr/`
+   - `speculo/.speculo/.config/RULES.md`
+   - `speculo/.speculo/.config/context/`
+   - `speculo/.speculo/.config/adr/`
    - `AGENTS.md`、`CONTRIBUTING.md`
    - `.editorconfig`、`eslint.config.*`、`biome.json`、`prettier.config.*`、`tsconfig.json`
 7. 机器强制的标准只记录来源，不重复检查工具已覆盖的内容。
