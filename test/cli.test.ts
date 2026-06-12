@@ -49,6 +49,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "doc", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "doc", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);
       assert.equal(await pathExists(join(root, "adapters")), false);
     } finally {

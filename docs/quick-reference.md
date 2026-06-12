@@ -30,6 +30,7 @@
 | ID | 入口 | 一句话用途 |
 |----|------|----------|
 | `doc/index` | `workflows/doc/00-INDEX.md` | 文档写作、塑形、编辑与素材管理导航 |
+| `doc/M-mao-zedong-cognitive-os` | `workflows/doc/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md` | `doc/M`：以毛泽东方法论为底座的认知咨询 |
 | `doc/teach` | `workflows/doc/T-teach/T-teach.md` | `doc/T`：设计交互式课程：使命→资源→课程→参考→记录 |
 | `doc/writing-fragments` | `workflows/doc/F-writing-fragments/F-writing-fragments.md` | `doc/F`：追问式访谈采集 fragment 素材 |
 | `doc/writing-beats` | `workflows/doc/B-writing-beats/B-writing-beats.md` | `doc/B`：逐个 beat 推进文章旅程 |

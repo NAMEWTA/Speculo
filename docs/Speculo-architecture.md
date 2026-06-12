@@ -116,6 +116,8 @@ workflows/dev/
 ```text
 workflows/doc/
 ├── 00-INDEX.md
+├── M-mao-zedong-cognitive-os/
+├── T-teach/
 ├── F-writing-fragments/
 ├── B-writing-beats/
 ├── S-writing-shape/
@@ -125,6 +127,8 @@ workflows/doc/
 
 入口别名：
 
+- `doc/M`：以毛泽东方法论为底座的认知咨询
+- `doc/T`：设计交互式课程：使命→资源→课程→参考→记录
 - `doc/F`：追问式访谈采集 fragment 素材
 - `doc/B`：逐个 beat 推进文章旅程
 - `doc/S`：读取素材堆并塑造成文章
