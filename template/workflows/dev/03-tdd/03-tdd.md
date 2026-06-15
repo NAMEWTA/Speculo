@@ -30,6 +30,16 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 - `interface-design.md`：设计可测试公共接口时读取。
 - `refactoring.md`：进入重构阶段时读取。
 
+### 消费 slices 切片契约
+
+多阶段 change 从 `slices.md` 接手时，每个 TDD 阶段对应一个切片，须读取并守护该切片契约（见 `../I-to-issues/issues-slices.md`）：
+
+- **保留/不动**：把切片的「保留/不动」清单当作实现硬约束——冻结常量 / 共享依赖 / 邻近功能一律不碰。
+- **关键核实结论与行号现场核对**：切片记录的行号为*近似*，实现时一律以现场代码为准、不照搬。
+- **验收切片**：Finish 阶段运行切片的「验收切片」；删除型切片须含残留扫描（`grep` 0 命中）并留证。
+- **横切铁律**：遵守 §4 横切关注点（契约先行、删缓存可重建、数据安全冻结等）。
+- **存疑即问**：计划阶段遇未决分支，按 `../I-to-issues/issues-slices.md`「存疑时的提问协议」一次一问、带推荐、逐步锁定。
+
 ## 阶段
 
 > **产物目录：** 本工作流所有产物写入 `speculo/.speculo/dev/<change>/tdd/<phase-id>/`（见下「TDD 产物目录与阶段标识」）。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-user-auth`）。

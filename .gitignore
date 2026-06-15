@@ -10,3 +10,7 @@ coverage/
 *.swp
 .nezha/
 .worktree/
+.idea/
+.venv/
+__pycache__/
+speculo/

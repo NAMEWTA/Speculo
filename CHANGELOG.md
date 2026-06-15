@@ -6,6 +6,30 @@
 
 ---
 
+## [0.1.9] — 2026-06-15
+
+### Added
+
+- **workflows**：`I-to-issues` 新增「切片计划质量准则」与「存疑时的提问协议」（决策树），确保切片计划可被下游直接接手。
+- **workflows**：`slices.md` 结构从五段扩展为八段——新增 §0 战略与背景（已确认决策 + 关键核实结论）、§6 风险与回滚、§7 退役清单、§8 验证总览；最小形态（§0 简 + §1 + §3 + §5 + §8）支持单文件小改。
+- **workflows**：`03-tdd` 新增「消费 slices 切片契约」段，规范多阶段 change 中 TDD 与 slices 的交接——保留/不动约束、行号现场核对、验收切片、横切铁律、存疑提问。
+- **templates**：`tdd-plan-template.md` 新增「保留/不动」「现场核对」「验收切片」字段。
+- **templates**：`tdd-verification-template.md` 新增「验收切片结果（含残留扫描）」「保留/不动核对」字段。
+
+### Changed
+
+- **workflows**：`issues-slices.md` 填写引导从 7 步扩展为 10 步，覆盖 Context 采集、条件段填写、验证收口。
+- **templates**：`issues-slices-template.md` 同步八段结构，标注条件段与最小形态，新增「保留/不动」「残留扫描」「风险」「退役」「验证总览」字段。
+- **workflows**：`tdd-finish.md` 完成准则新增验收切片运行、保留/不动核对要求。
+- **workflows**：`tdd-loop.md` RED-GREEN-REFACTOR 循环增加保留/不动检查与行号现场核对纪律。
+- **workflows**：`tdd-plan.md` 计划阶段增加切片契约承载步骤。
+
+### Housekeeping
+
+- `.gitignore` 新增 `.idea/`、`.venv/`、`__pycache__/`、`speculo/`（dogfooding 产物目录）。
+
+---
+
 ## [0.1.8] — 2026-06-13
 
 ### Changed
