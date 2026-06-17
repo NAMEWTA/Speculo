@@ -18,9 +18,13 @@
 
 ### Spec 维度（做对了吗）
 
-1. 先读 spec，再读 diff。
+1. 先读 spec（若有），再读 diff；若无 spec 且 `review-setup.md` 记录为 `no spec available`，则从以下自推断来源检查一致性：
+   - **commit message 推断**：commit message 中描述的需求是否在 diff 中完整实现
+   - **测试推断**：新增/修改的测试所描述的预期行为是否在 diff 中正确实现
+   - **代码注释推断**：diff 中 TODO/FIXME/HACK 标记的意图是否被正确落实
+   - **自推断仍不足时**：整区写 `no spec available — unable to verify spec compliance`
 2. 报告：缺失需求、范围蔓延（spec 外的实现）、看似实现但有问题的需求。
-3. 每条引用 spec 原文。缺少 spec 时整区写 `no spec available`。
+3. 每条引用 spec 原文（若有）或推断来源（commit message/测试/注释）。
 
 ### Engineering 维度（做好了吗）
 

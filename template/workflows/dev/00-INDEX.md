@@ -22,9 +22,9 @@ keywords: [dev, 开发, workflow, index, 状态]
 | `dev/02` | `02-prd/02-prd.md` | zoom-out 全景理解与 PRD 综合 |
 | `dev/03` | `03-tdd/03-tdd.md` | 垂直切片 TDD 实现 |
 | `dev/04` | `04-finalize/04-finalize.md` | 完成前验证、状态收尾与归档 |
-| `dev/I` | `I-to-issues/I-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow |
-| `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断 |
-| `dev/R` | `R-review/R-review.md` | Spec / Engineering / Standards 三维度 diff 审查 |
+| `dev/I` | `I-to-issues/I-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow，也可独立进入 |
+| `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断，零依赖，可独立进入 |
+| `dev/R` | `R-review/R-review.md` | Spec / Engineering / Standards 三维度 diff 审查，零依赖，可独立进入 |
 | `dev/D` | `D-docs-sync/D-docs-sync.md` | 基于 git diff 同步 README、CHANGELOG、AGENTS 等对外文档 |
 
 ## 进入协议
@@ -42,10 +42,12 @@ keywords: [dev, 开发, workflow, index, 状态]
 - `full`：`dev/01` -> `dev/02` -> `dev/I` -> `dev/03` -> `dev/04`。
 - `planning-only`：`dev/01` -> `dev/02` -> `dev/I`，不进入实现。
 - `implementation-only`：已有 PRD、issue 或明确任务时，从 `dev/03` 开始。
-- `hotfix`：Bug、异常、性能回退时，从 `dev/H` 开始；修复阶段可嵌入 `dev/03` 的 TDD 回归循环。
-- `review`：已有 fixed point 或用户要求审查时，从 `dev/R` 开始。
+- `hotfix`：Bug、异常、性能回退时，从 `dev/H` 开始（零依赖，无需上游工作流产物）；修复阶段可嵌入 `dev/03` 的 TDD 回归循环。
+- `review`：已有 fixed point 或用户要求审查时，从 `dev/R` 开始（零依赖，无需上游工作流产物）。
 - `finalize`：实现完成、需要完成前验证与状态收尾归档时，从 `dev/04` 开始。
 - `docs-sync`：需要基于 git 差异刷新对外文档时，从 `dev/D` 开始。
+
+> **独立入口说明：** `dev/H`、`dev/I`、`dev/R` 三个横向工作流均为零硬依赖设计。用户可直接从任一入口进入，无需预先执行 `dev/01`、`dev/02` 等主线工作流。当同 change 目录下缺少上游产物时，各工作流会自行通过代码库探索（git 考古、grep 搜索、文档扫描）采集所需上下文，仅在代码库无法确定的决策点上询问用户。
 
 ## 状态汇报
 

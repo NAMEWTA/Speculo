@@ -39,6 +39,43 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 
 详细诊断纪律在同目录 `diagnose-guide.md`。必须由人类操作才能复现时，按 `scripts/hitl-loop.template.sh` 建立结构化 HITL 循环。
 
+### 独立使用
+
+本工作流**零硬依赖**，无需预先执行 dev/01、dev/02 等其他工作流即可独立进入。只需用户描述 Bug/异常/性能症状 + 当前 git 仓库即可启动。
+
+**独立进入流程：**
+
+1. **change 目录**：若用户未指定 `<change>` 目录，按 `YYYY-MM-DD-<kebab-name>` 格式创建（如 `2026-06-17-fix-login-timeout`），初始化 `.status.json` 并更新 `dev-status.json`。
+2. **信息自采集**：若同 change 目录下无上游产物（PRD、decision-log 等），**自行通过代码库探索采集诊断所需上下文**，不要求用户先执行其他工作流：
+   - `git log --oneline -30` 查找近期相关变更
+   - 搜索错误信息/堆栈中的关键符号（`grep -rn` 在项目中定位）
+   - 读取相关模块的代码、测试和配置文件
+   - 检查 `speculo/.speculo/.config/` 下的项目规则与 ADR
+3. **深度搜索**：反馈循环构建受阻时，不轻易放弃——按 `diagnose-guide.md` 的 10 种方法逐项尝试；代码库中找不到线索时，搜索项目文档、issue tracker、CI 日志。
+4. **仅必要时询问**：仅在代码库探索无法确定的关键决策点（如需要访问外部环境、需要用户提供日志文件）使用 `AskUserQuestion`。
+
+### 缺少 change 目录时的自初始化
+
+若当前无对应 change 目录，按以下步骤创建：
+
+1. 从用户报告的 Bug/异常提取 `<kebab-name>`（如 `fix-login-timeout`、`fix-payment-npe`）
+2. 创建 `speculo/.speculo/dev/<YYYY-MM-DD>-<kebab-name>/`
+3. 初始化 `.status.json`：
+   ```json
+   {
+     "dev_entry": "dev/H",
+     "current_phase": "1. Diagnose Loop",
+     "phase_history": [],
+     "change_status": "active",
+     "embedded_guides": ["diagnose"],
+     "feedback_loop": "none",
+     "hypothesis_status": "open",
+     "regression_test": "blocked",
+     "debug_artifacts": []
+   }
+   ```
+4. 在 `speculo/.speculo/dev-status.json` 的 `active` 数组中追加该 change 目录名
+
 ## 阶段
 
 ### 1. Diagnose Loop — 反馈循环与假设
@@ -61,8 +98,8 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 
 ## 依赖
 
-- 软依赖：无
 - 硬依赖：无
+- 软依赖：无。若同 change 目录下存在其他工作流产物（如 diagnosis.md），可继承其信息加速执行；缺失时自行采集，不阻塞流程。修复阶段可嵌入 `../03-tdd/03-tdd.md` 的 Slice Loop 执行 TDD 修复，此为可选加速而非必须。
 
 ## 状态扩展字段
 

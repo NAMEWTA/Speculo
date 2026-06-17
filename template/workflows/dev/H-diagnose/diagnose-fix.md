@@ -2,7 +2,7 @@
 
 ## 输入
 
-- `diagnosis.md`
+- `diagnosis.md`（本工作流 Phase 1 自产；独立进入时由 diagnose-loop 生成，无需外部提供）
 - 已确认或最高可信假设
 - 原始反馈循环和可用测试接缝
 - `H-diagnose.md` 中的内置诊断指引
