@@ -3,8 +3,7 @@ import { join, resolve } from "node:path";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
-  promptWorkflowSelection,
-  promptUpdateSelection,
+  promptCategorySelection,
   scanInstalledWorkflows,
   selectAllFromCatalog,
   isInteractive,
@@ -150,17 +149,19 @@ async function resolveSelection(
   const catalog = await discoverWorkflowCatalog(packageRoot);
 
   if (mode === 'update') {
-    // In update mode, show currently installed + newly available
+    // Pre-select categories that already have at least one workflow installed
     let installed: { category: string; name: string }[] = [];
     try {
       installed = await scanInstalledWorkflows(root);
     } catch {
       // root not readable — treat as empty
     }
-    return promptUpdateSelection(catalog, installed);
+    const preSelectedCategories = new Set(installed.map((w) => w.category));
+    return promptCategorySelection(catalog, { preSelectedCategories });
   }
 
-  return promptWorkflowSelection(catalog);
+  // Init mode: no pre-selected categories
+  return promptCategorySelection(catalog);
 }
 
 async function initFresh(

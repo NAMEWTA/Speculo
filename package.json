@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Speculo — specification-driven development framework assets, with a CLI to install and update them across AI coding tools.",
   "type": "module",
   "bin": {
@@ -50,5 +50,8 @@
   "devDependencies": {
     "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2"
   }
 }

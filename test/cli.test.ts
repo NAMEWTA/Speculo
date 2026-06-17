@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { initSpeculo } from "../src/index.js";
 import { pathExists } from "../src/utils.js";
-import { selectAllFromCatalog, discoverWorkflowCatalog } from "../src/workflows.js";
+import { promptCategorySelection, selectAllFromCatalog, discoverWorkflowCatalog } from "../src/workflows.js";
 
 const packageRoot = process.cwd();
 
@@ -319,5 +319,13 @@ describe("speculo CLI operations", () => {
       w => w.category === "doc" && w.name === "M-mao-zedong-cognitive-os"
     );
     assert.equal(docMao, undefined);
+  });
+
+  it("promptCategorySelection falls back to all in non-TTY", async () => {
+    const catalog = await discoverWorkflowCatalog(packageRoot);
+    const selection = await promptCategorySelection(catalog);
+    assert.ok(selection.categories.has("dev"));
+    assert.ok(selection.categories.has("doc"));
+    assert.ok(selection.categories.has("person"));
   });
 });

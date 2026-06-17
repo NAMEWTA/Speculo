@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createInterface } from "node:readline/promises";
+import { checkbox } from "@inquirer/prompts";
 
 // ---- Types ----
 
@@ -131,233 +131,74 @@ export function isInteractive(): boolean {
   return process.stdin.isTTY === true;
 }
 
-function flattenCatalog(
-  catalog: WorkflowCatalog
-): { entry: WorkflowEntry; index: number }[] {
-  const flat: { entry: WorkflowEntry; index: number }[] = [];
+/**
+ * Build the choices array for the @inquirer/checkbox prompt.
+ * Each category becomes one checkbox option showing its name and workflow count.
+ */
+function buildCategoryChoices(
+  catalog: WorkflowCatalog,
+  preSelected?: Set<string>
+): { name: string; value: string; description: string; checked: boolean }[] {
   const sortedCategories = [...catalog.keys()].sort();
-
-  for (const cat of sortedCategories) {
-    const workflows = catalog.get(cat)!;
-    for (const wf of workflows) {
-      flat.push({ entry: wf, index: flat.length + 1 });
-    }
-  }
-
-  return flat;
-}
-
-function printCatalogMenu(catalog: WorkflowCatalog): number {
-  const sortedCategories = [...catalog.keys()].sort();
-  let num = 1;
-
-  for (const cat of sortedCategories) {
-    console.log(`\n  [${cat}]`);
-    const workflows = catalog.get(cat)!;
-    for (const wf of workflows) {
-      const desc = wf.description ? ` — ${wf.description.slice(0, 60)}${wf.description.length > 60 ? "..." : ""}` : "";
-      console.log(`    ${String(num).padStart(2)}. ${wf.displayName}${desc}`);
-      num++;
-    }
-  }
-
-  console.log("");
-  return num - 1;
-}
-
-function parseSelection(
-  input: string,
-  maxIndex: number
-): number[] | "all" | null {
-  const trimmed = input.trim().toLowerCase();
-  if (trimmed === "" || trimmed === "all") return "all";
-
-  const numbers: number[] = [];
-  const parts = trimmed.split(/[,\s]+/);
-  for (const part of parts) {
-    if (part === "") continue;
-    const n = Number(part);
-    if (!Number.isInteger(n) || n < 1 || n > maxIndex) return null;
-    numbers.push(n);
-  }
-
-  return numbers.length > 0 ? numbers : null;
+  return sortedCategories.map((cat) => {
+    const wfs = catalog.get(cat)!;
+    const count = wfs.length;
+    const description = `${count} workflow${count > 1 ? "s" : ""}`;
+    return {
+      name: cat,
+      value: cat,
+      description,
+      checked: preSelected?.has(cat) ?? false,
+    };
+  });
 }
 
 /**
- * Show a numbered menu of available workflows and prompt the user to select.
- * Returns "all" selection when non-interactive or user enters empty/all.
+ * Interactive category-level workflow selection using @inquirer checkbox.
+ *
+ * In init mode, no categories are pre-selected — the user picks what they want.
+ * In update mode, categories already installed are pre-selected (checked by default).
+ *
+ * Returns a WorkflowSelection containing every workflow in the selected categories.
+ * If no categories are selected, returns an empty selection (only .speculo, commands,
+ * and skills are installed).
+ *
+ * When stdin is not a TTY (pipe, redirect), falls back to selecting all categories.
  */
-export async function promptWorkflowSelection(
+export async function promptCategorySelection(
   catalog: WorkflowCatalog,
-  options?: { all?: boolean }
+  options?: { preSelectedCategories?: Set<string> }
 ): Promise<WorkflowSelection> {
-  const flat = flattenCatalog(catalog);
-  const maxIndex = flat.length;
-
-  // Non-interactive or explicit --all → select all
-  if (!isInteractive() || options?.all) {
+  // Non-interactive → select all
+  if (!isInteractive()) {
     return selectAllFromCatalog(catalog);
   }
 
-  console.log("\nAvailable workflows:");
-  printCatalogMenu(catalog);
+  const choices = buildCategoryChoices(catalog, options?.preSelectedCategories);
 
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  const selectedCategories: string[] = await checkbox({
+    message: "Select workflow categories to install (space to toggle, enter to confirm):",
+    choices,
+    pageSize: 10,
   });
 
-  let attempts = 0;
-  const maxAttempts = 3;
-
-  while (attempts < maxAttempts) {
-    const answer = await rl.question(
-      `Select workflows (1-${maxIndex}, comma/space separated, or "all"): `
-    );
-    attempts++;
-
-    const result = parseSelection(answer, maxIndex);
-    if (result === "all") {
-      rl.close();
-      return selectAllFromCatalog(catalog);
-    }
-    if (result !== null) {
-      rl.close();
-      const workflows = result.map((i) => ({
-        category: flat[i - 1].entry.category,
-        name: flat[i - 1].entry.name,
-      }));
-      const categories = new Set(workflows.map((w) => w.category));
-      return { workflows, categories };
-    }
-
-    console.log(
-      `Invalid selection. Enter numbers 1-${maxIndex} (comma/space separated), or "all".`
-    );
+  if (selectedCategories.length === 0) {
+    console.log("No categories selected. No workflows will be installed.\n");
   }
 
-  rl.close();
-  throw new Error(
-    `Too many invalid attempts. Please run with --all to install all workflows.`
-  );
-}
+  // Build WorkflowSelection from selected categories
+  const workflows: { category: string; name: string }[] = [];
+  const categories = new Set<string>();
 
-/**
- * Show a menu for update mode: split workflows into installed (refreshable)
- * and new (available to add). Returns the combined selection.
- */
-export async function promptUpdateSelection(
-  catalog: WorkflowCatalog,
-  installed: { category: string; name: string }[],
-  options?: { all?: boolean }
-): Promise<WorkflowSelection> {
-  // Non-interactive or explicit --all → select all
-  if (!isInteractive() || options?.all) {
-    return selectAllFromCatalog(catalog);
-  }
-
-  console.log("\nWorkflow update selection:");
-
-  // Build a set of installed keys for quick lookup
-  const installedSet = new Set(
-    installed.map((w) => `${w.category}/${w.name}`)
-  );
-
-  // Categorize workflows
-  const refreshable: WorkflowEntry[] = [];
-  const newOnly: WorkflowEntry[] = [];
-  const staleWarnings: string[] = [];
-
-  // Find stale (installed but no longer in catalog)
-  for (const w of installed) {
-    const catWfs = catalog.get(w.category);
-    if (!catWfs || !catWfs.some((e) => e.name === w.name)) {
-      staleWarnings.push(`${w.category}/${w.name}`);
-    }
-  }
-
-  // Build flat list: refreshable first, then new
-  for (const [cat, wfs] of catalog) {
+  for (const cat of selectedCategories) {
+    categories.add(cat);
+    const wfs = catalog.get(cat) ?? [];
     for (const wf of wfs) {
-      if (installedSet.has(`${wf.category}/${wf.name}`)) {
-        refreshable.push(wf);
-      } else {
-        newOnly.push(wf);
-      }
+      workflows.push({ category: wf.category, name: wf.name });
     }
   }
 
-  if (staleWarnings.length > 0) {
-    console.log(
-      `\n  ⚠ Stale (installed but no longer available): ${staleWarnings.join(", ")}`
-    );
-  }
-
-  let num = 1;
-  const flatWithLabels: { entry: WorkflowEntry; label: string; index: number }[] = [];
-
-  if (refreshable.length > 0) {
-    console.log("\n  [Installed — select to refresh]");
-    for (const wf of refreshable) {
-      const desc = wf.description ? ` — ${wf.description.slice(0, 50)}${wf.description.length > 50 ? "..." : ""}` : "";
-      console.log(`    ${String(num).padStart(2)}. ${wf.displayName} (${wf.category})${desc}`);
-      flatWithLabels.push({ entry: wf, label: "installed", index: num });
-      num++;
-    }
-  }
-
-  if (newOnly.length > 0) {
-    console.log("\n  [NEW — select to add]");
-    for (const wf of newOnly) {
-      const desc = wf.description ? ` — ${wf.description.slice(0, 50)}${wf.description.length > 50 ? "..." : ""}` : "";
-      console.log(`    ${String(num).padStart(2)}. ${wf.displayName} (${wf.category}) [NEW]${desc}`);
-      flatWithLabels.push({ entry: wf, label: "new", index: num });
-      num++;
-    }
-  }
-
-  console.log("");
-
-  const maxIndex = num - 1;
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  let attempts = 0;
-  const maxAttempts = 3;
-
-  while (attempts < maxAttempts) {
-    const answer = await rl.question(
-      `Select workflows (1-${maxIndex}, comma/space separated, or "all"): `
-    );
-    attempts++;
-
-    const result = parseSelection(answer, maxIndex);
-    if (result === "all") {
-      rl.close();
-      return selectAllFromCatalog(catalog);
-    }
-    if (result !== null) {
-      rl.close();
-      const workflows = result.map((i) => ({
-        category: flatWithLabels[i - 1].entry.category,
-        name: flatWithLabels[i - 1].entry.name,
-      }));
-      const categories = new Set(workflows.map((w) => w.category));
-      return { workflows, categories };
-    }
-
-    console.log(
-      `Invalid selection. Enter numbers 1-${maxIndex} (comma/space separated), or "all".`
-    );
-  }
-
-  rl.close();
-  throw new Error(
-    `Too many invalid attempts. Please run with --all to update all workflows.`
-  );
+  return { workflows, categories };
 }
 
 /** Build a WorkflowSelection that selects every workflow in the catalog. */
