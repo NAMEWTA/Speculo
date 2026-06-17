@@ -6,6 +6,30 @@
 
 ---
 
+## [Unreleased]
+
+---
+
+## [0.1.11] — 2026-06-17
+
+### Added
+
+- **workflows**：`H-diagnose`、`I-to-issues`、`R-review` 三个横向工作流新增「独立使用」协议——零硬依赖，无需预先执行 dev/01、dev/02 等主线工作流即可独立进入。
+- **workflows**：三个横向工作流新增自初始化能力——缺少 change 目录时可自行创建并初始化 `.status.json`。
+- **workflows**：各阶段规范新增深度搜索协议——当上游产物（PRD、decision-log 等）缺失时，通过 git 考古、grep 搜索、文档扫描、测试阅读自行采集上下文，仅在代码库探索穷尽后询问用户。
+- **workflows**：`R-review` Spec 维度新增自推断 fallback——无 spec 时从 commit message、测试、代码注释推断需求意图。
+- **workflows**：`00-INDEX.md` 新增独立入口说明，执行模式表标注三个横向工作流零依赖/可独立进入。
+- **workflows**：`H-diagnose` 新增「独立诊断时的信息采集」四步协议（环境扫描 → 症状定位 → 模块探索 → 提问收敛）。
+
+### Changed
+
+- **workflows**：`H-diagnose`、`I-to-issues`、`R-review` 依赖声明从软依赖重写为「无；若同 change 目录存在上游产物可继承加速，缺失时自行采集不阻塞」。
+- **workflows**：`I-to-issues`「存疑时的提问协议」增加代码库探索步骤——先从仓库确定，无法确定时再问用户。
+- **workflows**：`R-review` `review-setup.md` Spec/Standards 来源发现扩展为多轮深度搜索。
+- **workflows**：`R-review` `review-verdict.md` 后续选项增加独立进入时的说明。
+
+---
+
 ## [0.1.10] — 2026-06-17
 
 ### Added
@@ -161,7 +185,8 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.5...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.11...HEAD)
+- [0.1.11](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.11)
 - [0.1.5](https://github.com/NAMEWTA/Speculo/compare/v0.1.4...v0.1.5)
 - [0.1.4](https://github.com/NAMEWTA/Speculo/compare/v0.1.3...v0.1.4)
 - [0.1.3](https://github.com/NAMEWTA/Speculo/compare/v0.1.2...v0.1.3)
