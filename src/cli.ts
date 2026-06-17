@@ -6,18 +6,26 @@ import { initSpeculo } from "./index.js";
 function usage(): string {
   return [
     "Usage:",
-    "  speculo init [target]",
+    "  speculo init [--all] [target]",
     "",
     "Commands:",
     "  init    Install speculo assets under speculo/. If speculo/ does not exist,",
     "          copies .speculo, commands, skills, and workflows with conflict detection.",
     "          If speculo/ already exists, refreshes commands, skills, and workflows",
-    "          while preserving .speculo/ user state."
+    "          while preserving .speculo/ user state.",
+    "",
+    "Options:",
+    "  --all   Install/update all workflows without interactive selection.",
+    "          When omitted in a terminal, an interactive menu lets you pick",
+    "          which workflows to install or refresh."
   ].join("\n");
 }
 
 async function main(argv: string[]): Promise<number> {
-  const [command, targetArg, extra] = argv;
+  // Parse --all flag (can appear anywhere in argv)
+  const allFlag = argv.includes("--all");
+  const positional = argv.filter(a => a !== "--all");
+  const [command, targetArg, extra] = positional;
 
   if (!command || command === "--help" || command === "-h") {
     console.log(usage());
@@ -35,16 +43,16 @@ async function main(argv: string[]): Promise<number> {
 
   try {
     if (command === "init") {
-      const result = await initSpeculo(target, { packageRoot });
+      const result = await initSpeculo(target, { packageRoot, all: allFlag });
       if (result.mode === 'init') {
         console.log(`Speculo initialized in ${result.target}`);
         for (const copied of result.copied ?? []) {
-          console.log(`copied ${copied}`);
+          console.log(`  copied ${copied}`);
         }
       } else {
         console.log(`Speculo updated in ${result.target}`);
         for (const updated of result.updated ?? []) {
-          console.log(`updated ${updated}`);
+          console.log(`  updated ${updated}`);
         }
       }
       return 0;
@@ -52,10 +60,10 @@ async function main(argv: string[]): Promise<number> {
 
     if (command === "update") {
       console.error("Warning: `speculo update` is deprecated. Use `speculo init` instead.");
-      const result = await initSpeculo(target, { packageRoot });
+      const result = await initSpeculo(target, { packageRoot, all: true });
       console.log(`Speculo updated in ${result.target}`);
       for (const updated of result.updated ?? []) {
-        console.log(`updated ${updated}`);
+        console.log(`  updated ${updated}`);
       }
       return 0;
     }

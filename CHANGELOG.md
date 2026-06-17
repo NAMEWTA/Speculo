@@ -6,6 +6,30 @@
 
 ---
 
+## [0.1.10] — 2026-06-17
+
+### Added
+
+- **CLI**：`speculo init --all` 标志，跳过交互式选择直接安装/更新所有 workflow。
+- **CLI**：交互式 workflow 选择——在 TTY 中运行 `speculo init`（不带 `--all`）时，通过菜单选择要安装或刷新的 workflow；更新模式下展示已安装 + 新增可用 workflow。
+- **workflows**：新增 `person` 分类——以人物方法论为底座的认知工作流类别，含 `person/M`（毛泽东认知操作系统）及完整知识库（`books/`、`references/research/`）和模板。
+- **skills**：新增 `agents-md-builder` skill，用于构建 AGENTS.md 文件。
+- **state**：init skeleton 新增 `person/`、`person-status.json`、`archive/person/` 状态骨架。
+- **API**：`initSpeculo` 新增 `selection` 选项，支持编程式指定 workflow 选择（跳过交互提示）。
+
+### Changed
+
+- **CLI**：init/update 改为选择式 workflow 安装——仅复制选中的 workflow 目录，不再整体复制 `workflows/`。分类级元数据（`00-INDEX.md`、`_templates/`）按所选分类复制。
+- **CLI**：update 模式变为精确覆盖——仅触碰选中的 workflow 目录，`workflows/` 根层的散放文件得以保留。
+- **workflows**：毛泽东认知操作系统从 `doc/` 分类迁移至 `person/` 分类。
+- **CLI**：输出格式优化，复制/更新的文件列表增加缩进。
+
+### Removed
+
+- **workflows**：`doc/M`（毛泽东认知操作系统）从 doc 分类索引和目录中移除。
+
+---
+
 ## [0.1.9] — 2026-06-15
 
 ### Added

@@ -1,6 +1,15 @@
 import { cp, mkdir, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathExists } from "./utils.js";
+import {
+  discoverWorkflowCatalog,
+  promptWorkflowSelection,
+  promptUpdateSelection,
+  scanInstalledWorkflows,
+  selectAllFromCatalog,
+  isInteractive,
+  type WorkflowSelection,
+} from "./workflows.js";
 
 export type SpeculoCommandResult = {
   target: string;
@@ -11,6 +20,10 @@ export type SpeculoCommandResult = {
 
 export type SpeculoOptions = {
   packageRoot?: string;
+  /** If true, install all workflows without prompting (--all equivalent). */
+  all?: boolean;
+  /** Explicit workflow selection for programmatic use (bypasses prompt). */
+  selection?: WorkflowSelection;
 };
 
 const INIT_ASSETS = [".speculo", "commands", "skills", "workflows"] as const;
@@ -47,6 +60,109 @@ async function collectConflicts(root: string, assets: readonly string[]): Promis
   return conflicts;
 }
 
+/**
+ * Copy selected workflows from the template to the install root.
+ * Handles category-level metadata (00-INDEX.md, _templates/) along with
+ * individual workflow directories.
+ */
+async function copyWorkflows(
+  packageRoot: string,
+  root: string,
+  selection: WorkflowSelection,
+  options: { overwrite?: boolean } = {}
+): Promise<string[]> {
+  const copied: string[] = [];
+  const workflowsRoot = join(root, "workflows");
+  const templateWorkflows = join(packageRoot, "template", "workflows");
+  const overwrite = options.overwrite ?? false;
+
+  await mkdir(workflowsRoot, { recursive: true });
+
+  // Track which category metadata has already been copied
+  const categoriesDone = new Set<string>();
+
+  for (const wf of selection.workflows) {
+    const cat = wf.category;
+
+    // Copy category-level 00-INDEX.md (only once per category)
+    if (!categoriesDone.has(cat)) {
+      const catDir = join(workflowsRoot, cat);
+      await mkdir(catDir, { recursive: true });
+
+      // 00-INDEX.md
+      const indexSrc = join(templateWorkflows, cat, "00-INDEX.md");
+      const indexDest = join(catDir, "00-INDEX.md");
+      if (overwrite && (await pathExists(indexDest))) {
+        await rm(indexDest, { force: true });
+      }
+      if (await pathExists(indexSrc)) {
+        await cp(indexSrc, indexDest, { force: overwrite, errorOnExist: !overwrite });
+      }
+
+      // _templates/
+      const templatesSrc = join(templateWorkflows, cat, "_templates");
+      const templatesDest = join(catDir, "_templates");
+      if (overwrite && (await pathExists(templatesDest))) {
+        await rm(templatesDest, { recursive: true, force: true });
+      }
+      if (await pathExists(templatesSrc)) {
+        await cp(templatesSrc, templatesDest, { recursive: true, force: overwrite, errorOnExist: !overwrite });
+      }
+
+      categoriesDone.add(cat);
+    }
+
+    // Copy the workflow directory
+    const wfSrc = join(templateWorkflows, cat, wf.name);
+    const wfDest = join(workflowsRoot, cat, wf.name);
+
+    if (overwrite && (await pathExists(wfDest))) {
+      await rm(wfDest, { recursive: true, force: true });
+    }
+
+    if (await pathExists(wfSrc)) {
+      await cp(wfSrc, wfDest, { recursive: true, force: overwrite, errorOnExist: !overwrite });
+      copied.push(`workflows/${cat}/${wf.name}`);
+    }
+  }
+
+  return copied;
+}
+
+async function resolveSelection(
+  packageRoot: string,
+  root: string,
+  options: SpeculoOptions,
+  mode: 'init' | 'update'
+): Promise<WorkflowSelection> {
+  // Explicit selection from caller (programmatic use)
+  if (options.selection) {
+    return options.selection;
+  }
+
+  // --all flag or non-interactive → select all
+  if (options.all || !isInteractive()) {
+    const catalog = await discoverWorkflowCatalog(packageRoot);
+    return selectAllFromCatalog(catalog);
+  }
+
+  // Interactive mode
+  const catalog = await discoverWorkflowCatalog(packageRoot);
+
+  if (mode === 'update') {
+    // In update mode, show currently installed + newly available
+    let installed: { category: string; name: string }[] = [];
+    try {
+      installed = await scanInstalledWorkflows(root);
+    } catch {
+      // root not readable — treat as empty
+    }
+    return promptUpdateSelection(catalog, installed);
+  }
+
+  return promptWorkflowSelection(catalog);
+}
+
 async function initFresh(
   targetArg = ".",
   options: SpeculoOptions = {}
@@ -57,7 +173,10 @@ async function initFresh(
 
   await mkdir(root, { recursive: true });
 
-  const conflicts = await collectConflicts(root, INIT_ASSETS);
+  // Collect conflicts for non-workflow assets only
+  // (workflows are selective, no blanket conflict check)
+  const nonWorkflowAssets = INIT_ASSETS.filter(a => a !== 'workflows');
+  const conflicts = await collectConflicts(root, nonWorkflowAssets);
   if (conflicts.length > 0) {
     throw new Error(
       [
@@ -68,11 +187,20 @@ async function initFresh(
   }
 
   const copied: string[] = [];
-  for (const asset of INIT_ASSETS) {
+
+  // Copy non-workflow assets in full
+  for (const asset of nonWorkflowAssets) {
     const source = await ensureAssetSource(packageRoot, asset);
     const destination = join(root, asset);
     await cp(source, destination, { recursive: true, force: false, errorOnExist: true });
     copied.push(asset);
+  }
+
+  // Selective workflow copy
+  const selection = await resolveSelection(packageRoot, root, options, 'init');
+  const workflowPaths = await copyWorkflows(packageRoot, root, selection);
+  for (const wf of workflowPaths) {
+    copied.push(wf);
   }
 
   return { target, mode: 'init', copied };
@@ -89,12 +217,21 @@ async function initOverwrite(
   await mkdir(root, { recursive: true });
 
   const updated: string[] = [];
-  for (const asset of UPDATE_ASSETS) {
+
+  // Full refresh for non-workflow assets (current rm+cp behavior)
+  for (const asset of UPDATE_ASSETS.filter(a => a !== 'workflows')) {
     const source = await ensureAssetSource(packageRoot, asset);
     const destination = join(root, asset);
     await rm(destination, { recursive: true, force: true });
     await cp(source, destination, { recursive: true, force: true });
     updated.push(asset);
+  }
+
+  // Selective workflow overwrite
+  const selection = await resolveSelection(packageRoot, root, options, 'update');
+  const workflowPaths = await copyWorkflows(packageRoot, root, selection, { overwrite: true });
+  for (const wf of workflowPaths) {
+    updated.push(wf);
   }
 
   return { target, mode: 'update', updated };

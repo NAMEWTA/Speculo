@@ -1,6 +1,6 @@
 ---
-id: doc/M-mao-zedong-cognitive-os
-category: doc
+id: person/M-mao-zedong-cognitive-os
+category: person
 name: 毛泽东认知操作系统
 description: 以毛泽东方法论为底座的问题诊断、战略制定与行动规划咨询工作流；当用户需要以矛盾分析、持久战思维、群众路线等方法论拆解复杂问题、制定对策、组织落地时使用
 keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型, 咨询, 持久战, 群众路线]
@@ -20,7 +20,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 **局限**：聚焦思维方法论的迁移，不评判政治立场；涉及 1949 年后争议历史只取思维方法论侧面并标注边界。
 
-> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-mao-strategy-consult`）。产物写入 `speculo/.speculo/doc/<change>/`。
+> **目录命名：** `<change>` 必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-mao-strategy-consult`）。产物写入 `speculo/.speculo/person/<change>/`。
 
 ## 内置指引
 
@@ -99,7 +99,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 ## 阶段
 
-> **产物目录：** 本工作流所有产物写入 `speculo/.speculo/doc/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-mao-strategy-consult`）。
+> **产物目录：** 本工作流所有产物写入 `speculo/.speculo/person/<change>/`。下文产物路径均相对该 change 目录。**`<change>` 必须为 `YYYY-MM-DD-<kebab-name>`**（例：`2026-06-12-mao-strategy-consult`）。
 
 ### 1. 激活与问诊 — Activate
 - 规范：`activate.md`
@@ -158,7 +158,7 @@ keywords: [毛泽东, 毛选, 教员, 矛盾分析, 战略, 组织, 认知模型
 
 本工作流需在同 change 的 `.status.json` 追加：
 
-- `doc_entry` (string) — 固定为 `doc/M`
+- `doc_entry` (string) — 固定为 `person/M`
 - `problem_type` (string) — 问题类型（战略方向/强敌竞争/实力悬殊/起步弱小/资源分配/团队组织/决策方法/路线两难）
 - `primary_framework` (string) — 主框架（如 `B1-持久战`、`A1-矛盾分析`）
 - `models_applied` (array) — 已应用的 Module A 模型列表

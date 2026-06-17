@@ -3,11 +3,11 @@
 ## 输入
 
 - 用户描述的困境、问题或咨询主题
-- 当前 doc change 目录：`speculo/.speculo/doc/<change>/`
+- 当前 doc change 目录：`speculo/.speculo/person/<change>/`
 
 ## 产物
 
-- `speculo/.speculo/doc/<change>/problem-statement.md`
+- `speculo/.speculo/person/<change>/problem-statement.md`
 
 ## 填写引导
 

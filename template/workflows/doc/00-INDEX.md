@@ -18,7 +18,6 @@ keywords: [doc, writing, article, fragments, edit, 文档, 写作]
 
 | 别名 | 入口 | 用途 |
 |------|------|------|
-| `doc/M` | `M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md` | 以毛泽东方法论为底座的认知咨询：分析问题→制定战略→组织行动 |
 | `doc/T` | `T-teach/T-teach.md` | 设计交互式课程：使命→资源→课程→参考→记录 |
 | `doc/F` | `F-writing-fragments/F-writing-fragments.md` | 追问式访谈，沉淀异质 fragment 素材 |
 | `doc/B` | `B-writing-beats/B-writing-beats.md` | 逐个 beat 推进文章旅程 |
@@ -36,7 +35,6 @@ keywords: [doc, writing, article, fragments, edit, 文档, 写作]
 
 ## 执行模式
 
-- `mao`：以毛泽东方法论进行结构化认知咨询——分析问题、制定战略、组织行动，进入 `doc/M`。
 - `teach`：想学某个主题，需要设计交互式课程体验，进入 `doc/T`。
 - `fragments`：从主题和对话中采集素材，进入 `doc/F`。
 - `beats`：已有素材，想逐个转向推进叙事，进入 `doc/B`。

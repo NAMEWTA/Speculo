@@ -2,12 +2,12 @@
 
 ## 输入
 
-- `speculo/.speculo/doc/<change>/problem-statement.md`（Phase 1 产物）
-- `speculo/.speculo/doc/<change>/analysis.md`（Phase 2 产物）
+- `speculo/.speculo/person/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/person/<change>/analysis.md`（Phase 2 产物）
 
 ## 产物
 
-- `speculo/.speculo/doc/<change>/strategy.md`
+- `speculo/.speculo/person/<change>/strategy.md`
 
 ## 元框架（战略流水线）
 
