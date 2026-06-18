@@ -10,6 +10,16 @@
 
 ---
 
+## [0.1.13] — 2026-06-18
+
+### Added
+
+- **vendor/**：新增原生 AgentSkills 收集目录——从各处搜集的第三方技能原样保存，不做 Speculo 化改造。
+- **CLI**：`speculo init`（无 `--all`）对 `vendor/` 执行增量合并——只添加尚不存在的技能，已有内容不改动。
+- **CLI**：`speculo init --all` 对 `vendor/` 执行全覆盖刷新——同 commands/skills 一样 rm+cp。
+
+---
+
 ## [0.1.12] — 2026-06-17
 
 ### Changed

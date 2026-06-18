@@ -16,8 +16,10 @@ function usage(): string {
     "",
     "Options:",
     "  --all   Install/update all workflows without interactive selection.",
-    "          When omitted in a terminal, an interactive menu lets you pick",
-    "          which workflows to install or refresh."
+    "          Also triggers full overwrite of vendor/ (native skills collection).",
+    "          When omitted, vendor/ is merge-only — new skills are added but",
+    "          existing ones are preserved. In a terminal without --all, an",
+    "          interactive menu lets you pick which workflows to install or refresh."
   ].join("\n");
 }
 

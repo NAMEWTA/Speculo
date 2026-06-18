@@ -22,10 +22,10 @@ describe("speculo CLI operations", () => {
       const result = await initSpeculo(target, { packageRoot, all: true });
 
       assert.equal(result.mode, "init");
-      // First 3 items are non-workflow assets
-      assert.deepEqual(result.copied!.slice(0, 3), [".speculo", "commands", "skills"]);
+      // First 4 items are non-workflow assets
+      assert.deepEqual(result.copied!.slice(0, 4), [".speculo", "commands", "skills", "vendor"]);
       // Rest are workflow paths
-      for (const item of result.copied!.slice(3)) {
+      for (const item of result.copied!.slice(4)) {
         assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
       }
       // Assets nest under <target>/speculo/, not the target root.
@@ -53,6 +53,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "skills", "speculo-write", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "worktree-isolation", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "agents-md-builder", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
       // Person workflow (moved from doc/)
       assert.equal(await pathExists(join(root, "workflows", "person", "00-INDEX.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
@@ -86,10 +87,10 @@ describe("speculo CLI operations", () => {
       const result = await initSpeculo(target, { packageRoot, all: true });
 
       assert.equal(result.mode, "update");
-      // First 2 items are non-workflow assets (commands, skills)
-      assert.deepEqual(result.updated!.slice(0, 2), ["commands", "skills"]);
+      // First 3 items are non-workflow assets (commands, skills, vendor)
+      assert.deepEqual(result.updated!.slice(0, 3), ["commands", "skills", "vendor"]);
       // Rest are workflow paths
-      for (const item of result.updated!.slice(2)) {
+      for (const item of result.updated!.slice(3)) {
         assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
       }
       // The stale `commands` file was replaced by the `commands` directory from the package.
@@ -121,9 +122,9 @@ describe("speculo CLI operations", () => {
       const result = await initSpeculo(target, { packageRoot, all: true });
 
       assert.equal(result.mode, "update");
-      // First 2 items are non-workflow assets
-      assert.deepEqual(result.updated!.slice(0, 2), ["commands", "skills"]);
-      for (const item of result.updated!.slice(2)) {
+      // First 3 items are non-workflow assets
+      assert.deepEqual(result.updated!.slice(0, 3), ["commands", "skills", "vendor"]);
+      for (const item of result.updated!.slice(3)) {
         assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
       }
       assert.match(await readFile(join(root, "commands", "status.md"), "utf8"), /# Status 命令/);
@@ -327,5 +328,62 @@ describe("speculo CLI operations", () => {
     assert.ok(selection.categories.has("dev"));
     assert.ok(selection.categories.has("doc"));
     assert.ok(selection.categories.has("person"));
+  });
+
+  describe("vendor handling", () => {
+    it("update without --all merges vendor (adds new, preserves existing)", async () => {
+      const target = await tempProject();
+      const root = join(target, "speculo");
+      try {
+        // First: fresh init with all (vendor included)
+        await initSpeculo(target, { packageRoot, all: true });
+        assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
+
+        // User adds a collected skill and modifies README
+        await mkdir(join(root, "vendor", "my-skill"), { recursive: true });
+        await writeFile(join(root, "vendor", "my-skill", "SKILL.md"), "my content");
+        await writeFile(join(root, "vendor", "README.md"), "custom readme");
+
+        // Second: update without --all (merge mode for vendor)
+        const result = await initSpeculo(target, { packageRoot });
+        assert.equal(result.mode, "update");
+
+        // User's collected skill still exists
+        assert.equal(await pathExists(join(root, "vendor", "my-skill", "SKILL.md")), true);
+        assert.equal(await readFile(join(root, "vendor", "my-skill", "SKILL.md"), "utf8"), "my content");
+
+        // User's modified README preserved (merge doesn't overwrite existing)
+        assert.equal(await readFile(join(root, "vendor", "README.md"), "utf8"), "custom readme");
+      } finally {
+        await rm(target, { recursive: true, force: true });
+      }
+    });
+
+    it("update with --all fully overwrites vendor", async () => {
+      const target = await tempProject();
+      const root = join(target, "speculo");
+      try {
+        // First: fresh init with all
+        await initSpeculo(target, { packageRoot, all: true });
+
+        // User adds skill and modifies README
+        await mkdir(join(root, "vendor", "user-skill"), { recursive: true });
+        await writeFile(join(root, "vendor", "user-skill", "SKILL.md"), "user");
+        await writeFile(join(root, "vendor", "README.md"), "modified");
+
+        // Second: update with --all (full overwrite for vendor)
+        const result = await initSpeculo(target, { packageRoot, all: true });
+        assert.equal(result.mode, "update");
+        assert.ok(result.updated!.includes("vendor"), "vendor should be in updated list with --all");
+
+        // User's skill removed by full overwrite
+        assert.equal(await pathExists(join(root, "vendor", "user-skill")), false);
+
+        // README restored to framework version
+        assert.match(await readFile(join(root, "vendor", "README.md"), "utf8"), /原生 AgentSkills/);
+      } finally {
+        await rm(target, { recursive: true, force: true });
+      }
+    });
   });
 });

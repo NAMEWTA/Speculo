@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, readdir, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathExists } from "./utils.js";
 import {
@@ -25,7 +25,7 @@ export type SpeculoOptions = {
   selection?: WorkflowSelection;
 };
 
-const INIT_ASSETS = [".speculo", "commands", "skills", "workflows"] as const;
+const INIT_ASSETS = [".speculo", "commands", "skills", "workflows", "vendor"] as const;
 const UPDATE_ASSETS = ["commands", "skills", "workflows"] as const;
 
 // Assets install under a single `speculo/` directory inside the target,
@@ -57,6 +57,36 @@ async function collectConflicts(root: string, assets: readonly string[]): Promis
     }
   }
   return conflicts;
+}
+
+/**
+ * Merge vendor skills from the template into the install root.
+ * Only copies skills that don't already exist — never overwrites.
+ * Returns a list of `vendor/<name>` paths that were added.
+ */
+async function mergeVendor(packageRoot: string, root: string): Promise<string[]> {
+  const added: string[] = [];
+  const vendorSrc = join(assetRoot(packageRoot), "vendor");
+  const vendorDest = join(root, "vendor");
+
+  await mkdir(vendorDest, { recursive: true });
+
+  let entries;
+  try {
+    entries = await readdir(vendorSrc, { withFileTypes: true });
+  } catch {
+    // No vendor/ in template — nothing to merge
+    return added;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const dest = join(vendorDest, entry.name);
+    if (await pathExists(dest)) continue; // already exists, skip
+    await cp(join(vendorSrc, entry.name), dest, { recursive: true });
+    added.push(`vendor/${entry.name}`);
+  }
+  return added;
 }
 
 /**
@@ -226,6 +256,18 @@ async function initOverwrite(
     await rm(destination, { recursive: true, force: true });
     await cp(source, destination, { recursive: true, force: true });
     updated.push(asset);
+  }
+
+  // Vendor handling: full overwrite with --all, merge otherwise
+  if (options.all) {
+    const vendorSrc = await ensureAssetSource(packageRoot, "vendor");
+    const vendorDest = join(root, "vendor");
+    await rm(vendorDest, { recursive: true, force: true });
+    await cp(vendorSrc, vendorDest, { recursive: true, force: true });
+    updated.push("vendor");
+  } else {
+    const added = await mergeVendor(packageRoot, root);
+    for (const item of added) updated.push(item);
   }
 
   // Selective workflow overwrite
