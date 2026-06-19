@@ -26,11 +26,17 @@ keywords: [archive, 归档, 清理]
 
 ## 执行步骤
 
-1. 扫描 `speculo/.speculo/<cat>/*/.status.json`，当前内置分类至少包括 `dev` 与 `doc`，仅选择 `change_status: completed` 的 change。
+1. **预扫描：** 列出 `speculo/.speculo/<cat>/`（内置分类至少包括 `dev` 与 `doc`）下所有符合 `YYYY-MM-DD-<kebab-name>` 格式的 change 目录。对每个目录检查 `.status.json` 是否存在：
+   - 存在且 `change_status: completed` → 加入待归档候选。
+   - 存在但 `change_status` 为其他值 → 跳过（非完成状态）。
+   - **不存在 `.status.json`** → 标记为 `broken-change: missing .status.json`，**不归档、不删除、不移动**，在清单中单独列出并跳过。
 2. 排除已经位于 `speculo/.speculo/archive/` 下的目录；若目标归档路径已存在，标记为冲突并停止，不覆盖。
-3. 列出待归档清单：源路径、目标路径、当前分类、`updated_at`、最后 phase、是否仍在 `<cat>-status.json active[]`。
-4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。
-5. 用户确认后逐项执行：
+3. 列出完整清单（分三组）：
+   - **待归档：** 源路径、目标路径、当前分类、`updated_at`、最后 phase、是否仍在 `<cat>-status.json active[]`。
+   - **broken-change：** 缺少 `.status.json` 的 change 目录路径。
+   - **冲突：** 目标路径已存在的 change。
+4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。对于 `broken-change`，提示用户需先通过对应 workflow 入口（`dev/00-INDEX.md` 或 `doc/00-INDEX.md`）补建 `.status.json`，或将 `change_status` 手动置为 `completed` 后再归档。
+5. 用户确认后逐项执行（仅对待归档项）：
    - 创建 `speculo/.speculo/archive/<cat>/<YYYY-MM>/`
    - 移动 change 目录到 `speculo/.speculo/archive/<cat>/<YYYY-MM>/<change-name>/`
    - 从对应 `speculo/.speculo/<cat>-status.json` 的 `active[]` 删除该 change
@@ -50,6 +56,9 @@ keywords: [archive, 归档, 清理]
 
 ## 归档清单
 [TODO: 列出本次归档的所有 change，格式 "<source-path> → <dest-path>"]
+
+## 跳过清单
+[TODO: 列出被跳过的 broken-change（缺少 .status.json）和冲突项]
 
 ## 用户确认记录
 [TODO: 记录用户确认的原始内容]

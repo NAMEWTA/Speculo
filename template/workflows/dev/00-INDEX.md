@@ -32,7 +32,11 @@ keywords: [dev, 开发, workflow, index, 状态]
 1. 若用户未指定 change，扫描 `speculo/.speculo/dev-status.json` 和 `speculo/.speculo/dev/*/.status.json`，列出 active changes。
    - **命名校验**：扫描时仅处理符合 `YYYY-MM-DD-<kebab-name>` 格式的目录。不符合的目录标记为 `malformed`，单独列出路径并提示用户修复或手动清理，不自动删除或重命名。
 2. 若只有一个 active change，默认继续该 change；若有多个 active change，要求用户选择。
-3. 若没有 active change，按用户意图创建新的 change 目录，**目录名必须为 `YYYY-MM-DD-<kebab-name>`**（使用当前日期，`<kebab-name>` 从用户意图提取），并初始化 `.status.json` 与 `speculo/.speculo/dev-status.json`。
+3. 若没有 active change，按用户意图创建新的 change。**以下三步为原子操作，不可跳过，前一步失败时停止后续并报告：**
+   - **3a. 创建 change 目录** —— `speculo/.speculo/dev/<YYYY-MM-DD>-<kebab-name>/`（使用当前日期，`<kebab-name>` 从用户意图提取，不超过 5 个词）。
+   - **3b. 写入 `.status.json`** —— 在 change 目录下创建 `.status.json`，按 `docs/persistence-contract.md` §2.2 最小初始化模板填入所有必填字段（`name`、`category: "dev"`、`change_status: "active"`、`created_at`、`updated_at`、`current_phase: "00-init"`、`phase_history`）。
+   - **3c. 更新 `dev-status.json`** —— 读取 `speculo/.speculo/dev-status.json`，在 `active[]` 中追加该 change 的索引条目（`name`、`current_phase: "00-init"`、`updated_at`），写回文件。
+   - 以上三步全部成功后，方可继续推荐入口。
 4. 推荐入口时优先使用用户显式别名；没有别名时按执行模式推荐。
 5. 执行任何 workflow 前，读取该 workflow 入口文件、阶段文件、模板和被调用 skill wrapper。
 6. **Worktree 隔离（可选，默认 off）**：仅当用户**显式请求**隔离时，新 change 在 `dev/01` 的 Phase 0 经 `../../skills/worktree-isolation/SKILL.md` 建立隔离分支 `speculo/dev/<change>` 与 `.worktree/<change>/` 工作树，并把 `base_branch`、`change_branch` 记入 `.status.json`。扫描 active changes 时，对 `worktree_enabled` 为真者可结合 `git worktree list` 核对工作树是否存在。
