@@ -10,6 +10,25 @@
 
 ---
 
+## [0.1.14] — 2026-06-20
+
+### Fixed
+
+- **workflows**：新创建的 change 目录现在必定包含 `.status.json`，并在 `<cat>-status.json` `active[]` 中出现——修复三个持久化契约实现缺口（active[] 从未填充、`.status.json` 不稳定存在、多并发未显式声明）。
+- **workflows**：dev/doc `00-INDEX.md` 进入协议 step 3 拆为原子子步骤（创建目录 → 写 `.status.json` → 更新 `active[]`），不可跳过。
+- **commands**：`archive` 命令新增预扫描——缺少 `.status.json` 的 change 标记为 `broken-change` 并跳过，不再静默忽略。
+
+### Docs
+
+- **docs/persistence-contract.md**：新增 §2 Change 初始化铁律（三步原子操作 + 模板 + 校验清单），显式声明 `active[]` 支持同分类多 change 并发。原 §2–§11 重新编号为 §3–§12。
+
+### Dependencies
+
+- **CI**：`actions/checkout` 从 v4 升至 v7。
+- **dev**：`@types/node` 从 ^22.19.19 升至 ^26.0.0。
+
+---
+
 ## [0.1.13] — 2026-06-18
 
 ### Added
@@ -209,7 +228,10 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.11...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.14...HEAD)
+- [0.1.14](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.14)
+- [0.1.13](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.13)
+- [0.1.12](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.12)
 - [0.1.11](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.11)
 - [0.1.5](https://github.com/NAMEWTA/Speculo/compare/v0.1.4...v0.1.5)
 - [0.1.4](https://github.com/NAMEWTA/Speculo/compare/v0.1.3...v0.1.4)
