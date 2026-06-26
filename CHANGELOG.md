@@ -6,6 +6,14 @@
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **vendor**：新增 `resolving-merge-conflicts` 技能——用于解决 git merge/rebase 冲突的 AI 辅助技能。
+
+---
+
 ## [0.1.17] — 2026-06-26
 
 ### Added
