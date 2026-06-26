@@ -6,11 +6,15 @@
 
 ---
 
-## [Unreleased]
+## [0.1.18] — 2026-06-26
 
 ### Added
 
 - **vendor**：新增 `resolving-merge-conflicts` 技能——用于解决 git merge/rebase 冲突的 AI 辅助技能。
+
+---
+
+## [Unreleased]
 
 ---
 
@@ -271,7 +275,8 @@
 - 初始化 `LICENSE`（MIT）、`CHANGELOG.md`，并在 `README.md` 补充安装方式、徽章与 License 小节。
 - 初始化 `.speculo/dev/docs-sync-state.json` 同步基线，纳入 `README.md` 与 `CHANGELOG.md`。
 
----
+---8...HEAD)
+- [0.1.18](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.18
 
 ## 版本链接 / Links
 
