@@ -22,6 +22,8 @@ keywords: [prd, zoom-out, 需求, 计划]
 
 当 dev workflow 已完成足够上下文探索，需要把当前对话和代码理解沉淀成 PRD 时使用。不要重复访谈已明确的信息；综合当前对话、代码库事实、领域术语、ADR、模块候选和测试目标。
 
+PRD 综合统一使用 `speculo/.speculo/.config/context/CONTEXT.md` 的通用语言；若 PRD 引入或锐化了 CONTEXT 中尚不存在的领域术语，按横向工作流 `../M-domain-modeling/M-domain-modeling.md` 主动沉淀（用户确认后写入 `.config/context/`），不要让术语只活在 PRD 里。
+
 PRD 只写入 `speculo/.speculo/dev/<change>/prd.md`，overview 只写入 `speculo/.speculo/dev/<change>/overview.md`。不写项目根下的任意规划文档，不默认发布外部 issue。只有 tracker 已配置且用户明确要求时，才进入外部发布动作。
 
 （`<change>` 格式：`YYYY-MM-DD-<kebab-name>`）

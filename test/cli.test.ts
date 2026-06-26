@@ -65,6 +65,24 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "security-checklist.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
+      // New horizontal dev workflows
+      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "M-domain-modeling.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "CONTEXT-FORMAT.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "ADR-FORMAT.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "A-improve-architecture.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "HTML-REPORT.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "domain-model-log-template.md")), true);
+      // Vendored codebase-design (referenced by 03-tdd, I-to-issues, A-improve-architecture)
+      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "DEEPENING.md")), true);
+      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "DESIGN-IT-TWICE.md")), true);
+      // speculo-write quality-levers reference (writing-great-skills domain model)
+      assert.equal(await pathExists(join(root, "skills", "speculo-write", "references", "authoring-quality-levers.md")), true);
+      // Deduped files removed: their content now lives in single sources
+      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "deep-modules.md")), false);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "interface-design.md")), false);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "ADR-FORMAT.md")), false);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "CONTEXT-FORMAT.md")), false);
       // Doc workflows (mao removed from here)
       assert.equal(await pathExists(join(root, "workflows", "doc", "00-INDEX.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);

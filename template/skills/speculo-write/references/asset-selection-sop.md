@@ -4,6 +4,8 @@
 
 把用户的“做一个能力”翻译成 Speculo 的正确资产形态：workflow、skill、command，或它们的组合。
 
+> **粒度即拆分成本**（见 `authoring-quality-levers.md`「何时拆分」）：把流程切成 workflow 的多个 phase，是为了把**后续步骤**移出视野、防过早完成（**按序列拆分**）；把能力抽成可复用 skill，是为了独立触达、值回其 `description` 常驻系统提示的负载（**按调用拆分**）。每次切割都有成本，只在物有所值时拆。
+
 ## 判定规则
 
 ### 做 Workflow

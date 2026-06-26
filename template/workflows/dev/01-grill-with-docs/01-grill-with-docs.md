@@ -8,7 +8,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 # Grill With Docs 工作流执行指引
 
-本工作流用于在 PRD 或实现前澄清领域语言、识别决策分支，并把已确认的上下文沉淀为当前 change 的可追踪产物。领域拷问、CONTEXT 格式和 ADR 判断规则已内置在本 workflow 目录中。
+本工作流用于在 PRD 或实现前澄清领域语言、识别决策分支，并把已确认的上下文沉淀为当前 change 的可追踪产物。**领域建模的主动纪律（挑战术语、锐化语言、压测边界）与 CONTEXT / ADR 格式由横向工作流 `../M-domain-modeling/M-domain-modeling.md` 拥有**，本工作流引用之，专注把拷问结论落到当前 change 的 `context-map.md` 与 `decision-log.md`。
 
 ## 内置指引
 
@@ -38,7 +38,7 @@ keywords: [grill, context, adr, 术语, 决策]
 
 每次只问一个问题，等待用户对当前问题的反馈后再继续。如果某个问题可以通过探索代码库来回答，就直接探索代码库。
 
-需要格式约定时读取同目录 `CONTEXT-FORMAT.md` 或 `ADR-FORMAT.md`。项目 CONTEXT 或 ADR 的创建、修改必须写入 `speculo/.speculo/.config/` 下，并符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
+需要格式约定时读取 `../M-domain-modeling/CONTEXT-FORMAT.md` 或 `../M-domain-modeling/ADR-FORMAT.md`（格式单一事实源）；主动拷问的具体手法见 `../M-domain-modeling/M-domain-modeling.md`「会话期间（主动纪律）」。项目 CONTEXT 或 ADR 的创建、修改必须写入 `speculo/.speculo/.config/` 下，并符合本 workflow 的用户确认策略；未确认内容只记录到当前 change 的 `decision-log.md`。
 
 ### Worktree 隔离（条件）
 

@@ -16,6 +16,16 @@
 - [ ] command frontmatter 包含 `id`、`type: command`、`name`、`description`，可选 `keywords`
 - [ ] 没有把 phases、templates、depends_on、status_extensions 写进 frontmatter
 
+## 质量杠杆检查
+
+> 适用于所有资产类型；理论见 `authoring-quality-levers.md`。
+
+- [ ] description / 入口用**主导词**锚定调用，正文用同一主导词锚定执行
+- [ ] 内容按**信息层级**排布（步骤 / 文件内参考 / 已披露参考），入口阶梯顶部清晰
+- [ ] 每个步骤 / phase 的**完成标准**可检验，重要处穷尽
+- [ ] 跨资产共享含义只有**单一事实源**，引用方未复制
+- [ ] 逐句过**空操作测试**，无**过早完成 / 重复 / 沉积 / 蔓延**诱因
+
 ## Workflow 检查
 
 - [ ] 入口正文包含 `## 阶段`

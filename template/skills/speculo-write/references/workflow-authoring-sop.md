@@ -1,5 +1,7 @@
 # Workflow Authoring SOP
 
+phase 的切分、完成准则与措辞遵循 `authoring-quality-levers.md` 的质量杠杆（**按序列拆分**隐藏后续步骤防过早完成、**完成标准**可检验且穷尽、**主导词**锚定调用与执行）；本文只补 workflow 特有的结构与路径约束。
+
 ## 入口结构
 
 workflow 放在 `template/workflows/<cat>/`，`<cat>` 只能是 `dev`、`doc`、`ops`。

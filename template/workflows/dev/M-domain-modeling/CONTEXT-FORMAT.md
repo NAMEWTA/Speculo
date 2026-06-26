@@ -1,6 +1,8 @@
 # CONTEXT.md 格式
 
-本辅助文档只定义项目术语表的写法。默认产物仍写入 `speculo/.speculo/dev/<change>/context-map.md` 和 `speculo/.speculo/dev/<change>/decision-log.md`；只有用户明确确认时，才按本格式创建或更新 `speculo/.speculo/.config/context/CONTEXT.md` / `speculo/.speculo/.config/context/CONTEXT-MAP.md`。
+本文是项目术语表（通用语言）写法的**单一事实源**，由 `dev/M-domain-modeling` 拥有，`dev/01`、`dev/02`、`dev/04`、`dev/D`、`dev/A` 等工作流按需引用。
+
+只有用户明确确认时，才按本格式创建或更新 `speculo/.speculo/.config/context/CONTEXT.md` / `speculo/.speculo/.config/context/CONTEXT-MAP.md`；未确认的术语只记录到调用方工作流的会话产物（如 `decision-log.md`、`domain-model-log.md`）。
 
 ## 结构
 
@@ -56,7 +58,7 @@ _避免使用_：Client、buyer、account
 - **Ordering ↔ Billing**：共享 `CustomerId` 和 `Money` 类型
 ```
 
-技能会自动推断适用哪种结构：
+本工作流自动推断适用哪种结构：
 
 - 如果 `speculo/.speculo/.config/context/CONTEXT-MAP.md` 存在，读取它以查找上下文
 - 如果只有 `speculo/.speculo/.config/context/CONTEXT.md`，则为单上下文

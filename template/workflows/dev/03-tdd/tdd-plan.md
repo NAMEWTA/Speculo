@@ -14,7 +14,7 @@
 ## 填写引导
 
 1. 遵循 `03-tdd.md` 的内置 TDD 指引。
-2. 按需读取同目录的接口设计、测试、mock 和 deep module 文档。
+2. 按需读取同目录 `tests.md` / `mocking.md`，以及设计词汇单一事实源 `../../../vendor/codebase-design/`（`SKILL.md` 深模块与可测试接口设计、`DEEPENING.md` 依赖类别与接缝、`DESIGN-IT-TWICE.md` 备选接口）。
 3. 与用户确认公共接口、最重要的行为和测试覆盖优先级。
 4. 拆出第一个 tracing slice，避免水平切片。
 5. 探索代码库时使用项目领域术语表，确保测试名称和接口词汇与项目语言一致，并尊重触及区域的 ADR。

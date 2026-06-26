@@ -8,7 +8,7 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 
 # TDD Implementation 工作流执行指引
 
-本工作流用于把 PRD、issue、诊断结论或用户明确任务实现为经过验证的代码变更。TDD 红绿重构、测试、mock、接口设计、deep module 和重构指引已内置在本 workflow 目录中。
+本工作流用于把 PRD、issue、诊断结论或用户明确任务实现为经过验证的代码变更。TDD 红绿重构、测试、mock 与重构指引内置在本 workflow 目录中；**深模块、接口、接缝、适配器的设计词汇与原则统一引用 `vendor/codebase-design`，本工作流不再复制**（见下「渐进披露」）。
 
 ## 内置指引
 
@@ -24,11 +24,17 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 
 ### 渐进披露
 
-- `tests.md`：设计测试方式时读取。
-- `mocking.md`：考虑 mock 边界时读取。
-- `deep-modules.md`：识别深模块机会时读取。
-- `interface-design.md`：设计可测试公共接口时读取。
-- `refactoring.md`：进入重构阶段时读取。
+测试与重构相关指引内置在同目录：
+
+- `tests.md`：设计测试方式（好测试 vs 坏测试）时读取。
+- `mocking.md`：考虑 mock 边界、为可 mock 性设计接口时读取。
+- `refactoring.md`：进入重构阶段、识别重构候选时读取。
+
+深模块 / 接口 / 接缝 / 适配器 / 杠杆 / 局部性的设计词汇与原则统一由 `vendor/codebase-design` 承载（**单一事实源，本工作流不复制**），按需直接引用：
+
+- `../../../vendor/codebase-design/SKILL.md`：设计深模块、判断深 vs 浅、为可测试性设计接口（接受依赖而非创建、返回结果而非副作用、小表面积）时读取——deep module 与可测试接口设计的权威来源。
+- `../../../vendor/codebase-design/DEEPENING.md`：判定依赖类别（进程内 / 本地可替换 / 端口与适配器 / mock）与「替换而非叠加」的测试策略时读取。
+- `../../../vendor/codebase-design/DESIGN-IT-TWICE.md`：需要为深化候选并行探索多个备选接口时读取。
 
 ### 消费 slices 切片契约
 

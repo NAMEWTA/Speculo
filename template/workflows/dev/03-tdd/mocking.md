@@ -1,40 +1,23 @@
-# 何时使用 Mock
+# Mock 边界与可 Mock 性
 
-只在**系统边界**处 mock：
+> **依赖类别**（进程内 / 本地可替换 / 端口与适配器 / 真正外部）与「在接缝处注入端口、生产用真实适配器、测试用内存或 mock 适配器」的判定，是设计词汇的一部分，见单一事实源 `../../../vendor/codebase-design/DEEPENING.md`。本文只覆盖**写测试时**的 mock 取舍与 SDK 风格接口。
+
+## 只在系统边界处 mock
 
 - 外部 API（支付、邮件等）
-- 数据库（有时——优先考虑测试数据库）
-- 时间/随机性
+- 数据库（有时——优先考虑测试数据库 / 本地可替换实现）
+- 时间 / 随机性
 - 文件系统（有时）
 
 不要 mock：
 
-- 你自己的类/模块
+- 你自己的类 / 模块
 - 内部协作者
 - 任何你能控制的东西
 
-## 为可 Mock 性设计
+> 依赖注入（接受依赖而非内部创建）是让边界可 mock 的前提；该原则见 `../../../vendor/codebase-design/SKILL.md`「为可测试性设计」，本文不复制。
 
-在系统边界处，设计易于 mock 的接口：
-
-**1. 使用依赖注入**
-
-将外部依赖传入，而不是在内部创建：
-
-```typescript
-// 易于 mock
-function processPayment(order, paymentClient) {
-  return paymentClient.charge(order.total);
-}
-
-// 难以 mock
-function processPayment(order) {
-  const client = new StripeClient(process.env.STRIPE_KEY);
-  return client.charge(order.total);
-}
-```
-
-**2. 优先使用 SDK 风格的接口，而非通用 fetcher**
+## 优先 SDK 风格接口，而非通用 fetcher
 
 为每个外部操作创建专用函数，而不是一个带条件逻辑的通用函数：
 

@@ -40,6 +40,8 @@ keywords: [docs-sync, changelog, readme, agents, documentation, 文档同步]
 - `changelog-contract.md`：更新 CHANGELOG 类文档时读取。
 - `state-json-schema.md`：初始化、读取或写回 docs-sync state 时读取。
 
+> **通用语言对齐**：对外文档（README / AGENTS）中的领域术语以 `speculo/.speculo/.config/context/CONTEXT.md` 为准；同步中若发现文档与 CONTEXT 术语漂移，交由 `../M-domain-modeling/M-domain-modeling.md` 沉淀，docs-sync 本身不另立或重定义领域术语。
+
 ## 阶段
 
 ### 1. State Read — 读取同步状态

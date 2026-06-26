@@ -26,6 +26,8 @@ keywords: [dev, 开发, workflow, index, 状态]
 | `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断，零依赖，可独立进入 |
 | `dev/R` | `R-review/R-review.md` | Spec / Engineering / Standards 三维度 diff 审查，零依赖，可独立进入 |
 | `dev/D` | `D-docs-sync/D-docs-sync.md` | 基于 git diff 同步 README、CHANGELOG、AGENTS 等对外文档 |
+| `dev/M` | `M-domain-modeling/M-domain-modeling.md` | 主动领域建模：挑战术语、压测边界，沉淀 CONTEXT 通用语言与 ADR；格式单一事实源，可嵌入其他 dev workflow，也可独立进入 |
+| `dev/A` | `A-improve-architecture/A-improve-architecture.md` | 深化机会扫描 + HTML 架构审查 + 质询，基于 `vendor/codebase-design` 词汇，零依赖，可独立进入 |
 
 ## 进入协议
 
@@ -50,8 +52,12 @@ keywords: [dev, 开发, workflow, index, 状态]
 - `review`：已有 fixed point 或用户要求审查时，从 `dev/R` 开始（零依赖，无需上游工作流产物）。
 - `finalize`：实现完成、需要完成前验证与状态收尾归档时，从 `dev/04` 开始。
 - `docs-sync`：需要基于 git 差异刷新对外文档时，从 `dev/D` 开始。
+- `domain-modeling`：需要主动澄清/锐化领域术语、维护 CONTEXT 与 ADR 时，从 `dev/M` 开始（零依赖；也被 `dev/01`、`dev/02`、`dev/04`、`dev/D`、`dev/A` 引用）。
+- `improve-architecture`：需要系统性发现并落实架构深化机会时，从 `dev/A` 开始（零依赖；建立在 `vendor/codebase-design` 词汇与 `dev/M` 领域模型之上）。
 
-> **独立入口说明：** `dev/H`、`dev/I`、`dev/R` 三个横向工作流均为零硬依赖设计。用户可直接从任一入口进入，无需预先执行 `dev/01`、`dev/02` 等主线工作流。当同 change 目录下缺少上游产物时，各工作流会自行通过代码库探索（git 考古、grep 搜索、文档扫描）采集所需上下文，仅在代码库无法确定的决策点上询问用户。
+> **独立入口说明：** `dev/H`、`dev/I`、`dev/R`、`dev/M`、`dev/A` 五个横向工作流均为零硬依赖设计。用户可直接从任一入口进入，无需预先执行 `dev/01`、`dev/02` 等主线工作流。当同 change 目录下缺少上游产物时，各工作流会自行通过代码库探索（git 考古、grep 搜索、文档扫描）采集所需上下文，仅在代码库无法确定的决策点上询问用户。
+>
+> **横向工作流的共享底座：** `dev/M`（领域模型）拥有 CONTEXT / ADR 格式的单一事实源；`dev/A`（架构深化）与 `dev/03`（TDD）共享 `vendor/codebase-design` 的设计词汇（模块 / 接口 / 接缝 / 适配器 / 深度 / 杠杆 / 局部性）。引用方一律不复制这些规范。
 
 ## 状态汇报
 

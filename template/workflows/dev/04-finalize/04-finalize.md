@@ -82,6 +82,7 @@ keywords: [finalize, verify, complete, archive, 归档, 收尾, 完成验证]
   - 每条完成结论都有**本次运行**的命令与输出证据
   - 已对照来源（PRD / issue / slices / 用户任务）逐项核对需求清单
   - 无调试残留与推测性功能
+  - （如适用）实现期引入的新领域术语 / 架构决策已按 `../M-domain-modeling/M-domain-modeling.md` 沉淀到 CONTEXT / ADR（模型未漂移）；无新术语则不适用
   - `completion-verification.md` 无残留 `[TODO:]`
   - `.status.json` 的 `verification_status` 为 `verified` 或 `blocked`
 

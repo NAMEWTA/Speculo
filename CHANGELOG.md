@@ -6,7 +6,27 @@
 
 ---
 
-## [Unreleased]
+## [0.1.17] — 2026-06-26
+
+### Added
+
+- **vendor**：新增 `codebase-design` 原生技能（`SKILL.md` + `DEEPENING.md` + `DESIGN-IT-TWICE.md`）——深模块设计的**共享词汇单一事实源**（模块 / 接口 / 接缝 / 适配器 / 深度 / 杠杆 / 局部性），供 `dev/03`、`dev/I`、`dev/A` 引用。
+- **workflows/dev**：新增横向工作流 `M-domain-modeling`（`dev/M`）——主动领域建模纪律（挑战术语、锐化语言、压测边界、与代码交叉核对），并**拥有 `CONTEXT-FORMAT.md` / `ADR-FORMAT.md` 格式单一事实源**；产物 `domain-model-log.md`，CONTEXT/ADR 经确认后写入 `.config/`。
+- **workflows/dev**：新增横向工作流 `A-improve-architecture`（`dev/A`）——扫描深化机会 → 可视化 HTML 架构审查报告 → 质询所选候选；HTML 报告写入 change 目录（遵守持久化铁律，不落临时目录），架构词汇引用 `vendor/codebase-design`、领域沉淀引用 `M-domain-modeling`、质询引用 `grill-me`。
+- **skills/speculo-write**：新增 `references/authoring-quality-levers.md`——「编写出色技能」领域模型的 Speculo 适配版（可预测性、主导词、信息层级、完成标准、何时拆分、修剪、失败模式），作为质量理论单一事实源。
+
+### Changed
+
+- **workflows/dev/03-tdd**：去重——删除与 `vendor/codebase-design` 逐字重复的 `deep-modules.md`、`interface-design.md`，`mocking.md` 精简为 TDD 专属（SDK 风格接口 + 何时 mock），依赖类别指向 `DEEPENING.md`；`03-tdd.md` / `tdd-plan.md` 改为引用 `vendor/codebase-design`。
+- **workflows/dev/I-to-issues**：接入 `vendor/codebase-design`——§2 架构上下文统一用深模块词汇，按「一个适配器=假设接缝，两个=真实接缝」判定切片是否引入接缝。
+- **workflows/dev**：`01-grill-with-docs` 删除自带的 `ADR-FORMAT.md` / `CONTEXT-FORMAT.md`（移交 `M-domain-modeling` 拥有），改为引用；`02-prd`、`04-finalize`、`D-docs-sync` 接入 `M-domain-modeling`（术语沉淀 / 模型未漂移核对 / 对外文档通用语言对齐）。
+- **workflows/dev/H-diagnose**：`diagnose-guide.md` 对 `/improve-codebase-architecture` 技能的引用重定向到新工作流 `../A-improve-architecture/`。
+- **skills/speculo-write**：升级——`SKILL.md` 注入可预测性框架与质量杠杆引用；`skill-authoring-sop.md`（主导词措辞、信息层级、扩展审查清单）、`validation-checklist.md`（新增质量杠杆检查段）、`asset-selection-sop.md`（粒度即拆分成本）、`workflow-authoring-sop.md` / `command-authoring-sop.md` 均接入质量杠杆。
+- **workflows/dev/00-INDEX.md**：入口别名表新增 `dev/M`、`dev/A`；执行模式新增 `domain-modeling`、`improve-architecture`；独立入口说明扩展为五个零依赖横向工作流，并说明共享底座。
+
+### Removed
+
+- **workflows/dev**：`03-tdd/deep-modules.md`、`03-tdd/interface-design.md`、`01-grill-with-docs/ADR-FORMAT.md`、`01-grill-with-docs/CONTEXT-FORMAT.md`——内容已收敛到各自的单一事实源（`vendor/codebase-design`、`M-domain-modeling`）。
 
 ---
 
@@ -247,7 +267,10 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.14...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.17...HEAD)
+- [0.1.17](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.17)
+- [0.1.16](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.16)
+- [0.1.15](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.15)
 - [0.1.14](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.14)
 - [0.1.13](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.13)
 - [0.1.12](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.12)

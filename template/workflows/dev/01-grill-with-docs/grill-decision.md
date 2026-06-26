@@ -5,7 +5,7 @@
 - `speculo/.speculo/dev/<change>/context-map.md`
 - 用户当前方案或目标
 - 本 workflow 入口文件中的内置领域拷问指引
-- 同目录 `CONTEXT-FORMAT.md`、`ADR-FORMAT.md`
+- `../M-domain-modeling/CONTEXT-FORMAT.md`、`../M-domain-modeling/ADR-FORMAT.md`（格式单一事实源）；主动拷问手法见 `../M-domain-modeling/M-domain-modeling.md`
 
 ## 产物
 
@@ -14,7 +14,7 @@
 
 ## 填写引导
 
-1. 遵循 `01-grill-with-docs.md` 的内置指引，再按需读取同目录格式文档。
+1. 遵循 `01-grill-with-docs.md` 的内置指引，再按需读取 `../M-domain-modeling/` 的格式文档与主动拷问纪律。
 2. 每次只问一个会改变决策树的问题，并给出推荐答案。
 3. 对术语冲突、代码现实冲突和 ADR 候选直接指出。
 4. 用户确认后，把决策写入 `decision-log.md`。
