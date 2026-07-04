@@ -16,6 +16,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- **commands**：新增 `config-prune` dry-run 命令，用于审计 `.config` 中可删除、合并或改写的过期知识资产；破坏性清理必须等待用户确认。
+- **workflows/dev/D-docs-sync**：新增 `.config` 同步契约与 archive 知识提取阶段，支持从归档产物沉淀 ADR / CONTEXT / RULES / LESSONS 候选。
+- **.speculo**：新增 `AGENTS.md` 与 `archive/AGENTS.md`，作为状态骨架、归档目录和渐进披露读取顺序的指引入口。
+
+### Changed
+
+- **workflows/dev/D-docs-sync**：从 `tracked_docs` 升级为 `tracked_assets`，同步范围扩展到 README、CHANGELOG、AGENTS、docs 与 `.config` 知识资产；state schema 升至 v2 并提供 v1 迁移规则。
+- **workflows**：分类导航入口改为 `AGENTS.md`；CLI 更新选中 workflow 分类时会移除旧入口文件。
+- **workflows/dev/03-tdd**：开始 TDD 计划或写代码前必须检查当前分支、`git status --short --branch`、`git diff --stat` 和 `git diff --cached --stat`，并把 git 基线写入 TDD 产物。
+- **workflows/dev/M-domain-modeling**：ADR 格式新增 `superseded_by` 生命周期字段和取代链同步规则。
+- **docs**：同步 `vendor/` 更新语义、`person` workflow 分类、`dev/M`、`dev/A` 与 docs-sync 新职责，删除旧的 doc/M 归属说明。
+
 ---
 
 ## [0.1.17] — 2026-06-26
@@ -34,7 +48,7 @@
 - **workflows/dev**：`01-grill-with-docs` 删除自带的 `ADR-FORMAT.md` / `CONTEXT-FORMAT.md`（移交 `M-domain-modeling` 拥有），改为引用；`02-prd`、`04-finalize`、`D-docs-sync` 接入 `M-domain-modeling`（术语沉淀 / 模型未漂移核对 / 对外文档通用语言对齐）。
 - **workflows/dev/H-diagnose**：`diagnose-guide.md` 对 `/improve-codebase-architecture` 技能的引用重定向到新工作流 `../A-improve-architecture/`。
 - **skills/speculo-write**：升级——`SKILL.md` 注入可预测性框架与质量杠杆引用；`skill-authoring-sop.md`（主导词措辞、信息层级、扩展审查清单）、`validation-checklist.md`（新增质量杠杆检查段）、`asset-selection-sop.md`（粒度即拆分成本）、`workflow-authoring-sop.md` / `command-authoring-sop.md` 均接入质量杠杆。
-- **workflows/dev/00-INDEX.md**：入口别名表新增 `dev/M`、`dev/A`；执行模式新增 `domain-modeling`、`improve-architecture`；独立入口说明扩展为五个零依赖横向工作流，并说明共享底座。
+- **workflows/dev/AGENTS.md**：入口别名表新增 `dev/M`、`dev/A`；执行模式新增 `domain-modeling`、`improve-architecture`；独立入口说明扩展为五个零依赖横向工作流，并说明共享底座。
 
 ### Removed
 
@@ -66,7 +80,7 @@
 ### Fixed
 
 - **workflows**：新创建的 change 目录现在必定包含 `.status.json`，并在 `<cat>-status.json` `active[]` 中出现——修复三个持久化契约实现缺口（active[] 从未填充、`.status.json` 不稳定存在、多并发未显式声明）。
-- **workflows**：dev/doc `00-INDEX.md` 进入协议 step 3 拆为原子子步骤（创建目录 → 写 `.status.json` → 更新 `active[]`），不可跳过。
+- **workflows**：dev/doc `AGENTS.md` 进入协议 step 3 拆为原子子步骤（创建目录 → 写 `.status.json` → 更新 `active[]`），不可跳过。
 - **commands**：`archive` 命令新增预扫描——缺少 `.status.json` 的 change 标记为 `broken-change` 并跳过，不再静默忽略。
 
 ### Docs
@@ -112,7 +126,7 @@
 - **workflows**：三个横向工作流新增自初始化能力——缺少 change 目录时可自行创建并初始化 `.status.json`。
 - **workflows**：各阶段规范新增深度搜索协议——当上游产物（PRD、decision-log 等）缺失时，通过 git 考古、grep 搜索、文档扫描、测试阅读自行采集上下文，仅在代码库探索穷尽后询问用户。
 - **workflows**：`R-review` Spec 维度新增自推断 fallback——无 spec 时从 commit message、测试、代码注释推断需求意图。
-- **workflows**：`00-INDEX.md` 新增独立入口说明，执行模式表标注三个横向工作流零依赖/可独立进入。
+- **workflows**：`AGENTS.md` 新增独立入口说明，执行模式表标注三个横向工作流零依赖/可独立进入。
 - **workflows**：`H-diagnose` 新增「独立诊断时的信息采集」四步协议（环境扫描 → 症状定位 → 模块探索 → 提问收敛）。
 
 ### Changed
@@ -137,7 +151,7 @@
 
 ### Changed
 
-- **CLI**：init/update 改为选择式 workflow 安装——仅复制选中的 workflow 目录，不再整体复制 `workflows/`。分类级元数据（`00-INDEX.md`、`_templates/`）按所选分类复制。
+- **CLI**：init/update 改为选择式 workflow 安装——仅复制选中的 workflow 目录，不再整体复制 `workflows/`。分类级元数据（`AGENTS.md`、`_templates/`）按所选分类复制。
 - **CLI**：update 模式变为精确覆盖——仅触碰选中的 workflow 目录，`workflows/` 根层的散放文件得以保留。
 - **workflows**：毛泽东认知操作系统从 `doc/` 分类迁移至 `person/` 分类。
 - **CLI**：输出格式优化，复制/更新的文件列表增加缩进。
@@ -190,7 +204,7 @@
 ### Added
 
 - **docs**：新增 `docs/persistence-contract.md` §0「命名铁律」——所有 change 目录、command 产物目录、归档路径必须以 `YYYY-MM-DD-` 开头，不带日期的目录名视为无效（`malformed`）。
-- **workflows**：dev/doc 的 `00-INDEX.md` 全线植入命名铁律引用，扫描 active change 时自动检测并报告 malformed 目录。
+- **workflows**：dev/doc 的 `AGENTS.md` 全线植入命名铁律引用，扫描 active change 时自动检测并报告 malformed 目录。
 - **workflows**：Mao 认知操作系统工作流内置《毛泽东选集》全文知识库（`books/`，229 篇），无需联网即可检索原文、精确引用。
 
 ### Changed

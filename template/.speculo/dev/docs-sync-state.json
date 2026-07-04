@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "skill": "docs-sync",
   "state_path": "speculo/.speculo/dev/docs-sync-state.json",
-  "tracked_docs": [],
+  "tracked_assets": [],
   "last_sync_sha": null,
   "last_sync_short": null,
   "last_sync_commit_subject": null,
@@ -10,5 +10,5 @@
   "last_sync_run_at": null,
   "previous_sync_sha": null,
   "total_syncs": 0,
-  "synced_docs": []
+  "synced_assets": []
 }

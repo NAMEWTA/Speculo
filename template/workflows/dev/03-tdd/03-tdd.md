@@ -10,6 +10,22 @@ keywords: [tdd, implement, red-green-refactor, 实现, 测试]
 
 本工作流用于把 PRD、issue、诊断结论或用户明确任务实现为经过验证的代码变更。TDD 红绿重构、测试、mock 与重构指引内置在本 workflow 目录中；**深模块、接口、接缝、适配器的设计词汇与原则统一引用 `vendor/codebase-design`，本工作流不再复制**（见下「渐进披露」）。
 
+## 执行前 Git 基线
+
+开始 TDD 计划或写代码前，必须先查看当前目录所在仓库和分支的 git 情况：
+
+```bash
+git branch --show-current
+git status --short --branch
+git diff --stat
+git diff --cached --stat
+```
+
+- 把当前分支、dirty/staged/untracked 摘要记录到 `tdd/<phase-id>/tdd-plan.md`；进入实现循环后如状态变化，记录到 `implementation-log.md`。
+- 默认把已有改动视为用户或上一阶段留下的工作，不回退、不覆盖、不格式化无关文件。
+- 如果本阶段需要修改的文件已存在未知改动，先核对 diff；无法判断归属或改动会重叠时，停止并询问用户。
+- 若仓库不是 git 仓库或命令无法运行，记录失败原因和可见文件状态，再继续后续判断。
+
 ## 内置指引
 
 ### 核心原则

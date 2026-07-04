@@ -25,7 +25,7 @@ pnpm build && node --test --test-name-pattern="init fails on existing" dist/test
 This repo is both a CLI and the payload it ships. Keep them distinct:
 
 1. **CLI source** — `src/` (`cli.ts`, `index.ts`, `utils.ts`) + `test/`. A tiny ESM/TypeScript tool with two commands. This is the only code that is built and tested.
-2. **Framework asset source** — `template/`. Markdown `commands/`, `workflows/`, `skills/`, and a `.speculo/` state skeleton. This is the *content* the CLI copies into other projects. Most editing in this repo happens here, and it is plain Markdown/JSON — not compiled, not unit-tested directly.
+2. **Framework asset source** — `template/`. Markdown `commands/`, `workflows/`, `skills/`, `vendor/`, and a `.speculo/` state skeleton. This is the *content* the CLI copies into other projects. Most editing in this repo happens here, and it is plain Markdown/JSON — not compiled, not unit-tested directly.
 
 `package.json` `files: ["dist/src", "template"]` ships exactly these two layers; `bin.speculo` → `dist/src/cli.js`.
 
@@ -33,14 +33,14 @@ This repo is both a CLI and the payload it ships. Keep them distinct:
 
 The whole tool is two functions driven by two constant arrays — these arrays are the single source of truth for what gets copied:
 
-- `INIT_ASSETS = [".speculo", "commands", "skills", "workflows"]` → `initSpeculo` copies each from `<packageRoot>/template/<asset>` into `<target>/speculo/<asset>`. Assets nest under a **single `speculo/` directory** in the target (`INSTALL_SUBDIR`), mirroring the package layout — never scattered into the target root. It **collects all conflicts first and refuses (throws) if any destination already exists** — never overwrites on init (`cp` with `errorOnExist`).
-- `UPDATE_ASSETS = ["commands", "skills", "workflows"]` → `updateSpeculo` does `rm -rf` then `cp` for each under `<target>/speculo/`. **`.speculo/` is deliberately excluded** so user state/artifacts survive an update.
+- `INIT_ASSETS = [".speculo", "commands", "skills", "workflows", "vendor"]` → `initSpeculo` copies each from `<packageRoot>/template/<asset>` into `<target>/speculo/<asset>`. Assets nest under a **single `speculo/` directory** in the target (`INSTALL_SUBDIR`), mirroring the package layout — never scattered into the target root. It **collects all conflicts first and refuses (throws) if any destination already exists** — never overwrites on init (`cp` with `errorOnExist`).
+- `UPDATE_ASSETS = ["commands", "skills", "workflows"]` → update mode refreshes commands/skills/workflows and preserves `.speculo/`. `vendor/` is overwritten only with `--all`; otherwise update mode incrementally merges missing vendor skills.
 
 `cli.ts` resolves `packageRoot` as `dirname(import.meta.url)/../..` — correct only because the compiled entry lives at `dist/src/cli.js` (two levels under the package root). Changing the build layout breaks asset resolution.
 
 ### Tests are coupled to the shipped asset list
 
-`test/cli.test.ts` asserts specific files exist after `init` under `<target>/speculo/` (e.g. `speculo/skills/speculo-write/SKILL.md`, `speculo/workflows/dev/R-review/R-review.md`, `speculo/.speculo/dev/docs-sync-state.json`), that nothing scatters into the target root (e.g. no `<target>/.speculo`), and that removed paths stay gone (e.g. no `adapters/`). **If you add, rename, or remove a shipped asset under `template/`, update these assertions.**
+`test/cli.test.ts` asserts specific files exist after `init` under `<target>/speculo/` (e.g. `speculo/skills/speculo-write/SKILL.md`, `speculo/workflows/dev/R-review/R-review.md`, `speculo/commands/config-prune.md`, `speculo/.speculo/dev/docs-sync-state.json`), that nothing scatters into the target root (e.g. no `<target>/.speculo`), and that removed paths stay gone (e.g. no `adapters/`). **If you add, rename, or remove a shipped asset under `template/`, update these assertions.**
 
 ## The two `.speculo/` directories
 

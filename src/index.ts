@@ -27,6 +27,8 @@ export type SpeculoOptions = {
 
 const INIT_ASSETS = [".speculo", "commands", "skills", "workflows", "vendor"] as const;
 const UPDATE_ASSETS = ["commands", "skills", "workflows"] as const;
+const CATEGORY_GUIDE_FILE = "AGENTS.md";
+const LEGACY_CATEGORY_INDEX_FILE = "00-INDEX.md";
 
 // Assets install under a single `speculo/` directory inside the target,
 // mirroring the package layout — never scattered into the target root.
@@ -91,7 +93,7 @@ async function mergeVendor(packageRoot: string, root: string): Promise<string[]>
 
 /**
  * Copy selected workflows from the template to the install root.
- * Handles category-level metadata (00-INDEX.md, _templates/) along with
+ * Handles category-level metadata (AGENTS.md, _templates/) along with
  * individual workflow directories.
  */
 async function copyWorkflows(
@@ -113,19 +115,25 @@ async function copyWorkflows(
   for (const wf of selection.workflows) {
     const cat = wf.category;
 
-    // Copy category-level 00-INDEX.md (only once per category)
+    // Copy category-level AGENTS.md (only once per category)
     if (!categoriesDone.has(cat)) {
       const catDir = join(workflowsRoot, cat);
       await mkdir(catDir, { recursive: true });
 
-      // 00-INDEX.md
-      const indexSrc = join(templateWorkflows, cat, "00-INDEX.md");
-      const indexDest = join(catDir, "00-INDEX.md");
-      if (overwrite && (await pathExists(indexDest))) {
-        await rm(indexDest, { force: true });
+      // AGENTS.md
+      const guideSrc = join(templateWorkflows, cat, CATEGORY_GUIDE_FILE);
+      const guideDest = join(catDir, CATEGORY_GUIDE_FILE);
+      if (overwrite) {
+        if (await pathExists(guideDest)) {
+          await rm(guideDest, { force: true });
+        }
+        const legacyIndexDest = join(catDir, LEGACY_CATEGORY_INDEX_FILE);
+        if (await pathExists(legacyIndexDest)) {
+          await rm(legacyIndexDest, { force: true });
+        }
       }
-      if (await pathExists(indexSrc)) {
-        await cp(indexSrc, indexDest, { force: overwrite, errorOnExist: !overwrite });
+      if (await pathExists(guideSrc)) {
+        await cp(guideSrc, guideDest, { force: overwrite, errorOnExist: !overwrite });
       }
 
       // _templates/

@@ -1,18 +1,26 @@
 ---
 id: dev/index
 category: dev
-name: Dev Workflow Index
-description: 开发工作流导航、状态汇报与下一步推荐入口
-keywords: [dev, 开发, workflow, index, 状态]
+name: Dev Workflow AGENTS Guide
+description: 开发工作流导航、状态汇报、下一步推荐与渐进披露指引
+keywords: [dev, 开发, workflow, index, agents, 状态]
 ---
 
-# Dev Workflow Index
+# Dev Workflow AGENTS Guide
 
 > ⚠️ **持久化铁律：本文件及所有 dev workflow 的全部产物，必须且只能写入 `speculo/.speculo/dev/<change>/`。绝对禁止写入项目根目录的 `.speculo/`、`temp/` 或其他任何非规范位置。**
 
-本文件是 dev 分类的导航入口。进入时先读取 `speculo/.speculo/dev-status.json`，再按其中 active change 读取 `speculo/.speculo/dev/<change>/.status.json`，根据用户意图推荐下一步。
+本文件是 dev 分类的 AGENTS 导航入口。进入时先读取 `speculo/.speculo/dev-status.json`，再按其中 active change 读取 `speculo/.speculo/dev/<change>/.status.json`，根据用户意图推荐下一步。
 
 > **命名铁律：** 所有 change 目录必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-user-auth`）。不符合此格式的目录视为 `malformed`，仅汇报不自动操作。
+
+## 渐进披露
+
+1. 先读本文件，确认当前 dev change、执行模式和入口别名。
+2. 选定入口后，只读取对应 workflow 入口文件（如 `03-tdd/03-tdd.md`）。
+3. 进入具体 phase 时，再读取该 phase 文件、模板和被调用 skill wrapper。
+4. 执行中如涉及项目硬约束、跨任务经验、领域上下文、术语定义、ADR 或决策依据，必须参考 `../../.speculo/.config/` 下对应文件；`RULES.md` 的约束高于普通 workflow 文案。
+5. 需要理解状态骨架、archive 或 `.config` 时，读取 `../../.speculo/AGENTS.md` 和相关子目录的 `AGENTS.md`。
 
 ## 入口别名
 
@@ -25,7 +33,7 @@ keywords: [dev, 开发, workflow, index, 状态]
 | `dev/I` | `I-to-issues/I-to-issues.md` | 垂直切片 issue 分解，可嵌入其他 dev workflow，也可独立进入 |
 | `dev/H` | `H-diagnose/H-diagnose.md` | hotfix / bug / 性能回退诊断，零依赖，可独立进入 |
 | `dev/R` | `R-review/R-review.md` | Spec / Engineering / Standards 三维度 diff 审查，零依赖，可独立进入 |
-| `dev/D` | `D-docs-sync/D-docs-sync.md` | 基于 git diff 同步 README、CHANGELOG、AGENTS 等对外文档 |
+| `dev/D` | `D-docs-sync/D-docs-sync.md` | 基于 git diff、归档产物和 `.config` 生命周期同步文档/知识资产 |
 | `dev/M` | `M-domain-modeling/M-domain-modeling.md` | 主动领域建模：挑战术语、压测边界，沉淀 CONTEXT 通用语言与 ADR；格式单一事实源，可嵌入其他 dev workflow，也可独立进入 |
 | `dev/A` | `A-improve-architecture/A-improve-architecture.md` | 深化机会扫描 + HTML 架构审查 + 质询，基于 `vendor/codebase-design` 词汇，零依赖，可独立进入 |
 
@@ -41,7 +49,8 @@ keywords: [dev, 开发, workflow, index, 状态]
    - 以上三步全部成功后，方可继续推荐入口。
 4. 推荐入口时优先使用用户显式别名；没有别名时按执行模式推荐。
 5. 执行任何 workflow 前，读取该 workflow 入口文件、阶段文件、模板和被调用 skill wrapper。
-6. **Worktree 隔离（可选，默认 off）**：仅当用户**显式请求**隔离时，新 change 在 `dev/01` 的 Phase 0 经 `../../skills/worktree-isolation/SKILL.md` 建立隔离分支 `speculo/dev/<change>` 与 `.worktree/<change>/` 工作树，并把 `base_branch`、`change_branch` 记入 `.status.json`。扫描 active changes 时，对 `worktree_enabled` 为真者可结合 `git worktree list` 核对工作树是否存在。
+6. 执行中一旦需要项目规则、经验、领域术语、上下文或 ADR，先读取 `../../.speculo/.config/`，再继续判断或写入产物；除非用户明确要求或规则允许，不自动改写 `.config/`。
+7. **Worktree 隔离（可选，默认 off）**：仅当用户**显式请求**隔离时，新 change 在 `dev/01` 的 Phase 0 经 `../../skills/worktree-isolation/SKILL.md` 建立隔离分支 `speculo/dev/<change>` 与 `.worktree/<change>/` 工作树，并把 `base_branch`、`change_branch` 记入 `.status.json`。扫描 active changes 时，对 `worktree_enabled` 为真者可结合 `git worktree list` 核对工作树是否存在。
 
 ## 执行模式
 

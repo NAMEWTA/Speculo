@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Node](https://img.shields.io/node/v/@namewta/speculo.svg)](./package.json)
 
-**版本：** v2.3  
+**版本：** v2.6
 **核心原则：** 工具无关 · CLI 接入 · workflow 自治
 
 ## 这是什么
@@ -31,6 +31,7 @@ Speculo/
     ├── commands/               # 一次性独立命令
     ├── workflows/              # 多阶段工作流
     ├── skills/                 # command 可调用的可复用 skill
+    ├── vendor/                 # 原生第三方 AgentSkills 收集目录
     └── .speculo/               # 项目状态与产物骨架
 ```
 
@@ -53,17 +54,23 @@ speculo init my-project
 
 ## 内置入口
 
-- `workflows/dev/00-INDEX.md`：开发工作流导航
+- `workflows/dev/AGENTS.md`：开发工作流导航
 - `workflows/dev/01-grill-with-docs/01-grill-with-docs.md`：领域澄清与决策拷问
 - `workflows/dev/02-prd/02-prd.md`：全景理解与 PRD
 - `workflows/dev/03-tdd/03-tdd.md`：TDD 实现
 - `workflows/dev/I-to-issues/I-to-issues.md`：`dev/I` 垂直切片分解
 - `workflows/dev/H-diagnose/H-diagnose.md`：`dev/H` hotfix / diagnose
 - `workflows/dev/R-review/R-review.md`：`dev/R` Spec / Engineering / Standards 三维度 diff 审查
-- `workflows/dev/D-docs-sync/D-docs-sync.md`：`dev/D` git diff 驱动文档同步
-- `workflows/doc/00-INDEX.md`：文档写作 workflow 导航
+- `workflows/dev/M-domain-modeling/M-domain-modeling.md`：`dev/M` 主动领域建模，维护 CONTEXT 与 ADR
+- `workflows/dev/A-improve-architecture/A-improve-architecture.md`：`dev/A` 架构深化机会扫描与 HTML 审查报告
+- `workflows/dev/D-docs-sync/D-docs-sync.md`：`dev/D` 基于 git diff、归档产物和 `.config` 生命周期同步文档/知识资产
+- `workflows/doc/AGENTS.md`：文档写作 workflow 导航
+- `workflows/person/AGENTS.md`：人物方法论 workflow 导航
+- `.speculo/AGENTS.md`：状态骨架、项目知识和归档的读取指引
+- `.speculo/archive/AGENTS.md`：已完成 change 归档读取指引
 - `commands/status.md`：聚合当前状态
 - `commands/archive.md`：归档 completed change
+- `commands/config-prune.md`：dry-run 审计 `.config` 过期知识资产
 - `commands/{caveman,grill-me,handoff,write-a-skill,scaffold-exercises}.md`：生产力命令
 - `commands/retro.md`：复盘 Speculo 使用痛点并经确认提改进 issue
 

@@ -11,7 +11,7 @@ touch template/workflows/<cat>/NN-<name>/<name>-<phase>.md
 touch template/workflows/<cat>/_templates/<name>-<artifact>-template.md
 ```
 
-`<cat>` 必须是 `dev`、`doc` 或 `ops`。文件夹使用 `NN-<kebab-name>`，入口文件名必须与文件夹同名。
+`<cat>` 必须是 `dev`、`doc`、`person` 或 `ops`。文件夹使用 `NN-<kebab-name>` 或横向字母前缀，入口文件名必须与文件夹同名。
 
 ## 入口文件骨架
 
