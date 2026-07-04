@@ -34,7 +34,7 @@
 - 常规同步不整页重写 README 或代理手册；`bootstrap` 模式只在文件缺失时创建完整初始文件，已有文件仍以审计和差量修订为主。
 - 不添加没有对应代码来源的计划中能力。
 - 不把 docs-sync state 放回 skill 或 workflow 目录。
-- 不自动删除 `.config` 文件；删除候选进入 report 或 `../../../commands/config-prune.md` dry-run，执行删除需要用户确认。
+- 不自动删除 `.config` 文件；删除候选进入 report 或交由 `../../../skills/config-prune/SKILL.md` 审计，执行删除需要用户确认。
 - 不把归档产物正文大段复制到长期文档；只沉淀可复用结论，并保留路径引用。
 
 ## 完成准则
