@@ -18,6 +18,14 @@
 
 ---
 
+## [0.1.20] — 2026-07-04
+
+### Changed
+
+- **commands**：`config-prune` 审计逻辑提取为独立 `config-prune` skill——command 仅负责输出持久化（report.md），审计候选生成委托给 skill；docs-sync 工作流引用同步指向新 skill。
+
+---
+
 ## [0.1.19] — 2026-07-04
 
 ### Added
@@ -297,7 +305,8 @@
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.19...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.20...HEAD)
+- [0.1.20](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.20)
 - [0.1.19](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.19)
 - [0.1.18](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.18)
 - [0.1.17](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.17)
