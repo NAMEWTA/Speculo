@@ -85,7 +85,7 @@
 ```jsonc
 {
   "name": "<YYYY-MM-DD>-<kebab-name>",
-  "category": "dev | doc | ops",
+  "category": "dev | doc | person | ops",
   "change_status": "active",
   "execution_mode": "待 workflow 首次进入时填写",
   "created_at": "<ISO 8601，当前时间>",
@@ -133,7 +133,7 @@ AI 代理在创建 change 时必须逐项确认（扩展自 §12）：
 ```jsonc
 {
   "name":           "string, change 目录名",
-  "category":       "string, dev | doc | ops",
+  "category":       "string, dev | doc | person | ops",
   "change_status":  "string, active | completed | archived",
   "execution_mode": "string, 由 workflow 自治声明的命名预设",
   "created_at":     "string, ISO 8601",
@@ -183,7 +183,7 @@ Frontmatter **仅承载发现元数据**——让 AI 或轻量工具能扫描出
 ```yaml
 ---
 id: <category>/<name>        # 必填：全局唯一
-category: dev | doc | ops    # 必填
+category: dev | doc | person | ops    # 必填
 name: <人类可读名>            # 必填
 description: <一句话>         # 必填
 keywords: [...]              # 可选：工具或 AI 触发匹配
@@ -201,8 +201,8 @@ keywords: [...]              # 可选：工具或 AI 触发匹配
 
 ### 依赖关系语义
 
-- **软依赖**：建议先做，不强制；`00-INDEX.md` 推荐时仅作排序提示
-- **硬依赖**：未满足时拒绝执行；`00-INDEX.md` 必须报错并提示先跑前置
+- **软依赖**：建议先做，不强制；`AGENTS.md` 推荐时仅作排序提示
+- **硬依赖**：未满足时拒绝执行；`AGENTS.md` 必须报错并提示先跑前置
 
 ### `scope` 枚举（在正文中描述）
 - `same-change`：限同一 change 目录下
@@ -266,7 +266,7 @@ description: <一句话>         # 必填
 | `speculo/.speculo/<cat>/<change>/*.md` | ⚠️ | ✅ |
 | `speculo/.speculo/<cat>/<change>/.status.json` | ❌ | ✅ |
 | `speculo/.speculo/*-status.json` | ❌ | ✅ |
-| `speculo/.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入 |
+| `speculo/.speculo/dev/docs-sync-state.json` | ❌ | ✅ `dev/D-docs-sync` 原子写入；保存 tracked assets 与 git diff 基线 |
 
 > ⚠️ **创建时强制写入：** `.status.json` 与 `<cat>-status.json` 的 `active[]` 追加为 change 创建的必要组成部分。未完成这两项写入的 change 视为 `broken-change`，详见 §2。
 

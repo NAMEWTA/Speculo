@@ -26,7 +26,7 @@ keywords: [status, 状态, 进度]
 
 ## 执行步骤
 
-1. 读取已存在的 `speculo/.speculo/<cat>-status.json`，当前内置分类至少包括 `dev` 与 `doc`。缺失时报告缺失路径，建议重新运行 `speculo init`，或创建空索引 `{"active":[]}`。
+1. 读取已存在的 `speculo/.speculo/<cat>-status.json`，当前内置分类至少包括 `dev`、`doc` 与 `person`。缺失时报告缺失路径，建议重新运行 `speculo init`，或创建空索引 `{"active":[]}`。
 2. 对每个索引的 `active[]` 条目，读取 `speculo/.speculo/<cat>/<change>/.status.json`。读取失败时把该 change 标记为 `broken-index`，不要擅自删除索引项。
 3. 扫描 `speculo/.speculo/<cat>/*/.status.json`，找出 `change_status: completed` 且尚未位于 `speculo/.speculo/archive/` 的待归档 change。
 4. 聚合输出：

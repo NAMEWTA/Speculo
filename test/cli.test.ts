@@ -34,7 +34,13 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
       assert.equal(await pathExists(join(root, ".speculo", "doc-status.json")), true);
       assert.equal(await pathExists(join(root, ".speculo", "person-status.json")), true);
+      assert.equal(await pathExists(join(root, ".speculo", "AGENTS.md")), true);
+      assert.equal(await pathExists(join(root, ".speculo", "archive", "AGENTS.md")), true);
       assert.equal(await pathExists(join(root, ".speculo", "dev", "docs-sync-state.json")), true);
+      const docsSyncState = JSON.parse(await readFile(join(root, ".speculo", "dev", "docs-sync-state.json"), "utf8"));
+      assert.equal(docsSyncState.schema_version, 2);
+      assert.deepEqual(docsSyncState.tracked_assets, []);
+      assert.deepEqual(docsSyncState.synced_assets, []);
       assert.equal(await pathExists(join(root, ".speculo", ".config", "RULES.md")), true);
       assert.equal(await pathExists(join(root, ".speculo", ".config", "LESSONS.md")), true);
       assert.equal(await pathExists(join(root, ".speculo", ".config", "context")), true);
@@ -45,6 +51,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, ".speculo", ".config", removedConfigTemplate)), false);
       assert.equal(await pathExists(join(root, "commands", "status.md")), true);
       assert.equal(await pathExists(join(root, "commands", "retro.md")), true);
+      assert.equal(await pathExists(join(root, "commands", "config-prune.md")), true);
       assert.equal(await pathExists(join(root, "skills", "caveman", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "speculo-retro", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "speculo-retro", "references", "friction-taxonomy.md")), true);
@@ -55,7 +62,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "skills", "agents-md-builder", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
       // Person workflow (moved from doc/)
-      assert.equal(await pathExists(join(root, "workflows", "person", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person", "_templates", "mao-consultation-output-template.md")), true);
       // Dev workflows
@@ -65,6 +72,8 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "security-checklist.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "config-contract.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "knowledge-extract.md")), true);
       // New horizontal dev workflows
       assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "M-domain-modeling.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "CONTEXT-FORMAT.md")), true);
@@ -84,7 +93,7 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "ADR-FORMAT.md")), false);
       assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "CONTEXT-FORMAT.md")), false);
       // Doc workflows (mao removed from here)
-      assert.equal(await pathExists(join(root, "workflows", "doc", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "doc", "AGENTS.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);
       // Old path must not exist
       assert.equal(await pathExists(join(root, "workflows", "doc", "M-mao-zedong-cognitive-os")), false);
@@ -130,6 +139,7 @@ describe("speculo CLI operations", () => {
       await writeFile(join(root, "skills", "local-skill.md"), "remove me");
       // Write a local file inside an installed workflow (will be overwritten on update)
       await writeFile(join(root, "workflows", "dev", "H-diagnose", "local-note.md"), "remove me");
+      await writeFile(join(root, "workflows", "dev", "00-INDEX.md"), "legacy index");
       // Write a stray file at the workflows root level — preserved because
       // update mode only touches selected workflow directories, not the root.
       await writeFile(join(root, "workflows", "stray-root-file.md"), "keep me too");
@@ -151,6 +161,8 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "local-note.md")), false);
       // Stray file at workflows root level preserved (update is surgical, not blanket rm)
       assert.equal(await readFile(join(root, "workflows", "stray-root-file.md"), "utf8"), "keep me too");
+      assert.equal(await pathExists(join(root, "workflows", "dev", "AGENTS.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "00-INDEX.md")), false);
       assert.equal(await readFile(join(root, ".speculo", "state.txt"), "utf8"), "keep me");
       assert.equal(await readFile(join(root, ".speculo", "doc-status.json"), "utf8"), "keep doc status");
     } finally {
@@ -170,8 +182,8 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, ".speculo", "doc-status.json")), true);
       assert.equal(await pathExists(join(root, ".speculo", "person-status.json")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "doc", "00-INDEX.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "doc", "AGENTS.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
 
       // Second call: speculo/ exists, should enter update mode without error.
@@ -206,7 +218,7 @@ describe("speculo CLI operations", () => {
       // Person workflow installed
       assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
       // Person category metadata installed
-      assert.equal(await pathExists(join(root, "workflows", "person", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
       // Dev and doc workflows NOT installed (only person selected)
       assert.equal(await pathExists(join(root, "workflows", "dev")), false);
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
@@ -231,8 +243,8 @@ describe("speculo CLI operations", () => {
       });
 
       // Selected categories have their metadata
-      assert.equal(await pathExists(join(root, "workflows", "dev", "00-INDEX.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "00-INDEX.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "AGENTS.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
       // Unselected category does not
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
       // Selected workflows exist

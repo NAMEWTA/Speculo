@@ -1,18 +1,26 @@
 ---
 id: doc/index
 category: doc
-name: Doc Workflow Index
-description: 文档写作、塑形、编辑与素材管理的横向工作流导航入口
-keywords: [doc, writing, article, fragments, edit, 文档, 写作]
+name: Doc Workflow AGENTS Guide
+description: 文档写作、塑形、编辑与素材管理的横向工作流导航与渐进披露指引
+keywords: [doc, writing, article, fragments, edit, agents, 文档, 写作]
 ---
 
-# Doc Workflow Index
+# Doc Workflow AGENTS Guide
 
 > ⚠️ **持久化铁律：本文件及所有 doc workflow 的全部产物，必须且只能写入 `speculo/.speculo/doc/<change>/`。绝对禁止写入项目根目录的 `.speculo/`、`temp/` 或其他任何非规范位置。**
 
-本文件是 doc 分类的导航入口。进入时先读取 `speculo/.speculo/doc-status.json`，再按其中 active change 读取 `speculo/.speculo/doc/<change>/.status.json`，根据用户意图推荐横向 workflow。
+本文件是 doc 分类的 AGENTS 导航入口。进入时先读取 `speculo/.speculo/doc-status.json`，再按其中 active change 读取 `speculo/.speculo/doc/<change>/.status.json`，根据用户意图推荐横向 workflow。
 
 > **命名铁律：** 所有 change 目录必须为 `YYYY-MM-DD-<kebab-name>`（例：`2026-06-12-article-draft`）。不符合此格式的目录视为 `malformed`，仅汇报不自动操作。
+
+## 渐进披露
+
+1. 先读本文件，确认当前 doc change、写作模式和入口别名。
+2. 选定入口后，只读取对应 workflow 入口文件（如 `S-writing-shape/S-writing-shape.md`）。
+3. 进入具体 phase 时，再读取该 phase 文件、模板和被调用 skill wrapper。
+4. 执行中如涉及项目硬约束、跨任务经验、写作上下文、术语定义、ADR 或决策依据，必须参考 `../../.speculo/.config/` 下对应文件；`RULES.md` 的约束高于普通 workflow 文案。
+5. 需要理解状态骨架、archive 或 `.config` 时，读取 `../../.speculo/AGENTS.md` 和相关子目录的 `AGENTS.md`。
 
 ## 入口别名
 
@@ -36,6 +44,7 @@ keywords: [doc, writing, article, fragments, edit, 文档, 写作]
    - 以上三步全部成功后，方可继续推荐入口。
 4. 推荐入口时优先使用用户显式别名；没有别名时按用户意图推荐一个横向 workflow。
 5. 执行任何 workflow 前，读取该 workflow 入口文件、阶段文件和模板。
+6. 执行中一旦需要项目规则、经验、上下文、术语或 ADR，先读取 `../../.speculo/.config/`，再继续判断或写入产物；除非用户明确要求或规则允许，不自动改写 `.config/`。
 
 ## 执行模式
 

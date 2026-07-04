@@ -10,6 +10,9 @@
 ## 切片来源
 [TODO: 记录来自 PRD、slices、diagnosis 还是用户直接请求。]
 
+## 执行前 Git 基线
+[TODO: 记录当前分支、`git status --short --branch` 摘要、`git diff --stat`、`git diff --cached --stat`。若不是 git 仓库或命令失败，记录原因。]
+
 ## 保留/不动（约束）
 [TODO: 承接本切片「保留/不动」：实现中不能碰的代码/契约/数据（冻结常量、共享依赖、邻近功能）；无则写「无」。]
 

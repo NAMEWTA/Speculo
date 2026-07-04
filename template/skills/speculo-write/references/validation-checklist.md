@@ -61,6 +61,7 @@
 - [ ] 新分类有 `speculo/.speculo/archive/<cat>/.gitkeep`
 - [ ] 项目级长期上下文写入 `speculo/.speculo/.config/context/`
 - [ ] 项目级 ADR 写入 `speculo/.speculo/.config/adr/`
+- [ ] `.config` 清理类资产默认 dry-run，删除或合并前要求用户确认
 - [ ] 没有新增项目根 state 文件
 
 ## 文档与测试

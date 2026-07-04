@@ -20,7 +20,7 @@ description: 在独立 git worktree 中隔离推进一个 change 的原子能力
 ## 输入
 
 - 当前 git 仓库与**当前分支**（启用隔离时即记为 base 分支）
-- 当前 change 目录名（`YYYY-MM-DD-<kebab>`）与其分类 `<cat>`（dev | doc | ops）
+- 当前 change 目录名（`YYYY-MM-DD-<kebab>`）与其分类 `<cat>`（dev | doc | person | ops）
 - 用户的隔离意图（是否显式请求）
 - 仓库 `.gitignore`
 

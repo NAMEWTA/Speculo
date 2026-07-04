@@ -7,6 +7,9 @@
 ## 阶段标识
 [TODO: 本阶段 `<phase-id>`（与同目录 `tdd-plan.md` 一致）。]
 
+## Git 状态变化
+[TODO: 记录相对 `tdd-plan.md` 执行前基线新增/变化的 dirty、staged、untracked 文件，以及未知改动的处理结论。]
+
 ## 循环记录
 [TODO: 对每轮 RED/GREEN/REFACTOR 记录切片、行为、测试、实现摘要、重构摘要和验证结果。]
 

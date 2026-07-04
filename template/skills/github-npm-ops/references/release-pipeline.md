@@ -33,7 +33,7 @@
 ## Phase 2 — Docs Sync
 
 - 由调用方执行 `workflows/dev/D-docs-sync/D-docs-sync.md`。
-- 只修改 tracked docs 中需要同步的文档。
+- 只修改 tracked assets 中需要同步的文档或知识资产。
 - CHANGELOG 类文档只写 `[Unreleased]`，保留该段落。
 - 本阶段不推进 docs-sync state 到 release commit；最终基线推进放到 Phase 6。
 
@@ -92,7 +92,7 @@ npm view "<package-name>" dist-tags
 
 - `last_sync_sha` 推进到 `RELEASE_COMMIT_SHA`。
 - `previous_sync_sha` 使用推进前的 `last_sync_sha`。
-- `synced_docs` 使用 Phase 2 实际修改的文档列表；空同步为 `[]`。
+- `synced_assets` 使用 Phase 2 实际修改的资产列表；空同步为 `[]`。
 
 调用方把 state 推进作为 release tag 之后的普通 docs commit，tag 不移动；写入机制（原子写、schema 校验）由 D-docs-sync workflow 负责。
 

@@ -84,7 +84,7 @@
 
 迁移完成后同步：
 
-- 分类 `00-INDEX.md`
+- 分类 `AGENTS.md`
 - `speculo/.speculo/<cat>-status.json` 初始骨架
 - `speculo/.speculo/archive/<cat>/.gitkeep`
 - 项目若有 docs quick reference / architecture / adopting 等索引，按需更新

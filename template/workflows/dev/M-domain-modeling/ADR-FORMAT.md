@@ -16,11 +16,36 @@ ADR 存放在 `speculo/.speculo/.config/adr/` 目录下，使用顺序编号：`
 
 就这些。一个 ADR 可以只是一段话。价值在于记录「做出了某个决策」以及「为什么」——而不是填满各个章节。
 
+## 生命周期元数据
+
+默认 ADR 不需要元数据。只有当决策需要生命周期联动时，在标题下方放极简字段：
+
+```md
+# {决策的简短标题}
+
+Status: accepted
+superseded_by: null
+
+{1-3 句话：背景是什么、我们决定了什么、为什么这样决定。}
+```
+
+允许值：
+
+- `Status: proposed | accepted | deprecated | superseded`
+- `superseded_by: ADR-NNNN | null`
+
+当新 ADR 取代旧 ADR 时：
+
+- 新 ADR 正文说明取代了哪个 ADR 以及原因。
+- 旧 ADR 顶部更新为 `Status: superseded` 和 `superseded_by: ADR-NNNN`。
+- 若项目有 ADR 索引或 README，同步状态和取代链。
+- 任何 CONTEXT、AGENTS、README 或 docs 中的旧 ADR 引用都必须改为新 ADR、删除，或标记为待确认。
+
 ## 可选章节
 
 只有确实能增加价值时才包含以下章节。大多数 ADR 不需要它们。
 
-- **Status** 前置元数据（`proposed | accepted | deprecated | superseded by ADR-NNNN`）—— 当决策被重新审视时很有用
+- **Status** 前置元数据（见「生命周期元数据」）—— 当决策被重新审视时很有用
 - **Considered Options** —— 只有被拒绝的替代方案值得记住时才写
 - **Consequences** —— 只有非显而易见的下游影响需要指出时才写
 
