@@ -16,6 +16,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.1.19] — 2026-07-04
+
 ### Added
 
 - **commands**：新增 `config-prune` dry-run 命令，用于审计 `.config` 中可删除、合并或改写的过期知识资产；破坏性清理必须等待用户确认。
@@ -289,12 +293,13 @@
 - 初始化 `LICENSE`（MIT）、`CHANGELOG.md`，并在 `README.md` 补充安装方式、徽章与 License 小节。
 - 初始化 `.speculo/dev/docs-sync-state.json` 同步基线，纳入 `README.md` 与 `CHANGELOG.md`。
 
----8...HEAD)
-- [0.1.18](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.18
+---
 
 ## 版本链接 / Links
 
-- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.17...HEAD)
+- [Unreleased](https://github.com/NAMEWTA/Speculo/compare/v0.1.19...HEAD)
+- [0.1.19](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.19)
+- [0.1.18](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.18)
 - [0.1.17](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.17)
 - [0.1.16](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.16)
 - [0.1.15](https://github.com/NAMEWTA/Speculo/releases/tag/v0.1.15)
