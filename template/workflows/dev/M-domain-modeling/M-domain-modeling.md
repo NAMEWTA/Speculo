@@ -58,34 +58,18 @@ keywords: [domain-modeling, context, adr, ubiquitous-language, 领域建模, 术
 
 ### 独立使用
 
-本工作流**零硬依赖**，无需预先执行其他工作流即可独立进入（`dev/M`）。只需用户的领域讨论 + 当前 git 仓库即可启动；缺 change 目录时按下「自初始化」创建。
+本工作流**零硬依赖**，无需预先执行其他工作流即可独立进入（`dev/M`）。只需用户的领域讨论 + 当前 git 仓库即可启动。
 
-### 缺少 change 目录时的自初始化
+### 缺少 change 目录时
 
-若当前无对应 change 目录：
-
-1. 从用户意图提取 `<kebab-name>`（如 `model-ordering-terms`）
-2. 创建 `speculo/.speculo/dev/<YYYY-MM-DD>-<kebab-name>/`
-3. 初始化 `.status.json`：
-   ```json
-   {
-     "dev_entry": "dev/M",
-     "current_phase": "1. Model Session",
-     "phase_history": [],
-     "change_status": "active",
-     "embedded_guides": ["domain-modeling"],
-     "terms_resolved": [],
-     "adr_candidates": [],
-     "context_write_status": "none"
-   }
-   ```
-4. 在 `speculo/.speculo/dev-status.json` 的 `active` 数组追加该 change 目录名
+若无 active change，执行 `../AGENTS.md` 进入协议步骤 3（原子三步），不得内联自初始化 JSON。
 
 ## 阶段
 
 > **惰性创建文件**——只在需要写入时才创建。`.config/context/CONTEXT.md` 与 `.config/adr/` 由 Speculo 初始化提供；若目标项目缺失，在第一个术语 / ADR 解决时按需创建。
 
 ### 1. Model Session — 词汇与决策沉淀
+- id：`model-session`
 - 规范：本入口「会话期间（主动纪律）」+ 同目录 `CONTEXT-FORMAT.md`、`ADR-FORMAT.md`
 - 模板：`../_templates/domain-model-log-template.md`
 - 产物：`domain-model-log.md`；经用户确认后更新 `.config/context/` 与 `.config/adr/`

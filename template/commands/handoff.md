@@ -25,7 +25,7 @@ keywords: [handoff, 交接, summary, resume]
 ## 执行步骤
 
 1. 读取 `../skills/handoff/SKILL.md`。
-2. 按 `../skills/handoff/SKILL.md` 要求，生成脱敏交接文档。
+2. 按 `../skills/handoff/SKILL.md` 要求，生成脱敏交接正文与 `<topic>` 建议。
 3. 创建规范命令产物目录 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`。
 4. 把交接正文写入 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
 5. 删除 API key、密码、PII 和其他敏感信息；不要复制 PRD、计划、ADR、issue、commit、diff 或其他已有产物正文。

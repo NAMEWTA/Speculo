@@ -76,4 +76,4 @@ beat 是旅程中的一个动作：铺开一个场景、落下一个观点、提
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
 - 每次写入 beat 后更新 `beat_count`、`current_beat_status` 和 `updated_at`。
-- 文章自然结束且用户确认后，可把 `change_status` 置为 `completed`。
+- 文章自然结束且用户确认后，调用 `../../commands/archive.md` 归档 change；不得自行写入 `change_status: completed`。

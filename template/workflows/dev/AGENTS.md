@@ -44,7 +44,7 @@ keywords: [dev, 开发, workflow, index, agents, 状态]
 2. 若只有一个 active change，默认继续该 change；若有多个 active change，要求用户选择。
 3. 若没有 active change，按用户意图创建新的 change。**以下三步为原子操作，不可跳过，前一步失败时停止后续并报告：**
    - **3a. 创建 change 目录** —— `speculo/.speculo/dev/<YYYY-MM-DD>-<kebab-name>/`（使用当前日期，`<kebab-name>` 从用户意图提取，不超过 5 个词）。
-   - **3b. 写入 `.status.json`** —— 在 change 目录下创建 `.status.json`，按 `docs/persistence-contract.md` §2.2 最小初始化模板填入所有必填字段（`name`、`category: "dev"`、`change_status: "active"`、`created_at`、`updated_at`、`current_phase: "00-init"`、`phase_history`）。
+   - **3b. 写入 `.status.json`** —— 在 change 目录下创建 `.status.json`，按 `../../skills/speculo-write/references/persistence-contract-sop.md` 最小初始化模板填入所有必填字段（`name`、`category: "dev"`、`change_status: "active"`、`created_at`、`updated_at`、`current_phase: "00-init"`、`phase_history`）。
    - **3c. 更新 `dev-status.json`** —— 读取 `speculo/.speculo/dev-status.json`，在 `active[]` 中追加该 change 的索引条目（`name`、`current_phase: "00-init"`、`updated_at`），写回文件。
    - 以上三步全部成功后，方可继续推荐入口。
 4. 推荐入口时优先使用用户显式别名；没有别名时按执行模式推荐。
@@ -79,9 +79,17 @@ keywords: [dev, 开发, workflow, index, agents, 状态]
 - worktree 模式 change 额外汇报 `base_branch` / `change_branch` / `worktree_status`
 - 推荐下一步入口和原因
 
+## 续跑协议
+
+1. 读取 change 目录下 `.status.json` 的 `current_phase` 与 `phase_history`。
+2. 跳过 `status: completed` 的 phase；从 `in-progress`、`blocked` 或首个 `pending` phase 继续。
+3. 根据 `current_phase` 匹配 workflow 入口 `## 阶段` 中的机器 id，只读取对应 phase 文件与模板。
+4. 首个 workflow 进入 change 时写入 `execution_mode`（使用入口声明的执行模式名或用户指定别名）。
+5. 不得因续跑而重复创建 change 或重写已完成的 phase 产物。
+
 ## 完成与状态更新
 
 - 所有 dev workflow 必须维护同一 change 的 `.status.json`。
 - 进入 phase 时更新 `current_phase`，并在 `phase_history` 追加 `in-progress` 记录。
 - phase 完成时写入 `completed_at` 和 `status: completed`。
-- 只有完成当前 change 的最终交付边界时，才把 `change_status` 置为 `completed`。
+- 只有 `dev/04-finalize` 或 `archive` 命令可写 `change_status: completed | archived`；其他 dev workflow 只写各自扩展字段。

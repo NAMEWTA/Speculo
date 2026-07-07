@@ -11,7 +11,7 @@ touch template/workflows/<cat>/NN-<name>/<name>-<phase>.md
 touch template/workflows/<cat>/_templates/<name>-<artifact>-template.md
 ```
 
-`<cat>` 必须是 `dev`、`doc`、`person` 或 `ops`。文件夹使用 `NN-<kebab-name>` 或横向字母前缀，入口文件名必须与文件夹同名。
+`<cat>` 必须是 `dev`、`doc` 或 `person`。`ops` 是预留分类，只有 `.speculo` 骨架和 workflow 分类同时落地后才能启用。文件夹使用 `NN-<kebab-name>` 或横向字母前缀，入口文件名必须与文件夹同名。
 
 ## 入口文件骨架
 
@@ -31,9 +31,11 @@ keywords: [<关键词>]
 ## 阶段
 
 ### 1. <Phase> — <说明>
+- id：`<phase-id>`
 - 规范：`<name>-<phase>.md`
 - 模板：`../_templates/<name>-<artifact>-template.md`
 - 产物：`<artifact>.md`
+- agent：无，或 `agents/<phase-agent>.md`
 - 完成准则：
   - `<artifact>.md` 无残留 `[TODO:]`
   - <可机械验证的完成条件>
@@ -53,7 +55,7 @@ keywords: [<关键词>]
 
 - 进入 phase 时更新 `current_phase` 并追加 `phase_history`。
 - phase 完成时写入 `completed_at` 与 `status: completed`。
-- 全部 phase 完成后，按工作流边界决定移交下游或把 `change_status` 置 `completed`。
+- 全部 phase 完成后，按工作流边界移交下游；只有收尾 workflow 或 `archive` 命令可写 `change_status: completed | archived`。
 ```
 
 ## Frontmatter 字段
@@ -63,7 +65,7 @@ Frontmatter 仅承载发现元数据：
 | 字段 | 必填 | 说明 |
 |------|------|------|
 | `id` | 是 | `<category>/<name>`，全局唯一 |
-| `category` | 是 | `dev` / `doc` / `ops` |
+| `category` | 是 | `dev` / `doc` / `person` |
 | `name` | 是 | 人类可读名 |
 | `description` | 是 | 一句话用途 |
 | `keywords` | 否 | 工具或 AI 匹配关键词 |
@@ -85,6 +87,29 @@ Frontmatter 仅承载发现元数据：
 ## 状态字段
 
 `.status.json` 的强制元字段由 `docs/persistence-contract.md` 定义。workflow 自治字段只在入口正文 `## 状态扩展字段` 中声明，由执行者写入同一份 `.status.json`。
+
+`current_phase` 使用入口 `## 阶段` 中声明的稳定机器 id（kebab-case），不要使用人类可读标题。首个 workflow 进入 change 时写入 `execution_mode`。
+
+## Workflow Agents
+
+适合隔离执行、并行审查或反自证验证的 phase 可以创建 agent 定义：
+
+```text
+template/workflows/<cat>/<entry>/agents/<name>-agent.md
+```
+
+Agent 文件需要 frontmatter：
+
+```yaml
+---
+id: <cat>/<entry>/<agent-name>
+type: agent
+name: <人类可读名>
+description: <一句话说明该 agent 何时用于隔离执行>
+---
+```
+
+正文必须包含 `## 使命`、`## 输入契约`、`## 执行规范`、`## 产物与状态`、`## 边界`。Agent 引用同目录 phase 文件和模板，不复制大段规范；不写 `change_status`，只写它声明的 phase 产物和状态扩展字段。入口 `## 阶段` 必须列出对应 agent 相对路径。
 
 ## 完成准则
 

@@ -78,3 +78,14 @@
 | `github-npm-ops` | `skills/github-npm-ops/SKILL.md` | GitHub 运营、npm 发布、release workflow 与失败恢复 |
 | `speculo-write` | `skills/speculo-write/SKILL.md` | 创建或改造 Speculo workflow、skill、command |
 | `speculo-retro` | `skills/speculo-retro/SKILL.md` | 复盘 Speculo 使用痛点并产出 issue-ready 改进提案 |
+| `config-prune` | `skills/config-prune/SKILL.md` | dry-run 审计 `.config` 过期知识资产 |
+| `worktree-isolation` | `skills/worktree-isolation/SKILL.md` | git worktree 隔离分支与合并清理 |
+| `agents-md-builder` | `skills/agents-md-builder/SKILL.md` | 基于仓库证据生成 AGENTS.md（见 `dev/D-docs-sync/agents-contract.md`） |
+
+## Vendor Skills
+
+| ID | 入口 | 一句话用途 |
+|----|------|----------|
+| `codebase-design` | `vendor/codebase-design/SKILL.md` | 深模块 / 接口 / 接缝设计词汇（dev/03、dev/A 引用） |
+| `officecli` | `vendor/officecli/SKILL.md` | Office 文档 CLI 操作 |
+| `skill-creator` | `vendor/skill-creator/SKILL.md` | AgentSkills 规范创作辅助 |

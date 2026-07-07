@@ -78,4 +78,4 @@ keywords: [shape, article, markdown, draft, writing, 塑形]
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
 - 每次写入块后更新 `format_decisions`、`writing_status` 和 `updated_at`。
-- 文章完成由用户决定；用户确认完成后，可把 `change_status` 置为 `completed`。
+- 文章完成由用户决定；用户确认完成后，调用 `../../commands/archive.md` 归档 change；不得自行写入 `change_status: completed`。

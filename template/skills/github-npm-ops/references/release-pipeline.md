@@ -5,7 +5,7 @@
 ## Iron Law
 
 - 禁止提交破坏构建的代码；release 前必须运行仓库声明的 lint / test / build 或等价质量闸。
-- docs-sync 必须由调用方按 `workflows/dev/D-docs-sync/D-docs-sync.md` 执行，基于 `speculo/.speculo/dev/docs-sync-state.json#last_sync_sha..HEAD` 的 git diff。
+- docs-sync 必须由调用方按 `../../../workflows/dev/D-docs-sync/D-docs-sync.md` 执行，基于 `speculo/.speculo/dev/docs-sync-state.json#last_sync_sha..HEAD` 的 git diff。
 - tag 必须精确指向 release commit，即包含 `package.json` version bump 与 CHANGELOG 迁移的 commit；禁止指向后续 docs / state commit。
 - npm 已成功上传后，同一 version 不可重发；不要通过删 tag 或 unpublish 试图覆盖。
 
@@ -32,7 +32,7 @@
 
 ## Phase 2 — Docs Sync
 
-- 由调用方执行 `workflows/dev/D-docs-sync/D-docs-sync.md`。
+- 由调用方执行 `../../../workflows/dev/D-docs-sync/D-docs-sync.md`。
 - 只修改 tracked assets 中需要同步的文档或知识资产。
 - CHANGELOG 类文档只写 `[Unreleased]`，保留该段落。
 - 本阶段不推进 docs-sync state 到 release commit；最终基线推进放到 Phase 6。
@@ -88,7 +88,7 @@ npm view "<package-name>" dist-tags
 
 ## Phase 6 — 推进 docs-sync 基线
 
-仅当 Phase 1-5 全绿时执行。本 skill 不自行选择持久化目录；把基线推进交给调用方的 release workflow 或 `workflows/dev/D-docs-sync/D-docs-sync.md`，只向其提供以下取值：
+仅当 Phase 1-5 全绿时执行。本 skill 不自行选择持久化目录；把基线推进交给调用方的 release workflow 或 `../../../workflows/dev/D-docs-sync/D-docs-sync.md`，只向其提供以下取值：
 
 - `last_sync_sha` 推进到 `RELEASE_COMMIT_SHA`。
 - `previous_sync_sha` 使用推进前的 `last_sync_sha`。

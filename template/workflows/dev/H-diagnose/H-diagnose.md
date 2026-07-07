@@ -45,7 +45,7 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 
 **独立进入流程：**
 
-1. **change 目录**：若用户未指定 `<change>` 目录，按 `YYYY-MM-DD-<kebab-name>` 格式创建（如 `2026-06-17-fix-login-timeout`），初始化 `.status.json` 并更新 `dev-status.json`。
+1. **change 目录**：若无 active change，执行 `../AGENTS.md` 进入协议步骤 3（原子三步），不得内联自初始化 JSON。
 2. **信息自采集**：若同 change 目录下无上游产物（PRD、decision-log 等），**自行通过代码库探索采集诊断所需上下文**，不要求用户先执行其他工作流：
    - `git log --oneline -30` 查找近期相关变更
    - 搜索错误信息/堆栈中的关键符号（`grep -rn` 在项目中定位）
@@ -54,31 +54,19 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 3. **深度搜索**：反馈循环构建受阻时，不轻易放弃——按 `diagnose-guide.md` 的 10 种方法逐项尝试；代码库中找不到线索时，搜索项目文档、issue tracker、CI 日志。
 4. **仅必要时询问**：仅在代码库探索无法确定的关键决策点（如需要访问外部环境、需要用户提供日志文件）使用 `AskUserQuestion`。
 
-### 缺少 change 目录时的自初始化
+### 缺少 change 目录时
 
-若当前无对应 change 目录，按以下步骤创建：
-
-1. 从用户报告的 Bug/异常提取 `<kebab-name>`（如 `fix-login-timeout`、`fix-payment-npe`）
-2. 创建 `speculo/.speculo/dev/<YYYY-MM-DD>-<kebab-name>/`
-3. 初始化 `.status.json`：
-   ```json
-   {
-     "dev_entry": "dev/H",
-     "current_phase": "1. Diagnose Loop",
-     "phase_history": [],
-     "change_status": "active",
-     "embedded_guides": ["diagnose"],
-     "feedback_loop": "none",
-     "hypothesis_status": "open",
-     "regression_test": "blocked",
-     "debug_artifacts": []
-   }
-   ```
-4. 在 `speculo/.speculo/dev-status.json` 的 `active` 数组中追加该 change 目录名
+若无 active change，执行 `../AGENTS.md` 进入协议步骤 3（原子三步），不得内联自初始化 JSON。
 
 ## 阶段
 
+| Phase | id | agent | 规范 | 模板 | 产物 |
+|-------|-----|-------|------|------|------|
+| 1. Diagnose Loop | `diagnose-loop` | `agents/diagnose-agent.md` | `diagnose-loop.md` | `../_templates/diagnosis-template.md` | `diagnosis.md` |
+| 2. Fix Regression | `fix-regression` | `agents/fix-agent.md` | `diagnose-fix.md` | `../_templates/regression-template.md` | `regression.md` |
+
 ### 1. Diagnose Loop — 反馈循环与假设
+- id：`diagnose-loop`
 - 规范：`diagnose-loop.md`
 - 模板：`../_templates/diagnosis-template.md`
 - 产物：`diagnosis.md`
@@ -88,6 +76,7 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
   - `diagnosis.md` 无残留 `[TODO:]`
 
 ### 2. Fix Regression — 修复与回归
+- id：`fix-regression`
 - 规范：`diagnose-fix.md`
 - 模板：`../_templates/regression-template.md`
 - 产物：`regression.md`
@@ -116,4 +105,4 @@ keywords: [diagnose, hotfix, bug, debug, performance, 回归]
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
 - 若需要 TDD 实现修复，可嵌入 `../03-tdd/03-tdd.md` 的 Slice Loop。
-- 修复验证完成后可把 `change_status` 置为 `completed`，或移交后续 review/handoff。
+- 修复验证完成后移交 `../04-finalize/04-finalize.md` 或 `../R-review/R-review.md`；不得自行写入 `change_status: completed`。

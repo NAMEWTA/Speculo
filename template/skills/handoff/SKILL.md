@@ -2,7 +2,7 @@
 id: handoff
 type: skill
 name: Handoff
-description: 将当前对话压缩成交接文档；当用户需要另一个 agent、另一个会话或 command/handoff 接手继续工作时使用。
+description: 将当前对话压缩成脱敏交接正文与元数据；当用户需要另一个 agent、另一个会话或 command/handoff 接手继续工作时使用。
 ---
 
 # Handoff
@@ -22,29 +22,52 @@ description: 将当前对话压缩成交接文档；当用户需要另一个 age
 
 ## 输出
 
-- 保存到规范命令产物目录的脱敏交接文档：`speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`
-- 文档路径、主题目录名和命名依据
+- 脱敏交接正文（Markdown），供调用方写入规范命令产物目录
+- 建议的 `<topic>` 目录名（kebab-case）与命名依据
 - 3-5 条极简摘要
 - 推荐技能清单
 
-## 命名与位置
+**本 skill 不自行创建目录、不写盘。** 持久化由 `commands/handoff.md` 独占负责。
 
-- 交接文档必须写入调用方命令产物目录：`speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
+## 命名建议
+
 - `<YYYY-MM-DD>` 使用当前日期。
 - `<topic>` 从用户目标、项目名、变更名或下一次会话重点提取，使用小写 kebab-case；无法判断时使用 `session`。
-- 安装后的实际项目位置是 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
-- 禁止写入 `temp/`、系统临时目录、仓库根目录临时文件或其他非 Speculo 规范位置。
+- 安装后的目标路径为 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/handoff.md`。
 
 ## 执行步骤
 
 1. 收集当前目标、背景、已做工作、关键文件、验证结果、剩余风险和下一步。
 2. 删除 API key、密码、token、个人身份信息和其他敏感内容。
 3. 不复制 PRD、计划、ADR、issue、commit、diff 或其他已有产物正文；改用路径、URL 或 commit 引用。
-4. 添加 `推荐技能` 部分，列出下一个 agent 应优先读取或调用的技能。
-5. 创建 `speculo/.speculo/commands/<YYYY-MM-DD>-handoff-<topic>/`，并把交接文档写入其中的 `handoff.md`。
-6. 返回文档路径、主题目录名、3-5 条极简摘要和推荐技能清单。
+4. 添加 `## 推荐技能` 部分，列出下一个 agent 应优先读取或调用的 skill。
+5. 按下方结构组织脱敏正文，连同 `<topic>` 建议、摘要和推荐技能清单返回给调用方。
+
+## 正文结构
+
+```markdown
+# Handoff
+
+## 目标
+[概括当前任务目标和用户下一步重点。]
+
+## 已完成
+[列出已完成工作、关键决策和重要文件路径。]
+
+## 未完成
+[列出下一步、阻塞点和剩余风险。]
+
+## 验证
+[记录已运行命令、结果和未运行原因。]
+
+## 推荐技能
+[列出下一个 agent 推荐读取的 skill。]
+
+## 摘要
+[用 3-5 条概括交接内容，不复制敏感信息。]
+```
 
 ## references/ 与 scripts/
 
 - 无 `references/` 子文档；该 skill 的完整执行规则在本入口中。
-- 无 `scripts/`；直接按本文件步骤整理和写入交接文档。
+- 无 `scripts/`；直接按本文件步骤整理交接正文并返回。

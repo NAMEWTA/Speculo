@@ -85,7 +85,7 @@
 ```jsonc
 {
   "name": "<YYYY-MM-DD>-<kebab-name>",
-  "category": "dev | doc | person | ops",
+  "category": "dev | doc | person",
   "change_status": "active",
   "execution_mode": "待 workflow 首次进入时填写",
   "created_at": "<ISO 8601，当前时间>",
@@ -133,7 +133,7 @@ AI 代理在创建 change 时必须逐项确认（扩展自 §12）：
 ```jsonc
 {
   "name":           "string, change 目录名",
-  "category":       "string, dev | doc | person | ops",
+  "category":       "string, dev | doc | person",
   "change_status":  "string, active | completed | archived",
   "execution_mode": "string, 由 workflow 自治声明的命名预设",
   "created_at":     "string, ISO 8601",
@@ -144,7 +144,7 @@ AI 代理在创建 change 时必须逐项确认（扩展自 §12）：
       "phase":        "string, phase id",
       "entered_at":   "string, ISO 8601",
       "completed_at": "string|null, ISO 8601",
-      "status":       "string, pending | in-progress | completed | skipped | revisited"
+      "status":       "string, pending | in-progress | completed | skipped | revisited | blocked"
     }
   ]
 }
@@ -183,7 +183,7 @@ Frontmatter **仅承载发现元数据**——让 AI 或轻量工具能扫描出
 ```yaml
 ---
 id: <category>/<name>        # 必填：全局唯一
-category: dev | doc | person | ops    # 必填
+category: dev | doc | person          # 必填；ops 为预留分类，未在模板骨架落地
 name: <人类可读名>            # 必填
 description: <一句话>         # 必填
 keywords: [...]              # 可选：工具或 AI 触发匹配
@@ -198,6 +198,10 @@ keywords: [...]              # 可选：工具或 AI 触发匹配
 | `## 依赖` | 列出软依赖 / 硬依赖的其他 workflow（相对路径） |
 | `## 状态扩展字段` | 本 workflow 要追加到 `.status.json` 的字段及类型 |
 | `## 完成与状态更新` | 每个 phase 完成时的状态写入动作 |
+
+`current_phase` 必须使用 workflow 入口声明的稳定机器 id（kebab-case），不是人类可读标题。首个 workflow 进入 change 时必须写入 `execution_mode`；若由用户直接指定入口，则用该入口声明的执行模式名。
+
+`change_status: completed` 只允许负责最终交付边界的收尾 workflow（当前为 `dev/04-finalize`）写入；`change_status: archived` 只允许 `archive` 命令或收尾 workflow 的归档步骤写入。其他 workflow 只能维护自己的扩展字段（如 `implementation_status: verified`），不得自行完成或归档整个 change。
 
 ### 依赖关系语义
 
@@ -290,3 +294,38 @@ AI 代理在创建或扫描目录时必须执行以下机械检查：
 - [ ] 仅处理符合日期命名规范的目录
 - [ ] 不符合规范的目录标记为 `malformed`，列出路径并提示用户修复或手动清理
 - [ ] 不自动删除、重命名或忽略 malformed 目录；必须汇报
+
+## 13. Workflow Agents
+
+当一个 workflow 的 phase 适合隔离执行、并行审查或反自证验证时，可在该 workflow 目录下创建：
+
+```text
+template/workflows/<cat>/<entry>/agents/<name>-agent.md
+```
+
+Agent 文件是框架资产，不是运行时产物；不需要带日期。它的 frontmatter 最小集为：
+
+```yaml
+---
+id: <cat>/<entry>/<agent-name>
+type: agent
+name: <人类可读名>
+description: <一句话说明该 agent 何时用于隔离执行>
+---
+```
+
+正文必须包含：
+
+| 章节 | 内容 |
+|------|------|
+| `## 使命` | 该 agent 负责的单一 phase 或审查轴 |
+| `## 输入契约` | 当前 change 路径、`current_phase`/`phase-id`、必须读取的上游产物 |
+| `## 执行规范` | 用相对路径引用同目录 phase 文件、模板、skill；不得复制大段规范正文 |
+| `## 产物与状态` | 产物路径和 `.status.json` 扩展字段写入责任 |
+| `## 边界` | 不越过本 phase、不改无关文件、不写 `change_status` |
+
+Workflow 入口若提供 agents，必须在 `## 阶段` 中列出对应 agent 相对路径。Agent 只可写它声明的 phase 产物和状态扩展字段；最终 `change_status` 仍由收尾 workflow 或 `archive` 命令负责。
+
+## 14. 预留分类
+
+`ops` 是预留分类。只有当 `template/.speculo/ops-status.json`、`template/.speculo/ops/.gitkeep`、`template/.speculo/archive/ops/.gitkeep` 和 `template/workflows/ops/AGENTS.md` 同时落地后，才可把 `ops` 加入 category 枚举。

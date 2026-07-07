@@ -71,6 +71,16 @@ describe("speculo CLI operations", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "R-review.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "security-checklist.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "agents", "tdd-plan-agent.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "agents", "spec-review-agent.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "agents", "diagnose-agent.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "agents", "completion-gate-agent.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "agents", "docs-diff-agent.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "architecture-scan.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "overview-template.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "prd-overview-template.md")), false);
+      assert.equal(await pathExists(join(root, "workflows", "doc", "_templates", "teach-lesson-html-template.md")), true);
+      assert.equal(await pathExists(join(root, "skills", "config-prune", "references", "audit-rules.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "config-contract.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "knowledge-extract.md")), true);

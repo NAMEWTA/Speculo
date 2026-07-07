@@ -55,7 +55,16 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
 
 ## 阶段
 
+| Phase | id | agent | 规范 | 产物 |
+|-------|-----|-------|------|------|
+| 1. State Read | `state-read` | — | `docs-sync-state.md` | `docs-sync-state.json` |
+| 2. Diff Collect | `diff-collect` | `agents/docs-diff-agent.md` | `docs-sync-diff.md` | `docs-sync-report.md` |
+| 3. Knowledge Extract | `knowledge-extract` | — | `knowledge-extract.md` | `docs-sync-report.md` |
+| 4. Asset Audit & Update | `asset-audit-update` | `agents/docs-update-agent.md` | `docs-sync-update.md` | `docs-sync-report.md` |
+| 5. State Write | `state-write` | `agents/docs-update-agent.md` | `docs-sync-finish.md` | `docs-sync-state.json` |
+
 ### 1. State Read — 读取同步状态
+- id：`state-read`
 - 规范：`docs-sync-state.md`
 - 模板：`../_templates/docs-sync-state-template.json`
 - 产物：`speculo/.speculo/dev/docs-sync-state.json`
@@ -65,6 +74,7 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
   - 首次空 state 已进入 `bootstrap` 模式，并已生成首批 `tracked_assets` 候选与初始化范围
 
 ### 2. Diff Collect — 收集 git 差异
+- id：`diff-collect`
 - 规范：`docs-sync-diff.md`
 - 模板：无
 - 产物：`docs-sync-report.md`
@@ -74,6 +84,7 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
   - 已判断哪些资产需要新增、删除、修改或保留
 
 ### 3. Knowledge Extract — 归档知识沉淀
+- id：`knowledge-extract`
 - 规范：`knowledge-extract.md`
 - 模板：`../_templates/docs-sync-report-template.md`
 - 产物：`docs-sync-report.md`
@@ -83,6 +94,7 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
   - 不确定或多语义项已转交 `../M-domain-modeling/M-domain-modeling.md` 或标记为待确认
 
 ### 4. Asset Audit & Update — 审计并差量更新资产
+- id：`asset-audit-update`
 - 规范：`docs-sync-update.md`
 - 模板：`../_templates/docs-sync-report-template.md`
 - 产物：`docs-sync-report.md`
@@ -94,6 +106,7 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
   - `docs-sync-report.md` 无残留 `[TODO:]`
 
 ### 5. State Write — 验证与写回状态
+- id：`state-write`
 - 规范：`docs-sync-finish.md`
 - 模板：`../_templates/docs-sync-report-template.md`
 - 产物：`speculo/.speculo/dev/docs-sync-state.json`
@@ -124,4 +137,4 @@ keywords: [docs-sync, changelog, readme, agents, config, archive, adr, context, 
 
 - 进入每个 phase 时更新 `current_phase` 和 `phase_history`。
 - 只有验证完成后才原子写回 `speculo/.speculo/dev/docs-sync-state.json`。
-- 本 workflow 不自动完成 change；用户要求仅同步文档时，可在报告完成后把 `change_status` 置为 `completed`。
+- 本 workflow 不自动完成 change；同步完成后仅更新 `docs_sync_status` 等扩展字段。需要收尾时移交 `../04-finalize/04-finalize.md`；不得自行写入 `change_status: completed`。

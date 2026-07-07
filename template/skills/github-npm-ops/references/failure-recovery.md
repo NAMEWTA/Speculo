@@ -124,11 +124,11 @@ git push origin vX.Y.Z
 
 ---
 
-## 与 github-ops skill 的关系
+## 与 github-npm-ops skill 的关系
 
 本文件是发布编排视角下的失败恢复入口；更细粒度的失败案例（如 EUSAGE / E422 / provenance 错误码、package.json 字段错误）见 `troubleshooting-playbook.md`。
 
-| 失败位置 | 看本文件 | 看 github-ops troubleshooting-playbook |
+| 失败位置 | 看本文件 | 看 github-npm-ops troubleshooting-playbook |
 |---------|---------|---------------------------------------|
 | Phase 1–6 编排逻辑层面 | ✅ | ❌ |
 | release.yml 内部步骤的具体错误码 | ❌ | ✅ |

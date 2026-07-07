@@ -32,7 +32,7 @@ PRD 只写入 `speculo/.speculo/dev/<change>/prd.md`，overview 只写入 `specu
 
 ### 1. Zoom Out — 全景理解
 - 规范：`prd-zoom-out.md`
-- 模板：`../_templates/prd-overview-template.md`
+- 模板：`../_templates/overview-template.md`
 - 产物：`overview.md`
 - 完成准则：
   - 已说明相关模块、调用者、边界和未知点

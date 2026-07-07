@@ -70,7 +70,7 @@
 
 **转为 discussion**
 
-> This is more of a usage question than a bug, moving to [Discussions](link) where the community can chime in.
+> This is more of a usage question than a bug, moving to Discussions where the community can chime in.
 
 ### 大批量分诊节奏
 

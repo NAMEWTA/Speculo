@@ -3,7 +3,8 @@
 ## 输入
 
 - 用户描述的困境、问题或咨询主题
-- 当前 doc change 目录：`speculo/.speculo/person/<change>/`
+- 当前 person change 目录：`speculo/.speculo/person/<change>/`
+- 引语与篇目映射：`references/research/15-quote-bank.md`（查原文前先读）
 
 ## 产物
 

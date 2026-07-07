@@ -6,6 +6,37 @@
 - 当前 git 仓库
 - 当前 change 目录：`speculo/.speculo/dev/<change>/`
 
+## 严重度模型
+
+每条 finding 必须标注严重度：
+
+| 级别 | 名称 | 含义 | 动作 |
+|------|------|------|------|
+| **P0** | Critical | 安全漏洞、数据丢失风险、正确性 bug | 必须阻断合并 |
+| **P1** | High | 逻辑错误、显著 SOLID 违背、性能回退、关键需求缺失 | 合并前应修复 |
+| **P2** | Medium | 代码异味、可维护性隐患、轻微 SOLID 违背、范围蔓延 | 本 PR 修或建后续项 |
+| **P3** | Low | 风格、命名、小建议 | 可选改进 |
+
+## 执行原则
+
+- 用户说的任何东西都是固定点。若用户没有指定固定点，先询问；拿到前不要继续。
+- 比较命令使用三点语法：`git diff <fixed-point>...HEAD`，同时记录 `git log <fixed-point>..HEAD --oneline`。
+- **Worktree 模式**：若当前 change 为 worktree 隔离模式（`.status.json` 的 `worktree_enabled` 为真），fixed point 默认取 `base_branch`，且审查必须完整覆盖 change 分支树 `base_branch..change_branch` 的**每一个 commit**。此时读取 `../../../skills/worktree-isolation/SKILL.md` 的 `references/audit-branch-tree.md`。
+- **Review-first**：本工作流默认只产出审查结论，**不修改代码**；除非用户在看到 findings 后明确授权修复。
+- **诚实优先**：无法覆盖的区域要显式声明（见 `review-verdict.md` 的 clean-review 要求）。
+- 机器已强制的标准（lint / 类型 / 格式）只记录来源，不重复人工检查。
+- 如果环境支持并行子代理，三个维度应并行执行；否则按三个独立上下文顺序执行。
+
+## 独立进入流程
+
+本工作流**零硬依赖**。只需用户提供 fixed point + 当前 git 仓库即可启动。
+
+1. **fixed point**：若用户未指定，先询问；worktree 模式下默认取 `base_branch`。
+2. **change 目录**：若无 active change，执行 `../AGENTS.md` 进入协议步骤 3（原子三步），不得内联自初始化 JSON。
+3. **信息自采集**：若同 change 下无上游产物，按下方「来源深度搜索」自行采集审查上下文。
+4. **深度搜索**：Spec 和 Standards 来源仍不足时，对关键路径执行额外考古；检查测试文件推断预期行为。
+5. **诚实优先**：找不到 spec 时记录 `no spec available`；找不到成文标准时记录覆盖空白。Engineering 维度始终执行。
+
 ## 独立进入时的来源深度搜索
 
 当本工作流独立进入（无上游 PRD、slices、decision-log 等产物）时，在收集 spec 和 standards 来源时执行以下扩展搜索。**不要求用户先执行 dev/01、dev/02 或其他工作流。**
@@ -57,7 +88,14 @@
    - `.editorconfig`、`eslint.config.*`、`biome.json`、`prettier.config.*`、`tsconfig.json`
    - 全部缺失时记录覆盖空白说明
 7. 机器强制的标准只记录来源，不重复检查工具已覆盖的内容。
-8. Engineering 维度不需要外部来源，但记录将依据同目录的 `solid-checklist.md`、`security-checklist.md`、`code-quality-checklist.md`、`removal-checklist.md`。
+8. Engineering 维度不需要外部来源，但记录将依据同目录的 `solid-checklist.md`、`security-checklist.md`、`code-quality-checklist.md`、`removal-checklist.md`（进入 Engineering 审查时按需读取）。
+
+## 渐进披露（Engineering 维度深度清单）
+
+- `solid-checklist.md`：SOLID 违背与架构异味
+- `security-checklist.md`：安全漏洞、竞态、密钥、密码学
+- `code-quality-checklist.md`：错误处理、性能、边界条件
+- `removal-checklist.md`：死代码与删除候选
 
 ## 边界
 

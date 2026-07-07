@@ -54,5 +54,5 @@ keywords: [status, 状态, 进度]
 [TODO: 列出最近 5 个更新的 change + 分类 + 当前 phase]
 
 ## 可能僵尸 Changes
-[TODO: 超过 N 天未更新的 change 清单]
+[TODO: 超过 14 天未更新的 change 清单]
 ```

@@ -35,7 +35,7 @@ keywords: [archive, 归档, 清理]
    - **待归档：** 源路径、目标路径、当前分类、`updated_at`、最后 phase、是否仍在 `<cat>-status.json active[]`。
    - **broken-change：** 缺少 `.status.json` 的 change 目录路径。
    - **冲突：** 目标路径已存在的 change。
-4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。对于 `broken-change`，提示用户需先通过对应 workflow 入口（`dev/AGENTS.md`、`doc/AGENTS.md` 或 `person/AGENTS.md`）补建 `.status.json`，或将 `change_status` 手动置为 `completed` 后再归档。
+4. 向用户展示清单并等待明确确认。没有确认时只输出计划，不移动目录、不改索引。对于 `broken-change`，提示用户需先通过对应 workflow 入口（`../workflows/dev/AGENTS.md`、`../workflows/doc/AGENTS.md` 或 `../workflows/person/AGENTS.md`）补建 `.status.json`，或将 `change_status` 手动置为 `completed` 后再归档。
 5. 用户确认后逐项执行（仅对待归档项）：
    - 创建 `speculo/.speculo/archive/<cat>/<YYYY-MM>/`
    - 移动 change 目录到 `speculo/.speculo/archive/<cat>/<YYYY-MM>/<change-name>/`
