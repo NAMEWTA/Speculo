@@ -18,6 +18,25 @@
 
 ---
 
+## [0.1.21] — 2026-07-07
+
+### Added
+
+- **workflows**：多工作流引入 `agents/` 子目录——支持阶段内隔离执行与并行审查（`03-tdd`、`04-finalize`、`A-improve-architecture`、`D-docs-sync`、`H-diagnose`、`R-review`）。
+- **scripts**：新增 `check-template-links.mjs`——校验 `template/` 内 Markdown 相对链接有效性。
+- **skills/config-prune**：新增 `references/audit-rules.md` 审计规则单一事实源。
+- **workflows/doc**：新增 `teach-lesson-html-template.md` 教学 HTML 模板。
+
+### Changed
+
+- **docs**：持久化契约与 workflow 创作文档更新——明确 agent 定义、执行协议；`ops` 分类暂不作为有效分类直至满足特定条件。
+- **workflows**：主阶段文件瘦身——编排逻辑保留在 phase 文件，具体执行委托给 agent 子文档；`dev/AGENTS.md`、`doc/AGENTS.md`、`person/AGENTS.md` 分类导航同步更新。
+- **skills/handoff**：增强 handoff 技能以适配 workflow agent 结构。
+- **workflows/person/M-mao-zedong-cognitive-os**：大幅精简主文件与各阶段文档，内容收敛到 phase 子文件与引用。
+- **test**：CLI 测试新增 agent 子目录资产存在性断言。
+
+---
+
 ## [0.1.20] — 2026-07-04
 
 ### Changed
