@@ -84,11 +84,11 @@ keywords: [matt-pocock, engineering, productivity, grilling, tdd, review]
   <phase id="select-change" order="1">
     <skill root="skills" path="runtime-context/SKILL.md" activation="required" />
     <artifact root="state" path="status.json" />
-    <completion>已选择唯一 active change，或原子创建新 change（名称 = `YYYY-MM-DD-<kebab-topic>`，日期前缀自动生成，格式不匹配则阻塞）与 .status.json。</completion>
+    <completion>已选择唯一 active change，或原子创建新 change（名称 = `YYYY-MM-DD-&lt;kebab-topic&gt;`，日期前缀自动生成，格式不匹配则阻塞）与 .status.json。</completion>
   </phase>
   <phase id="init-config" order="2">
     <skill root="skills" path="runtime-context/SKILL.md" activation="required" />
-    <artifact root="project" path="speculo/config.json" />
+    <artifact root="speculo" path="config.json" />
     <when>speculo/config.json 存在时读取；不存在时以默认值静默降级。</when>
     <completion>config 已解析并纳入 runtime context，后续所有 phase 可引用 config.language / config.defaults 等字段。</completion>
   </phase>

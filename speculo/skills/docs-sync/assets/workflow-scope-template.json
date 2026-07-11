@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "workflow": "{workflow}",
-  "manifest_path": "speculo/.speculo/{workflow}/docs-sync.json",
-  "project_targets": [],
-  "state_targets": [],
-  "scope_revision": 1,
-  "scope_confirmed_at": "{ISO-8601}"
-}
