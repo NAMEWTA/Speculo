@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 7 — 实操修改指南</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<article class="lesson">
+
+<header>
+  <p class="lesson-number">第 7 课</p>
+  <h1>实操修改指南</h1>
+  <p class="lesson-tagline">常见修改场景的完整步骤和影响分析</p>
+</header>
+
+<nav class="toc">
+  <h2>本课内容</h2>
+  <ol>
+    <li><a href="#cheatsheet">修改速查表</a></li>
+    <li><a href="#scenario1">场景 1：新增一条简单路由</a></li>
+    <li><a href="#scenario2">场景 2：修改现有路由的 skill 映射</a></li>
+    <li><a href="#scenario3">场景 3：新增一个 persistence store</a></li>
+    <li><a href="#scenario4">场景 4：调整路由优先级</a></li>
+    <li><a href="#scenario5">场景 5：修改进入协议（增删 phase）</a></li>
+    <li><a href="#impact">修改影响矩阵</a></li>
+    <li><a href="#checkpoint">自检点</a></li>
+  </ol>
+</nav>
+
+<section id="cheatsheet">
+  <h2>1. 修改速查表</h2>
+
+  <table class="concept-table">
+    <thead><tr><th>你想做什么</th><th>需要修改的文件</th><th>最低风险</th></tr></thead>
+    <tbody>
+      <tr><td>新增一条路由</td><td>WORKFLOW.md + 新建 routes/xxx.md</td><td>⭐ 低</td></tr>
+      <tr><td>修改已有路由的 when 条件</td><td>WORKFLOW.md 的 routes 块</td><td>⭐ 低</td></tr>
+      <tr><td>改变路由的 vendor skill 映射</td><td>routes/xxx.md 的 skill 声明</td><td>⭐⭐ 中</td></tr>
+      <tr><td>新增 persistence store</td><td>WORKFLOW.md 的 persistence 块</td><td>⭐⭐ 中</td></tr>
+      <tr><td>调整路由优先级</td><td>WORKFLOW.md 多个 route 的 order 值</td><td>⭐⭐⭐ 高</td></tr>
+      <tr><td>修改 runtime-context 的根别名</td><td>WORKFLOW.md + 所有引用该别名的文件</td><td>⭐⭐⭐ 高</td></tr>
+      <tr><td>修改进入协议</td><td>WORKFLOW.md 的 sequence 块</td><td>⭐⭐⭐ 高</td></tr>
+      <tr><td>修改 state-schema 扩展字段</td><td>WORKFLOW.md + 可能需要迁移现有 status.json</td><td>⭐⭐ 中</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="scenario1">
+  <h2>2. 场景 1：新增一条简单路由</h2>
+
+  <p><strong>需求</strong>：新增路由 "weekly-summary"，当用户说「生成周报」时激活研究类技能生成周报。</p>
+
+  <h3>Step 1：创建路由文件</h3>
+  <p>文件：<code>workflows/matt-pocock/routes/weekly-summary.md</code></p>
+  <div class="code-block">
+<pre># Weekly Summary
+
+&lt;routes&gt;
+  &lt;route id="generate-weekly" order="1"&gt;
+    &lt;skill root="vendor:matt-pocock"
+           path="engineering/research/SKILL.md"
+           activation="adapted" /&gt;
+    &lt;artifact root="change" path="weekly-summary/{date}.md" /&gt;
+    &lt;when&gt;用户要生成周报、本周总结或工作回顾。&lt;/when&gt;
+  &lt;/route&gt;
+&lt;/routes&gt;</pre>
+  </div>
+
+  <h3>Step 2：注册路由</h3>
+  <p>在 WORKFLOW.md 的 &lt;routes&gt; 块末尾（order=10 experimental 之后）添加：</p>
+  <div class="code-block">
+<pre>&lt;route id="weekly-summary" order="11"
+       root="workflow" path="routes/weekly-summary.md"&gt;
+  &lt;when&gt;用户要生成周报、本周总结或工作回顾。&lt;/when&gt;
+&lt;/route&gt;</pre>
+  </div>
+
+  <h3>Step 3：验证清单</h3>
+  <ul>
+    <li>✅ vendor skill 存在（engineering/research/SKILL.md）</li>
+    <li>✅ 不需要新增 persistence store（产物写入已有 changes）</li>
+    <li>✅ 不需要扩展 state-schema</li>
+    <li>✅ 不需要修改进入协议（现有三步足够）</li>
+    <li>✅ order 值不与现有路由冲突</li>
+    <li>✅ root 别名在 runtime-context 中已声明</li>
+  </ul>
+
+  <p><strong>总修改量：1 个新文件 + WORKFLOW.md 中新增 4 行</strong>。</p>
+</section>
+
+<section id="scenario2">
+  <h2>3. 场景 2：修改现有路由的 skill 映射</h2>
+
+  <p><strong>需求</strong>：将 productivity 路由中的 handoff 子路由改为使用自定义的 handoff 变体技能。</p>
+
+  <h3>修改前</h3>
+  <div class="code-block">
+<pre>&lt;skill root="vendor:matt-pocock" path="productivity/handoff/SKILL.md"
+       activation="adapted" /&gt;</pre>
+  </div>
+
+  <h3>修改后</h3>
+  <div class="code-block">
+<pre>&lt;skill root="vendor:matt-pocock" path="productivity/handoff-v2/SKILL.md"
+       activation="adapted" /&gt;</pre>
+  </div>
+
+  <h3>影响分析</h3>
+  <table class="concept-table">
+    <thead><tr><th>影响范围</th><th>是否需要额外修改</th></tr></thead>
+    <tbody>
+      <tr><td>进入协议</td><td>不需要——handoff 通过 productivity 路由间接激活</td></tr>
+      <tr><td>status.json</td><td>不需要——route_history 记录的是路由 ID 而非 skill 路径</td></tr>
+      <tr><td>其他路由</td><td>不需要——各路由独立</td></tr>
+      <tr><td>artifact 路径</td><td>可能需要——如果新 skill 的产物结构不同，调整 artifact path</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>总修改量：routes/productivity.md 中改 1 行</strong>。</p>
+</section>
+
+<section id="scenario3">
+  <h2>4. 场景 3：新增一个 persistence store</h2>
+
+  <p><strong>需求</strong>：新增 "templates" store，存放跨路由复用的模板文件。</p>
+
+  <h3>在 persistence 块中添加</h3>
+  <div class="code-block">
+<pre>&lt;store id="templates" role="template" kind="directory"
+       path="templates" create="lazy"
+       consumers="docs-sync" /&gt;</pre>
+  </div>
+
+  <h3>决策检查清单</h3>
+  <ol>
+    <li><strong>create 应该用哪种模式？</strong>→ <code>lazy</code>。模板只在有路由需要时才创建，不应预先创建空目录</li>
+    <li><strong>需要 consumers 吗？</strong>→ 至少需要一个消费者命令，否则 store 永远不被读取。docs-sync 可能会同步模板文档</li>
+    <li><strong>role 语义是否正确？</strong>→ template 不是预定义的 role，但 role 是自由字符串，只要 consumers 命令知道如何按 role 发现即可</li>
+    <li><strong>需要更新 state-schema 吗？</strong>→ 不需要——新 store 是目录存储，不影响 status.json 的 JSON 字段</li>
+  </ol>
+</section>
+
+<section id="scenario4">
+  <h2>5. 场景 4：调整路由优先级</h2>
+
+  <p><strong>需求</strong>：wayfinder 的优先级应该高于 triage，因为用户在开始任何工作前应该先评估全局路径。</p>
+
+  <div class="callout callout-important">
+    <p><strong>⚠️ 高风险操作。</strong>路由优先级影响所有用户的意图匹配结果。调整 order 值可能导致之前匹配到 A 路由的意图现在匹配到 B 路由。</p>
+  </div>
+
+  <h3>修改步骤</h3>
+  <ol>
+    <li>在 WORKFLOW.md 中交换 wayfinder 和 triage 的 order 值（或重新编号所有 route）</li>
+    <li>检查两条路由的 &lt;when&gt; 条件是否会导致歧义</li>
+    <li>如果两个 when 条件有重叠，需要在 ask-matt 中增加消歧逻辑</li>
+    <li>在测试环境中验证：同样的用户输入，路由结果是否仍正确</li>
+  </ol>
+
+  <h3>order 间隔建议</h3>
+  <p>当前 order 是连续数字（1-10），这意味着如果要插入新路由，需要移动所有后续路由。更好的做法是<strong>用 10 的倍数</strong>（10, 20, 30...），给未来插入留空间。</p>
+</section>
+
+<section id="scenario5">
+  <h2>6. 场景 5：修改进入协议</h2>
+
+  <p><strong>需求</strong>：在 Phase 2 和 Phase 3 之间插入 Phase 2.5——"intent-confirm"，向用户确认：「你确定要执行 {route_name} 吗？这将创建新的 change。」</p>
+
+  <div class="code-block">
+<pre>&lt;phase id="intent-confirm" order="2.5"&gt;
+  &lt;when&gt;目标 route 会产生外部副作用或创建新 change。&lt;/when&gt;
+  &lt;completion&gt;用户已确认意图和即将产生的副作用范围。&lt;/completion&gt;
+&lt;/phase&gt;</pre>
+  </div>
+
+  <h3>影响分析</h3>
+  <ul>
+    <li><strong>Phase 1 (select-change)</strong>：不受影响——change 已在此时创建或选择</li>
+    <li><strong>Phase 2 (route)</strong>：不受影响——route 已选定</li>
+    <li><strong>Phase 3 (lazy-config)</strong>：order 从 3 变为 4（或保持 3 但 intent-confirm 用 2.5）</li>
+    <li><strong>新增技能？</strong>此 phase 没有 skill 声明——它是纯工作流逻辑（展示路由信息和副作用范围 + 等待确认），不需要单独的 vendor skill</li>
+  </ul>
+</section>
+
+<section id="impact">
+  <h2>7. 修改影响矩阵</h2>
+
+  <p>修改一个组件时，需要检查哪些其他组件会受影响：</p>
+
+  <table class="concept-table">
+    <thead>
+      <tr><th>修改 ↓ / 影响 →</th><th>runtime-context</th><th>persistence</th><th>routes 块</th><th>route 文件</th><th>进入协议</th><th>transitions</th><th>state-schema</th><th>status.json</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>runtime-context</strong></td><td>-</td><td>root 别名</td><td>root 别名</td><td>root 别名</td><td>root 别名</td><td>-</td><td>-</td><td>-</td></tr>
+      <tr><td><strong>persistence</strong></td><td>-</td><td>-</td><td>-</td><td>artifact</td><td>-</td><td>store 引用</td><td>-</td><td>-</td></tr>
+      <tr><td><strong>routes 块</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>current_route</td></tr>
+      <tr><td><strong>route 文件</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+      <tr><td><strong>进入协议</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>转移触发</td><td>-</td><td>-</td></tr>
+      <tr><td><strong>transitions</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>状态值</td></tr>
+      <tr><td><strong>state-schema</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>新字段</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>最危险的修改</strong>：runtime-context 的根别名——它影响所有引用该别名的 XML 块（persistence 的 root、routes 的 root、进入协议的 skill root）。<strong>最安全的修改</strong>：route 文件内部（只需确保 skill 路径和 artifact 路径有效）。</p>
+</section>
+
+<section id="checkpoint">
+  <h2>8. 自检点</h2>
+
+  <div class="quiz">
+    <p class="quiz-question"><strong>Q1:</strong> 如果要新增一个 persistence store 但忘记更新 consumers，会发生什么？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>store 会被创建，数据会被写入，但没有命令知道如何读取它——数据变成孤岛。consumers 字段是命令的"读取许可"——没有声明的命令不会扫描该 store。如果是写入型 store（技能直接写），影响较小（产物仍存在 change 中）；如果是读取型 store（如 knowledge），数据无法被 retro/docs-sync 等命令消费。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q2:</strong> 修改 WORKFLOW.md 的 &lt;routes&gt; 中某条 route 的 order 值时，需要同步修改 route 文件本身吗？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>不需要。route 文件内部的子路由 order 是独立编号空间（只在该路由文件内部排序），与 WORKFLOW.md 主路由的 order 是分开的。修改主路由的 order 只影响主路由之间的优先级；修改子路由的 order 只影响该路由文件内部的子路由优先级。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q3:</strong> 删除一条路由需要修改哪些文件？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>(1) 从 WORKFLOW.md 的 &lt;routes&gt; 中删除对应条目；(2) 可选：删除 routes/xxx.md 路由文件（不删也没影响，它不会被引用）；(3) 检查 status.json 的 route_history 是否有该路由——不需要修改 history，但未来 retro 分析时可能遇到引用不存在的路由；(4) 如果该路由有专用的 persistence store（且无其他路由使用），从 persistence 块中删除。</p>
+    </details>
+  </div>
+
+  <div class="ask-teacher">
+    <p>💡 <strong>向老师提问：</strong></p>
+    <ul>
+      <li>「如果我要从零搭建一个类似 Matt-Pocock 的工作流体系（新的 vendor + 新的 workflows），我应该从哪里开始？」</li>
+      <li>「修改后的回归测试怎么做？有没有自动化检查 route 配置完整性的方法？」</li>
+      <li>「这些修改在团队协作中如何做 code review？reviewer 应该重点检查什么？」</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="lesson-footer">
+  <p>
+    <strong>推荐阅读：</strong>
+    <a href="../../../../workflows/matt-pocock/WORKFLOW.md">WORKFLOW.md 原文</a> —
+    <a href="../../../../workflows/matt-pocock/routes/experimental.md">experimental 路由（in-progress 技能参考）</a>
+  </p>
+  <p>
+    上一课：<a href="0006-path-adaptation.html">路径适配机制</a> ｜
+    课程完结 🎉 ｜
+    <a href="../reference/glossary.html">参考：术语表</a>
+  </p>
+</footer>
+
+</article>
+
+</body>
+</html>

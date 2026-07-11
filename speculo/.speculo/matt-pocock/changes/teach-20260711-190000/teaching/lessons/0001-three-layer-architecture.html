@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 — 三层架构与数据流向</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<article class="lesson">
+
+<header>
+  <p class="lesson-number">第 1 课</p>
+  <h1>三层架构与数据流向</h1>
+  <p class="lesson-tagline">理解 vendor、workflows、.speculo 的职责边界和它们之间的契约</p>
+</header>
+
+<nav class="toc">
+  <h2>本课内容</h2>
+  <ol>
+    <li><a href="#recap">宏观回顾：从用户意图到技能执行</a></li>
+    <li><a href="#layer1">第 1 层：vendor/ — 原始技能资产</a></li>
+    <li><a href="#layer2">第 2 层：workflows/ — 编排层</a></li>
+    <li><a href="#layer3">第 3 层：.speculo/ — 运行时状态</a></li>
+    <li><a href="#dataflow">数据流向：一次完整的请求追踪</a></li>
+    <li><a href="#contracts">层间契约总结</a></li>
+    <li><a href="#checkpoint">自检点</a></li>
+  </ol>
+</nav>
+
+<section id="recap">
+  <h2>1. 宏观回顾</h2>
+
+  <p>在进入细节之前，先建立一个心智模型。当一个用户说「帮我分类这些 issue」时，Speculo 内部发生了：</p>
+
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="step-label">用户意图</span><span class="step-value">"帮我分类 issue"</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">ask-matt 路由</span><span class="step-value">命中 triage 路由</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">路由适配</span><span class="step-value">加载 vendor triage SKILL.md<br>将路径重定向到 state namespace</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">技能执行</span><span class="step-value">分类角色状态机运行<br>结果写入 changes/triage-xxx/</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">持久化</span><span class="step-value">status.json 更新<br>change 归档至 archive/</span></div>
+  </div>
+
+  <p>这就是三层的协作方式。每一层有自己的职责、自己的文件、自己的边界。下面逐层拆解。</p>
+</section>
+
+<section id="layer1">
+  <h2>2. 第 1 层：<code>vendor/</code> — 原始技能资产</h2>
+
+  <h3>定位</h3>
+  <p>vendor 层是 Matt Pocock 的<strong>原始技能代码</strong>。它在 Speculo 中的角色类似于第三方库——Speculo 使用它、编排它，但不修改它。</p>
+
+  <h3>物理结构</h3>
+  <div class="code-tree">
+<pre>vendor/matt-pocock/
+├── README.md                    ← 技能清单（用户调用 vs 模型调用）
+├── engineering/                 ← 编码技能
+│   ├── ask-matt/SKILL.md        ← 路由器：根据意图推荐技能
+│   ├── triage/SKILL.md          ← 分类 issue
+│   ├── implement/SKILL.md       ← 构建实现
+│   ├── to-spec/SKILL.md         ← 生成规范
+│   ├── to-tickets/SKILL.md      ← 拆分工单
+│   ├── code-review/SKILL.md     ← 代码审查
+│   ├── diagnosing-bugs/SKILL.md ← 诊断 bug
+│   ├── tdd/SKILL.md             ← 测试驱动开发
+│   ├── prototype/SKILL.md       ← 一次性原型
+│   ├── research/SKILL.md        ← 背景研究
+│   ├── domain-modeling/SKILL.md ← 领域建模
+│   ├── codebase-design/SKILL.md ← 代码仓设计
+│   ├── wayfinder/SKILL.md       ← 大工作规划
+│   ├── grill-with-docs/SKILL.md ← 文档化访谈
+│   ├── improve-codebase-architecture/SKILL.md ← 架构改进
+│   ├── resolving-merge-conflicts/SKILL.md     ← 合并冲突解决
+│   └── setup-matt-pocock-skills/SKILL.md      ← 一次性配置
+└── productivity/                ← 通用生产力技能
+    ├── teach/SKILL.md           ← 跨会话教学
+    ├── handoff/SKILL.md         ← 会话交接
+    ├── grill-me/SKILL.md        ← 无状态访谈
+    ├── grilling/SKILL.md        ← 访谈循环原语
+    └── writing-great-skills/SKILL.md ← 技能编写指南</pre>
+  </div>
+
+  <h3>关键特征</h3>
+  <ol>
+    <li><strong>每个技能一个目录</strong>，包含 <code>SKILL.md</code> 加可选的模板/格式/脚本</li>
+    <li><strong>技能分为两种调用模式</strong>：
+      <ul>
+        <li><span class="badge badge-user">用户调用</span>：用户主动发起（如 triage、implement、teach）—— 在 WORKFLOW.md 的 routes 中映射</li>
+        <li><span class="badge badge-model">模型调用</span>：模型在内部自动使用（如 tdd、prototype、research）—— 不直接路由，由其他技能内部引用</li>
+      </ul>
+    </li>
+    <li><strong>完全自描述</strong>：技能不知道 Speculo 的存在。它们写「保存到当前目录」或「写入 .scratch/」，这些路径在编排层被适配重定向</li>
+    <li><strong>不可修改</strong>：Speculo 使用者不应修改 vendor 中的技能文件。自定义应通过 workflow 层的路由适配实现</li>
+  </ol>
+
+  <h3>技能元数据格式</h3>
+  <p>每个 SKILL.md 的 YAML frontmatter 定义了技能的接口契约：</p>
+  <div class="code-block">
+<pre>---
+name: teach
+description: 在此工作区内教授用户一项新技能或概念。
+disable-model-invocation: true    ← true = 仅用户调用
+argument-hint: "你想学习什么？"
+---</pre>
+  </div>
+  <p>Workflow 层在路由时读取 <code>name</code> 和 <code>description</code>，<code>disable-model-invocation</code> 决定该技能是否可作为路由目标。</p>
+</section>
+
+<section id="layer2">
+  <h2>3. 第 2 层：<code>workflows/</code> — 编排层</h2>
+
+  <h3>定位</h3>
+  <p>编排层是 <strong>Speculo 的核心增值</strong>。它不定义新技能，而是用声明式语言描述：哪些用户意图触发哪些 vendor 技能、技能输出存到哪里、状态如何转移。如果说 vendor 是乐高积木，workflow 就是搭建图纸。</p>
+
+  <h3>物理结构</h3>
+  <div class="code-tree">
+<pre>workflows/matt-pocock/
+├── WORKFLOW.md                  ← 主定义文件（编排核心）
+└── routes/                      ← 路由定义文件
+    ├── idea-to-delivery.md
+    ├── wayfinder.md
+    ├── triage.md
+    ├── diagnose.md
+    ├── architecture.md
+    ├── review.md
+    ├── merge-conflicts.md
+    ├── research-prototype.md
+    ├── productivity.md
+    ├── experimental.md
+    └── setup.md                 ← 特殊的懒配置路由</pre>
+  </div>
+
+  <h3>WORKFLOW.md 的 XML 声明式语法</h3>
+  <p>主定义文件用 XML 块声明了 8 个核心概念。每个块是独立的领域描述：</p>
+
+  <table class="concept-table">
+    <thead>
+      <tr><th>XML 块</th><th>角色</th><th>核心语义</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>&lt;runtime-context&gt;</code></td>
+        <td>根别名映射</td>
+        <td>定义 workflow / state / vendor 三个根的物理路径别名，供后续所有块用别名引用而非硬编码路径</td>
+      </tr>
+      <tr>
+        <td><code>&lt;persistence&gt;</code></td>
+        <td>存储声明</td>
+        <td>声明 state 根下的存储骨架：哪些是固定骨架（index/changes/archive），哪些是懒创建（knowledge/integrations/backlog）</td>
+      </tr>
+      <tr>
+        <td><code>&lt;routes&gt;</code></td>
+        <td>路由表</td>
+        <td>10 条路由的优先级排序，每条绑定一个 <code>&lt;when&gt;</code> 触发条件和目标 route 文件</td>
+      </tr>
+      <tr>
+        <td><code>&lt;sequence&gt;</code></td>
+        <td>进入协议</td>
+        <td>三步启动序列：select-change → route → lazy-config，确保上下文就绪后才激活技能</td>
+      </tr>
+      <tr>
+        <td><code>&lt;dependencies&gt;</code></td>
+        <td>前置依赖</td>
+        <td>声明硬依赖（hard）—— 缺少则工作流不可用</td>
+      </tr>
+      <tr>
+        <td><code>&lt;state-schema&gt;</code></td>
+        <td>状态扩展字段</td>
+        <td>status.json 中除骨架字段外扩展的自定义字段及其类型</td>
+      </tr>
+      <tr>
+        <td><code>&lt;transitions&gt;</code></td>
+        <td>状态机</td>
+        <td>状态转移规则：route→phase、phase→route、active→archived</td>
+      </tr>
+      <tr>
+        <td>正文段落</td>
+        <td>持久化与副作用规则</td>
+        <td>路径重定向规则、外部副作用确认规则、临时文件清理规则</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>每个路由文件（routes/*.md）内部也使用类似的 XML 声明语法，定义该路由下的子路由、所需技能、产物路径和触发条件。</p>
+</section>
+
+<section id="layer3">
+  <h2>4. 第 3 层：<code>.speculo/</code> — 运行时状态</h2>
+
+  <h3>定位</h3>
+  <p>状态层是工作流的<strong>持久化存储</strong>。所有执行过程中的决策、产物、配置都沉淀在这里。它是 gitignored 的——不属于源码，属于运行实例。</p>
+
+  <h3>物理结构</h3>
+  <div class="code-tree">
+<pre>.speculo/
+├── workspace.json              ← 项目根注册表（全局唯一）
+├── person/                     ← 个人工作流状态
+│   ├── status.json
+│   ├── changes/
+│   ├── archive/
+│   └── .config/
+├── matt-pocock/                ← Matt Pocock 工作流状态
+│   ├── status.json             ← 当前状态：route、change、history
+│   ├── changes/                ← 活跃 change 的产物
+│   │   └── teach-20260711-190000/
+│   │       └── teaching/       ← 当前 teach 技能的教学产物
+│   ├── archive/                ← 已完成的 change
+│   ├── knowledge/              ← 领域知识
+│   │   └── domain.md
+│   └── integrations/           ← 集成配置
+│       ├── issue-tracker.md
+│       └── triage-labels.md
+└── commands/                   ← 命令定义</pre>
+  </div>
+
+  <h3>status.json 的骨架字段</h3>
+  <div class="code-block">
+<pre>{
+  "schema_version": 1,         ← 格式版本（升级时迁移）
+  "workflow": "matt-pocock",   ← 所属工作流
+  "current_route": "productivity",  ← 当前路由
+  "route_history": [...],      ← 路由跳转历史
+  "active": [...],             ← 所有活跃 change 的 ID 列表
+  "current_change": "teach-20260711-190000"  ← 当前活跃 change
+}</pre>
+  </div>
+  <p>加上 WORKFLOW.md <code>&lt;state-schema&gt;</code> 声明的扩展字段（skill_history、external_refs、legacy_source 等）。</p>
+
+  <h3>change 的生命周期</h3>
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="step-label">创建</span><span class="step-value">进入协议 Phase 1<br>原子创建 change 目录<br>更新 status.json</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">活跃</span><span class="step-value">技能产物写入<br>change/{路由子目录}/<br>可跨路由复用</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">完成门禁</span><span class="step-value">用户确认交付边界<br>finalize 命令触发<br>completion-gate 检查</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="step-label">归档</span><span class="step-value">change 移至 archive/<br>status.json 更新</span></div>
+  </div>
+</section>
+
+<section id="dataflow">
+  <h2>5. 数据流向：一次完整的请求追踪</h2>
+
+  <p>以刚才我们的 teach 请求为例，追踪完整的调用链和数据流向：</p>
+
+  <div class="sequence-diagram">
+    <div class="seq-step">
+      <div class="seq-num">1</div>
+      <div class="seq-body">
+        <strong>runtime-context 激活</strong>
+        <p>从 CWD 向上查找 <code>speculo/.speculo/workspace.json</code>，解析根别名：</p>
+        <ul>
+          <li>workflow = <code>speculo/workflows</code></li>
+          <li>state = <code>speculo/.speculo</code></li>
+          <li>vendor = <code>speculo/vendor</code></li>
+        </ul>
+        <p>结合 WORKFLOW.md 的 <code>&lt;runtime-context&gt;</code>，推导：</p>
+        <ul>
+          <li>workflow_root = <code>workflows/matt-pocock</code></li>
+          <li>state_root = <code>.speculo/matt-pocock</code></li>
+          <li>vendor_root = <code>vendor/matt-pocock</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="seq-step">
+      <div class="seq-num">2</div>
+      <div class="seq-body">
+        <strong>select-change（Phase 1）</strong>
+        <p>读取 <code>state_root/status.json</code>。若无当前 change，原子创建新 change：</p>
+        <ul>
+          <li>生成 change ID：<code>teach-20260711-190000</code></li>
+          <li>创建目录：<code>state_root/changes/teach-20260711-190000/</code></li>
+          <li>更新 status.json：current_change = "teach-20260711-190000"</li>
+        </ul>
+        <p>派生 change_root = <code>state_root/changes/teach-20260711-190000</code></p>
+      </div>
+    </div>
+
+    <div class="seq-step">
+      <div class="seq-num">3</div>
+      <div class="seq-body">
+        <strong>route（Phase 2）— ask-matt 激活</strong>
+        <p>读取 <code>vendor_root/engineering/ask-matt/SKILL.md</code></p>
+        <p>用户意图「想学 workflows 的使用方法」→ 匹配 productivity 路由 → teach 子路由</p>
+        <p>更新 status.json：current_route = "productivity"，route_history 追加</p>
+      </div>
+    </div>
+
+    <div class="seq-step">
+      <div class="seq-num">4</div>
+      <div class="seq-body">
+        <strong>lazy-config（Phase 3）</strong>
+        <p>teach 子路由不需要 issue tracker / triage labels / domain 文档 → 跳过</p>
+      </div>
+    </div>
+
+    <div class="seq-step">
+      <div class="seq-num">5</div>
+      <div class="seq-body">
+        <strong>技能激活 — teach</strong>
+        <p>读取 productivity 路由中的 teach 声明：</p>
+        <ul>
+          <li>skill = <code>vendor_root/productivity/teach/SKILL.md</code></li>
+          <li>activation = <code>adapted</code> → 路径适配模式</li>
+          <li>artifact root = <code>change_root/teaching/</code></li>
+        </ul>
+        <p>原 skill 写「当前目录」→ 适配为 <code>change_root/teaching/</code></p>
+        <p>原 skill 写「./lessons/」→ 适配为 <code>change_root/teaching/lessons/</code></p>
+        <p>MISSION.md、RESOURCES.md、lessons/*.html 全部写入适配后的路径</p>
+      </div>
+    </div>
+
+    <div class="seq-step">
+      <div class="seq-num">6</div>
+      <div class="seq-body">
+        <strong>持久化与状态转移</strong>
+        <p>每次状态变更更新 status.json（current_route、route_history、skill_history）</p>
+        <p>用户说「完成」→ finalize 命令 → completion-gate 检查 → change 移至 archive/</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contracts">
+  <h2>6. 层间契约总结</h2>
+
+  <table class="concept-table">
+    <thead>
+      <tr><th>契约</th><th>上游（调用方）</th><th>下游（被调用方）</th><th>核心约束</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>路径解析契约</td>
+        <td>workflow 的 <code>&lt;runtime-context&gt;</code></td>
+        <td>workspace.json + runtime-context skill</td>
+        <td>所有路径必须是项目根相对路径；任一路径越界或目标缺失 → blocked</td>
+      </tr>
+      <tr>
+        <td>路由适配契约</td>
+        <td>route 的 <code>&lt;skill activation="adapted"&gt;</code></td>
+        <td>vendor SKILL.md</td>
+        <td>仅替换路径引用（当前目录、.scratch/、docs/agents/、系统临时目录），不修改技能逻辑</td>
+      </tr>
+      <tr>
+        <td>持久化契约</td>
+        <td>workflow 的 <code>&lt;persistence&gt;</code></td>
+        <td>state namespace 的目录/文件</td>
+        <td>固定骨架（status.json/changes/archive）必须存在；懒 store 按需创建；消费者标记决定哪些命令读取哪些 store</td>
+      </tr>
+      <tr>
+        <td>状态转移契约</td>
+        <td>workflow 的 <code>&lt;transitions&gt;</code></td>
+        <td>status.json</td>
+        <td>route→phase 在路由选定且配置就绪后触发；phase→route 在当前能力完成后触发；active→archived 需 finalize 命令 + completion-gate</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="checkpoint">
+  <h2>7. 自检点</h2>
+
+  <div class="quiz">
+    <p class="quiz-question"><strong>Q1:</strong> 如果 vendor skill 写「把文件保存到当前目录」，workflow 层如何确保文件实际写入 state namespace？</p>
+    <p class="quiz-hint">提示：看 productivity 路由中 teach 的 <code>activation="adapted"</code> 和 <code>&lt;artifact root="change" path="teaching/"&gt;</code></p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>Workflow 层在激活技能前进行路径适配：将技能原文中的「当前目录」替换为 <code>&lt;artifact&gt;</code> 声明的路径（如 <code>change_root/teaching/</code>）。这是 <code>activation="adapted"</code> 模式的行为——<code>activation="required"</code> 模式不做路径替换。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q2:</strong> status.json 中的 <code>current_change</code> 和 <code>active</code> 数组是什么关系？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p><code>active</code> 是所有活跃 change ID 的列表（可能多个），<code>current_change</code> 是当前正在使用的 change ID。一个 change 可以跨越多个路由（route→phase→route 转移到新路由时复用同一 change），所以 current_change 可能不变但 current_route 会变。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q3:</strong> 为什么 persist 声明中 knowledge store 的 <code>create="lazy"</code> 而 index store 的 <code>create="initialize"</code>？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p><code>create="initialize"</code> 意味着进入协议阶段必须确保该 store 存在——index（status.json）、changes、archive 是工作流运行的固定骨架，缺少任何一个工作流都无法正确运转。<code>create="lazy"</code> 意味着 knowledge 目录只在某条路由实际产生领域知识时才创建——如果用户只使用不需要领域知识的路由（如 teach），就不需要创建空目录。</p>
+    </details>
+  </div>
+
+  <div class="ask-teacher">
+    <p>💡 <strong>向老师提问：</strong>如果你对三层架构的某个细节不清楚，或者想确认你对数据流向的理解是否正确，现在就向 AI 老师提问。例如：</p>
+    <ul>
+      <li>「如果我想让 teach 技能的产物保存到另一个路径，应该改哪里？」</li>
+      <li>「runtime-context skill 返回 blocked 是什么意思？什么情况下会发生？」</li>
+      <li>「多个 change 同时活跃时，status.json 如何知道哪个是当前 change？」</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="lesson-footer">
+  <p>
+    <strong>推荐阅读：</strong>
+    <a href="../../../../workflows/matt-pocock/WORKFLOW.md">WORKFLOW.md</a> —
+    <a href="../../../../.speculo/workspace.json">workspace.json</a> —
+    <a href="../../../../skills/runtime-context/SKILL.md">runtime-context SKILL.md</a>
+  </p>
+  <p>
+    下一课：<a href="0002-workflow-md-syntax.html">WORKFLOW.md XML 声明式语法详解</a>
+  </p>
+</footer>
+
+</article>
+
+</body>
+</html>

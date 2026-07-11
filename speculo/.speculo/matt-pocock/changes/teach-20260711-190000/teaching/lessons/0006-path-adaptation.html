@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 6 — 路径适配机制</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<article class="lesson">
+
+<header>
+  <p class="lesson-number">第 6 课</p>
+  <h1>路径适配机制</h1>
+  <p class="lesson-tagline">activation="adapted" 如何将 vendor skill 的默认路径重定向到 state namespace</p>
+</header>
+
+<nav class="toc">
+  <h2>本课内容</h2>
+  <ol>
+    <li><a href="#why">为什么需要路径适配</a></li>
+    <li><a href="#required-vs-adapted">activation="required" vs "adapted"</a></li>
+    <li><a href="#redirect-rules">四条重定向规则</a></li>
+    <li><a href="#full-example">完整示例：teach skill 的路径变换</a></li>
+    <li><a href="#artifact-vars">artifact 路径模板变量</a></li>
+    <li><a href="#checkpoint">自检点</a></li>
+  </ol>
+</nav>
+
+<section id="why">
+  <h2>1. 为什么需要路径适配</h2>
+
+  <p>vendor 技能是<strong>独立编写</strong>的——它们不知道 Speculo 的存在。一个典型的 vendor skill 会写：</p>
+  <div class="code-block">
+<pre>将当前目录视为教学工作区。
+- `MISSION.md`：记录用户对该主题感兴趣原因的文档。
+- `./lessons/*.html`：课程目录。
+- `./assets/*`：跨课程共享的可复用组件。</pre>
+  </div>
+
+  <p>在 Speculo 中，"当前目录"是项目根——如果 teach 在那里写 MISSION.md 和 lessons/，会污染项目源码。路径适配的本质是：<strong>保持技能逻辑不变，但将所有文件系统写入重定向到 state namespace</strong>。</p>
+</section>
+
+<section id="required-vs-adapted">
+  <h2>2. activation 的两种模式</h2>
+
+  <table class="concept-table">
+    <thead><tr><th></th><th>required</th><th>adapted</th></tr></thead>
+    <tbody>
+      <tr><td><strong>适用对象</strong></td><td>基础设施技能（runtime-context、ask-matt）</td><td>业务技能（teach、triage、handoff 等）</td></tr>
+      <tr><td><strong>路径处理</strong></td><td>保持原样，不做任何重定向</td><td>将默认路径映射到 artifact 声明的 state namespace 路径</td></tr>
+      <tr><td><strong>可否跳过</strong></td><td>不可跳过——缺失则工作流 blocked</td><td>不可跳过执行，但 lazy-config 阶段可能被跳过</td></tr>
+      <tr><td><strong>典型场景</strong></td><td>工作流引擎本身——它需要真实的文件系统路径来构建运行时上下文</td><td>用户面向的技能——它产生业务产物，需要隔离在 state namespace 中</td></tr>
+      <tr><td><strong>如果误用</strong></td><td>对业务技能用 required → 产物写入项目根，污染源码</td><td>对基础设施用 adapted → 引擎找不到真实路径，工作流失败</td></tr>
+    </tbody>
+  </table>
+
+  <h3>为什么 runtime-context 必须是 required？</h3>
+  <p>runtime-context 的工作是<strong>找到真实的文件系统路径</strong>并验证它们存在。如果对它做路径适配，它会返回适配后的路径（例如把 workspace.json 的路径指向 change/ 内），后续所有技能都无法找到真实的配置文件。</p>
+
+  <h3>为什么 teach 必须是 adapted？</h3>
+  <p>teach 的工作是<strong>产生教学内容</strong>。这些内容属于某个 change 的工作产物，不属于项目源码。adapted 模式确保 MISSION.md 写入 <code>change/teaching/MISSION.md</code> 而非 <code>./MISSION.md</code>。</p>
+</section>
+
+<section id="redirect-rules">
+  <h2>3. 四条重定向规则</h2>
+
+  <table class="concept-table">
+    <thead><tr><th>原始路径</th><th>适配后路径</th><th>示例</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>当前目录 (./)</strong></td>
+        <td><code>&lt;artifact root="change" path="..."&gt;</code> 声明的路径</td>
+        <td>./MISSION.md → change/teaching/MISSION.md</td>
+      </tr>
+      <tr>
+        <td><strong>.scratch/</strong></td>
+        <td>change 内的等价临时目录</td>
+        <td>.scratch/draft.md → change/scratch/draft.md</td>
+      </tr>
+      <tr>
+        <td><strong>docs/agents/</strong></td>
+        <td>change 下的对应文档路径</td>
+        <td>docs/agents/brief.md → change/docs/brief.md</td>
+      </tr>
+      <tr>
+        <td><strong>系统临时目录 (/tmp)</strong></td>
+        <td>change 内的 tmp/ 目录</td>
+        <td>/tmp/prototype.py → change/tmp/prototype.py</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>四条规则的优先级：<strong>先匹配 artifact 声明，artifact 未覆盖的路径按上述映射处理</strong>。如果技能使用了不在上述列表中的路径（如 ~/.config/），则保持原样——这通常是一个 bug，需要在路由层面处理。</p>
+
+  <div class="callout callout-important">
+    <p><strong>⚠️ 路径适配不递归</strong>：只适配技能直接指定的路径，不对技能读取的外部文件内容中的路径再做替换。如果技能引用了一个模板文件，模板文件内的路径不会被适配。</p>
+  </div>
+</section>
+
+<section id="full-example">
+  <h2>4. 完整示例：teach skill 的路径变换</h2>
+
+  <h3>路由声明（productivity.md）</h3>
+  <div class="code-block">
+<pre>&lt;route id="teach" order="2"&gt;
+  &lt;skill root="vendor:matt-pocock" path="productivity/teach/SKILL.md"
+         activation="adapted" /&gt;
+  &lt;artifact root="change" path="teaching/" /&gt;
+  &lt;when&gt;用户要跨会话学习主题。&lt;/when&gt;
+&lt;/route&gt;</pre>
+  </div>
+
+  <h3>变换映射表</h3>
+  <table class="concept-table">
+    <thead><tr><th>技能原文</th><th>适配后路径</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>MISSION.md</code></td><td><code>change/teaching/MISSION.md</code></td><td>当前目录 → artifact 路径</td></tr>
+      <tr><td><code>./reference/*.html</code></td><td><code>change/teaching/reference/*.html</code></td><td>相对路径被保留在 artifact 子目录下</td></tr>
+      <tr><td><code>RESOURCES.md</code></td><td><code>change/teaching/RESOURCES.md</code></td><td>同上</td></tr>
+      <tr><td><code>./learning-records/*.md</code></td><td><code>change/teaching/learning-records/*.md</code></td><td>同上</td></tr>
+      <tr><td><code>./lessons/*.html</code></td><td><code>change/teaching/lessons/*.html</code></td><td>同上</td></tr>
+      <tr><td><code>./assets/*</code></td><td><code>change/teaching/assets/*</code></td><td>同上</td></tr>
+      <tr><td><code>NOTES.md</code></td><td><code>change/teaching/NOTES.md</code></td><td>同上</td></tr>
+    </tbody>
+  </table>
+
+  <p>技能本身完全不知道这些文件实际写入 <code>.speculo/matt-pocock/changes/teach-xxx/teaching/</code>——它以为自己在操作"当前目录"。这个<strong>隔离性</strong>是 adapted 模式的核心价值。</p>
+</section>
+
+<section id="artifact-vars">
+  <h2>5. artifact 路径模板变量</h2>
+
+  <p>artifact 的 path 支持模板变量：</p>
+
+  <div class="code-block">
+<pre>&lt;artifact root="change" path="handoffs/{topic}.md" /&gt;</pre>
+  </div>
+
+  <p><code>{topic}</code> 是运行时变量，由技能在执行时填充。这允许同一路由产生不同名称的产物文件，但仍在声明的路径空间内。</p>
+
+  <table class="concept-table">
+    <thead><tr><th>变量</th><th>来源</th><th>示例</th></tr></thead>
+    <tbody>
+      <tr><td><code>{topic}</code></td><td>用户输入或技能提取的主题名</td><td>handoffs/prototype-result.md</td></tr>
+      <tr><td><code>{date}</code></td><td>当前日期（YYYY-MM-DD）</td><td>weekly-summary/2026-07-11.md</td></tr>
+      <tr><td><code>{change_id}</code></td><td>当前 change ID</td><td>可用于产物标记来源 change</td></tr>
+    </tbody>
+  </table>
+
+  <p>模板变量的<strong>安全边界</strong>：变量值会被 sanitize（去除路径分隔符和特殊字符），防止路径穿越攻击（如 topic = "../../../etc/passwd"）。</p>
+</section>
+
+<section id="checkpoint">
+  <h2>6. 自检点</h2>
+
+  <div class="quiz">
+    <p class="quiz-question"><strong>Q1:</strong> 如果一个 vendor skill 写了 <code>~/.config/my-skill/settings.json</code>，adapted 模式会怎么处理？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>保持原样，不做适配。四条重定向规则不覆盖 home 目录路径。这是一个需要注意的场景——技能将数据写到 state namespace 之外，跨 session 可能冲突。最佳实践是避免技能使用 ~ 路径；如果必须，在路由声明中扩展 adapted 规则或在代码审查时发现并修正。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q2:</strong> 如果同一个路由中既要调用一个 adapted skill 又要调用一个 required skill，artifact 如何声明？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>每个 &lt;skill&gt; 有独立的 activation 属性。可以这样设计：</p>
+      <pre>  &lt;skill root="vendor:x" path="business-skill" activation="adapted" /&gt;
+  &lt;skill root="skills" path="infra-check" activation="required" /&gt;
+  &lt;artifact root="change" path="output/" /&gt;</pre>
+      <p>artifact 声明应用于 adapted 技能；required 技能忽略它。</p>
+    </details>
+
+    <p class="quiz-question"><strong>Q3:</strong> 路径适配是编译时（路由加载时）还是运行时（技能写入文件时）发生的？</p>
+    <details class="quiz-answer">
+      <summary>点击查看答案</summary>
+      <p>逻辑上是<strong>运行时</strong>——在技能执行过程中，当技能试图写入文件时，拦截写入路径并做替换。实际上由 Speculo 的 workflow 引擎在激活技能时注入路径上下文，技能通过该上下文解析最终路径。不是静态替换技能文件中的文本——技能 SKILL.md 本身保持不变。</p>
+    </details>
+  </div>
+
+  <div class="ask-teacher">
+    <p>💡 <strong>向老师提问：</strong></p>
+    <ul>
+      <li>「如果我想让 adapted 模式覆盖更多路径（如 ~/.config/），应该在哪里修改配置？」</li>
+      <li>「artifact 路径模板支持哪些变量？能否自定义变量？」</li>
+      <li>「路径穿越的 sanitize 逻辑是什么——是拒绝还是转义？」</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="lesson-footer">
+  <p>
+    <strong>推荐阅读：</strong>
+    <a href="../../../../workflows/matt-pocock/routes/productivity.md">productivity 路由</a> —
+    <a href="../../../../workflows/matt-pocock/routes/setup.md">setup 路由</a> —
+    <a href="../../../../vendor/matt-pocock/productivity/teach/SKILL.md">teach SKILL.md</a>
+  </p>
+  <p>
+    上一课：<a href="0005-persistence.html">持久化与副作用</a> ｜
+    下一课：<a href="0007-modification-guide.html">实操修改指南</a>
+  </p>
+</footer>
+
+</article>
+
+</body>
+</html>

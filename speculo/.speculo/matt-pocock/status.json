@@ -1,8 +1,9 @@
 {
   "schema_version": 1,
   "workflow": "matt-pocock",
-  "current_route": "triage",
-  "route_history": ["triage"],
-  "active": ["triage-20260711-184837"],
-  "current_change": "triage-20260711-184837"
+  "current_route": "productivity",
+  "route_history": ["triage", "productivity"],
+  "active": ["triage-20260711-184837", "teach-20260711-190000"],
+  "current_change": "teach-20260711-190000",
+  "skill_history": ["teach"]
 }
