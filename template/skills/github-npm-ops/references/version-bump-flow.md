@@ -18,7 +18,7 @@ git tag --sort=-version:refname | head -3
 head -30 CHANGELOGS.md
 ```
 
-任意一项异常先解决再发版:工作区不干净 → 先提交或暂存;`[Unreleased]` 为空 → 先做 docs-sync。
+任意一项异常先解决再发版：工作区不干净 → 先提交，或调用 docs-sync 按其清洁契约处理；`[Unreleased]` 为空 → 先做 docs-sync。禁止用 stash 隐藏待发布改动。
 
 ## 1. 维护 CHANGELOG
 
@@ -46,7 +46,7 @@ head -30 CHANGELOGS.md
  - [0.0.9](https://github.com/owner/repo/releases/tag/v0.0.9)
 ```
 
-完整 CHANGELOG 契约见 `../../../workflows/dev/D-docs-sync/changelog-contract.md`。
+完整 CHANGELOG 契约见 `../../docs-sync/references/changelog-contract.md`。
 
 ## 2. bump package.json
 
@@ -180,7 +180,7 @@ git push origin v0.0.10
 
 npm 已上线 → **不要**改版本号,只补后续动作。
 
-下面的 `notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留发布摘要或 release notes，由调用方写入 `speculo/.speculo/commands/<YYYY-MM-DD>-<cmd>-<topic>/`。
+下面的 `notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留发布摘要或 release notes，由调用方写入 `speculo/.speculo/commands/<command>/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`。
 
 ```bash
 notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"

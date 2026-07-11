@@ -1,6 +1,6 @@
 # 审查 change 分支树
 
-worktree 模式下，review 必须覆盖 change 分支相对 base 的**全部 commit**，而不只是工作区 diff。调用方：`dev/R` review 的 setup 阶段。
+worktree 模式下，review 必须覆盖 change 分支相对 base 的**全部 commit**，而不只是工作区 diff。由当前 workflow 的 review route 调用。
 
 ## 输入
 
@@ -29,4 +29,4 @@ worktree 模式下，review 必须覆盖 change 分支相对 base 的**全部 co
 
 - 不替换用户显式指定的 fixed point。
 - 不遗漏任何 commit；clean-review 声明须确认已覆盖 `base..change_branch` 全部 commit。
-- 不自行选择持久化目录；审查字段由调用方写入 `speculo/.speculo/<cat>/<change>/.status.json`。
+- 不自行选择持久化目录；审查字段由调用方写入 `speculo/.speculo/<workflow>/changes/<change>/.status.json`。

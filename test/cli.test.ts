@@ -1,12 +1,27 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { initSpeculo } from "../src/index.js";
+import {
+  detectLegacyState,
+  migrateSpeculo,
+} from "../src/migrate.js";
 import { pathExists } from "../src/utils.js";
-import { promptCategorySelection, selectAllFromCatalog, discoverWorkflowCatalog } from "../src/workflows.js";
+import {
+  discoverWorkflowCatalog,
+  promptWorkflowSelection,
+  selectAllFromCatalog,
+} from "../src/workflows.js";
 
 const packageRoot = process.cwd();
 
@@ -14,416 +29,763 @@ async function tempProject(): Promise<string> {
   return mkdtemp(join(tmpdir(), "speculo-test-"));
 }
 
-describe("speculo CLI operations", () => {
-  it("init copies assets under speculo/ without scattering into the target root", async () => {
+async function writeJson(path: string, value: unknown): Promise<void> {
+  await mkdir(join(path, ".."), { recursive: true });
+  await writeFile(path, JSON.stringify(value, null, 2) + "\n");
+}
+
+function legacyStatus(
+  name: string,
+  category: "dev" | "doc" | "person",
+  changeStatus: "active" | "archived" = "active"
+): Record<string, unknown> {
+  return {
+    name,
+    category,
+    change_status: changeStatus,
+    execution_mode: "legacy",
+    created_at: "2026-06-01T00:00:00.000Z",
+    updated_at: "2026-06-01T00:00:00.000Z",
+    current_phase: "legacy-phase",
+    phase_history: [],
+  };
+}
+
+async function createLegacyChange(
+  root: string,
+  category: "dev" | "doc" | "person",
+  name: string,
+  archived = false
+): Promise<void> {
+  const destination = archived
+    ? join(root, "archive", category, name.slice(0, 7), name)
+    : join(root, category, name);
+  await mkdir(destination, { recursive: true });
+  await writeJson(
+    join(destination, ".status.json"),
+    legacyStatus(name, category, archived ? "archived" : "active")
+  );
+  await writeFile(join(destination, "artifact.md"), category + " artifact\n");
+}
+
+async function createLegacyInstallation(target: string): Promise<void> {
+  const install = join(target, "speculo");
+  const state = join(install, ".speculo");
+  await mkdir(join(state, ".config", "context"), { recursive: true });
+  await mkdir(join(state, ".config", "adr"), { recursive: true });
+  await writeFile(join(state, ".config", "RULES.md"), "# User Rules\n");
+  await writeFile(join(state, ".config", "LESSONS.md"), "# User Lessons\n");
+  await writeJson(join(state, "dev-status.json"), { active: [] });
+  await writeJson(join(state, "doc-status.json"), { active: [] });
+  await writeJson(join(state, "person-status.json"), { active: [] });
+  await createLegacyChange(state, "dev", "2026-06-01-login");
+  await createLegacyChange(state, "doc", "2026-06-02-article");
+  await createLegacyChange(state, "person", "2026-06-03-strategy");
+  await createLegacyChange(state, "dev", "2026-05-01-old-code", true);
+  await createLegacyChange(state, "person", "2026-05-02-old-consult", true);
+  await writeJson(join(state, "dev", "docs-sync-state.json"), {
+    schema_version: 2,
+    state_path: "speculo/.speculo/dev/docs-sync-state.json",
+    tracked_assets: ["README.md"],
+    last_sync_sha: null,
+    last_sync_short: null,
+    last_sync_commit_subject: null,
+    last_sync_commit_date: null,
+  });
+  await mkdir(join(state, "commands", "2026-06-01-status-check"), {
+    recursive: true,
+  });
+  await writeFile(
+    join(state, "commands", "2026-06-01-status-check", "snapshot.md"),
+    "legacy command\n"
+  );
+  await writeFile(join(state, "AGENTS.md"), "legacy state guide\n");
+
+  await mkdir(join(install, "workflows", "dev"), { recursive: true });
+  await mkdir(join(install, "workflows", "doc"), { recursive: true });
+  await writeFile(join(install, "workflows", "dev", "AGENTS.md"), "legacy dev\n");
+  await writeFile(join(install, "workflows", "doc", "AGENTS.md"), "legacy doc\n");
+  await mkdir(join(install, "vendor", "codebase-design"), { recursive: true });
+  await mkdir(join(install, "vendor", "resolving-merge-conflicts"), {
+    recursive: true,
+  });
+  await writeFile(
+    join(install, "vendor", "codebase-design", "SKILL.md"),
+    "legacy vendor\n"
+  );
+  await writeFile(
+    join(install, "vendor", "resolving-merge-conflicts", "SKILL.md"),
+    "legacy vendor\n"
+  );
+}
+
+async function createValidatorFixture(root: string, skillPath: string): Promise<void> {
+  await writeJson(join(root, "template", ".speculo", "workspace.json"), {
+    schema_version: 1,
+    path_base: "project-root",
+    roots: {
+      speculo: "speculo",
+      state: "speculo/.speculo",
+      commands: "speculo/commands",
+      skills: "speculo/skills",
+      workflows: "speculo/workflows",
+      vendor: "speculo/vendor",
+    },
+  });
+  await mkdir(join(root, "template", "skills", "example"), { recursive: true });
+  await writeFile(
+    join(root, "template", "skills", "example", "SKILL.md"),
+    "---\nid: example\ntype: skill\nname: Example\ndescription: Example\n---\n"
+  );
+  await mkdir(join(root, "template", "workflows", "example", "_state", "changes"), {
+    recursive: true,
+  });
+  await mkdir(join(root, "template", "workflows", "example", "_state", "archive"), {
+    recursive: true,
+  });
+  await writeJson(
+    join(root, "template", "workflows", "example", "_state", "status.json"),
+    { schema_version: 1, workflow: "example", active: [] }
+  );
+  await writeFile(
+    join(root, "template", "workflows", "example", "WORKFLOW.md"),
+    [
+      "---",
+      "id: example",
+      "type: workflow",
+      "workflow: example",
+      "name: Example",
+      "description: Example workflow",
+      "---",
+      "",
+      "```xml",
+      "<runtime-context>",
+      '  <root id="workflow" base="workflows" path="example" />',
+      '  <root id="state" base="state" path="example" />',
+      "</runtime-context>",
+      "```",
+      "",
+      "```xml",
+      '<persistence root="state">',
+      '  <store id="index" role="index" kind="file" path="status.json" create="initialize" />',
+      '  <store id="changes" role="active" kind="directory" path="changes" create="initialize" />',
+      '  <store id="archive" role="archive" kind="directory" path="archive" create="initialize" />',
+      "</persistence>",
+      "```",
+      "",
+      "```xml",
+      "<sequence>",
+      `  <skill root="skills" path="${skillPath}" />`,
+      "</sequence>",
+      "```",
+      "",
+    ].join("\n")
+  );
+
+  for (const name of [
+    "speculo-write-skill",
+    "speculo-write-workflows",
+    "speculo-write-command",
+  ]) {
+    const skillDir = join(root, ".agents", "skills", name);
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(
+      join(skillDir, "SKILL.md"),
+      `---\nname: ${name}\ndescription: Fixture skill\n---\n\n# Fixture\n`
+    );
+  }
+}
+
+describe("Speculo v3 CLI", () => {
+  it("fresh init installs workflow packages and workflow-owned state", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
       const result = await initSpeculo(target, { packageRoot, all: true });
-
       assert.equal(result.mode, "init");
-      // First 4 items are non-workflow assets
-      assert.deepEqual(result.copied!.slice(0, 4), [".speculo", "commands", "skills", "vendor"]);
-      // Rest are workflow paths
-      for (const item of result.copied!.slice(4)) {
-        assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
-      }
-      // Assets nest under <target>/speculo/, not the target root.
       assert.equal(await pathExists(join(target, ".speculo")), false);
-      assert.equal(await pathExists(join(target, "workflows")), false);
-      assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "doc-status.json")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "person-status.json")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "archive", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "dev", "docs-sync-state.json")), true);
-      const docsSyncState = JSON.parse(await readFile(join(root, ".speculo", "dev", "docs-sync-state.json"), "utf8"));
-      assert.equal(docsSyncState.schema_version, 2);
-      assert.deepEqual(docsSyncState.tracked_assets, []);
-      assert.deepEqual(docsSyncState.synced_assets, []);
-      assert.equal(await pathExists(join(root, ".speculo", ".config", "RULES.md")), true);
-      assert.equal(await pathExists(join(root, ".speculo", ".config", "LESSONS.md")), true);
-      assert.equal(await pathExists(join(root, ".speculo", ".config", "context")), true);
-      assert.equal(await pathExists(join(root, ".speculo", ".config", "adr")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "person", ".gitkeep")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "archive", "person", ".gitkeep")), true);
-      const removedConfigTemplate = "ARCHITECTURE" + ".md.example";
-      assert.equal(await pathExists(join(root, ".speculo", ".config", removedConfigTemplate)), false);
-      assert.equal(await pathExists(join(root, "commands", "status.md")), true);
-      assert.equal(await pathExists(join(root, "commands", "retro.md")), true);
-      assert.equal(await pathExists(join(root, "commands", "config-prune.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "caveman", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "references", "friction-taxonomy.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "speculo-retro", "references", "issue-drafting-sop.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "github-npm-ops", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "speculo-write", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "worktree-isolation", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "agents-md-builder", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, ".speculo", "README.md")), true);
+      assert.equal(
+        await pathExists(join(root, ".speculo", "workspace.json")),
+        true
+      );
+      const workspace = JSON.parse(
+        await readFile(join(root, ".speculo", "workspace.json"), "utf8")
+      );
+      assert.equal(workspace.path_base, "project-root");
+      assert.equal(workspace.roots.state, "speculo/.speculo");
+      assert.equal(
+        await pathExists(join(root, ".speculo", "commands", "docs-sync", "state.json")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock", "WORKFLOW.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "person", "WORKFLOW.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock", "_state")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock", "status.json")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock", "changes")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock", "archive")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock", "docs-sync.json")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock", ".config")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "person", "status.json")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "person", "docs-sync.json")),
+        false
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            root,
+            "vendor",
+            "matt-pocock",
+            "engineering",
+            "codebase-design",
+            "SKILL.md"
+          )
+        ),
+        true
+      );
+      assert.equal(await pathExists(join(root, "workflows", "dev")), false);
+      assert.equal(await pathExists(join(root, "workflows", "doc")), false);
+      assert.equal(await pathExists(join(root, "commands", "grill-me.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "handoff.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "docs-sync.md")), true);
+      assert.equal(await pathExists(join(root, "commands", "finalize.md")), true);
+      assert.equal(await pathExists(join(root, "commands", "knowledge-prune.md")), true);
+      assert.equal(await pathExists(join(root, "commands", "archive.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "config-prune.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "write-a-skill.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "scaffold-exercises.md")), false);
+      assert.equal(
+        await pathExists(join(root, "skills", "runtime-context", "SKILL.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "skills", "knowledge-prune", "SKILL.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "vendor", "codebase-design")),
+        false
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("person-only selection excludes Matt assets and state", async () => {
+    const target = await tempProject();
+    const root = join(target, "speculo");
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["person"] },
+      });
+      assert.equal(
+        await pathExists(join(root, "workflows", "person", "WORKFLOW.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "matt-pocock")),
+        false
+      );
+      assert.equal(
+        await pathExists(join(root, "vendor", "matt-pocock")),
+        false
+      );
       assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
-      // Person workflow (moved from doc/)
-      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "_templates", "mao-consultation-output-template.md")), true);
-      // Dev workflows
-      assert.equal(await pathExists(join(root, "workflows", "dev", "I-to-issues", "I-to-issues.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "R-review.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "security-checklist.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "04-finalize.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "agents", "tdd-plan-agent.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "agents", "spec-review-agent.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "agents", "diagnose-agent.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "04-finalize", "agents", "completion-gate-agent.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "agents", "docs-diff-agent.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "architecture-scan.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "overview-template.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "prd-overview-template.md")), false);
-      assert.equal(await pathExists(join(root, "workflows", "doc", "_templates", "teach-lesson-html-template.md")), true);
-      assert.equal(await pathExists(join(root, "skills", "config-prune", "references", "audit-rules.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "D-docs-sync.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "config-contract.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "D-docs-sync", "knowledge-extract.md")), true);
-      // New horizontal dev workflows
-      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "M-domain-modeling.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "CONTEXT-FORMAT.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "M-domain-modeling", "ADR-FORMAT.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "A-improve-architecture.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "A-improve-architecture", "HTML-REPORT.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "_templates", "domain-model-log-template.md")), true);
-      // Vendored codebase-design (referenced by 03-tdd, I-to-issues, A-improve-architecture)
-      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "SKILL.md")), true);
-      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "DEEPENING.md")), true);
-      assert.equal(await pathExists(join(root, "vendor", "codebase-design", "DESIGN-IT-TWICE.md")), true);
-      // speculo-write quality-levers reference (writing-great-skills domain model)
-      assert.equal(await pathExists(join(root, "skills", "speculo-write", "references", "authoring-quality-levers.md")), true);
-      // Deduped files removed: their content now lives in single sources
-      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "deep-modules.md")), false);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "03-tdd", "interface-design.md")), false);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "ADR-FORMAT.md")), false);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "01-grill-with-docs", "CONTEXT-FORMAT.md")), false);
-      // Doc workflows (mao removed from here)
-      assert.equal(await pathExists(join(root, "workflows", "doc", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "doc", "F-writing-fragments", "F-writing-fragments.md")), true);
-      // Old path must not exist
-      assert.equal(await pathExists(join(root, "workflows", "doc", "M-mao-zedong-cognitive-os")), false);
-      assert.equal(await pathExists(join(root, "workflows", "doc", "_templates", "mao-consultation-output-template.md")), false);
-      assert.equal(await pathExists(join(root, "adapters")), false);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("init detects existing speculo/ and enters update mode", async () => {
+  it("Matt-only selection installs the complete native vendor tree", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
-      await mkdir(root, { recursive: true });
-      await writeFile(join(root, "commands"), "existing");
-
-      const result = await initSpeculo(target, { packageRoot, all: true });
-
-      assert.equal(result.mode, "update");
-      // First 3 items are non-workflow assets (commands, skills, vendor)
-      assert.deepEqual(result.updated!.slice(0, 3), ["commands", "skills", "vendor"]);
-      // Rest are workflow paths
-      for (const item of result.updated!.slice(3)) {
-        assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
-      }
-      // The stale `commands` file was replaced by the `commands` directory from the package.
-      assert.equal(await pathExists(join(root, "commands", "status.md")), true);
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["matt-pocock"] },
+      });
+      assert.equal(
+        await pathExists(join(root, "workflows", "person")),
+        false
+      );
+      assert.equal(
+        await pathExists(
+          join(root, "vendor", "matt-pocock", "productivity", "grilling", "SKILL.md")
+        ),
+        true
+      );
+      assert.equal(
+        await pathExists(
+          join(root, "vendor", "matt-pocock", "productivity", "grill-me", "SKILL.md")
+        ),
+        true
+      );
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("init re-run overwrites commands, skills, and workflows but preserves .speculo", async () => {
+  it("update refreshes selected assets while preserving all workflow state", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
-      // First call: fresh install.
-      const first = await initSpeculo(target, { packageRoot, all: true });
-      assert.equal(first.mode, "init");
+      await initSpeculo(target, { packageRoot, all: true });
+      await writeFile(
+        join(root, ".speculo", "matt-pocock", "state-marker.txt"),
+        "preserve"
+      );
+      await mkdir(join(root, ".speculo", "matt-pocock", ".config"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(root, ".speculo", "matt-pocock", ".config", "legacy.txt"),
+        "preserve legacy namespace"
+      );
+      await writeJson(
+        join(root, ".speculo", "matt-pocock", "docs-sync.json"),
+        {
+          schema_version: 1,
+          workflow: "matt-pocock",
+          manifest_path: "speculo/.speculo/matt-pocock/docs-sync.json",
+          project_targets: [],
+          state_targets: [],
+          scope_revision: 1,
+          scope_confirmed_at: "2026-07-11T00:00:00Z",
+        }
+      );
+      await rm(join(root, ".speculo", "workspace.json"));
+      await writeFile(
+        join(root, "workflows", "matt-pocock", "asset-marker.txt"),
+        "remove"
+      );
+      await writeFile(
+        join(root, "workflows", "person", "local-marker.txt"),
+        "keep unselected"
+      );
+      await writeFile(join(root, "commands", "local.md"), "remove");
 
-      await writeFile(join(root, "commands", "status.md"), "local edit");
-      await writeFile(join(root, "skills", "local-skill.md"), "remove me");
-      // Write a local file inside an installed workflow (will be overwritten on update)
-      await writeFile(join(root, "workflows", "dev", "H-diagnose", "local-note.md"), "remove me");
-      await writeFile(join(root, "workflows", "dev", "00-INDEX.md"), "legacy index");
-      // Write a stray file at the workflows root level — preserved because
-      // update mode only touches selected workflow directories, not the root.
-      await writeFile(join(root, "workflows", "stray-root-file.md"), "keep me too");
-      await writeFile(join(root, ".speculo", "state.txt"), "keep me");
-      await writeFile(join(root, ".speculo", "doc-status.json"), "keep doc status");
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["matt-pocock"] },
+      });
 
-      // Second call: auto-detects existing speculo/ and enters update mode.
-      const result = await initSpeculo(target, { packageRoot, all: true });
-
-      assert.equal(result.mode, "update");
-      // First 3 items are non-workflow assets
-      assert.deepEqual(result.updated!.slice(0, 3), ["commands", "skills", "vendor"]);
-      for (const item of result.updated!.slice(3)) {
-        assert.ok(item.startsWith("workflows/"), `Expected workflow path, got ${item}`);
-      }
-      assert.match(await readFile(join(root, "commands", "status.md"), "utf8"), /# Status 命令/);
-      assert.equal(await pathExists(join(root, "skills", "local-skill.md")), false);
-      // File inside a workflow directory that was selected for update is overwritten
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "local-note.md")), false);
-      // Stray file at workflows root level preserved (update is surgical, not blanket rm)
-      assert.equal(await readFile(join(root, "workflows", "stray-root-file.md"), "utf8"), "keep me too");
-      assert.equal(await pathExists(join(root, "workflows", "dev", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "00-INDEX.md")), false);
-      assert.equal(await readFile(join(root, ".speculo", "state.txt"), "utf8"), "keep me");
-      assert.equal(await readFile(join(root, ".speculo", "doc-status.json"), "utf8"), "keep doc status");
+      assert.equal(
+        await readFile(
+          join(root, ".speculo", "matt-pocock", "state-marker.txt"),
+          "utf8"
+        ),
+        "preserve"
+      );
+      assert.equal(
+        await readFile(
+          join(root, ".speculo", "matt-pocock", ".config", "legacy.txt"),
+          "utf8"
+        ),
+        "preserve legacy namespace"
+      );
+      const docsScope = JSON.parse(
+        await readFile(
+          join(root, ".speculo", "matt-pocock", "docs-sync.json"),
+          "utf8"
+        )
+      );
+      assert.equal(docsScope.scope_revision, 1);
+      assert.equal(docsScope.scope_confirmed_at, "2026-07-11T00:00:00Z");
+      assert.equal(
+        await pathExists(join(root, ".speculo", "workspace.json")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock", "asset-marker.txt")),
+        false
+      );
+      assert.equal(
+        await readFile(join(root, "workflows", "person", "local-marker.txt"), "utf8"),
+        "keep unselected"
+      );
+      assert.equal(await pathExists(join(root, "commands", "local.md")), false);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("compiled CLI resolves package assets from the package root", async () => {
+  it("default vendor update preserves native files while --all refreshes them", async () => {
+    const target = await tempProject();
+    const root = join(target, "speculo");
+    const grilling = join(
+      root,
+      "vendor",
+      "matt-pocock",
+      "productivity",
+      "grilling",
+      "SKILL.md"
+    );
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["matt-pocock"] },
+      });
+      await writeFile(grilling, "custom native skill\n");
+
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["matt-pocock"] },
+      });
+      assert.equal(await readFile(grilling, "utf8"), "custom native skill\n");
+
+      await initSpeculo(target, { packageRoot, all: true });
+      assert.match(await readFile(grilling, "utf8"), /name: grilling/);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("catalog discovers first-level workflow packages", async () => {
+    const catalog = await discoverWorkflowCatalog(packageRoot);
+    assert.deepEqual([...catalog.keys()].sort(), ["matt-pocock", "person"]);
+    assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, [
+      "matt-pocock",
+      "person",
+    ]);
+    const nonInteractive = await promptWorkflowSelection(catalog);
+    assert.deepEqual(nonInteractive.workflowIds, ["matt-pocock", "person"]);
+  });
+
+  it("framework validator rejects escaping and missing XML references", async () => {
+    const validator = join(packageRoot, "scripts", "validate-framework-assets.mjs");
+    for (const [skillPath, expectedStatus, expectedMessage] of [
+      ["example/SKILL.md", 0, "framework asset validation: ok"],
+      ["../escape/SKILL.md", 1, "path escapes its declared root"],
+      ["missing/SKILL.md", 1, "missing skill reference"],
+    ] as const) {
+      const fixture = await tempProject();
+      try {
+        await createValidatorFixture(fixture, skillPath);
+        const result = spawnSync(process.execPath, [validator, fixture], {
+          encoding: "utf8",
+        });
+        assert.equal(result.status, expectedStatus);
+        assert.match(result.stdout + result.stderr, new RegExp(expectedMessage));
+      } finally {
+        await rm(fixture, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("init refuses legacy state until explicit migration", async () => {
+    const target = await tempProject();
+    try {
+      await mkdir(join(target, "speculo", ".speculo"), { recursive: true });
+      await writeJson(
+        join(target, "speculo", ".speculo", "dev-status.json"),
+        { active: [] }
+      );
+      await assert.rejects(
+        initSpeculo(target, { packageRoot, all: true }),
+        /speculo migrate --apply/
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("migrate previews without mutation and applies the v3 mapping", async () => {
+    const target = await tempProject();
+    const root = join(target, "speculo");
+    const state = join(root, ".speculo");
+    try {
+      await createLegacyInstallation(target);
+      const preview = await migrateSpeculo(target, { packageRoot });
+      assert.equal(preview.legacyDetected, true);
+      assert.equal(preview.applied, false);
+      assert.equal(await pathExists(join(state, "dev-status.json")), true);
+
+      const result = await migrateSpeculo(target, {
+        packageRoot,
+        apply: true,
+      });
+      assert.equal(result.applied, true);
+      assert.equal(await detectLegacyState(target), false);
+      assert.equal(await pathExists(join(state, "dev-status.json")), false);
+      assert.equal(
+        await readFile(join(state, "matt-pocock", ".config", "RULES.md"), "utf8"),
+        "# User Rules\n"
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            state,
+            "matt-pocock",
+            "archive",
+            "2026-06",
+            "2026-06-01-legacy-dev-login",
+            "artifact.md"
+          )
+        ),
+        true
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            state,
+            "matt-pocock",
+            "archive",
+            "2026-06",
+            "2026-06-02-legacy-doc-article",
+            "artifact.md"
+          )
+        ),
+        true
+      );
+      assert.equal(
+        await pathExists(
+          join(state, "person", "changes", "2026-06-03-strategy", "artifact.md")
+        ),
+        true
+      );
+      const personIndex = JSON.parse(
+        await readFile(join(state, "person", "status.json"), "utf8")
+      );
+      assert.equal(personIndex.active[0].name, "2026-06-03-strategy");
+      const docsState = JSON.parse(
+        await readFile(
+          join(state, "commands", "docs-sync", "state.json"),
+          "utf8"
+        )
+      );
+      assert.equal(docsState.schema_version, 4);
+      assert.equal(docsState.command, "docs-sync");
+      assert.equal(
+        docsState.state_path,
+        "speculo/.speculo/commands/docs-sync/state.json"
+      );
+      assert.equal("last_sync_short" in docsState, false);
+      assert.equal("last_sync_commit_subject" in docsState, false);
+      assert.equal(docsState.baseline.mode, "explicit");
+      assert.equal(docsState.baseline.sha, null);
+      assert.deepEqual(docsState.project_targets, []);
+      assert.deepEqual(docsState.pending_legacy_targets, ["README.md"]);
+      const archivedPersonStatus = JSON.parse(
+        await readFile(
+          join(
+            state,
+            "person",
+            "archive",
+            "2026-05",
+            "2026-05-02-old-consult",
+            ".status.json"
+          ),
+          "utf8"
+        )
+      );
+      assert.equal(archivedPersonStatus.change_status, "archived");
+      assert.equal(archivedPersonStatus.archived, true);
+      assert.equal(
+        archivedPersonStatus.archive_path,
+        "speculo/.speculo/person/archive/2026-05/2026-05-02-old-consult"
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            state,
+            "commands",
+            "_legacy",
+            "2026-06-01-status-check",
+            "snapshot.md"
+          )
+        ),
+        true
+      );
+      assert.equal(await pathExists(join(state, "workspace.json")), true);
+      const migrationReports = await readdir(join(state, "commands", "migrate"));
+      assert.equal(
+        migrationReports.some((name) => /^\d{4}-\d{2}-\d{2}-workspace-layout-v3\.md$/.test(name)),
+        true
+      );
+      assert.equal(await pathExists(join(root, "workflows", "dev")), false);
+      assert.equal(await pathExists(join(root, "workflows", "doc")), false);
+      assert.equal(await pathExists(join(root, "vendor", "codebase-design")), false);
+      assert.equal(
+        await pathExists(join(root, "vendor", "resolving-merge-conflicts")),
+        false
+      );
+
+      const second = await migrateSpeculo(target, {
+        packageRoot,
+        apply: true,
+      });
+      assert.equal(second.legacyDetected, false);
+      assert.equal(second.applied, false);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("migrates transitional command state without touching workflow data", async () => {
+    const target = await tempProject();
+    const state = join(target, "speculo", ".speculo");
+    try {
+      await initSpeculo(target, { packageRoot, all: true });
+      await writeFile(
+        join(state, "matt-pocock", "preserve.txt"),
+        "workflow state"
+      );
+      await mkdir(join(state, "commands", ".config"), { recursive: true });
+      await writeJson(
+        join(state, "commands", ".config", "docs-sync-state.json"),
+        {
+          schema_version: 3,
+          skill: "docs-sync",
+          state_path: "speculo/.speculo/commands/.config/docs-sync-state.json",
+          tracked_assets: ["README.md"],
+          last_sync_sha: null,
+          last_sync_run_at: null,
+          previous_sync_sha: null,
+          total_syncs: 0,
+          synced_assets: [],
+        }
+      );
+      await mkdir(join(state, "commands", "2026-07-01-status-workspace"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(state, "commands", "2026-07-01-status-workspace", "snapshot.md"),
+        "old report\n"
+      );
+      await rm(join(state, "workspace.json"));
+
+      assert.equal(await detectLegacyState(target), true);
+      const preview = await migrateSpeculo(target, { packageRoot });
+      assert.equal(preview.applied, false);
+      assert.equal(
+        await pathExists(join(state, "commands", ".config", "docs-sync-state.json")),
+        true
+      );
+
+      const result = await migrateSpeculo(target, { packageRoot, apply: true });
+      assert.equal(result.applied, true);
+      assert.equal(await detectLegacyState(target), false);
+      assert.equal(
+        await readFile(join(state, "matt-pocock", "preserve.txt"), "utf8"),
+        "workflow state"
+      );
+      assert.equal(await pathExists(join(state, "workspace.json")), true);
+      assert.equal(
+        await pathExists(join(state, "commands", "docs-sync", "state.json")),
+        true
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            state,
+            "commands",
+            "_legacy",
+            "2026-07-01-status-workspace",
+            "snapshot.md"
+          )
+        ),
+        true
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("migration blockers leave the legacy tree untouched", async () => {
+    const target = await tempProject();
+    const state = join(target, "speculo", ".speculo");
+    try {
+      await createLegacyInstallation(target);
+      await writeFile(join(state, "unknown-state.txt"), "keep me\n");
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot, apply: true }),
+        /Unknown legacy state entry/
+      );
+      assert.equal(
+        await readFile(join(state, "unknown-state.txt"), "utf8"),
+        "keep me\n"
+      );
+      assert.equal(await pathExists(join(state, "dev-status.json")), true);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("migration preview rejects malformed legacy indexes without mutation", async () => {
+    const target = await tempProject();
+    const state = join(target, "speculo", ".speculo");
+    try {
+      await createLegacyInstallation(target);
+      await writeFile(join(state, "dev-status.json"), "{not-json\n");
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot }),
+        /Invalid legacy workflow index JSON/
+      );
+      assert.equal(
+        await readFile(join(state, "dev-status.json"), "utf8"),
+        "{not-json\n"
+      );
+      assert.equal(await pathExists(join(state, "dev")), true);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("compiled CLI resolves package assets and exposes migrate help", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     const cliPath = join(process.cwd(), "dist", "src", "cli.js");
     try {
-      // First call: fresh init with --all (pipe stdio means non-TTY, auto-all)
-      execFileSync(process.execPath, [cliPath, "init", "--all", target], { stdio: "pipe" });
-
-      assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "doc-status.json")), true);
-      assert.equal(await pathExists(join(root, ".speculo", "person-status.json")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "doc", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-
-      // Second call: speculo/ exists, should enter update mode without error.
-      execFileSync(process.execPath, [cliPath, "init", "--all", target], { stdio: "pipe" });
-
-      // .speculo still intact after update.
-      assert.equal(await pathExists(join(root, ".speculo", "dev-status.json")), true);
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
+      const help = execFileSync(process.execPath, [cliPath, "--help"], {
+        encoding: "utf8",
+      });
+      assert.match(help, /speculo migrate/);
+      execFileSync(process.execPath, [cliPath, "init", "--all", target], {
+        stdio: "pipe",
+      });
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock", "WORKFLOW.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, ".speculo", "person", "status.json")),
+        true
+      );
     } finally {
       await rm(target, { recursive: true, force: true });
     }
-  });
-
-  it("init with explicit selection installs only chosen workflows", async () => {
-    const target = await tempProject();
-    const root = join(target, "speculo");
-    try {
-      const result = await initSpeculo(target, {
-        packageRoot,
-        selection: {
-          workflows: [{ category: "person", name: "M-mao-zedong-cognitive-os" }],
-          categories: new Set(["person"]),
-        },
-      });
-
-      assert.equal(result.mode, "init");
-      assert.ok(result.copied!.includes(".speculo"));
-      assert.ok(result.copied!.includes("commands"));
-      assert.ok(result.copied!.includes("skills"));
-      assert.ok(result.copied!.includes("workflows/person/M-mao-zedong-cognitive-os"));
-
-      // Person workflow installed
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-      // Person category metadata installed
-      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
-      // Dev and doc workflows NOT installed (only person selected)
-      assert.equal(await pathExists(join(root, "workflows", "dev")), false);
-      assert.equal(await pathExists(join(root, "workflows", "doc")), false);
-    } finally {
-      await rm(target, { recursive: true, force: true });
-    }
-  });
-
-  it("init with selection copies category metadata for selected categories only", async () => {
-    const target = await tempProject();
-    const root = join(target, "speculo");
-    try {
-      await initSpeculo(target, {
-        packageRoot,
-        selection: {
-          workflows: [
-            { category: "dev", name: "H-diagnose" },
-            { category: "person", name: "M-mao-zedong-cognitive-os" },
-          ],
-          categories: new Set(["dev", "person"]),
-        },
-      });
-
-      // Selected categories have their metadata
-      assert.equal(await pathExists(join(root, "workflows", "dev", "AGENTS.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "AGENTS.md")), true);
-      // Unselected category does not
-      assert.equal(await pathExists(join(root, "workflows", "doc")), false);
-      // Selected workflows exist
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-      // Unselected workflows in selected category do not exist
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review")), false);
-    } finally {
-      await rm(target, { recursive: true, force: true });
-    }
-  });
-
-  it("update mode preserves unselected installed workflows", async () => {
-    const target = await tempProject();
-    const root = join(target, "speculo");
-    try {
-      // First: init with all workflows
-      await initSpeculo(target, { packageRoot, all: true });
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "R-review.md")), true);
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-
-      // Write a marker in a workflow to verify it's preserved (not overwritten)
-      await writeFile(join(root, "workflows", "dev", "R-review", "marker.txt"), "do not remove");
-
-      // Second: update with only person/ selected
-      await initSpeculo(target, {
-        packageRoot,
-        selection: {
-          workflows: [{ category: "person", name: "M-mao-zedong-cognitive-os" }],
-          categories: new Set(["person"]),
-        },
-      });
-
-      // Unselected dev workflow still exists with its marker
-      assert.equal(await pathExists(join(root, "workflows", "dev", "R-review", "R-review.md")), true);
-      assert.equal(await readFile(join(root, "workflows", "dev", "R-review", "marker.txt"), "utf8"), "do not remove");
-      // Selected person workflow was refreshed (its directory still exists)
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-    } finally {
-      await rm(target, { recursive: true, force: true });
-    }
-  });
-
-  it("update mode adds newly available workflow while keeping existing", async () => {
-    const target = await tempProject();
-    const root = join(target, "speculo");
-    try {
-      // First: init with only dev workflows
-      const catalog = await discoverWorkflowCatalog(packageRoot);
-      const devWfs = catalog.get("dev") ?? [];
-      await initSpeculo(target, {
-        packageRoot,
-        selection: {
-          workflows: devWfs.map(w => ({ category: w.category, name: w.name })),
-          categories: new Set(["dev"]),
-        },
-      });
-
-      // Person not installed
-      assert.equal(await pathExists(join(root, "workflows", "person")), false);
-
-      // Write marker in dev workflow
-      await writeFile(join(root, "workflows", "dev", "H-diagnose", "marker.txt"), "keep");
-
-      // Second: update adding person workflow
-      await initSpeculo(target, {
-        packageRoot,
-        selection: {
-          workflows: [
-            ...devWfs.map(w => ({ category: w.category, name: w.name })),
-            { category: "person", name: "M-mao-zedong-cognitive-os" },
-          ],
-          categories: new Set(["dev", "person"]),
-        },
-      });
-
-      // Person now installed
-      assert.equal(await pathExists(join(root, "workflows", "person", "M-mao-zedong-cognitive-os", "M-mao-zedong-cognitive-os.md")), true);
-      // Dev marker preserved (dev workflows were re-copied via overwrite though)
-      // Actually with overwrite:true, the marker gets removed. Let's just verify dev still exists.
-      assert.equal(await pathExists(join(root, "workflows", "dev", "H-diagnose", "H-diagnose.md")), true);
-    } finally {
-      await rm(target, { recursive: true, force: true });
-    }
-  });
-
-  it("selectAllFromCatalog includes all categories", async () => {
-    const catalog = await discoverWorkflowCatalog(packageRoot);
-    const selection = selectAllFromCatalog(catalog);
-
-    assert.ok(selection.categories.has("dev"));
-    assert.ok(selection.categories.has("doc"));
-    assert.ok(selection.categories.has("person"));
-
-    // Verify person/M is in the selection
-    const maoEntry = selection.workflows.find(
-      w => w.category === "person" && w.name === "M-mao-zedong-cognitive-os"
-    );
-    assert.ok(maoEntry, "Mao workflow should be in all selection");
-
-    // Verify doc/M is NOT in any workflow (moved to person)
-    const docMao = selection.workflows.find(
-      w => w.category === "doc" && w.name === "M-mao-zedong-cognitive-os"
-    );
-    assert.equal(docMao, undefined);
-  });
-
-  it("promptCategorySelection falls back to all in non-TTY", async () => {
-    const catalog = await discoverWorkflowCatalog(packageRoot);
-    const selection = await promptCategorySelection(catalog);
-    assert.ok(selection.categories.has("dev"));
-    assert.ok(selection.categories.has("doc"));
-    assert.ok(selection.categories.has("person"));
-  });
-
-  describe("vendor handling", () => {
-    it("update without --all merges vendor (adds new, preserves existing)", async () => {
-      const target = await tempProject();
-      const root = join(target, "speculo");
-      try {
-        // First: fresh init with all (vendor included)
-        await initSpeculo(target, { packageRoot, all: true });
-        assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
-
-        // User adds a collected skill and modifies README
-        await mkdir(join(root, "vendor", "my-skill"), { recursive: true });
-        await writeFile(join(root, "vendor", "my-skill", "SKILL.md"), "my content");
-        await writeFile(join(root, "vendor", "README.md"), "custom readme");
-
-        // Second: update without --all (merge mode for vendor)
-        const result = await initSpeculo(target, { packageRoot });
-        assert.equal(result.mode, "update");
-
-        // User's collected skill still exists
-        assert.equal(await pathExists(join(root, "vendor", "my-skill", "SKILL.md")), true);
-        assert.equal(await readFile(join(root, "vendor", "my-skill", "SKILL.md"), "utf8"), "my content");
-
-        // User's modified README preserved (merge doesn't overwrite existing)
-        assert.equal(await readFile(join(root, "vendor", "README.md"), "utf8"), "custom readme");
-      } finally {
-        await rm(target, { recursive: true, force: true });
-      }
-    });
-
-    it("update with --all fully overwrites vendor", async () => {
-      const target = await tempProject();
-      const root = join(target, "speculo");
-      try {
-        // First: fresh init with all
-        await initSpeculo(target, { packageRoot, all: true });
-
-        // User adds skill and modifies README
-        await mkdir(join(root, "vendor", "user-skill"), { recursive: true });
-        await writeFile(join(root, "vendor", "user-skill", "SKILL.md"), "user");
-        await writeFile(join(root, "vendor", "README.md"), "modified");
-
-        // Second: update with --all (full overwrite for vendor)
-        const result = await initSpeculo(target, { packageRoot, all: true });
-        assert.equal(result.mode, "update");
-        assert.ok(result.updated!.includes("vendor"), "vendor should be in updated list with --all");
-
-        // User's skill removed by full overwrite
-        assert.equal(await pathExists(join(root, "vendor", "user-skill")), false);
-
-        // README restored to framework version
-        assert.match(await readFile(join(root, "vendor", "README.md"), "utf8"), /原生 AgentSkills/);
-      } finally {
-        await rm(target, { recursive: true, force: true });
-      }
-    });
   });
 });

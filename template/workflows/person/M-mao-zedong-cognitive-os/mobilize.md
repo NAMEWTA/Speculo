@@ -2,15 +2,15 @@
 
 ## 输入
 
-- `speculo/.speculo/person/<change>/problem-statement.md`（Phase 1 产物）
-- `speculo/.speculo/person/<change>/analysis.md`（Phase 2 产物）
-- `speculo/.speculo/person/<change>/strategy.md`（Phase 3 产物）
+- `speculo/.speculo/person/changes/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/person/changes/<change>/analysis.md`（Phase 2 产物）
+- `speculo/.speculo/person/changes/<change>/strategy.md`（Phase 3 产物）
 - Module C 方法清单与操作手册：`references/research/13-organization-action.md`
 - 引语与篇目映射：`references/research/15-quote-bank.md`
 
 ## 产物
 
-- `speculo/.speculo/person/<change>/action-plan.md`
+- `speculo/.speculo/person/changes/<change>/action-plan.md`
 
 ## 核心命题
 

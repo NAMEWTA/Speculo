@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * One-shot relative link checker for template/ assets.
+ * One-shot relative link checker for shipped template assets and repository skills.
  * Validates [text](relative-path) markdown links to existing files.
  * Skips code fences, inline code, placeholders, URLs, and anchors.
  */
@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const templateRoot = join(packageRoot, "template");
+const agentsRoot = join(packageRoot, ".agents");
 
 const MD_LINK_RE = /\[([^\]]*)\]\(([^)]+)\)/g;
 const SKIP_PREFIXES = ["http://", "https://", "mailto:", "#", "data:"];
@@ -50,7 +51,14 @@ function extractLinks(content) {
 }
 
 const broken = [];
-for (const file of walk(templateRoot)) {
+const roots = [templateRoot, agentsRoot].filter((root) => {
+  try {
+    return statSync(root).isDirectory();
+  } catch {
+    return false;
+  }
+});
+for (const file of roots.flatMap((root) => walk(root))) {
   const content = readFileSync(file, "utf8");
   const base = dirname(file);
   for (const link of extractLinks(content)) {
@@ -71,4 +79,4 @@ if (broken.length) {
   process.exit(1);
 }
 
-console.log("template/ link check: 0 broken markdown file links");
+console.log("framework link check: 0 broken markdown file links");

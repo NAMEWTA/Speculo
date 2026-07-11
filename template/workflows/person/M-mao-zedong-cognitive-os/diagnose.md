@@ -2,13 +2,13 @@
 
 ## 输入
 
-- `speculo/.speculo/person/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/person/changes/<change>/problem-statement.md`（Phase 1 产物）
 - Module A 模型清单与展开规则：`references/research/11-analysis-frameworks.md`
 - 引语与篇目映射：`references/research/15-quote-bank.md`（查原文前先读）
 
 ## 产物
 
-- `speculo/.speculo/person/<change>/analysis.md`
+- `speculo/.speculo/person/changes/<change>/analysis.md`
 
 ## 认知主线
 

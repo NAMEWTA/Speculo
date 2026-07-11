@@ -1,38 +1,34 @@
 import { cp, mkdir, readdir, rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
+import { detectLegacyState } from "./migrate.js";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
-  promptCategorySelection,
+  isInteractive,
+  promptWorkflowSelection,
   scanInstalledWorkflows,
   selectAllFromCatalog,
-  isInteractive,
   type WorkflowSelection,
 } from "./workflows.js";
 
 export type SpeculoCommandResult = {
   target: string;
-  mode: 'init' | 'update';
+  mode: "init" | "update";
   copied?: string[];
   updated?: string[];
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
-  /** If true, install all workflows without prompting (--all equivalent). */
   all?: boolean;
-  /** Explicit workflow selection for programmatic use (bypasses prompt). */
   selection?: WorkflowSelection;
 };
 
-const INIT_ASSETS = [".speculo", "commands", "skills", "workflows", "vendor"] as const;
-const UPDATE_ASSETS = ["commands", "skills", "workflows"] as const;
-const CATEGORY_GUIDE_FILE = "AGENTS.md";
-const LEGACY_CATEGORY_INDEX_FILE = "00-INDEX.md";
-
-// Assets install under a single `speculo/` directory inside the target,
-// mirroring the package layout — never scattered into the target root.
+const CORE_ASSETS = [".speculo", "commands", "skills"] as const;
 const INSTALL_SUBDIR = "speculo";
+const WORKFLOW_ENTRY = "WORKFLOW.md";
+const STATE_TEMPLATE_DIR = "_state";
+const MATT_WORKFLOW_ID = "matt-pocock";
 
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
@@ -42,124 +38,149 @@ function installRoot(target: string): string {
   return join(target, INSTALL_SUBDIR);
 }
 
-async function ensureAssetSource(packageRoot: string, asset: string): Promise<string> {
+async function ensureAssetSource(
+  packageRoot: string,
+  asset: string
+): Promise<string> {
   const source = join(assetRoot(packageRoot), asset);
   if (!(await pathExists(source))) {
-    throw new Error(`Missing packaged Speculo asset: template/${asset}`);
+    throw new Error("Missing packaged Speculo asset: template/" + asset);
   }
   return source;
 }
 
-async function collectConflicts(root: string, assets: readonly string[]): Promise<string[]> {
-  const conflicts: string[] = [];
-  for (const asset of assets) {
+async function copyCoreAssets(
+  packageRoot: string,
+  root: string,
+  overwrite: boolean
+): Promise<string[]> {
+  const copied: string[] = [];
+  for (const asset of CORE_ASSETS) {
+    const source = await ensureAssetSource(packageRoot, asset);
     const destination = join(root, asset);
-    if (await pathExists(destination)) {
-      conflicts.push(destination);
+    if (asset === ".speculo" && overwrite) {
+      await copyMissingTree(source, destination);
+      copied.push(asset);
+      continue;
+    }
+    if (overwrite && asset !== ".speculo") {
+      await rm(destination, { recursive: true, force: true });
+    }
+    await cp(source, destination, {
+      recursive: true,
+      force: overwrite,
+      errorOnExist: !overwrite,
+    });
+    copied.push(asset);
+  }
+  return copied;
+}
+
+async function copyMissingTree(
+  source: string,
+  destination: string
+): Promise<void> {
+  await mkdir(destination, { recursive: true });
+  const entries = await readdir(source, { withFileTypes: true });
+  for (const entry of entries) {
+    const sourceEntry = join(source, entry.name);
+    const destinationEntry = join(destination, entry.name);
+    if (entry.isDirectory()) {
+      await copyMissingTree(sourceEntry, destinationEntry);
+    } else if (!(await pathExists(destinationEntry))) {
+      await cp(sourceEntry, destinationEntry, {
+        force: false,
+        errorOnExist: true,
+      });
     }
   }
-  return conflicts;
 }
 
-/**
- * Merge vendor skills from the template into the install root.
- * Only copies skills that don't already exist — never overwrites.
- * Returns a list of `vendor/<name>` paths that were added.
- */
-async function mergeVendor(packageRoot: string, root: string): Promise<string[]> {
-  const added: string[] = [];
-  const vendorSrc = join(assetRoot(packageRoot), "vendor");
-  const vendorDest = join(root, "vendor");
-
-  await mkdir(vendorDest, { recursive: true });
-
-  let entries;
-  try {
-    entries = await readdir(vendorSrc, { withFileTypes: true });
-  } catch {
-    // No vendor/ in template — nothing to merge
-    return added;
-  }
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const dest = join(vendorDest, entry.name);
-    if (await pathExists(dest)) continue; // already exists, skip
-    await cp(join(vendorSrc, entry.name), dest, { recursive: true });
-    added.push(`vendor/${entry.name}`);
-  }
-  return added;
+function shouldCopyVendorEntry(
+  name: string,
+  selection: WorkflowSelection
+): boolean {
+  return name !== MATT_WORKFLOW_ID ||
+    selection.workflowIds.includes(MATT_WORKFLOW_ID);
 }
 
-/**
- * Copy selected workflows from the template to the install root.
- * Handles category-level metadata (AGENTS.md, _templates/) along with
- * individual workflow directories.
- */
-async function copyWorkflows(
+async function copyVendor(
   packageRoot: string,
   root: string,
   selection: WorkflowSelection,
-  options: { overwrite?: boolean } = {}
+  mode: "fresh" | "merge" | "overwrite"
+): Promise<string[]> {
+  const sourceRoot = await ensureAssetSource(packageRoot, "vendor");
+  const destinationRoot = join(root, "vendor");
+  const copied: string[] = [];
+
+  if (mode === "overwrite") {
+    await rm(destinationRoot, { recursive: true, force: true });
+  }
+  await mkdir(destinationRoot, { recursive: true });
+
+  const entries = await readdir(sourceRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!shouldCopyVendorEntry(entry.name, selection)) continue;
+
+    const source = join(sourceRoot, entry.name);
+    const destination = join(destinationRoot, entry.name);
+    if (mode === "merge" && (await pathExists(destination))) continue;
+
+    await cp(source, destination, {
+      recursive: entry.isDirectory(),
+      force: mode === "overwrite",
+      errorOnExist: mode === "fresh",
+    });
+    copied.push("vendor/" + entry.name);
+  }
+
+  return copied;
+}
+
+async function copyWorkflowPackages(
+  packageRoot: string,
+  root: string,
+  selection: WorkflowSelection,
+  overwrite: boolean
 ): Promise<string[]> {
   const copied: string[] = [];
-  const workflowsRoot = join(root, "workflows");
-  const templateWorkflows = join(packageRoot, "template", "workflows");
-  const overwrite = options.overwrite ?? false;
+  const sourceRoot = join(assetRoot(packageRoot), "workflows");
+  const destinationRoot = join(root, "workflows");
+  await mkdir(destinationRoot, { recursive: true });
 
-  await mkdir(workflowsRoot, { recursive: true });
-
-  // Track which category metadata has already been copied
-  const categoriesDone = new Set<string>();
-
-  for (const wf of selection.workflows) {
-    const cat = wf.category;
-
-    // Copy category-level AGENTS.md (only once per category)
-    if (!categoriesDone.has(cat)) {
-      const catDir = join(workflowsRoot, cat);
-      await mkdir(catDir, { recursive: true });
-
-      // AGENTS.md
-      const guideSrc = join(templateWorkflows, cat, CATEGORY_GUIDE_FILE);
-      const guideDest = join(catDir, CATEGORY_GUIDE_FILE);
-      if (overwrite) {
-        if (await pathExists(guideDest)) {
-          await rm(guideDest, { force: true });
-        }
-        const legacyIndexDest = join(catDir, LEGACY_CATEGORY_INDEX_FILE);
-        if (await pathExists(legacyIndexDest)) {
-          await rm(legacyIndexDest, { force: true });
-        }
-      }
-      if (await pathExists(guideSrc)) {
-        await cp(guideSrc, guideDest, { force: overwrite, errorOnExist: !overwrite });
-      }
-
-      // _templates/
-      const templatesSrc = join(templateWorkflows, cat, "_templates");
-      const templatesDest = join(catDir, "_templates");
-      if (overwrite && (await pathExists(templatesDest))) {
-        await rm(templatesDest, { recursive: true, force: true });
-      }
-      if (await pathExists(templatesSrc)) {
-        await cp(templatesSrc, templatesDest, { recursive: true, force: overwrite, errorOnExist: !overwrite });
-      }
-
-      categoriesDone.add(cat);
+  for (const workflowId of selection.workflowIds) {
+    const source = join(sourceRoot, workflowId);
+    const entry = join(source, WORKFLOW_ENTRY);
+    if (!(await pathExists(entry))) {
+      throw new Error("Unknown workflow package: " + workflowId);
     }
 
-    // Copy the workflow directory
-    const wfSrc = join(templateWorkflows, cat, wf.name);
-    const wfDest = join(workflowsRoot, cat, wf.name);
-
-    if (overwrite && (await pathExists(wfDest))) {
-      await rm(wfDest, { recursive: true, force: true });
+    const destination = join(destinationRoot, workflowId);
+    if (overwrite) {
+      await rm(destination, { recursive: true, force: true });
     }
 
-    if (await pathExists(wfSrc)) {
-      await cp(wfSrc, wfDest, { recursive: true, force: overwrite, errorOnExist: !overwrite });
-      copied.push(`workflows/${cat}/${wf.name}`);
+    await cp(source, destination, {
+      recursive: true,
+      force: overwrite,
+      errorOnExist: !overwrite,
+      filter: (path) => basename(path) !== STATE_TEMPLATE_DIR,
+    });
+    copied.push("workflows/" + workflowId);
+
+    const stateSource = join(source, STATE_TEMPLATE_DIR);
+    const stateDestination = join(root, ".speculo", workflowId);
+    if (!(await pathExists(stateSource))) {
+      throw new Error("Workflow " + workflowId + " is missing _state/");
+    }
+    if (!(await pathExists(stateDestination))) {
+      await cp(stateSource, stateDestination, {
+        recursive: true,
+        force: false,
+        errorOnExist: true,
+      });
+      copied.push(".speculo/" + workflowId);
     }
   }
 
@@ -170,122 +191,65 @@ async function resolveSelection(
   packageRoot: string,
   root: string,
   options: SpeculoOptions,
-  mode: 'init' | 'update'
+  mode: "init" | "update"
 ): Promise<WorkflowSelection> {
-  // Explicit selection from caller (programmatic use)
-  if (options.selection) {
-    return options.selection;
-  }
+  if (options.selection) return options.selection;
 
-  // --all flag or non-interactive → select all
-  if (options.all || !isInteractive()) {
-    const catalog = await discoverWorkflowCatalog(packageRoot);
-    return selectAllFromCatalog(catalog);
-  }
-
-  // Interactive mode
   const catalog = await discoverWorkflowCatalog(packageRoot);
+  if (options.all || !isInteractive()) return selectAllFromCatalog(catalog);
 
-  if (mode === 'update') {
-    // Pre-select categories that already have at least one workflow installed
-    let installed: { category: string; name: string }[] = [];
-    try {
-      installed = await scanInstalledWorkflows(root);
-    } catch {
-      // root not readable — treat as empty
-    }
-    const preSelectedCategories = new Set(installed.map((w) => w.category));
-    return promptCategorySelection(catalog, { preSelectedCategories });
+  if (mode === "update") {
+    const installed = await scanInstalledWorkflows(root);
+    return promptWorkflowSelection(catalog, {
+      preSelectedWorkflowIds: new Set(installed),
+    });
   }
 
-  // Init mode: no pre-selected categories
-  return promptCategorySelection(catalog);
+  return promptWorkflowSelection(catalog);
 }
 
 async function initFresh(
-  targetArg = ".",
-  options: SpeculoOptions = {}
+  targetArg: string,
+  options: SpeculoOptions
 ): Promise<SpeculoCommandResult> {
   const target = resolve(targetArg);
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
+  const selection = await resolveSelection(packageRoot, root, options, "init");
 
   await mkdir(root, { recursive: true });
+  const copied = await copyCoreAssets(packageRoot, root, false);
+  await copyVendor(packageRoot, root, selection, "fresh");
+  copied.push("vendor");
+  copied.push(
+    ...await copyWorkflowPackages(packageRoot, root, selection, false)
+  );
 
-  // Collect conflicts for non-workflow assets only
-  // (workflows are selective, no blanket conflict check)
-  const nonWorkflowAssets = INIT_ASSETS.filter(a => a !== 'workflows');
-  const conflicts = await collectConflicts(root, nonWorkflowAssets);
-  if (conflicts.length > 0) {
-    throw new Error(
-      [
-        "Speculo init refused to overwrite existing paths:",
-        ...conflicts.map((conflict) => `- ${conflict}`)
-      ].join("\n")
-    );
-  }
-
-  const copied: string[] = [];
-
-  // Copy non-workflow assets in full
-  for (const asset of nonWorkflowAssets) {
-    const source = await ensureAssetSource(packageRoot, asset);
-    const destination = join(root, asset);
-    await cp(source, destination, { recursive: true, force: false, errorOnExist: true });
-    copied.push(asset);
-  }
-
-  // Selective workflow copy
-  const selection = await resolveSelection(packageRoot, root, options, 'init');
-  const workflowPaths = await copyWorkflows(packageRoot, root, selection);
-  for (const wf of workflowPaths) {
-    copied.push(wf);
-  }
-
-  return { target, mode: 'init', copied };
+  return { target, mode: "init", copied };
 }
 
-async function initOverwrite(
-  targetArg = ".",
-  options: SpeculoOptions = {}
+async function initUpdate(
+  targetArg: string,
+  options: SpeculoOptions
 ): Promise<SpeculoCommandResult> {
   const target = resolve(targetArg);
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
+  const selection = await resolveSelection(packageRoot, root, options, "update");
+  const updated = await copyCoreAssets(packageRoot, root, true);
 
-  await mkdir(root, { recursive: true });
-
-  const updated: string[] = [];
-
-  // Full refresh for non-workflow assets (current rm+cp behavior)
-  for (const asset of UPDATE_ASSETS.filter(a => a !== 'workflows')) {
-    const source = await ensureAssetSource(packageRoot, asset);
-    const destination = join(root, asset);
-    await rm(destination, { recursive: true, force: true });
-    await cp(source, destination, { recursive: true, force: true });
-    updated.push(asset);
-  }
-
-  // Vendor handling: full overwrite with --all, merge otherwise
   if (options.all) {
-    const vendorSrc = await ensureAssetSource(packageRoot, "vendor");
-    const vendorDest = join(root, "vendor");
-    await rm(vendorDest, { recursive: true, force: true });
-    await cp(vendorSrc, vendorDest, { recursive: true, force: true });
+    await copyVendor(packageRoot, root, selection, "overwrite");
     updated.push("vendor");
   } else {
-    const added = await mergeVendor(packageRoot, root);
-    for (const item of added) updated.push(item);
+    updated.push(...await copyVendor(packageRoot, root, selection, "merge"));
   }
 
-  // Selective workflow overwrite
-  const selection = await resolveSelection(packageRoot, root, options, 'update');
-  const workflowPaths = await copyWorkflows(packageRoot, root, selection, { overwrite: true });
-  for (const wf of workflowPaths) {
-    updated.push(wf);
-  }
+  updated.push(
+    ...await copyWorkflowPackages(packageRoot, root, selection, true)
+  );
 
-  return { target, mode: 'update', updated };
+  return { target, mode: "update", updated };
 }
 
 export async function initSpeculo(
@@ -295,11 +259,17 @@ export async function initSpeculo(
   const target = resolve(targetArg);
   const root = installRoot(target);
 
-  if (await pathExists(root)) {
-    const result = await initOverwrite(targetArg, options);
-    return { ...result, mode: 'update' };
+  if (!(await pathExists(root))) {
+    return initFresh(targetArg, options);
   }
 
-  const result = await initFresh(targetArg, options);
-  return { ...result, mode: 'init' };
+  if (await detectLegacyState(target)) {
+    throw new Error(
+      "Legacy Speculo state detected. Run `speculo migrate " +
+      targetArg + "` to preview, then `speculo migrate --apply " +
+      targetArg + "` before updating."
+    );
+  }
+
+  return initUpdate(targetArg, options);
 }

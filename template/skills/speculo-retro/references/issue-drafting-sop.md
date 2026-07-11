@@ -13,8 +13,8 @@
   "priority":     "priority:critical | priority:high | priority:medium | priority:low",
   "area":         "string|null, 例 area:commands / area:workflows / area:skills / area:cli / area:contract",
   "body":         "string, 见正文结构",
-  "affected":     ["相对路径，例 speculo/commands/archive.md"],
-  "evidence":     ["证据出处，例 speculo/.speculo/dev/<change>/.status.json#phase_history"],
+  "affected":     ["相对路径，例 speculo/commands/finalize.md"],
+  "evidence":     ["证据出处，例 speculo/.speculo/<workflow>/changes/<change>/.status.json#phase_history"],
   "disposition":  "file-issue | record-lesson | drop",
   "dup_of":       "number|null, 疑似重复的已存在 issue 编号"
 }
@@ -74,4 +74,4 @@
 
 ## 交接契约
 
-本 skill 只返回上面的结构化提案清单 + 丢弃/合并说明，**不写文件、不调用 `gh`、不创建 issue**。落盘到 `speculo/.speculo/commands/<run>/report.md` 与实际 `gh issue create` 由调用方 command 在用户确认后执行。
+本 skill 只返回上面的结构化提案清单 + 丢弃/合并说明，**不写文件、不调用 `gh`、不创建 issue**。落盘到 `speculo/.speculo/commands/retro/<YYYY-MM-DD>-<scope>-<topic>[-NN].md` 与实际 `gh issue create` 由调用方 command 在用户确认后执行。

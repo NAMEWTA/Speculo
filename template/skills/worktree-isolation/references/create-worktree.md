@@ -1,6 +1,6 @@
 # 创建隔离 worktree
 
-为当前 change 建立独立分支与 `.worktree/<change>/` 工作树。调用方：`dev/01` grill 的 Worktree Setup 阶段（条件）。
+为当前 workflow change 建立独立分支与 `.worktree/<change>/` 工作树。调用方只有在用户显式启用隔离时执行。
 
 ## 前置
 
@@ -11,7 +11,7 @@
 ## 命名
 
 - base 分支 = 启用隔离时的当前分支（`git rev-parse --abbrev-ref HEAD`）
-- change 分支 = `speculo/<cat>/<change>`
+- change 分支 = `speculo/<workflow>/<change>`
 - worktree 路径 = `.worktree/<change>`
 
 ## 步骤
@@ -21,11 +21,11 @@
 3. 创建分支与工作树：
 
    ```bash
-   git worktree add -b speculo/<cat>/<change> .worktree/<change>
+   git worktree add -b speculo/<workflow>/<change> .worktree/<change>
    ```
 
-4. 在工作树内初始化该 change 的 Speculo 产物目录 `speculo/.speculo/<cat>/<change>/` 与 `.status.json`（由调用方按持久化契约写入）。
-5. 提示调用方：此后所有工作在 `.worktree/<change>/` 内、`speculo/<cat>/<change>` 分支上进行。
+4. 在工作树内初始化该 change 的 Speculo 产物目录 `speculo/.speculo/<workflow>/changes/<change>/` 与 `.status.json`（由调用方按持久化契约写入）。
+5. 提示调用方：此后所有工作在 `.worktree/<change>/` 内、`speculo/<workflow>/<change>` 分支上进行。
 
 ## 返回给调用方
 
@@ -34,6 +34,6 @@
 
 ## 边界
 
-- 不自行选择持久化目录；字段值返回给调用方 workflow 写入 `speculo/.speculo/<cat>/<change>/.status.json`。
+- 不自行选择持久化目录；字段值返回给调用方 workflow 写入 `speculo/.speculo/<workflow>/changes/<change>/.status.json`。
 - 分支或工作树已存在时不覆盖、不复用，停止报告。
 - 非 git 仓库 / 工作区不可用 / `speculo/.speculo/` 未被跟踪时降级为非 worktree 模式。

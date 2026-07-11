@@ -2,31 +2,32 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
+import { migrateSpeculo } from "./migrate.js";
 
 function usage(): string {
   return [
     "Usage:",
     "  speculo init [--all] [target]",
+    "  speculo migrate [--apply] [target]",
     "",
     "Commands:",
-    "  init    Install speculo assets under speculo/. If speculo/ does not exist,",
-    "          copies .speculo, commands, skills, and workflows with conflict detection.",
-    "          If speculo/ already exists, refreshes commands, skills, and workflows",
-    "          while preserving .speculo/ user state.",
+    "  init       Install or refresh Speculo core assets and selected workflow packages.",
+    "             Existing workflow state under speculo/.speculo/ is never overwritten.",
+    "  migrate    Preview migration from v2 or transitional v3 state to the current v3 contract.",
+    "             Pass --apply to perform the staged, rollback-safe migration.",
     "",
     "Options:",
-    "  --all   Install/update all workflows without interactive selection.",
-    "          Also triggers full overwrite of vendor/ (native skills collection).",
-    "          When omitted, vendor/ is merge-only — new skills are added but",
-    "          existing ones are preserved. In a terminal without --all, an",
-    "          interactive menu lets you pick which workflows to install or refresh."
+    "  --all      Select every workflow and fully refresh vendor assets during init.",
+    "  --apply    Apply a migration; without this flag migrate is always dry-run.",
   ].join("\n");
 }
 
 async function main(argv: string[]): Promise<number> {
-  // Parse --all flag (can appear anywhere in argv)
   const allFlag = argv.includes("--all");
-  const positional = argv.filter(a => a !== "--all");
+  const applyFlag = argv.includes("--apply");
+  const positional = argv.filter(
+    (argument) => argument !== "--all" && argument !== "--apply"
+  );
   const [command, targetArg, extra] = positional;
 
   if (!command || command === "--help" || command === "-h") {
@@ -35,7 +36,7 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (extra) {
-    console.error(`Unexpected argument: ${extra}`);
+    console.error("Unexpected argument: " + extra);
     console.error(usage());
     return 1;
   }
@@ -45,40 +46,71 @@ async function main(argv: string[]): Promise<number> {
 
   try {
     if (command === "init") {
-      const result = await initSpeculo(target, { packageRoot, all: allFlag });
-      if (result.mode === 'init') {
-        console.log(`Speculo initialized in ${result.target}`);
-        for (const copied of result.copied ?? []) {
-          console.log(`  copied ${copied}`);
-        }
-      } else {
-        console.log(`Speculo updated in ${result.target}`);
-        for (const updated of result.updated ?? []) {
-          console.log(`  updated ${updated}`);
-        }
+      if (applyFlag) {
+        throw new Error("--apply is only valid with `speculo migrate`.");
+      }
+      const result = await initSpeculo(target, {
+        packageRoot,
+        all: allFlag,
+      });
+      console.log(
+        result.mode === "init"
+          ? "Speculo initialized in " + result.target
+          : "Speculo updated in " + result.target
+      );
+      for (const item of result.copied ?? result.updated ?? []) {
+        console.log("  " + (result.mode === "init" ? "copied " : "updated ") + item);
+      }
+      return 0;
+    }
+
+    if (command === "migrate") {
+      if (allFlag) {
+        throw new Error("--all is only valid with `speculo init`.");
+      }
+      const result = await migrateSpeculo(target, {
+        packageRoot,
+        apply: applyFlag,
+      });
+      if (!result.legacyDetected) {
+        console.log("No legacy Speculo state detected in " + result.target);
+        return 0;
+      }
+
+      console.log(
+        result.applied
+          ? "Speculo state migrated in " + result.target
+          : "Speculo migration preview for " + result.target
+      );
+      for (const action of result.actions) {
+        const mapping = action.from
+          ? action.from + (action.to ? " -> " + action.to : "")
+          : action.detail;
+        console.log("  " + action.kind + " " + mapping);
+      }
+      if (!result.applied) {
+        console.log("Dry-run only. Re-run with --apply to perform this migration.");
       }
       return 0;
     }
 
     if (command === "update") {
-      console.error("Warning: `speculo update` is deprecated. Use `speculo init` instead.");
-      const result = await initSpeculo(target, { packageRoot, all: true });
-      console.log(`Speculo updated in ${result.target}`);
-      for (const updated of result.updated ?? []) {
-        console.log(`  updated ${updated}`);
-      }
+      console.error("Warning: `speculo update` is deprecated. Use `speculo init`.");
+      const result = await initSpeculo(target, {
+        packageRoot,
+        all: true,
+      });
+      console.log("Speculo updated in " + result.target);
       return 0;
     }
 
-    console.error(`Unknown command: ${command}`);
+    console.error("Unknown command: " + command);
     console.error(usage());
     return 1;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(message);
+    console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
 }
 
-const exitCode = await main(process.argv.slice(2));
-process.exitCode = exitCode;
+process.exitCode = await main(process.argv.slice(2));

@@ -22,7 +22,7 @@ if (!firstLine.startsWith("#!/usr/bin/env node")) {
 
 try {
   const out = execFileSync(process.execPath, [bin, "--help"], { encoding: "utf8" });
-  if (!/speculo init/.test(out)) {
+  if (!/speculo init/.test(out) || !/speculo migrate/.test(out)) {
     console.error("verify-bin: `speculo --help` did not print the expected usage banner.");
     process.exit(1);
   }
@@ -31,4 +31,4 @@ try {
   process.exit(1);
 }
 
-console.log("verify-bin: OK — dist/src/cli.js is present, shebang-prefixed, and responds to --help.");
+console.log("verify-bin: OK - dist/src/cli.js exposes init and migrate through --help.");

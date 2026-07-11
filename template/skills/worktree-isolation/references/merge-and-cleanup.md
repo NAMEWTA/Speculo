@@ -1,6 +1,6 @@
 # 合并回收与清理
 
-finalize 验证通过后，把 change 分支合并回原分支并清理 worktree。调用方：`dev/04` finalize 的 Merge Back & Cleanup 阶段（条件）。**全程破坏性，须先列计划、经用户确认。**
+finalize 验证通过后，把 change 分支合并回原分支并清理 worktree。由 `../../../commands/finalize.md` 在隔离模式下调用。**全程破坏性，须先列计划、经用户确认。**
 
 ## 前置
 
@@ -15,16 +15,16 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
 
    ```bash
    git switch <base_branch>
-   git merge --no-ff speculo/<cat>/<change>
+   git merge --no-ff speculo/<workflow>/<change>
    ```
 
    - 合并冲突 → **停止**，报告冲突文件，交回用户解决，不强推、不 `--force`。
-   - 合并成功 → 置 `worktree_status: merged`。合并后 base 分支已包含代码与 `speculo/.speculo/<cat>/<change>/` 产物。
+   - 合并成功 → 置 `worktree_status: merged`。合并后 base 分支已包含代码与 `speculo/.speculo/<workflow>/changes/<change>/` 产物。
 3. **清理工作树与分支**：
 
    ```bash
    git worktree remove .worktree/<change>
-   git branch -d speculo/<cat>/<change>
+   git branch -d speculo/<workflow>/<change>
    ```
 
    - 完成后置 `worktree_status: removed`。
@@ -40,4 +40,4 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
 
 - `verification_status` 非 `verified` 不合并。
 - 未获用户确认不执行任何合并 / 删除 / 移除。
-- 不自行选择持久化目录；`worktree_status` 由调用方写入 `speculo/.speculo/<cat>/<change>/.status.json`。
+- 不自行选择持久化目录；`worktree_status` 由调用方写入 `speculo/.speculo/<workflow>/changes/<change>/.status.json`。

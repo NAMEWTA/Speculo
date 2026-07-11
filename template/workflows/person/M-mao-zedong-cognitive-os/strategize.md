@@ -2,14 +2,14 @@
 
 ## 输入
 
-- `speculo/.speculo/person/<change>/problem-statement.md`（Phase 1 产物）
-- `speculo/.speculo/person/<change>/analysis.md`（Phase 2 产物）
+- `speculo/.speculo/person/changes/<change>/problem-statement.md`（Phase 1 产物）
+- `speculo/.speculo/person/changes/<change>/analysis.md`（Phase 2 产物）
 - Module B 框架清单与决策树：`references/research/12-strategy-frameworks.md`
 - 引语与篇目映射：`references/research/15-quote-bank.md`
 
 ## 产物
 
-- `speculo/.speculo/person/<change>/strategy.md`
+- `speculo/.speculo/person/changes/<change>/strategy.md`
 
 ## 元框架（战略流水线）
 

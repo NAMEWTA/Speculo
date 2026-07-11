@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "path_base": "project-root",
+  "roots": {
+    "speculo": "speculo",
+    "state": "speculo/.speculo",
+    "commands": "speculo/commands",
+    "skills": "speculo/skills",
+    "workflows": "speculo/workflows",
+    "vendor": "speculo/vendor"
+  }
+}

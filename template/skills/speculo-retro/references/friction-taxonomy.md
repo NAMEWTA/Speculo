@@ -7,14 +7,14 @@
 按以下顺序采集原始摩擦点，每条记录**证据出处**（文件路径或对话节点），后续起草 issue 时要引用：
 
 1. **当前对话上下文** —— 本次会话激活过的 command / workflow；用户在哪一步卡住、追问、返工；为绕开限制做了哪些手动动作；哪些指令被误解。
-2. **命令产物** —— `speculo/.speculo/commands/<run>/` 下的 `report.md`、`snapshot.md`、`handoff.md`：里面记录的「验证失败原因」「未完成」「阻塞点」是一手摩擦。
-3. **change 状态机** —— `speculo/.speculo/<cat>/<change>/.status.json` 的 `phase_history`：
+2. **命令产物** —— `speculo/.speculo/commands/<command>/*.md`：其中记录的验证失败、未完成和阻塞点是一手摩擦。
+3. **change 状态机** —— `speculo/.speculo/<workflow>/changes/<change>/.status.json` 的 `phase_history`：
    - `revisited` —— phase 被迫回退，通常意味着流程设计或前置产物有缺口
    - `blocked` —— 卡点，记录阻塞原因
    - `skipped` —— phase 被跳过，可能是冗余或不适用
    - `updated_at` 长期停滞 —— 流程让人不想推进
 4. **change 产物正文** —— `prd.md`、`tdd-*.md`、`slices.md`、`diagnosis.md` 中显式写下的「待澄清」「风险」「TODO」。
-5. **沉淀教训** —— `speculo/.speculo/.config/LESSONS.md`：已记录但尚未转成改进项的教训，用于去重与佐证频率。
+5. **沉淀教训** —— 各 workflow 声明的 lessons/knowledge store：已记录但尚未转成改进项的教训，用于去重与佐证频率。
 6. **契约落差** —— 实际产物路径、frontmatter、命名是否偏离 `persistence-contract`：路径散落、缺字段、命名不合 `YYYY-MM-DD-<kebab>` 都是 bug 信号。
 
 ## 摩擦类型分类
