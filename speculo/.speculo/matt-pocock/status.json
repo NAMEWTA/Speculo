@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "workflow": "matt-pocock",
+  "current_route": "triage",
+  "route_history": ["triage"],
+  "active": ["triage-20260711-184837"],
+  "current_change": "triage-20260711-184837"
+}
