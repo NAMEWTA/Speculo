@@ -4,7 +4,7 @@
 
 ## 共同预检
 
-- change 名称符合日期 kebab 规则，且 `.status.json` 可解析。
+- change 名称符合日期 kebab 规则（格式校验来源与 `runtime-context/SKILL.md` 第4步相同，创建时已保证；此处为冗余验证），且 `.status.json` 可解析。
 - 源位于 runtime context 的 `changes_root`，目标位于 `archive_root/<YYYY-MM>/<change>`。
 - 目标不存在，workflow `status.json` 与 change 状态一致。
 - worktree 模式已经合并回目标分支并清理，或调用方明确记录 blocked。

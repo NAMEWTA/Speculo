@@ -18,7 +18,7 @@ keywords: [finalize, verify, complete, archive, 收尾]
 
 ### finalize-active
 
-1. 读取 `../skills/runtime-context/SKILL.md` 和 `../skills/change-lifecycle/SKILL.md`，解析 workflow 的固定 `changes/archive` 根。
+1. 读取 `../skills/runtime-context/SKILL.md` 和 `../skills/change-lifecycle/SKILL.md`，解析 `speculo/config.json`（不存在时以默认值静默降级）和 workflow 的固定 `changes/archive` 根。
 2. 选择一个 active change，执行新鲜验证、需求核对和 worktree 预检；缺证据即 blocked。
 3. 展示验证证据、状态变化、归档目标和报告路径，等待用户明确确认。
 4. 确认后将 change 置为 completed，再移动到 archive，更新 `status.json#active`，复查目标和索引。

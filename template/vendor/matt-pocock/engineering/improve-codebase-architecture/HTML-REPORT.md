@@ -2,11 +2,13 @@
 
 架构审查渲染为一个独立的 HTML 文件，存放在操作系统临时目录中。Tailwind 和 Mermaid 均来自 CDN。Mermaid 处理图形状的图表；手工构建的 div 和内联 SVG 处理更具编辑性的可视化（质量图、横截面图）。混合使用两者 — 不要所有事情都依赖 Mermaid，否则会变得千篇一律。
 
+`{{config.defaults.report_language}}` 占位符由 runtime-context 输出的 `config` 对象填充，值来自 `speculo/config.json` 的 `defaults.report_language` 字段；若 config 文件不存在，默认值为 `"en"`。Tailwind 和 Mermaid 均来自 CDN。Mermaid 处理图形状的图表；手工构建的 div 和内联 SVG 处理更具编辑性的可视化（质量图、横截面图）。混合使用两者 — 不要所有事情都依赖 Mermaid，否则会变得千篇一律。
+
 ## 脚手架
 
 ```html
 <!doctype html>
-<html lang="en">
+<html lang="{{config.defaults.report_language}}">
   <head>
     <meta charset="utf-8" />
     <title>Architecture review — {{repo name}}</title>

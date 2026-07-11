@@ -2,6 +2,7 @@
   "schema_version": 1,
   "path_base": "project-root",
   "roots": {
+    "config": "speculo/config.json",
     "speculo": "speculo",
     "state": "speculo/.speculo",
     "commands": "speculo/commands",

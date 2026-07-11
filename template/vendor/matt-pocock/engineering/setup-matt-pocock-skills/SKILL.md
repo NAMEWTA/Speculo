@@ -26,6 +26,7 @@ disable-model-invocation: true
 - `docs/adr/` 和所有 `src/*/docs/adr/` 目录
 - `docs/agents/` —— 此技能之前的输出是否已存在？
 - `.scratch/` —— 表示本地 markdown issue tracker 约定已在使用中的标志
+- `speculo/config.json` —— 全局配置文件是否已存在？若存在，读取其内容
 
 ### 2. 展示发现结果并询问
 
@@ -73,12 +74,22 @@ disable-model-invocation: true
 - **单上下文** —— 仓库根目录下一个 `CONTEXT.md` + `docs/adr/`。大多数仓库属于此类。
 - **多上下文** —— 根目录下 `CONTEXT-MAP.md` 指向各上下文的 `CONTEXT.md` 文件（通常为 mono repo）。
 
+**D 节 —— 语言与配置偏好。**
+
+> 解释：Speculo 使用 `speculo/config.json` 存储全局配置，包括 AI 与用户的交互语言、报告生成语言、以及持久化路径覆盖。其他 commands 和 workflows 在初始化时读取此文件以自动选择语言和确认策略。
+
+询问用户：
+
+- **交互语言** —— Speculo 与用户交互时使用的语言。选项：`zh-CN`（简体中文）、`en`（英文）。默认：`zh-CN`。
+- **报告语言** —— AI 生成产物（HTML 报告、Markdown 文档、issue 正文）的默认语言。默认与交互语言相同。
+
 ### 3. 确认并编辑
 
 向用户展示以下内容的草稿：
 
 - 要添加到 `CLAUDE.md` / `AGENTS.md`（根据第 4 步的选择规则决定编辑哪个文件）的 `## Agent skills` 块
 - `docs/agents/issue-tracker.md`、`docs/agents/triage-labels.md`、`docs/agents/domain.md` 的内容
+- `speculo/config.json` 的内容（若不存在则新建）
 
 让他们在写入之前编辑。
 
@@ -121,6 +132,24 @@ disable-model-invocation: true
 - [domain.md](./domain.md) —— 领域文档消费方规则 + 布局
 
 对于"其他"issue tracker，根据用户的描述从头编写 `docs/agents/issue-tracker.md`。
+
+如果 `speculo/config.json` 不存在，根据 D 节的用户选择创建：
+
+```jsonc
+{
+  "schema_version": 1,
+  "language": "<用户选择的交互语言>",
+  "persistence": {
+    "root_override": null
+  },
+  "defaults": {
+    "confirm_before_external_write": true,
+    "report_language": "<用户选择的报告语言>"
+  }
+}
+```
+
+如果 `speculo/config.json` 已存在，仅更新用户本次修改的字段，保留其他现有值。
 
 ### 5. 完成
 

@@ -14,7 +14,7 @@ keywords: [knowledge, prune, rules, lessons, context, adr]
 
 ## 执行
 
-1. 读取 `../skills/runtime-context/SKILL.md`，选择 workflow 并解析其 `<persistence>` 声明的 knowledge/policy namespace。
+1. 读取 `../skills/runtime-context/SKILL.md`，解析 `speculo/config.json`（不存在时以默认值静默降级），选择 workflow 并解析其 `<persistence>` 声明的 knowledge/policy namespace。
 2. 读取 `../skills/knowledge-prune/SKILL.md`，默认执行 dry-run，生成 `delete | merge | rewrite | keep | needs-confirmation` 清单。
 3. 将报告写入 command 专属目录；无用户确认时不删除、重命名或改写任何 namespace。
 4. 用户确认后再次执行路径包含检查，逐项操作并复查 git、引用和报告结果。

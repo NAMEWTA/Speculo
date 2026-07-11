@@ -25,7 +25,7 @@ keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 
 ## 执行步骤
 
-1. 读取 `../skills/runtime-context/SKILL.md` 与 `../skills/speculo-retro/SKILL.md`，采集对话、command 报告、change 状态以及 workflow 声明的 lessons/knowledge store。
+1. 读取 `../skills/runtime-context/SKILL.md` 与 `../skills/speculo-retro/SKILL.md`，解析 `speculo/config.json`（不存在时以默认值静默降级），采集对话、command 报告、change 状态以及 workflow 声明的 lessons/knowledge store。
 2. 用该 skill 产出规范化复盘结论：去重、分级、根因化的 issue-ready 提案清单，附丢弃/合并说明与每条处置建议。
 3. 创建 command 专属目录 `speculo/.speculo/commands/retro/`，把复盘结论写入带 scope 的 Markdown 报告。
 4. **解析目标仓库**：默认框架反馈上游 `NAMEWTA/Speculo`；用户在请求中显式指定其他 `owner/repo` 时覆盖默认。无论如何，在调用 `gh` 前回显解析到的 `owner/repo`，让用户确认或改正。
