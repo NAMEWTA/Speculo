@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Per-workflow `PERSISTENCE.md` runtime contracts and independently callable `atomic-skills/` entries.
+- Complete one-to-one wrapper catalog for all 28 Matt Pocock vendor skills, including explicit experimental gating for the 6 `in-progress` skills.
+
+### Changed
+- Matt Pocock routes now resolve every raw skill through workflow-owned atomic wrappers so route and direct invocation share one change and persistence boundary.
+- Framework validation now enforces persistence loading, wrapper/catalog completeness, unique raw targets, and the absence of direct raw skill references in routes.
+
 ## [0.2.0] - 2026-07-11
 
 ### Added

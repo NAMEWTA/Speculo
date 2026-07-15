@@ -5,7 +5,7 @@
 ```xml
 <sequence>
   <phase id="collect" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/triage/SKILL.md" activation="adapted" />
+    <instructions root="workflow" path="atomic-skills/triage.md" activation="adapted" />
     <artifact root="change" path="triage/{item}/record.md" />
     <completion>完整正文、评论、标签、diff、冗余性与私有 out-of-scope 已检查。</completion>
   </phase>
@@ -14,8 +14,8 @@
   </phase>
   <phase id="validate-grill" order="3">
     <when>声明需要复现或需求仍不完整。</when>
-    <skill root="vendor:matt-pocock" path="productivity/grilling/SKILL.md" activation="conditional" />
-    <skill root="vendor:matt-pocock" path="engineering/domain-modeling/SKILL.md" activation="conditional" />
+    <instructions root="workflow" path="atomic-skills/grilling.md" activation="conditional" />
+    <instructions root="workflow" path="atomic-skills/domain-modeling.md" activation="conditional" />
     <completion>事实已验证，问题逐个解决。</completion>
   </phase>
   <phase id="apply" order="4">

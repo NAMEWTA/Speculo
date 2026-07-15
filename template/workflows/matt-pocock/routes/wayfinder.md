@@ -5,9 +5,9 @@
 ```xml
 <sequence>
   <phase id="name-destination" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/wayfinder/SKILL.md" activation="required" />
-    <skill root="vendor:matt-pocock" path="productivity/grilling/SKILL.md" activation="required" />
-    <skill root="vendor:matt-pocock" path="engineering/domain-modeling/SKILL.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/wayfinder.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/grilling.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/domain-modeling.md" activation="required" />
     <completion>目的地与范围边界已确认。</completion>
   </phase>
   <phase id="map-frontier" order="2">

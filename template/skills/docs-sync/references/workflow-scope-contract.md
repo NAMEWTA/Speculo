@@ -1,12 +1,12 @@
 # Workflow 范围契约
 
-docs-sync 必须遵循每个 workflow 的 `WORKFLOW.md`、持久化声明与确认规则。`docs-sync.json` 是 command 拥有的标准延迟 sidecar，不属于 workflow `_state` 固定骨架。
+docs-sync 必须遵循每个 workflow 的 `WORKFLOW.md` 与同级 `PERSISTENCE.md`。`docs-sync.json` 是 command 拥有的标准延迟 sidecar，不属于 workflow `_state` 固定骨架。
 
 ## 发现
 
 1. 从 `speculo/workflows/*/WORKFLOW.md` 发现已安装 workflow。
 2. 每个包必须有匹配的 `speculo/.speculo/<workflow>/` 状态根；包或状态根单边缺失时阻塞，不猜测归属。
-3. 读取 `<runtime-context>`、`<persistence>`、固定 archive 和所有 `consumers` 包含 `docs-sync` 的 store。
+3. 读取同级 `PERSISTENCE.md` 的 `<runtime-context>`、`<persistence>`、固定 archive 和所有 `consumers` 包含 `docs-sync` 的 store。
 4. 状态根存在但没有已安装 package 时只报告 orphan，不创建 sidecar。
 
 ## Sidecar v1

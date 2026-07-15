@@ -14,7 +14,7 @@
 
 ## Workflow 绑定
 
-读取 workflow 的 `<runtime-context>`：
+读取 workflow 同级 `PERSISTENCE.md` 的 `<runtime-context>`：
 
 - `base` 必须引用 `workspace.json#roots` 中已有根。
 - `path` 不能是绝对路径，不能包含 `..` 或反斜杠。
@@ -38,4 +38,4 @@ change_root = changes_root/<change>
 - `<artifact root="change">` 只能落在当前 change。
 - `<artifact root="state">` 只能落在 `<persistence>` 声明的额外命名空间。
 - command 报告只能落在 `state/commands/<command>/`，skill 不自行选择路径。
-- raw vendor skill 未经 workflow runtime context 激活时，不承诺 Speculo 持久化边界。
+- raw vendor SKILL 只通过同 workflow 的一对一 atomic wrapper 激活；wrapper 先加载 `PERSISTENCE.md`，嵌套 skill 名称继续解析到 wrapper。

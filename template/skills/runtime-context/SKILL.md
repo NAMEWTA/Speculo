@@ -7,18 +7,18 @@ description: 解析 Speculo 项目根、资产根和 workflow 状态根，向 co
 
 # Runtime Context
 
-从项目根注册表和 workflow XML 声明构造一次运行所需的全部路径。调用方持有持久化责任；本 skill 只解析和验证路径。
+从项目根注册表和 workflow `PERSISTENCE.md` 构造一次运行所需的全部路径。调用方持有持久化责任；本 skill 只解析和验证路径。
 
 ## 输入
 
 - 当前工作目录或用户指定的项目目录。
-- workflow id，以及对应 `WORKFLOW.md` 中的 `<runtime-context>` 和 `<persistence>`。
+- workflow id，以及对应 `PERSISTENCE.md` 中的 `<runtime-context>` 和 `<persistence>`。
 - 可选 change 名称和 command id。
 
 ## 流程
 
 1. 按 `references/path-resolution.md` 向上定位 `speculo/.speculo/workspace.json`；找不到唯一项目根时返回 blocked。
-2. 读取注册表与 workflow 根别名，解析 `workflow/state/commands/skills/vendor`。
+2. 读取注册表与 workflow 的 `PERSISTENCE.md`，解析 `workflow/state/commands/skills/vendor`。
    - 对每个解析后的 vendor root 执行存在性验证：目标目录必须存在，否则返回明确错误信息指明缺失的具体路径，禁止静默跳过。
    - 任一路径越界或目标缺失时返回 blocked。
 3. 读取 `speculo/config.json`（若存在）；不存在时以默认值静默降级（`language: "en"`、`persistence.root_override: null`、`defaults.confirm_before_external_write: true`、`defaults.report_language: "en"`）。

@@ -2,7 +2,7 @@
 
 ## 扫描范围
 
-1. 读取目标 workflow 的 `<persistence>`，选择 role 为 `knowledge | policy | legacy-knowledge` 且真实存在的 store。
+1. 读取目标 workflow `PERSISTENCE.md` 的 `<persistence>`，选择 role 为 `knowledge | policy | legacy-knowledge` 且真实存在的 store。
 2. `create="lazy"` 但不存在的 store 记为 `missing`，不为审计而创建；`existing-only` store 只读。
 3. 扫描代码、文档、active changes 和 archive 中对 ADR、CONTEXT、LESSONS、RULES 及具体文件名的引用。
 

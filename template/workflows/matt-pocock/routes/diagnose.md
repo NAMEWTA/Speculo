@@ -5,7 +5,7 @@
 ```xml
 <sequence>
   <phase id="feedback-loop" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/diagnosing-bugs/SKILL.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/diagnosing-bugs.md" activation="required" />
     <artifact root="change" path="diagnosis/feedback-loop.md" />
     <completion>存在一条已运行、能对当前症状变红、快速且确定的命令；否则 blocked。</completion>
   </phase>

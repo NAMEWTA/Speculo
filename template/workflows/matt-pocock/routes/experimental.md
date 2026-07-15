@@ -6,12 +6,12 @@
 
 ```xml
 <routes>
-  <route id="loop-me" order="1" root="vendor:matt-pocock" path="in-progress/loop-me/SKILL.md" />
-  <route id="wizard" order="2" root="vendor:matt-pocock" path="in-progress/wizard/SKILL.md" />
-  <route id="claude-handoff" order="3" root="vendor:matt-pocock" path="in-progress/claude-handoff/SKILL.md" />
-  <route id="writing-fragments" order="4" root="vendor:matt-pocock" path="in-progress/writing-fragments/SKILL.md" />
-  <route id="writing-beats" order="5" root="vendor:matt-pocock" path="in-progress/writing-beats/SKILL.md" />
-  <route id="writing-shape" order="6" root="vendor:matt-pocock" path="in-progress/writing-shape/SKILL.md" />
+  <route id="loop-me" order="1" root="workflow" path="atomic-skills/loop-me.md" />
+  <route id="wizard" order="2" root="workflow" path="atomic-skills/wizard.md" />
+  <route id="claude-handoff" order="3" root="workflow" path="atomic-skills/claude-handoff.md" />
+  <route id="writing-fragments" order="4" root="workflow" path="atomic-skills/writing-fragments.md" />
+  <route id="writing-beats" order="5" root="workflow" path="atomic-skills/writing-beats.md" />
+  <route id="writing-shape" order="6" root="workflow" path="atomic-skills/writing-shape.md" />
 </routes>
 ```
 

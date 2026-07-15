@@ -12,7 +12,7 @@ description: dry-run 审计 workflow 声明的知识与策略 namespace，返回
 ## 输入
 
 - `runtime-context` 返回的 workflow/state 根。
-- `WORKFLOW.md#persistence` 中 role 为 knowledge、policy 或 legacy-knowledge 的 namespace。
+- `PERSISTENCE.md#persistence` 中 role 为 knowledge、policy 或 legacy-knowledge 的 namespace。
 - 用户确认状态：`dry-run | confirmed`。
 
 ## 流程

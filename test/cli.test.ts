@@ -159,6 +159,30 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
       "---",
       "",
       "```xml",
+      "<sequence>",
+      '  <phase id="load-persistence" order="1">',
+      '    <instructions root="workflow" path="PERSISTENCE.md" activation="required" />',
+      "    <completion>persistence loaded</completion>",
+      "  </phase>",
+      "</sequence>",
+      "```",
+      "",
+      "```xml",
+      "<atomic-skills>",
+      '  <atomic-skill id="example" order="1" root="workflow" path="atomic-skills/example.md">',
+      "    <when>example capability</when>",
+      "  </atomic-skill>",
+      "</atomic-skills>",
+      "```",
+      "",
+    ].join("\n")
+  );
+  await writeFile(
+    join(root, "template", "workflows", "example", "PERSISTENCE.md"),
+    [
+      "# Example Persistence",
+      "",
+      "```xml",
       "<runtime-context>",
       '  <root id="workflow" base="workflows" path="example" />',
       '  <root id="state" base="state" path="example" />',
@@ -173,9 +197,35 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
       "</persistence>",
       "```",
       "",
+    ].join("\n")
+  );
+  await mkdir(
+    join(root, "template", "workflows", "example", "atomic-skills"),
+    { recursive: true }
+  );
+  await writeFile(
+    join(root, "template", "workflows", "example", "atomic-skills", "example.md"),
+    [
+      "---",
+      "id: example",
+      "type: atomic-skill",
+      "workflow: example",
+      "name: Example",
+      "description: Example atomic skill",
+      "stability: stable",
+      "invocation: model-allowed",
+      "---",
+      "",
       "```xml",
       "<sequence>",
-      `  <skill root="skills" path="${skillPath}" />`,
+      '  <phase id="load-persistence" order="1">',
+      '    <instructions root="workflow" path="PERSISTENCE.md" activation="required" />',
+      "    <completion>persistence loaded</completion>",
+      "  </phase>",
+      '  <phase id="invoke" order="2">',
+      `    <skill root="skills" path="${skillPath}" activation="adapted" />`,
+      "    <completion>skill invoked</completion>",
+      "  </phase>",
       "</sequence>",
       "```",
       "",
@@ -225,6 +275,44 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, "workflows", "person", "WORKFLOW.md")),
         true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "person", "PERSISTENCE.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "matt-pocock", "PERSISTENCE.md")),
+        true
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "person", "PERSISTENCE.md")),
+        true
+      );
+      const atomicWrappers = await readdir(
+        join(root, "workflows", "matt-pocock", "atomic-skills")
+      );
+      assert.equal(atomicWrappers.length, 28);
+      assert.equal(atomicWrappers.includes("ask-matt.md"), true);
+      assert.equal(atomicWrappers.includes("writing-shape.md"), true);
+      const atomicContents = await Promise.all(
+        atomicWrappers.map((name) =>
+          readFile(
+            join(root, "workflows", "matt-pocock", "atomic-skills", name),
+            "utf8"
+          )
+        )
+      );
+      assert.equal(
+        atomicContents.filter((content) => /\nstability: stable\n/.test(content)).length,
+        22
+      );
+      assert.equal(
+        atomicContents.filter((content) => /\nstability: experimental\n/.test(content)).length,
+        6
+      );
+      assert.equal(
+        await pathExists(join(root, "workflows", "person", "atomic-skills")),
+        false
       );
       assert.equal(
         await pathExists(join(root, "workflows", "matt-pocock", "_state")),
@@ -353,6 +441,12 @@ describe("Speculo v3 CLI", () => {
         ),
         true
       );
+      assert.equal(
+        await pathExists(
+          join(root, "workflows", "matt-pocock", "atomic-skills", "grill-me.md")
+        ),
+        true
+      );
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -390,6 +484,14 @@ describe("Speculo v3 CLI", () => {
       await writeFile(
         join(root, "workflows", "matt-pocock", "asset-marker.txt"),
         "remove"
+      );
+      await writeFile(
+        join(root, "workflows", "matt-pocock", "PERSISTENCE.md"),
+        "stale persistence\n"
+      );
+      await writeFile(
+        join(root, "workflows", "matt-pocock", "atomic-skills", "ask-matt.md"),
+        "stale wrapper\n"
       );
       await writeFile(
         join(root, "workflows", "person", "local-marker.txt"),
@@ -431,6 +533,20 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, "workflows", "matt-pocock", "asset-marker.txt")),
         false
+      );
+      assert.match(
+        await readFile(
+          join(root, "workflows", "matt-pocock", "PERSISTENCE.md"),
+          "utf8"
+        ),
+        /# Matt Pocock Persistence/
+      );
+      assert.match(
+        await readFile(
+          join(root, "workflows", "matt-pocock", "atomic-skills", "ask-matt.md"),
+          "utf8"
+        ),
+        /id: ask-matt/
       );
       assert.equal(
         await readFile(join(root, "workflows", "person", "local-marker.txt"), "utf8"),
@@ -499,6 +615,133 @@ describe("Speculo v3 CLI", () => {
         });
         assert.equal(result.status, expectedStatus);
         assert.match(result.stdout + result.stderr, new RegExp(expectedMessage));
+      } finally {
+        await rm(fixture, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("framework validator enforces persistence and atomic wrapper contracts", async () => {
+    const validator = join(packageRoot, "scripts", "validate-framework-assets.mjs");
+    const cases: Array<{
+      expected: string;
+      mutate: (root: string) => Promise<void>;
+    }> = [
+      {
+        expected: "missing PERSISTENCE.md",
+        mutate: (root) => rm(
+          join(root, "template", "workflows", "example", "PERSISTENCE.md")
+        ),
+      },
+      {
+        expected: "load-persistence must require workflow:PERSISTENCE.md",
+        mutate: async (root) => {
+          const path = join(root, "template", "workflows", "example", "WORKFLOW.md");
+          const content = await readFile(path, "utf8");
+          await writeFile(
+            path,
+            content.replace(
+              'path="PERSISTENCE.md" activation="required"',
+              'path="PERSISTENCE.md" activation="optional"'
+            )
+          );
+        },
+      },
+      {
+        expected: "load-persistence must require workflow:PERSISTENCE.md",
+        mutate: async (root) => {
+          const path = join(
+            root,
+            "template",
+            "workflows",
+            "example",
+            "atomic-skills",
+            "example.md"
+          );
+          const content = await readFile(path, "utf8");
+          await writeFile(
+            path,
+            content.replace(
+              'path="PERSISTENCE.md" activation="required"',
+              'path="PERSISTENCE.md" activation="optional"'
+            )
+          );
+        },
+      },
+      {
+        expected: "atomic wrapper must reference exactly one raw SKILL",
+        mutate: async (root) => {
+          const path = join(
+            root,
+            "template",
+            "workflows",
+            "example",
+            "atomic-skills",
+            "example.md"
+          );
+          const content = await readFile(path, "utf8");
+          const skill = '    <skill root="skills" path="example/SKILL.md" activation="adapted" />';
+          await writeFile(path, content.replace(skill, `${skill}\n${skill}`));
+        },
+      },
+      {
+        expected: "unlisted atomic wrapper atomic-skills/orphan.md",
+        mutate: async (root) => {
+          const source = join(
+            root,
+            "template",
+            "workflows",
+            "example",
+            "atomic-skills",
+            "example.md"
+          );
+          await writeFile(
+            join(source, "..", "orphan.md"),
+            await readFile(source, "utf8")
+          );
+        },
+      },
+      {
+        expected: "raw <skill> references must be isolated in atomic wrappers",
+        mutate: async (root) => {
+          const path = join(root, "template", "workflows", "example", "WORKFLOW.md");
+          const content = await readFile(path, "utf8");
+          await writeFile(
+            path,
+            content.replace(
+              "    <completion>persistence loaded</completion>",
+              '    <skill root="skills" path="example/SKILL.md" activation="adapted" />\n    <completion>persistence loaded</completion>'
+            )
+          );
+        },
+      },
+      {
+        expected: "runtime-context and persistence belong only in PERSISTENCE.md",
+        mutate: async (root) => {
+          const path = join(root, "template", "workflows", "example", "WORKFLOW.md");
+          const content = await readFile(path, "utf8");
+          await writeFile(
+            path,
+            content +
+              '\n```xml\n<runtime-context><root id="duplicate" base="state" path="example" /></runtime-context>\n```\n'
+          );
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const fixture = await tempProject();
+      try {
+        await createValidatorFixture(fixture, "example/SKILL.md");
+        await testCase.mutate(fixture);
+        const result = spawnSync(process.execPath, [validator, fixture], {
+          encoding: "utf8",
+        });
+        assert.equal(result.status, 1);
+        assert.match(
+          result.stdout + result.stderr,
+          new RegExp(testCase.expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        );
       } finally {
         await rm(fixture, { recursive: true, force: true });
       }

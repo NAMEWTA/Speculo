@@ -3,32 +3,23 @@ id: person
 type: workflow
 workflow: person
 name: Person Workflow
-description: 以人物方法论为底座的显式激活型咨询 workflow
+description: 以人物方法论为底座并共享独立持久化契约的咨询 workflow
 keywords: [person, methodology, consulting, 人物, 方法论]
 ---
 
 # Person Workflow
 
-先读取项目根 `speculo/.speculo/workspace.json`，再解析以下 workflow/state 根。进入时读取 `status.json`，选择唯一 active change；没有 active change 时原子创建 `changes/<YYYY-MM-DD-name>/.status.json` 并追加索引。
+先读取 [PERSISTENCE.md](./PERSISTENCE.md)。该文件是 runtime roots、store、change 启动和副作用边界的唯一来源；本入口只负责选择人物方法论 route。
 
-## 运行时根
-
-```xml
-<runtime-context>
-  <root id="workflow" base="workflows" path="person" />
-  <root id="state" base="state" path="person" />
-</runtime-context>
-```
-
-## 持久化命名空间
+## 进入协议
 
 ```xml
-<persistence root="state">
-  <store id="index" role="index" kind="file" path="status.json" create="initialize" />
-  <store id="changes" role="active" kind="directory" path="changes" create="initialize" />
-  <store id="archive" role="archive" kind="directory" path="archive" create="initialize" />
-  <store id="knowledge" role="knowledge" kind="directory" path=".config" create="initialize" consumers="docs-sync,retro,knowledge-prune" />
-</persistence>
+<sequence>
+  <phase id="load-persistence" order="1">
+    <instructions root="workflow" path="PERSISTENCE.md" activation="required" />
+    <completion>runtime context 与 current change 已按唯一持久化契约解析。</completion>
+  </phase>
+</sequence>
 ```
 
 ## 路由
@@ -45,15 +36,6 @@ keywords: [person, methodology, consulting, 人物, 方法论]
 
 ```xml
 <dependencies />
-```
-
-## 状态扩展字段
-
-```xml
-<state-schema>
-  <field name="current_route" type="string" />
-  <field name="route_history" type="array" />
-</state-schema>
 ```
 
 ## 状态转移

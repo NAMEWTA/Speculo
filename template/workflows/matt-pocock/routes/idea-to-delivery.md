@@ -5,16 +5,16 @@
 ```xml
 <sequence>
   <phase id="grill" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/grill-with-docs/SKILL.md" activation="conditional">
+    <instructions root="workflow" path="atomic-skills/grill-with-docs.md" activation="conditional">
       <when>当前任务位于已有代码仓，需要同步领域语言与 ADR 候选。</when>
-    </skill>
-    <skill root="vendor:matt-pocock" path="productivity/grill-me/SKILL.md" activation="conditional">
+    </instructions>
+    <instructions root="workflow" path="atomic-skills/grill-me.md" activation="conditional">
       <when>用户显式要求 grill-me，或计划/设计不依赖现有代码仓。</when>
-    </skill>
-    <skill root="vendor:matt-pocock" path="productivity/grilling/SKILL.md" activation="required" />
-    <skill root="vendor:matt-pocock" path="engineering/domain-modeling/SKILL.md" activation="conditional">
+    </instructions>
+    <instructions root="workflow" path="atomic-skills/grilling.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/domain-modeling.md" activation="conditional">
       <when>存在代码仓并需要沉淀领域语言或 ADR 候选。</when>
-    </skill>
+    </instructions>
     <artifact root="change" path="decision-log.md" />
     <completion>一次只确认一个决策；所有关键分支均已清晰且用户确认达成共识后，才允许形成 Plan 或进入 spec。CONTEXT/ADR 仅在确认后写入 knowledge namespace。</completion>
   </phase>
@@ -24,19 +24,19 @@
     <completion>答案与来源已回填 decision-log，临时代码已删除。</completion>
   </phase>
   <phase id="spec" order="3">
-    <skill root="vendor:matt-pocock" path="engineering/to-spec/SKILL.md" activation="adapted" />
+    <instructions root="workflow" path="atomic-skills/to-spec.md" activation="adapted" />
     <artifact root="change" path="spec/spec.md" />
     <completion>spec 先本地落盘；外发 tracker 需要单独确认。</completion>
   </phase>
   <phase id="tickets" order="4">
     <when>工作跨多个上下文窗口。</when>
-    <skill root="vendor:matt-pocock" path="engineering/to-tickets/SKILL.md" activation="adapted" />
+    <instructions root="workflow" path="atomic-skills/to-tickets.md" activation="adapted" />
     <artifact root="change" path="tracker/tickets.md" />
     <completion>垂直切片与阻塞边已获用户批准，外发引用已回写。</completion>
   </phase>
   <phase id="implement" order="5">
-    <skill root="vendor:matt-pocock" path="engineering/implement/SKILL.md" activation="adapted" />
-    <skill root="vendor:matt-pocock" path="engineering/tdd/SKILL.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/implement.md" activation="adapted" />
+    <instructions root="workflow" path="atomic-skills/tdd.md" activation="required" />
     <artifact root="change" path="implementation/log.md" />
     <completion>每个切片已验证；commit 仅在用户确认后执行。</completion>
   </phase>

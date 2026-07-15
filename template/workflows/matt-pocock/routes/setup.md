@@ -7,7 +7,7 @@
 ```xml
 <sequence>
   <phase id="discover-config" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/setup-matt-pocock-skills/SKILL.md" activation="adapted" />
+    <instructions root="workflow" path="atomic-skills/setup-matt-pocock-skills.md" activation="adapted" />
     <completion>已展示仓库、tracker 和领域文档现状。</completion>
   </phase>
   <phase id="configure-tracker" order="2">

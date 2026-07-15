@@ -5,7 +5,7 @@
 ```xml
 <sequence>
   <phase id="fixed-point" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/code-review/SKILL.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/code-review.md" activation="required" />
     <completion>固定点可解析、diff 非空、规范与标准来源已记录。</completion>
   </phase>
   <phase id="parallel-axes" order="2">

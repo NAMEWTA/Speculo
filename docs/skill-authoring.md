@@ -13,6 +13,8 @@
 - 逻辑在 commands、workflows 或其他 skills 间可复用。
 - 任务需要专用 `SKILL.md` 配 references 和可选 scripts。
 
+Workflow 内的一对一 `atomic-skills/<id>.md` 是持久化适配入口，不是可复用 `template/skills/<id>/SKILL.md`。前者遵循 [workflow-authoring.md](./workflow-authoring.md) 并只包装一个真实 SKILL；跨 workflow 复用的能力才按本文创建 skill package。
+
 ## SKILL.md Structure
 
 - **Frontmatter**：`id`、`type: skill`、`name`、`description`。

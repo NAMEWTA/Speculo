@@ -67,14 +67,16 @@ After initialization, the target project gains the following AI agent-callable a
 
 ### 2 Workflow Packages
 
-| Workflow | Routes | Description |
-|---|---|---|
-| **matt-pocock** | 10 | Route-first composition of Matt Pocock native skills (engineering + productivity) |
-| **person** | 1 | Persona-methodology-based consulting workflow |
+| Workflow | Routes | Atomic entries | Description |
+|---|---:|---:|---|
+| **matt-pocock** | 10 | 28 | Route composition plus one-to-one access to every stable and experimental Matt Pocock SKILL |
+| **person** | 1 | 0 | Persona-methodology-based consulting workflow without synthetic skill wrappers |
+
+Every workflow ships a peer `PERSISTENCE.md` as its sole runtime contract. `WORKFLOW.md` and each `atomic-skills/<id>.md` entry load it first, so composed routes and direct atomic calls resolve the same state root, active change, namespaces, and confirmation boundaries.
 
 ### Vendor Skill Collections
 
-- **Matt Pocock skills** — Engineering (ask-matt, implement, wayfinder, tdd, code-review, diagnosing-bugs, prototyping, research, domain-modeling, codebase-design, triage, setup, to-spec, to-tickets, grill-with-docs, improve-codebase-architecture) and Productivity (grill-me, handoff, teach, writing-great-skills)
+- **Matt Pocock skills** — 22 stable Engineering/Productivity skills and 6 explicitly enabled `in-progress` skills, all preserved as read-only vendor sources behind workflow-owned atomic wrappers.
 
 ## Documentation
 

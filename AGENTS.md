@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.2.0
+- Package: `@namewta/speculo` v0.2.1
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -17,7 +17,7 @@ template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
   commands/           5 command definitions
   skills/             10 skill directories
-  workflows/          2 workflow packages (matt-pocock, person)
+  workflows/          2 workflow packages with PERSISTENCE + route/atomic entries
   vendor/             Native skill collections (matt-pocock, officecli)
 test/                 Test suite (cli.test.ts)
 scripts/              Validation + verification tooling
@@ -57,15 +57,16 @@ speculo update                       Deprecated → delegates to speculo init --
 
 ## Template Asset Layout
 
-- **template/.speculo/workspace.json** — 6 root aliases: speculo, state, commands, skills, workflows, vendor
+- **template/.speculo/workspace.json** — 7 root aliases: config, speculo, state, commands, skills, workflows, vendor
 - **template/commands/** — docs-sync, finalize, knowledge-prune, retro, status
 - **template/skills/** — agents-md-builder, change-lifecycle, config-prune, docs-sync, github-npm-ops, knowledge-prune, runtime-context, scaffold-exercises, speculo-retro, worktree-isolation
-- **template/workflows/** — matt-pocock (10 routes), person (1 route)
+- **template/workflows/** — matt-pocock (10 routes, 28 atomic skills), person (1 route)
 - **template/vendor/** — matt-pocock (raw upstream skills), officecli (one skill)
 
 ## Workflow Package Contract
 
-- Each workflow must have `WORKFLOW.md` with XML-declared `<runtime-context>`, `<persistence>`, `<routes>`.
+- Each workflow must have `WORKFLOW.md` and peer `PERSISTENCE.md`; the latter exclusively owns `<runtime-context>`, `<persistence>`, change startup and side-effect boundaries.
+- `WORKFLOW.md` must load `PERSISTENCE.md` first. Workflows with SKILL dependencies expose one-to-one `atomic-skills/` wrappers and route through them.
 - `_state/` skeleton must contain `status.json`, `changes/`, `archive/`.
 - `docs-sync.json` is a lazy command sidecar; never put it in `_state/` template.
 - Workflow root resolves to `speculo/workflows/<workflow>`; state root to `speculo/.speculo/<workflow>`.

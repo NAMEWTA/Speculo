@@ -11,7 +11,11 @@ const templateRoot = join(packageRoot, "template");
 const workflowsRoot = join(templateRoot, "workflows");
 const workspacePath = join(templateRoot, ".speculo", "workspace.json");
 const docsSyncAssets = join(templateRoot, "skills", "docs-sync", "assets");
+const workflowEntryName = "WORKFLOW.md";
+const persistenceEntryName = "PERSISTENCE.md";
+const atomicSkillsDirName = "atomic-skills";
 const allowedXmlRoots = new Set([
+  "atomic-skills",
   "routes",
   "sequence",
   "dependencies",
@@ -21,6 +25,7 @@ const allowedXmlRoots = new Set([
   "persistence",
 ]);
 const staticReferenceTags = new Set([
+  "atomic-skill",
   "route",
   "skill",
   "instructions",
@@ -128,6 +133,250 @@ function parseXmlBlock(block, file, index) {
   return parsed;
 }
 
+function parsedXmlBlocks(content, file) {
+  return xmlBlocks(content)
+    .map((block, index) => parseXmlBlock(block, file, index))
+    .filter(Boolean);
+}
+
+function collectXmlNodes(tag, value, target, output) {
+  for (const node of asArray(value)) {
+    if (tag === target) output.push(node);
+    if (!node || typeof node !== "object") continue;
+    for (const [childTag, child] of Object.entries(node)) {
+      if (childTag === "#text" || childTag.startsWith("@_")) continue;
+      collectXmlNodes(childTag, child, target, output);
+    }
+  }
+}
+
+function xmlNodes(blocks, target) {
+  const output = [];
+  for (const block of blocks) {
+    const rootTag = Object.keys(block)[0];
+    collectXmlNodes(rootTag, block[rootTag], target, output);
+  }
+  return output;
+}
+
+function validatePersistenceLoad(blocks, file) {
+  const sequences = blocks.filter((block) => block.sequence !== undefined);
+  if (sequences.length !== 1) {
+    fail(`${file}: must contain exactly one top-level <sequence>`);
+    return;
+  }
+  const phases = asArray(sequences[0].sequence.phase);
+  const first = phases.filter((phase) => phase?.["@_order"] === "1");
+  if (first.length !== 1 || first[0]["@_id"] !== "load-persistence") {
+    fail(`${file}: first phase must be load-persistence with order 1`);
+    return;
+  }
+  const instructions = asArray(first[0].instructions).filter(
+    (node) =>
+      node?.["@_root"] === "workflow" &&
+      node?.["@_path"] === persistenceEntryName &&
+      node?.["@_activation"] === "required"
+  );
+  if (instructions.length !== 1) {
+    fail(`${file}: load-persistence must require workflow:${persistenceEntryName}`);
+  }
+}
+
+function validateAtomicSkills(workflowId, workflowDir, entryBlocks, context) {
+  const atomicBlocks = entryBlocks.filter(
+    (block) => block["atomic-skills"] !== undefined
+  );
+  const atomicDir = join(workflowDir, atomicSkillsDirName);
+  const hasAtomicDir = existsSync(atomicDir);
+
+  if (!hasAtomicDir && atomicBlocks.length === 0) return;
+  if (!hasAtomicDir) {
+    fail(`template/workflows/${workflowId}/${atomicSkillsDirName}: missing directory`);
+    return;
+  }
+  if (atomicBlocks.length !== 1) {
+    fail(`template/workflows/${workflowId}/${workflowEntryName}: must declare exactly one <atomic-skills> catalog`);
+    return;
+  }
+
+  const catalog = atomicBlocks[0]["atomic-skills"];
+  const entries = asArray(catalog["atomic-skill"]);
+  const ids = [];
+  const catalogPaths = new Set();
+  for (const [index, entry] of entries.entries()) {
+    const id = entry?.["@_id"];
+    const order = entry?.["@_order"];
+    const root = entry?.["@_root"];
+    const path = entry?.["@_path"];
+    if (!id || order !== String(index + 1) || root !== "workflow") {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic skill ${index + 1} requires id, continuous order and workflow root`);
+      continue;
+    }
+    if (path !== `${atomicSkillsDirName}/${id}.md`) {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic skill ${id} path must be ${atomicSkillsDirName}/${id}.md`);
+    }
+    if (typeof entry.when !== "string" || entry.when.trim().length === 0) {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic skill ${id} requires <when>`);
+    }
+    ids.push(id);
+    catalogPaths.add(path);
+  }
+  if (new Set(ids).size !== ids.length) {
+    fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic skill ids must be unique`);
+  }
+  if (ids.join("\n") !== [...ids].sort().join("\n")) {
+    fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic skill ids must be ordered lexically`);
+  }
+
+  const wrapperFiles = readdirSync(atomicDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => entry.name)
+    .sort();
+  const wrapperPaths = new Set(
+    wrapperFiles.map((name) => `${atomicSkillsDirName}/${name}`)
+  );
+  for (const path of catalogPaths) {
+    if (!wrapperPaths.has(path)) {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: catalog references missing atomic wrapper ${path}`);
+    }
+  }
+  for (const path of wrapperPaths) {
+    if (!catalogPaths.has(path)) {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: unlisted atomic wrapper ${path}`);
+    }
+  }
+
+  const sourceRoot = catalog["@_source-root"];
+  const completeCoverage = catalog["@_coverage"] === "complete";
+  if (completeCoverage && !sourceRoot) {
+    fail(`template/workflows/${workflowId}/${workflowEntryName}: complete atomic coverage requires source-root`);
+  }
+
+  const targetRefs = new Set();
+  for (const wrapperName of wrapperFiles) {
+    const wrapperPath = join(atomicDir, wrapperName);
+    const relativeWrapper = wrapperPath.slice(packageRoot.length + 1);
+    const content = readFileSync(wrapperPath, "utf8");
+    const frontmatter = parseFrontmatter(content, relativeWrapper);
+    const expectedKeys = [
+      "description",
+      "id",
+      "invocation",
+      "name",
+      "stability",
+      "type",
+      "workflow",
+    ];
+    if (Object.keys(frontmatter).sort().join(",") !== expectedKeys.join(",")) {
+      fail(`${relativeWrapper}: atomic frontmatter must contain ${expectedKeys.join(", ")}`);
+    }
+    const id = wrapperName.slice(0, -3);
+    if (
+      frontmatter.id !== id ||
+      frontmatter.type !== "atomic-skill" ||
+      frontmatter.workflow !== workflowId
+    ) {
+      fail(`${relativeWrapper}: id/type/workflow must match its package and filename`);
+    }
+    if (!new Set(["stable", "experimental"]).has(frontmatter.stability)) {
+      fail(`${relativeWrapper}: stability must be stable or experimental`);
+    }
+    if (!new Set(["user-only", "model-allowed"]).has(frontmatter.invocation)) {
+      fail(`${relativeWrapper}: invocation must be user-only or model-allowed`);
+    }
+
+    const blocks = parsedXmlBlocks(content, relativeWrapper);
+    validatePersistenceLoad(blocks, relativeWrapper);
+    const sequences = blocks.filter((block) => block.sequence !== undefined);
+    const phases = sequences.length === 1
+      ? asArray(sequences[0].sequence.phase)
+      : [];
+    if (
+      phases.length !== 2 ||
+      phases[1]?.["@_id"] !== "invoke" ||
+      phases[1]?.["@_order"] !== "2"
+    ) {
+      fail(`${relativeWrapper}: atomic wrapper must contain only load-persistence and invoke phases`);
+    }
+
+    const skillNodes = xmlNodes(blocks, "skill");
+    if (skillNodes.length !== 1) {
+      fail(`${relativeWrapper}: atomic wrapper must reference exactly one raw SKILL`);
+      continue;
+    }
+    const target = skillNodes[0];
+    const targetRoot = target?.["@_root"];
+    const targetPath = target?.["@_path"];
+    if (
+      !targetRoot ||
+      typeof targetPath !== "string" ||
+      !targetPath.endsWith("/SKILL.md") ||
+      target?.["@_activation"] !== "adapted"
+    ) {
+      fail(`${relativeWrapper}: invoke phase must adapt one root+path SKILL.md target`);
+      continue;
+    }
+    if (sourceRoot && targetRoot !== sourceRoot) {
+      fail(`${relativeWrapper}: target root must match catalog source-root ${sourceRoot}`);
+    }
+    const targetRef = `${targetRoot}:${targetPath}`;
+    if (targetRefs.has(targetRef)) {
+      fail(`${relativeWrapper}: duplicate atomic target ${targetRef}`);
+    }
+    targetRefs.add(targetRef);
+
+    const projectPath = context.aliases[targetRoot]
+      ? posix.join(context.aliases[targetRoot], targetPath)
+      : undefined;
+    const sourcePath = projectPath ? projectPathToTemplate(projectPath) : undefined;
+    if (sourcePath && existsSync(sourcePath)) {
+      const rawFrontmatter = parseFrontmatter(
+        readFileSync(sourcePath, "utf8"),
+        sourcePath.slice(packageRoot.length + 1)
+      );
+      const expectedStability = targetPath.startsWith("in-progress/")
+        ? "experimental"
+        : "stable";
+      const expectedInvocation =
+        expectedStability === "experimental" ||
+          rawFrontmatter["disable-model-invocation"] === "true"
+          ? "user-only"
+          : "model-allowed";
+      if (frontmatter.stability !== expectedStability) {
+        fail(`${relativeWrapper}: stability must match raw target ${expectedStability}`);
+      }
+      if (frontmatter.invocation !== expectedInvocation) {
+        fail(`${relativeWrapper}: invocation must preserve raw target policy ${expectedInvocation}`);
+      }
+    }
+  }
+
+  if (completeCoverage && sourceRoot && context.aliases[sourceRoot]) {
+    const sourceDir = projectPathToTemplate(context.aliases[sourceRoot]);
+    if (!sourceDir || !existsSync(sourceDir)) {
+      fail(`template/workflows/${workflowId}/${workflowEntryName}: missing atomic source root ${sourceRoot}`);
+    } else {
+      const expectedTargets = new Set(
+        walkMarkdown(sourceDir)
+          .filter((path) => path.endsWith(`${posix.sep}SKILL.md`) || path.endsWith("/SKILL.md"))
+          .map((path) =>
+            `${sourceRoot}:${path.slice(sourceDir.length + 1).replaceAll("\\", "/")}`
+          )
+      );
+      for (const target of expectedTargets) {
+        if (!targetRefs.has(target)) {
+          fail(`template/workflows/${workflowId}/${workflowEntryName}: complete atomic catalog is missing ${target}`);
+        }
+      }
+      for (const target of targetRefs) {
+        if (!expectedTargets.has(target)) {
+          fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic target is outside complete source set ${target}`);
+        }
+      }
+    }
+  }
+}
+
 function walkXmlNode(tag, value, context) {
   for (const node of asArray(value)) {
     if (!node || typeof node !== "object") continue;
@@ -181,7 +430,8 @@ function walkXmlNode(tag, value, context) {
 
 function validateWorkflow(workflowId, workspace) {
   const workflowDir = join(workflowsRoot, workflowId);
-  const entryPath = join(workflowDir, "WORKFLOW.md");
+  const entryPath = join(workflowDir, workflowEntryName);
+  const persistencePath = join(workflowDir, persistenceEntryName);
   const relativeEntry = entryPath.slice(packageRoot.length + 1);
   if (!existsSync(entryPath)) {
     fail(`${relativeEntry}: missing workflow entry`);
@@ -194,19 +444,43 @@ function validateWorkflow(workflowId, workspace) {
     fail(`${relativeEntry}: id/workflow must match directory ${workflowId}`);
   }
 
-  const parsedEntryBlocks = xmlBlocks(entryContent)
-    .map((block, index) => parseXmlBlock(block, relativeEntry, index))
-    .filter(Boolean);
-  const runtimeBlock = parsedEntryBlocks.find(
+  if (!existsSync(persistencePath)) {
+    fail(`${relativeEntry}: missing ${persistenceEntryName}`);
+    return;
+  }
+  const relativePersistence = persistencePath.slice(packageRoot.length + 1);
+  const persistenceContent = readFileSync(persistencePath, "utf8");
+  const parsedEntryBlocks = parsedXmlBlocks(entryContent, relativeEntry);
+  const parsedPersistenceBlocks = parsedXmlBlocks(
+    persistenceContent,
+    relativePersistence
+  );
+  validatePersistenceLoad(parsedEntryBlocks, relativeEntry);
+
+  if (
+    parsedEntryBlocks.some(
+      (block) =>
+        block["runtime-context"] !== undefined ||
+        block.persistence !== undefined
+    )
+  ) {
+    fail(`${relativeEntry}: runtime-context and persistence belong only in ${persistenceEntryName}`);
+  }
+
+  const runtimeBlocks = parsedPersistenceBlocks.filter(
     (block) => block["runtime-context"] !== undefined
   );
-  const persistenceBlock = parsedEntryBlocks.find(
+  const persistenceBlocks = parsedPersistenceBlocks.filter(
     (block) => block.persistence !== undefined
   );
-  const runtime = runtimeBlock?.["runtime-context"];
-  const persistence = persistenceBlock?.persistence;
-  if (!runtime) fail(`${relativeEntry}: missing <runtime-context>`);
-  if (!persistence) fail(`${relativeEntry}: missing <persistence>`);
+  if (runtimeBlocks.length !== 1) {
+    fail(`${relativePersistence}: must contain exactly one <runtime-context>`);
+  }
+  if (persistenceBlocks.length !== 1) {
+    fail(`${relativePersistence}: must contain exactly one <persistence>`);
+  }
+  const runtime = runtimeBlocks[0]?.["runtime-context"];
+  const persistence = persistenceBlocks[0]?.persistence;
   if (!runtime || !persistence) return;
 
   const aliases = { ...workspace.roots };
@@ -269,14 +543,27 @@ function validateWorkflow(workflowId, workspace) {
   }
 
   const baseContext = { aliases, file: relativeEntry, stateNamespaces };
+  validateAtomicSkills(workflowId, workflowDir, parsedEntryBlocks, baseContext);
   for (const filePath of walkMarkdown(workflowDir)) {
     const file = filePath.slice(packageRoot.length + 1);
     const content = readFileSync(filePath, "utf8");
-    for (const [index, block] of xmlBlocks(content).entries()) {
-      const parsed = parseXmlBlock(block, file, index);
-      if (!parsed) continue;
+    const blocks = parsedXmlBlocks(content, file);
+    for (const parsed of blocks) {
       const rootTag = Object.keys(parsed)[0];
+      if (
+        filePath !== persistencePath &&
+        (rootTag === "runtime-context" || rootTag === "persistence")
+      ) {
+        fail(`${file}: ${rootTag} belongs only in ${persistenceEntryName}`);
+      }
       walkXmlNode(rootTag, parsed[rootTag], { ...baseContext, file });
+    }
+    const isAtomicWrapper = filePath.startsWith(`${join(workflowDir, atomicSkillsDirName)}/`);
+    if (filePath !== persistencePath && !isAtomicWrapper) {
+      const skillNodes = xmlNodes(blocks, "skill");
+      if (skillNodes.length > 0) {
+        fail(`${file}: raw <skill> references must be isolated in atomic wrappers`);
+      }
     }
   }
 }

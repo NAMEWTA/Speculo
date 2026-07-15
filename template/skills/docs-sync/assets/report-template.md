@@ -30,7 +30,7 @@ generated_at: <ISO-8601>
 
 ## Workflow Sources
 
-[按 workflow 记录读取的 WORKFLOW、archive、声明 store 和受保护候选；空集合写 `[]`。]
+[按 workflow 记录读取的 WORKFLOW/PERSISTENCE、archive、声明 store 和受保护候选；空集合写 `[]`。]
 
 ## Synced Assets
 

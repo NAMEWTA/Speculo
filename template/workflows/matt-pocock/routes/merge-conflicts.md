@@ -5,7 +5,7 @@
 ```xml
 <sequence>
   <phase id="inspect-intent" order="1">
-    <skill root="vendor:matt-pocock" path="engineering/resolving-merge-conflicts/SKILL.md" activation="required" />
+    <instructions root="workflow" path="atomic-skills/resolving-merge-conflicts.md" activation="required" />
     <artifact root="change" path="merge-conflicts/record.md" />
     <completion>每个冲突双方的一手意图已查明。</completion>
   </phase>
