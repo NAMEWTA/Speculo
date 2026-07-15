@@ -19,7 +19,7 @@ template/             Shipped asset bundle
   skills/             10 skill directories
   workflows/          2 workflow packages with PERSISTENCE + route/atomic entries
   vendor/             Native skill collections (matt-pocock, officecli)
-test/                 Test suite (cli.test.ts)
+test/                 CLI and vendor/workflow reconciliation test suites
 scripts/              Validation + verification tooling
 .agents/skills/       Internal authoring skills (speculo-write-command/skill/workflows)
 .github/workflows/    CI (build, test, verify-bin) + Release (npm publish + GitHub Release)
@@ -60,7 +60,7 @@ speculo update                       Deprecated → delegates to speculo init --
 - **template/.speculo/workspace.json** — 7 root aliases: config, speculo, state, commands, skills, workflows, vendor
 - **template/commands/** — docs-sync, finalize, knowledge-prune, retro, status
 - **template/skills/** — agents-md-builder, change-lifecycle, config-prune, docs-sync, github-npm-ops, knowledge-prune, runtime-context, scaffold-exercises, speculo-retro, worktree-isolation
-- **template/workflows/** — matt-pocock (10 routes, 28 atomic skills), person (1 route)
+- **template/workflows/** — matt-pocock (10 routes, complete vendor atomic coverage), person (1 route)
 - **template/vendor/** — matt-pocock (raw upstream skills), officecli (one skill)
 
 ## Workflow Package Contract
@@ -76,7 +76,7 @@ speculo update                       Deprecated → delegates to speculo init --
 Three skills in `.agents/skills/` for maintaining Speculo itself:
 - **speculo-write-command** — Create/audit single-file commands
 - **speculo-write-skill** — Create/audit reusable skills
-- **speculo-write-workflows** — Create/audit workflow packages
+- **speculo-write-workflows** — Create/audit workflow packages and reconcile vendor Git changes
 
 All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contract.md`, `_shared/authoring-quality.md`.
 
@@ -84,6 +84,7 @@ All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contra
 
 - `validate-framework-assets.mjs` — Validates workflow XML blocks, frontmatter, state templates, agent skills.
 - `check-template-links.mjs` — Validates all relative markdown links in `template/` and `.agents/`.
+- `vendor-workflow-impact.mjs` — Read-only Git impact analysis bundled with `speculo-write-workflows`.
 - Tests use `mkdtemp` for temp directories, always clean up.
 
 ## Dangerous Patterns (verified regressions)

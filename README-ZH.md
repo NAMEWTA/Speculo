@@ -67,16 +67,16 @@ npm install -g @namewta/speculo
 
 ### 2 个 Workflow Packages
 
-| Workflow | 路由数 | 原子入口 | 说明 |
-|---|---:|---:|---|
-| **matt-pocock** | 10 | 28 | 组合 routes，并一对一直接访问全部稳定及实验 Matt Pocock SKILL |
-| **person** | 1 | 0 | 基于人物方法论的咨询 workflow，不制造虚假的 skill wrapper |
+| Workflow | 路由数 | 原子覆盖 | 说明 |
+|---|---:|---|---|
+| **matt-pocock** | 10 | 完整 vendor inventory | 组合 routes，并一对一直接访问全部稳定及实验 Matt Pocock SKILL |
+| **person** | 1 | 无 | 基于人物方法论的咨询 workflow，不制造虚假的 skill wrapper |
 
 每个 workflow 都以同级 `PERSISTENCE.md` 作为唯一运行契约。`WORKFLOW.md` 与每个 `atomic-skills/<id>.md` 入口先读取它，因此组合 route 与直接原子调用共享相同的状态根、active change、namespace 和确认边界。
 
 ### Vendor Skill Collections
 
-- **Matt Pocock skills** — 22 个稳定 Engineering/Productivity skills 与 6 个需显式启用的 `in-progress` skills；vendor 原文保持只读，由 workflow atomic wrappers 负责适配。
+- **Matt Pocock skills** — 完整的稳定与需显式启用的 `in-progress` inventory；vendor 原文保持只读，由 workflow atomic wrappers 负责适配。
 
 ## 文档
 

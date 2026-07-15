@@ -38,16 +38,25 @@ workflows/<workflow>/
 ## Atomic Skill Wrappers
 
 - `atomic-skills/<id>.md` frontmatter 固定为 `id/type/workflow/name/description/stability/invocation`；id 与文件名一致。
+- `<id>` 等于 raw `SKILL.md` frontmatter `name`；同一 `source-root` 内 raw name 必须存在且唯一。路径移动且 name 不变时只更新 target，name 变更视为 atomic ID 变更。
 - wrapper 只有两个连续 phase：先强制加载 `PERSISTENCE.md`，再以 `activation="adapted"` 调用恰好一个现存 `SKILL.md`。
 - 同一 raw target 只能有一个 wrapper；catalog 与目录必须一一对应，按 id 词法排序并使用连续 order。
 - `stability` 与 vendor 分类一致；raw `disable-model-invocation` 和 experimental 能力保持 `user-only`。
 - `<atomic-skills source-root="..." coverage="complete">` 要求覆盖该 root 下全部 `SKILL.md`。
 - raw skill 内的后续 `/skill` 调用继续解析到同 workflow 的 wrapper；vendor 原文保持不变。
 
+## Vendor Reconciliation
+
+- Vendor 更新后以 Git 变更和当前 raw inventory 对账 wrapper/catalog；`coverage="complete"` 的期望集合是 source-root 下全部 `SKILL.md`。
+- 新增 raw Skill 先获得直接 atomic 入口；route 只承载真实组合，不根据目录位置自动归类。
+- 删除或改名前扫描 route、raw `/skill` 调用和其他路径引用；有反向依赖时先确定替代、合并或删除语义。
+- 路径适配、持久化和副作用确认写入 workflow 层，vendor 树作为不可变输入。
+
 ## Validation Rules
 
 - 无绝对路径、反斜杠、`..`、裸 id、`src` 或未声明 state namespace。
 - 所有静态引用使用 `root + path` 并解析到真实文件。
 - runtime/persistence 只出现于 `PERSISTENCE.md`；WORKFLOW 和 wrapper 都以第一阶段强制读取它。
+- Raw name、wrapper id、wrapper 文件名和 catalog id 必须一致且唯一。
 - `_state/` 必须包含 `status.json`、`changes/`、`archive/`。
 - `docs-sync.json` 是 command 拥有的延迟 sidecar，不得放入 `_state/`。

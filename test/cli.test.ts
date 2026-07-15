@@ -29,6 +29,43 @@ async function tempProject(): Promise<string> {
   return mkdtemp(join(tmpdir(), "speculo-test-"));
 }
 
+interface VendorSkillInventoryEntry {
+  id: string;
+  path: string;
+  stability: "stable" | "experimental";
+  invocation: "user-only" | "model-allowed";
+}
+
+async function vendorSkillInventory(
+  root: string,
+  segments: string[] = []
+): Promise<VendorSkillInventoryEntry[]> {
+  const entries = await readdir(join(root, ...segments), { withFileTypes: true });
+  const inventory: VendorSkillInventoryEntry[] = [];
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      inventory.push(...await vendorSkillInventory(root, [...segments, entry.name]));
+      continue;
+    }
+    if (entry.name !== "SKILL.md") continue;
+    const content = await readFile(join(root, ...segments, entry.name), "utf8");
+    const id = content.match(/^name:\s*(.+)$/m)?.[1]?.trim();
+    assert.ok(id, `${join(...segments, entry.name)} must declare name`);
+    const stability = segments[0] === "in-progress" ? "experimental" : "stable";
+    const invocation =
+      stability === "experimental" || /^disable-model-invocation:\s*true$/m.test(content)
+        ? "user-only"
+        : "model-allowed";
+    inventory.push({
+      id,
+      path: [...segments, entry.name].join("/"),
+      stability,
+      invocation,
+    });
+  }
+  return inventory.sort((left, right) => left.id.localeCompare(right.id));
+}
+
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(join(path, ".."), { recursive: true });
   await writeFile(path, JSON.stringify(value, null, 2) + "\n");
@@ -291,25 +328,26 @@ describe("Speculo v3 CLI", () => {
       const atomicWrappers = await readdir(
         join(root, "workflows", "matt-pocock", "atomic-skills")
       );
-      assert.equal(atomicWrappers.length, 28);
-      assert.equal(atomicWrappers.includes("ask-matt.md"), true);
-      assert.equal(atomicWrappers.includes("writing-shape.md"), true);
-      const atomicContents = await Promise.all(
-        atomicWrappers.map((name) =>
-          readFile(
-            join(root, "workflows", "matt-pocock", "atomic-skills", name),
-            "utf8"
-          )
-        )
+      const expectedInventory = await vendorSkillInventory(
+        join(packageRoot, "template", "vendor", "matt-pocock")
       );
-      assert.equal(
-        atomicContents.filter((content) => /\nstability: stable\n/.test(content)).length,
-        22
+      assert.deepEqual(
+        atomicWrappers.sort(),
+        expectedInventory.map((entry) => `${entry.id}.md`)
       );
-      assert.equal(
-        atomicContents.filter((content) => /\nstability: experimental\n/.test(content)).length,
-        6
-      );
+      for (const entry of expectedInventory) {
+        const wrapper = await readFile(
+          join(root, "workflows", "matt-pocock", "atomic-skills", `${entry.id}.md`),
+          "utf8"
+        );
+        assert.match(wrapper, new RegExp(`^id: ${entry.id}$`, "m"));
+        assert.match(wrapper, new RegExp(`^stability: ${entry.stability}$`, "m"));
+        assert.match(wrapper, new RegExp(`^invocation: ${entry.invocation}$`, "m"));
+        assert.equal(
+          wrapper.includes(`path="${entry.path}" activation="adapted"`),
+          true
+        );
+      }
       assert.equal(
         await pathExists(join(root, "workflows", "person", "atomic-skills")),
         false
@@ -712,6 +750,40 @@ describe("Speculo v3 CLI", () => {
               "    <completion>persistence loaded</completion>",
               '    <skill root="skills" path="example/SKILL.md" activation="adapted" />\n    <completion>persistence loaded</completion>'
             )
+          );
+        },
+      },
+      {
+        expected: "id must match raw target name Example",
+        mutate: async (root) => {
+          const path = join(root, "template", "workflows", "example", "WORKFLOW.md");
+          const content = await readFile(path, "utf8");
+          await writeFile(
+            path,
+            content.replace("<atomic-skills>", '<atomic-skills source-root="skills" coverage="complete">')
+          );
+        },
+      },
+      {
+        expected: "duplicate raw target name example",
+        mutate: async (root) => {
+          const workflow = join(root, "template", "workflows", "example", "WORKFLOW.md");
+          await writeFile(
+            workflow,
+            (await readFile(workflow, "utf8")).replace(
+              "<atomic-skills>",
+              '<atomic-skills source-root="skills" coverage="complete">'
+            )
+          );
+          const first = join(root, "template", "skills", "example", "SKILL.md");
+          await writeFile(
+            first,
+            (await readFile(first, "utf8")).replace("name: Example", "name: example")
+          );
+          await mkdir(join(root, "template", "skills", "second"), { recursive: true });
+          await writeFile(
+            join(root, "template", "skills", "second", "SKILL.md"),
+            "---\nname: example\ndescription: duplicate\n---\n"
           );
         },
       },

@@ -334,6 +334,11 @@ function validateAtomicSkills(workflowId, workflowDir, entryBlocks, context) {
         readFileSync(sourcePath, "utf8"),
         sourcePath.slice(packageRoot.length + 1)
       );
+      if (sourceRoot && !rawFrontmatter.name) {
+        fail(`${relativeWrapper}: raw target must declare frontmatter name`);
+      } else if (sourceRoot && rawFrontmatter.name !== id) {
+        fail(`${relativeWrapper}: id must match raw target name ${rawFrontmatter.name}`);
+      }
       const expectedStability = targetPath.startsWith("in-progress/")
         ? "experimental"
         : "stable";
@@ -351,7 +356,7 @@ function validateAtomicSkills(workflowId, workflowDir, entryBlocks, context) {
     }
   }
 
-  if (completeCoverage && sourceRoot && context.aliases[sourceRoot]) {
+  if (sourceRoot && context.aliases[sourceRoot]) {
     const sourceDir = projectPathToTemplate(context.aliases[sourceRoot]);
     if (!sourceDir || !existsSync(sourceDir)) {
       fail(`template/workflows/${workflowId}/${workflowEntryName}: missing atomic source root ${sourceRoot}`);
@@ -363,14 +368,35 @@ function validateAtomicSkills(workflowId, workflowDir, entryBlocks, context) {
             `${sourceRoot}:${path.slice(sourceDir.length + 1).replaceAll("\\", "/")}`
           )
       );
+      const rawNames = new Map();
       for (const target of expectedTargets) {
-        if (!targetRefs.has(target)) {
-          fail(`template/workflows/${workflowId}/${workflowEntryName}: complete atomic catalog is missing ${target}`);
+        const targetPath = target.slice(`${sourceRoot}:`.length);
+        const sourcePath = join(sourceDir, ...targetPath.split("/"));
+        const rawFrontmatter = parseFrontmatter(
+          readFileSync(sourcePath, "utf8"),
+          sourcePath.slice(packageRoot.length + 1)
+        );
+        const rawName = rawFrontmatter.name;
+        if (!rawName) {
+          fail(`${sourcePath.slice(packageRoot.length + 1)}: raw target must declare frontmatter name`);
+          continue;
+        }
+        if (rawNames.has(rawName)) {
+          fail(`${sourcePath.slice(packageRoot.length + 1)}: duplicate raw target name ${rawName}`);
+        } else {
+          rawNames.set(rawName, targetPath);
         }
       }
-      for (const target of targetRefs) {
-        if (!expectedTargets.has(target)) {
-          fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic target is outside complete source set ${target}`);
+      if (completeCoverage) {
+        for (const target of expectedTargets) {
+          if (!targetRefs.has(target)) {
+            fail(`template/workflows/${workflowId}/${workflowEntryName}: complete atomic catalog is missing ${target}`);
+          }
+        }
+        for (const target of targetRefs) {
+          if (!expectedTargets.has(target)) {
+            fail(`template/workflows/${workflowId}/${workflowEntryName}: atomic target is outside complete source set ${target}`);
+          }
         }
       }
     }
