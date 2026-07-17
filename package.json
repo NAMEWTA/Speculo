@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Workflow-packaged specification-driven development assets with install, update, and migration tooling.",
   "type": "module",
   "bin": {
