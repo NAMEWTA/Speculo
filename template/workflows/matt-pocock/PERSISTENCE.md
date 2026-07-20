@@ -68,6 +68,15 @@
 2. direct 调用没有 route 产物声明时，运行时文件由目标 skill 在当前 change 内按需新建；只强制 `change_root` 边界，不强制 `atomic-skills/<id>` 子目录。
 3. 项目代码、测试和用户明确要求的项目文档属于项目产物，可写入经确认的项目相对路径；同时把验证或结果指针记录到当前 change。
 4. 长期知识、规则和集成配置先在 change 中形成，经确认后才写入已声明的 lazy store。raw skill 中的 `CONTEXT.md`、ADR、`docs/agents/`、`.out-of-scope/` 等逻辑位置分别映射到 `knowledge`、`integrations` 或 `policy`，不在项目根自行创建私有运行状态。
+
+```xml
+<vendor-path-mapping>
+  <map vendor="docs/agents/issue-tracker.md, docs/agents/triage-labels.md, *-tracker 配置文件" to="{state_root}/integrations/" />
+  <map vendor="docs/agents/domain.md, CONTEXT.md, adr/" to="{state_root}/knowledge/" />
+  <map vendor=".out-of-scope/" to="{state_root}/policy/" />
+</vendor-path-mapping>
+```
+
 5. 临时原型、数据库、脚本和报告必须删除或吸收；保留的结论写入当前 change。raw skill 指向系统临时目录、当前目录或 `.scratch/` 时，同样受本规则约束。
 
 raw skill 内部提及另一个 `/skill` 时，解析到 `atomic-skills/<skill-id>.md`；只有该 wrapper 可以直接引用对应 vendor `SKILL.md`。

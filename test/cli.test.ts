@@ -169,6 +169,19 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
       vendor: "speculo/vendor",
     },
   });
+  for (const name of [
+    "speculo-write-skill",
+    "speculo-write-workflows",
+    "speculo-write-command",
+    "speculo-write-canonical",
+  ]) {
+    const dir = join(root, ".agents", "skills", name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "SKILL.md"),
+      `---\nname: ${name}\ndescription: Test authoring skill stub\n---\n`
+    );
+  }
   await mkdir(join(root, "template", "skills", "example"), { recursive: true });
   await writeFile(
     join(root, "template", "skills", "example", "SKILL.md"),

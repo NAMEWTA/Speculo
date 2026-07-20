@@ -27,6 +27,7 @@ description: 解析 Speculo 项目根、资产根和 workflow 状态根，向 co
    - 创建 change 时自动以当天日期为前缀（`YYYY-MM-DD-`），用户只需提供 topic 部分。
    - 手动指定完整 change 名时，不匹配格式则阻塞并提示正确格式：`YYYY-MM-DD-<kebab-topic>`。
    - 已有不带日期前缀的历史 change 标注为遗留，不阻塞但记录警告。
+   - 初始化时若检测到 `<state_root>/../state/` 目录存在（即 `speculo/.speculo/state/`），标记为需清理——该目录由历史路径解析 bug 产生，不是合法的持久化命名空间。
    - 校验逻辑定义为单一来源（本步骤），归档端（`finalize-archive.md`）的日期 kebab 检查引用同一格式规则。
 5. 返回 project-relative runtime context，供后续所有 skills 复用；后续调用不得重新猜测路径。
 

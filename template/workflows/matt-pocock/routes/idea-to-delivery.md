@@ -31,7 +31,7 @@
   <phase id="tickets" order="4">
     <when>工作跨多个上下文窗口。</when>
     <instructions root="workflow" path="atomic-skills/to-tickets.md" activation="adapted" />
-    <artifact root="change" path="tracker/tickets.md" />
+    <artifact root="change" path="tracker/tickets/README.md" />
     <completion>垂直切片与阻塞边已获用户批准，外发引用已回写。</completion>
   </phase>
   <phase id="implement" order="5">

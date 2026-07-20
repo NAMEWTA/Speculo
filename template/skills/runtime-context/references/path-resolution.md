@@ -17,8 +17,9 @@
 读取 workflow 同级 `PERSISTENCE.md` 的 `<runtime-context>`：
 
 - `base` 必须引用 `workspace.json#roots` 中已有根。
+- `<root base="X" path="Y"/>` 解析为 `workspace.roots[X] + "/" + Y`。`base` 的值在 `workspace.json` 中已经是完整路径——不要将 root ID `X` 作为子目录重新拼接。
 - `path` 不能是绝对路径，不能包含 `..` 或反斜杠。
-- `workflow` 和 `state` 必须分别解析到 `speculo/workflows/<workflow>` 与 `speculo/.speculo/<workflow>`。
+- 验证：解析后，`workflow` 根必须等于 `speculo/workflows/<workflow>`，`state` 根必须等于 `speculo/.speculo/<workflow>`。
 - vendor 可声明零个或多个具名根，例如 `vendor:matt-pocock`。
 
 固定派生规则：
@@ -28,6 +29,12 @@ changes_root = state_root/changes
 archive_root = state_root/archive
 change_root = changes_root/<change>
 ```
+
+**完整示例**——以 `workspace.roots.state = "speculo/.speculo"` 和 `<root id="state" base="state" path="matt-pocock"/>` 为例：
+- `state_root = "speculo/.speculo" + "/" + "matt-pocock" = "speculo/.speculo/matt-pocock"`
+- **不是** `"speculo/.speculo/state/matt-pocock"`——root ID `"state"` 仅用于在 `workspace.roots` 中查找 base 路径，绝不追加为子目录。
+- `changes_root = "speculo/.speculo/matt-pocock/changes"`
+- `archive_root = "speculo/.speculo/matt-pocock/archive"`
 
 **Change 名称格式约束：** `<change>` 必须匹配 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`（即 `YYYY-MM-DD-<kebab-topic>`）。创建 change 时自动以当天日期为前缀，用户只需提供 topic 部分。手动指定完整名称时，不匹配格式则阻塞并提示正确格式。此格式约束在创建时即强制执行，归档时的日期 kebab 检查作为冗余验证与此处共享同一校验来源。已有不带日期前缀的历史 change 在文档中标注为遗留，归档时不阻塞。
 
@@ -39,3 +46,4 @@ change_root = changes_root/<change>
 - `<artifact root="state">` 只能落在 `<persistence>` 声明的额外命名空间。
 - command 报告只能落在 `state/commands/<command>/`，skill 不自行选择路径。
 - raw vendor SKILL 只通过同 workflow 的一对一 atomic wrapper 激活；wrapper 先加载 `PERSISTENCE.md`，嵌套 skill 名称继续解析到 wrapper。
+- 解析任何 `<root>` 元素后，验证结果路径中**不包含**该 root ID 作为重复路径段。例如 `speculo/.speculo/state/` 总是错误的——`state` root ID 已在 `workspace.roots` 查找中被消费，不应作为子目录再次出现。

@@ -23,6 +23,7 @@ const allowedXmlRoots = new Set([
   "transitions",
   "runtime-context",
   "persistence",
+  "vendor-path-mapping",
 ]);
 const staticReferenceTags = new Set([
   "atomic-skill",
@@ -292,12 +293,16 @@ function validateAtomicSkills(workflowId, workflowDir, entryBlocks, context) {
     const phases = sequences.length === 1
       ? asArray(sequences[0].sequence.phase)
       : [];
+    const invokePhase = phases.find(p => p["@_id"] === "invoke");
     if (
-      phases.length !== 2 ||
-      phases[1]?.["@_id"] !== "invoke" ||
-      phases[1]?.["@_order"] !== "2"
+      phases.length < 2 ||
+      phases.length > 3 ||
+      phases[0]?.["@_id"] !== "load-persistence" ||
+      phases[0]?.["@_order"] !== "1" ||
+      !invokePhase ||
+      invokePhase["@_order"] !== String(phases.length)
     ) {
-      fail(`${relativeWrapper}: atomic wrapper must contain only load-persistence and invoke phases`);
+      fail(`${relativeWrapper}: atomic wrapper must contain load-persistence (order=1), optional adapt-paths, and invoke phases`);
     }
 
     const skillNodes = xmlNodes(blocks, "skill");
