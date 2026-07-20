@@ -19,6 +19,7 @@ template/             Shipped asset bundle
   skills/             10 skill directories
   workflows/          2 workflow packages with PERSISTENCE + route/atomic entries
   vendor/             Native skill collections (matt-pocock, officecli)
+  canonical/          Single-file canonical distribution format for AI platforms
 test/                 CLI and vendor/workflow reconciliation test suites
 scripts/              Validation + verification tooling
 .agents/skills/       Internal authoring skills (speculo-write-command/skill/workflows)
@@ -62,6 +63,7 @@ speculo update                       Deprecated → delegates to speculo init --
 - **template/skills/** — agents-md-builder, change-lifecycle, config-prune, docs-sync, github-npm-ops, knowledge-prune, runtime-context, scaffold-exercises, speculo-retro, worktree-isolation
 - **template/workflows/** — matt-pocock (10 routes, complete vendor atomic coverage), person (1 route)
 - **template/vendor/** — matt-pocock (raw upstream skills), officecli (one skill)
+- **template/canonical/** — canonical 格式规范、示例（README.md + canonical-skill-example.md）与 `scripts/canonicalize.mjs` 自动化工具
 
 ## Workflow Package Contract
 

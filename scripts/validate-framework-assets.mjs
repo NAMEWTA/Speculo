@@ -38,6 +38,7 @@ const expectedAgentSkills = [
   "speculo-write-skill",
   "speculo-write-workflows",
   "speculo-write-command",
+  "speculo-write-canonical",
 ];
 const parser = new XMLParser({
   ignoreAttributes: false,
