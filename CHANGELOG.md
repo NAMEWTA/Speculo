@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.7] - 2026-07-21
+
+### Fixed
+- specdev INDEX.md 持久化约定表格补充 `.config/` 配置目录文档说明（#25）
+
+---
+
 ## [0.2.6] - 2026-07-21
 
 ### Added
