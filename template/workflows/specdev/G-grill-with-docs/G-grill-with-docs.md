@@ -41,6 +41,12 @@ keywords: [设计, 访谈, 领域建模, ADR, 决策记录, 词汇表, 设计轨
 
 **完成标准**：LOG.md 已同步所有结论；CONTEXT.md 已精炼术语；ADR.md 已追加满足三条件的架构决策。
 
+### 4. 停止
+
+设计阶段完成。向用户汇报产物摘要（LOG.md / CONTEXT.md / ADR.md 的条目数量和关键结论），明确询问是否进入 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 实现阶段。
+
+不得在用户确认前自动读取实现源码或执行代码变更。
+
 ## 子文件引用
 
 本入口及以下子文件按需加载：

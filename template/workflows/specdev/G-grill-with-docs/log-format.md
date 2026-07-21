@@ -25,20 +25,20 @@
 - 后续确认改变既有结论时，直接修订原日志条目，并记录替代关系，不保留互相矛盾的"现行规则"。
 - 日志可以记录具体交互和边界；词汇表保持精炼；ADR 只记录难以逆转、令人意外且存在真实权衡的决定。
 
-## LOG-0001: {决策的简短标题}
+## LOG-0001: {状态} — {问题/主题}
 
 Status: accepted
 Related: ADR-0001
 
 {背景：讨论了什么问题，做出了什么决定，以及为什么。可以记录具体的交互过程、边界场景和固定行为。}
 
-## LOG-0002: {另一决策标题}
+## LOG-0002: {状态} — {另一问题/主题}
 
 Status: deferred
 
 {为什么暂不决定，以及后续恢复讨论时应从什么问题开始。}
 
-## LOG-0003: {被替代的决策标题}
+## LOG-0003: {状态} — {被替代的问题/主题}
 
 Status: superseded
 Superseded by: LOG-0004
@@ -56,7 +56,8 @@ Superseded by: LOG-0004
 
 1. 读取 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`，找到最高现有编号
 2. 编号加 1（从 `0001` 开始，不足四位补零）
-3. 在文件末尾追加新条目
+3. 标题格式为 `## LOG-XXXX: {状态} — {问题/主题}`，必须能独立看出该条目回答了什么设计问题
+4. 在文件末尾追加新条目
 
 ## 修改已有日志
 
@@ -73,7 +74,7 @@ Superseded by: LOG-0004
 原始条目：
 
 ```md
-## LOG-0005: 订单状态机使用三态模型
+## LOG-0005: accepted — 订单状态机使用三态模型
 
 Status: accepted
 
@@ -83,14 +84,14 @@ Status: accepted
 讨论后发现需要更细粒度，追加替代条目：
 
 ```md
-## LOG-0005: 订单状态机使用三态模型
+## LOG-0005: superseded — 订单状态机使用三态模型
 
 Status: superseded
 Superseded by: LOG-0007
 
 订单状态为 pending → confirmed → completed 的三态模型。后续讨论发现 confirmed 状态无法区分"已付款待发货"和"已发货待签收"，因此改为五态模型。
 
-## LOG-0007: 订单状态机使用五态模型
+## LOG-0007: accepted — 订单状态机使用五态模型
 
 Status: accepted
 

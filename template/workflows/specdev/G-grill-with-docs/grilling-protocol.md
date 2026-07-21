@@ -30,15 +30,23 @@
 
 在我确认我们已达成共识之前，不要执行该方案。即使讨论看起来已经穷尽，也要明确询问："我们是否已就该设计达成共识？"只有在得到肯定回答后才进入下一阶段。
 
-## 访谈中维护 LOG.md
+## 访谈中维护三文件
+
+访谈中每完成一轮设计问答，按 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>` 规定的顺序同步三个文件：
+
+1. **LOG.md** 先更新——立即追加日志条目，记录本次讨论的结论
+2. **CONTEXT.md** 随后更新——从日志中提取新术语或修正的术语定义
+3. **ADR.md** 最后更新——检查是否需要追加满足三条件的架构决策
 
 在访谈过程中，每当一个结论被确认、延后或被替代时，当场更新 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`。不要等访谈结束再批量写入——发生时立即捕获。具体格式参见 `<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`。
 
-写入 LOG.md 的时机：
+写入三文件的时机：
 
-- **结论被确认** — 用户明确同意某个设计决定时，立即追加一条 `accepted` 日志
+- **结论被确认** — 用户明确同意某个设计决定时，立即追加一条 `accepted` 日志，随后检查是否需要新增/修改 CONTEXT 术语，最后检查是否满足三条件追加 ADR
 - **决定被延后** — 用户说"先不定"或"后面再讨论"时，追加一条 `deferred` 日志，记录为什么暂不决定以及从什么角度恢复讨论
-- **结论被替代** — 后续讨论推翻了之前的决定时，将原条目状态改为 `superseded`，标注 `Superseded by: LOG-XXXX`，再新建替代条目
+- **结论被替代** — 后续讨论推翻了之前的决定时，将原条目状态改为 `superseded`，标注 `Superseded by: LOG-XXXX`，再新建替代条目；同时检查 CONTEXT 和 ADR 是否需要对应更新
+
+每次 LOG 更新后，立即检查 CONTEXT 和 ADR 是否需要同步更新。不要将 CONTEXT 和 ADR 的更新推迟到访谈结束后批量处理——与 LOG 一样在结论结晶的瞬间立即捕获。
 
 ## 访谈节奏
 
