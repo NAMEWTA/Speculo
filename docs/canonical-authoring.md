@@ -105,7 +105,7 @@ node scripts/canonicalize.mjs template/skills/knowledge-prune --type skill
 node scripts/canonicalize.mjs template/commands/retro.md
 
 # 从 workflow 目录生成
-node scripts/canonicalize.mjs template/workflows/matt-pocock --type workflow
+node scripts/canonicalize.mjs template/workflows/specdev --type workflow
 
 # 写入文件而非 stdout
 node scripts/canonicalize.mjs template/skills/agents-md-builder --type skill --output canonical-agents-md-builder.md

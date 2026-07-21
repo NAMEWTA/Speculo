@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.2.1
+- Package: `@namewta/speculo` v0.2.5
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -18,13 +18,13 @@ template/             Shipped asset bundle
   commands/           4 command definitions
   skills/             6 skill directories
   workflows/          workflow packages with INDEX.md + work entries
-  vendor/             Native skill collections (matt-pocock, officecli)
+  vendor/             Native skill collections (matt-pocock, khazix-skills)
   canonical/          Single-file canonical distribution format for AI platforms
-test/                 CLI and vendor/workflow reconciliation test suites
-scripts/              Validation + verification tooling
-.agents/skills/       Internal authoring skills (speculo-write-command/skill/workflows)
+test/                 CLI test suite
+scripts/              Build, validation, verification, and canonicalize tooling
+.agents/skills/       Internal authoring skills (5 speculo-write-* skills + _shared)
 .github/workflows/    CI (build, test, verify-bin) + Release (npm publish + GitHub Release)
-docs/                 Authoring contracts (skill, command, workflow, persistence)
+docs/                 Authoring contracts (skill, command, canonical, persistence)
 ```
 
 ## Essential Commands
@@ -55,14 +55,15 @@ speculo update                       Deprecated → delegates to speculo init --
 
 - `--all` only valid with `init`; `--apply` only valid with `migrate`.
 - Existing `.speculo/` state is never overwritten on init.
+- `update` command is deprecated and will be removed in a future version.
 
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 7 root aliases: config, speculo, state, commands, skills, workflows, vendor
 - **template/commands/** — archive-and-consolidate, docs-sync, retro, status
 - **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, worktree-isolation
-- **template/workflows/** — specdev（研发全流程）, person（1 work entry: M-mao-zedong-cognitive-os）
-- **template/vendor/** — matt-pocock (raw upstream skills), khazix-skills (neat-freak)
+- **template/workflows/** — specdev（研发全流程: D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, S-spec, T-tickets, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/vendor/** — matt-pocock (raw upstream skills), khazix-skills (neat-freak: knowledge governance)
 - **template/canonical/** — canonical 格式规范、示例（README.md + canonical-skill-example.md）与 `scripts/canonicalize.mjs` 自动化工具
 
 ## Workflow Package Contract
@@ -76,11 +77,12 @@ speculo update                       Deprecated → delegates to speculo init --
 
 ## Internal Authoring Skills
 
-Four skills in `.agents/skills/` for maintaining Speculo itself:
+Five skills in `.agents/skills/` for maintaining Speculo itself:
+- **speculo-write-canonical** — Generate/audit single-file canonical distribution format for AI platforms
 - **speculo-write-command** — Create/audit single-file commands
 - **speculo-write-skill** — Create/audit reusable skills
 - **speculo-write-work** — Write individual work entry files and progressive-disclosure sub-files within a workflow
-- **speculo-write-workflows** — Create/audit workflow packages and reconcile vendor Git changes
+- **speculo-write-workflows** — Create/audit workflow packages, generate INDEX.md, and reconcile vendor Git changes
 
 All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contract.md`, `_shared/authoring-quality.md`.
 
@@ -88,7 +90,7 @@ All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contra
 
 - `validate-framework-assets.mjs` — Validates workflow XML blocks, frontmatter, state templates, agent skills.
 - `check-template-links.mjs` — Validates all relative markdown links in `template/` and `.agents/`.
-- `vendor-workflow-impact.mjs` — Read-only Git impact analysis bundled with `speculo-write-workflows`.
+- `canonicalize.mjs` — Auto-generates single-file canonical documents from skill/command/workflow directories.
 - Tests use `mkdtemp` for temp directories, always clean up.
 
 ## Dangerous Patterns (verified regressions)

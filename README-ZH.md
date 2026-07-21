@@ -40,43 +40,39 @@ npm install -g @namewta/speculo
 
 初始化后，目标项目获得以下可通过 AI agent 调用的资产：
 
-### 5 个 Commands
+### 4 个 Commands
 
 | Command | 用途 |
 |---|---|
 | `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档 |
-| `finalize` | 完成门禁、状态终结与安全归档 |
-| `knowledge-prune` | workflow 知识命名空间的 dry-run 审计 |
+| `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 10 个 Skills
+### 6 个 Skills
 
 | Skill | 用途 |
 |---|---|
 | `agents-md-builder` | 多层 AGENTS.md / CLAUDE.md 手册树构建器 |
-| `change-lifecycle` | 变更状态转换、验证与归档 |
-| `config-prune` | 配置命名空间裁剪 |
+| `archive-and-consolidate` | 归档过期内容、合并分散知识、清理过时资产 |
 | `docs-sync` | 核心文档审计与同步 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
-| `knowledge-prune` | 知识命名空间裁剪 |
-| `runtime-context` | Speculo 根的路径解析 |
-| `scaffold-exercises` | 练习脚手架 |
 | `speculo-retro` | 回顾分析 |
 | `worktree-isolation` | Git worktree 隔离 |
 
 ### 2 个 Workflow Packages
 
-| Workflow | 路由数 | 原子覆盖 | 说明 |
-|---|---:|---|---|
-| **matt-pocock** | 10 | 完整 vendor inventory | 组合 routes，并一对一直接访问全部稳定及实验 Matt Pocock SKILL |
-| **person** | 1 | 无 | 基于人物方法论的咨询 workflow，不制造虚假的 skill wrapper |
+| Workflow | Work 条目 | 说明 |
+|---|---:|---|
+| **specdev** | 7 | 全周期规范驱动开发：init-setup、diagnose-bugs、grill-with-docs、implement、spec、tickets、wayfinder |
+| **person** | 1 | 基于人物方法论的咨询 workflow（Mao Zedong Cognitive OS） |
 
-每个 workflow 都以同级 `PERSISTENCE.md` 作为唯一运行契约。`WORKFLOW.md` 与每个 `atomic-skills/<id>.md` 入口先读取它，因此组合 route 与直接原子调用共享相同的状态根、active change、namespace 和确认边界。
+每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
 
 ### Vendor Skill Collections
 
-- **Matt Pocock skills** — 完整的稳定与需显式启用的 `in-progress` inventory；vendor 原文保持只读，由 workflow atomic wrappers 负责适配。
+- **Matt Pocock skills** — 完整的稳定与实验 inventory；vendor 原文保持只读，由 workflow atomic wrappers 负责适配。
+- **Khazix Skills (neat-freak)** — 知识治理与清理：过期内容归档、分散知识合并、过时资产清理。
 
 ## 文档
 

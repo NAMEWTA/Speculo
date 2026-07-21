@@ -40,43 +40,39 @@ Requires: Node.js ≥ 22.22.3
 
 After initialization, the target project gains the following AI agent-callable assets:
 
-### 5 Commands
+### 4 Commands
 
 | Command | Purpose |
 |---|---|
 | `docs-sync` | Clean workspace, sync project documentation from reproducible Git ranges |
-| `finalize` | Completion gates, status finalization, and safe archiving |
-| `knowledge-prune` | Dry-run audit of workflow knowledge namespaces |
+| `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 10 Skills
+### 6 Skills
 
 | Skill | Purpose |
 |---|---|
 | `agents-md-builder` | Multi-layer AGENTS.md / CLAUDE.md handbook tree builder |
-| `change-lifecycle` | Change state transitions, verification, and archival |
-| `config-prune` | Configuration namespace pruning |
+| `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Core documentation audit and synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
-| `knowledge-prune` | Knowledge namespace pruning |
-| `runtime-context` | Path resolution for Speculo roots |
-| `scaffold-exercises` | Exercise scaffolding |
 | `speculo-retro` | Retrospective analysis |
 | `worktree-isolation` | Git worktree isolation |
 
 ### 2 Workflow Packages
 
-| Workflow | Routes | Atomic coverage | Description |
-|---|---:|---|---|
-| **matt-pocock** | 10 | Complete vendor inventory | Route composition plus one-to-one access to every stable and experimental Matt Pocock SKILL |
-| **person** | 1 | None | Persona-methodology-based consulting workflow without synthetic skill wrappers |
+| Workflow | Work Entries | Description |
+|---|---:|---|
+| **specdev** | 7 | Full-cycle specification-driven development: init-setup, diagnose-bugs, grill-with-docs, implement, spec, tickets, wayfinder |
+| **person** | 1 | Persona-methodology-based consulting workflow (Mao Zedong Cognitive OS) |
 
-Every workflow ships a peer `PERSISTENCE.md` as its sole runtime contract. `WORKFLOW.md` and each `atomic-skills/<id>.md` entry load it first, so composed routes and direct atomic calls resolve the same state root, active change, namespaces, and confirmation boundaries.
+Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
 ### Vendor Skill Collections
 
-- **Matt Pocock skills** — The complete stable and explicitly enabled `in-progress` inventory, preserved as read-only vendor sources behind workflow-owned atomic wrappers.
+- **Matt Pocock skills** — The complete stable and explicitly enabled inventory, preserved as read-only vendor sources behind workflow-owned atomic wrappers.
+- **Khazix Skills (neat-freak)** — Knowledge governance and cleanup: stale content archiving, scattered knowledge consolidation, and outdated asset cleanup.
 
 ## Documentation
 

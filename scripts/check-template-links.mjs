@@ -60,6 +60,9 @@ const roots = [templateRoot, agentsRoot].filter((root) => {
 });
 for (const file of roots.flatMap((root) => walk(root))) {
   const content = readFileSync(file, "utf8");
+  // Skip canonical-format files — self-contained XML documents with embedded source files;
+  // their internal markdown links don't resolve to physical paths.
+  if (content.trim().startsWith("<canonical ")) continue;
   const base = dirname(file);
   for (const link of extractLinks(content)) {
     const target = resolve(base, link);
