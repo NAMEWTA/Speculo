@@ -3,7 +3,7 @@
   "command": "docs-sync",
   "state_path": "speculo/.speculo/commands/docs-sync/state.json",
   "baseline": {
-    "mode": "explicit",
+    "mode": "state-file-commit",
     "sha": null
   },
   "last_range": {
