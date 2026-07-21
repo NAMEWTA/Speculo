@@ -11,8 +11,8 @@ const templateRoot = join(packageRoot, "template");
 const workflowsRoot = join(templateRoot, "workflows");
 const workspacePath = join(templateRoot, ".speculo", "workspace.json");
 const docsSyncAssets = join(templateRoot, "skills", "docs-sync", "assets");
-const workflowEntryName = "WORKFLOW.md";
-const persistenceEntryName = "PERSISTENCE.md";
+const workflowEntryName = "INDEX.md";
+const persistenceEntryName = "INDEX.md";
 const atomicSkillsDirName = "atomic-skills";
 const allowedXmlRoots = new Set([
   "atomic-skills",
@@ -472,9 +472,15 @@ function validateWorkflow(workflowId, workspace) {
 
   const entryContent = readFileSync(entryPath, "utf8");
   const frontmatter = parseFrontmatter(entryContent, relativeEntry);
-  if (frontmatter.id !== workflowId || frontmatter.workflow !== workflowId) {
+  const idOk = frontmatter.id === workflowId || frontmatter.id === `${workflowId}/index`;
+  if (!idOk || frontmatter.workflow !== workflowId) {
     fail(`${relativeEntry}: id/workflow must match directory ${workflowId}`);
   }
+
+  const isSingleFile = entryPath === persistencePath;
+
+  // Single-file mode (INDEX.md): skip XML block checks
+  if (isSingleFile) return;
 
   if (!existsSync(persistencePath)) {
     fail(`${relativeEntry}: missing ${persistenceEntryName}`);

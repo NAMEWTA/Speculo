@@ -217,7 +217,7 @@ async function collectActiveChanges(
         sourcePath: join(workflowRoot, name),
         originalName: name,
         destinationRelative: join(
-          "matt-pocock",
+          "specdev",
           "archive",
           monthFromName(name),
           destinationName
@@ -275,7 +275,7 @@ async function collectArchivedChanges(
           sourcePath: join(workflowArchive, month, name),
           originalName: name,
           destinationRelative: join(
-            "matt-pocock",
+            "specdev",
             "archive",
             month,
             destinationName
@@ -440,8 +440,8 @@ export async function planMigration(
     actions.push({
       kind: "move-config",
       from: ".speculo/.config",
-      to: ".speculo/matt-pocock/.config",
-      detail: "Move shared v2 configuration into the Matt workflow",
+      to: ".speculo/specdev/.config",
+      detail: "Move shared v2 configuration into the SpecDev workflow",
     });
   }
 
@@ -503,7 +503,7 @@ function migratedStatus(
   const status = { ...change.status };
   delete status.category;
   status.schema_version = 1;
-  status.workflow = change.sourceWorkflow === "person" ? "person" : "matt-pocock";
+  status.workflow = change.sourceWorkflow === "person" ? "person" : "specdev";
   status.name = destinationName;
   status.updated_at = now;
 
@@ -605,7 +605,7 @@ function reportMarkdown(plan: MigrationPlan, now: string): string {
     "",
     "## Follow-up",
     "",
-    "Run `speculo init <target>` and select matt-pocock/person as needed.",
+    "Run `speculo init <target>` and select specdev/person as needed.",
     "Legacy dev/doc active work is historical archive and is not resumed automatically.",
     ""
   );
@@ -702,8 +702,8 @@ async function buildMigratedState(
     force: true,
   });
   await cp(
-    join(templateRoot, "workflows", "matt-pocock", "_state"),
-    join(stage, "matt-pocock"),
+    join(templateRoot, "workflows", "specdev", "_state"),
+    join(stage, "specdev"),
     { recursive: true, force: true }
   );
   await cp(
@@ -718,7 +718,7 @@ async function buildMigratedState(
   );
   await copyDirectoryContents(
     join(root, ".config"),
-    join(stage, "matt-pocock", ".config")
+    join(stage, "specdev", ".config")
   );
 
   const docsSyncSource = join(root, "dev", "docs-sync-state.json");

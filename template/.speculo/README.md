@@ -5,8 +5,8 @@
 ## 读取顺序
 
 1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。
-2. 从 `../workflows/<workflow>/WORKFLOW.md` 或 `atomic-skills/<id>.md` 进入，并首先读取同级 `PERSISTENCE.md` 的 `<runtime-context>`、`<persistence>` 与 change 启动协议。
-3. 读取 `<workflow>/status.json`，再读取 `changes/<change>/.status.json` 和当前 route/direct 产物。
+2. 从 `../workflows/<workflow>/INDEX.md` 进入 workflow，再通过 `<Path>` 指针进入具体 work 入口文件。
+3. 读取 `<workflow>/status.json`，再读取 `changes/<change>/.status.json` 和当前 work 产物。
 4. 历史 change 只从 `<workflow>/archive/YYYY-MM/<change>/` 读取。
 5. Command 报告位于 `commands/<command>/*.md`，command state 位于 `commands/<command>/state.json`。
 6. 首次 docs-sync 确认后读取 `<workflow>/docs-sync.json`；它分列该 workflow 的项目文档和私有 state 更新范围。
@@ -17,4 +17,4 @@
 - `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar，不进入 `_state`，也不授予越过 workflow 确认规则的权限。
 - `.config` 不是标准目录；只有 workflow 声明时才可使用。
 - Command 报告命名为 `<YYYY-MM-DD>-<scope>-<topic>[-NN].md`，禁止覆盖。
-- Atomic wrapper 可独立启动，但只使用 `PERSISTENCE.md` 解析并完成边界校验的路径；raw vendor SKILL 不直接选择持久化根。
+- Raw vendor SKILL 不直接选择持久化根；始终通过 work 入口的 `<Path>` 指针解析路径。

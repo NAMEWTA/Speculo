@@ -1,6 +1,6 @@
 # 合并回收与清理
 
-finalize 验证通过后，把 change 分支合并回原分支并清理 worktree。由 `../../../commands/finalize.md` 在隔离模式下调用。**全程破坏性，须先列计划、经用户确认。**
+archive-and-consolidate 验证通过后，把 change 分支合并回原分支并清理 worktree。由 `../../../commands/archive-and-consolidate.md` 在隔离模式下调用。**全程破坏性，须先列计划、经用户确认。**
 
 ## 前置
 
@@ -28,7 +28,7 @@ finalize 验证通过后，把 change 分支合并回原分支并清理 worktree
    ```
 
    - 完成后置 `worktree_status: removed`。
-4. **移交归档**：清理后归档在 base 分支进行（change 目录已随合并到达 base），由调用方 finalize 的归档阶段执行。
+4. **移交归档**：清理后归档在 base 分支进行（change 目录已随合并到达 base），由调用方 `archive-and-consolidate` 的归档阶段执行。
 
 ## 失败处理
 

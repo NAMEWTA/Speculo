@@ -18,9 +18,9 @@ keywords: [docs-sync, readme, changelog, agents, documentation]
 
 ## 执行
 
-1. 读取 `../skills/runtime-context/SKILL.md` 与 `../skills/docs-sync/SKILL.md`，解析 command 路径、`speculo/config.json`（不存在时以默认值静默降级）和全部已安装 workflow/state 根。
+1. 读取 `../skills/docs-sync/SKILL.md`，解析 `speculo/config.json` 与 `speculo/.speculo/workspace.json`（不存在时以默认值静默降级），获取全部已安装 workflow/state 根。
 2. 按 skill 的 Git 契约检查 tracked、staged、unstaged 与 untracked 内容；安全且校验通过时显式暂存并创建 checkpoint，异常时无损阻塞。
-3. 读取全局 state、各 `WORKFLOW.md`、同级 `PERSISTENCE.md` 和 sidecar。首次运行统一展示全局与每个 workflow 的候选范围；用户确认后为所有已安装 workflow 创建 sidecar，空范围也保留。
+3. 读取全局 state、各 `INDEX.md` 和 sidecar。首次运行统一展示全局与每个 workflow 的候选范围；用户确认后为所有已安装 workflow 创建 sidecar，空范围也保留。
 4. 由 skill 收集精确 commit 区间、archive 与声明 store 证据，整份审计命中文档并执行新增、更新、删除段落、合并或保留。整文件/目录删除和受保护知识仍逐次确认。
 5. 运行项目与文档校验，原子写入报告、state 和 sidecar，再显式暂存本次产物并创建同步或 no-op commit。
 6. 重新读取 Git、state、报告与 sidecar；只有工作区干净、节点可复现且所有文件已提交时完成。

@@ -1,0 +1,4 @@
+# AGENTS.md
+
+<SPECULO>
+</SPECULO>

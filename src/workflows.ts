@@ -17,7 +17,7 @@ export type WorkflowSelection = {
 
 const FRONTMATTER_RE = /^---\s*\n([\s\S]*?)\n---/;
 const FIELD_RE = /^(\w+):\s*(.+)$/;
-const WORKFLOW_ENTRY = "WORKFLOW.md";
+const WORKFLOW_ENTRY = "INDEX.md";
 
 function parseFrontmatter(content: string): Record<string, string> {
   const match = content.match(FRONTMATTER_RE);
@@ -63,7 +63,7 @@ export async function discoverWorkflowCatalog(
       if (error instanceof Error && error.message.includes("ids must match")) {
         throw error;
       }
-      // A directory without WORKFLOW.md is not an installable workflow package.
+      // A directory without INDEX.md is not an installable workflow package.
     }
   }
 

@@ -13,11 +13,11 @@
 
 ## 更新策略
 
-- **首次安装**：复制通用 vendor；`matt-pocock/` 仅在选择同名 workflow 时复制。
+- **首次安装**：无条件复制所有 vendor 条目。
 - **`speculo init`（无 `--all`）**：只添加缺失 vendor，保留用户已有内容。
-- **`speculo init --all`**：选择全部 workflow，并用当前包中符合选择条件的 vendor 全量刷新。
+- **`speculo init --all`**：用当前包中所有 vendor 条目全量刷新。
 
-`vendor/matt-pocock/` 保留上游的领域目录和原生 `SKILL.md`。直接激活 raw skill 不受 Speculo 持久化保证；规范入口是 `../workflows/matt-pocock/WORKFLOW.md`。
+`vendor/matt-pocock/` 保留上游的领域目录和原生 `SKILL.md`。直接激活 raw skill 不受 Speculo 持久化保证。
 
 ## 如何添加原生技能
 

@@ -35,7 +35,7 @@ Canonical 文档是源文件的**透明容器**——不修改原始内容，仅
 
 - `<canonical>` 直接放在 markdown 正文中，**不在 code fence 内**。这与 Speculo 现有的 `<sequence>`、`<persistence>` 等 XML 标签用法一致，LLM 可直接解析。
 - 每个源文件的 YAML frontmatter 原样保留在 `<source-file>` 内，不做合并或转换。
-- `order` 从 1 连续递增；主入口文件（`SKILL.md` / `WORKFLOW.md` / command 单文件）的 `order` 始终为 `1`。
+- `order` 从 1 连续递增；主入口文件（`SKILL.md` / `INDEX.md` / command 单文件）的 `order` 始终为 `1`。
 - `path` 编码原始目录层级（如 `references/audit-rules.md`），LLM 通过 `path` 匹配跨文件引用。
 - 源文件内容中的 markdown 链接**保留原文不重写**。LLM 通过 `<source-file path="...">` 标签定位被引用内容。
 
@@ -43,25 +43,23 @@ Canonical 文档是源文件的**透明容器**——不修改原始内容，仅
 
 | 文件类型 | 是否包含 | 说明 |
 |----------|----------|------|
-| `SKILL.md`、`WORKFLOW.md`、command `.md` | 总是 | 主入口文件 |
+| `SKILL.md`、`INDEX.md`、command `.md` | 总是 | 主入口文件 |
 | `references/*.md` | 总是 | 被主入口引用的参考文档 |
-| `routes/*.md` | 总是（仅 workflow） | 组合 route |
-| `atomic-skills/*.md` | 总是（仅 workflow） | 原子 skill 包装 |
-| `PERSISTENCE.md` | 总是（仅 workflow） | 运行时契约 |
+| `*.md`（work entry） | 总是（仅 workflow） | work 条目入口文件及其渐进披露子文件 |
 | `assets/*.json` | 包含 | 添加 `content-type="json"` |
 | `scripts/*.mjs`、`scripts/*.sh` | 小脚本包含，大脚本摘要 | 判断标准：< 200 行直接包含，否则写描述性摘要 |
 | `_state/`、`.speculo/`、`.gitkeep` | 排除 | 运行时状态，非能力定义 |
 
 ## 示例
 
-参见 [canonical-skill-example.md](./canonical-skill-example.md)——以 `knowledge-prune` skill 为示例的完整 canonical 化成品。
+参见 [canonical-skill-example.md](./canonical-skill-example.md)——以 `archive-and-consolidate` skill 为示例的完整 canonical 化成品。
 
 ## 如何创建 Canonical 文档
 
 ### 自动创建（推荐）
 
 ```bash
-node scripts/canonicalize.mjs template/skills/knowledge-prune --type skill
+node scripts/canonicalize.mjs template/skills/archive-and-consolidate --type skill
 ```
 
 默认输出到 stdout；加 `--output <file>` 写入文件：
@@ -83,7 +81,7 @@ node scripts/canonicalize.mjs template/skills/agents-md-builder --type skill --o
 </canonical>
 ```
 
-2. 将主入口文件（`SKILL.md` / `WORKFLOW.md` / command `.md`）的全部内容粘贴到 `<source-file order="1">` 内。
+2. 将主入口文件（`SKILL.md` / `INDEX.md` / command `.md`）的全部内容粘贴到 `<source-file order="1">` 内。
 3. 为每个附加文件追加 `<source-file path="..." order="N">`，将文件内容粘贴进去。
 4. 检查内容中的 XML 特殊字符（`&`、`<`、`>`）已正确转义为 `&amp;`、`&lt;`、`&gt;`。
 5. 保存为 `.md` 文件，上传到目标 AI 平台。
@@ -112,5 +110,5 @@ node scripts/canonicalize.mjs template/skills/agents-md-builder --type skill --o
 ## 注意事项
 
 - **Vendor 技能**：vendor 目录中的原生技能使用不同 frontmatter 规范（`name` 替代 `id`，无 `type` 字段）。Canonical 格式透明保留原始 frontmatter，不做校验。
-- **Workflow 体积**：workflow 文件较多（WORKFLOW.md + PERSISTENCE.md + routes/ + atomic-skills/），生成的 canonical 文档较长。这属于预期行为——自包含性优先于简洁性。
+- **Workflow 体积**：workflow 文件较多（INDEX.md + 多个 work 条目目录 + 渐进披露子文件），生成的 canonical 文档较长。这属于预期行为——自包含性优先于简洁性。
 - **XML 转义**：源文件代码块中如果包含 `&`、`<`、`>`，手动创建时需转义；自动脚本已内置转义处理。

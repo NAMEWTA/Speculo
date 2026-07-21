@@ -15,9 +15,9 @@
 src/                 CLI source (cli.ts, index.ts, migrate.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
-  commands/           5 command definitions
-  skills/             10 skill directories
-  workflows/          2 workflow packages with PERSISTENCE + route/atomic entries
+  commands/           4 command definitions
+  skills/             6 skill directories
+  workflows/          workflow packages with INDEX.md + work entries
   vendor/             Native skill collections (matt-pocock, officecli)
   canonical/          Single-file canonical distribution format for AI platforms
 test/                 CLI and vendor/workflow reconciliation test suites
@@ -42,7 +42,7 @@ docs/                 Authoring contracts (skill, command, workflow, persistence
 - **cli.ts** — Thin command router: parse command → delegate to index.ts (init) or migrate.ts (migrate). `update` is deprecated.
 - **index.ts** — `initSpeculo()` copies template assets to `<target>/speculo/`. Core assets (`.speculo`, `commands`, `skills`) always installed. Workflow packages selected interactively or via `--all`.
 - **migrate.ts** — `planMigration()` + `migrateSpeculo()`: v2/transitional-v3 → current v3 state. Staged, rollback-safe with backup/restore.
-- **workflows.ts** — Discover, scan, prompt workflow selection. Parses `WORKFLOW.md` frontmatter. Non-TTY auto-selects all.
+- **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
 - **utils.ts** — Single `pathExists()` helper.
 
 ## CLI Usage
@@ -59,25 +59,27 @@ speculo update                       Deprecated → delegates to speculo init --
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 7 root aliases: config, speculo, state, commands, skills, workflows, vendor
-- **template/commands/** — docs-sync, finalize, knowledge-prune, retro, status
-- **template/skills/** — agents-md-builder, change-lifecycle, config-prune, docs-sync, github-npm-ops, knowledge-prune, runtime-context, scaffold-exercises, speculo-retro, worktree-isolation
-- **template/workflows/** — matt-pocock (10 routes, complete vendor atomic coverage), person (1 route)
-- **template/vendor/** — matt-pocock (raw upstream skills), officecli (one skill)
+- **template/commands/** — archive-and-consolidate, docs-sync, retro, status
+- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, worktree-isolation
+- **template/workflows/** — specdev（研发全流程）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/vendor/** — matt-pocock (raw upstream skills), khazix-skills (neat-freak)
 - **template/canonical/** — canonical 格式规范、示例（README.md + canonical-skill-example.md）与 `scripts/canonicalize.mjs` 自动化工具
 
 ## Workflow Package Contract
 
-- Each workflow must have `WORKFLOW.md` and peer `PERSISTENCE.md`; the latter exclusively owns `<runtime-context>`, `<persistence>`, change startup and side-effect boundaries.
-- `WORKFLOW.md` must load `PERSISTENCE.md` first. Workflows with SKILL dependencies expose one-to-one `atomic-skills/` wrappers and route through them.
-- `_state/` skeleton must contain `status.json`, `changes/`, `archive/`.
+- Each workflow must have `INDEX.md` (auto-generated work catalog, not manually edited).
+- Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming, with progressive disclosure sub-files.
+- All cross-references use `<Path>{roots.xxx}/...</Path>` format based on workspace.json root aliases.
+- `_state/` skeleton must contain `status.json`, `changes/`, `archive/`; other content decided by workflow.
 - `docs-sync.json` is a lazy command sidecar; never put it in `_state/` template.
 - Workflow root resolves to `speculo/workflows/<workflow>`; state root to `speculo/.speculo/<workflow>`.
 
 ## Internal Authoring Skills
 
-Three skills in `.agents/skills/` for maintaining Speculo itself:
+Four skills in `.agents/skills/` for maintaining Speculo itself:
 - **speculo-write-command** — Create/audit single-file commands
 - **speculo-write-skill** — Create/audit reusable skills
+- **speculo-write-work** — Write individual work entry files and progressive-disclosure sub-files within a workflow
 - **speculo-write-workflows** — Create/audit workflow packages and reconcile vendor Git changes
 
 All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contract.md`, `_shared/authoring-quality.md`.

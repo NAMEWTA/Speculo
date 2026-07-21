@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { detectLegacyState } from "./migrate.js";
 import { pathExists } from "./utils.js";
@@ -26,9 +26,9 @@ export type SpeculoOptions = {
 
 const CORE_ASSETS = [".speculo", "commands", "skills"] as const;
 const INSTALL_SUBDIR = "speculo";
-const WORKFLOW_ENTRY = "WORKFLOW.md";
+const WORKFLOW_ENTRY = "INDEX.md";
 const STATE_TEMPLATE_DIR = "_state";
-const MATT_WORKFLOW_ID = "matt-pocock";
+const SPECULO_TAG_RE = /<SPECULO>[\s\S]*?<\/SPECULO>/;
 
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
@@ -96,12 +96,84 @@ async function copyMissingTree(
   }
 }
 
-function shouldCopyVendorEntry(
-  name: string,
+function generateSpeculoContent(selection: WorkflowSelection): string {
+  const lines: string[] = [];
+
+  lines.push("## Speculo 运行时配置");
+  lines.push("");
+  lines.push("### 初始化状态检查");
+  lines.push("");
+  lines.push("运行时必须读取以下文件以确认 Speculo 初始化状态：");
+  lines.push("");
+  lines.push("- `./speculo/.speculo/workspace.json` — 工作区根别名配置");
+  lines.push("- `./speculo/config.json` — 项目配置文件");
+  lines.push("");
+  lines.push("若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。");
+  lines.push("此时必须提示用户：**请先运行 `speculo init` 完成初始化配置。**");
+  lines.push("");
+
+  if (selection.workflowIds.length > 0) {
+    lines.push("### 工作流入口（强制读取）");
+    lines.push("");
+    lines.push("初始化时已选择以下工作流，运行时必须强制读取对应入口文件：");
+    lines.push("");
+    for (const workflowId of [...selection.workflowIds].sort()) {
+      lines.push(`- \`./speculo/workflows/${workflowId}/INDEX.md\``);
+    }
+    lines.push("");
+  }
+
+  return `<SPECULO>\n${lines.join("\n")}</SPECULO>`;
+}
+
+async function writeAgentFiles(
+  target: string,
+  packageRoot: string,
   selection: WorkflowSelection
-): boolean {
-  return name !== MATT_WORKFLOW_ID ||
-    selection.workflowIds.includes(MATT_WORKFLOW_ID);
+): Promise<string[]> {
+  const written: string[] = [];
+  const speculoBlock = generateSpeculoContent(selection);
+
+  const claudePath = join(target, "CLAUDE.md");
+  if (!(await pathExists(claudePath))) {
+    const claudeTemplate = join(assetRoot(packageRoot), "CLAUDE.md");
+    if (await pathExists(claudeTemplate)) {
+      await cp(claudeTemplate, claudePath);
+    } else {
+      await writeFile(
+        claudePath,
+        "# CLAUDE.md\n\n必须查看 [@AGENTS.md](./AGENTS.md) 文档，按照 Speculo 规范进行开发。\n",
+        "utf8"
+      );
+    }
+    written.push("CLAUDE.md");
+  }
+
+  const agentsPath = join(target, "AGENTS.md");
+  if (await pathExists(agentsPath)) {
+    let content = await readFile(agentsPath, "utf8");
+    if (SPECULO_TAG_RE.test(content)) {
+      content = content.replace(SPECULO_TAG_RE, speculoBlock);
+      written.push("AGENTS.md (updated <SPECULO>)");
+    } else {
+      content = content.trimEnd() + "\n\n" + speculoBlock + "\n";
+      written.push("AGENTS.md (appended <SPECULO>)");
+    }
+    await writeFile(agentsPath, content, "utf8");
+  } else {
+    const agentsTemplate = join(assetRoot(packageRoot), "AGENTS.md");
+    let templateContent: string;
+    if (await pathExists(agentsTemplate)) {
+      templateContent = await readFile(agentsTemplate, "utf8");
+    } else {
+      templateContent = "# AGENTS.md\n\n<SPECULO>\n</SPECULO>\n";
+    }
+    templateContent = templateContent.replace(SPECULO_TAG_RE, speculoBlock);
+    await writeFile(agentsPath, templateContent, "utf8");
+    written.push("AGENTS.md");
+  }
+
+  return written;
 }
 
 async function copyVendor(
@@ -121,8 +193,6 @@ async function copyVendor(
 
   const entries = await readdir(sourceRoot, { withFileTypes: true });
   for (const entry of entries) {
-    if (!shouldCopyVendorEntry(entry.name, selection)) continue;
-
     const source = join(sourceRoot, entry.name);
     const destination = join(destinationRoot, entry.name);
     if (mode === "merge" && (await pathExists(destination))) continue;
@@ -224,6 +294,7 @@ async function initFresh(
   copied.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, false)
   );
+  copied.push(...await writeAgentFiles(target, packageRoot, selection));
 
   return { target, mode: "init", copied };
 }
@@ -248,6 +319,7 @@ async function initUpdate(
   updated.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, true)
   );
+  updated.push(...await writeAgentFiles(target, packageRoot, selection));
 
   return { target, mode: "update", updated };
 }

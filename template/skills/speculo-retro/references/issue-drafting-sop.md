@@ -13,7 +13,7 @@
   "priority":     "priority:critical | priority:high | priority:medium | priority:low",
   "area":         "string|null, 例 area:commands / area:workflows / area:skills / area:cli / area:contract",
   "body":         "string, 见正文结构",
-  "affected":     ["相对路径，例 speculo/commands/finalize.md"],
+  "affected":     ["相对路径，例 speculo/commands/archive-and-consolidate.md"],
   "evidence":     ["证据出处，例 speculo/.speculo/<workflow>/changes/<change>/.status.json#phase_history"],
   "disposition":  "file-issue | record-lesson | drop",
   "dup_of":       "number|null, 疑似重复的已存在 issue 编号"
