@@ -26,6 +26,8 @@ keywords: [诊断, 调试, bug, 反馈回路, 假设, 根因分析]
 
 **完成标准**：活跃变更已确认，领域词汇表和架构决策已加载。`{change}` 已确定。
 
+若诊断过程中遇到不熟悉的第三方库行为、API 语义、运行时特性或工具链细节，先调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 完成一手来源调查，再继续构建回路。
+
 ### 2. 构建反馈回路
 
 委托给 `<Path>{roots.workflows}/specdev/D-diagnose-bugs/feedback-loop-techniques.md</Path>`。构建一个紧凑的通过/失败信号——一条命令，确定性、秒级、agent 可无人值守运行。在此投入不成比例的精力：反馈回路是诊断的超能力。如果确实无法构建回路，向用户明确说明已尝试的方法并请求访问复现环境或捕获产物。

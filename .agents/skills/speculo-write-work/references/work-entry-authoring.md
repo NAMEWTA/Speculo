@@ -12,7 +12,6 @@ Workflow 包内所有文件为纯自然 markdown，不使用 XML 块。所有跨
 | `{roots.skills}` | `speculo/skills/` |
 | `{roots.workflows}` | `speculo/workflows/` |
 | `{roots.state}` | `speculo/.speculo/` |
-| `{roots.vendor}` | `speculo/vendor/` |
 | `{roots.commands}` | `speculo/commands/` |
 
 ## Work 条目命名

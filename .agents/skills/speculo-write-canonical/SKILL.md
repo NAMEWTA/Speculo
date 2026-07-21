@@ -1,54 +1,135 @@
 ---
 name: speculo-write-canonical
-description: 将 Speculo 多文件能力（skill/command/workflow）canonical 化为自包含单 MD 文档。用户要求生成 canonical 文档、验证 canonical 格式、重新 canonical 化已有能力或修复 canonical 文档中的 XML 结构时使用。
+description: 将 Speculo 多文件能力（skill/command/workflow）合并为自包含单 MD 文档，上传到网页 AI 平台（ChatGPT Projects、Claude Projects、NotebookLM）使用。触发：用户要求生成 canonical 文档、要求将能力打包为单文件、或要求上传能力到 AI 平台时。
 ---
 
 # Speculo Write Canonical
 
+将 Speculo 多文件能力合并为**自包含的单 MD 文档**，可直接上传到网页 AI 平台作为知识附件。输出是纯 Markdown 文档，不使用 `<canonical>` XML 容器——它就是一份普通 MD 文件，平台直接解析。
+
 ## 过程
 
-1. 读取 [AGENTS.md](../../../AGENTS.md)、[canonical-authoring.md](../../../docs/canonical-authoring.md)、[canonical/README.md](../../../template/canonical/README.md) 和 [authoring-quality.md](../_shared/authoring-quality.md)。完成标准：canonical 格式规范、文件包含/排除规则、XML 标签结构和质量杠杆已列成检查项。
+### 1. 审计源目录
 
-2. 审计目标能力目录：确认能力类型（skill/command/workflow），识别主入口文件（SKILL.md / INDEX.md / command .md），列出所有应包含的源文件，标记应排除的运行时状态目录（`_state/`、`.speculo/`、`.gitkeep`）。完成标准：源文件清单完整且无遗漏，排除列表正确，每个文件都有明确包含/排除理由。
+读取能力目录，识别：
+- **主入口文件**：skill 的 `SKILL.md`、workflow 的 `INDEX.md`、work entry 的 `<Name>.md`、command 的单文件 `.md`
+- **被引用文件**：主入口中通过路径引用的 `references/*.md`、`routes/*.md`、`atomic-skills/*.md` 等——在主入口中搜索 `](references/`、`](routes/` 等链接模式找到它们
+- **排除**：`_state/`、`.speculo/`、`.gitkeep`、`.DS_Store`、`node_modules/`
 
-3. 确定 canonical 元数据：`id` 取自主入口 frontmatter 的 `id`（或 `name`），`type` 取自主入口 frontmatter 的 `type` 或能力目录类型。文件按主入口 → references → routes → atomic-skills → assets → scripts 排序，主入口 `order="1"`。完成标准：`id` 与源入口一致，`type` 为有效值，文件排序符合 canonical-authoring.md 规则。
+完成标准：主入口已识别，所有被引用文件清单完整，排除列表正确。
 
-4. 生成 canonical 文档。优先使用 `scripts/canonicalize.mjs` 自动生成；需要手动控制内容时按 canonical/README.md 的 XML 模板手动拼接。自动生成后检查 id/type 是否与源一致。完成标准：每个源文件恰好对应一个 `<source-file>`，`order` 从 1 连续递增无跳号，`path` 使用正斜杠且指向真实文件，XML 特殊字符已转义。
+### 2. 读取全部源内容
 
-5. 验证生成的 canonical 文档：
-   - `<canonical>` 的 `id` 和 `type` 属性正确。
-   - `<source-file>` 数量与源文件清单一致。
-   - `order` 连续递增，主入口为 1。
-   - 源文件内容原样保留（包括 YAML frontmatter），未做合并或语义修改。
-   - 无 `_state/`、`.speculo/`、`.gitkeep` 等运行时路径被包含。
-   完成标准：所有验证项通过，或每个阻塞有明确修复指示。
+逐个读取主入口和所有被引用文件。记录每个文件的：
+- 文件名（用作隔离标签名，去 `.md` 扩展名，kebab-case）
+- 去掉 YAML frontmatter 后的正文内容
 
-6. 展示生成的 canonical 文档路径或内容摘要（文件数、每个 `<source-file>` 的 `path` 和大致行数），确认是否需要写入文件或仅输出到 stdout。完成标准：用户已确认输出目标和内容完整性。
+完成标准：所有文件内容已读取，frontmatter 块已标记待去除。
 
-## 文件选择
+### 3. 生成合并文档
 
-按 canonical-authoring.md 的规则：
+按以下结构输出单个 MD 文件：
 
-- **总是包含**：主入口 .md、`references/**/*.md`、`routes/**/*.md`、`atomic-skills/**/*.md`、`assets/**/*.json`、`_templates/**/*.md`。
-- **条件包含**：`scripts/**/*.mjs` 和 `*.sh` 内容 < 200 行直接包含，否则替换为描述性摘要。
-- **总是排除**：`_state/`、`.speculo/`、`.gitkeep`、`_state/changes/`、`_state/archive/`、`.config/`。
+```
+# <能力名称>
 
-## 自动化
+<主入口文件的正文，已去除 YAML frontmatter。其中所有 <Path>...</Path> 
+标签替换为纯文本描述，所有文件引用替换为指向文末隔离标签的说明。>
 
-推荐使用 `scripts/canonicalize.mjs` 自动生成。脚本自动处理：目录遍历、文件排序、content-type 检测、XML 转义、frontmatter 解析（自动检测 id/type）。仅当需要排除额外文件或调整排序时才手动干预。
+---
 
-```bash
-# 从 skill 目录
-node scripts/canonicalize.mjs template/skills/<name> --type skill --output canonical-<name>.md
-# 从 command 文件
-node scripts/canonicalize.mjs template/commands/<name>.md --output canonical-<name>.md
-# 从 workflow 目录
-node scripts/canonicalize.mjs template/workflows/<name> --type workflow --output canonical-<name>.md
+## 参考内容
+
+<每个被引用文件的内容，用 XML 隔离标签包裹。>
 ```
 
-## 验证
+**具体规则：**
 
-- 运行 `node scripts/canonicalize.mjs <path>` 确认脚本无错误输出且 XML 结构完整。
-- 检查生成的 canonical 文档中 `id` 匹配源 frontmatter。
-- 确认 `<source-file>` 数量等于源文件清单中应包含的文件数。
-- 无断链：canonical 文档内的 markdown 链接路径可匹配到对应 `<source-file path="...">`。
+- **去除所有 YAML frontmatter**：删除每个源文件开头的 `---` 块。这是 Speculo 内部元数据，网页平台不需要。
+- **`<Path>` 替换为纯文本**：将 `<Path>{roots.xxx}/path/to/file</Path>` 替换为自然语言描述。例如 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` → "同步更新 LOG.md"。`{change}` 等变量直接描述其含义即可。
+- **文件引用替换为内联标签引用**：将 `[某文档](references/xxx.md)` 替换为 "参见下方 `<xxx>` 标签中的完整内容"。目标是将所有需要的外部知识内联到本文档中。
+- **子文件用 XML 隔离标签包裹**：在主文档末尾，每个被引用文件用 `<文件名（去.md）>...</文件名>` 包裹。标签名取自文件名去扩展名，kebab-case。例如 `references/grilling-protocol.md` → `<grilling-protocol>...</grilling-protocol>`。
+- **标签内保留完整 markdown**：XML 隔离标签内的内容保留原始 markdown 格式（标题、列表、代码块等），仅去掉 YAML frontmatter。
+
+**输出格式示意：**
+
+```markdown
+# 设计访谈（带文档）
+
+组合 work——grilling 访谈技术 + domain-modeling 领域建模规程...
+
+## 流程
+
+### 1. 启动变更
+
+创建变更目录，初始化三个文档：ADR.md、LOG.md、CONTEXT.md。
+
+### 2. 访谈
+
+使用 grilling 访谈协议进行设计访谈。完整协议见下方 <grilling-protocol> 标签。
+
+### 3. 捕获文档
+
+按领域建模规程维护三个文档。完整规程见下方 <domain-modeling-rules> 标签。
+
+---
+
+## 参考内容
+
+<grilling-protocol>
+
+# 访谈协议
+
+...（grilling-protocol.md 的完整正文，无 frontmatter）...
+
+</grilling-protocol>
+
+<domain-modeling-rules>
+
+# 领域建模规程
+
+...（domain-modeling-rules.md 的完整正文，无 frontmatter）...
+
+</domain-modeling-rules>
+
+<adr-format>
+
+# ADR.md 格式
+
+...（adr-format.md 的完整正文，无 frontmatter）...
+
+</adr-format>
+```
+
+### 4. 质量检查
+
+- 全文搜索 `<Path` — 必须为 0 结果
+- 全文搜索 `---\nid:` 或 `---\ntype:` — 必须无 Speculo frontmatter 残留
+- 每个被引用文件都有对应的 XML 隔离标签
+- 主入口中的文件引用已替换为"参见下方 `<xxx>`"
+- XML 标签名与源文件名一致（去 .md）
+
+完成标准：无 `<Path>` 残留、无 frontmatter 残留、所有引用已内联。
+
+## 输出格式规范
+
+| 规则 | 说明 |
+|------|------|
+| 纯 Markdown | 不使用 `<canonical>` 或 `<source-file>` 包裹标签 |
+| 无 YAML frontmatter | 去除所有 `---` 元数据块 |
+| 无 `<Path>` 标签 | 替换为自然语言纯文本描述 |
+| 子文件 XML 隔离 | 用 `<filename>...</filename>` 包裹内联内容 |
+| 单文件自包含 | 全量内联，无外部依赖，无渐进式披露 |
+| 标签命名 | 取文件名去 `.md` 扩展名，kebab-case |
+
+## 上下文说明
+
+生成的 canonical 文档是上传到网页 AI 平台的**知识附件**——平台在每次对话中都会加载它。因此：
+- 内容应自包含，不依赖用户额外提供文件
+- 但如果能力涉及跨 workflow 引用（如 W-wayfinder 引用 G-grill-with-docs 的子文件），在文档开头注明建议的配套上传文件和 GitHub 仓库地址
+- 确保去除所有仅对 Speculo CLI 运行时有效的内部标记
+
+## 参考
+
+- 示例 canonical 文档：见 [references/canonical-example.md](references/canonical-example.md)
+- 质量模型：见 [../_shared/authoring-quality.md](../_shared/authoring-quality.md)

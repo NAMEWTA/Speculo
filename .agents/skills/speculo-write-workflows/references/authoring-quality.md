@@ -1,6 +1,6 @@
 # Speculo Authoring Quality Model
 
-本模型将 writing-great-skills 的方法用于 Speculo 资产维护。vendor 是只读事实源。
+本模型将 writing-great-skills 的方法用于 Speculo 资产维护。
 
 ## 根本目标
 

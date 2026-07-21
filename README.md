@@ -2,7 +2,7 @@
 
 > Workflow-packaged specification-driven development assets with install, update, and migration tooling.
 
-Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages, and vendor skill collections — delivered into any project via a unified CLI.
+Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
 
 ## Quick Start
 
@@ -58,7 +58,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `docs-sync` | Core documentation audit and synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `speculo-retro` | Retrospective analysis |
-| `worktree-isolation` | Git worktree isolation |
+| `dev-worktree` | Git worktree isolation for development |
 
 ### 2 Workflow Packages
 
@@ -69,11 +69,6 @@ After initialization, the target project gains the following AI agent-callable a
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
-### Vendor Skill Collections
-
-- **Matt Pocock skills** — The complete stable and explicitly enabled inventory, preserved as read-only vendor sources behind workflow-owned atomic wrappers.
-- **Khazix Skills (neat-freak)** — Knowledge governance and cleanup: stale content archiving, scattered knowledge consolidation, and outdated asset cleanup.
-
 ## Documentation
 
 - [AGENTS.md](./AGENTS.md) — AI agent handbook (authoritative)
@@ -82,9 +77,14 @@ Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entr
 - [.agents/skills/](./.agents/skills/) — Internal authoring tools for Speculo maintainers
 - [README-ZH.md](./README-ZH.md) — 中文镜像
 
-## Acknowledgments
+## Acknowledgments — Honoring Open Source Heritage
 
-Inspired by and built upon [Matt Pocock Skills](https://github.com/mattpocock/skills) — the pioneering work that shaped AI-assisted development workflows. Speculo extends this foundation with package-based workflow management, persistence contracts, and a unified install/migrate lifecycle.
+Speculo stands on the shoulders of pioneers. With deep gratitude, we honor:
+
+- **[Matt Pocock Skills](https://github.com/mattpocock/skills)** — the groundbreaking work that defined AI-assisted development workflows and inspired the very concept of packageable agent skills.
+- **[Khazix Skills](https://github.com/KKKKhazix/khazix-skills)** — a rich ecosystem of practical agent skills that demonstrated the power of community-driven workflow sharing.
+
+Speculo extends these foundations with package-based workflow management, persistence contracts, and a unified install/migrate lifecycle. We carry their spirit forward.
 
 ## License
 

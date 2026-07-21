@@ -7,7 +7,6 @@
     "state": "speculo/.speculo",
     "commands": "speculo/commands",
     "skills": "speculo/skills",
-    "workflows": "speculo/workflows",
-    "vendor": "speculo/vendor"
+    "workflows": "speculo/workflows"
   }
 }

@@ -17,7 +17,7 @@ function usage(): string {
     "             Pass --apply to perform the staged, rollback-safe migration.",
     "",
     "Options:",
-    "  --all      Select every workflow and fully refresh vendor assets during init.",
+    "  --all      Select every workflow and fully refresh all assets during init.",
     "  --apply    Apply a migration; without this flag migrate is always dry-run.",
   ].join("\n");
 }

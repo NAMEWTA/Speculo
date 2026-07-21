@@ -2,7 +2,7 @@
 
 > 将规范驱动开发资产打包为可安装工作流——安装、更新与迁移工具。
 
-Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages 和 vendor skill collections——通过统一的 CLI 安装到任意项目中。
+Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages——通过统一的 CLI 安装到任意项目中。
 
 ## 快速开始
 
@@ -58,7 +58,7 @@ npm install -g @namewta/speculo
 | `docs-sync` | 核心文档审计与同步 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
 | `speculo-retro` | 回顾分析 |
-| `worktree-isolation` | Git worktree 隔离 |
+| `dev-worktree` | Git worktree 开发隔离 |
 
 ### 2 个 Workflow Packages
 
@@ -69,11 +69,6 @@ npm install -g @namewta/speculo
 
 每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
 
-### Vendor Skill Collections
-
-- **Matt Pocock skills** — 完整的稳定与实验 inventory；vendor 原文保持只读，由 workflow atomic wrappers 负责适配。
-- **Khazix Skills (neat-freak)** — 知识治理与清理：过期内容归档、分散知识合并、过时资产清理。
-
 ## 文档
 
 - [AGENTS.md](./AGENTS.md) — AI 代理手册（权威）
@@ -82,9 +77,14 @@ npm install -g @namewta/speculo
 - [.agents/skills/](./.agents/skills/) — Speculo 维护者内部编写工具
 - [README.md](./README.md) — English version
 
-## 致敬
+## 致敬与开源传承
 
-灵感源自并构建于 [Matt Pocock Skills](https://github.com/mattpocock/skills) —— 塑造了 AI 辅助开发工作流的开创性项目。Speculo 在此基础上扩展了基于包的 workflow 管理、持久化契约以及统一的安装/迁移生命周期。
+Speculo 站在先行者的肩膀上。我们怀着深深的敬意，隆重致谢：
+
+- **[Matt Pocock Skills](https://github.com/mattpocock/skills)** —— 定义了 AI 辅助开发工作流的开创性项目，启发了"可打包 agent 技能"这一核心理念。
+- **[Khazix Skills](https://github.com/KKKKhazix/khazix-skills)** —— 丰富的实用 agent 技能生态，展现了社区驱动工作流共享的力量。
+
+Speculo 在此基础上扩展了基于包的 workflow 管理、持久化契约以及统一的安装/迁移生命周期。我们将传承他们的精神，继续前行。
 
 ## 许可证
 

@@ -18,7 +18,7 @@ Workflow 包内所有文件均为纯自然 markdown，不使用 XML 块。
 
 ### Work 入口文件（`<Letter>-<work>/<Letter>-<work>.md`）
 
-纯自然 markdown。仿 `<Path>{roots.vendor}/matt-pocock/productivity/writing-great-skills/SKILL.md</Path>` 的行文风格——编号步骤、内联完成标准、`<Path>` 指针引用子文件。无 XML 块。
+纯自然 markdown。仿 `<Path>{roots.skills}/writing-great-skills/SKILL.md</Path>` 的行文风格——编号步骤、内联完成标准、`<Path>` 指针引用子文件。无 XML 块。
 
 ## Package Structure
 
@@ -26,10 +26,13 @@ Workflow 包内所有文件均为纯自然 markdown，不使用 XML 块。
 workflows/<workflow>/
   INDEX.md               # 唯一入口——纯 markdown + AUTO-INDEX 标记
   <Letter>-<work>/       # work 条目（可多个），纯 markdown 入口
+  common/                # 可选：跨 work 共享的原子技能（dev-worktree、handoff 等）
+    <skill-name>/
+      SKILL.md           # 原子技能入口——YAML frontmatter + 纯自然 markdown
   _state/                # status.json, changes/, archive/（固定必需）
 ```
 
-只有 workflow 存在真实 SKILL 依赖时才创建 `atomic-skills/`；不要为空 package 添加占位目录或 README。
+`common/` 存放任何 work 都可能调用到的原子技能——每个技能有独立触发词、遵循渐进披露原则，通过 `<Path>{roots.workflows}/<workflow>/common/<skill-name>/SKILL.md</Path>` 被 work 引用。只有至少两个 work 需要该能力时才放入 `common/`；单一 work 专用的能力作为该 work 的子文件即可。不要为空 workflow 创建空的 `common/` 目录。
 
 ## INDEX.md
 

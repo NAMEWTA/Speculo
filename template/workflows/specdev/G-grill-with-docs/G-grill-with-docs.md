@@ -29,6 +29,8 @@ keywords: [设计, 访谈, 领域建模, ADR, 决策记录, 词汇表, 设计轨
 
 委托给 `<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`。一次一问，沿设计树逐分支推进，在用户确认共识之前不执行方案。访谈过程中随时更新 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`，记录每个确认、延后、替代的结论。
 
+若访谈中涉及不熟悉的外部技术、第三方 API、或需要查阅官方文档才能回答的设计问题，暂停访谈，调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 完成探查后再继续。
+
 **完成标准**：访谈完成——一次一问，决策树已遍历，共识已达成。LOG.md 已同步所有访谈结论。
 
 ### 3. 捕获文档

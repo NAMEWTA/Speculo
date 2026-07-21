@@ -17,4 +17,3 @@
 - `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar，不进入 `_state`，也不授予越过 workflow 确认规则的权限。
 - `.config` 不是标准目录；只有 workflow 声明时才可使用。
 - Command 报告命名为 `<YYYY-MM-DD>-<scope>-<topic>[-NN].md`，禁止覆盖。
-- Raw vendor SKILL 不直接选择持久化根；始终通过 work 入口的 `<Path>` 指针解析路径。

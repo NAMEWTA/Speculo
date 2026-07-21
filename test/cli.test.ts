@@ -29,43 +29,6 @@ async function tempProject(): Promise<string> {
   return mkdtemp(join(tmpdir(), "speculo-test-"));
 }
 
-interface VendorSkillInventoryEntry {
-  id: string;
-  path: string;
-  stability: "stable" | "experimental";
-  invocation: "user-only" | "model-allowed";
-}
-
-async function vendorSkillInventory(
-  root: string,
-  segments: string[] = []
-): Promise<VendorSkillInventoryEntry[]> {
-  const entries = await readdir(join(root, ...segments), { withFileTypes: true });
-  const inventory: VendorSkillInventoryEntry[] = [];
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      inventory.push(...await vendorSkillInventory(root, [...segments, entry.name]));
-      continue;
-    }
-    if (entry.name !== "SKILL.md") continue;
-    const content = await readFile(join(root, ...segments, entry.name), "utf8");
-    const id = content.match(/^name:\s*(.+)$/m)?.[1]?.trim();
-    assert.ok(id, `${join(...segments, entry.name)} must declare name`);
-    const stability = segments[0] === "in-progress" ? "experimental" : "stable";
-    const invocation =
-      stability === "experimental" || /^disable-model-invocation:\s*true$/m.test(content)
-        ? "user-only"
-        : "model-allowed";
-    inventory.push({
-      id,
-      path: [...segments, entry.name].join("/"),
-      stability,
-      invocation,
-    });
-  }
-  return inventory.sort((left, right) => left.id.localeCompare(right.id));
-}
-
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(join(path, ".."), { recursive: true });
   await writeFile(path, JSON.stringify(value, null, 2) + "\n");
@@ -142,18 +105,6 @@ async function createLegacyInstallation(target: string): Promise<void> {
   await mkdir(join(install, "workflows", "doc"), { recursive: true });
   await writeFile(join(install, "workflows", "dev", "AGENTS.md"), "legacy dev\n");
   await writeFile(join(install, "workflows", "doc", "AGENTS.md"), "legacy doc\n");
-  await mkdir(join(install, "vendor", "codebase-design"), { recursive: true });
-  await mkdir(join(install, "vendor", "resolving-merge-conflicts"), {
-    recursive: true,
-  });
-  await writeFile(
-    join(install, "vendor", "codebase-design", "SKILL.md"),
-    "legacy vendor\n"
-  );
-  await writeFile(
-    join(install, "vendor", "resolving-merge-conflicts", "SKILL.md"),
-    "legacy vendor\n"
-  );
 }
 
 async function createValidatorFixture(root: string, skillPath: string): Promise<void> {
@@ -166,7 +117,6 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
       commands: "speculo/commands",
       skills: "speculo/skills",
       workflows: "speculo/workflows",
-      vendor: "speculo/vendor",
     },
   });
   for (const name of [
@@ -303,19 +253,6 @@ describe("Speculo v3 CLI", () => {
         await pathExists(join(root, ".speculo", "person", "docs-sync.json")),
         false
       );
-      assert.equal(
-        await pathExists(
-          join(
-            root,
-            "vendor",
-            "matt-pocock",
-            "engineering",
-            "codebase-design",
-            "SKILL.md"
-          )
-        ),
-        true
-      );
       assert.equal(await pathExists(join(root, "workflows", "dev")), false);
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
       assert.equal(await pathExists(join(root, "commands", "grill-me.md")), false);
@@ -333,10 +270,6 @@ describe("Speculo v3 CLI", () => {
       );
       assert.equal(
         await pathExists(join(root, "skills", "knowledge-prune", "SKILL.md")),
-        false
-      );
-      assert.equal(
-        await pathExists(join(root, "vendor", "codebase-design")),
         false
       );
     } finally {
@@ -364,17 +297,12 @@ describe("Speculo v3 CLI", () => {
         await pathExists(join(root, ".speculo", "specdev")),
         false
       );
-      assert.equal(
-        await pathExists(join(root, "vendor", "matt-pocock")),
-        true
-      );
-      assert.equal(await pathExists(join(root, "vendor", "README.md")), true);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("SpecDev-only selection installs work entries and vendor tree", async () => {
+  it("SpecDev-only selection installs work entries", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
     try {
@@ -385,18 +313,6 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, "workflows", "person")),
         false
-      );
-      assert.equal(
-        await pathExists(
-          join(root, "vendor", "matt-pocock", "productivity", "grilling", "SKILL.md")
-        ),
-        true
-      );
-      assert.equal(
-        await pathExists(
-          join(root, "vendor", "matt-pocock", "productivity", "grill-me", "SKILL.md")
-        ),
-        true
       );
       assert.equal(
         await pathExists(
@@ -516,37 +432,6 @@ describe("Speculo v3 CLI", () => {
         "keep unselected"
       );
       assert.equal(await pathExists(join(root, "commands", "local.md")), false);
-    } finally {
-      await rm(target, { recursive: true, force: true });
-    }
-  });
-
-  it("default vendor update preserves native files while --all refreshes them", async () => {
-    const target = await tempProject();
-    const root = join(target, "speculo");
-    const grilling = join(
-      root,
-      "vendor",
-      "matt-pocock",
-      "productivity",
-      "grilling",
-      "SKILL.md"
-    );
-    try {
-      await initSpeculo(target, {
-        packageRoot,
-        selection: { workflowIds: ["specdev"] },
-      });
-      await writeFile(grilling, "custom native skill\n");
-
-      await initSpeculo(target, {
-        packageRoot,
-        selection: { workflowIds: ["specdev"] },
-      });
-      assert.equal(await readFile(grilling, "utf8"), "custom native skill\n");
-
-      await initSpeculo(target, { packageRoot, all: true });
-      assert.match(await readFile(grilling, "utf8"), /name: grilling/);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -726,12 +611,6 @@ describe("Speculo v3 CLI", () => {
       );
       assert.equal(await pathExists(join(root, "workflows", "dev")), false);
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
-      assert.equal(await pathExists(join(root, "vendor", "codebase-design")), false);
-      assert.equal(
-        await pathExists(join(root, "vendor", "resolving-merge-conflicts")),
-        false
-      );
-
       const second = await migrateSpeculo(target, {
         packageRoot,
         apply: true,

@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 /**
- * Canonicalize a Speculo capability directory into a single self-contained
- * .md document suitable for upload to AI platforms.
+ * @deprecated 此脚本生成旧版 canonical 格式（<canonical> XML 容器 + <source-file> 标签）。
+ * 新版格式使用纯 Markdown + 简单 XML 隔离标签，手动拼接即可。
+ * 生成流程见 .agents/skills/speculo-write-canonical/SKILL.md。
  *
- * Usage:
+ * Usage (legacy):
  *   node scripts/canonicalize.mjs <dir> [--id <id>] [--type skill|command|workflow] [--output <file>]
- *
- *   node scripts/canonicalize.mjs template/skills/knowledge-prune --type skill
  */
 
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
@@ -152,11 +151,20 @@ function walk(dir, base) {
   return files;
 }
 
-function sortFiles(files) {
+function sortFiles(files, dirBase) {
+  const dirName = basename(dirBase);
+  const isEntry = (relPath) => {
+    const name = basename(relPath);
+    // Standard entry candidates (SKILL.md, WORKFLOW.md)
+    if (ENTRY_CANDIDATES.includes(name)) return true;
+    // Workflow-entry pattern: <DirName>.md at root level
+    if (!relPath.includes("/") && name === `${dirName}.md`) return true;
+    return false;
+  };
   return files.sort((a, b) => {
-    // Entry files first (SKILL.md, WORKFLOW.md)
-    const aEntry = ENTRY_CANDIDATES.includes(basename(a.relPath)) ? 0 : 1;
-    const bEntry = ENTRY_CANDIDATES.includes(basename(b.relPath)) ? 0 : 1;
+    // Entry files first
+    const aEntry = isEntry(a.relPath) ? 0 : 1;
+    const bEntry = isEntry(b.relPath) ? 0 : 1;
     if (aEntry !== bEntry) return aEntry - bEntry;
 
     // Then by directory group: root > references > routes > atomic-skills > assets > scripts
@@ -234,7 +242,7 @@ if (allFiles.length === 0) {
   process.exit(1);
 }
 
-const sorted = sortFiles(allFiles);
+const sorted = sortFiles(allFiles, inputDir);
 const output = buildCanonical(sorted, id, type);
 
 if (outputFile) {

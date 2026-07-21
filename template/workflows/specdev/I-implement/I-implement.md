@@ -11,12 +11,15 @@ keywords: [实现, TDD, 代码审查, 模块设计, 重构]
 
 基于 spec 或 tickets 实现工作——融合设计检查、TDD、审查、提交的完整实现流程。每一步引用内部子文件，不依赖外部 skill。
 
-在开始实现之前，读取当前变更的上下文与架构决策：
+在开始实现之前，读取变更的上下文与架构决策：
 
-- **CONTEXT.md** —— 项目领域术语与概念：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
-- **ADR.md** —— 架构决策记录：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- **CONTEXT.md** —— 当前变更的领域术语与概念：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
+- **ADR.md** —— 当前变更的架构决策记录：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- **goal-plan.md** —— 如果存在目标规划文档，读取了解里程碑级约束和门禁次序：`<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
+- **永久 ADR** —— 已确认并提升到永久的架构决策，始终反映项目当前架构现状：`<Path>{roots.state}/specdev/adr/</Path>`
+- **永久 CONTEXT** —— 已确认并提升到永久的领域词汇表，始终反映项目当前领域术语现状：`<Path>{roots.state}/specdev/context/</Path>`
 
-如果这些文件不存在，先运行 `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>` 或询问用户以建立上下文。
+如果当前 change 下的 CONTEXT.md 或 ADR.md 不存在，先运行 `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>` 或询问用户以建立上下文。永久 ADR 和 CONTEXT 目录可能为空——静默继续，不影响后续流程。
 
 ## 流程
 
@@ -31,6 +34,8 @@ keywords: [实现, TDD, 代码审查, 模块设计, 重构]
 - 每个接缝处的依赖属于哪个类别？（进程内、本地可替换、远程但自有、真正的外部依赖——参见 `<Path>{roots.workflows}/specdev/I-implement/deepening.md</Path>`）
 
 如果需要探索替代接口设计，启动 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>` 流程。
+
+若设计检查中遇到不熟悉的库/框架 API、需要了解替代方案的技术细节或外部依赖的能力边界，先调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 完成探查后再继续接口评估。
 
 **完成标准**：模块接口设计已检查——深度、接缝位置、适配器策略合理。每个接缝的依赖类别已分类。
 

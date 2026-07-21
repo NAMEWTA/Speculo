@@ -23,7 +23,6 @@ const allowedXmlRoots = new Set([
   "transitions",
   "runtime-context",
   "persistence",
-  "vendor-path-mapping",
 ]);
 const staticReferenceTags = new Set([
   "atomic-skill",

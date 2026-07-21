@@ -176,38 +176,6 @@ async function writeAgentFiles(
   return written;
 }
 
-async function copyVendor(
-  packageRoot: string,
-  root: string,
-  selection: WorkflowSelection,
-  mode: "fresh" | "merge" | "overwrite"
-): Promise<string[]> {
-  const sourceRoot = await ensureAssetSource(packageRoot, "vendor");
-  const destinationRoot = join(root, "vendor");
-  const copied: string[] = [];
-
-  if (mode === "overwrite") {
-    await rm(destinationRoot, { recursive: true, force: true });
-  }
-  await mkdir(destinationRoot, { recursive: true });
-
-  const entries = await readdir(sourceRoot, { withFileTypes: true });
-  for (const entry of entries) {
-    const source = join(sourceRoot, entry.name);
-    const destination = join(destinationRoot, entry.name);
-    if (mode === "merge" && (await pathExists(destination))) continue;
-
-    await cp(source, destination, {
-      recursive: entry.isDirectory(),
-      force: mode === "overwrite",
-      errorOnExist: mode === "fresh",
-    });
-    copied.push("vendor/" + entry.name);
-  }
-
-  return copied;
-}
-
 async function copyWorkflowPackages(
   packageRoot: string,
   root: string,
@@ -289,8 +257,6 @@ async function initFresh(
 
   await mkdir(root, { recursive: true });
   const copied = await copyCoreAssets(packageRoot, root, false);
-  await copyVendor(packageRoot, root, selection, "fresh");
-  copied.push("vendor");
   copied.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, false)
   );
@@ -308,13 +274,6 @@ async function initUpdate(
   const root = installRoot(target);
   const selection = await resolveSelection(packageRoot, root, options, "update");
   const updated = await copyCoreAssets(packageRoot, root, true);
-
-  if (options.all) {
-    await copyVendor(packageRoot, root, selection, "overwrite");
-    updated.push("vendor");
-  } else {
-    updated.push(...await copyVendor(packageRoot, root, selection, "merge"));
-  }
 
   updated.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, true)

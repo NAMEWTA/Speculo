@@ -457,8 +457,6 @@ export async function planMigration(
   for (const legacyPath of [
     "workflows/dev",
     "workflows/doc",
-    "vendor/codebase-design",
-    "vendor/resolving-merge-conflicts",
   ]) {
     if (await pathExists(join(installRoot(resolvedTarget), legacyPath))) {
       actions.push({
@@ -790,8 +788,6 @@ async function moveLegacyAssetsToBackup(
   for (const relativePath of [
     "workflows/dev",
     "workflows/doc",
-    "vendor/codebase-design",
-    "vendor/resolving-merge-conflicts",
   ]) {
     const source = join(root, relativePath);
     if (!(await pathExists(source))) continue;

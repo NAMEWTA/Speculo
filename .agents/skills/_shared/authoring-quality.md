@@ -1,6 +1,6 @@
 # Speculo Authoring Quality Model
 
-本模型将 [writing-great-skills](../../../template/vendor/matt-pocock/productivity/writing-great-skills/SKILL.md) 的方法用于 Speculo 资产维护。需要术语精确定义时再读取同目录 [GLOSSARY.md](../../../template/vendor/matt-pocock/productivity/writing-great-skills/GLOSSARY.md)；vendor 是只读事实源。
+本模型将 [writing-great-skills](../../../template/skills/writing-great-skills/SKILL.md) 的方法用于 Speculo 资产维护。需要术语精确定义时再读取同目录 [GLOSSARY.md](../../../template/skills/writing-great-skills/GLOSSARY.md)；writing-great-skills 是只读事实源。
 
 ## 根本目标
 

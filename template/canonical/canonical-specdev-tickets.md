@@ -1,12 +1,3 @@
----
-id: specdev/tickets
-type: workflow-entry
-workflow: specdev
-name: 拆分 Tickets
-description: 将 spec 或计划拆分为一组曳光弹式垂直切片 tickets，每个声明阻塞边，持久化到变更目录。支持宽重构的扩展-收缩排序。
-keywords: [tickets, 拆分, 任务, 垂直切片, 阻塞, 曳光弹]
----
-
 # 拆分 Tickets
 
 将 plan、spec 或对话拆分为一组 **tickets** —— 曳光弹式垂直切片，每个 ticket 声明**阻塞**它的那些 tickets。
@@ -18,13 +9,13 @@ keywords: [tickets, 拆分, 任务, 垂直切片, 阻塞, 曳光弹]
 基于对话上下文中已有的内容进行工作。如果用户将某个引用（spec 路径或其他标识）作为参数传入，拉取它并读取其完整内容。
 
 主要输入来源：
-- 如果已有 spec，读取 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` —— 这是 ticket 拆分的首要依据。
-- 读取 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 了解本 change 的架构决策——ticket 不应与已做出的决策冲突。
-- 读取 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 了解本 change 的领域词汇表。
-- 读取 `<Path>{roots.state}/specdev/adr/</Path>` —— 已确认并提升到永久的架构决策，始终反映项目当前架构现状。
-- 读取 `<Path>{roots.state}/specdev/context/</Path>` —— 已确认并提升到永久的领域词汇表，始终反映项目当前领域术语现状。
+- 如果已有 spec，读取 ``spec`` —— 这是 ticket 拆分的首要依据。
+- 读取 ``ADR`` 了解本 change 的架构决策——ticket 不应与已做出的决策冲突。
+- 读取 ``CONTEXT`` 了解本 change 的领域词汇表。
+- 读取 `specdev/adr/` —— 已确认并提升到永久的架构决策，始终反映项目当前架构现状。
+- 读取 `specdev/context/` —— 已确认并提升到永久的领域词汇表，始终反映项目当前领域术语现状。
 
-如果尚未有 spec，可以基于对话中的计划或待办列表进行拆分，但优先建议用户先运行 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>` 产出 spec 以获得更精确的拆分。
+如果尚未有 spec，可以基于对话中的计划或待办列表进行拆分，但优先建议用户先运行 ``S-spec`` 产出 spec 以获得更精确的拆分。
 
 **完成标准**：上下文（spec、对话、代码库）已收集，所有必要输入源已读取。
 
@@ -38,8 +29,6 @@ keywords: [tickets, 拆分, 任务, 垂直切片, 阻塞, 曳光弹]
 - 识别即将被修改的模块——它们的接口是否清晰？依赖是否合理？
 - 如果某个模块的当前结构会使后续实现变得复杂，先提出一个重构 ticket，放在功能 tickets 之前。
 - 预重构必须独立有价值——不是为了"更干净"而重构，而是为了"让后续变更更安全/更简单"。
-
-若探索中遇到不熟悉的模块、外部依赖或第三方库——其接口设计意图和行为特征尚不明确——调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 完成探查后再继续识别预重构机会。
 
 **完成标准**：代码库已探索，预重构机会已识别，领域词汇表和 ADR 已纳入考量。
 
@@ -88,11 +77,11 @@ keywords: [tickets, 拆分, 任务, 垂直切片, 阻塞, 曳光弹]
 
 **5a. 创建 ticket 目录**
 
-创建 `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>` 目录。
+创建 `specdev/changes/{change}/ticket/` 目录。
 
 **5b. 写入单个 ticket 文件**
 
-按依赖顺序（无阻塞者在前，被阻塞者在后），为每个 ticket 创建独立文件 `<Path>{roots.state}/specdev/changes/{change}/ticket/#NN-<ticket-name>.md</Path>`。`#NN` 为 ticket 编号（`#01`, `#02`, ..., `#10`, ...），代表执行顺序。
+按依赖顺序（无阻塞者在前，被阻塞者在后），为每个 ticket 创建独立文件 `ticket/#NN-<ticket-name>.md`。`#NN` 为 ticket 编号（`#01`, `#02`, ..., `#10`, ...），代表执行顺序。
 
 每个 ticket 文件按以下模板填写：
 
@@ -172,37 +161,72 @@ keywords: [tickets, 拆分, 任务, 垂直切片, 阻塞, 曳光弹]
 
 **5c. 写入 tickets-map.md**
 
-创建 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`，作为所有 ticket 的总体地图和执行看板。格式遵循权威模板 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>`——加载该模板获取完整的节结构、表格列定义和填写约定。
+创建 ``tickets-map``，作为所有 ticket 的总体地图和执行看板。
 
-T-tickets 阶段填写的列：**编号**、**Ticket**、**被阻塞于**、**状态**（初始"未开始"）。**Gate** 和 **Contract ID** 列暂留空或标注 `[待标注]`——由后续 P-goal-plan 在标注门禁层级时填充。**依赖关系**节写入基础 ASCII 树形图（阻塞链），后续 P-goal-plan 在此基础上叠加门禁边界（`--- P0 gate ---`）、就绪标记 `[READY]` 和扇出标记 `[FAN-OUT: N路并行]`。**并行规则**节按模板保留——T-tickets 阶段写入规则文本，P-goal-plan 阶段可调整并发数。
+```markdown
+# Tickets Map: <工作简短名称>
+
+<一段话总结所有 ticket 共同构建的内容。如果拆分依据是 spec，引用 spec.md。如果基于对话或计划，说明来源。>
+
+## 执行清单
+
+| 编号 | Ticket | 被阻塞于 | 状态 |
+|------|--------|----------|------|
+| #01 | [ticket-name](./ticket/#01-ticket-name.md) | 无 | 未开始 |
+| #02 | [ticket-name](./ticket/#02-ticket-name.md) | #01 | 未开始 |
+| #10 | [ticket-name](./ticket/#10-ticket-name.md) | #02, #05 | 未开始 |
+
+> 状态枚举：未开始 / 进行中 / 已完成。所有 ticket 发布时初始状态为"未开始"，随实现进度手动更新。
+> **被阻塞于**列填写阻塞本 ticket 的 ticket 编号（如 `#01`、`#02, #05`），执行者需自行打开对应 ticket 文件查看其状态。不可仅凭此表判断——始终以对应 ticket 文件中的状态字段为准。
+
+## 依赖关系
+
+<!-- 用 ASCII 树形图展示 ticket 之间的阻塞关系。 -->
+
+```
+#01-<name>          ← 无阻塞，可立即开始
+  ├── #02-<name>    ← 阻塞于 #01
+  └── #03-<name>    ← 阻塞于 #01
+        └── #04-<name>  ← 阻塞于 #03
+```
+
+## 横切关注点
+
+<!-- 跨多个 ticket 的规则与约束。仅在有实际内容时填写，无则省略整个小节。 -->
+
+- **数据安全铁律**：<冻结的常量、不可改的 wire-format、持久化格式>
+- **契约先行**：<跨 ticket 的 schema/API 变更顺序约束>
+- **行号现场核对**：所有文件路径和行号为近似，实施时以现场代码为准。
+
+## 阻塞关系说明
+
+<!-- 依赖图的文字说明。简单线性链可省略整个小节。对于扩展-收缩模式，解释三阶段。 -->
+
+<描述为何 ticket #B 被 ticket #A 阻塞。扩展-收缩模式：扩展阶段创建新形式 → 迁移批次逐步切换调用点 → 收缩阶段删除旧形式。>
+
+## 风险与注意事项
+
+<!-- 跨 ticket 的风险、回滚考虑。无可省略整个小节。 -->
+```
 
 **tickets-map.md 填写说明：**
 
-- **执行清单**的 Ticket 列使用指向 `./ticket/` 目录的相对链接（含 `#` 编号前缀）
+- **执行清单**的 Ticket 列使用指向 `./ticket/` 目录的相对链接（含 `#` 编号前缀），可在 markdown 渲染器中直接点击跳转
 - **编号**列使用 `#01`、`#02`、`#10` 格式（`#` + 零填充序号），代表依赖顺序
-- **被阻塞于**列填写阻塞者的编号（如 `#01`、`#02, #05`）
+- **被阻塞于**列填写阻塞者的编号（如 `#01`、`#02, #05`），执行者需自行查看对应 ticket 文件的状态字段确认是否已就绪
 - **状态**列由 T-tickets 初始化为"未开始"，后续由实现者手动更新——始终以对应 ticket 文件中的状态字段为权威来源
-- **Gate** 列（P0/P1/P2）和 **Contract ID** 列由 P-goal-plan 填充；T-tickets 阶段留空或标 `[待标注]`
-- **依赖关系**用 ASCII 树形图展示阻塞链——T-tickets 写入基础结构，P-goal-plan 叠加门禁标注
+- **依赖关系**用 ASCII 树形图直观展示阻塞链；纯线性链用缩进列表即可
 - **横切关注点**只放跨 ticket 的规则——单 ticket 的规则留在该 ticket 文件内
-- **阻塞关系说明**在依赖图非平凡时补充文字解释
+- **阻塞关系说明**在依赖图非平凡时补充文字解释，特别是扩展-收缩排序的三阶段
 
-**完成标准**：`ticket/` 目录已创建，所有 ticket 独立文件已按依赖顺序写入（命名为 `#NN-<ticket-name>.md`）；`tickets-map.md` 已按 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>` 格式写入——包含总体摘要、六列执行清单（Gate 和 Contract ID 列为 `[待标注]`）、基础依赖关系 ASCII 树形图、并行规则和横切关注点；每个 ticket 声明阻塞边、战略与背景、范围边界、交付物、保留/不动和验收标准。
+**完成标准**：`ticket/` 目录已创建，所有 ticket 独立文件已按依赖顺序写入（命名为 `#NN-<ticket-name>.md`）；`tickets-map.md` 已写入——包含总体摘要、执行清单（编号、ticket 链接、被阻塞于、状态四列，初始均为"未开始"）、依赖关系图和横切关注点；每个 ticket 声明阻塞边（使用相对路径）、战略与背景、范围边界、交付物、保留/不动和验收标准。
 
 ## 子文件引用
 
-| 文件 | 内容 | 触发条件 |
-|------|------|----------|
-| `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>` | tickets-map.md 权威模板——执行清单六列表格、门禁标注 DAG、并行规则、横切关注点 | 进入步骤 5c「写入 tickets-map.md」时加载——T-tickets 按此模板输出基础结构，P-goal-plan 随后标注 Gate、Contract ID 和门禁 DAG |
+本入口为单文件 work，所有内容均已内联。以下引用供其他 work 读取产物：
 
-本入口为单文件 work，所有 ticket 拆分流程内容均已内联。以下引用供其他 work 读取产物：
-
-- `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` —— 总体地图与执行清单（编号 | Ticket | 被阻塞于 | Gate | Contract ID | 状态），格式遵循 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>` —— 独立 ticket 文件目录，每个文件命名为 `#NN-<ticket-name>.md`（`#NN` = `#01`, `#02`, ..., `#10`, ...）
-- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` —— 上游 spec（拆分依据）
-- `<Path>{roots.state}/specdev/adr/</Path>` —— 永久架构决策目录（已确认并提升的 ADR）
-- `<Path>{roots.state}/specdev/context/</Path>` —— 永久领域词汇表目录（已确认并提升的 CONTEXT）
-
-## 下一步
-
-如果 ticket 数量超过 10 个，建议运行 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>` 产出目标规划文档，定义里程碑级约束、质量门禁和执行协议，为大规模协调执行做准备。
+- ``tickets-map`` —— 总体地图与执行清单（编号 | Ticket | 被阻塞于 | 状态）
+- `specdev/changes/{change}/ticket/` —— 独立 ticket 文件目录，每个文件命名为 `#NN-<ticket-name>.md`（`#NN` = `#01`, `#02`, ..., `#10`, ...）
+- ``spec`` —— 上游 spec（拆分依据）
+- `specdev/adr/` —— 永久架构决策目录（已确认并提升的 ADR）
+- `specdev/context/` —— 永久领域词汇表目录（已确认并提升的 CONTEXT）

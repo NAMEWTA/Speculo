@@ -1,12 +1,3 @@
----
-id: specdev/spec
-type: workflow-entry
-workflow: specdev
-name: 编写 Spec
-description: 将当前对话综合为一份完整的 spec 文档，包含问题陈述、解决方案、用户故事、实现决策和测试决策，持久化到变更目录。
-keywords: [spec, 规范, 需求, PRD, 用户故事]
----
-
 # 编写 Spec
 
 此 work 读取当前对话上下文和代码库理解，产出一份 spec（你可能也称之为 PRD）。不要访谈用户 —— 仅综合你已经知道的内容。
@@ -17,13 +8,11 @@ keywords: [spec, 规范, 需求, PRD, 用户故事]
 
 探索仓库以了解代码库的当前状态（如果尚未这样做）。在整个 spec 中使用项目的领域词汇表，并尊重所涉及区域的任何 ADR。
 
-先读取 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 了解项目的领域词汇表——使用其中的术语定义，不要自创名称。
+先读取 ``CONTEXT`` 了解项目的领域词汇表——使用其中的术语定义，不要自创名称。
 
-再读取 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 了解已做出的架构决策——不要与已有决策冲突。如果 spec 涉及与某 ADR 相同或相邻的区域，在实现决策中引用该 ADR。
+再读取 ``ADR`` 了解已做出的架构决策——不要与已有决策冲突。如果 spec 涉及与某 ADR 相同或相邻的区域，在实现决策中引用该 ADR。
 
-`{change}` 为当前活跃变更的目录名，格式为 `<YYYY-MM-DD>-<topic>`。如果尚未创建变更目录，先运行 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 的启动变更阶段初始化 CONTEXT.md 和 ADR.md。
-
-若代码库探索中遇到不熟悉的模块、外部依赖、第三方 SDK 或技术领域，调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 进行针对性调查——了解其设计意图、API 契约和行为特征——再基于完整理解撰写 spec。
+`{change}` 为当前活跃变更的目录名，格式为 `<YYYY-MM-DD>-<topic>`。如果尚未创建变更目录，先运行 ``G-grill-with-docs`` 的启动变更阶段初始化 CONTEXT.md 和 ADR.md。
 
 **完成标准**：代码库当前状态已理解，领域词汇表和 ADR 已纳入考量。
 
@@ -47,7 +36,7 @@ keywords: [spec, 规范, 需求, PRD, 用户故事]
 
 ### 3. 编写 spec
 
-按以下模板编写完整 spec，写入 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`。
+按以下模板编写完整 spec，写入 ``spec``。
 
 ---
 
@@ -88,6 +77,6 @@ keywords: [spec, 规范, 需求, PRD, 用户故事]
 
 本入口为单文件 work，所有内容均已内联。以下引用仅在其他 work 需要读取 spec 时使用：
 
-- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` —— 编写的 spec 产物
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` —— 领域词汇表（阅读用）
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` —— 架构决策记录（阅读用）
+- ``spec`` —— 编写的 spec 产物
+- CONTEXT.md —— 领域词汇表（阅读用）
+- ADR.md —— 架构决策记录（阅读用）

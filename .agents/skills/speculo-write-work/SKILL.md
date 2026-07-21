@@ -31,8 +31,9 @@ Workflow 包内所有文件为纯自然 markdown，不使用 XML 块。本 skill
 - `<Path>{roots.skills}/_shared/authoring-quality.md</Path>` — 质量模型：主导词、信息层级、就近放置、完成标准、按调用/按顺序拆分、单一真相源、修剪规则
 - `<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>` — work 条目命名、frontmatter、格式规范
 - `<Path>{roots.skills}/speculo-write-workflows/references/persistence-contract.md</Path>` — 持久化根解析、变更目录、产物边界
-- `<Path>{roots.vendor}/matt-pocock/productivity/writing-great-skills/SKILL.md</Path>` — 写作风格参考（主导词、信息层级、完成标准、修剪原则、失败模式）
-- `<Path>{roots.vendor}/matt-pocock/productivity/writing-great-skills/GLOSSARY.md</Path>` — 术语精确定义
+- `<Path>{roots.skills}/writing-great-skills/SKILL.md</Path>` — 写作风格参考（主导词、信息层级、完成标准、修剪原则、失败模式）
+- `<Path>{roots.skills}/writing-great-skills/GLOSSARY.md</Path>` — 术语精确定义
+
 
 读取目标 workflow 的 `<Path>{roots.workflows}/<workflow>/INDEX.md</Path>` 和已有 work 目录，了解当前上下文。
 
@@ -111,7 +112,7 @@ keywords: [<主导词>, ...]         # YAML 数组
 ### 6. 验证与质量审计
 
 **指针验证**：
-- 所有 `<Path>` 使用 `{roots.xxx}` 别名（config、speculo、state、commands、skills、workflows、vendor）
+- 所有 `<Path>` 使用 `{roots.xxx}` 别名（config、speculo、state、commands、skills、workflows）
 - 无绝对路径、反斜杠、`..`、裸 id 引用
 - 所有指针解析到真实存在的文件
 
@@ -159,5 +160,5 @@ keywords: [<主导词>, ...]         # YAML 数组
 - 质量模型：`<Path>{roots.skills}/_shared/authoring-quality.md</Path>`
 - 包结构与 INDEX.md 规范：`<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>`
 - 持久化根解析与产物边界：`<Path>{roots.skills}/speculo-write-workflows/references/persistence-contract.md</Path>`
-- 写作风格与实践样例：`<Path>{roots.vendor}/matt-pocock/productivity/writing-great-skills/SKILL.md</Path>`
+
 - 参考实现（单文件/渐进披露）：specdev workflow 下 `S-spec/`、`G-grill-with-docs/`、`I-implement/`

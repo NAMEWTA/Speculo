@@ -18,7 +18,7 @@ template/             Shipped asset bundle
   commands/           4 command definitions
   skills/             6 skill directories
   workflows/          workflow packages with INDEX.md + work entries
-  vendor/             Native skill collections (matt-pocock, khazix-skills)
+
   canonical/          Single-file canonical distribution format for AI platforms
 test/                 CLI test suite
 scripts/              Build, validation, verification, and canonicalize tooling
@@ -59,11 +59,11 @@ speculo update                       Deprecated → delegates to speculo init --
 
 ## Template Asset Layout
 
-- **template/.speculo/workspace.json** — 7 root aliases: config, speculo, state, commands, skills, workflows, vendor
+- **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, retro, status
-- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, worktree-isolation
+- **template/skills/** — agents-md-builder, archive-and-consolidate, dev-worktree, docs-sync, github-npm-ops, speculo-retro
 - **template/workflows/** — specdev（研发全流程: D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, S-spec, T-tickets, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
-- **template/vendor/** — matt-pocock (raw upstream skills), khazix-skills (neat-freak: knowledge governance)
+
 - **template/canonical/** — canonical 格式规范、示例（README.md + canonical-skill-example.md）与 `scripts/canonicalize.mjs` 自动化工具
 
 ## Workflow Package Contract
@@ -82,7 +82,7 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 - **speculo-write-command** — Create/audit single-file commands
 - **speculo-write-skill** — Create/audit reusable skills
 - **speculo-write-work** — Write individual work entry files and progressive-disclosure sub-files within a workflow
-- **speculo-write-workflows** — Create/audit workflow packages, generate INDEX.md, and reconcile vendor Git changes
+- **speculo-write-workflows** — Create/audit workflow packages, generate INDEX.md, and track asset changes
 
 All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contract.md`, `_shared/authoring-quality.md`.
 
