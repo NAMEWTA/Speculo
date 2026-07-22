@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.11] - 2026-07-22
+
+### Fixed
+- T-tickets 编号契约去掉 `#` 前缀：文件名/编号列/阻塞路径/DAG 与派单协议统一为两位零填充纯数字（`01`），避免 tickets-map 链接被编码为 `%23`（#30）
+- P-goal-plan §5 执行协议强制引用 I-implement：开头声明本协议是 I-implement 的实例化，Lead 与简化模型步骤 1 清单均以 I-implement 为第一项（#29）
+
+### Changed
+- `IMPLEMENTER_DISPATCH` / `TICKET_DONE` 协议标签改为纯数字编号（`IMPLEMENTER_DISPATCH 01` / `TICKET_DONE 01`），不再使用 `#n`
+- `canonical-specdev-tickets.md` 与 T-tickets 编号契约锁步同步
+
+---
+
 ## [0.2.7] - 2026-07-21
 
 ### Fixed
