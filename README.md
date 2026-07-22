@@ -79,12 +79,15 @@ Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entr
 
 ## Acknowledgments — Honoring Open Source Heritage
 
-Speculo stands on the shoulders of pioneers. With deep gratitude, we honor:
+Speculo stands on the shoulders of pioneers — including our own failures. With deep gratitude, we honor:
 
+- **[SpecForge](https://github.com/NAMEWTA/specforge)** — the author's own previous project. A CLI-driven SDD tool whose failure taught us the most important lesson: in the AI era, documents are the interface, not CLI commands. Making humans learn commands to manage AI documents gets the relationship backwards.
 - **[Matt Pocock Skills](https://github.com/mattpocock/skills)** — the groundbreaking work that defined AI-assisted development workflows and inspired the very concept of packageable agent skills.
 - **[Khazix Skills](https://github.com/KKKKhazix/khazix-skills)** — a rich ecosystem of practical agent skills that demonstrated the power of community-driven workflow sharing.
+- **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight spec-driven development framework whose changes/ directory structure and archive mechanism deeply influenced Speculo's persistence contract design.
+- **[Superpowers](https://github.com/obra/superpowers)** — a complete agentic development methodology whose skill orchestration and subagent dispatch provided key reference for workflow package design.
 
-Speculo extends these foundations with package-based workflow management, persistence contracts, and a unified install/migrate lifecycle. We carry their spirit forward.
+Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a unified install/migrate lifecycle. We carry their spirit forward.
 
 ## License
 

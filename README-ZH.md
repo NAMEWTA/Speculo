@@ -79,12 +79,15 @@ npm install -g @namewta/speculo
 
 ## 致敬与开源传承
 
-Speculo 站在先行者的肩膀上。我们怀着深深的敬意，隆重致谢：
+Speculo 站在先行者的肩膀上——也包括我自己的失败。我们怀着深深的敬意，隆重致谢：
 
+- **[SpecForge](https://github.com/NAMEWTA/specforge)** —— 作者自己的上一代项目。一个 CLI 驱动的 SDD 工具，它的失败教会了我们最重要的一课：AI 时代的工具，CLI 不是入口，文档才是。让人类学命令去管理 AI 的文档，是本末倒置。
 - **[Matt Pocock Skills](https://github.com/mattpocock/skills)** —— 定义了 AI 辅助开发工作流的开创性项目，启发了"可打包 agent 技能"这一核心理念。
 - **[Khazix Skills](https://github.com/KKKKhazix/khazix-skills)** —— 丰富的实用 agent 技能生态，展现了社区驱动工作流共享的力量。
+- **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** —— 轻量级 spec 驱动开发框架，其 changes/ 目录结构与归档机制深刻影响了 Speculo 的持久化契约设计。
+- **[Superpowers](https://github.com/obra/superpowers)** —— 完整的 agentic 开发方法论，其技能编排与子代理调度为 workflow 包设计提供了重要参考。
 
-Speculo 在此基础上扩展了基于包的 workflow 管理、持久化契约以及统一的安装/迁移生命周期。我们将传承他们的精神，继续前行。
+Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt 继承技能方法论，从 OpenSpec 借鉴工程化管理，从 Superpowers 学习编排思想——形成基于包的 workflow 管理、持久化契约以及统一的安装/迁移生命周期。我们将传承他们的精神，继续前行。
 
 ## 许可证
 
