@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.12] - 2026-07-22
+
+### Added
+- T-triage workflow：外部 issue 摄入分诊——深度理解上下文后写入 source-issue.md 与 triage.md，推荐下一 work（#31）
+
+### Changed
+- **status.json schema 升级到 v2**：`active` 从 `string[]` 升级为 `object[]`，支持 per-change 维度的 `current_work`/`works_run`/`result` 独立追踪（#31）
+- 移除全局 `current_work` 字段，语义移至 per-change active 条目
+- `work_history` 条目增加 `change` 外键，移除 `artifacts` 字段
+- 新增 `completed` 数组记录已归档 change 的路径与时间
+- 新增 per-change `.status.json` 约定，追踪 change 生命周期状态
+- A-archive-and-consolidate 全链路联动：从 status.json `active` 筛选 `result: "completed"`，归档后追加到 `completed` 数组
+- W-wayfinder ticket 领取机制从全局 `active` 数组迁移到 per-change `claimed_tickets`
+
+---
+
 ## [0.2.11] - 2026-07-22
 
 ### Fixed
