@@ -127,7 +127,7 @@ description: >
 
 1. **重新验证**：路径包含检查、预检重跑（确认计划生成后无新 change 插入）、store 存在性重验。
 2. **执行顺序**：
-   a. **归档移动**（原子批处理）：创建月目录 → 移动 change 目录 → 更新 `.status.json` → 更新 `status.json#active`
+   a. **归档移动**（原子批处理）：创建月目录 → 移动 change 目录 → 更新 `.status.json` → 从 `status.json` 的 `active` 移除对应条目，追加到 `completed` 数组
    b. **知识合并写入**：创建 lazy stores（如 `adr/`、`context/` 不存在则创建）→ 写入新 ADR → 合并术语到 `context/` → 标记 superseded ADR
    c. **清理**：删除已批准文件 → 合并已批准内容 → 改写已批准条目
 3. 任一步骤失败：报告已完成/失败清单，停止，不猜测成功。
@@ -136,7 +136,7 @@ description: >
 
 1. 重读源路径：归档 change 必须不存在于 `changes_root/`。
 2. 重读目标路径：归档 change 完整存在于 `archive_root/<YYYY-MM>/`，知识 store 内容正确。
-3. 重读 `status.json`：`active` 数组不包含已归档 change。
+3. 重读 `status.json`：`active` 数组不包含已归档 change 条目，`completed` 数组已追加对应归档记录。
 4. 重读归档 `.status.json`：`change_status: archived`、`archived: true`、`archive_path` 一致。
 5. 对照知识 stores：新内容存在，无不期望的修改。
 6. 任一不一致 → `blocked`，报告具体差异；全部通过 → `verified`。

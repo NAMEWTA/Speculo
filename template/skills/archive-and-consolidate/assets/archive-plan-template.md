@@ -26,7 +26,8 @@
 
 归档执行后将对 `status.json` 做如下变更：
 
-- `active` 数组移除：`["2026-07-15-add-auth", "2026-07-10-fix-timezone"]`
+- `active` 数组移除对应 change 条目
+- `completed` 数组追加归档记录（`change`、`path`、`archived_at`、`archive_path`）
 - 每个归档 change 的 `.status.json` 更新：`change_status: archived`, `archived: true`
 
 ## 阻塞项详情

@@ -6,7 +6,7 @@ specdev workflow 的变更以 markdown 目录形式存储在 `{roots.state}/spec
 
 - 每个变更一个目录：`{roots.state}/specdev/changes/<YYYY-MM-DD>-<topic>/`
   - 例如：`changes/2026-07-21-add-auth-layer/`
-- 当前活跃变更通过 `{roots.state}/specdev/status.json` 的 `active` 数组追踪
+- 当前活跃变更通过 `{roots.state}/specdev/status.json` 的 `active` 数组追踪，每个条目为包含 `change`、`current_work`、`works_run`、`result` 等字段的对象
 - 归档变更移至：`{roots.state}/specdev/archive/YYYY-MM/<change>/`
   - 例如：`archive/2026-07/2026-07-21-add-auth-layer/`
 - 变更目录内的工作产物由各 work 定义，典型结构：
@@ -24,17 +24,24 @@ specdev workflow 的变更以 markdown 目录形式存储在 `{roots.state}/spec
 - `status.json` 结构：
   ```jsonc
   {
-    "schema_version": 1,
+    "schema_version": 2,
     "workflow": "specdev",
     "active": [
-      "2026-07-21-add-auth-layer"
-    ]
+      {
+        "change": "2026-07-21-add-auth-layer",
+        "current_work": "specdev/grill-with-docs",
+        "works_run": [],
+        "result": null
+      }
+    ],
+    "work_history": [],
+    "completed": []
   }
   ```
 
 ## 当 work 说"发布到变更目录"时
 
-在 `{roots.state}/specdev/changes/<change>/` 下创建或更新指定文件。如果变更目录尚未加入 `active` 数组，将其追加到 `status.json` 的 `active` 中。
+在 `{roots.state}/specdev/changes/<change>/` 下创建或更新指定文件。如果变更目录尚未加入 `active` 数组，将其作为新条目（`{ change, current_work: null, works_run: [], result: null }`）追加到 `status.json` 的 `active` 中。
 
 例如：`S-spec` 说"将规格发布到变更目录" → 写入 `<Path>{roots.state}/specdev/changes/<change>/spec.md</Path>`。
 
@@ -44,7 +51,7 @@ specdev workflow 的变更以 markdown 目录形式存储在 `{roots.state}/spec
 
 ## 当 work 说"归档变更"时
 
-将变更目录从 `{roots.state}/specdev/changes/<change>/` 移动到 `{roots.state}/specdev/archive/YYYY-MM/<change>/`（YYYY-MM 取变更日期中的年月），并从 `status.json` 的 `active` 数组中移除。
+将变更目录从 `{roots.state}/specdev/changes/<change>/` 移动到 `{roots.state}/specdev/archive/YYYY-MM/<change>/`（YYYY-MM 取变更日期中的年月），从 `status.json` 的 `active` 数组中移除对应条目，追加归档记录到 `completed` 数组。
 
 ## Wayfinding 操作
 

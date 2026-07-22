@@ -17,13 +17,14 @@ keywords: [设计, 访谈, 领域建模, ADR, 决策记录, 词汇表, 设计轨
 
 ### 1. 启动变更
 
-创建 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 目录（`{change}` 为 `<YYYY-MM-DD>-<topic>` 格式），初始化三个空文件模板：
+创建 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 目录（`{change}` 为 `<YYYY-MM-DD>-<topic>` 格式），初始化三个空文件模板及状态文件：
 
+- `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` — 初始状态（`change_status: "active"`、`created_at` 为当前时间、`completed_at: null`、`archived: false`、`archive_path: null`）
 - `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` — 架构决策记录，仅含 `# 架构决策记录` 标题
 - `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` — 设计决策日志，含 `# 设计决策日志` 标题及维护规则说明
 - `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` — 领域词汇表，含 `# {主题} 领域词汇表` 标题及一两句描述
 
-**完成标准**：变更目录 `<YYYY-MM-DD>-<topic>` 已创建，初始 ADR.md/LOG.md/CONTEXT.md 已就位。
+**完成标准**：变更目录 `<YYYY-MM-DD>-<topic>` 已创建，初始 .status.json、ADR.md、LOG.md、CONTEXT.md 已就位。
 
 ### 2. 访谈
 

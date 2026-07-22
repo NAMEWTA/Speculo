@@ -10,7 +10,7 @@
 2. **状态可解析**：`.status.json` 可解析，`change_status` 字段存在且值为 `completed`。
 3. **源存在**：源目录 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 真实存在。
 4. **目标不冲突**：目标目录 `<Path>{roots.state}/specdev/archive/<YYYY-MM>/<change>/</Path>` 不存在（YYYY-MM 从 change 名称提取）。
-5. **状态一致**：workflow `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组中包含该 change（或不包含但 change 自身状态为 completed——此时记录警告但不阻塞）。
+5. **状态一致**：`<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组中存在该 change 的条目（通过 `change` 字段匹配），且 `result` 为 `"completed"`（或不匹配但 change 自身 `.status.json` 状态为 completed——此时记录警告但不阻塞）。
 6. **worktree 已合并**：若使用了 worktree 隔离模式，确认已合并回目标分支并清理；未合并则记录 `blocked`。
 
 ## 归档移动步骤
@@ -19,7 +19,7 @@
 
 1. 创建 `<Path>{roots.state}/specdev/archive/<YYYY-MM>/</Path>` 月目录（如不存在）。
 2. 将 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 整个目录原子移动到 `<Path>{roots.state}/specdev/archive/<YYYY-MM>/<change>/</Path>`。使用 mv/rename，不用复制后删除。
-3. 从 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组中移除该 change。
+3. 从 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组中移除该 change 的条目，追加归档记录到 `completed` 数组（`change`、`path`、`archived_at`、`archive_path`）。
 4. 更新已移动的 `.status.json`：
    - `change_status: "archived"`
    - `archived: true`
@@ -42,7 +42,7 @@
 
 1. 源路径不存在（移动成功）。
 2. 目标路径完整存在，内容与移动前一致。
-3. `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组已移除该 change。
+3. `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组已移除该 change 条目，`completed` 数组已追加归档记录。
 4. 归档目录 `.status.json` 字段一致（`change_status: archived`、`archived: true`、`archive_path` 正确）。
 5. 验证失败时报告已完成/未完成清单，不猜测成功。
 

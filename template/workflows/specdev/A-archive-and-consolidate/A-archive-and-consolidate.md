@@ -23,7 +23,7 @@ keywords: [归档, 沉淀, 知识持久化, 清理, ADR, 词汇表, 研究]
 
 ### 2. 扫描已完成变更
 
-遍历 `<Path>{roots.state}/specdev/changes/</Path>`，读取每个变更的 `.status.json`，筛选 `change_status: completed`。收集每个已完成变更的 ADR.md、CONTEXT.md、LOG.md 及 research/ 子目录产物。
+遍历 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组，筛选 `result: "completed"` 的 change；同时遍历 `<Path>{roots.state}/specdev/changes/</Path>`，读取每个变更的 `.status.json` 作为补充（`change_status: completed`）。收集每个已完成变更的 ADR.md、CONTEXT.md、LOG.md 及 research/ 子目录产物。
 
 **完成标准**：每个已完成变更的元数据和知识产物已收集；无可读产物的变更已标注原因。
 
