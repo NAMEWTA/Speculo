@@ -70,11 +70,11 @@
 #### TICKET_DONE 格式（Lead+Subagent 模型）
 
 ```
-TICKET_DONE #<n> (<k>/<N>) gate=<P0|P1|P2> contract_ids=<P0-01,P1-03> verify=<cmd:result> commit=<sha>
+TICKET_DONE <n> (<k>/<N>) gate=<P0|P1|P2> contract_ids=<P0-01,P1-03> verify=<cmd:result> commit=<sha>
 ```
 
 字段说明：
-- `#<n>` —— ticket 编号
+- `<n>` —— ticket 编号（两位零填充纯数字，如 `01`，不含 `#`）
 - `(<k>/<N>)` —— 进度计数（当前第几个 / 总数）
 - `gate` —— 门禁层级
 - `contract_ids` —— 如激活合同模式，列出本 ticket 覆盖的合同条目 ID，逗号分隔；如无合同则使用 `adr_ref=<ADR-NNNN>`
@@ -94,7 +94,7 @@ MILESTONE_DONE issues_closed=<N>/<N> contract_todo=0 verify=GREEN
 #### 格式变体
 
 - **切面跟踪**（ticket 数 > 15 时推荐）：在 TICKET_DONE 中增加 `slice=<ADR|DATA|SHELL|WORK|...>` 字段，按切面分组追踪进度
-- **简化模型**：使用简化格式 `TICKET_DONE #<n> verify=<cmd:result>`
+- **简化模型**：使用简化格式 `TICKET_DONE <n> verify=<cmd:result>`
 
 ### 草拟与确认
 

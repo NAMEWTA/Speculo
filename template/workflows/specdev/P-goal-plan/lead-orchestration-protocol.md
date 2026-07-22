@@ -17,14 +17,14 @@
 | 目标规划文档 | `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` | 里程碑级约束、门禁次序、Definition of Done——子代理理解全局上下文和自身 ticket 在整体中的位置 |
 | ticket 文件 | `<Path>{roots.state}/specdev/changes/{change}/</Path>` 下对应 ticket | 验收标准、file allowlist、合同引用、阻塞关系——子代理的直接任务定义，包含「要构建什么」「范围边界」「保留/不动」 |
 | 合同验收条目 | 合同文档中本 ticket 覆盖的条目（如激活合同模式） | 编号验收条目及当前状态——子代理必须逐个满足的可检查条件 |
-| 实现方法参考 | `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` | 深层模块设计原则、TDD 红绿循环、双轴审查流程——子代理的实现方法论，确保所有子代理采用一致的工程质量标准 |
+| 实现方法参考 | `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` | 深层模块设计原则、TDD 红绿循环、双轴审查流程——子代理的实现方法论；子代理开始实现前**必须先读**，与 goal-plan §5 步骤 1 第一项一致 |
 
 ### 1.2 派单模板
 
 Lead 向子代理发送的内容应包含以下结构化信息块，而非仅一行元数据：
 
 ```
-IMPLEMENTER_DISPATCH #<n>
+IMPLEMENTER_DISPATCH <n>
   issue: <url>
   gate: <P0|P1|P2>
   allowlist: <files>
@@ -36,9 +36,11 @@ IMPLEMENTER_DISPATCH #<n>
   context: <{roots.state}/specdev/changes/{change}/CONTEXT.md>
   permanent_context: <{roots.state}/specdev/context/>
   goal_plan: <{roots.state}/specdev/changes/{change}/goal-plan.md>
-  ticket_file: <{roots.state}/specdev/changes/{change}/<ticket-file>>
+  ticket_file: <{roots.state}/specdev/changes/{change}/ticket/<nn>-<slug>.md>
   implement_ref: <{roots.workflows}/specdev/I-implement/I-implement.md>
 ```
+
+其中 `<n>` / `<nn>` 为两位零填充纯数字 ticket 编号（如 `01`），不含 `#`。
 
 Lead 在生成子代理时将以上文件作为上下文传入，确保子代理在开始实现前已读取全部载荷。永久 ADR 和永久 CONTEXT 目录可能为空——静默继续。
 
