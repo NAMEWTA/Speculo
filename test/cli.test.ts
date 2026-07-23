@@ -256,7 +256,7 @@ describe("Speculo v3 CLI", () => {
       assert.equal(await pathExists(join(root, "workflows", "dev")), false);
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
       assert.equal(await pathExists(join(root, "commands", "grill-me.md")), false);
-      assert.equal(await pathExists(join(root, "commands", "handoff.md")), false);
+      assert.equal(await pathExists(join(root, "commands", "handoff.md")), true);
       assert.equal(await pathExists(join(root, "commands", "docs-sync.md")), true);
       assert.equal(await pathExists(join(root, "commands", "finalize.md")), false);
       assert.equal(await pathExists(join(root, "commands", "knowledge-prune.md")), false);
