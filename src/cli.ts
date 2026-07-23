@@ -3,23 +3,55 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
 import { migrateSpeculo } from "./migrate.js";
+import {
+  checkForUpdate,
+  formatVersionBanner,
+  type VersionInfo,
+} from "./version.js";
 
 function usage(): string {
   return [
     "Usage:",
     "  speculo init [--all] [target]",
     "  speculo migrate [--apply] [target]",
+    "  speculo version",
     "",
     "Commands:",
     "  init       Install or refresh Speculo core assets and selected workflow packages.",
     "             Existing workflow state under speculo/.speculo/ is never overwritten.",
     "  migrate    Preview migration from v2 or transitional v3 state to the current v3 contract.",
     "             Pass --apply to perform the staged, rollback-safe migration.",
+    "  version    Print the current Speculo version and check for updates.",
     "",
     "Options:",
     "  --all      Select every workflow and fully refresh all assets during init.",
     "  --apply    Apply a migration; without this flag migrate is always dry-run.",
   ].join("\n");
+}
+
+function isInteractive(): boolean {
+  return process.stdin.isTTY === true;
+}
+
+async function showVersionWithCheck(
+  packageRoot: string,
+  packageName: string
+): Promise<VersionInfo> {
+  const info = await checkForUpdate(packageRoot, packageName);
+  console.log(formatVersionBanner(info));
+  return info;
+}
+
+async function confirmContinue(): Promise<boolean> {
+  if (!isInteractive()) {
+    return true;
+  }
+
+  const { confirm } = await import("@inquirer/prompts");
+  return confirm({
+    message: "是否继续运行 speculo init？",
+    default: true,
+  });
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -30,9 +62,9 @@ async function main(argv: string[]): Promise<number> {
   );
   const [command, targetArg, extra] = positional;
 
-  if (!command || command === "--help" || command === "-h") {
+  if (command === "--help" || command === "-h") {
     console.log(usage());
-    return command ? 0 : 1;
+    return 0;
   }
 
   if (extra) {
@@ -43,15 +75,34 @@ async function main(argv: string[]): Promise<number> {
 
   const target = resolve(targetArg ?? ".");
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const packageName = "@namewta/speculo";
 
   try {
-    if (command === "init") {
+    // ── version ──────────────────────────────────────────────
+    if (command === "version") {
+      await showVersionWithCheck(packageRoot, packageName);
+      return 0;
+    }
+
+    // ── init (or no command → default to init) ───────────────
+    if (!command || command === "init") {
       if (applyFlag) {
         throw new Error("--apply is only valid with `speculo migrate`.");
       }
-      const result = await initSpeculo(target, {
+
+      // Show version info and check for updates
+      await showVersionWithCheck(packageRoot, packageName);
+
+      // Confirm before proceeding
+      const proceed = await confirmContinue();
+      if (!proceed) {
+        console.log("已取消。");
+        return 0;
+      }
+
+      const result = await initSpeculo(targetArg ?? ".", {
         packageRoot,
-        all: allFlag,
+        all: command === "init" ? allFlag : false,
       });
       console.log(
         result.mode === "init"
@@ -64,6 +115,7 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
+    // ── migrate ──────────────────────────────────────────────
     if (command === "migrate") {
       if (allFlag) {
         throw new Error("--all is only valid with `speculo init`.");
@@ -94,6 +146,7 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
+    // ── update (deprecated) ──────────────────────────────────
     if (command === "update") {
       console.error("Warning: `speculo update` is deprecated. Use `speculo init`.");
       const result = await initSpeculo(target, {
