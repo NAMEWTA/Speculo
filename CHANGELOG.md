@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.15] - 2026-07-23
+
+### Fixed
+- 修复 handoff command 迁移后 CI 测试断言：`commands/handoff.md` 现为 first-class command，init 后应存在
+
+---
+
 ## [0.2.14] - 2026-07-23
 
 ### Changed
