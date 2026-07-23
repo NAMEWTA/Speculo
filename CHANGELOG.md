@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.13] - 2026-07-23
+
+### Added
+- `speculo version` 命令：查看当前安装版本，自动检查 npm registry 最新版本并提示升级
+- `speculo` / `speculo init` 启动时自动版本检查：显示本地版本与远程最新版本比对，交互模式下确认后继续
+
+---
+
 ## [0.2.12] - 2026-07-22
 
 ### Added
