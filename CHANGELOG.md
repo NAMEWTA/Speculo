@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.16] - 2026-07-24
+
+### Fixed
+- 修复 `speculo init` 未生成 `speculo/config.json` 的回归问题（#33）
+
+### Added
+- handoff 命令新增「路径引用规范」小节，要求文件引用统一使用项目根目录相对路径（#32）
+
+---
+
 ## [0.2.15] - 2026-07-23
 
 ### Fixed
