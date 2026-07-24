@@ -205,6 +205,16 @@ describe("Speculo v3 CLI", () => {
       );
       assert.equal(workspace.path_base, "project-root");
       assert.equal(workspace.roots.state, "speculo/.speculo");
+      assert.equal(workspace.roots.config, "speculo/config.json");
+      assert.equal(
+        await pathExists(join(root, "config.json")),
+        true
+      );
+      const config = JSON.parse(
+        await readFile(join(root, "config.json"), "utf8")
+      );
+      assert.equal(config.schema_version, 1);
+      assert.equal(config.language, "zh-CN");
       assert.equal(
         await pathExists(join(root, ".speculo", "commands", "docs-sync", "state.json")),
         false
@@ -381,6 +391,14 @@ describe("Speculo v3 CLI", () => {
       );
       await writeFile(join(root, "commands", "local.md"), "remove");
 
+      // Write custom config.json to verify it is not overwritten during update
+      await writeJson(join(root, "config.json"), {
+        schema_version: 1,
+        language: "en",
+        persistence: { root_override: "/custom" },
+        defaults: { confirm_before_external_write: false, report_language: "en" },
+      });
+
       await initSpeculo(target, {
         packageRoot,
         selection: { workflowIds: ["specdev"] },
@@ -432,6 +450,14 @@ describe("Speculo v3 CLI", () => {
         "keep unselected"
       );
       assert.equal(await pathExists(join(root, "commands", "local.md")), false);
+
+      // Verify custom config.json was preserved (not overwritten by update)
+      const configAfter = JSON.parse(
+        await readFile(join(root, "config.json"), "utf8")
+      );
+      assert.equal(configAfter.language, "en");
+      assert.equal(configAfter.persistence.root_override, "/custom");
+      assert.equal(configAfter.defaults.confirm_before_external_write, false);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

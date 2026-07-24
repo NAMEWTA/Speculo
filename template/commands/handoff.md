@@ -32,3 +32,15 @@ speculo/.speculo/commands/handoff/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
 清除任何敏感信息，如 API 密钥、密码或个人身份信息。
 
 如果用户传入了参数，将其视为对下一个会话重点内容的描述，并据此定制文档。
+
+## 路径引用规范
+
+文档中所有文件/文件夹引用必须使用**项目根目录**的相对路径。
+
+- ✅ `cde-base/cde-modules/cde-gba/cde-gba-universal/`
+- ✅ `sql/current/other_domain.sql`
+- ✅ `speculo/.speculo/specdev/changes/2026-07-21-gba-info-json-extension/spec.md`
+- ❌ `../../specdev/changes/...` — 相对于 handoff 文件，脱离目录后不可定位
+- ❌ `cde-base` — 裸名，无法判断是目录/文件/子模块
+
+例外：skills 名称属于逻辑标识而非文件路径，不适用此规则。

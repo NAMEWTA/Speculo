@@ -24,7 +24,7 @@ export type SpeculoOptions = {
   selection?: WorkflowSelection;
 };
 
-const CORE_ASSETS = [".speculo", "commands", "skills"] as const;
+const CORE_ASSETS = [".speculo", "commands", "skills", "config.json"] as const;
 const INSTALL_SUBDIR = "speculo";
 const WORKFLOW_ENTRY = "INDEX.md";
 const STATE_TEMPLATE_DIR = "_state";
@@ -61,6 +61,13 @@ async function copyCoreAssets(
     if (asset === ".speculo" && overwrite) {
       await copyMissingTree(source, destination);
       copied.push(asset);
+      continue;
+    }
+    if (asset === "config.json" && overwrite) {
+      if (!(await pathExists(destination))) {
+        await cp(source, destination);
+        copied.push(asset);
+      }
       continue;
     }
     if (overwrite && asset !== ".speculo") {
