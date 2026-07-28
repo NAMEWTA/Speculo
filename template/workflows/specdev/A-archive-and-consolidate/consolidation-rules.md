@@ -14,7 +14,7 @@
 
 ### 内容格式
 
-遵循 `<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>` 定义的格式：
+永久库 ADR 与变更内 ADR（`<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>` 的 `## NNNN: 标题` 段落格式）格式不同——永久库使用独立文件与结构化字段：
 
 ```markdown
 # ADR-NNNN: {标题}
@@ -25,6 +25,8 @@
 - **决策内容**：{具体决策是什么}
 - **后果**：{这个决策带来的影响，正面和负面}
 ```
+
+从变更内 ADR 提升时：标题取 `## NNNN: {标题}` 中的标题文本，正文扩写为上述五字段；来源 change 与原编号写入「决策上下文」。
 
 ### Supersede 处理
 
@@ -38,7 +40,7 @@
 
 ### 从 LOG 提升
 
-若变更的 `LOG.md` 中存在 `LOG-XXXX: accepted` 条目，其结论满足 ADR 三条件（不可逆 + 令人意外 + 真实权衡）但未正式记录为 ADR，则：
+若变更的 `LOG.md` 中存在 `LOG-XXXX: accepted` 条目，其结论满足 ADR 三条件（难以逆转 + 令人意外 + 真实权衡）但未正式记录为 ADR，则：
 
 1. 创建正式 ADR 文件
 2. 在 Context 中注明"从 `<change-name>` 的 LOG-XXXX 提升"

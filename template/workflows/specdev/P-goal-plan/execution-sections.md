@@ -32,7 +32,7 @@ P0 门禁先开，阻塞所有 P1/P2 关闭。ticket 可以在其依赖就绪后
 - 用注释标注门禁边界：`--- P0 gate ---`
 - 可立即开始的 ticket 标注 `[READY]`
 - 扇出点标注 `[FAN-OUT: N路并行]`
-- ticket 编号使用两位零填充纯数字（`01`, `02`, …），**不含** `#`
+- ticket 编号格式见 T-tickets（两位零填充纯数字，不含 `#`）
 
 示例格式：
 ```
@@ -75,7 +75,7 @@ tickets-map.md 的「并行规则」节已由模板预设默认值（最大 3 �
 
    Lead 读取 issue 全文、合同/参考权威对应行、ticket 的验收标准。如果激活参考权威模式，对照参考快照中的对应交互路径。
 
-2. **派单** —— Lead 输出结构化派单行 `IMPLEMENTER_DISPATCH <n> issue=<url> gate=<P0|P1|P2> allowlist=<files> contract_ids=<...>`（`<n>` 为两位零填充纯数字编号，如 `01`，不含 `#`），然后生成实现子代理（model: fable, 唯一 name）。Lead+Subagent 模型下，加载 `<Path>{roots.workflows}/specdev/P-goal-plan/lead-orchestration-protocol.md</Path>` 获取完整的编排协议——包括子代理上下文载荷结构、handoff 交接、合并冲突解决、Worktree 隔离和收尾审查的详细步骤。
+2. **派单** —— Lead 输出结构化派单行 `IMPLEMENTER_DISPATCH <n> issue=<url> gate=<P0|P1|P2> allowlist=<files> contract_ids=<...>`（`<n>` 编号格式见 T-tickets），然后生成实现子代理（使用当前可用的最强实现模型，唯一 name）。Lead+Subagent 模型下，加载 `<Path>{roots.workflows}/specdev/P-goal-plan/lead-orchestration-protocol.md</Path>` 获取完整的编排协议——包括子代理上下文载荷结构、handoff 交接、合并冲突解决、Worktree 隔离和收尾审查的详细步骤。
 3. **实现** —— 子代理在 file allowlist 内实现变更，按 ticket 指定的测试矩阵运行测试；实现过程遵循 I-implement 的设计检查与 TDD 红绿循环。
 4. **双轴审查** —— 实现完成后，立即启动两个审查子代理并行运行：
    - `reviewer-standards-<n>`：代码质量、架构、测试覆盖

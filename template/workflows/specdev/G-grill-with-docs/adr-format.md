@@ -2,6 +2,8 @@
 
 所有架构决策记录存放在变更目录的单一 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 文件中。不使用 `docs/adr/` 目录下的编号文件，所有决策在一个文件内按二级标题分段。
 
+> 变更内格式为 `## NNNN: 标题` 段落。经 `A-archive-and-consolidate` 提升到永久库 `<Path>{roots.state}/specdev/adr/</Path>` 后，转为独立文件 `# ADR-NNNN: 标题` + 结构化字段（见 consolidation-rules）。
+
 ## 模板
 
 ```md

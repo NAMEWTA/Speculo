@@ -70,7 +70,7 @@
 
 - ticket 数量从 tickets-map.md 统计
 - 合同条目从合同文档的表格行计数
-- verify 命令从 spec.md Test Decisions 提取，如无则使用 `pnpm verify`
+- verify 命令从 spec.md Test Decisions 提取，如无则从项目脚本（package.json scripts、Makefile 等）探测整体验证命令，不确定时询问用户
 - 锁定裁定数量从 §2 提取
 
 ### 草拟与确认

@@ -3,8 +3,8 @@ id: archive-and-consolidate
 type: command
 name: Archive and Consolidate
 description: >
-  归档已完成 change，从归档中提取知识合并到 _state/ 知识 store（ADR/、CONTEXT.md、DOMAIN.md、LESSONS.md、RULES.md），
-  并清理过时/重复知识。默认 dry-run，需用户确认后执行。取代 finalize 和 knowledge-prune 的归档与清理能力。
+  归档已完成 change，从归档中提取知识合并到 workflow 声明的知识 store（如 adr/、context/），
+  并清理过时/重复知识。默认 dry-run，需用户确认后执行。
 keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 清理, 收尾]
 ---
 
@@ -12,7 +12,7 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 ## 报告
 
-统一写入：`speculo/.speculo/commands/archive-and-consolidate/<YYYY-MM-DD>-<workflow>-<scope>[-NN].md`。
+统一写入：`speculo/.speculo/commands/archive-and-consolidate/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
 
 报告必须记录：`mode`（dry-run 或 executed）、选中的 workflow、归档计划、合并计划、清理候选、用户确认状态和最终结果。
 

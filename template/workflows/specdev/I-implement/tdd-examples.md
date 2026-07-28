@@ -78,7 +78,7 @@ test("calculateTotal sums line items", () => {
 
 ---
 
-# 何时使用 Mock
+## 何时使用 Mock
 
 仅在**系统边界**处使用 Mock：
 

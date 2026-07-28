@@ -54,12 +54,7 @@
 
 1. **确定扫描起点**：`scan_root = root / target_subdir`，若未指定则为 `root`。
 2. **递归遍历**：从 `scan_root` 递归遍历所有子目录。
-3. **跳过忽略目录**：以下目录不进入、不扫描、不处理：
-   - `.git`、`node_modules`、`dist`、`target`、`.turbo`
-   - `coverage`、`__pycache__`、`.idea`、`.vscode`
-   - `build`、`out`、`.next`、`.nuxt`
-   - `vendor`、`bower_components`
-   - 任何在 `.gitignore` 中且非被跟踪的目录
+3. **跳过忽略目录**：见文末「忽略目录完整清单」；另跳过任何在 `.gitignore` 中且非被跟踪的目录。
 4. **检测 manifest**：对每个非忽略目录，检查是否存在任何 manifest 文件。
 5. **选择主 manifest**：按优先级选择。
 6. **应用过滤**：若用户指定了 `manifest_filter`，仅保留匹配该类型的目录。

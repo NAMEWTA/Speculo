@@ -112,6 +112,7 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
     schema_version: 1,
     path_base: "project-root",
     roots: {
+      config: "speculo/config.json",
       speculo: "speculo",
       state: "speculo/.speculo",
       commands: "speculo/commands",
@@ -124,6 +125,7 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
     "speculo-write-workflows",
     "speculo-write-command",
     "speculo-write-canonical",
+    "speculo-write-work",
   ]) {
     const dir = join(root, ".agents", "skills", name);
     await mkdir(dir, { recursive: true });
@@ -147,7 +149,7 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
     join(root, "template", "workflows", "example", "_state", "status.json"),
     { schema_version: 1, workflow: "example", active: [] }
   );
-  // New-model single-file INDEX.md (isSingleFile=true → validator skips XML checks)
+  // Full package INDEX.md (type: workflow requires all 7 sections)
   await writeFile(
     join(root, "template", "workflows", "example", "INDEX.md"),
     [
@@ -157,34 +159,51 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
       "workflow: example",
       "name: Example",
       "description: Example workflow for validator testing",
+      "keywords: [example]",
       "---",
       "",
       "# Example Workflow",
       "",
-      "```xml",
-      "<sequence>",
-      '  <phase id="load-persistence" order="1">',
-      '    <instructions root="workflow" path="INDEX.md" activation="required" />',
-      "    <completion>persistence loaded</completion>",
-      "  </phase>",
-      "</sequence>",
-      "```",
+      "## 运行时根",
+      "",
+      "- workflow 根解析为 template/workflows/example/",
+      "- state 根解析为 template 运行时 state",
+      "",
+      "## 持久化约定",
+      "",
+      "| 名称 | 路径 | 说明 |",
+      "|------|------|------|",
+      "| 状态索引 | status.json | workflow 全局状态 |",
+      "| 活跃变更 | changes/ | 进行中的 change |",
+      "| 变更归档 | archive/ | 已归档 change |",
+      "",
+      "## 启动协议",
+      "",
+      "1. 解析运行时",
+      "2. 选择 change",
+      "",
+      "## 状态字段",
+      "",
+      "- schema_version",
+      "- workflow",
+      "- active",
+      "",
+      "## 路径分配",
+      "",
+      "产物写入当前 change 目录。",
+      "",
+      "## 副作用边界",
+      "",
+      "确认前不得执行破坏性操作。",
+      "",
+      "## Work 条目",
+      "",
+      "<!-- AUTO-INDEX-START -->",
+      "",
+      "<!-- AUTO-INDEX-END -->",
       "",
     ].join("\n")
   );
-
-  for (const name of [
-    "speculo-write-skill",
-    "speculo-write-workflows",
-    "speculo-write-command",
-  ]) {
-    const skillDir = join(root, ".agents", "skills", name);
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(
-      join(skillDir, "SKILL.md"),
-      `---\nname: ${name}\ndescription: Fixture skill\n---\n\n# Fixture\n`
-    );
-  }
 }
 
 describe("Speculo v3 CLI", () => {

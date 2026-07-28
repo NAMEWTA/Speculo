@@ -19,8 +19,6 @@
 - 路径等于 `scan_root`
 - 通常包含 `.git`、顶层 CI 配置、workspace 声明等
 
-**模板**：`templates/repo-root-AGENTS.md`
-
 ### 优先级 2：`scripts-docs`
 
 **判定条件**：目录是特批的脚本/文档目录。
@@ -34,8 +32,6 @@
 - 只为根目录生成 AGENTS.md，不为子目录继续生成
 - 必须显式说明“这是特批文档例外，不是 manifest 模块”
 - 必须区分“可执行脚本”“SQL 资产”“配置模板”“运行时数据目录”
-
-**模板**：`templates/scripts-docs-AGENTS.md`
 
 ### 优先级 3：`aggregator`
 
@@ -60,8 +56,6 @@
 - 必须写清“哪些问题必须进入哪个子模块继续调查”
 - 聚合层只说编排，不展开子模块实现
 
-**模板**：`templates/aggregator-AGENTS.md`
-
 ### 优先级 4：`runnable-app`
 
 **判定条件**：无子模块声明，但有明确的运行入口。
@@ -85,8 +79,6 @@
 - 必须写清内部依赖模块如何接入到当前应用
 - 不改写成叶子模块的膨胀版
 
-**模板**：`templates/runnable-app-AGENTS.md`
-
 ### 优先级 5：`contract-module`
 
 **判定条件**：无子模块、无运行入口，主要职责是暴露类型、契约、配置或依赖约束。
@@ -108,8 +100,6 @@
 - 没有 `src/` 时，显式说明这是约束层而非实现层
 - 不要误写成运行时代码模块
 
-**模板**：`templates/contract-module-AGENTS.md`
-
 ### 优先级 6：`capability-module`
 
 **判定条件**：以上都不匹配的其余所有 manifest 目录。
@@ -124,8 +114,6 @@
 - 必须写清导出面、核心分层、关键业务/能力入口
 - 必须写清内部依赖与上游消费方
 - 区分它是更偏能力模块、业务模块还是集成模块
-
-**模板**：`templates/capability-module-AGENTS.md`
 
 ## 角色判定流程图
 

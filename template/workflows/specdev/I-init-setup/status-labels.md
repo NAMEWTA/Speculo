@@ -1,6 +1,6 @@
 # 状态标签
 
-specdev 各 work 使用五种规范的状态角色来追踪工作项的生命周期。本文件将这些角色映射到持久化文件中使用的实际标签字符串。
+specdev 的 issue 分诊（`T-triage` 及 `common/triage` skill）使用五种规范的状态角色来追踪工作项的生命周期。本文件将这些角色映射到持久化文件中使用的实际标签字符串。
 
 | 角色 | 标签 | 含义 |
 |------|------|------|
@@ -16,9 +16,8 @@ specdev 各 work 使用五种规范的状态角色来追踪工作项的生命周
 
 标签字符串写入位置取决于具体 work：
 
-- **T-tickets** —— 写入工作项文件（`tickets/NN-<slug>.md`）顶部的 `Status:` 行
-- **W-wayfinder** —— 写入 `wayfinder/map.md` 中工作项的状态标记
-- **其他 work** —— 在变更目录的相应产物文件中以 frontmatter 或元数据行形式记录
+- **T-triage** —— 写入变更目录 `triage.md` 的推荐 status 字段（参见 T-triage 步骤 4）
+- **其他 work** —— 引用这些角色时，在变更目录的相应产物文件中以元数据行形式记录
 
 ## 状态流转
 
@@ -51,4 +50,4 @@ needs-triage ──→ needs-info ──→ needs-triage ──→ ready-for-age
 | `ready-for-human` | `需人工` |
 | `wontfix` | `不处理` |
 
-确保标签字符串在实际使用位置（tickets 文件、wayfinder 地图等）保持一致。
+确保标签字符串在实际使用位置（triage.md 等产物文件）保持一致。

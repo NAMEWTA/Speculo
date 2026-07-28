@@ -46,7 +46,7 @@ Workflow 包有一个 INDEX.md、若干 `<Letter>-<work>/` 目录，以及可选
 
 ## 过程
 
-1. 读取 `<Path>{roots.agents}/AGENTS.md</Path>`、`<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>`、`<Path>{roots.skills}/speculo-write-workflows/references/persistence-contract.md</Path>` 和 `<Path>{roots.skills}/speculo-write-workflows/references/authoring-quality.md</Path>`。完成标准：workflow 包结构、INDEX.md 更新规则、work 命名规则（`<大写字母>-<work_name>/`）和渐进披露要求已列成检查项。
+1. 读取 `AGENTS.md`、`<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>`、`docs/persistence-contract.md` 和 `<Path>{roots.skills}/_shared/authoring-quality.md</Path>`。完成标准：workflow 包结构、INDEX.md 更新规则、work 命名规则（`<大写字母>-<work_name>/`）和渐进披露要求已列成检查项。
 
 2. 扫描目标 workflow 的现有 work 目录（`<Letter>-<work>/`）、`common/` 原子技能、INDEX.md 和 `_state/`。按独立主导词和持久化责任判断新增、合并或重命名。完成标准：每个 work 只有一个清晰职责，无重复主导词；`common/` 中只保留至少两个 work 都会调用的技能（单一 work 专用的应移入该 work 的子文件）；`_state/` 模板包含 `status.json`、`changes/` 和 `archive/`。
 
@@ -88,10 +88,11 @@ INDEX.md 是 workflow 的唯一入口文件，纯自然 markdown。完整模板�
 
 编写 INDEX.md 时必须遵守以下硬性规则：
 
-1. **持久化约定只列真实存在的目录**：
+1. **持久化约定只列真实存在或有明确生成者的目录**：
    - 固定骨架（`speculo init` 创建）：`status.json`、`changes/`、`archive/`
-   - 确认后按需创建（changes 产物经确认后提升）：`adr/`（永久 ADR）、`context/`（永久词汇表）
-   - 禁止列出不存在的目录（如 `.config/`、`config.json`、`knowledge/` 等）。按需临时产物属于 work 内部行为
+   - 确认后按需创建（changes 产物经确认后提升）：`adr/`（永久 ADR）、`context/`（永久词汇表）、`research/`（永久研究库，如 workflow 使用）
+   - 运行时生成目录（如 `.config/`、`config.json`）须注明生成者与时机后方可列出
+   - 禁止列出无生成者、无时机说明的虚构目录
 
 2. **状态字段必须完整**：`status.json` 中每个字段必须写清楚：字段名、类型、用途、可能值（字符串列出格式如 `"YYYY-MM-DD-<topic>"`，数组列出元素类型，对象列出子字段）。不允许只列字段名不加说明。标准字段集：
    - `schema_version`（数字）

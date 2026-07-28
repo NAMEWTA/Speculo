@@ -40,7 +40,7 @@ IMPLEMENTER_DISPATCH <n>
   implement_ref: <{roots.workflows}/specdev/I-implement/I-implement.md>
 ```
 
-其中 `<n>` / `<nn>` 为两位零填充纯数字 ticket 编号（如 `01`），不含 `#`。
+其中 `<n>` / `<nn>` 为 ticket 编号（格式见 T-tickets：两位零填充纯数字，不含 `#`）。
 
 Lead 在生成子代理时将以上文件作为上下文传入，确保子代理在开始实现前已读取全部载荷。永久 ADR 和永久 CONTEXT 目录可能为空——静默继续。
 
@@ -118,14 +118,11 @@ Lead 在生成子代理时将以上文件作为上下文传入，确保子代理
 
 子代理完成实现并通过审查和门禁后：
 
-1. Lead 调用 `<Path>{roots.workflows}/specdev/common/dev-worktree/SKILL.md</Path>` Phase B
-2. Phase B 流程：验证测试通过 → 展示选项（本地合并/PR/保留/丢弃）→ 执行所选选项
-3. 默认选项为本地合并：checkout base → pull → `git merge --no-ff <change_branch>` → 在合并结果上重跑测试
-4. 合并成功后，从主仓库根目录执行：`git worktree remove <path>` → `git branch -d <branch>` → `git worktree prune`
-5. 更新 `.status.json`：`worktree_status: removed`
-6. 如果 worktree finalize 期间出现合并冲突，跳转到 §3 合并冲突解决协议
+1. Lead 调用 `<Path>{roots.workflows}/specdev/common/dev-worktree/SKILL.md</Path>` Phase B（完整命令序列见 `common/dev-worktree/references/finalize.md`）
+2. 默认选项为本地合并；合并冲突跳转到 §3
+3. 更新 `.status.json`：`worktree_status: removed`
 
-**完成标准**：每个并发子代理在独立 worktree 中工作，分支名 `speculo/specdev/<change>-<ticket-n>`；任意两个子代理的 file allowlist 无重叠；基线测试在 worktree 创建时通过；子代理完成后 worktree 已合并回 base 分支、worktree 目录和临时分支已清理；`.status.json` 反映最终状态。
+**完成标准**：每个并发子代理在独立 worktree 中工作，分支名 `speculo/specdev/<change>-<ticket-n>`；任意两个子代理的 file allowlist 无重叠；基线测试在 worktree 创建时通过；子代理完成后 worktree 已按 finalize 规程合并并清理；`.status.json` 反映最终状态。
 
 ## 5. 里程碑收尾审查与清理
 

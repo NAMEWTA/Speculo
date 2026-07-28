@@ -15,13 +15,13 @@ keywords: [寻路, 地图, 探索, 规划, 战争迷雾, 调研]
 
 ## 规划，而非执行
 
-Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图完成时路径就清晰了 —— 在某人动手做事之前没有任何剩余的决策。想要直接动手做事的冲动通常就是信号，表明你已经到达地图的边缘，是时候移交了。一项工作可以通过其 **Notes** 覆盖此行为 —— 将执行带入地图本身 —— 但如果没有明确说明，产出决策，而非可交付成果。
+Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图完成时路径就清晰了 —— 在某人动手做事之前没有任何剩余的决策。想要直接动手做事的冲动通常就是信号，表明你已经到达地图的边缘，是时候移交了。一项工作可以通过其「说明」章节覆盖此行为 —— 将执行带入地图本身 —— 但如果没有明确说明，产出决策，而非可交付成果。
 
 ## 用名称引用
 
-每张地图和每个 ticket 都有其**名称** —— 即其标题或标识。在人类阅读的所有内容中 —— 叙述、地图的 Decisions-so-far —— 使用名称引用它，绝不使用裸 ID、编号或 slug。一堵 `#42, #43, #44` 的墙是难以阅读的；名称可以一目了然。引用标记不会消失 —— 名称包裹着其引用 —— 但它们在名称*内部*，绝不是名称的替代品。
+每张地图和每个 ticket 都有其**名称** —— 即其标题或标识。在人类阅读的所有内容中 —— 叙述、地图的 「已做出的决策」 —— 使用名称引用它，绝不使用裸 ID、编号或 slug。一堵 `#42, #43, #44` 的墙是难以阅读的；名称可以一目了然。引用标记不会消失 —— 名称包裹着其引用 —— 但它们在名称*内部*，绝不是名称的替代品。
 
-在本地 markdown 地图中，使用 Markdown 链接 `[ticket 标题](#ticket-标题)` 进行引用。已解决的 tickets 在地图的 Decisions-so-far 中以 `- [ticket 标题] —— 答案概括` 形式索引。
+在本地 markdown 地图中，使用 Markdown 链接 `[ticket 标题](#ticket-标题)` 进行引用。已解决的 tickets 在地图的 「已做出的决策」 中以 `- [ticket 标题] —— 答案概括` 形式索引。
 
 ## 地图
 
@@ -29,11 +29,7 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 
 地图是一个**索引**，而非存储。它列出已做出的决策并指向持有其详细信息的 tickets；一个决策只存在于一个地方 —— 其 ticket —— 因此地图从不重述，仅概括并链接。
 
-**地图物理结构：** 地图文件本身是 markdown 文件。Tickets 是地图文件内的编号 task list items，而非外部 issues。每个 ticket 拥有一个独立的 markdown 小节，包含标题、类型标签、问题和答案。状态通过 checkbox 标记追踪（`- [ ]` 开放，`- [x]` 已解决）。阻塞关系通过"被阻塞于"字段声明，以 ticket 标题引用。
-
-**前沿查询：** 前沿上的 tickets 是指：checkbox 未勾选（开放）、其"被阻塞于"中列出的所有 tickets 均已勾选（无阻塞）、且尚未被领取的 tickets。Agent 通过阅读地图文件本身即可识别前沿。
-
-**领取机制：** 当一个 agent 会话开始处理某个 ticket 时，它应在 `<Path>{roots.state}/specdev/status.json</Path>` 的当前 change 的 `active` 条目中，将 ticket 名称追加到 `claimed_tickets` 数组，以便并发会话跳过它。处理完成后从 `claimed_tickets` 中移除。`claimed_tickets` 中存在记录即为领取标记。
+**地图物理结构：** 地图文件本身是 markdown 文件。Tickets 是地图文件内的编号 task list items，而非外部 issues。每个 ticket 拥有一个独立的 markdown 小节，包含标题、类型标签、问题和答案。状态通过 checkbox 标记追踪（`- [ ]` 开放，`- [x]` 已解决）。阻塞、领取与前沿的定义见下方「Tickets」节。
 
 ### 地图正文
 
@@ -104,7 +100,7 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 每个 ticket 要么是 **HITL** —— 人在回路中，与一个代表自己发言的人类*一起*工作 —— 要么是 **AFK**，由 agent 独立驱动。HITL ticket 只能通过实时交流来解决；agent 绝不代替人类一方发言（一个自问自答的质询 agent 已经破坏了这一点）。
 
 - **Research**（AFK）：调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 启动后台 Agent 针对一手来源调查问题，在 ticket 的答案中链接研究产出文件。当需要当前工作目录之外的知识时使用。
-- **Prototype**（HITL）：通过制作一个廉价、粗糙、具体的产物来提高讨论的保真度 —— 大纲、粗略尝试、桩代码、或 UI/逻辑代码。将原型链接为资产。当"它应该是什么样子"或"它应该怎样表现"是关键问题时使用。
+- **Prototype**（HITL）：调用 `<Path>{roots.workflows}/specdev/common/prototype/SKILL.md</Path>` 制作一个廉价、粗糙、具体的产物来提高讨论的保真度 —— 大纲、粗略尝试、桩代码、或 UI/逻辑代码。将原型链接为资产。当"它应该是什么样子"或"它应该怎样表现"是关键问题时使用。
 - **Grilling**（HITL）：通过 `<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>` 访谈协议逐个问题进行对话。同时使用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>` 维护领域模型。默认情况 —— 当不确定类型时选此。
 - **Task**（HITL 或 AFK）：在*决策*能够做出之前必须完成的手动工作 —— 没有需要决定、原型化或研究的内容，但讨论被阻塞直到完成。注册服务以便判断其 API、开通访问权限、移动数据以便看到其形态。这是唯一一个*执行*而非决策的类型 —— 它通过为决策解除阻塞来赢得其位置，而非通过交付目标。Agent 在可能的情况下独立驱动（AFK）；否则它交给人类一份精确的清单（HITL）。当工作完成时解决；答案记录已完成的工作以及后续 tickets 依赖的任何结果性事实（凭据位置、新 URL、行数）。
 
@@ -119,7 +115,7 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 - **做成 ticket 当** 问题已经清晰 —— 即使它被阻塞，你尚不能行动。你能写出明确的"问题"段落。
 - **尚未明确当** 你还无法如此精确地表述它。不要将迷雾预先切成 ticket 大小的碎片：它比 ticket 更粗糙，一个补丁可能在当前沿到达时升级为多个 tickets，或零个。
 
-**尚未明确**排除已决策的内容（Decisions-so-far）、已有的活跃 ticket 以及超出范围的内容（下一节）。
+**尚未明确**排除已决策的内容（「已做出的决策」）、已有的活跃 ticket 以及超出范围的内容（下一节）。
 
 ## 超出范围
 
@@ -145,9 +141,9 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 
    **完成标准**：前沿的开放决策和第一步已浮现；迷雾部分已识别并草拟。
 
-3. **创建地图**：写入 `<Path>{roots.state}/specdev/changes/{change}/map.md</Path>`，填写 Destination 和 Notes，Decisions-so-far 为空，迷雾草拟进**尚未明确**。
+3. **创建地图**：写入 `<Path>{roots.state}/specdev/changes/{change}/map.md</Path>`，填写「目的地」和「说明」，「已做出的决策」 为空，迷雾草拟进**尚未明确**。
 
-   **完成标准**：地图文件已创建，Destination、Notes、尚未明确、超出范围均已填写。
+   **完成标准**：地图文件已创建，目的地、说明、尚未明确、超出范围均已填写。
 
 4. **创建你现在能明确的 tickets** 作为地图文件内的小节 —— 然后在**第二遍**中连接阻塞边（tickets 需要首先有标题才能相互引用）。连接关系将它们排序为前沿和被阻塞；你尚无法明确的都在迷雾中 —— **尚未明确**章节。
 
@@ -159,21 +155,21 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 
 用户带着一张地图（变更目录或 map.md 路径）调用。Ticket 是**可选的** —— 不提供时，你选择下一个决策，而非用户。
 
-1. **加载地图** —— 低分辨率视图（Destination、Notes、Decisions-so-far、尚未明确、超出范围），而非每个 ticket 的完整正文。
+1. **加载地图** —— 低分辨率视图（目的地、说明、已做出的决策、尚未明确、超出范围），而非每个 ticket 的完整正文。
 
    **完成标准**：地图的低分辨率视图已加载，当前状态已理解。
 
-2. **选择 ticket。** 如果用户指定了一个，使用它。否则按顺序选择第一个前沿 ticket（开放、未被阻塞、未被领取）。**领取它**：在任何工作之前将 ticket 名称追加到 `<Path>{roots.state}/specdev/status.json</Path>` 的当前 change 的 `active` 条目中的 `claimed_tickets` 数组。
+2. **选择 ticket。** 如果用户指定了一个，使用它。否则按顺序选择第一个前沿 ticket。**领取它**（规则见上方「Tickets」节）。
 
    **完成标准**：一个前沿 ticket 已被选中并领取。
 
-3. **解决它** —— **按需缩放**：按需拉取任何相关或已关闭 ticket 的完整正文；调用 Notes 块中指定的技能。根据 ticket 类型选择解决方式：**research** ticket 调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>`；**grilling** ticket 使用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 进行访谈；**prototype** 和 **task** 按各自问题描述执行。查阅 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>` 维护领域模型的一致性。
+3. **解决它** —— **按需缩放**：按需拉取任何相关或已关闭 ticket 的完整正文；调用「说明」中指定的技能。根据 ticket 类型选择解决方式：**research** 调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>`；**grilling** 使用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`；**prototype** 调用 `<Path>{roots.workflows}/specdev/common/prototype/SKILL.md</Path>`；**task** 按问题描述执行。查阅 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>` 维护领域模型。
 
    **完成标准**：ticket 的问题已解决，答案已记录。
 
-4. **记录解决方案：** 在 ticket 的"答案"小节中填写答案，将 checkbox 从 `- [ ]` 改为 `- [x]`，在地图的 Decisions-so-far 中**追加一条上下文指针**：`- [ticket 标题] —— 答案的一句话概括`。从 `<Path>{roots.state}/specdev/status.json</Path>` 的当前 change 的 `active` 条目中的 `claimed_tickets` 数组中移除该 ticket。
+4. **记录解决方案：** 在 ticket 的"答案"小节中填写答案，将 checkbox 从 `- [ ]` 改为 `- [x]`，在地图的「已做出的决策」中**追加一条上下文指针**：`- [ticket 标题] —— 答案的一句话概括`。从 `claimed_tickets` 中移除该 ticket（规则见上方「Tickets」节）。
 
-   **完成标准**：ticket checkbox 已勾选，Decisions-so-far 已更新，active 数组已清理。
+   **完成标准**：ticket checkbox 已勾选，「已做出的决策」已更新，领取标记已清除。
 
 5. **添加新浮现的 tickets** 作为地图文件内新的小节（先创建再连接阻塞边）；升级答案使任何变得可明确的迷雾，从**尚未明确**中清除每个已升级的补丁，使其仅以其新 ticket 的形式存在。如果答案揭示某个 ticket —— 这个或其他 —— 位于目标之外，**将其裁定为超出范围**而非在路径上解决它。如果该决策使地图的其他部分无效，更新或删除这些 tickets（勾选并注明无效原因）。
 
@@ -186,7 +182,7 @@ Wayfinder 默认进行**规划**：每个 ticket 解决一个决策，当地图�
 当所有 tickets 已关闭（勾选）、迷雾已清空（尚未明确为空或仅剩无法继续分解的模糊项）、且通往目标的路径已清晰时，地图完成。向用户汇报：
 
 - 目的地是否已可抵达——路径上的每个步骤是否都已有明确的 ticket 或决策
-- Decisions-so-far 中的关键结论摘要
+- 「已做出的决策」 中的关键结论摘要
 - 剩余的任何**尚未明确**项——它们是否阻碍行动，还是可作为实现细节处理
 - 建议的下一步行动（移交实现、开始执行、或重新划定目标）
 

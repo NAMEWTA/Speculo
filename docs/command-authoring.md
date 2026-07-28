@@ -17,6 +17,7 @@
 ## Command Structure
 
 - 单文件入口：frontmatter 含 `id`、`type: command`、`name`、`description`、`keywords`。
+- 可选附加字段：`argument-hint`、`disable-model-invocation`（Claude Code 原生字段，可与 Speculo 字段并存）。
 - 报告路径：`speculo/.speculo/commands/<command>/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`。
 - Scope 必须从文件名可见，完整选择写入报告 frontmatter。
 - Command 是薄编排和审计回执的所有者；被调用 skill 不自行持久化。

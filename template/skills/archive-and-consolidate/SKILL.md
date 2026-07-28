@@ -119,7 +119,7 @@ description: >
 3. 显式标注所有破坏性动作（移动、删除、改写）。
 4. 报告摘要：待归档 change 数、待合并知识项数、待清理候选数、需确认项数。
 5. 呈现给用户并显式声明：**"未修改任何文件。此为 dry-run 计划，请确认后执行。"**
-6. dry-run 到此完成；调用方负责将报告写入 `commands_root/archive-and-consolidate/<YYYY-MM-DD>-<workflow>-<scope>[-NN].md`。
+6. dry-run 到此完成；调用方负责将报告写入 `commands_root/archive-and-consolidate/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
 
 ### Step 7：执行已确认动作
 

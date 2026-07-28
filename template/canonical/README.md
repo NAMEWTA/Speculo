@@ -86,3 +86,4 @@ Canonical 文档是源文件的**透明容器**——去除 Speculo 内部元数
 
 - **Workflow 体积**：workflow 文件较多，生成的 canonical 文档较长。这属于预期行为——自包含性优先于简洁性。
 - **跨 workflow 引用**：如果能力引用了其他 workflow 的文件，在文档开头注明建议的配套上传文件和 GitHub 仓库地址。
+- **canonical-teach.md**：源在仓库外 vendor 目录（`temp/matt-pocock-skills/.../teach/`），不在 `template/` 内，不参与与 template 源文件的同步校验。

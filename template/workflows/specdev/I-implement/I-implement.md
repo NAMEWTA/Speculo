@@ -19,7 +19,7 @@ keywords: [实现, TDD, 代码审查, 模块设计, 重构]
 - **永久 ADR** —— 已确认并提升到永久的架构决策，始终反映项目当前架构现状：`<Path>{roots.state}/specdev/adr/</Path>`
 - **永久 CONTEXT** —— 已确认并提升到永久的领域词汇表，始终反映项目当前领域术语现状：`<Path>{roots.state}/specdev/context/</Path>`
 
-如果当前 change 下的 CONTEXT.md 或 ADR.md 不存在，先运行 `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>` 或询问用户以建立上下文。永久 ADR 和 CONTEXT 目录可能为空——静默继续，不影响后续流程。
+如果当前 change 下的 CONTEXT.md 或 ADR.md 不存在，先运行 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 或询问用户以建立上下文。永久 ADR 和 CONTEXT 目录可能为空——静默继续，不影响后续流程。
 
 ## 流程
 
@@ -65,8 +65,8 @@ keywords: [实现, TDD, 代码审查, 模块设计, 重构]
 
 ### 4. 提交
 
-1. 运行类型检查：`npx tsc --noEmit`
-2. 运行完整测试套件：`npx vitest run`
+1. 运行项目自身的类型/静态检查命令——从项目脚本（package.json scripts、Makefile、CI 配置等）探测，不确定时询问用户
+2. 运行项目自身的完整测试套件命令——探测方式同上
 3. 将更改提交到当前分支：`git add -A && git commit -m "<描述性提交信息>"`
 4. 更新 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 下的状态文件
 

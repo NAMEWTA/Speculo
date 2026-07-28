@@ -16,7 +16,7 @@ keywords: [诊断, 调试, bug, 反馈回路, 假设, 根因分析]
 - **CONTEXT.md** —— 项目领域术语与概念：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
 - **ADR.md** —— 架构决策记录：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
 
-如果这些文件不存在，先运行 `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>` 或询问用户以建立上下文。
+如果这些文件不存在，静默继续——诊断不依赖设计文档，缺失的 change 在需要记录结论时按 `<Path>{roots.workflows}/specdev/INDEX.md</Path>` 启动协议创建。需要建立完整设计上下文时，运行 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`。
 
 ## 流程
 
@@ -60,7 +60,7 @@ keywords: [诊断, 调试, bug, 反馈回路, 假设, 根因分析]
 - **最小复现场景**——阶段 3 产出的最小化复现，可直接转为回归测试
 - **建议的修复接缝**——在哪个模块/接口处修复最合适
 
-修复、回归测试编写和提交由 I-implement 完成。如果不存在正确的测试缝合点，将此发现记录到 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 并在步骤 7 的事后分析中提出架构改进建议。
+修复、回归测试编写和提交由 I-implement 完成。如果不存在正确的测试接缝，将此发现记录到 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 并在步骤 7 的事后分析中提出架构改进建议。
 
 **完成标准**：I-implement 已启动，根因描述、最小复现、建议修复接缝已移交。
 

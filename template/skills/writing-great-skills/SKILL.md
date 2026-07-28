@@ -1,4 +1,6 @@
 ---
+id: writing-great-skills
+type: skill
 name: writing-great-skills
 description: 编写和编辑高质量 skills 的参考指南 — 使 skill 行为可预测的词汇和原则。
 disable-model-invocation: true

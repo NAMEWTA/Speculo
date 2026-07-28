@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.2.5
+- Package: `@namewta/speculo` v0.2.16
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -15,13 +15,12 @@
 src/                 CLI source (cli.ts, index.ts, migrate.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
-  commands/           4 command definitions
+  commands/           5 command definitions
   skills/             6 skill directories
   workflows/          workflow packages with INDEX.md + work entries
-
-  canonical/          Single-file canonical distribution format for AI platforms
+  canonical/          Single-file pure-Markdown distribution format for AI platforms
 test/                 CLI test suite
-scripts/              Build, validation, verification, and canonicalize tooling
+scripts/              Build, validation, verification tooling
 .agents/skills/       Internal authoring skills (5 speculo-write-* skills + _shared)
 .github/workflows/    CI (build, test, verify-bin) + Release (npm publish + GitHub Release)
 docs/                 Authoring contracts (skill, command, canonical, persistence)
@@ -60,15 +59,14 @@ speculo update                       Deprecated → delegates to speculo init --
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
-- **template/commands/** — archive-and-consolidate, docs-sync, retro, status
-- **template/skills/** — agents-md-builder, archive-and-consolidate, dev-worktree, docs-sync, github-npm-ops, speculo-retro
-- **template/workflows/** — specdev（研发全流程: D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, S-spec, T-tickets, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
-
-- **template/canonical/** — canonical 格式规范、示例（README.md + canonical-skill-example.md）与 `scripts/canonicalize.mjs` 自动化工具
+- **template/commands/** — archive-and-consolidate, docs-sync, handoff, retro, status
+- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, writing-great-skills
+- **template/workflows/** — specdev（研发全流程: A-archive-and-consolidate, D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；按 `speculo-write-canonical` skill 手动拼接
 
 ## Workflow Package Contract
 
-- Each workflow must have `INDEX.md` (auto-generated work catalog, not manually edited).
+- Each workflow must have `INDEX.md` (work catalog with AUTO-INDEX markers; full package contract for `type: workflow`).
 - Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming, with progressive disclosure sub-files.
 - All cross-references use `<Path>{roots.xxx}/...</Path>` format based on workspace.json root aliases.
 - `_state/` skeleton must contain `status.json`, `changes/`, `archive/`; other content decided by workflow.
@@ -78,7 +76,7 @@ speculo update                       Deprecated → delegates to speculo init --
 ## Internal Authoring Skills
 
 Five skills in `.agents/skills/` for maintaining Speculo itself:
-- **speculo-write-canonical** — Generate/audit single-file canonical distribution format for AI platforms
+- **speculo-write-canonical** — Generate/audit single-file pure-Markdown canonical distribution format for AI platforms
 - **speculo-write-command** — Create/audit single-file commands
 - **speculo-write-skill** — Create/audit reusable skills
 - **speculo-write-work** — Write individual work entry files and progressive-disclosure sub-files within a workflow
@@ -88,9 +86,8 @@ All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contra
 
 ## Validation Pipeline
 
-- `validate-framework-assets.mjs` — Validates workflow XML blocks, frontmatter, state templates, agent skills.
-- `check-template-links.mjs` — Validates all relative markdown links in `template/` and `.agents/`.
-- `canonicalize.mjs` — Auto-generates single-file canonical documents from skill/command/workflow directories.
+- `validate-framework-assets.mjs` — Validates INDEX frontmatter/sections, `_state/` skeleton, `<Path>` root aliases, docs-sync templates, agent skills.
+- `check-template-links.mjs` — Validates markdown links and `<Path>` pointers in `template/` (and markdown links in `.agents/`).
 - Tests use `mkdtemp` for temp directories, always clean up.
 
 ## Dangerous Patterns (verified regressions)

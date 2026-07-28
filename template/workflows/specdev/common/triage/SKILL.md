@@ -40,13 +40,13 @@ Triage 期间发布到 issue tracker 的每条评论或 issue **必须**以此�
 
 每个经 triage 的 issue 应携带恰好一个类别角色和一个状态角色。如果状态角色冲突，标记它并在做任何其他操作之前询问维护者。
 
-这些是标准角色名称 —— issue tracker 中使用的实际标签字符串可能不同。映射关系应已提供给你 —— 如果没有，运行 `/setup-matt-pocock-skills`。
+这些是标准角色名称 —— issue tracker 中使用的实际标签字符串可能不同。映射关系读取 `<Path>{roots.state}/specdev/.config/status-labels.md</Path>`（若存在），否则直接使用角色名。
 
 状态转换：未标记的 issue 通常先进入 `needs-triage`；然后移动到 `needs-info`、`ready-for-agent`、`ready-for-human` 或 `wontfix`。当报告者回复后，`needs-info` 返回 `needs-triage`。维护者可随时覆盖 —— 标记看起来不寻常的转换并在继续之前询问。
 
 ## 调用方式
 
-维护者调用 `/triage` 并用自然语言描述他们想要什么。解读请求并行动。示例：
+维护者调用本 skill 并用自然语言描述他们想要什么。解读请求并行动。示例：
 
 - "展示需要我关注的内容"
 - "我们看看 #42"（issue 或 PR）
@@ -73,7 +73,7 @@ Triage 期间发布到 issue tracker 的每条评论或 issue **必须**以此�
 
 3. **验证声明。** 在任何质询之前，检查声明是否成立。对于 bug，按报告者的步骤复现。对于 PR，确认 diff 做了它声称做的事情 —— checkout 它，运行相关测试或命令。报告结果：已确认（含代码路径）、未通过、或细节不足（强烈的 `needs-info` 信号）。已确认的验证会产生更强的 agent 摘要。
 
-4. **质询（如需要）。** 如果请求需要充实，同时运行 `/grilling` 和 `/domain-modeling` 技能 —— 逐个问题地进行质询，随着决策落地内联更新 `CONTEXT.md`/ADR。
+4. **质询（如需要）。** 如果请求需要充实，按 `<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>` 逐个问题地进行质询，并按 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>` 随着决策落地内联更新 `CONTEXT.md`/ADR。
 
 5. **应用结果：**
    - `ready-for-agent` —— 发布 agent 摘要评论（[AGENT-BRIEF.md](AGENT-BRIEF.md)）。

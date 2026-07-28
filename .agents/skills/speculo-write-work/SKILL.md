@@ -30,7 +30,7 @@ Workflow 包内所有文件为纯自然 markdown，不使用 XML 块。本 skill
 - `<Path>{roots.agents}/AGENTS.md</Path>` — 项目约定和目录映射
 - `<Path>{roots.skills}/_shared/authoring-quality.md</Path>` — 质量模型：主导词、信息层级、就近放置、完成标准、按调用/按顺序拆分、单一真相源、修剪规则
 - `<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>` — work 条目命名、frontmatter、格式规范
-- `<Path>{roots.skills}/speculo-write-workflows/references/persistence-contract.md</Path>` — 持久化根解析、变更目录、产物边界
+- `docs/persistence-contract.md` — 持久化根解析、变更目录、产物边界
 - `<Path>{roots.skills}/writing-great-skills/SKILL.md</Path>` — 写作风格参考（主导词、信息层级、完成标准、修剪原则、失败模式）
 - `<Path>{roots.skills}/writing-great-skills/GLOSSARY.md</Path>` — 术语精确定义
 
@@ -59,7 +59,7 @@ Workflow 包内所有文件为纯自然 markdown，不使用 XML 块。本 skill
 **渐进披露模式**适用于：
 - 存在仅在特定条件下触发的步骤分支
 - 某步骤的后续步骤（完成后步骤）诱发了对当前步骤的过早完成——隐藏后续步骤鼓励更彻底的实地探查
-- 入口文件建议控制在 50 行以内
+- 入口文件只保留每条分支都需要的步骤；分支细节下推子文件（用逐句质量规则约束，不设行数上限）
 
 判断标准：如果你能用"当用户需要 X 时"或"仅在 Y 条件下"来描述一个步骤，它应进入子文件。
 
@@ -124,7 +124,7 @@ keywords: [<主导词>, ...]         # YAML 数组
 | 无效操作 | 逐句检查——这句改变了模型的默认行为吗？删除"agent 本来就会做的事" |
 | 重复 | 同一含义是否出现在多个位置？收拢到单一权威位置 |
 | 沉积 | 是否有因"删了感觉不安全"而保留的过时内容？删除不再使用的规则和引用 |
-| 蔓延 | 入口文件是否过长（>50 行）？将可下推的参考内容移入子文件 |
+| 蔓延 | 入口是否混入了仅某分支需要的细节？将可下推的参考内容移入子文件 |
 | 信息层级 | 入口是否只保留了每条分支都需要的步骤？分支细节是否全部在子文件中？ |
 | 完成标准 | 每个步骤的完成标准是否可检查？关键步骤是否穷尽？ |
 | 否定措辞 | 是否有"不要/禁止/切勿"？替换为正面目标陈述，仅安全边界可保留禁令 |
@@ -159,6 +159,6 @@ keywords: [<主导词>, ...]         # YAML 数组
 
 - 质量模型：`<Path>{roots.skills}/_shared/authoring-quality.md</Path>`
 - 包结构与 INDEX.md 规范：`<Path>{roots.skills}/speculo-write-workflows/references/workflow-authoring.md</Path>`
-- 持久化根解析与产物边界：`<Path>{roots.skills}/speculo-write-workflows/references/persistence-contract.md</Path>`
+- 持久化根解析与产物边界：`docs/persistence-contract.md`
 
 - 参考实现（单文件/渐进披露）：specdev workflow 下 `S-spec/`、`G-grill-with-docs/`、`I-implement/`

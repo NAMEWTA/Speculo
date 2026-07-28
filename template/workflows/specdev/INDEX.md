@@ -27,7 +27,9 @@ keywords: [specdev, 软件研发, 设计, spec, tickets, 寻路, TDD, 实现, �
 | 活跃变更 | `<Path>{roots.state}/specdev/changes/</Path>` | 进行中的 change 产物（ADR、LOG、CONTEXT、spec、tickets、map 等） |
 | 永久 ADR | `<Path>{roots.state}/specdev/adr/</Path>` | changes 中经确认后的 ADR 提升至此，始终反映当前架构决策现状 |
 | 永久词汇表 | `<Path>{roots.state}/specdev/context/</Path>` | changes 中经确认后的 CONTEXT 提升至此，始终反映当前领域术语现状 |
+| 永久研究库 | `<Path>{roots.state}/specdev/research/</Path>` | changes 中长期有效的研究产物提升至此，由 A-archive-and-consolidate 维护 |
 | 变更归档 | `<Path>{roots.state}/specdev/archive/</Path>` | 已完成并归档的历史 change，按 YYYY-MM/<change>/ 组织 |
+| 全局配置 | `<Path>{roots.state}/specdev/config.json</Path>` | 交互语言、报告语言与持久化设置，由 I-init-setup 生成，各 work 启动时读取 |
 
 `.config/` 目录包含三个由 `I-init-setup` 生成的配置文件，定义 specdev 各 work 的持久化和行为约定：
 
@@ -35,7 +37,7 @@ keywords: [specdev, 软件研发, 设计, spec, tickets, 寻路, TDD, 实现, �
 - **`domain-layout.md`** — 领域文档布局：三文件模型（CONTEXT.md / ADR.md / LOG.md）的路径解析规则和读取顺序
 - **`status-labels.md`** — 状态标签映射：五个标准角色（`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`）的标签字符串、状态流转图和自定义方式
 
-`status.json`、`changes/`、`archive/` 为固定骨架，由 `speculo init` 创建。`adr/` 和 `context/` 为确认后创建——当 changes 中的 ADR、CONTEXT 经确认符合当前现状后，提升到这两个目录，始终保持与项目当前状态一致。
+`status.json`、`changes/`、`archive/`、`adr/`、`context/`、`research/` 均随骨架由 `speculo init` 创建；后三者初始为空——changes 中的 ADR、CONTEXT、研究产物经确认符合当前现状后提升至此，始终保持与项目当前状态一致。
 
 ## 启动协议
 
@@ -45,6 +47,7 @@ keywords: [specdev, 软件研发, 设计, spec, tickets, 寻路, TDD, 实现, �
    - 唯一活跃 change → 直接使用 `active[0]`
    - 无活跃（`active` 为空数组）→ 创建 `changes/<YYYY-MM-DD>-<kebab-topic>/`，追加条目 `{ change, current_work: null, works_run: [], result: null }` 到 `active`
    - 多个候选 → 列出 `active` 中各 change，由用户消歧
+   - 例外：`T-triage` 分诊外部 issue 时默认总是创建新 change，仅用户声明续作时复用活跃条目（见 T-triage 步骤 3）
 
 ## 状态字段
 
@@ -96,6 +99,8 @@ keywords: [specdev, 软件研发, 设计, spec, tickets, 寻路, TDD, 实现, �
 
 ## Work 条目
 
+work id 格式为 `specdev/<work-name>`，其中 `<work-name>` 为 work 目录名去掉字母前缀（如 `G-grill-with-docs` → `specdev/grill-with-docs`）。
+
 <!-- AUTO-INDEX-START -->
 
 - **A-archive-and-consolidate** — 归档与沉淀：将已完成变更归档至 archive/，并智能评估、提取持久化知识到 adr/、context/、research/ 知识库——与现有知识逐项比对，执行创建/更新/合并/废弃，确保知识始终最新。
@@ -104,6 +109,7 @@ keywords: [specdev, 软件研发, 设计, spec, tickets, 寻路, TDD, 实现, �
 - **I-implement** — 实现：基于 spec 或 tickets 实现工作——以深层模块设计原则指导架构、以 TDD 红绿循环驱动编码、以双轴审查把关质量。
 - **I-init-setup** — 初始化设置：为 specdev workflow 配置变更追踪、领域文档布局、状态标签和语言偏好。首次使用其他 specdev works 前运行一次。
 - **P-goal-plan** — 目标规划：将 spec、tickets 和参考权威综合为一份目标规划文档——编排多 ticket 里程碑的约束、质量门禁和执行协议，桥接"已有 tickets"到"协调执行 20+ tickets"
+- **R-review-architecture** — 架构审查：扫描代码仓寻找深层化机会——发现浅模块、接缝泄漏和局部性缺陷，以可视化 HTML 报告呈现候选方案，逐一访谈深化。
 - **S-spec** — 编写 Spec：将当前对话综合为一份完整的 spec 文档，包含问题陈述、解决方案、用户故事、实现决策和测试决策，持久化到变更目录。
 - **T-tickets** — 拆分 Tickets：将 spec 或计划拆分为一组曳光弹式垂直切片 tickets，每个声明阻塞边，持久化到变更目录。支持宽重构的扩展-收缩排序。
 - **T-triage** — Issue 分诊：将外部 issue 摄入并分诊为本地 change：深度理解上下文后写入 source-issue.md 与 triage.md，再推荐下一 work（G-grill / S-spec / I-implement / D-diagnose 等）。

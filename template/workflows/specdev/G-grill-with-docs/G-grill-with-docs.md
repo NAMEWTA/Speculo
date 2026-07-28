@@ -36,11 +36,7 @@ keywords: [设计, 访谈, 领域建模, ADR, 决策记录, 词汇表, 设计轨
 
 ### 3. 捕获文档
 
-委托给 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。对照词汇表挑战术语、精炼模糊语言、讨论具体场景、与代码交叉引用。
-
-- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 同步所有结论
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 精炼术语定义
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 仅追加满足三条件的架构决策（参见 `<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`）
+委托给 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。对照词汇表挑战术语、精炼模糊语言、讨论具体场景、与代码交叉引用。三文件按 grilling-protocol 规定的顺序同步（LOG → CONTEXT → ADR）。
 
 **完成标准**：LOG.md 已同步所有结论；CONTEXT.md 已精炼术语；ADR.md 已追加满足三条件的架构决策。
 

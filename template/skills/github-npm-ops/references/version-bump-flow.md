@@ -15,14 +15,14 @@ git log origin/main..HEAD --oneline
 git tag --sort=-version:refname | head -3
 
 # 4. CHANGELOG 顶部 [Unreleased] 段落已写好本次内容
-head -30 CHANGELOGS.md
+head -30 CHANGELOG.md
 ```
 
 任意一项异常先解决再发版：工作区不干净 → 先提交，或调用 docs-sync 按其清洁契约处理；`[Unreleased]` 为空 → 先做 docs-sync。禁止用 stash 隐藏待发布改动。
 
 ## 1. 维护 CHANGELOG
 
-`CHANGELOGS.md` 顶部必须始终保留 `[Unreleased]` 段落。新版本发布时:
+`CHANGELOG.md` 顶部必须始终保留 `[Unreleased]` 段落。新版本发布时:
 
 1. 把 `[Unreleased]` 内容**整段迁移**到新建的 `## [X.Y.Z] — YYYY-MM-DD` 标题下
 2. 重新插入空的 `[Unreleased]` 段落
@@ -67,10 +67,10 @@ npm version 0.0.10 --no-git-tag-version
 
 ## 3. release commit(原子提交)
 
-把 `package.json` + `CHANGELOGS.md` 一并提交,使用 Conventional Commits 的 `chore(release):` 前缀。
+把 `package.json` + `CHANGELOG.md` 一并提交,使用 Conventional Commits 的 `chore(release):` 前缀。
 
 ```bash
-git add package.json CHANGELOGS.md
+git add package.json CHANGELOG.md
 git commit -m "chore(release): v0.0.10" \
            -m "迁移 [Unreleased] 段落到 0.0.10:<一两句关键变更摘要>"
 ```
@@ -129,33 +129,13 @@ gh run list --workflow release.yml --limit 3 \
 6. Run tests
 7. Build
 8. **Verify bin entry**
-9. **Extract release notes from CHANGELOGS.md** ← v1.1.0 新增
+9. **Extract release notes from CHANGELOG.md** ← v1.1.0 新增
 10. **Publish to npm**
 11. **Create GitHub Release**
 
 ## 7. 三端验证
 
-```bash
-# 1. npm 包已上线(CDN 30–60 秒延迟)
-npm view @scope/pkg version
-npm view @scope/pkg dist-tags
-
-# 2. GitHub Release 存在 + 正文非空
-gh release view v0.0.10 --json name,tagName,isDraft,isPrerelease,body \
-  --jq '{name, tagName, isDraft, isPrerelease, body_length: (.body | length), body_preview: (.body | .[0:200])}'
-
-# 3. workflow conclusion=success 且所有步骤 success
-gh run view <run-id> --json conclusion,jobs \
-  --jq '{conclusion, steps: [.jobs[].steps[] | {name, conclusion}]}'
-```
-
-任一缺失视为发布残次品:
-
-| 缺失项 | 修复 |
-|--------|------|
-| npm 包查不到 | 等 60 秒再查;仍无 → 看 workflow `Publish to npm` 步骤日志 |
-| Release 正文为空 / 仅一行 Full Changelog | 跑 [release-notes-injection.md](release-notes-injection.md) §3 的事后修复 |
-| workflow `Extract release notes` 失败 | CHANGELOG 标题与 tag 不匹配,核对 `## [X.Y.Z]` 是否存在 |
+完整命令与判定见 [release-pipeline.md](release-pipeline.md) Phase 5（`npm view` / `gh release view` / `gh run view`）。任一缺失视为发布残次品；Release 正文为空时按 [release-notes-injection.md](release-notes-injection.md) 事后修复。
 
 ## 8. 失败回滚
 
@@ -187,7 +167,7 @@ notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"
 trap 'rm -f "$notes_file"' EXIT
 
 # 抽取 CHANGELOG 段落
-awk -v v="0.0.10" '...' CHANGELOGS.md > "$notes_file"
+awk -v v="0.0.10" '...' CHANGELOG.md > "$notes_file"
 
 # 手动创建 GitHub Release
 gh release create v0.0.10 --notes-file "$notes_file" --latest
@@ -213,7 +193,7 @@ npm view @scope/pkg@0.0.10 version
 ```bash
 # bump 到下一个补丁
 npm version 0.0.11 --no-git-tag-version
-git add package.json CHANGELOGS.md
+git add package.json CHANGELOG.md
 git commit -m "chore(release): v0.0.11"
 git push origin main
 git tag v0.0.11

@@ -9,7 +9,7 @@
 全部 ticket 关闭后执行以下验收仪式：
 
 1. **合同/ADR 终审** —— 如果激活合同模式：逐行检查合同文档，确认所有行状态为 `done` 或 `deviate`（有记录理由），无 `todo` 残留；如果无合同但激活 ADR 模式：检查 ADR 偏差表条目已解决或明确记录为 `deviate`
-2. **整体验证门禁** —— 运行 `pnpm verify`（或 spec 中指定的验证命令），确认全绿
+2. **整体验证门禁** —— 运行 spec 或项目脚本声明的整体验证命令（类型检查 + 测试 + 构建的组合），确认全绿
 3. **集成回归走查** —— 完成一次端到端用户旅程脚本走查
 4. **关闭 spec issue** —— 关闭关联的 spec issue，引用 milestone done
 5. **人工 side-by-side 验证清单** —— 输出人工核对清单供用户在真机上执行最终手感验收
@@ -48,7 +48,7 @@
 3. **伪完成禁止** —— 「能力存在但手感、交互细节、边界情况、空状态文案与参考/规格不一致，视为未完成。禁止以"API 通了"为由关闭 ticket。」
 4. **Git 纪律** —— 如果使用 Lead+Subagent 模型：「仅 Lead 操作 Git（提交、合并、推送）。子代理输出 diff/patch，Lead 审查后提交。」
 5. **单一真相源** —— 「不复活废弃组件、不创建规格外的新抽象、不引入与 ADR 冲突的外部依赖。所有技术决策追溯到 ADR 或 LOG。」
-6. **沟通语言** —— 「全部代码注释、提交信息、issue 评论、进度报告使用简体中文。」
+6. **沟通语言** —— 「全部代码注释、提交信息、issue 评论、进度报告使用 {report_language}。」（生成 goal-plan 时从 `<Path>{roots.state}/specdev/config.json</Path>` 的 `defaults.report_language` 读取并填入具体语言）
 
 #### 模式特定约束
 
@@ -74,7 +74,7 @@ TICKET_DONE <n> (<k>/<N>) gate=<P0|P1|P2> contract_ids=<P0-01,P1-03> verify=<cmd
 ```
 
 字段说明：
-- `<n>` —— ticket 编号（两位零填充纯数字，如 `01`，不含 `#`）
+- `<n>` —— ticket 编号（格式见 T-tickets）
 - `(<k>/<N>)` —— 进度计数（当前第几个 / 总数）
 - `gate` —— 门禁层级
 - `contract_ids` —— 如激活合同模式，列出本 ticket 覆盖的合同条目 ID，逗号分隔；如无合同则使用 `adr_ref=<ADR-NNNN>`

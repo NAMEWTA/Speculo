@@ -1,6 +1,6 @@
 # Phase 0 — 前置检测完整清单
 
-> 本文件是 `npm-cicd-release` 命令 Phase 0 的「展开形态」。命令正文只列出五项核心前置；这里给出 11 项完整探测、失败信号与建议修复。
+> 本文件是发布编排流程（[release-pipeline.md](release-pipeline.md)）Phase 0 的「展开形态」。编排正文只列出核心前置；这里给出 11 项完整探测、失败信号与建议修复。
 > 全部探测都是**只读**的，不会修改任何文件。任一项不通过 → 命令终止，输出修复建议；不要尝试自动跳过。
 
 ## 探测矩阵
@@ -28,12 +28,12 @@
 - 探测项 10：影响 Phase 2 是否进入 docs-sync 主流程
 - 探测项 11：直接关系到能否打 tag，必须在 Phase 0 阶段就排除
 
-## 与三个 skill 的边界
+## 与后续 Phase 的边界
 
-Phase 0 只做**只读探测**，不调用任何 skill 的 SOP：
+Phase 0 只做**只读探测**，不执行任何修复 SOP：
 
-- `git-commit-template` skill 只在 Phase 1 被引用
-- `docs-sync` skill 只在 Phase 2 / Phase 6 被引用
-- `github-npm-ops` skill 在 Phase 3 / 4 / 5 被引用
+- 提交与版本操作在 Phase 1 / Phase 3（见 [version-bump-flow.md](version-bump-flow.md)）
+- 文档同步在 Phase 2 / Phase 6（由调用方执行 `docs-sync` command）
+- 发布监控、验证与恢复在 Phase 4 / 5（见 [release-pipeline.md](release-pipeline.md)、[failure-recovery.md](failure-recovery.md)）
 
-如果 Phase 0 嗅探到的状态需要某个 skill 的修复 SOP（如 release.yml 缺失），明确转交，不要在本命令内复刻 skill 的内容。
+如果 Phase 0 嗅探到的状态需要某个修复 SOP（如 release.yml 缺失），明确转交对应 reference，不要在前置检测阶段现场修复。

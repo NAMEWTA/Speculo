@@ -41,7 +41,7 @@ specdev 每个变更遵循三文件模型（参见 `<Path>{roots.workflows}/spec
 
 | 来源文件 | 知识类型 | 判定特征 | 目标知识库 |
 |---------|---------|---------|-----------|
-| **ADR.md** | 架构决策 | `## NNNN: Title` 条目，满足三条件（不可逆 + 令人意外 + 真实权衡） | `<Path>{roots.state}/specdev/adr/</Path>` |
+| **ADR.md** | 架构决策 | `## NNNN: Title` 条目，满足三条件（难以逆转 + 令人意外 + 真实权衡） | `<Path>{roots.state}/specdev/adr/</Path>` |
 | **CONTEXT.md** | 领域术语 | `**术语名**：定义` + `_Avoid_` 条目，项目特有概念 | `<Path>{roots.state}/specdev/context/</Path>` |
 | **LOG.md** | 设计决策 | `LOG-XXXX: accepted` 条目，满足 ADR 三条件但未正式记录 → 提升为 ADR | `<Path>{roots.state}/specdev/adr/</Path>` |
 | **research/** | 研究产物 | 跨变更相关的研究发现（>1 变更引用或覆盖共享技术栈） | `<Path>{roots.state}/specdev/research/</Path>` |

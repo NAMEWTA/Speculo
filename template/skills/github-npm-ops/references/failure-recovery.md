@@ -18,7 +18,7 @@ git push origin :refs/tags/vX.Y.Z
 #    修复完后落新的非 release commit，保持 release commit 干净
 
 # 3. （若 release commit 已被 push）amend / 追加修复 commit 都可
-#    重要：若需要修改 package.json 或 CHANGELOGS.md，最好新落一个 fix commit
+#    重要：若需要修改 package.json 或 CHANGELOG.md，最好新落一个 fix commit
 #    再用 --amend 合并到 release commit 后 force-push（仅个人分支或本地未推时）
 
 # 4. 重新打 tag 指向（可能更新过的）release commit
@@ -37,26 +37,14 @@ git push origin vX.Y.Z
 **恢复**：**不要**重发 npm（同版本号永久不可重发），仅手动补 GitHub Release。
 
 ```bash
-notes_file="$(mktemp -t speculo-release-notes.XXXXXX)"
-trap 'rm -f "$notes_file"' EXIT
-
-# 1. 抽取 CHANGELOG 段落作为 Release notes
-awk -v v="X.Y.Z" '
-  $0 ~ "^## \\["v"\\]" { found=1; print; next }
-  found && /^## \[/ { exit }
-  found && /^---[[:space:]]*$/ { next }
-  found { print }
-' CHANGELOGS.md > "$notes_file"
-
+# 1. 按 release-notes-injection.md 的抽取片段从 CHANGELOG.md 得到 notes_file
 # 2. 手动创建 GitHub Release
 gh release create vX.Y.Z \
   --title "Release vX.Y.Z" \
   --notes-file "$notes_file" \
   --latest
 
-# 3. 三端再次校验
-npm view <pkg> version          # 应 == X.Y.Z
-gh release view vX.Y.Z --json body,isDraft,isPrerelease
+# 3. 三端再次校验——见 release-pipeline.md Phase 5
 ```
 
 **错误码映射**：通常是基础设施层错误（GitHub API 抖动 / token 权限缺 `contents: write`），不计入项目业务错误字典。
@@ -118,7 +106,7 @@ git push origin vX.Y.Z
 > 反重复失败原则：同根因连续失败时，必须先声明新尝试与上次的差异。
 
 - **同根因连续失败 ≥ 2 次** → 必须先停手，**书面声明**本次重试与上次的差异
-- 未声明差异即重试 → 触发 `E010_repeatedFailurePattern`，`npm-cicd-release` 命令应主动暂停，等待用户输入差异声明
+- 未声明差异即重试 → 触发 `E010_repeatedFailurePattern`，发布编排流程应主动暂停，等待用户输入差异声明
 
 例：场景 C 中 NPM_TOKEN 失效连续两次 fail，第二次失败后必须先确认 token 已真正更新（粘贴新 token 的尾 4 位摘要 / GitHub Secrets 更新时间），再继续。
 

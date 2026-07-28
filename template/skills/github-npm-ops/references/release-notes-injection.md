@@ -13,18 +13,18 @@
 | 直 push main(无 PR 流程) | 仅 `Full Changelog: vA...vB` 一行 | 生成器没有 PR 可分类,只能给 compare 链接 |
 | 有 PR 但仓库没有 `.github/release.yml` | 全部 PR 都被塞进 "What's Changed" 一节 | 没有 label → 章节映射 |
 
-而仓库通常已经维护了 `CHANGELOGS.md`(Keep a Changelog 格式)。**正确做法是把 CHANGELOG 段落作为 Release 正文的事实来源**,自动生成器仅作为补充链接。
+而仓库通常已经维护了 `CHANGELOG.md`(Keep a Changelog 格式)。**正确做法是把 CHANGELOG 段落作为 Release 正文的事实来源**,自动生成器仅作为补充链接。
 
 ## 2. 注入方案
 
-核心思路:在 workflow 里加一步,从 `CHANGELOGS.md` 抽取当前 tag 对应的版本段落,写到 `release-notes.md`,再通过 `softprops/action-gh-release` 的 `body_path` 注入。
+核心思路:在 workflow 里加一步,从 `CHANGELOG.md` 抽取当前 tag 对应的版本段落,写到 `release-notes.md`,再通过 `softprops/action-gh-release` 的 `body_path` 注入。
 
 ### 2.1 完整 workflow 步骤
 
 加到 `Verify bin entry` 之后、`Publish to npm` 之前(也可以放 publish 之后,只要在 Create GitHub Release 之前):
 
 ```yaml
-- name: Extract release notes from CHANGELOGS.md
+- name: Extract release notes from CHANGELOG.md
   run: |
     VERSION="${GITHUB_REF_NAME#v}"
     awk -v v="$VERSION" '
@@ -32,11 +32,11 @@
       found && /^## \[/ { exit }
       found && /^---[[:space:]]*$/ { next }
       found { print }
-    ' CHANGELOGS.md > release-notes.md
+    ' CHANGELOG.md > release-notes.md
 
     if [ ! -s release-notes.md ]; then
-      echo "::warning::CHANGELOGS.md 中未找到 [$VERSION] 段落,回退到自动生成。"
-      echo "See [CHANGELOGS.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOGS.md) for details." > release-notes.md
+      echo "::warning::CHANGELOG.md 中未找到 [$VERSION] 段落,回退到自动生成。"
+      echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
     fi
 
     echo "--- Release notes preview ---"
@@ -100,7 +100,7 @@ awk -v v="$VERSION" '
   found && /^## \[/ { exit }
   found && /^---[[:space:]]*$/ { next }
   found { print }
-' CHANGELOGS.md > "$notes_file" && \
+' CHANGELOG.md > "$notes_file" && \
   gh release edit "v$VERSION" --notes-file "$notes_file"
 ```
 
@@ -120,7 +120,7 @@ for v in 0.0.7 0.0.8 0.0.9; do
     found && /^## \[/ { exit }
     found && /^---[[:space:]]*$/ { next }
     found { print }
-  ' CHANGELOGS.md > "$notes_file"
+  ' CHANGELOG.md > "$notes_file"
 
   if [ -s "$notes_file" ]; then
     gh release edit "v$v" --notes-file "$notes_file"

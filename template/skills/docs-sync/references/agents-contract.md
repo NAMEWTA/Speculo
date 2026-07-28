@@ -20,7 +20,7 @@
 
 ## AGENTS 与 CLAUDE
 
-- **铁律：`AGENTS.md` 始终是唯一的权威代理手册。`CLAUDE.md` 永远只能是轻量重定向文件，内容固定为：**
+- `AGENTS.md` 是唯一的权威代理手册；`CLAUDE.md` 只能是轻量重定向，内容固定为：
 
   ```
   # CLAUDE.md
@@ -28,9 +28,9 @@
   Speculo agent handbook: see [AGENTS.md](./AGENTS.md).
   ```
 
-- 无论项目是单工具还是多工具、纯 Claude 还是跨平台，均不得将 `CLAUDE.md` 作为权威内容载体。所有代理指令、事实和规则必须写入 `AGENTS.md`。
-- 现有多行 `CLAUDE.md` 必须在此次同步中改写为重定向；改变权威来源、删除内容或创建符号链接前必须确认，但确定重定向后立即执行全量迁移。
-- 反之亦然：`AGENTS.md` 不得被缩减为指向 `CLAUDE.md` 的重定向。`AGENTS.md` 重定向到其他文件一律视为错误状态，必须修复。
+- 所有代理指令、事实和规则写入 `AGENTS.md`，不把 `CLAUDE.md` 当作权威内容载体。
+- 现有多行 `CLAUDE.md` 经用户确认后改写为重定向，原内容全量迁移到 `AGENTS.md`。
+- `AGENTS.md` 不得被缩减为指向 `CLAUDE.md` 的重定向——发现即修复。
 - Monorepo 使用就近手册覆盖；父级只导航，不复制子模块细节。
 
 ## 验证

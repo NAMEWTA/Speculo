@@ -12,33 +12,29 @@ const workflowsRoot = join(templateRoot, "workflows");
 const workspacePath = join(templateRoot, ".speculo", "workspace.json");
 const docsSyncAssets = join(templateRoot, "skills", "docs-sync", "assets");
 const workflowEntryName = "INDEX.md";
-const persistenceEntryName = "INDEX.md";
-const atomicSkillsDirName = "atomic-skills";
-const allowedXmlRoots = new Set([
-  "atomic-skills",
-  "routes",
-  "sequence",
-  "dependencies",
-  "state-schema",
-  "transitions",
-  "runtime-context",
-  "persistence",
+const allowedRootAliases = new Set([
+  "config",
+  "speculo",
+  "state",
+  "commands",
+  "skills",
+  "workflows",
 ]);
-const staticReferenceTags = new Set([
-  "atomic-skill",
-  "route",
-  "skill",
-  "instructions",
-  "template",
-  "agent",
-  "command",
-  "dependency",
-]);
+const requiredIndexSections = [
+  "运行时根",
+  "持久化约定",
+  "启动协议",
+  "状态字段",
+  "路径分配",
+  "副作用边界",
+  "Work 条目",
+];
 const expectedAgentSkills = [
   "speculo-write-skill",
   "speculo-write-workflows",
   "speculo-write-command",
   "speculo-write-canonical",
+  "speculo-write-work",
 ];
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -459,10 +455,29 @@ function walkXmlNode(tag, value, context) {
   }
 }
 
+function validatePathTags(file, content) {
+  const re = /<Path>\{roots\.([a-zA-Z0-9_-]+)\}([^<]*)<\/Path>/g;
+  let match;
+  while ((match = re.exec(content)) !== null) {
+    const alias = match[1];
+    const rest = match[2] ?? "";
+    if (!allowedRootAliases.has(alias)) {
+      fail(`${file}: unknown Path root alias {roots.${alias}}`);
+    }
+    if (rest.includes("\\")) {
+      fail(`${file}: Path must use forward slashes: ${match[0]}`);
+      continue;
+    }
+    // Reject path-segment ".." only (not prose ellipsis "...")
+    if (rest.split("/").includes("..")) {
+      fail(`${file}: Path must not escape with ..: ${match[0]}`);
+    }
+  }
+}
+
 function validateWorkflow(workflowId, workspace) {
   const workflowDir = join(workflowsRoot, workflowId);
   const entryPath = join(workflowDir, workflowEntryName);
-  const persistencePath = join(workflowDir, persistenceEntryName);
   const relativeEntry = entryPath.slice(packageRoot.length + 1);
   if (!existsSync(entryPath)) {
     fail(`${relativeEntry}: missing workflow entry`);
@@ -476,101 +491,14 @@ function validateWorkflow(workflowId, workspace) {
     fail(`${relativeEntry}: id/workflow must match directory ${workflowId}`);
   }
 
-  const isSingleFile = entryPath === persistencePath;
-
-  // Single-file mode (INDEX.md): skip XML block checks
-  if (isSingleFile) return;
-
-  if (!existsSync(persistencePath)) {
-    fail(`${relativeEntry}: missing ${persistenceEntryName}`);
-    return;
-  }
-  const relativePersistence = persistencePath.slice(packageRoot.length + 1);
-  const persistenceContent = readFileSync(persistencePath, "utf8");
-  const parsedEntryBlocks = parsedXmlBlocks(entryContent, relativeEntry);
-  const parsedPersistenceBlocks = parsedXmlBlocks(
-    persistenceContent,
-    relativePersistence
-  );
-  validatePersistenceLoad(parsedEntryBlocks, relativeEntry);
-
-  if (
-    parsedEntryBlocks.some(
-      (block) =>
-        block["runtime-context"] !== undefined ||
-        block.persistence !== undefined
-    )
-  ) {
-    fail(`${relativeEntry}: runtime-context and persistence belong only in ${persistenceEntryName}`);
-  }
-
-  const runtimeBlocks = parsedPersistenceBlocks.filter(
-    (block) => block["runtime-context"] !== undefined
-  );
-  const persistenceBlocks = parsedPersistenceBlocks.filter(
-    (block) => block.persistence !== undefined
-  );
-  if (runtimeBlocks.length !== 1) {
-    fail(`${relativePersistence}: must contain exactly one <runtime-context>`);
-  }
-  if (persistenceBlocks.length !== 1) {
-    fail(`${relativePersistence}: must contain exactly one <persistence>`);
-  }
-  const runtime = runtimeBlocks[0]?.["runtime-context"];
-  const persistence = persistenceBlocks[0]?.persistence;
-  if (!runtime || !persistence) return;
-
-  const aliases = { ...workspace.roots };
-  for (const root of asArray(runtime.root)) {
-    const id = root["@_id"];
-    const base = root["@_base"];
-    const rootPath = root["@_path"];
-    if (!id || !base || !rootPath) {
-      fail(`${relativeEntry}: runtime root requires id/base/path`);
-      continue;
-    }
-    if (!aliases[base]) {
-      fail(`${relativeEntry}: runtime root ${id} uses unknown base ${base}`);
-      continue;
-    }
-    if (!safeRelativePath(rootPath, `${relativeEntry}: runtime root ${id}`)) {
-      continue;
-    }
-    aliases[id] = posix.join(aliases[base], rootPath);
-  }
-
-  if (aliases.workflow !== `speculo/workflows/${workflowId}`) {
-    fail(`${relativeEntry}: workflow root must resolve to speculo/workflows/${workflowId}`);
-  }
-  if (aliases.state !== `speculo/.speculo/${workflowId}`) {
-    fail(`${relativeEntry}: state root must resolve to speculo/.speculo/${workflowId}`);
-  }
-  if (persistence["@_root"] !== "state") {
-    fail(`${relativeEntry}: persistence root must be state`);
-  }
-
-  const stores = asArray(persistence.store);
-  const storeById = Object.fromEntries(
-    stores.map((store) => [store["@_id"], store])
-  );
-  const requiredStores = {
-    index: ["status.json", "file"],
-    changes: ["changes", "directory"],
-    archive: ["archive", "directory"],
-  };
-  for (const [id, [path, kind]] of Object.entries(requiredStores)) {
-    const store = storeById[id];
-    if (
-      !store ||
-      store["@_path"] !== path ||
-      store["@_kind"] !== kind
-    ) {
-      fail(`${relativeEntry}: persistence store ${id} must be ${kind} ${path}`);
+  // Full package contract only for type: workflow (not auto-generated stubs)
+  if (frontmatter.type === "workflow") {
+    for (const section of requiredIndexSections) {
+      if (!entryContent.includes(`## ${section}`)) {
+        fail(`${relativeEntry}: missing required section "## ${section}"`);
+      }
     }
   }
-  const stateNamespaces = stores
-    .map((store) => store["@_path"])
-    .filter((path) => safeRelativePath(path, `${relativeEntry}: persistence namespace`));
 
   const stateTemplate = join(workflowDir, "_state");
   for (const required of ["status.json", "changes", "archive"]) {
@@ -579,30 +507,17 @@ function validateWorkflow(workflowId, workspace) {
     }
   }
 
-  const baseContext = { aliases, file: relativeEntry, stateNamespaces };
-  validateAtomicSkills(workflowId, workflowDir, parsedEntryBlocks, baseContext);
+  // Validate <Path>{roots.xxx}/...</Path> aliases across workflow markdown
   for (const filePath of walkMarkdown(workflowDir)) {
+    // Skip large content corpora (books) — not instruction assets
+    if (filePath.includes(`${workflowDir}/`) && filePath.includes("/books/")) continue;
     const file = filePath.slice(packageRoot.length + 1);
     const content = readFileSync(filePath, "utf8");
-    const blocks = parsedXmlBlocks(content, file);
-    for (const parsed of blocks) {
-      const rootTag = Object.keys(parsed)[0];
-      if (
-        filePath !== persistencePath &&
-        (rootTag === "runtime-context" || rootTag === "persistence")
-      ) {
-        fail(`${file}: ${rootTag} belongs only in ${persistenceEntryName}`);
-      }
-      walkXmlNode(rootTag, parsed[rootTag], { ...baseContext, file });
-    }
-    const isAtomicWrapper = filePath.startsWith(`${join(workflowDir, atomicSkillsDirName)}/`);
-    if (filePath !== persistencePath && !isAtomicWrapper) {
-      const skillNodes = xmlNodes(blocks, "skill");
-      if (skillNodes.length > 0) {
-        fail(`${file}: raw <skill> references must be isolated in atomic wrappers`);
-      }
-    }
+    validatePathTags(file, content);
   }
+
+  // workspace roots used only to ensure path_base contract already validated above
+  void workspace;
 }
 
 function validateAgentSkills() {

@@ -52,7 +52,7 @@ jobs:
       - name: Verify bin entry
         run: node scripts/verify-bin.mjs
 
-      - name: Extract release notes from CHANGELOGS.md
+      - name: Extract release notes from CHANGELOG.md
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           awk -v v="$VERSION" '
@@ -60,11 +60,11 @@ jobs:
             found && /^## \[/ { exit }
             found && /^---[[:space:]]*$/ { next }
             found { print }
-          ' CHANGELOGS.md > release-notes.md
+          ' CHANGELOG.md > release-notes.md
 
           if [ ! -s release-notes.md ]; then
-            echo "::warning::CHANGELOGS.md 中未找到 [$VERSION] 段落，回退到自动生成。"
-            echo "See [CHANGELOGS.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOGS.md) for details." > release-notes.md
+            echo "::warning::CHANGELOG.md 中未找到 [$VERSION] 段落，回退到自动生成。"
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
           fi
 
       - name: Publish to npm
@@ -173,10 +173,10 @@ permissions:
 
 CLI 包专有：确认 `dist/cli/index.js` 存在、有 shebang、可执行。防止 tsconfig 出问题导致产物不完整。
 
-### Extract release notes from CHANGELOGS.md
+### Extract release notes from CHANGELOG.md
 
 ```yaml
-- name: Extract release notes from CHANGELOGS.md
+- name: Extract release notes from CHANGELOG.md
   run: |
     VERSION="${GITHUB_REF_NAME#v}"
     awk -v v="$VERSION" '
@@ -184,11 +184,11 @@ CLI 包专有：确认 `dist/cli/index.js` 存在、有 shebang、可执行。�
       found && /^## \[/ { exit }
       found && /^---[[:space:]]*$/ { next }
       found { print }
-    ' CHANGELOGS.md > release-notes.md
+    ' CHANGELOG.md > release-notes.md
 
     if [ ! -s release-notes.md ]; then
       echo "::warning::..." >&2
-      echo "See [CHANGELOGS.md](...) for details." > release-notes.md
+      echo "See [CHANGELOG.md](...) for details." > release-notes.md
     fi
 ```
 
