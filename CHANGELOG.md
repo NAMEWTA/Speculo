@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.0] - 2026-07-28
+
+### Added
+- **R-review-architecture workflow**：新增架构评审工作流，含探索指南（exploration-guide.md）和 HTML 报告模板（html-report-template.md），支持系统性代码架构评审
+- **handoff 独立 skill**：handoff 从 workflow 迁移为 `template/skills/common/handoff/SKILL.md` 和 `template/commands/handoff.md` 的一等公民 command+skill
+- **Mao consultation output template**：person workflow 新增 `mao-consultation-output-template.md` 输出模板
+- **git-repository-audit command**：新增 `template/commands/git-repository-audit.md` 命令定义
+- `writing-great-skills` SKILL.md 新增内容补充
+- `canonical-specdev-*` 文档内容更新
+- `G-grill-with-docs` 新增 `adr-format.md` 引用
+
+### Changed
+- **AGENTS.md 刷新至 v0.3.0**：更新资产盘点（commands 4→5、skills 6→6、workflows 10→11+）、移除 canonicalize.mjs 引用
+- **specdev workflow 重组**：INDEX.md 新增 R-review-architecture、A-archive-and-consolidate、P-goal-plan 条目；移除 improve-codebase-architecture
+- **canonical 格式纯 Markdown 化**：`canonical-authoring.md` 移除 `scripts/canonicalize.mjs` 引用，确认纯 Markdown 分发格式
+- **dev-worktree SKILL.md 大幅精简**：从 122 行压缩，移除冗余内容
+- **triage SKILL.md 与 OUT-OF-SCOPE.md 更新**
+- `validate-framework-assets.mjs` 与 `check-template-links.mjs` 适配新 workflow 结构
+- 多个 specdev work entries 内容同步更新：D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, T-tickets, W-wayfinder
+- GitHub npm ops 参考文档更新（failure-recovery, preflight-checklist, release-notes-injection, troubleshooting-playbook, version-bump-flow, workflow-yaml-reference）
+- CLI 测试更新以匹配 handoff command 新路径
+
+### Removed
+- **`scripts/canonicalize.mjs`**：已废弃的旧 XML 容器格式生成脚本，与现行纯 Markdown 契约不符
+- **`template/workflows/specdev/common/improve-codebase-architecture/`**：功能合并到 R-review-architecture
+- **`.agents/skills/speculo-write-workflows/references/authoring-quality.md` 与 `persistence-contract.md`**：移除冗余参考文档
+
+---
+
 ## [0.2.16] - 2026-07-24
 
 ### Fixed
