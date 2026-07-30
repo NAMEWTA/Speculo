@@ -61,7 +61,13 @@ Canonical 文档是源文件的**透明容器**——去除 Speculo 内部元数
 
 ## 生成方法
 
-按 `speculo-write-canonical` skill 的流程手动拼接：
+SpecDev 的设计、规格、Tickets、Goal Plan 和 Wayfinder canonical 使用 Node 脚本从当前模板统一生成：
+
+```bash
+pnpm generate-canonical
+```
+
+其他 canonical 按 `speculo-write-canonical` skill 的流程手动拼接：
 
 1. 读取能力源目录，识别主入口和所有被引用文件
 2. 去除所有 YAML frontmatter

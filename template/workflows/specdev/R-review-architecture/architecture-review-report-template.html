@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpecDev Architecture Review</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { max-width: 1180px; margin: 0 auto; padding: 32px; line-height: 1.55; }
+    header, section { margin-bottom: 28px; }
+    .meta, .card { border: 1px solid #8886; border-radius: 12px; padding: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .badge { display: inline-block; border: 1px solid currentColor; border-radius: 999px; padding: 2px 9px; margin-right: 6px; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #8886; padding: 8px; text-align: left; vertical-align: top; }
+    code { overflow-wrap: anywhere; }
+    path::before { content: "<Path>"; }
+    path::after { content: "</Path>"; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Architecture Review: &lt;范围&gt;</h1>
+    <div class="meta">
+      <p>决策记录：<code><Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path></code></p>
+      <p>本报告：<code><Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path></code></p>
+    </div>
+  </header>
+  <section>
+    <h2>审查压力与结构地图</h2>
+    <p>&lt;填写触发目标、范围、模块、接口、数据流和变化热点。&gt;</p>
+  </section>
+  <section>
+    <h2>候选提案</h2>
+    <div class="grid">
+      <article class="card">
+        <h3>AR-001 · &lt;标题&gt;</h3>
+        <p><span class="badge">severity</span><span class="badge">status</span></p>
+        <p><strong>证据：</strong><code><Path>project/relative/path</Path></code></p>
+        <p><strong>问题机制：</strong>&lt;...&gt;</p>
+        <p><strong>实际影响：</strong>&lt;...&gt;</p>
+        <p><strong>推荐：</strong>&lt;...&gt;</p>
+      </article>
+    </div>
+  </section>
+  <section>
+    <h2>方案对比</h2>
+    <table>
+      <thead><tr><th>维度</th><th>保持现状</th><th>推荐方案</th><th>替代方案</th></tr></thead>
+      <tbody><tr><td>调用者复杂度</td><td></td><td></td><td></td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>决策与下一步</h2>
+    <p>&lt;逐项记录 accepted / adjusted / deferred / rejected。&gt;</p>
+  </section>
+</body>
+</html>

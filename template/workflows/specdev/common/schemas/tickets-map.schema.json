@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:tickets-map:v3",
+  "title": "SpecDev Tickets Map Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "artifact": {"const": "tickets-map"},
+    "change": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]}
+  },
+  "additionalProperties": true
+}

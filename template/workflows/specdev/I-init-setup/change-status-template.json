@@ -1,0 +1,15 @@
+{
+  "schema_version": 3,
+  "artifact": "change-status",
+  "change": "<YYYY-MM-DD-topic>",
+  "change_status": "active",
+  "current_work": null,
+  "created_at": "<ISO-8601>",
+  "updated_at": "<ISO-8601>",
+  "completed_at": null,
+  "archived": false,
+  "archive_path": null,
+  "blockers": [],
+  "deviations": [],
+  "worktrees": []
+}

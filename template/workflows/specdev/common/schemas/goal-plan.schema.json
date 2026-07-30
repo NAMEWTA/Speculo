@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:goal-plan:v3",
+  "title": "SpecDev Goal Plan Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status", "modes", "ready_for_execution"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "artifact": {"const": "goal-plan"},
+    "change": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]},
+    "modes": {
+      "type": "array",
+      "items": {"enum": ["coordination", "migration", "high-assurance", "reference-conformance", "release-coordination"]},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "ready_for_execution": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

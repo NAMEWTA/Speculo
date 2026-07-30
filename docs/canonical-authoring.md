@@ -75,7 +75,13 @@ Canonical 文档是源文件的分发快照。源文件仍是权威定义，cano
 
 ## Automation
 
-**推荐流程**：按 `.agents/skills/speculo-write-canonical/SKILL.md` 手动拼接。
+SpecDev 的设计、规格、Tickets、Goal Plan 和 Wayfinder canonical 运行：
+
+```bash
+pnpm generate-canonical
+```
+
+生成器统一处理网页平台持久化约定、源文件引用内联、产物 YAML 头部保留和 canonical 专项校验。其他能力按 `.agents/skills/speculo-write-canonical/SKILL.md` 手动拼接。
 
 ## 跨 workflow 引用
 

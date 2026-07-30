@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:status:v3",
+  "title": "SpecDev Global Status",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "workflow",
+    "active",
+    "work_history",
+    "completed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "workflow": {
+      "const": "specdev"
+    },
+    "active": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "current_work",
+          "works_run",
+          "result"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "current_work": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "works_run": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimed_investigations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "owner",
+                "claimed_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "session": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "claimed_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "work_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "work_id",
+          "started_at",
+          "completed_at",
+          "result"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "work_id": {
+            "type": "string",
+            "pattern": "^specdev/"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "archived_at",
+          "archive_path"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "archived_at": {
+            "type": "string"
+          },
+          "archive_path": {
+            "type": "string",
+            "pattern": "^<Path>\\{roots\\.state\\}/specdev/archive/[^<]+</Path>$"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

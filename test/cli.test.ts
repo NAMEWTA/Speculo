@@ -206,6 +206,161 @@ async function createValidatorFixture(root: string, skillPath: string): Promise<
   );
 }
 
+async function createValidSpecdevChange(root: string): Promise<void> {
+  const change = "2026-07-29-node-validator";
+  await mkdir(join(root, "ticket"), { recursive: true });
+  await writeJson(join(root, ".status.json"), {
+    schema_version: 3,
+    artifact: "change-status",
+    change,
+    change_status: "active",
+    current_work: "specdev/tickets",
+    created_at: "2026-07-29T00:00:00Z",
+    updated_at: "2026-07-29T00:00:00Z",
+    completed_at: null,
+    archived: false,
+    archive_path: null,
+    blockers: [],
+    deviations: [],
+  });
+  await writeFile(
+    join(root, "spec.md"),
+    [
+      "---",
+      "schema_version: 3",
+      "artifact: spec",
+      `change: ${change}`,
+      "status: ready",
+      "ready_for_tickets: true",
+      "sources: [external-request]",
+      "---",
+      "",
+      "## 1. 问题与目标",
+      "",
+      "验证 Node 校验器。",
+      "",
+      "## 2. 解决方案与外部行为",
+      "",
+      "执行一个垂直切片。",
+      "",
+      "### 未决问题",
+      "",
+      "无",
+      "",
+      "## 4. 验收合同",
+      "",
+      "- AC-001：Node 校验器接受有效 change。",
+      "",
+      "## 5. 范围",
+      "",
+      "仅验证测试夹具。",
+      "",
+      "## 9. 验证策略",
+      "",
+      "运行校验器。",
+      "",
+    ].join("\n")
+  );
+  await writeFile(
+    join(root, "tickets-map.md"),
+    [
+      "---",
+      "schema_version: 3",
+      "artifact: tickets-map",
+      `change: ${change}`,
+      "status: ready",
+      "---",
+      "",
+      "## 2. 执行清单",
+      "",
+      "| Ticket | Contract |",
+      "|---|---|",
+      "| T-01 | AC-001 |",
+      "",
+      "## 3. 依赖 DAG",
+      "",
+      "T-01",
+      "",
+      "## 4. 合同覆盖矩阵",
+      "",
+      "| Contract | Ticket |",
+      "|---|---|",
+      "| AC-001 | T-01 |",
+      "",
+      "## 5. 并行与路径所有权",
+      "",
+      "单 Ticket，无并行冲突。",
+      "",
+    ].join("\n")
+  );
+  await writeFile(
+    join(root, "ticket", "01-node-validator.md"),
+    [
+      "---",
+      "schema_version: 3",
+      "artifact: ticket",
+      `change: ${change}`,
+      "id: T-01",
+      "title: 验证 Node 校验器",
+      "status: ready",
+      "planning_depth: standard",
+      "planning_depth_reason: 覆盖结构校验主路径",
+      "ready: true",
+      "risk: low",
+      "blocked_by: []",
+      "contract_ids: [AC-001]",
+      "owner: lead",
+      "expected_changes: [<Path>src/example.ts</Path>]",
+      "writable_paths: [<Path>src/example.ts</Path>]",
+      "read_only_paths: []",
+      "shared_paths: []",
+      "shared_path_owners: []",
+      "---",
+      "",
+      "## 1. 战略与来源",
+      "",
+      "覆盖 AC-001。",
+      "",
+      "## 2. 决策状态",
+      "",
+      "### 未决问题",
+      "",
+      "无",
+      "",
+      "## 3. 范围边界",
+      "",
+      "只修改授权路径。",
+      "",
+      "## 4. 要构建什么",
+      "",
+      "实现验证切片。",
+      "",
+      "## 5. 实现契约",
+      "",
+      "保持外部行为稳定。",
+      "",
+      "## 6. 执行路线",
+      "",
+      "先测试，再实现。",
+      "",
+      "## 7. 路径访问契约",
+      "",
+      "遵守 frontmatter 路径。",
+      "",
+      "## 8. 验证矩阵",
+      "",
+      "| 场景 | 命令 |",
+      "|---|---|",
+      "| 正常路径 | node validator |",
+      "",
+      "## 10. 验收标准",
+      "",
+      "- [ ] AC-001 已满足。",
+      "",
+    ].join("\n")
+  );
+}
+
 describe("Speculo v3 CLI", () => {
   it("fresh init installs workflow packages and workflow-owned state", async () => {
     const target = await tempProject();
@@ -355,6 +510,68 @@ describe("Speculo v3 CLI", () => {
         ),
         true
       );
+      assert.equal(
+        await pathExists(
+          join(
+            root,
+            "workflows",
+            "specdev",
+            "common",
+            "skills",
+            "dev-worktree",
+            "SKILL.md"
+          )
+        ),
+        true
+      );
+      assert.equal(
+        await pathExists(
+          join(
+            root,
+            "workflows",
+            "specdev",
+            "common",
+            "skills",
+            "handoff",
+            "SKILL.md"
+          )
+        ),
+        false
+      );
+      const orchestrationProtocol = await readFile(
+        join(
+          root,
+          "workflows",
+          "specdev",
+          "P-goal-plan",
+          "orchestration-protocol.md"
+        ),
+        "utf8"
+      );
+      assert.match(orchestrationProtocol, /## 8\. Evidence 返回与集成/);
+      assert.doesNotMatch(
+        orchestrationProtocol,
+        /common\/skills\/handoff|changes\/\{change\}\/handoff/
+      );
+      const validator = join(
+        root,
+        "workflows",
+        "specdev",
+        "common",
+        "tools",
+        "validate-specdev.mjs"
+      );
+      assert.equal(await pathExists(validator), true);
+      assert.equal(
+        await pathExists(
+          join(root, "workflows", "specdev", "common", "tools", "validate_specdev.py")
+        ),
+        false
+      );
+      const validation = spawnSync(process.execPath, [validator, "--self-check"], {
+        encoding: "utf8",
+      });
+      assert.equal(validation.status, 0, validation.stdout + validation.stderr);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -521,6 +738,76 @@ describe("Speculo v3 CLI", () => {
       assert.match(result.stdout + result.stderr, /missing workflow entry/);
     } finally {
       await rm(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("SpecDev package validator runs on the required Node runtime", () => {
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    const result = spawnSync(process.execPath, [validator, "--self-check"], {
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /Summary: 0 error\(s\), 0 warning\(s\)/);
+  });
+
+  it("SpecDev Node validator accepts a structurally valid change", async () => {
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    const root = await tempProject();
+    try {
+      const change = join(root, "2026-07-29-node-validator");
+      await createValidSpecdevChange(change);
+      const result = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.match(result.stdout, /Summary: 0 error\(s\), 0 warning\(s\)/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("SpecDev Node validator rejects a done Ticket without Evidence", async () => {
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    const root = await tempProject();
+    try {
+      const change = join(root, "2026-07-29-node-validator");
+      await createValidSpecdevChange(change);
+      const ticket = join(change, "ticket", "01-node-validator.md");
+      await writeFile(
+        ticket,
+        (await readFile(ticket, "utf8")).replace("status: ready", "status: done")
+      );
+      const result = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /status is done but Evidence is missing/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   });
 

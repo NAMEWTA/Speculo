@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:ticket:v3",
+  "title": "SpecDev Ticket Frontmatter",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "id",
+    "title",
+    "status",
+    "planning_depth",
+    "planning_depth_reason",
+    "ready",
+    "risk",
+    "blocked_by",
+    "contract_ids",
+    "owner",
+    "expected_changes",
+    "writable_paths",
+    "read_only_paths",
+    "shared_paths",
+    "shared_path_owners"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "ticket"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^T-[0-9]{2,}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "blocked",
+        "review",
+        "done",
+        "deviated",
+        "cancelled"
+      ]
+    },
+    "planning_depth": {
+      "enum": [
+        "lite",
+        "standard",
+        "deep"
+      ]
+    },
+    "planning_depth_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "blocked_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^T-[0-9]{2,}$"
+      },
+      "uniqueItems": true
+    },
+    "contract_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_changes": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "writable_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "read_only_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "shared_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "shared_path_owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^<Path>[^<]+</Path>\\s*=>\\s*[^=].+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "pathArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^<Path>[^<]+</Path>$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

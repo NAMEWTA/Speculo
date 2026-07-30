@@ -3,71 +3,104 @@ id: specdev/archive-and-consolidate
 type: workflow-entry
 workflow: specdev
 name: 归档与沉淀
-description: 将已完成变更归档至 archive/，并智能评估、提取持久化知识到 adr/、context/、research/ 知识库——与现有知识逐项比对，执行创建/更新/合并/废弃，确保知识始终最新。
-keywords: [归档, 沉淀, 知识持久化, 清理, ADR, 词汇表, 研究]
+description: 在验证完成和用户授权后归档 change，并以证据判断哪些架构决策、术语和研究应创建、合并、替代、废弃或不提升。
+keywords: [归档, consolidation, ADR, context, research, knowledge]
 ---
 
 # 归档与沉淀
 
-将 `changes/` 中已完成的变更归档至 `archive/`，同时从变更产物中提取可毕业知识，与现有 `<Path>{roots.state}/specdev/adr/</Path>`、`<Path>{roots.state}/specdev/context/</Path>`、`<Path>{roots.state}/specdev/research/</Path>` 知识库智能比对后合并写入。**不是只增不减**——每次运行均评估现有知识是否需要更新、合并或废弃。
+归档不是把整个 change 无差别复制到永久知识库。永久知识只保存“当前仍真实、超出单个 change 仍有用、已有实现证据”的结论，同时保留历史和 supersedes 关系。
 
-产物写入 `<Path>{roots.state}/specdev/</Path>` 下的 adr/、context/、research/、archive/。默认 dry-run 模式，确认后方执行。
+## 输入
+
+- change 根：`<Path>{roots.state}/specdev/changes/{change}/</Path>`
+- change 状态：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`
+- 全局状态：`<Path>{roots.state}/specdev/status.json</Path>`
+- 当前架构决策：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- 当前领域上下文：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
+- 当前设计日志：`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+- 当前 Spec：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
+- 当前 Tickets Map：`<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
+- 当前 Goal Plan：`<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
+- Evidence：`<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
+- 永久架构决策：`<Path>{roots.state}/specdev/adr/</Path>`
+- 永久领域上下文：`<Path>{roots.state}/specdev/context/</Path>`
+- 永久研究：`<Path>{roots.state}/specdev/research/</Path>`
 
 ## 流程
 
-### 1. 加载上下文与状态
+### 1. 完成检查
 
-读取 `<Path>{roots.workflows}/specdev/INDEX.md</Path>` 和 `<Path>{roots.state}/specdev/status.json</Path>`，枚举现有知识库全部内容：adr/ 中所有 `NNNN-slug.md`、context/ 中所有术语定义、research/ 中现有研究及 index.md。
+加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/archive-checklist.md</Path>`，检查 Ticket、Evidence、Spec 合同、Goal Gate、偏差、迁移、状态和用户授权。
 
-**完成标准**：所有知识库现有内容已索引；status.json 已解析；changes/ 目录已枚举。
+未完成、验证失败、存在未批准 deviation 或用户未授权时停止，不得标 completed 或 archived。
 
-### 2. 扫描已完成变更
+### 2. 冻结归档快照
 
-遍历 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 数组，筛选 `result: "completed"` 的 change；同时遍历 `<Path>{roots.state}/specdev/changes/</Path>`，读取每个变更的 `.status.json` 作为补充（`change_status: completed`）。收集每个已完成变更的 ADR.md、CONTEXT.md、LOG.md 及 research/ 子目录产物。
+记录：
 
-**完成标准**：每个已完成变更的元数据和知识产物已收集；无可读产物的变更已标注原因。
+- 归档时间；
+- 最终基线、提交或 PR；
+- 全局验证摘要；
+- 已知残余风险；
+- 被批准的 cancelled/deferred 条目；
+- 归档目标 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>`。
 
-### 3. 知识评估与鉴别
+归档前不得删除设计日志、Evidence 或被替代 ADR。
 
-加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/discrimination-guide.md</Path>`。将步骤 2 收集的知识与步骤 1 索引的现有知识逐项比对，标注处置动作：create / update / merge / supersede / retire / skip。冲突项标记 needs-confirmation 并展示双方版本与建议。
+### 3. 评估长期知识
 
-**完成标准**：每个提取的知识项已标注处置动作和理由；冲突项已展示双方版本及推荐方案。
+加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/knowledge-promotion-rules.md</Path>`，逐条评估当前 change 的架构决策、领域术语和研究结论。
 
-### 4. 生成归档计划
+每条结论执行：`create | update | merge | supersede | deprecate | skip`。无法判断当前真相时不提升，创建治理问题或新 change。
 
-加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/archive-rules.md</Path>`。对每个已完成变更执行预检（名称格式、状态可解析、源存在、目标不冲突），生成 `changes/ → archive/YYYY-MM/` 移动计划，批量原子性检查。
+### 4. 提升与冲突处理
 
-**完成标准**：归档计划表已生成，每项标注 ready/blocked 及原因；整批原子性已验证。
+- 架构决策提升到 `<Path>{roots.state}/specdev/adr/</Path>`；
+- 领域术语提升到 `<Path>{roots.state}/specdev/context/</Path>`；
+- 经实现验证、长期有效的研究提升到 `<Path>{roots.state}/specdev/research/</Path>`；
+- 冲突 ADR 建立 supersedes 双向引用，不静默覆盖；
+- 历史结论保留状态和来源，不通过删除历史制造一致性。
 
-### 5. 生成知识沉淀计划
+### 5. 移动归档并更新状态
 
-加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/consolidation-rules.md</Path>` 和 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/knowledge-graduation.md</Path>`。基于步骤 3 鉴别结果，生成 adr/、context/、research/ 的创建/更新/废弃计划。
+将 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 移动到 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>`。
 
-**完成标准**：三个知识库的写入计划已生成；未毕业知识标注保留在归档变更中的位置；冲突项已标注。
+更新 `<Path>{roots.state}/specdev/status.json</Path>`：从 active 移除，追加 completed/archived 记录；归档内 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/.status.json</Path>` 写入完成时间、归档路径和 promotion 摘要。
 
-### 6. 生成清理计划
+任何删除、移动或 Git 副作用均需用户授权。
 
-加载 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/cleanup-rules.md</Path>`。扫描现有知识库，识别陈旧、重复、格式违规内容，生成清理候选表（delete / merge / rewrite / keep / needs-confirmation）。
+### 6. 校验与汇报
 
-**完成标准**：清理候选表已生成，每项标注分类、理由和风险等级。
+运行包级和归档链接检查，确认：
 
-### 7. 呈现报告并等待确认
+- 归档路径存在；
+- 全局状态与归档状态一致；
+- 永久知识引用有效；
+- supersedes 链无断裂；
+- 无敏感信息进入永久知识。
 
-合并步骤 4-6 为统一报告。明确标注所有破坏性操作（移动、删除、覆写）。逐项展示冲突和待确认条目。**默认不修改任何文件**，等待用户逐项确认后进入执行。
+输出 promotion report：每条候选知识、执行动作、目标路径、证据和未提升原因。
 
-**完成标准**：报告已呈现；所有破坏性操作已标注；等待用户确认。
+## 禁止
+
+- 未完成或验证失败的 change 标 completed；
+- 把临时实现细节、一次性命令或未经验证假设提升为永久知识；
+- 静默覆盖冲突 ADR；
+- 删除历史以制造一致性；
+- 在归档或永久知识中写入秘密、令牌、敏感日志或个人隐私；
+- 未经用户授权移动、删除、提交或推送。
+
+## 完成标准
+
+- `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/archive-checklist.md</Path>` 全部适用项通过；
+- change 已移动到 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>`；
+- 全局和归档状态一致；
+- 长期知识已按证据处理；
+- promotion report 已向用户汇报；
+- 无未批准副作用。
 
 ## 子文件引用
 
-| 文件 | 触发条件 |
-|------|----------|
-| `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/discrimination-guide.md</Path>` | 进入步骤 3「知识评估与鉴别」时加载——智能比对四步法、六种处置动作判定规则、冲突标注格式 |
-| `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/archive-rules.md</Path>` | 进入步骤 4「生成归档计划」时加载——预检清单、批量原子性规则、移动与验证规程 |
-| `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/consolidation-rules.md</Path>` | 进入步骤 5「生成知识沉淀计划」时加载——adr/context/research 三库的写入规则、合并策略、保护规则 |
-| `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/knowledge-graduation.md</Path>` | 进入步骤 5「生成知识沉淀计划」时加载——三文件模型毕业标准、反毕业条件、知识类型到知识库的映射 |
-| `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/cleanup-rules.md</Path>` | 进入步骤 6「生成清理计划」时加载——五种清理分类、反模式扫描规则、保护规则 |
-
-## 依赖关系
-
-- 依赖 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 定义的 ADR/CONTEXT/LOG 三文件格式规范
-- 依赖 `<Path>{roots.workflows}/specdev/INDEX.md</Path>` 的持久化约定表
+- 归档检查：`<Path>{roots.workflows}/specdev/A-archive-and-consolidate/archive-checklist.md</Path>`
+- 知识提升规则：`<Path>{roots.workflows}/specdev/A-archive-and-consolidate/knowledge-promotion-rules.md</Path>`

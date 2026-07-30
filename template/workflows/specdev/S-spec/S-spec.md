@@ -3,91 +3,145 @@ id: specdev/spec
 type: workflow-entry
 workflow: specdev
 name: 编写 Spec
-description: 将当前对话综合为一份完整的 spec 文档，包含问题陈述、解决方案、用户故事、实现决策和测试决策，持久化到变更目录。
-keywords: [spec, 规范, 需求, PRD, 用户故事]
+description: 综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
+keywords: [spec, PRD, 用户故事, 验收合同, 接缝, 范围, readiness]
 ---
 
 # 编写 Spec
 
-此 work 读取当前对话上下文和代码库理解，产出一份 spec（你可能也称之为 PRD）。不要访谈用户 —— 仅综合你已经知道的内容。
+本 work 以“综合已有上下文”为主，不启动宽泛访谈。它保留原有的代码库探索、领域词汇、ADR 约束、测试接缝设计和用户确认能力，但将确认限制为真正影响外部行为或验证的高价值问题。
+
+Spec 决定“为什么、为谁、系统应表现为何”。它可以锁定影响公共接口、数据、兼容、安全或验收的实现约束，但不写逐文件施工计划。
+
+## 输入
+
+按存在情况读取：
+
+- `<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- `<Path>{roots.state}/specdev/context/</Path>`
+- `<Path>{roots.state}/specdev/adr/</Path>`
+- 当前代码、测试、接口、schema、配置和运行事实。
+
+不存在的可选工件静默跳过，不得把缺失内容当作已确认事实。
 
 ## 流程
 
-### 1. 探索代码库
+### 1. Grounding 与事实探索
 
-探索仓库以了解代码库的当前状态（如果尚未这样做）。在整个 spec 中使用项目的领域词汇表，并尊重所涉及区域的任何 ADR。
+1. 汇总用户目标、受众、问题、限制和已有决定；
+2. 只读探索相关代码、测试、配置、schema 和相邻实现；
+3. 使用 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 与 `<Path>{roots.state}/specdev/context/</Path>` 的术语，不自创冲突名称；
+4. 使用 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>` 的已接受决策；
+5. 按 `<Path>{roots.workflows}/specdev/common/rules/planning-principles.md</Path>` 区分可发现事实、高影响偏好和低影响实现细节；
+6. 按 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>` 处理冲突；
+7. 外部依赖、标准或版本行为不清楚时使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
 
-先读取 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 了解项目的领域词汇表——使用其中的术语定义，不要自创名称。
+广泛的产品或架构取舍仍未确定时，返回 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`；不要在 Spec 中用猜测补齐。
 
-再读取 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 了解已做出的架构决策——不要与已有决策冲突。如果 spec 涉及与某 ADR 相同或相邻的区域，在实现决策中引用该 ADR。
+### 2. 定义问题、用户和成功
 
-`{change}` 为当前活跃变更的目录名，格式为 `<YYYY-MM-DD>-<topic>`。如果尚未创建变更目录，先运行 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 的启动变更阶段初始化 CONTEXT.md 和 ADR.md。
+从用户或调用者视角写明：
 
-若代码库探索中遇到不熟悉的模块、外部依赖、第三方 SDK 或技术领域，调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 进行针对性调查——了解其设计意图、API 契约和行为特征——再基于完整理解撰写 spec。
+- 当前问题与影响；
+- 目标用户、调用者或运营角色；
+- 主要场景和现有痛点；
+- 成功状态与可观察结果；
+- 明确非目标。
 
-**完成标准**：代码库当前状态已理解，领域词汇表和 ADR 已纳入考量。
+目标不能只写“新增模块”“修改接口”或“完成 Ticket”。
 
-### 2. 草拟接缝
+### 3. 定义外部行为与范围
 
-草拟你将用于测试该功能的接缝（seam）。接缝是你可以插入测试以验证行为的位置——API 端点、CLI 命令、UI 交互点、事件回调等。
+写明：
 
-**接缝规则：**
+- 解决方案摘要；
+- 正常路径；
+- 边界和失败路径；
+- 稳定错误行为；
+- 状态转换和不变量；
+- IN、REUSE、OUT；
+- 需要保持的既有行为；
+- 公共接口、数据、安全、迁移和运维影响。
 
-- 优先使用现有接缝而不是新建。查看代码库中已有的测试，了解项目如何注入测试。
-- 使用尽可能高层的接缝。UI 测试 > API 测试 > 单元测试，按此优先级选择。
-- 如果需要新接缝，在尽可能高的层级提出。代码库中的接缝越少越好 —— 理想数量是 1 个。
-- 每个接缝描述：接缝位置（什么模块/组件）、接缝类型（E2E、API、单元）、何时触发、如何验证。
+局部文件组织、辅助函数和逐行实现不进入 Spec。
 
-**与用户确认这些接缝是否符合他们的期望。** 展示草拟的接缝列表，询问：
-- 接缝层级是否合适？（太高可能遗漏细节，太低可能过于脆弱）
-- 是否有遗漏的接缝？
-- 现有接缝是否已足够，无需新增？
+### 4. 设计验证接缝
 
-**完成标准**：测试接缝已草拟并经用户确认。
+优先复用现有稳定接缝。通常优先顺序是用户端到端行为、公共 API 或 CLI、事件或集成接缝、稳定单元接缝；实际层级由风险和项目先例决定，不机械追求最高层测试。
 
-### 3. 编写 spec
+每个接缝写明：
 
-按以下模板编写完整 spec，写入 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`。
+- 入口位置和类型；
+- 触发方式；
+- 可观察结果；
+- 覆盖哪些验收合同；
+- 现有测试先例或命令。
 
----
+若接缝选择会显著改变可测试性、事故半径或实现范围，向用户做一次聚焦确认；接缝可由代码和已有测试明确推导时，直接采用并记录依据，不为形式提问。
 
-**问题陈述** —— 从用户视角描述用户面临的问题。不要描述技术问题——描述用户遇到的困境、无法完成的任务、或当前流程中的痛点。一两段即可，但必须具体到让读者理解"为什么需要这个功能"。
+证据规则见 `<Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>`。
 
-**解决方案** —— 从用户视角描述问题的解决方案。描述用户将如何与新功能交互、他们的体验将如何改变。不要写实现细节——写用户能做什么、看到什么。一两段即可。
+### 5. 编写 Spec
 
-**用户故事** —— 一个详细的、编号的用户故事列表。每个用户故事格式为：
+使用 `<Path>{roots.workflows}/specdev/S-spec/spec-template.md</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`。
 
-> 作为 &lt;角色&gt;，我希望 &lt;功能&gt;，以便 &lt;收益&gt;
+稳定编号：
 
-例如：*作为手机银行客户，我希望查看账户余额，以便做出更明智的消费决策。*
+- `US-###`：用户故事；
+- `AC-###`：验收合同；
+- `NFR-###`：非功能要求；
+- `DEC-###`：已锁定实现约束；
+- `OOS-###`：明确超出范围。
 
-用户故事列表应极其详尽，涵盖该功能的所有方面。覆盖以下维度：
-- 主要流程（happy path）—— 用户最常走的路径
-- 边界情况 —— 空数据、极限值、并发操作
-- 错误处理 —— 用户犯错时发生什么
-- 权限与角色 —— 不同角色的不同体验
-- 状态转换 —— 数据从创建到归档的每个状态变化
+不得虚构错误码、性能阈值、schema、迁移政策、法规或合规要求。项目代码证据使用项目相对 Path 标签。
 
-**实现决策** —— 已做出的实现决策列表。可包含：将构建/修改的模块、这些模块将被修改的接口、开发者的技术澄清、架构决策、Schema 变更、API 契约、具体交互。不要包含具体文件路径或代码片段——它们可能很快过时。
+### 6. Readiness Review
 
-例外：如果原型产生了一个代码片段，它比文字更精确地编码了一个决策（状态机、reducer、schema、类型结构），将其内联在相关决策中，并简要注明来自原型。精简到富含决策的部分 —— 不是可运行的演示，只是关键部分。
+加载 `<Path>{roots.workflows}/specdev/S-spec/spec-readiness.md</Path>` 检查 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`。
 
-**测试决策** —— 已做出的测试决策列表。包含：什么构成好测试的描述（只测试外部行为，不测试实现细节）、哪些模块将被测试、测试的先例（即代码库中类似类型的测试）。
+任何会改变以下内容的未决问题都会使 `ready_for_tickets: false`：
 
-**超出范围** —— 描述此 spec 超出范围的内容。明确说出**不做什么**与说出做什么同样重要。对于每个超出范围的条目，简要说明原因（是后续版本的规划、还是技术上不可行、还是与产品愿景不符）。
+- 外部行为和范围；
+- 公共接口或数据；
+- 安全、隐私、资金或数据完整性；
+- 兼容、迁移和发布约束；
+- 验收合同或验证接缝。
 
-**补充说明** —— 关于该功能的任何补充说明。可包含：已知风险或不确定性、依赖的外部系统或团队、需要进一步调研的领域、迁移或废弃计划。
+低影响、可逆实现默认值可以作为显式假设，但必须有验证方式。
 
----
+### 7. 发布与路由
 
-写入后，不要做额外的 triage 或标签操作——spec.md 的地位由其在变更目录中的存在本身决定。
+1. 对照 `<Path>{roots.workflows}/specdev/common/schemas/spec.schema.json</Path>`；
+2. 运行：
 
-**完成标准**：spec.md 已写入变更目录——问题陈述、解决方案、用户故事、实现决策、测试决策、超出范围、补充说明各章节齐全，无残留 `[TODO:]`。
+```bash
+node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
+  <Path>{roots.state}/specdev/changes/{change}</Path>
+```
+
+3. 更新 `<Path>{roots.state}/specdev/status.json</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；
+4. 汇报主要用户故事、验收合同、范围、验证接缝、风险和 Ready 状态；
+5. 返回 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`、Ready 状态及下一 Work 的完整路径；
+6. 只有用户请求或工作流显式串联时，进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。
+
+## 完成标准
+
+- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` 已按模板写入；
+- 问题、目标用户、外部行为、范围和非目标明确；
+- 用户故事覆盖主要、边界、错误、角色和状态场景；
+- 每个验收合同可观察、可判定并绑定验证接缝；
+- 公共接口、数据、兼容、安全和迁移已决定或明确不适用；
+- 高影响未决问题与 `ready_for_tickets` 一致；
+- 不包含逐文件施工计划；
+- Spec、Ready 状态和下一 Work 路径已返回；
+- 状态和用户摘要已更新。
 
 ## 子文件引用
 
-本入口为单文件 work，所有内容均已内联。以下引用仅在其他 work 需要读取 spec 时使用：
-
-- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` —— 编写的 spec 产物
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` —— 领域词汇表（阅读用）
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` —— 架构决策记录（阅读用）
+- Spec 模板：`<Path>{roots.workflows}/specdev/S-spec/spec-template.md</Path>`
+- Ready 检查：`<Path>{roots.workflows}/specdev/S-spec/spec-readiness.md</Path>`

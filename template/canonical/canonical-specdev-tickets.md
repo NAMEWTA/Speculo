@@ -1,278 +1,1632 @@
 # 拆分 Tickets
 
-将 plan、spec 或对话拆分为一组 **tickets** —— 曳光弹式垂直切片，每个 ticket 声明**阻塞**它的那些 tickets。
+## 网页平台运行约定
+
+本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
+
+- 项目根下的 `specdev/` 是状态区；全局配置与状态分别为 `specdev/config.json` 和 `specdev/status.json`。
+- 当前 change 位于 `specdev/changes/{change}/`，其中 `{change}` 使用 `YYYY-MM-DD-<kebab-topic>`。
+- 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 `specdev/adr/`、`specdev/context/` 和 `specdev/research/`。
+- `specdev/config.json` 或 `specdev/status.json` 不存在时，分别按下方 `<config-template>` 和 `<status-template>` 标签创建；新建 change 时按下方 `<change-status-template>` 标签创建 `.status.json`。对应 schema 用于结构核对。
+- 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
+- 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
+- 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
+- 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
+
+Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
+
+本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
+
+## 输入
+
+优先读取：
+
+- 当前 Spec：`specdev/changes/{change}/spec.md`
+- 当前架构决策：`specdev/changes/{change}/ADR.md`
+- 当前领域上下文：`specdev/changes/{change}/CONTEXT.md`
+- 当前设计日志：`specdev/changes/{change}/LOG.md`
+- Bug 诊断：`specdev/changes/{change}/diagnosis.md`
+- 永久架构决策：`specdev/adr/`
+- 永久领域上下文：`specdev/context/`
+- 项目当前代码、测试、配置、schema 和 CI 事实。
+
+若尚无 `specdev/changes/{change}/spec.md`，只有在用户提供的计划或对话已经等价覆盖目标、范围、关键决定和可判定验收时才可继续；否则建议先运行 “编写 Spec 阶段”。
 
 ## 流程
 
-### 1. 收集上下文
+### 1. 输入预检
 
-基于对话上下文中已有的内容进行工作。如果用户将某个引用（spec 路径或其他标识）作为参数传入，拉取它并读取其完整内容。
+1. 读取所有存在的上游工件；
+2. 检查 `specdev/changes/{change}/spec.md` 的 `ready_for_tickets`；
+3. 按 下方 `<artifact-contract>` 标签 处理 Spec、ADR、用户决定与代码事实的冲突；
+4. 将未知项分类为可发现事实、高影响用户决定和低影响实现细节；
+5. 高影响未决问题没有关闭时停止，不通过更详细的 Ticket 文字伪装决策完备。
 
-主要输入来源：
-- 如果已有 spec，读取变更目录下的 spec.md —— 这是 ticket 拆分的首要依据。
-- 读取变更目录下的 ADR.md 了解本 change 的架构决策——ticket 不应与已做出的决策冲突。
-- 读取变更目录下的 CONTEXT.md 了解本 change 的领域词汇表。
-- 读取永久架构决策目录（specdev/adr/）—— 已确认并提升到永久的架构决策，始终反映项目当前架构现状。
-- 读取永久领域词汇表目录（specdev/context/）—— 已确认并提升到永久的领域词汇表，始终反映项目当前领域术语现状。
+**完成标准**：拆分依据、权威顺序、合同范围与未决问题已明确。
 
-如果尚未有 spec，可以基于对话中的计划或待办列表进行拆分，但优先建议用户先运行编写 Spec（S-spec）产出 spec 以获得更精确的拆分。
+### 2. 探索代码库与实现地形
 
-**完成标准**：上下文（spec、对话、代码库）已收集，所有必要输入源已读取。
+如果尚未探索，进行只读探索：
 
-### 2. 探索代码库
+- 找到行为入口、稳定接口、测试接缝、数据流和错误路径；
+- 查找相邻或类似实现，优先复用项目现有模式；
+- 识别可能修改的模块、公共路径、共享文件、迁移索引和全局注册点；
+- 查找现有测试命令、夹具、类型检查、构建和 CI 门禁；
+- 对照 `specdev/changes/{change}/CONTEXT.md` 使用项目领域词汇；
+- 对照 `specdev/changes/{change}/ADR.md` 与 `specdev/adr/` 避免重新争论已接受决策。
 
-如果尚未探索代码库，进行探索以了解代码的当前状态。Ticket 标题和描述应使用项目的领域词汇表，并尊重所涉及区域的 ADR。
+遇到不熟悉的模块、外部依赖或第三方库时，使用 下方 `<research>` 标签，再继续拆分。
 
-寻找预重构（prefactor）的机会，使实现更简单。"让变更变容易，然后做容易的变更。"
+#### Prefactor
 
-具体做法：
-- 识别即将被修改的模块——它们的接口是否清晰？依赖是否合理？
-- 如果某个模块的当前结构会使后续实现变得复杂，先提出一个重构 ticket，放在功能 tickets 之前。
-- 预重构必须独立有价值——不是为了"更干净"而重构，而是为了"让后续变更更安全/更简单"。
+遵循“让变更变容易，然后做容易的变更”：
 
-若探索中遇到不熟悉的模块、外部依赖或第三方库——其接口设计意图和行为特征尚不明确——调用 common/research skill 完成探查后再继续识别预重构机会。
+- 如果当前接口、依赖或接缝会使后续实现明显不安全或重复，提出前置 prefactor Ticket；
+- prefactor 必须说明它解除的具体阻碍；
+- prefactor 必须独立有价值且可验证；
+- 不为了“更干净”而创建与目标无关的重构 Ticket。
 
-**完成标准**：代码库已探索，预重构机会已识别，领域词汇表和 ADR 已纳入考量。
+**完成标准**：实现地形、稳定接缝、共享路径与必要 prefactor 已识别。
 
-### 3. 草拟垂直切片
+### 3. 草拟曳光弹式垂直切片
 
-将工作拆分为**曳光弹** tickets。每个切片横向切穿每一层（schema、API、UI、测试），是一条窄但**完整**的路径——是垂直切片，不是某一层的水平切片。
+加载 下方 `<decomposition-rules>` 标签。每个切片应横向穿过交付该行为所需的最小层次组合，而不是把数据库、后端、前端和测试拆成互相无价值的水平 Ticket。
 
-垂直切片规则：
-- 一个完成的切片可以独立演示或验证——用户可以感知到它交付的行为
-- 每个切片的大小适配单个全新上下文窗口——一个 agent 会话可以在不间断的情况下完成它
-- 任何预重构应最先完成——它们解除后续 tickets 的阻塞
+每个 Ticket 必须：
 
-为每个 ticket 标注其**阻塞边** —— 即必须在它开始之前完成的其他 tickets。没有阻塞边的 ticket 可以立即开始。
+- 交付一个可观察行为，或一个能独立解除后续阻塞的安全准备能力；
+- 完成后可以独立演示、测试或验证；
+- 适合一个全新 Agent 上下文在不中断的情况下完成；
+- 与其他 Ticket 有实质行为差异；
+- 只依赖真正阻止它开始的前置产物；
+- 自带至少一种完成证据。
 
-**宽重构是垂直切片的例外。** **宽重构**是指一个机械性变更 —— 重命名字段、修改共享符号的类型 —— 其**影响范围**辐射整个代码库，因此单次编辑会破坏数千个调用点，任何垂直切片都无法以绿色状态落地。不要强行将其塞入曳光弹；应将其排序为**扩展-收缩**序列：
+#### 宽重构例外
 
-1. **扩展**：在旧形式旁边添加新形式，使一切不中断。旧代码仍然工作，新代码可用但尚未被调用。
-2. **分批迁移调用点**：按影响范围分批（按包、按目录），每批是一个由扩展阶段阻塞的独立 ticket。保持 CI 逐批绿色，因为旧形式仍然存在。
-3. **收缩**：当没有调用方残留时删除旧形式，由一个由所有迁移批次阻塞的 ticket 负责。
+字段重命名、共享符号类型变化、协议升级等宽机械变更无法安全塞入单个垂直切片时，按以下顺序：
 
-当连批次本身都无法独立保持绿色时，保持排序不变，但让它们共享一个集成分支，所有批次共同阻塞一个最终的集成验证 ticket —— 绿色仅在该处得到承诺。
+1. **Expand**：在旧形式旁增加新形式，保持旧调用方可工作；
+2. **Migrate batches**：按包、目录、消费者或风险分批迁移，每批独立成 Ticket；
+3. **Contract**：确认旧调用点为零后删除旧形式；
+4. 若迁移批次无法各自保持绿色，使用隔离集成分支和最终集成验证 Gate，但仍保留明确的批次与责任边界。
 
-**完成标准**：曳光弹式垂直切片已草拟，每个 ticket 的阻塞边已标注。
+**完成标准**：每个 Ticket 的可观察产出、真实阻塞边和验证方式已草拟。
 
-### 4. 与用户核对
+### 4. 判定规划深度与风险
 
-以编号列表形式呈现提议的拆分方案。对于每个 ticket，展示：
+按 下方 `<readiness-and-depth>` 标签 为每个 Ticket 标注：
 
-- **标题**：简短的描述性名称
-- **被阻塞于**：必须首先完成的其他 tickets（如有），或"无 —— 可立即开始"
-- **它交付什么**：此 ticket 使哪些端到端行为可用，从用户视角描述
+- `lite`：局部、可逆、沿用既有模式、无公共契约或迁移影响；
+- `standard`：大多数多文件或跨层垂直切片；
+- `deep`：公共 API/schema、数据迁移、安全/隐私/资金、不可逆操作、expand-contract、共享核心路径、多 Agent 或高事故半径。
 
-询问用户：
+规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
 
-- 粒度是否合适？（太粗 —— 一个 ticket 内塞了太多决策，难以在一个会话内完成；太细 —— ticket 之间没有实质性行为差异）
-- 阻塞边是否正确 —— 每个 ticket 是否只依赖于真正阻碍它的 tickets？是否有不必要的阻塞关系？
-- 是否有 tickets 应合并或进一步拆分？
+### 5. 写成决策完备 Ticket
 
-迭代直到用户批准拆分方案。每次修改后重新展示完整列表。
+使用 下方 `<ticket-template>` 标签 填写：
 
-**完成标准**：用户已确认粒度、阻塞边与合并/拆分方案。批准后，tickets 将写入 `ticket/` 目录（一个 ticket 一个独立文件，命名为 `NN-<name>.md`），并生成 `tickets-map.md` 作为总体地图和执行清单。
+- 战略目标、可观察产出与来源追踪；
+- 当前代码事实和需求差距；
+- 已锁定决策、低影响假设和未决问题；
+- IN / REUSE / OUT；
+- 用户或调用者视角的端到端行为；
+- Standard/Deep 的接口、输入输出、不变量、数据流、失败与兼容契约；
+- 有序执行路线和安全落点；
+- expected、writable、read-only、shared 路径；
+- 正常、失败和回归验证矩阵；
+- 用户界面交互受影响时的 Lead E2E Gate；
+- Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
+- 可判定验收标准。
 
-### 5. 发布
+路径所有权必须遵守 下方 `<path-ownership>` 标签，证据设计必须遵守 下方 `<evidence-and-verification>` 标签。
 
-将已批准的 tickets 写入变更目录，**每个 ticket 一个独立文件**，并生成总体地图文件。按以下三步执行：
+### 6. 构建依赖 DAG、合同覆盖与并发检查
 
-**5a. 创建 ticket 目录**
+1. 使用 Ticket ID 建立 `blocked_by`；
+2. 检测循环和不存在的引用；
+3. 识别根 Ticket、汇合点、扇出与收缩点；
+4. 为每个 Spec 验收合同映射至少一个 Ticket；
+5. 检查并行候选的 `writable_paths` 是否相交；
+6. 共享路径必须指定唯一 owner，通常由 Lead 或专门 Ticket 修改；
+7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
-创建变更目录下的 `ticket/` 子目录。
+使用 下方 `<tickets-map-template>` 标签 草拟总体 Map。
 
-**5b. 写入单个 ticket 文件**
+### 7. Definition of Ready
 
-按依赖顺序（无阻塞者在前，被阻塞者在后），为每个 ticket 创建独立文件，路径为变更目录下的 `ticket/NN-<ticket-name>.md`。`NN` 为 ticket 编号（两位零填充阿拉伯数字：`01`, `02`, ..., `10`, ...），代表执行顺序。文件名与编号均不含 `#` 字符，避免 Markdown 链接被编码为 `%23`。
+加载 下方 `<ticket-readiness>` 标签 逐个检查。
 
-每个 ticket 文件按以下模板填写：
+存在以下任一情况时 `ready: false`：
 
-```markdown
-# Ticket NN: <标题>
+- 会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
+- 依赖缺失或 DAG 有环；
+- 可写路径不明确或并行所有权冲突；
+- 验证方法不能执行且没有批准的替代证据；
+- 单个新上下文无法完成；
+- Standard/Deep 缺少有序执行路线；
+- Deep 缺少迁移、兼容、监控、回滚或批准点。
 
-- **被阻塞于：** `./ticket/NN-<name>.md`, `./ticket/NN-<name>.md`（相对路径，或多个用逗号分隔。无阻塞则写"无 —— 可立即开始"。查看被引用 ticket 文件中的状态字段自行判断是否已就绪）
-- **状态：** 未开始
+### 8. 与用户核对
 
-<!-- 如需了解整体上下文、所有 ticket 的依赖关系全景或横切关注点，请查看 `../tickets-map.md`。 -->
+以完整编号列表展示所有 Ticket，至少包含：
 
-## 战略与背景
+- 标题；
+- 可观察交付；
+- 被阻塞于；
+- Planning Depth 与触发原因；
+- 风险；
+- Ready 状态；
+- 关键未决问题；
+- 预计并行组和共享路径 owner。
 
-<!-- [必填] 本 ticket 的战略上下文。 -->
+核对：
 
-- **本 ticket 战略**：一句话——本 ticket 做什么 + 为什么 + 以什么为基础（新建/复用现有模块）
-- **与该 ticket 相关的已确认决策**：逐条列出与本 ticket 范围相关的已拍板决策（从 ADR、spec 或对话中提取），防止实现时重新扯皮
-- **与该 ticket 相关的当前现状**：逐条列出与本 ticket 相关的、与需求不符的现有代码/行为。格式：文件路径 + 当前行为 + 为何不满足需求。可附近似行号作定位提示，不作承诺——实施时以现场代码为准
-- **该 ticket 的预期产出**：完成后可观察到的行为变化
+- 粒度是否适合单一上下文；
+- 是否出现水平切片；
+- 阻塞边是否真实；
+- 是否应合并、进一步拆分或增加 prefactor；
+- 合同是否全部覆盖；
+- 路径所有权和验证是否可信。
 
-## 范围边界
+每次修改后重新展示完整列表，直到用户批准。用户明确要求一次性自主规划且不存在高影响未知项时，可使用推荐默认值并把假设写入 Ticket，不为形式重复询问。
 
-| IN（本 ticket 构建） | REUSE（复用现有，不改动） | OUT（本 ticket 明确不做） |
-|---------------------|-------------------------|-------------------------|
-| ...                 | ...                     | ...                     |
+### 9. 发布
 
-## 要构建什么
+创建：
 
-<从用户视角描述此 ticket 交付的端到端行为。用户能做什么、看到什么变化。不是逐层实现清单。一到三段。>
+- Ticket 目录：`specdev/changes/{change}/ticket/`
+- Tickets Map：`specdev/changes/{change}/tickets-map.md`
+- Evidence 目录：`specdev/changes/{change}/evidence/`
 
-## 交付物
+按拓扑顺序写入 Ticket：
 
-<!-- 本 ticket 产出的文件/模块/功能。新增文件标 **新增**，重度重构标 **重构**。 -->
-
-- **新增** path/to/new.ts —— 描述
-- 修改 path/to/existing.ts —— 改动内容
-
-## 需阅读的文件
-
-<!-- 可选：仅当 ticket 涉及非显而易见的代码区域时填写。简单 ticket 可省略整个小节。 -->
-
-| 文件 | 目的 |
-|------|------|
-| path | 为何需要阅读 |
-
-## 保留/不动
-
-<!-- 本 ticket 绝对不能碰的代码、契约或数据。无则写"无"。 -->
-
-## 实现要点
-
-<!-- 可选：3-7 条关键技术决策。简单 ticket 可省略整个小节。 -->
-
-1. 关键技术点
-2. 关键技术点
-
-## 验收标准
-
-- [ ] 可验证的验收条件
-- [ ] 可验证的验收条件
+```text
+specdev/changes/{change}/ticket/NN-<ticket-name>.md
 ```
 
-**模板填写说明：**
+`NN` 使用两位或更多位零填充数字；Ticket frontmatter ID 使用 `T-NN`。Ticket 的 `blocked_by` 使用 Ticket ID，而不是相对文件路径。
 
-- **被阻塞于**使用指向 `./ticket/` 目录的相对路径（如 `./ticket/01-auth.md`），多个用逗号分隔。执行者应自行打开被引用的 ticket 文件查看其状态字段，判断阻塞是否已解除
-- **状态**初始固定为"未开始"；实现者开始工作时改为"进行中"，完成后改为"已完成"
-- **战略与背景**是必填段——为执行者提供该 ticket 的决策锚点和当前现状。从 spec、ADR、对话中提取，不确定的标记 `[待确认]`
-- **范围边界**是必填段——明确本 ticket 的 IN/REUSE/OUT 三列，防止范围蔓延。OUT 列吸收"明确不做"的内容
-- **交付物**列出本 ticket 产出的具体文件——新增标 **新增**，修改不标，重构标 **重构**。让执行者明确知道要动哪些文件
-- **需阅读的文件**仅在涉及非显而易见的代码区域时填写——告诉执行者上下文边界
-- **保留/不动**是本 ticket 的安全边界——显式列出不能碰的代码/契约/数据。无则写"无"
-- **实现要点**仅在 ticket 涉及有意义的架构决策时填写（3-7 条）。简单 ticket 省略
-- **验收标准**使用 `- [ ]` checklist 格式，每条具体、可独立验证。优先写可执行命令，其次写手动检查步骤
-- 描述统一使用深层模块设计词汇：模块/接口/接缝/适配器，而非组件/服务/边界
+使用 下方 `<ticket-template>` 标签 和 下方 `<tickets-map-template>` 标签 生成工件，并对照：
 
-避免在 ticket 文件中写入绝对路径；行号仅作近似定位提示，不作承诺。例外：如果原型产生了一个代码片段，它比文字更精确地编码了一个决策（状态机、reducer、schema、类型结构），将其内联并简要注明来自原型。精简到富含决策的部分 —— 不是可运行的演示，只是关键部分。
+- 下方 `<ticket-schema>` 标签
+- 下方 `<tickets-map-schema>` 标签
 
-**5c. 写入 tickets-map.md**
+运行：
 
-创建变更目录下的 tickets-map.md，作为所有 ticket 的总体地图和执行看板。格式遵循权威模板——参见下方 `<tickets-map-template>` 标签中的完整内容。
+> **结构校验：** 本地项目若已安装 Speculo，使用其 Node 校验器检查当前 change；
+> 纯网页环境逐项核对本文内联的 schema、Ready 清单和完成标准，并记录自动校验未运行。
 
-T-tickets 阶段填写的列：**编号**、**Ticket**、**被阻塞于**、**状态**（初始"未开始"）。**Gate** 和 **Contract ID** 列暂留空或标注 `[待标注]`——由后续 P-goal-plan 在标注门禁层级时填充。**依赖关系**节写入基础 ASCII 树形图（阻塞链），后续 P-goal-plan 在此基础上叠加门禁边界（`--- P0 gate ---`）、就绪标记 `[READY]` 和扇出标记 `[FAN-OUT: N路并行]`。**并行规则**节按模板保留——T-tickets 阶段写入规则文本，P-goal-plan 阶段可调整并发数。
+更新 `specdev/status.json` 与 `specdev/changes/{change}/.status.json`。
 
-**tickets-map.md 填写说明：**
+## 完成标准
 
-- **执行清单**的 Ticket 列使用指向 `./ticket/` 目录的相对链接（纯数字编号前缀，如 `./ticket/01-auth.md`）
-- **编号**列使用 `01`、`02`、`10` 格式（两位零填充阿拉伯数字，不含 `#`），代表依赖顺序
-- **被阻塞于**列填写阻塞者的编号（如 `01`、`02, 05`）
-- **状态**列由 T-tickets 初始化为"未开始"，后续由实现者手动更新——始终以对应 ticket 文件中的状态字段为权威来源
-- **Gate** 列（P0/P1/P2）和 **Contract ID** 列由 P-goal-plan 填充；T-tickets 阶段留空或标 `[待标注]`
-- **依赖关系**用 ASCII 树形图展示阻塞链——T-tickets 写入基础结构，P-goal-plan 叠加门禁标注
-- **横切关注点**只放跨 ticket 的规则——单 ticket 的规则留在该 ticket 文件内
-- **阻塞关系说明**在依赖图非平凡时补充文字解释
-
-**完成标准**：`ticket/` 目录与全部 `NN-<ticket-name>.md` 已按依赖顺序写入；`tickets-map.md` 已按模板落盘（Gate / Contract ID 为 `[待标注]`）；每个 ticket 含阻塞边、战略与背景、范围边界、交付物、保留/不动与验收标准。
+- Ticket 目录和 Map 已写入本文约定的位置；
+- Spec 合同全部 covered 或有明确批准的 deferred；
+- DAG 无环、阻塞引用存在；
+- Ready Ticket 无高影响未知项；
+- 并行 Ticket 无未解决的可写冲突；
+- 每个 Ticket 可独立验证且适配单一上下文；
+- Prefactor 与 expand-contract 使用条件正确；
+- 用户已批准拆分或明确授权自主发布；
+- 校验器无 error。
 
 ## 子文件引用
 
-| 文件 | 内容 | 触发条件 |
-|------|------|----------|
-| tickets-map-template（参见下方 `<tickets-map-template>` 标签） | tickets-map.md 权威模板——执行清单六列表格、门禁标注 DAG、并行规则、横切关注点 | 进入步骤 5c「写入 tickets-map.md」时加载——T-tickets 按此模板输出基础结构，P-goal-plan 随后标注 Gate、Contract ID 和门禁 DAG |
-
-本入口为单文件 work，所有 ticket 拆分流程内容均已内联。以下引用供其他 work 读取产物：
-
-- 变更目录下的 tickets-map.md —— 总体地图与执行清单（编号 | Ticket | 被阻塞于 | Gate | Contract ID | 状态），格式遵循下方 `<tickets-map-template>` 标签
-- 变更目录下的 `ticket/` 目录 —— 独立 ticket 文件目录，每个文件命名为 `NN-<ticket-name>.md`（`NN` = `01`, `02`, ..., `10`, ...）
-- 变更目录下的 spec.md —— 上游 spec（拆分依据）
-- 永久架构决策目录（specdev/adr/）—— 已确认并提升的 ADR
-- 永久领域词汇表目录（specdev/context/）—— 已确认并提升的 CONTEXT
+- 拆分规则：下方 `<decomposition-rules>` 标签
+- Ticket 就绪规则：下方 `<ticket-readiness>` 标签
+- Ticket 模板：下方 `<ticket-template>` 标签
+- Tickets Map 模板：下方 `<tickets-map-template>` 标签
 
 ## 下一步
 
-如果 ticket 数量超过 10 个，建议运行目标规划（P-goal-plan）产出目标规划文档，定义里程碑级约束、质量门禁和执行协议，为大规模协调执行做准备。
+满足任一情况时建议运行 “目标规划阶段”：Ticket 数量达到或超过 10、存在多 Agent 并行、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。少量线性 Ready Ticket 可直接进入 “实现阶段”。
 
 ---
 
 ## 参考内容
 
+以下内容均已内联。主流程提到标签时，直接使用对应标签中的完整规则、模板或 schema。
+
+<decomposition-rules>
+
+# Ticket 拆分规则
+
+本文件由 “拆分 Tickets 阶段” 在草拟切片时加载，并受 下方 `<planning-principles>` 标签 约束。
+
+## 好的垂直切片
+
+- 从稳定入口到可观察结果形成闭环；
+- 包含该行为所需的最小 schema、接口、交互与测试组合；
+- 完成后仓库处于可验证状态；
+- 与其他切片有实质行为差异；
+- 可以由一个全新上下文完成；
+- 不需要执行者重新决定外部行为或公共契约。
+
+## 拆分信号
+
+出现任一情况应拆分：
+
+- 包含两个可独立发布或验证的用户行为；
+- 需要多个不同领域或架构决策；
+- 预计超出单一上下文；
+- `writable_paths` 过宽且可通过接缝隔离；
+- 验证必须等到不相关工作完成；
+- 一个部分高风险、另一部分低风险；
+- 一个部分改变共享契约，其他部分只是消费者迁移。
+
+## 合并信号
+
+出现任一情况应合并：
+
+- 两个 Ticket 单独完成都没有可观察价值或安全准备价值；
+- 只是按技术层水平分割；
+- 验收、代码范围和证据高度重叠；
+- 依赖边只是人为交接，没有真实前置产物；
+- 拆分后每个 Ticket 都需要重复相同关键上下文和同一不可分割验证。
+
+## 特殊模式
+
+### Prefactor
+
+必须说明解除的具体阻碍、后续受益 Ticket 和独立验证。不能只写“清理代码”。
+
+### Expand-contract
+
+先扩展兼容层，再分批迁移，最后收缩。每批应保持绿色；不能保持绿色时必须有隔离集成分支与最终集成 Gate。
+
+### Research spike
+
+未知足以阻止决策时，进入 “寻路阶段”。调查 Ticket 只回答决策问题，不顺手实现产品代码。
+
+### Shared contract
+
+先由单一 owner Ticket 修改共享契约并形成稳定证据，再扇出消费者 Ticket。共享路径规则见 下方 `<path-ownership>` 标签。
+
+### Bug fix
+
+已确认根因时，以 `specdev/changes/{change}/diagnosis.md` 的修复契约为依据；根因未知时先运行 “Bug 诊断阶段”。
+
+</decomposition-rules>
+
+<ticket-readiness>
+
+# Ticket Definition of Ready
+
+本检查由 “拆分 Tickets 阶段” 使用，并细化 下方 `<readiness-and-depth>` 标签。
+
+## 通用门禁
+
+- [ ] frontmatter 字段完整，Ticket ID、文件名和 `specdev/changes/{change}/tickets-map.md` 一致。
+- [ ] 可观察产出单一、明确且可验证。
+- [ ] 来源和验收合同映射存在。
+- [ ] IN、REUSE、OUT 无冲突。
+- [ ] 高影响未决问题为零。
+- [ ] `blocked_by` 指向存在的 Ticket，DAG 无环。
+- [ ] `expected_changes`、`writable_paths`、`read_only_paths` 和 `shared_paths` 中的项目路径都使用项目根相对路径。
+- [ ] `writable_paths` 非空，或明确为仅文档、调查或无代码变更。
+- [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
+- [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
+- [ ] 仅当用户界面交互受影响时定义 E2E，且 owner 为 Lead 集成 Gate。
+- [ ] Evidence 位置明确为 `specdev/changes/{change}/evidence/T-NN.md`。
+- [ ] 单个全新上下文能够完成；否则已拆分。
+- [ ] 所有内部文件与目录引用使用本文约定的逻辑路径。
+
+## Standard 门禁
+
+- [ ] 实现契约包含入口、输入输出、不变量、状态或数据流、失败行为和兼容。
+- [ ] 有 3–7 步有序执行路线。
+- [ ] 路径所有权足以支持并发判断。
+- [ ] 验证矩阵可以证明外部行为，而非只检查内部调用。
+
+## Deep 门禁
+
+- [ ] 迁移顺序、兼容窗口、监控、回滚或前向恢复、收缩条件和批准点完整。
+- [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
+- [ ] 跨 Agent 路径所有权和集成 Gate 明确。
+- [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。
+
+## Ready 状态
+
+只有全部适用项通过时才能设置：
+
+```yaml
+ready: true
+status: ready
+```
+
+未通过时保持 `ready: false`，并在未决问题、阻塞原因或偏差记录中写明原因。
+
+</ticket-readiness>
+
+<ticket-template>
+
+## 产物 YAML 头部
+
+生成该工件时，将以下字段写在文档开头的 YAML frontmatter 中：
+
+```yaml
+schema_version: 3
+artifact: ticket
+change: <YYYY-MM-DD-topic>
+id: T-01
+title: <标题>
+status: draft
+planning_depth: standard
+planning_depth_reason: <触发该深度的事实>
+ready: false
+risk: medium
+blocked_by: []
+contract_ids: [AC-001]
+owner: unassigned
+expected_changes: ["src/example.ts"]
+writable_paths: ["src/example/**"]
+read_only_paths: []
+shared_paths: []
+shared_path_owners: []
+```
+
+# Ticket T-01: <标题>
+
+- **Ticket 文件：** `specdev/changes/{change}/ticket/01-<ticket-name>.md`
+- **总体 Map：** `specdev/changes/{change}/tickets-map.md`
+- **上游 Spec：** `specdev/changes/{change}/spec.md`
+- **完成 Evidence：** `specdev/changes/{change}/evidence/T-01.md`
+
+## 1. 战略与来源
+
+- **目标：** 做什么、为什么、基于什么现有能力。
+- **可观察产出：** 完成后用户、调用者或系统外部可以观察到什么。
+- **来源：** `US-###`、`AC-###`、`ADR-###`、`USER-DECISION`、`CODE`、`RESEARCH` 或 `DIAG-###`。
+- **当前事实：** 相关现状与目标差距；项目文件使用项目根相对路径，例如 `src/example.ts`。
+- **Planning Depth 原因：** 说明为什么是 Lite、Standard 或 Deep。
+
+## 2. 决策状态
+
+### 已锁定决策
+
+- ...
+
+### 已采用的低影响假设
+
+- 无。
+
+### 未决问题
+
+无。
+
+存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。
+
+## 3. 范围边界
+
+| IN（本 Ticket 构建） | REUSE（复用且不改变契约） | OUT（明确不做） |
+|---|---|---|
+| ... | ... | ... |
+
+## 4. 要构建什么
+
+从用户或调用者视角描述一条完整行为路径：入口、动作、可观察结果、失败行为和边界。不要按数据库、后端、前端、测试等技术层分段罗列。
+
+## 5. 实现契约
+
+<!-- Lite 可压缩为适用条目；Standard 和 Deep 必填。 -->
+
+- **入口或接缝：**
+- **输入与输出：**
+- **公共接口变化：** 无 / ...
+- **不变量：**
+- **状态或数据流：**
+- **错误与失败行为：**
+- **兼容要求：**
+- **安全与隐私要求：** 不适用：原因 / ...
+
+## 6. 执行路线
+
+<!-- Lite 通常 1–3 步；Standard 和 Deep 通常 3–7 步。描述行为顺序、安全落点和验证时机，不写逐行代码。 -->
+
+1. 建立或确认验证接缝，使目标行为或关键风险按预期失败。
+2. ...
+3. 形成保持仓库可验证的安全落点。
+4. 运行定向验证和适用回归。
+
+## 7. 路径访问契约
+
+- **预计修改点：** 与 `expected_changes` 对齐，仅作导航。
+- **可写范围：** 与 `writable_paths` 对齐；越界前必须停止。
+- **只读上下文：** 与 `read_only_paths` 对齐。
+- **共享路径：** 与 `shared_paths` 对齐；每项在 `shared_path_owners` 指定唯一 owner。
+- **保留或不动：** 无 / ...
+
+项目路径必须写成项目根相对路径。SpecDev 工件必须使用本文约定的逻辑路径。
+
+## 8. 验证矩阵
+
+| 行为或风险 | 验证接缝 | 命令或步骤 | 预期结果 | Evidence |
+|---|---|---|---|---|
+| 正常路径 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
+| 失败路径 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
+| 回归 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
+
+不适用的关键风险类别必须写“不适用：原因”。
+
+仅当用户界面交互受影响时增加 E2E 行；owner 固定为 Lead 集成 Gate，Worker 只提供场景与预期。
+
+## 9. 发布、迁移与恢复
+
+<!-- Deep 必填；其他深度仅在适用时保留。 -->
+
+- **迁移顺序：** 不适用：原因 / ...
+- **兼容窗口：** 不适用：原因 / ...
+- **监控信号：** 不适用：原因 / ...
+- **回滚或前向恢复：**
+- **不可逆操作与批准点：** 无 / ...
+- **收缩条件：** 不适用：原因 / 旧调用点、旧数据或旧协议使用量为零并有 Evidence。
+
+## 10. 验收标准
+
+- [ ] `AC-001`：<可判定结果>。
+- [ ] 验证矩阵全部执行并记录到 `specdev/changes/{change}/evidence/T-01.md`。
+- [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
+- [ ] 未发生未批准的范围、契约或发布偏差。
+- [ ] Ticket、Tickets Map 和 Evidence 状态一致。
+
+</ticket-template>
+
 <tickets-map-template>
 
-# Tickets Map: <工作简短名称>
+## 产物 YAML 头部
 
-<一段话总结所有 ticket 共同构建的内容。如果拆分依据是 spec，引用 spec.md。如果基于对话或计划，说明来源。>
+生成该工件时，将以下字段写在文档开头的 YAML frontmatter 中：
 
-## 执行清单
-
-| 编号 | Ticket | 被阻塞于 | Gate | Contract ID | 状态 |
-|------|--------|----------|------|-------------|------|
-| 01 | [ticket-name](./ticket/01-<kebab-title>.md) | 无 | P0 | — | 未开始 |
-| 02 | [ticket-name](./ticket/02-<kebab-title>.md) | 01 | P1 | P1-03 | 未开始 |
-| 10 | [ticket-name](./ticket/10-<kebab-title>.md) | 02, 05 | P2 | — | 未开始 |
-
-> **状态枚举**：未开始 / 进行中 / 已完成。所有 ticket 初始均为"未开始"。
-> **被阻塞于**列填写阻塞本 ticket 的 ticket 编号（如 `01`、`02, 05`），执行者需自行打开对应 ticket 文件查看其状态。不可仅凭此表判断——始终以对应 ticket 文件中的状态字段为准。
-> **Gate 列**：P0 = 核心基础设施（阻塞所有后续工作）/ P1 = 主要功能切片 / P2 = 增强和边界情况。由 P-goal-plan 填充，T-tickets 阶段留空或标注 `[待标注]`。
-> **Contract ID 列**：如有冻结合同/验收文档，填写本 ticket 覆盖的验收条目 ID（如 `P0-01, P1-03`）；无合同则填 `—`。由 P-goal-plan 填充。
-
-## 依赖关系（门禁标注 DAG）
-
-<!-- 用 ASCII DAG 展示 ticket 之间的阻塞关系和门禁边界。
-     由 T-tickets 写入基础树形结构，由 P-goal-plan 标注门禁层级（P0/P1/P2）、
-     就绪标记 [READY] 和扇出标记 [FAN-OUT: N路并行]。
-
-     绘制约定：
-     - 每行一个 ticket，缩进表示依赖深度
-     - → 表示依赖关系（A → B 表示 B 依赖 A）
-     - 用注释标注门禁边界：--- P0 gate ---
-     - 可立即开始的 ticket 标注 [READY]
-     - 扇出点标注 [FAN-OUT: N路并行]
-
-     示例格式：
-     01 [READY]  →  02 [FAN-OUT: 3路并行]
-                          ├→ 03 [P0]
-                          ├→ 04 [P1]
-                          └→ 05 [P1]
-     --- P0 gate ---
-     03  →  06 [P1]  →  07 [P2]
--->
-
-```
-01-<name>          ← 无阻塞，可立即开始
-  ├── 02-<name>    ← 阻塞于 01
-  └── 03-<name>    ← 阻塞于 01
-        └── 04-<name>  ← 阻塞于 03
+```yaml
+schema_version: 3
+artifact: tickets-map
+change: <YYYY-MM-DD-topic>
+status: draft
 ```
 
-## 并行规则
+# Tickets Map: <工作名称>
 
-- 最大 **3** 个并发实现者（ticket 数 > 20 时可调至 4）
-- 并发 ticket 的 file allowlist 必须互不重叠——两两之间无可写文件交集
-- 共享文件（package.json、lockfile、合同文档、IPC 根导出、领域词汇表）仅由 Lead 修改
-- 共享文件修改后，所有并发子代理需在继续前同步
+- **Map：** `specdev/changes/{change}/tickets-map.md`
+- **Spec：** `specdev/changes/{change}/spec.md`
+- **Ticket 目录：** `specdev/changes/{change}/ticket/`
+- **Evidence 目录：** `specdev/changes/{change}/evidence/`
+- **可选 Goal Plan：** `specdev/changes/{change}/goal-plan.md`
 
-## 横切关注点
+## 1. 目标与拆分策略
 
-<!-- 跨多个 ticket 的规则与约束。仅在有实际内容时填写，无则省略整个小节。 -->
+引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
 
-- **数据安全铁律**：<冻结的常量、不可改的 wire-format、持久化格式>
-- **契约先行**：<跨 ticket 的 schema/API 变更顺序约束>
-- **行号现场核对**：所有文件路径和行号为近似，实施时以现场代码为准。
+## 2. 执行清单
 
-## 阻塞关系说明
+| ID | Ticket | 可观察产出 | Blocked By | Depth | Risk | Ready | Owner | Contract IDs | Wave/Gate | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| T-01 | `specdev/changes/{change}/ticket/01-<ticket-name>.md` | ... | — | standard | medium | yes | unassigned | AC-001 | — | ready |
 
-<!-- 依赖图的文字说明。简单线性链可省略整个小节。对于扩展-收缩模式，解释三阶段。 -->
+Ticket frontmatter 是状态、依赖、深度和路径访问契约的权威；本表是同步投影，不得独立修改出另一套真相。
 
-<描述为何 ticket B 被 ticket A 阻塞。扩展-收缩模式：扩展阶段创建新形式 → 迁移批次逐步切换调用点 → 收缩阶段删除旧形式。>
+## 3. 依赖 DAG
 
-## 风险与注意事项
+```text
+T-01 [READY]
+  ├─→ T-02
+  └─→ T-03
+        └─→ T-04
+```
 
-<!-- 跨 ticket 的风险、回滚考虑。无可省略整个小节。 -->
+每条边必须表示真实开始条件。标记关键汇合点、prefactor、expand、migrate、observe、contract 和集成验证点。
+
+## 4. 合同覆盖矩阵
+
+| Contract ID | 覆盖 Ticket | 验证接缝 | 状态 | 说明 |
+|---|---|---|---|---|
+| AC-001 | T-01 | ... | covered | ... |
+
+`uncovered` 必须修复；`deferred` 必须有用户批准、原因和后续归属。
+
+## 5. 并行与路径所有权
+
+- 最大并发来自 `specdev/config.json`。
+- shared owner 为 Lead 或专用 Ticket。
+- 项目路径契约以 Ticket frontmatter 为准。
+- 并行写代码的 Ticket 使用独立 worktree；只读调查不需要。
+
+| Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
+|---|---|---|---|---|
+| T-02 | T-03 | 无 | 否 | 可并行 |
+
+## 6. Gate、Wave 与集成点
+
+T-tickets 可以标注候选 Wave 和行为里程碑。需要正式跨 Ticket 编排时，由 “目标规划阶段” 完成 Gate、Wave、owner、发布与恢复，并把结果投影回本 Map。
+
+## 7. 横切契约与风险
+
+只记录跨多个 Ticket 的数据、安全、兼容、共享接口、迁移、发布和恢复规则。单 Ticket 规则留在具体 `specdev/changes/{change}/ticket/NN-<ticket-name>.md`。
+
+## 8. 同步规则
+
+- Ticket 状态变化后同步执行清单；
+- Ticket ID、路径、依赖或 frontmatter 不一致时，以 Ticket 文件为权威并修复本 Map；
+- Goal Plan 存在时，Wave、Gate 和 owner 以 `specdev/changes/{change}/goal-plan.md` 为编排权威；
+- 依赖、合同覆盖或路径所有权变化后运行 Speculo Node 校验器；
+- 内部工件使用本文约定的逻辑路径，不用 Markdown 链接充当状态引用。
 
 </tickets-map-template>
+
+<planning-principles>
+
+# 规划原则
+
+SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”，不是把每个任务写成逐行施工脚本。
+
+## 1. 先探索，后提问
+
+先读取相关入口、配置、schema、类型、测试、相邻实现、当前工件和历史决策。未知项分为：
+
+- **可发现事实**：通过只读探索解决，不询问用户；
+- **高影响偏好或取舍**：无法从仓库推导，且会改变行为、架构、风险、范围、迁移或验收时才询问；
+- **低影响实现细节**：由实现者遵循现有惯例决定。
+
+外部事实研究使用 下方 `<research>` 标签。
+
+## 2. 决策完备
+
+一个 Plan 或 Ticket 达到以下状态才可执行：
+
+- 目标和成功标准明确；
+- IN、REUSE、OUT 与不变量明确；
+- 公共接口、数据和兼容策略已锁定或明确不变化；
+- 失败行为和关键边界有结论；
+- 依赖、路径所有权和批准点明确；
+- 验证方式和 Evidence 位置明确；
+- 不存在会改变上述内容的高影响未决问题。
+
+决策完备不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
+
+## 3. 最小充分细节
+
+- 局部、低风险、沿用现有模式的切片使用 Lite。
+- 多文件或跨层垂直切片使用 Standard。
+- 公共契约、迁移、安全、不可逆操作、共享核心路径或复杂协作使用 Deep。
+
+详细条件位于 下方 `<readiness-and-depth>` 标签。
+
+## 4. 计划与执行分离
+
+规划阶段可以读取、搜索、静态分析和执行只读或非修改性验证，不实现产品代码。执行阶段不重新决定已锁定的产品和架构事项。计划与代码事实冲突时，按 下方 `<deviation-control>` 标签 退回修订。
+
+## 5. 以可验证目标委托
+
+每个交付物至少有一种可重复证据：测试、类型检查、lint、构建、API 示例、截图对比、迁移 dry-run、查询结果或手动步骤。验证绑定外部行为或稳定接缝，不把私有实现细节当作唯一证据。
+
+## 6. 委托而非微操
+
+Ticket 告诉执行者：做什么、为什么、不能改变什么、按什么顺序形成安全落点、怎样证明。执行者决定：在现有代码惯例内怎样组织局部实现。只有高风险或非显然的接口、迁移和顺序需要写入执行路线。
+
+## 7. 分层规划
+
+- Spec 决定外部行为。
+- Ticket 是决策完备的微型执行计划。
+- Tickets Map 决定依赖和覆盖投影。
+- Goal Plan 只在协调复杂度需要时决定跨 Ticket 编排。
+- Implement 在既定契约内完成代码和 Evidence。
+
+职责细节见 下方 `<artifact-contract>` 标签。
+
+</planning-principles>
+
+<artifact-contract>
+
+# 工件职责与权威裁决
+
+SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个工件只承担自己的权威边界。
+
+## 1. 工件职责
+
+| 工件 | 具体位置 | 必须决定 | 不应决定 |
+|---|---|---|---|
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
+| 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
+| 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
+| 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
+| 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
+| Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
+| Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
+| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
+| Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
+| Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+
+## 2. 权威顺序
+
+同一事项冲突时按下列顺序裁决：
+
+1. 用户最新明确决定；
+2. 当前已接受架构决策：`specdev/changes/{change}/ADR.md`；
+3. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
+4. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+5. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
+6. 当前代码与运行事实；
+7. 旧计划、旧日志和未经确认的推断。
+
+代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
+
+## 3. 来源追踪
+
+高影响条目应带来源标识：
+
+- `USER-DECISION:<date-or-summary>`；
+- `ADR-###`；
+- `US-###` 或 `AC-###`；
+- `CODE:project/relative/path`；
+- `RESEARCH:<Url>https://example.com/source</Url>`；
+- `DIAG-###`。
+
+来源追踪解释“为什么这样决定”，不要求为普通描述逐句加标签。
+
+## 4. 冲突处理
+
+1. 指明冲突事项和双方来源；
+2. 判断冲突属于事实过时、产品取舍、架构取舍、Ticket 范围还是调度问题；
+3. 按本规则的权威顺序提出裁决；
+4. 若改变外部行为、公共契约、数据、安全、范围、迁移或验收，必须获得用户或指定批准人决定；
+5. 更新真正拥有该决策的工件；
+6. 在 `specdev/changes/{change}/LOG.md` 保留被替代结论和原因；
+7. 重新执行结构校验；纯网页环境按本文的内联规则人工核对。
+
+不得仅在下游工件中覆盖上游权威。
+
+</artifact-contract>
+
+<readiness-and-depth>
+
+# 规划深度与执行就绪
+
+## 1. Planning Depth
+
+### Lite
+
+适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
+
+最低内容：目标、范围、项目路径授权、1–3 条执行路线、验收标准和验证方法。
+
+### Standard
+
+适用于大多数跨多个文件或技术层的垂直切片。
+
+额外要求：锁定决策与假设、接口接缝、输入输出、不变量、失败行为、有序执行路线、验证矩阵和路径所有权。
+
+### Deep
+
+任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多 Agent 复杂协作、多个实质架构方案或高事故半径。
+
+额外要求：数据流或状态转换、兼容窗口、迁移顺序、可观测性、回滚、风险缓解、收缩条件和人工批准点。
+
+## 2. Ticket Definition of Ready
+
+Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
+
+- 外部行为和可观察产出明确；
+- IN、REUSE、OUT 无冲突；
+- 高影响决策已锁定；
+- 没有会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
+- 依赖存在且无循环；
+- `writable_paths`、`read_only_paths` 和 `shared_paths` 使用项目根相对路径；
+- shared path 有唯一 owner；
+- 验收标准可判定；
+- 验证矩阵覆盖正常、失败和回归风险，或有可信的不适用理由；
+- Standard 或 Deep Ticket 有有序执行路线；
+- Deep Ticket 有迁移、兼容、监控、回滚和批准点，或逐项说明不适用；
+- 单个全新上下文可以完成，否则必须拆分。
+
+详细检查位于 下方 `<ticket-readiness>` 标签。
+
+## 3. Spec Readiness
+
+`specdev/changes/{change}/spec.md` 只有在外部行为、范围、公共接口、数据、安全、兼容、迁移和验收合同不存在高影响未知项时，才可设置 `ready_for_tickets: true`。
+
+## 4. 假设规则
+
+- 低影响、可逆的默认值可以作为显式假设继续；
+- 高影响假设不得用于强行通过 Ready；
+- 实现者发现假设不成立时，按 下方 `<deviation-control>` 标签 处理；
+- 假设必须有适用范围和验证方式。
+
+</readiness-and-depth>
+
+<path-ownership>
+
+# 路径所有权与并发规则
+
+路径所有权是并行执行的硬边界，不是文件预测清单。
+
+## 1. 四类路径
+
+- `expected_changes`：预计修改的项目路径，仅用于导航；每项写成项目根相对路径。
+- `writable_paths`：实现者获准修改的项目路径或 glob，是硬约束。
+- `read_only_paths`：建立上下文但不得修改的项目路径。
+- `shared_paths`：多个 Ticket 可能需要修改的项目路径，必须指定唯一 owner。
+
+示例：
+
+```yaml
+expected_changes: ["src/auth/session.ts"]
+writable_paths: ["src/auth/**"]
+read_only_paths: ["src/users/**"]
+shared_paths: ["package.json"]
+```
+
+## 2. 所有权规则
+
+1. 可能并行的 Ticket，其 `writable_paths` 不得相交。
+2. glob 与具体路径按覆盖关系判断，不得只比较字符串。
+3. 根依赖清单、锁文件、根导出、共享 schema、迁移索引、全局路由和跨 Ticket 合同文件默认视为 shared。
+4. shared path 只能由 Lead 或专用 owner Ticket 修改；消费者 Ticket 只读。
+5. 需要越界时先停止，按 下方 `<deviation-control>` 标签 提出 ownership change；不得先改后报。
+6. 前置 Ticket 改变目录结构后，后续 Ticket 开始前重新解析项目路径；若授权范围语义未改变，可只更新导航路径。
+7. 不得把“最后解决合并冲突”当作所有权方案。
+
+## 3. Worktree 与分支
+
+并行写代码的 Ready Ticket 使用隔离 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+
+生命周期由 Lead 按 下方 `<dev-worktree>` 标签 管理，编排规则位于 “目标规划阶段的 Lead 编排规则”。
+
+</path-ownership>
+
+<evidence-and-verification>
+
+# 证据与验证规范
+
+验证回答“怎样证明行为已经正确发生”，Evidence 回答“实际运行了什么、结果是什么、仍有什么风险”。
+
+## 1. 验证矩阵
+
+每一行绑定一个行为、合同或风险：
+
+| 行为或风险 | 验证接缝 | 方法或命令 | 预期结果 | Evidence |
+|---|---|---|---|---|
+| 正常路径 | 公共接口 | 项目定向测试 | 指定外部行为成立 | `specdev/changes/{change}/evidence/T-NN.md` |
+| 无效输入 | schema 或公共接口 | 定向失败测试 | 稳定错误行为成立 | `specdev/changes/{change}/evidence/T-NN.md` |
+| 回归 | 现有测试套件 | 项目回归命令 | 相关既有行为保持 | `specdev/changes/{change}/evidence/T-NN.md` |
+
+命令引用项目脚本时，项目文件路径使用项目根相对路径，例如 `package.json` 或 `Makefile`。
+
+## 2. 最小充分验证
+
+选择最接近目标行为的稳定接缝：
+
+1. 公共接口或契约集成测试；
+2. 稳定接缝上的单元测试；
+3. 类型检查、静态分析、lint 和构建；
+4. 可重复手动步骤、截图或查询结果；
+5. 代码阅读推断。
+
+E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lead 在集成阶段执行。Worker 只记录场景、预期结果和待执行状态。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
+
+低层证据不能替代明确要求的用户行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控信号或回滚演练。
+
+## 3. 失败分类
+
+每个失败必须分类为：
+
+- 本 Ticket 引入的新失败；
+- 基线已存在的失败；
+- 环境、权限或基础设施失败；
+- 验证本身无效或无法观察目标行为。
+
+不得通过跳过测试、放宽断言、吞错、删除用例或把命令移出验证矩阵来制造绿色。
+
+## 4. Evidence 最低内容
+
+每个完成 Ticket 在 `specdev/changes/{change}/evidence/T-NN.md` 记录：
+
+- 基线、分支或 worktree；
+- 实际修改的项目路径；
+- 每条命令、退出状态和结果摘要；
+- 每条验收合同的证据映射；
+- 未运行项与原因；
+- 新失败、既有失败和环境失败；
+- 偏差及批准；
+- 残余风险；
+- worktree、提交或 PR 引用；
+- 最终结论。
+
+无法运行关键验证、存在未批准偏差或 Evidence 不完整时，Ticket 不得标为 `done`。
+
+</evidence-and-verification>
+
+<deviation-control>
+
+# 偏差控制
+
+偏差是“当前事实或实现需要偏离已批准工件”的显式事件。偏差不是普通进度说明，也不能作为先改后补文档的许可证。
+
+## 1. 偏差等级
+
+- **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
+- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得 owner 或 Lead 批准。
+- **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
+- **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
+- **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
+
+## 2. 触发条件
+
+以下任一情况必须建立偏差：
+
+- 当前代码事实使批准路线不可行；
+- 需要修改 Ticket 未授权的项目路径；
+- 需要修改 shared path，但当前实现者不是 owner；
+- 验证接缝无法证明验收合同；
+- 发现新的安全、数据、兼容、性能或迁移风险；
+- 依赖、合同或外部参考权威已变化；
+- 实际行为将与 Spec 或 ADR 不一致。
+
+## 3. 偏差记录
+
+偏差记录写入对应 Evidence：`specdev/changes/{change}/evidence/T-NN.md`，并至少包含：
+
+- 偏差 ID 与等级；
+- 触发事实和证据；
+- 受影响工件与路径；
+- 继续、回退、修订或拆分的选项；
+- 推荐方案和风险；
+- 批准人、批准时间和批准范围；
+- 最终处理结果。
+
+需要改变上层工件时，Evidence 只记录事件；真正的权威变更必须写回对应 Spec、Ticket、ADR 或 Goal Plan。
+
+## 4. 停止规则
+
+- 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
+- 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
+- 偏差影响并发 Agent 时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate。
+
+</deviation-control>
+
+<research>
+
+# SpecDev Research
+
+## 触发
+
+当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+
+## 流程
+
+1. 写清楚要支持的具体决策和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
+3. 核对版本、发布日期、适用环境和已知限制。
+4. 区分：来源明确事实、代码库事实、推断、建议。
+5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
+6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
+7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+
+## 输出模板
+
+```markdown
+# Research: <问题>
+- 决策用途：
+- 范围/版本：
+- 停止条件：
+
+## Findings
+### R-001
+- 结论：
+- 类型：官方事实 / 代码事实 / 推断 / 建议
+- 来源：
+- 置信度：high / medium / low
+- 适用限制：
+- 对工件影响：
+
+## Conflicts and Unknowns
+## Recommendation
+```
+
+不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+
+</research>
+
+<dev-worktree>
+
+# SpecDev Dev Worktree
+
+## 适用范围
+
+- 仅用于并行写代码且路径所有权不冲突的 Ready Ticket。
+- 只读调查和顺序执行默认共用当前工作区。
+- Lead 管理创建、集成和清理；Worker 只实现、验证并返回 Evidence。
+- 平台原生 worktree 优先；不可用时使用 Git worktree。
+
+## 生命周期
+
+1. 创建或恢复时加载 下方 `<dev-worktree-create>` 标签。
+2. Worker 完成后将记录从 `active` 更新为 `review`，返回 Ticket 状态、Evidence 路径、`workspace_ref`、commit 或 PR 引用，以及条件性 Lead E2E。
+3. Lead 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签。
+
+状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`。记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。
+
+## 边界
+
+- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`。
+- 持久状态只保存 `workspace_ref`，不保存机器绝对路径。
+- E2E 仅由 Lead 在集成阶段执行，且仅适用于用户界面交互受影响的变更。
+- 合并、推送、PR、删除分支或 worktree 仍需用户授权。
+
+</dev-worktree>
+
+<dev-worktree-create>
+
+# 创建或恢复 Ticket Worktree
+
+## 前置
+
+- Ticket `ready: true`，依赖完成，写路径无冲突。
+- `specdev/config.json` 中 `git.worktree_for_parallel: true`。
+- Lead 已固定所有并行 Ticket 共用的 `base_sha`。
+
+## 创建
+
+1. 若 `specdev/changes/{change}/.status.json` 的 `worktrees` 已有该 Ticket 的 `active` 或 `review` 记录，解析 `workspace_ref` 并验证分支、`base_sha` 和工作区状态；一致则恢复。
+2. 否则优先调用平台原生 worktree 能力；不可用时从 `base_sha` 执行 `git worktree add -b <ticket-branch> <physical-path> <base-sha>`。物理路径必须位于主工作树之外。
+3. 分支使用 `speculo/<change>/<ticket-id>`；现有分支或目标路径未能匹配记录时停止。
+4. 安装项目所需依赖，运行最小基线检查。E2E 不属于 Worker 基线。
+5. 写入 `worktrees`：
+
+```json
+{
+  "ticket_id": "T-01",
+  "owner": "<worker>",
+  "provider": "native",
+  "base_sha": "<sha>",
+  "branch": "speculo/<change>/T-01",
+  "workspace_ref": "<provider-opaque-or-project-relative-ref>",
+  "status": "active",
+  "updated_at": "<ISO-8601>"
+}
+```
+
+完成条件：工作区可定位、基线可用、状态记录与实际分支一致。失败时设为 `blocked` 并保留现场。
+
+</dev-worktree-create>
+
+<dev-worktree-finalize>
+
+# 集成与清理 Ticket Worktree
+
+## Lead 集成
+
+1. 确认记录为 `review`，读取 Worker Evidence，实际修改未越过路径契约。
+2. 在目标集成基线上应用变更并运行受影响的定向与回归验证。
+3. 仅当变更影响用户界面交互时，由 Lead 运行验收所需的最小 E2E；Worker 只提供场景和预期结果。
+4. 验证通过后将记录更新为 `integrated`；冲突或失败时设为 `blocked` 并保留 worktree。
+
+## 清理
+
+1. 取得用户对删除 worktree 和分支的授权。
+2. 从主工作树或平台管理入口移除已集成 worktree。
+3. 确认 worktree 不再注册后删除对应分支，并将状态更新为 `removed`。
+
+PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明确要求时使用强制删除。
+
+</dev-worktree-finalize>
+
+<config-template>
+
+```json
+{
+  "schema_version": 3,
+  "interaction_language": "zh-CN",
+  "artifact_language": "zh-CN",
+  "git": {
+    "auto_commit": false,
+    "default_branch": null,
+    "worktree_for_parallel": true
+  },
+  "execution": {
+    "max_parallel": 3,
+    "deep_ticket_human_approval": true,
+    "shared_path_owner": "lead"
+  },
+  "verification": {
+    "test": null,
+    "typecheck": null,
+    "lint": null,
+    "build": null
+  },
+  "planning": {
+    "default_depth": "standard",
+    "require_ready_gate": true,
+    "require_evidence": true
+  }
+}
+```
+
+</config-template>
+
+<config-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:config:v3",
+  "title": "SpecDev Configuration",
+  "type": "object",
+  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "interaction_language": {"type": "string", "minLength": 1},
+    "artifact_language": {"type": "string", "minLength": 1},
+    "git": {
+      "type": "object",
+      "required": ["auto_commit", "default_branch", "worktree_for_parallel"],
+      "properties": {
+        "auto_commit": {"type": "boolean"},
+        "default_branch": {"type": ["string", "null"]},
+        "worktree_for_parallel": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": ["max_parallel", "deep_ticket_human_approval", "shared_path_owner"],
+      "properties": {
+        "max_parallel": {"type": "integer", "minimum": 1},
+        "deep_ticket_human_approval": {"type": "boolean"},
+        "shared_path_owner": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "verification": {
+      "type": "object",
+      "required": ["test", "typecheck", "lint", "build"],
+      "properties": {
+        "test": {"type": ["string", "null"]},
+        "typecheck": {"type": ["string", "null"]},
+        "lint": {"type": ["string", "null"]},
+        "build": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "planning": {
+      "type": "object",
+      "required": ["default_depth", "require_ready_gate", "require_evidence"],
+      "properties": {
+        "default_depth": {"enum": ["lite", "standard", "deep"]},
+        "require_ready_gate": {"type": "boolean"},
+        "require_evidence": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
+```
+
+</config-schema>
+
+<status-template>
+
+```json
+{
+  "schema_version": 3,
+  "workflow": "specdev",
+  "active": [],
+  "work_history": [],
+  "completed": []
+}
+```
+
+</status-template>
+
+<status-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:status:v3",
+  "title": "SpecDev Global Status",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "workflow",
+    "active",
+    "work_history",
+    "completed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "workflow": {
+      "const": "specdev"
+    },
+    "active": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "current_work",
+          "works_run",
+          "result"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "current_work": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "works_run": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimed_investigations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "owner",
+                "claimed_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "session": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "claimed_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "work_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "work_id",
+          "started_at",
+          "completed_at",
+          "result"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "work_id": {
+            "type": "string",
+            "pattern": "^specdev/"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "change",
+          "archived_at",
+          "archive_path"
+        ],
+        "properties": {
+          "change": {
+            "type": "string"
+          },
+          "archived_at": {
+            "type": "string"
+          },
+          "archive_path": {
+            "type": "string",
+            "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
+```
+
+</status-schema>
+
+<change-status-template>
+
+```json
+{
+  "schema_version": 3,
+  "artifact": "change-status",
+  "change": "<YYYY-MM-DD-topic>",
+  "change_status": "active",
+  "current_work": null,
+  "created_at": "<ISO-8601>",
+  "updated_at": "<ISO-8601>",
+  "completed_at": null,
+  "archived": false,
+  "archive_path": null,
+  "blockers": [],
+  "deviations": [],
+  "worktrees": []
+}
+```
+
+</change-status-template>
+
+<change-status-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:change-status:v3",
+  "title": "SpecDev Change Status",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "change_status",
+    "current_work",
+    "created_at",
+    "updated_at",
+    "completed_at",
+    "archived",
+    "archive_path",
+    "blockers",
+    "deviations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "change-status"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "change_status": {
+      "enum": [
+        "active",
+        "blocked",
+        "completed",
+        "archived"
+      ]
+    },
+    "current_work": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "archived": {
+      "type": "boolean"
+    },
+    "archive_path": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
+        }
+      ]
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deviations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worktrees": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "owner",
+          "provider",
+          "base_sha",
+          "branch",
+          "workspace_ref",
+          "status",
+          "updated_at"
+        ],
+        "properties": {
+          "ticket_id": {
+            "type": "string",
+            "pattern": "^T-[0-9]{2,}$"
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "enum": [
+              "native",
+              "git",
+              "external"
+            ]
+          },
+          "base_sha": {
+            "type": "string",
+            "minLength": 1
+          },
+          "branch": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspace_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "active",
+              "review",
+              "integrated",
+              "removed",
+              "blocked"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "change_status": {
+            "const": "archived"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "archived": {
+            "const": true
+          },
+          "archive_path": {
+            "type": "string",
+            "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": true
+}
+```
+
+</change-status-schema>
+
+<ticket-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:ticket:v3",
+  "title": "SpecDev Ticket Frontmatter",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "id",
+    "title",
+    "status",
+    "planning_depth",
+    "planning_depth_reason",
+    "ready",
+    "risk",
+    "blocked_by",
+    "contract_ids",
+    "owner",
+    "expected_changes",
+    "writable_paths",
+    "read_only_paths",
+    "shared_paths",
+    "shared_path_owners"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "ticket"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^T-[0-9]{2,}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "blocked",
+        "review",
+        "done",
+        "deviated",
+        "cancelled"
+      ]
+    },
+    "planning_depth": {
+      "enum": [
+        "lite",
+        "standard",
+        "deep"
+      ]
+    },
+    "planning_depth_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "blocked_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^T-[0-9]{2,}$"
+      },
+      "uniqueItems": true
+    },
+    "contract_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_changes": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "writable_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "read_only_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "shared_paths": {
+      "$ref": "#/$defs/pathArray"
+    },
+    "shared_path_owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!/)(?![A-Za-z]:).+\\s*=>\\s*[^=].+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "pathArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!/)(?![A-Za-z]:).+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}
+```
+
+</ticket-schema>
+
+<tickets-map-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:tickets-map:v3",
+  "title": "SpecDev Tickets Map Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "artifact": {"const": "tickets-map"},
+    "change": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]}
+  },
+  "additionalProperties": true
+}
+```
+
+</tickets-map-schema>

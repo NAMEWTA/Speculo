@@ -1,70 +1,72 @@
-# Tickets Map: <工作简短名称>
+---
+schema_version: 3
+artifact: tickets-map
+change: <YYYY-MM-DD-topic>
+status: draft
+---
 
-<一段话总结所有 ticket 共同构建的内容。如果拆分依据是 spec，引用 spec.md。如果基于对话或计划，说明来源。>
+# Tickets Map: <工作名称>
 
-## 执行清单
+- **Map：** `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
+- **Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
+- **Ticket 目录：** `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
+- **Evidence 目录：** `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
+- **可选 Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
 
-| 编号 | Ticket | 被阻塞于 | Gate | Contract ID | 状态 |
-|------|--------|----------|------|-------------|------|
-| 01 | [ticket-name](./ticket/01-<kebab-title>.md) | 无 | P0 | — | 未开始 |
-| 02 | [ticket-name](./ticket/02-<kebab-title>.md) | 01 | P1 | P1-03 | 未开始 |
-| 10 | [ticket-name](./ticket/10-<kebab-title>.md) | 02, 05 | P2 | — | 未开始 |
+## 1. 目标与拆分策略
 
-> **状态枚举**：未开始 / 进行中 / 已完成。所有 ticket 初始均为"未开始"。
-> **被阻塞于**列填写阻塞本 ticket 的 ticket 编号（如 `01`、`02, 05`），执行者需自行打开对应 ticket 文件查看其状态。不可仅凭此表判断——始终以对应 ticket 文件中的状态字段为准。
-> **Gate 列**：P0 = 核心基础设施（阻塞所有后续工作）/ P1 = 主要功能切片 / P2 = 增强和边界情况。由 P-goal-plan 填充，T-tickets 阶段留空或标注 `[待标注]`。
-> **Contract ID 列**：如有冻结合同/验收文档，填写本 ticket 覆盖的验收条目 ID（如 `P0-01, P1-03`）；无合同则填 `—`。由 P-goal-plan 填充。
+引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
 
-## 依赖关系（门禁标注 DAG）
+## 2. 执行清单
 
-<!-- 用 ASCII DAG 展示 ticket 之间的阻塞关系和门禁边界。
-     由 T-tickets 写入基础树形结构，由 P-goal-plan 标注门禁层级（P0/P1/P2）、
-     就绪标记 [READY] 和扇出标记 [FAN-OUT: N路并行]。
+| ID | Ticket | 可观察产出 | Blocked By | Depth | Risk | Ready | Owner | Contract IDs | Wave/Gate | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| T-01 | `<Path>{roots.state}/specdev/changes/{change}/ticket/01-<ticket-name>.md</Path>` | ... | — | standard | medium | yes | unassigned | AC-001 | — | ready |
 
-     绘制约定：
-     - 每行一个 ticket，缩进表示依赖深度
-     - → 表示依赖关系（A → B 表示 B 依赖 A）
-     - 用注释标注门禁边界：--- P0 gate ---
-     - 可立即开始的 ticket 标注 [READY]
-     - 扇出点标注 [FAN-OUT: N路并行]
+Ticket frontmatter 是状态、依赖、深度和路径访问契约的权威；本表是同步投影，不得独立修改出另一套真相。
 
-     示例格式：
-     01 [READY]  →  02 [FAN-OUT: 3路并行]
-                          ├→ 03 [P0]
-                          ├→ 04 [P1]
-                          └→ 05 [P1]
-     --- P0 gate ---
-     03  →  06 [P1]  →  07 [P2]
--->
+## 3. 依赖 DAG
 
-```
-01-<name>          ← 无阻塞，可立即开始
-  ├── 02-<name>    ← 阻塞于 01
-  └── 03-<name>    ← 阻塞于 01
-        └── 04-<name>  ← 阻塞于 03
+```text
+T-01 [READY]
+  ├─→ T-02
+  └─→ T-03
+        └─→ T-04
 ```
 
-## 并行规则
+每条边必须表示真实开始条件。标记关键汇合点、prefactor、expand、migrate、observe、contract 和集成验证点。
 
-- 最大 **3** 个并发实现者（ticket 数 > 20 时可调至 4）
-- 并发 ticket 的 file allowlist 必须互不重叠——两两之间无可写文件交集
-- 共享文件（package.json、lockfile、合同文档、IPC 根导出、领域词汇表）仅由 Lead 修改
-- 共享文件修改后，所有并发子代理需在继续前同步
+## 4. 合同覆盖矩阵
 
-## 横切关注点
+| Contract ID | 覆盖 Ticket | 验证接缝 | 状态 | 说明 |
+|---|---|---|---|---|
+| AC-001 | T-01 | ... | covered | ... |
 
-<!-- 跨多个 ticket 的规则与约束。仅在有实际内容时填写，无则省略整个小节。 -->
+`uncovered` 必须修复；`deferred` 必须有用户批准、原因和后续归属。
 
-- **数据安全铁律**：<冻结的常量、不可改的 wire-format、持久化格式>
-- **契约先行**：<跨 ticket 的 schema/API 变更顺序约束>
-- **行号现场核对**：所有文件路径和行号为近似，实施时以现场代码为准。
+## 5. 并行与路径所有权
 
-## 阻塞关系说明
+- 最大并发来自 `<Path>{roots.state}/specdev/config.json</Path>`。
+- shared owner 为 Lead 或专用 Ticket。
+- 项目路径契约以 Ticket frontmatter 为准。
+- 并行写代码的 Ticket 使用独立 worktree；只读调查不需要。
 
-<!-- 依赖图的文字说明。简单线性链可省略整个小节。对于扩展-收缩模式，解释三阶段。 -->
+| Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
+|---|---|---|---|---|
+| T-02 | T-03 | 无 | 否 | 可并行 |
 
-<描述为何 ticket B 被 ticket A 阻塞。扩展-收缩模式：扩展阶段创建新形式 → 迁移批次逐步切换调用点 → 收缩阶段删除旧形式。>
+## 6. Gate、Wave 与集成点
 
-## 风险与注意事项
+T-tickets 可以标注候选 Wave 和行为里程碑。需要正式跨 Ticket 编排时，由 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>` 完成 Gate、Wave、owner、发布与恢复，并把结果投影回本 Map。
 
-<!-- 跨 ticket 的风险、回滚考虑。无可省略整个小节。 -->
+## 7. 横切契约与风险
+
+只记录跨多个 Ticket 的数据、安全、兼容、共享接口、迁移、发布和恢复规则。单 Ticket 规则留在具体 `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`。
+
+## 8. 同步规则
+
+- Ticket 状态变化后同步执行清单；
+- Ticket ID、路径、依赖或 frontmatter 不一致时，以 Ticket 文件为权威并修复本 Map；
+- Goal Plan 存在时，Wave、Gate 和 owner 以 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 为编排权威；
+- 依赖、合同覆盖或路径所有权变化后运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`；
+- 内部工件不得使用相对 Markdown 链接。

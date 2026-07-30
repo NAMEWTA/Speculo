@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:change-status:v3",
+  "title": "SpecDev Change Status",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "change_status",
+    "current_work",
+    "created_at",
+    "updated_at",
+    "completed_at",
+    "archived",
+    "archive_path",
+    "blockers",
+    "deviations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "change-status"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "change_status": {
+      "enum": [
+        "active",
+        "blocked",
+        "completed",
+        "archived"
+      ]
+    },
+    "current_work": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "archived": {
+      "type": "boolean"
+    },
+    "archive_path": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^<Path>\\{roots\\.state\\}/specdev/archive/[^<]+</Path>$"
+        }
+      ]
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deviations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worktrees": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "owner",
+          "provider",
+          "base_sha",
+          "branch",
+          "workspace_ref",
+          "status",
+          "updated_at"
+        ],
+        "properties": {
+          "ticket_id": {
+            "type": "string",
+            "pattern": "^T-[0-9]{2,}$"
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "enum": [
+              "native",
+              "git",
+              "external"
+            ]
+          },
+          "base_sha": {
+            "type": "string",
+            "minLength": 1
+          },
+          "branch": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspace_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "active",
+              "review",
+              "integrated",
+              "removed",
+              "blocked"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "change_status": {
+            "const": "archived"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "archived": {
+            "const": true
+          },
+          "archive_path": {
+            "type": "string",
+            "pattern": "^<Path>\\{roots\\.state\\}/specdev/archive/[^<]+</Path>$"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": true
+}

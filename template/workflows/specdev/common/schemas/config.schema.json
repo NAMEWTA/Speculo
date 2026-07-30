@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:config:v3",
+  "title": "SpecDev Configuration",
+  "type": "object",
+  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "interaction_language": {"type": "string", "minLength": 1},
+    "artifact_language": {"type": "string", "minLength": 1},
+    "git": {
+      "type": "object",
+      "required": ["auto_commit", "default_branch", "worktree_for_parallel"],
+      "properties": {
+        "auto_commit": {"type": "boolean"},
+        "default_branch": {"type": ["string", "null"]},
+        "worktree_for_parallel": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": ["max_parallel", "deep_ticket_human_approval", "shared_path_owner"],
+      "properties": {
+        "max_parallel": {"type": "integer", "minimum": 1},
+        "deep_ticket_human_approval": {"type": "boolean"},
+        "shared_path_owner": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "verification": {
+      "type": "object",
+      "required": ["test", "typecheck", "lint", "build"],
+      "properties": {
+        "test": {"type": ["string", "null"]},
+        "typecheck": {"type": ["string", "null"]},
+        "lint": {"type": ["string", "null"]},
+        "build": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "planning": {
+      "type": "object",
+      "required": ["default_depth", "require_ready_gate", "require_evidence"],
+      "properties": {
+        "default_depth": {"enum": ["lite", "standard", "deep"]},
+        "require_ready_gate": {"type": "boolean"},
+        "require_evidence": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

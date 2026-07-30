@@ -3,82 +3,146 @@ id: specdev/goal-plan
 type: workflow-entry
 workflow: specdev
 name: 目标规划
-description: 将 spec、tickets 和参考权威综合为一份目标规划文档——编排多 ticket 里程碑的约束、质量门禁和执行协议，桥接"已有 tickets"到"协调执行 20+ tickets"
-keywords: [目标规划, 编排, 里程碑, 门禁, Lead, Subagent, 合同, 参考权威]
+description: 在协调复杂度需要时，将 Ready Spec、Tickets、架构决策与外部约束综合为决策完备的跨 Ticket 编排计划。
+keywords: [目标规划, 编排, DAG, Gate, Wave, Lead, Subagent, 迁移, 证据]
 ---
 
 # 目标规划
 
-组合 work——将 spec、tickets、参考权威和领域上下文综合为一份完整的 goal-plan.md 文档，定义多 ticket 里程碑的约束条件、质量门禁、调度顺序和执行协议。
+Goal Plan 只解决单个 Ticket 无法独立决定的事情：跨 Ticket 顺序、并发、共享所有权、里程碑 Gate、集成验证、迁移与发布顺序、偏差升级和恢复。它不是 Ticket 的放大版，也不按固定章节数量衡量质量。
 
-产物统一写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
+产物写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
-在开始规划之前，读取变更的上下文与上游产物：
+## 何时运行
 
-- **spec.md** —— 当前变更的规格：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
-- **tickets-map.md** —— ticket 依赖图与执行清单（格式遵循 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>`）：`<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
-- **ADR.md** —— 架构决策记录：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
-- **CONTEXT.md** —— 领域词汇表：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
-- **LOG.md** —— 设计决策日志：`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+满足任一条件时运行：
 
-如果 spec.md 或 tickets-map.md 不存在，先运行 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>` 和 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>` 产出上游产物。
+- 多个 Ticket 可以或需要并行；
+- 存在 shared path、共享合同、集中 owner 或 Lead/Subagent；
+- 存在 Deep Ticket、expand-contract、数据迁移、兼容窗口或不可逆步骤；
+- 存在多个里程碑、外部审批、发布窗口、参考符合性或高事故半径；
+- Ticket DAG 虽不大，但关键路径、汇合点或恢复策略不能仅由 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 安全表达；
+- 用户明确要求正式跨 Ticket Plan。
+
+少量、线性、低风险且路径不冲突的 Ready Tickets 可以跳过本 work，直接由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 按 Tickets Map 执行。
+
+## 输入
+
+必须读取：
+
+- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
+- `<Path>{roots.state}/specdev/config.json</Path>`
+
+按存在情况读取：
+
+- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+- `<Path>{roots.state}/specdev/adr/</Path>`
+- `<Path>{roots.state}/specdev/context/</Path>`
+- 用户提供的合同、标准、参考实现、环境限制、发布窗口与批准策略。
+
+Spec 或 Tickets Map 不存在时，返回 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>` 或 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`，不得在 Goal Plan 中临时补造上游工件。
 
 ## 流程
 
-### 1. 收集输入与检测模式
+### 1. 验证上游与选择规划模式
 
-读取所有上游产物，检测适用的编排模式。委托给 `<Path>{roots.workflows}/specdev/P-goal-plan/input-validation.md</Path>`。
+加载 `<Path>{roots.workflows}/specdev/P-goal-plan/planning-modes.md</Path>`：
 
-若上游产物（spec、tickets-map、ADR）引用了不熟悉的外部依赖、技术栈或第三方服务，先调用 `<Path>{roots.workflows}/specdev/common/research/SKILL.md</Path>` 了解其能力边界、约束条件和集成方式，再推导编排模式和执行协议。
+1. 验证 Spec Ready、Ticket Ready、合同覆盖、DAG、路径所有权和 Deep Ticket 完整性；
+2. 只读探索会影响调度的代码事实和项目约束；
+3. 识别 coordination、migration、high-assurance、reference-conformance 等可组合模式；
+4. 只对无法发现且会改变 Gate、Wave、owner、迁移或批准点的问题向用户提问；
+5. 不熟悉的外部标准或依赖使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
 
-**完成标准**：上游产物已加载；编排模式已识别（合同模式、参考权威模式、偏差模式、执行模式），输出为模式检测摘要。
+任何硬停止问题都必须退回拥有该决策的上游工件，不得用 Goal Plan 覆盖。
 
-### 2. 编写远景章节（§1-3）
+### 2. 构建跨 Ticket 执行模型
 
-编写 Goal、Authoritative Inputs、Definition of Done 三个远景章节。委托给 `<Path>{roots.workflows}/specdev/P-goal-plan/vision-sections.md</Path>`。
+加载 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`：
 
-**完成标准**：§1 目标声明、§2 权威输入优先级表与冲突裁决顺序、§3 六道门禁 DoD 已草拟并经用户确认。
+1. 从 Ticket frontmatter 构建 DAG 和关键路径；
+2. 将 Ready 且项目写路径不相交的 Ticket 分配到 Wave；
+3. 为 shared path、共享合同和集中变更指定唯一 owner；
+4. 为行为闭环、合同稳定、迁移完成、发布就绪等关键状态定义 Gate；
+5. 明确 expand → migrate → contract、Evidence 返回和集成规则；并行写代码时使用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；
+6. 将每个 Ticket 需要的执行上下文压缩成派单载荷，不复制整个历史对话。
 
-### 3. 编写执行章节（§4-5）
+### 3. 定义整体完成、证据与恢复
 
-编写 Ticket DAG 与调度顺序、单 ticket 执行协议。委托给 `<Path>{roots.workflows}/specdev/P-goal-plan/execution-sections.md</Path>`。
+加载 `<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>`：
 
-**完成标准**：§4 DAG 图（ASCII art）、并发规则、门禁次序、编号对照表已草拟；§5 八步执行协议（含双轴审查、Lead 纪律、回写规则）已定制并经用户确认。
+1. 将整体目标、非目标和权威来源压缩为一个可审查摘要；
+2. 定义整体 Definition of Done 和每个 Gate 的关闭证据；
+3. 固化跨 Ticket 不可协商约束；
+4. 定义偏差等级、暂停范围、批准人和恢复动作；
+5. 定义进度回报、Evidence 汇总、残余风险和回滚要求。
 
-### 4. 编写治理章节（§6-8）
+### 4. 写入自适应 Goal Plan
 
-编写里程碑级验收、硬约束、进度回报格式。委托给 `<Path>{roots.workflows}/specdev/P-goal-plan/governance-sections.md</Path>`。
+使用 `<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
-**完成标准**：§6 五项里程碑验收步骤、§7 非协商硬约束、§8 结构化进度回报格式已草拟并经用户确认。
+模板包含六个职责区，但只保留适用内容：
 
-### 5. 可选——添加 Ticket 速查表（§9）
+1. Outcome and Authority；
+2. Execution Graph；
+3. Gates and Completion Evidence；
+4. Execution and Integration Protocol；
+5. Constraints, Risk and Recovery；
+6. Progress and Decisions。
 
-如果 ticket 数量超过 10 个或用户要求，追加 Ticket 一览速查表。委托给 `<Path>{roots.workflows}/specdev/P-goal-plan/quick-reference-table.md</Path>`。
+Ticket 较多时在 Execution Graph 内增加速查表；不创建独立的第二套状态来源。
 
-**完成标准**：§9 速查表已添加或已确认跳过。
+### 5. 同步与验证
 
-### 6. 写入产物与停止
+1. 将 Wave、Gate 和 owner 投影同步到 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`；
+2. 对照 `<Path>{roots.workflows}/specdev/common/schemas/goal-plan.schema.json</Path>`；
+3. 运行：
 
-将完整 goal-plan.md 写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。更新 `<Path>{roots.state}/specdev/status.json</Path>`：在 `work_history` 中追加条目（含 `change`、`work_id`、`started_at`、`completed_at`、`result`），在 `active` 中更新当前 change 条目的 `works_run` 列表。
+```bash
+node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
+  <Path>{roots.state}/specdev/changes/{change}</Path>
+```
 
-向用户汇报产物摘要（ticket 数量、门禁层级、合同/参考权威引用、关键约束），明确询问进入实现阶段（`<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`）或需要进一步修订。
+4. 更新 `<Path>{roots.state}/specdev/status.json</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；
+5. 向用户汇报模式、关键路径、Wave、Gate、shared owner、迁移策略、主要风险和 Ready 状态；
+6. 未经用户要求，不自动进入实现。
 
-**完成标准**：goal-plan.md 已写入变更目录，九章节齐全无残留 `[TODO:]`；status.json 已更新；摘要已汇报给用户。
+## 决策完备标准
+
+Goal Plan 必须让执行 Lead 或实现者无需重新决定：
+
+- 跨 Ticket 先后、并发 Wave 和关键汇合点；
+- shared path 与共享合同的 owner；
+- Gate 开启、关闭和证据；
+- 迁移、兼容、收缩、发布和回滚顺序；
+- Agent 派单上下文、Evidence 返回和集成规则；
+- 偏差等级、暂停范围和批准路径。
+
+Goal Plan 不应重复：
+
+- Ticket 的完整局部执行路线；
+- 每个 Ticket 的全部文件预测；
+- 每条局部验收 checklist；
+- Spec 中的完整用户故事和产品背景。
+
+## 完成标准
+
+- `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 已写入且只包含适用内容；
+- 所有计划内 Ticket Ready，DAG 无环，合同覆盖明确；
+- Wave、Gate、owner、集成、偏差和恢复可执行；
+- Tickets Map 投影已同步；
+- 无未批准高影响假设或硬停止问题；
+- `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 无 error；
+- 用户收到摘要和下一步选择。
 
 ## 子文件引用
 
-本入口及以下子文件按需加载：
-
-| 文件 | 内容 | 触发条件 |
-|------|------|----------|
-| `<Path>{roots.workflows}/specdev/P-goal-plan/input-validation.md</Path>` | 输入验证与模式检测 | 进入步骤 1「收集输入与检测模式」时加载——包含必需输入检查清单、五题模式检测、冲突裁决顺序推导、模式检测摘要输出格式 |
-| `<Path>{roots.workflows}/specdev/P-goal-plan/vision-sections.md</Path>` | 远景章节 §1-3 编写规程 | 进入步骤 2「编写远景章节」时加载——包含 Goal 五要素公式、权威输入优先级表与冲突裁决、六道门禁 DoD 骨架填充规则 |
-| `<Path>{roots.workflows}/specdev/P-goal-plan/execution-sections.md</Path>` | 执行章节 §4-5 编写规程 | 进入步骤 3「编写执行章节」时加载——包含 DAG 构造规则、ASCII 图约定、并发控制、八步执行协议模板 |
-| `<Path>{roots.workflows}/specdev/P-goal-plan/lead-orchestration-protocol.md</Path>` | Lead 编排协议——派单上下文、handoff 交接、合并冲突、Worktree 隔离、收尾审查 | 经由 `<Path>{roots.workflows}/specdev/P-goal-plan/execution-sections.md</Path>` 在 Lead+Subagent 模型 §5 步骤 2「派单」时加载——覆盖从派单到里程碑收尾的完整 Lead 协调生命周期 |
-| `<Path>{roots.workflows}/specdev/P-goal-plan/governance-sections.md</Path>` | 治理章节 §6-8 编写规程 | 进入步骤 4「编写治理章节」时加载——包含里程碑验收仪式、硬约束推导、进度回报格式模板 |
-| `<Path>{roots.workflows}/specdev/P-goal-plan/quick-reference-table.md</Path>` | 速查表 §9 编写规程 | ticket 数量 ≥ 10 或用户显式要求时加载——包含五列表格模板与从 tickets-map 提取行数据的规则 |
-
-## 依赖关系
-
-- **上游输入**：依赖 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>` 产出的 spec.md 和 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>` 产出的 tickets-map.md；强烈建议已有 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 产出的 ADR.md、CONTEXT.md、LOG.md。
-- **下游消费**：产物 goal-plan.md 被 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 在实现阶段读取，作为里程碑级约束和门禁次序的权威来源。
+- 规划模式与输入门禁：`<Path>{roots.workflows}/specdev/P-goal-plan/planning-modes.md</Path>`
+- DAG、Wave、Gate 与 Lead 编排：`<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`
+- 完成、证据、偏差与恢复：`<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>`
+- Goal Plan 模板：`<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>`
+- 并行 Ticket worktree：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`
