@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.2] - 2026-07-31
+
+### Added
+- **`speculo mirror-skills` 命令**（#34）：将 `.agents/skills/*` 完整正本镜像为 `.claude/skills/*` 薄指针。指针保留正本 frontmatter（`name`/`description`/触发短语），正文仅含哨兵 `<!-- speculo:pointer -->` 与指向正本的相对路径 `../../../.agents/skills/<name>/SKILL.md`，不复制判定逻辑（单一事实来源）。支持反向归位（`.claude` 完整 skill 且 `.agents` 缺失时，先 copy 到 `.agents` 作正本再指针化）、幂等（二次运行仅 `skip`）、`--dry-run` 预览。`.agents` 缺失对应正本或两侧均为完整 skill 时明确报错而非静默。仅处理含 `SKILL.md` 的目录，`_shared/` 等自动跳过。
+
+### Fixed
+- **init 输出显式标注保留的 config.json**（#33）：更新（update）模式下若 `speculo/config.json` 已存在，不覆盖用户修改，并在输出中报告 `config.json (preserved)`，补齐验收标准的"创建/跳过提示"一项。全新 init 生成 config.json 的行为自 v0.2.1（commit 042e8a4）起已在 main 中，本次仅补 update 侧提示。
+
+---
+
 ## [0.3.1] - 2026-07-31
 
 ### Added

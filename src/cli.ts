@@ -3,6 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
 import { migrateSpeculo } from "./migrate.js";
+import { mirrorSkills } from "./skills-mirror.js";
 import {
   checkForUpdate,
   formatVersionBanner,
@@ -14,18 +15,22 @@ function usage(): string {
     "Usage:",
     "  speculo init [--all] [target]",
     "  speculo migrate [--apply] [target]",
+    "  speculo mirror-skills [--dry-run] [target]",
     "  speculo version",
     "",
     "Commands:",
-    "  init       Install or refresh Speculo core assets and selected workflow packages.",
-    "             Existing workflow state under speculo/.speculo/ is never overwritten.",
-    "  migrate    Preview migration from v2 or transitional v3 state to the current v3 contract.",
-    "             Pass --apply to perform the staged, rollback-safe migration.",
-    "  version    Print the current Speculo version and check for updates.",
+    "  init           Install or refresh Speculo core assets and selected workflow packages.",
+    "                 Existing workflow state under speculo/.speculo/ is never overwritten.",
+    "  migrate        Preview migration from v2 or transitional v3 state to the current v3 contract.",
+    "                 Pass --apply to perform the staged, rollback-safe migration.",
+    "  mirror-skills  Mirror .agents/skills/* canonical skills into .claude/skills/* pointers.",
+    "                 Idempotent; relocates full .claude skills into .agents canonical first.",
+    "  version        Print the current Speculo version and check for updates.",
     "",
     "Options:",
     "  --all      Select every workflow and fully refresh all assets during init.",
     "  --apply    Apply a migration; without this flag migrate is always dry-run.",
+    "  --dry-run  Preview mirror-skills actions without writing to disk.",
   ].join("\n");
 }
 
@@ -57,8 +62,12 @@ async function confirmContinue(): Promise<boolean> {
 async function main(argv: string[]): Promise<number> {
   const allFlag = argv.includes("--all");
   const applyFlag = argv.includes("--apply");
+  const dryRunFlag = argv.includes("--dry-run");
   const positional = argv.filter(
-    (argument) => argument !== "--all" && argument !== "--apply"
+    (argument) =>
+      argument !== "--all" &&
+      argument !== "--apply" &&
+      argument !== "--dry-run"
   );
   const [command, targetArg, extra] = positional;
 
@@ -142,6 +151,37 @@ async function main(argv: string[]): Promise<number> {
       }
       if (!result.applied) {
         console.log("Dry-run only. Re-run with --apply to perform this migration.");
+      }
+      return 0;
+    }
+
+    // ── mirror-skills ────────────────────────────────────────
+    if (command === "mirror-skills") {
+      if (allFlag) {
+        throw new Error("--all is only valid with `speculo init`.");
+      }
+      if (applyFlag) {
+        throw new Error("--apply is only valid with `speculo migrate`.");
+      }
+      const result = await mirrorSkills(targetArg ?? ".", {
+        apply: !dryRunFlag,
+      });
+      console.log(
+        result.applied
+          ? "Skills mirrored in " + result.target
+          : "Skills mirror preview for " + result.target
+      );
+      for (const action of result.actions) {
+        console.log(
+          "  " + action.kind + " " + action.name +
+          (action.detail ? " (" + action.detail + ")" : "")
+        );
+      }
+      if (result.actions.length === 0) {
+        console.log("  No skills found under .agents/skills or .claude/skills.");
+      }
+      if (!result.applied) {
+        console.log("Dry-run only. Re-run without --dry-run to apply.");
       }
       return 0;
     }

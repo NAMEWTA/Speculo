@@ -22,6 +22,7 @@ import {
   promptWorkflowSelection,
   selectAllFromCatalog,
 } from "../src/workflows.js";
+import { mirrorSkills, POINTER_SENTINEL } from "../src/skills-mirror.js";
 
 const packageRoot = process.cwd();
 
@@ -635,10 +636,16 @@ describe("Speculo v3 CLI", () => {
         defaults: { confirm_before_external_write: false, report_language: "en" },
       });
 
-      await initSpeculo(target, {
+      const updateResult = await initSpeculo(target, {
         packageRoot,
         selection: { workflowIds: ["specdev"] },
       });
+
+      // Update reports the preserved config.json explicitly (issue #33).
+      assert.ok(
+        (updateResult.updated ?? []).includes("config.json (preserved)"),
+        "update output should mark config.json as preserved"
+      );
 
       assert.equal(
         await readFile(
@@ -1083,6 +1090,160 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, ".speculo", "person", "status.json")),
         true
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  async function writeSkill(
+    dir: string,
+    name: string,
+    body: string
+  ): Promise<void> {
+    await mkdir(join(dir, name), { recursive: true });
+    await writeFile(
+      join(dir, name, "SKILL.md"),
+      "---\nname: " + name + "\ndescription: " + name + " skill\n---\n\n" + body,
+      "utf8"
+    );
+  }
+
+  it("mirror-skills writes a frontmatter-preserving pointer for each canonical skill", async () => {
+    const target = await tempProject();
+    const agents = join(target, ".agents", "skills");
+    const claude = join(target, ".claude", "skills");
+    try {
+      await writeSkill(agents, "foo", "# Foo\n\ncanonical logic\n");
+      // _shared has no SKILL.md and must be ignored.
+      await mkdir(join(agents, "_shared"), { recursive: true });
+      await writeFile(join(agents, "_shared", "notes.md"), "shared\n", "utf8");
+
+      const result = await mirrorSkills(target, { apply: true });
+
+      assert.equal(result.applied, true);
+      assert.deepEqual(
+        result.actions.map((action) => action.kind + ":" + action.name),
+        ["mirror:foo"]
+      );
+
+      const pointer = await readFile(join(claude, "foo", "SKILL.md"), "utf8");
+      assert.match(pointer, /name: foo/);
+      assert.match(pointer, /description: foo skill/);
+      assert.ok(pointer.includes(POINTER_SENTINEL));
+      assert.ok(
+        pointer.includes("../../../.agents/skills/foo/SKILL.md"),
+        "pointer must reference the canonical via relative path"
+      );
+      // Canonical body must not be duplicated into the pointer.
+      assert.ok(!pointer.includes("canonical logic"));
+      // _shared is skipped, never mirrored.
+      assert.equal(await pathExists(join(claude, "_shared")), false);
+
+      // Relative path resolves from the pointer back to the canonical.
+      assert.equal(
+        await pathExists(
+          join(claude, "foo", "..", "..", "..", ".agents", "skills", "foo", "SKILL.md")
+        ),
+        true
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("mirror-skills relocates a full .claude skill into .agents canonical without content loss", async () => {
+    const target = await tempProject();
+    const agents = join(target, ".agents", "skills");
+    const claude = join(target, ".claude", "skills");
+    try {
+      await writeSkill(claude, "bar", "# Bar\n\nreal implementation\n");
+
+      const result = await mirrorSkills(target, { apply: true });
+      assert.deepEqual(
+        result.actions.map((action) => action.kind + ":" + action.name),
+        ["relocate:bar"]
+      );
+
+      // Canonical now lives in .agents with the original full body intact.
+      const canonical = await readFile(join(agents, "bar", "SKILL.md"), "utf8");
+      assert.ok(canonical.includes("real implementation"));
+      assert.ok(!canonical.includes(POINTER_SENTINEL));
+
+      // .claude side is now a pointer.
+      const pointer = await readFile(join(claude, "bar", "SKILL.md"), "utf8");
+      assert.ok(pointer.includes(POINTER_SENTINEL));
+      assert.ok(!pointer.includes("real implementation"));
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("mirror-skills is idempotent on a second run", async () => {
+    const target = await tempProject();
+    const claude = join(target, ".claude", "skills");
+    try {
+      await writeSkill(join(target, ".agents", "skills"), "foo", "# Foo\n");
+      await mirrorSkills(target, { apply: true });
+      const first = await readFile(join(claude, "foo", "SKILL.md"), "utf8");
+
+      const second = await mirrorSkills(target, { apply: true });
+      assert.deepEqual(
+        second.actions.map((action) => action.kind),
+        ["skip"]
+      );
+      assert.equal(
+        await readFile(join(claude, "foo", "SKILL.md"), "utf8"),
+        first
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("mirror-skills dry-run writes nothing", async () => {
+    const target = await tempProject();
+    try {
+      await writeSkill(join(target, ".agents", "skills"), "foo", "# Foo\n");
+      const result = await mirrorSkills(target, { apply: false });
+      assert.equal(result.applied, false);
+      assert.deepEqual(
+        result.actions.map((action) => action.kind),
+        ["mirror"]
+      );
+      assert.equal(await pathExists(join(target, ".claude")), false);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("mirror-skills errors on a dangling .claude pointer with no canonical", async () => {
+    const target = await tempProject();
+    const claude = join(target, ".claude", "skills");
+    try {
+      await mkdir(join(claude, "orphan"), { recursive: true });
+      await writeFile(
+        join(claude, "orphan", "SKILL.md"),
+        "---\nname: orphan\n---\n" + POINTER_SENTINEL + "\n",
+        "utf8"
+      );
+      await assert.rejects(
+        mirrorSkills(target, { apply: true }),
+        /no canonical/
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("mirror-skills errors when a full skill exists on both sides", async () => {
+    const target = await tempProject();
+    try {
+      await writeSkill(join(target, ".agents", "skills"), "dup", "# canonical\n");
+      await writeSkill(join(target, ".claude", "skills"), "dup", "# other full\n");
+      await assert.rejects(
+        mirrorSkills(target, { apply: true }),
+        /exists in both/
       );
     } finally {
       await rm(target, { recursive: true, force: true });

@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.3.1
+- Package: `@namewta/speculo` v0.3.2
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -41,18 +41,21 @@ scripts/              Build, validation, verification tooling
 - **index.ts** — `initSpeculo()` copies template assets to `<target>/speculo/`. Core assets (`.speculo`, `commands`, `skills`) always installed. Workflow packages selected interactively or via `--all`.
 - **migrate.ts** — `planMigration()` + `migrateSpeculo()`: v2/transitional-v3 → current v3 state. Staged, rollback-safe with backup/restore.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
+- **skills-mirror.ts** — `mirrorSkills()`: mirror `.agents/skills/*` canonicals into `.claude/skills/*` pointers; reverse-relocate full `.claude` skills into `.agents`; idempotent. Pointer detected via `<!-- speculo:pointer -->` sentinel.
 - **utils.ts** — Single `pathExists()` helper.
 
 ## CLI Usage
 
 ```
-speculo init [--all] [target]       Install/refresh core + selected workflows
-speculo migrate [--apply] [target]  Preview/apply legacy state migration
-speculo update                       Deprecated → delegates to speculo init --all
+speculo init [--all] [target]           Install/refresh core + selected workflows
+speculo migrate [--apply] [target]      Preview/apply legacy state migration
+speculo mirror-skills [--dry-run] [t]   Mirror .agents/skills/* canonical → .claude/skills/* pointers
+speculo update                           Deprecated → delegates to speculo init --all
 ```
 
-- `--all` only valid with `init`; `--apply` only valid with `migrate`.
-- Existing `.speculo/` state is never overwritten on init.
+- `--all` only valid with `init`; `--apply` only valid with `migrate`; `--dry-run` only valid with `mirror-skills`.
+- Existing `.speculo/` state is never overwritten on init; existing `config.json` is preserved on update.
+- `mirror-skills` keeps `.agents/skills/<name>/SKILL.md` as the single source of truth and regenerates `.claude/skills/<name>/SKILL.md` as a thin pointer (frontmatter + relative-path reference, sentinel `<!-- speculo:pointer -->`). Idempotent; relocates a full `.claude` skill into `.agents` first when no canonical exists.
 - `update` command is deprecated and will be removed in a future version.
 
 ## Template Asset Layout
