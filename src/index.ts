@@ -67,6 +67,10 @@ async function copyCoreAssets(
       if (!(await pathExists(destination))) {
         await cp(source, destination);
         copied.push(asset);
+      } else {
+        // Never overwrite a user-edited config on update; report the skip so
+        // the init output makes the preservation explicit (issue #33).
+        copied.push(asset + " (preserved)");
       }
       continue;
     }
