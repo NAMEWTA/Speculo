@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.3] - 2026-07-31
+
+### Added
+- **A-archive-and-consolidate 新增 consolidate-from-code 模式**：归档 Work 从单一 archive 路径扩展为双模式。没有可归档 change（或用户显式要求“基于当前代码沉淀知识”）时，进入 consolidate-from-code 模式——以当前代码库为基本事实、一次一问深度访谈用户，把经验证的架构决策与领域术语提升为永久知识。访谈运行本身建立一个承载 change，轨迹/LOG/CONTEXT/ADR 先落在该 change 内，经代码验证后再提升、最后归档；两模式收束到同一条“评估 → 提升 → 归档”尾部。§0 判定模式，多候选或既有可归档 change 又收到沉淀请求时停止请用户消歧。
+- **consolidation-interview.md 访谈协议**：新增代码库沉淀访谈协议子文件（基本事实优先、决策树、每轮只关闭一个关键结论、复用 grill 的 LOG/CONTEXT/ADR 格式、停止条件），供 consolidate-from-code 模式加载。
+
+### Changed
+- **W-wayfinder 工作流增强**：明确“规划而非执行”与“以名称指代”两条核心纪律；拆分“绘制地图 / 走完地图”两种调用模式；目标命名作为第一动作独立成节；调查 Ticket 引入 Type（research/decision/validation/mapping）与模式（AFK/HITL）分类，research/AFK 型可并行领取、decision 等 HITL 型单会话一次只解决一个。
+- **wayfinder-map-template 重构**：地图定位为“索引而非仓库”，新增目标、笔记（含执行授权）、已定决策、尚未指定（战争迷雾）、范围之外等分节；前沿由调查清单投影；停止条件补齐目标命名与迷雾收敛项。
+- **investigation-ticket-template**：随 Wayfinder 分类模型同步更新。
+- **specdev INDEX**：A-archive-and-consolidate 描述更新为双模式沉淀 Work。
+
+---
+
 ## [0.3.2] - 2026-07-31
 
 ### Added
