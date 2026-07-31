@@ -25,6 +25,7 @@ const STATE_PREFIX = "{roots.state}/specdev/";
 const EXPECTED_WORKS = new Set([
   "A-archive-and-consolidate",
   "D-diagnose-bugs",
+  "E-engineering-cognitive-mentor",
   "G-grill-with-docs",
   "I-implement",
   "I-init-setup",

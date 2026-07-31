@@ -73,8 +73,7 @@ Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entr
 
 - [AGENTS.md](./AGENTS.md) — AI agent handbook (authoritative)
 - [CHANGELOG.md](./CHANGELOG.md) — Release history
-- [docs/](./docs/) — Authoring contracts for commands, skills, workflows, and persistence
-- [.agents/skills/](./.agents/skills/) — Internal authoring tools for Speculo maintainers
+- [.agents/skills/](./.agents/skills/) — Internal authoring tools for Speculo maintainers (self-contained authoring contracts under `_shared/` and per-skill `references/`)
 - [README-ZH.md](./README-ZH.md) — 中文镜像
 
 ## Acknowledgments — Honoring Open Source Heritage

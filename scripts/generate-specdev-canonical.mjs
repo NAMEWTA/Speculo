@@ -212,6 +212,30 @@ const canonicalDocuments = [
       ...persistenceReferences,
     ],
   },
+  {
+    output:
+      "template/canonical/canonical-specdev-engineering-cognitive-mentor.md",
+    entry: `${workflowRoot}/E-engineering-cognitive-mentor/E-engineering-cognitive-mentor.md`,
+    references: [
+      reference("E-engineering-cognitive-mentor/mode-routing.md"),
+      reference("E-engineering-cognitive-mentor/interaction-protocol.md"),
+      reference("E-engineering-cognitive-mentor/evidence-and-options.md"),
+      reference("E-engineering-cognitive-mentor/bug-guidance.md"),
+      reference("E-engineering-cognitive-mentor/codebase-guidance.md"),
+      reference("E-engineering-cognitive-mentor/requirements-guidance.md"),
+      reference("E-engineering-cognitive-mentor/architecture-guidance.md"),
+      reference("E-engineering-cognitive-mentor/domain-learning-guidance.md"),
+      reference("E-engineering-cognitive-mentor/comprehension-and-closure.md"),
+      reference("E-engineering-cognitive-mentor/persistence-and-resume.md"),
+      reference("E-engineering-cognitive-mentor/mentor-report-template.md", {
+        preserveArtifactHeader: true,
+      }),
+      sharedSources.artifactContract,
+      sharedSources.deviationControl,
+      sharedSources.researchSkill,
+      ...persistenceReferences,
+    ],
+  },
 ];
 
 const capabilityNames = new Map([
@@ -225,8 +249,10 @@ const capabilityNames = new Map([
     "P-goal-plan/orchestration-protocol.md",
     "目标规划阶段的 Lead 编排规则",
   ],
+  ["R-review-architecture/R-review-architecture.md", "架构审查阶段"],
   ["S-spec/S-spec.md", "编写 Spec 阶段"],
   ["T-tickets/T-tickets.md", "拆分 Tickets 阶段"],
+  ["G-grill-with-docs/log-format.md", "设计访谈阶段的全局 LOG 条目格式"],
   [
     "T-tickets/ticket-readiness.md",
     "拆分 Tickets 阶段的 Ticket Ready 检查",

@@ -1,157 +1,125 @@
 #!/usr/bin/env node
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-/**
- * generate-index.mjs — 自动生成或更新 workflow 的 INDEX.md 中 AUTO-INDEX 区块
- *
- * 用法: node generate-index.mjs <workflow-path>
- *
- * 扫描 <workflow-path> 下所有 <大写字母>-<work_name>/ 目录，
- * 读取各入口文件 frontmatter 的 name 和 description，
- * 更新 INDEX.md 中 <!-- AUTO-INDEX-START --> ... <!-- AUTO-INDEX-END --> 区块。
- *
- * 如果 INDEX.md 中不存在 AUTO-INDEX 标记，则在文件末尾追加带标记的 work 列表。
- * INDEX.md 其余内容（frontmatter、XML 块、其他章节）原样保留不修改。
- */
+const START = '<!-- AUTO-INDEX-START -->';
+const END = '<!-- AUTO-INDEX-END -->';
 
-import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, basename, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-// --- 参数解析 ---
-const workflowPath = process.argv[2];
-if (!workflowPath) {
-  console.error('用法: node generate-index.mjs <workflow-path>');
-  process.exit(1);
+function usage(code = 0) {
+  const out = code === 0 ? console.log : console.error;
+  out(`Usage: node generate-index.mjs <workflow-path> [--check]\n\nRebuilds the unique AUTO-INDEX block from <Letter>-<slug> work directories.\n--check  Exit non-zero when INDEX.md would change.`);
+  process.exit(code);
 }
 
-// --- 目录扫描：匹配 <大写字母>-* 的目录 ---
-const WORK_DIR_RE = /^[A-Z]-/;
-
-async function discoverWorks(dir) {
-  const entries = await readdir(dir, { withFileTypes: true });
-  return entries
-    .filter((e) => e.isDirectory() && WORK_DIR_RE.test(e.name))
-    .map((e) => e.name)
-    .sort();
+function parseArgs(argv) {
+  let workflowPath;
+  let check = false;
+  for (const arg of argv) {
+    if (arg === '--help' || arg === '-h') usage(0);
+    else if (arg === '--check') check = true;
+    else if (!workflowPath) workflowPath = arg;
+    else throw new Error(`Unexpected argument: ${arg}`);
+  }
+  if (!workflowPath) usage(2);
+  return { workflowPath: path.resolve(workflowPath), check };
 }
 
-// --- 解析 YAML frontmatter（仅提取 name/description） ---
-const FRONTMATTER_RE = /^---\s*\n([\s\S]*?)\n---/;
-
-function parseFrontmatter(raw) {
-  const match = raw.match(FRONTMATTER_RE);
-  if (!match) return null;
-
-  const body = match[1];
-  const name = (body.match(/^name:\s*(.+)$/m) ?? [])[1]?.trim() ?? '';
-  const description = (body.match(/^description:\s*(.+)$/m) ?? [])[1]?.trim() ?? '';
-
-  return { name, description };
+function extractFrontmatter(text, file) {
+  const normalized = text.replace(/\r\n/g, '\n');
+  if (!normalized.startsWith('---\n')) throw new Error(`${file}: missing YAML frontmatter`);
+  const end = normalized.indexOf('\n---\n', 4);
+  if (end < 0) throw new Error(`${file}: unterminated YAML frontmatter`);
+  return normalized.slice(4, end);
 }
 
-// --- 构建 work 列表内容 ---
-function buildWorkList(works) {
-  const lines = [];
-  if (works.length === 0) {
-    lines.push('暂无 work 条目。');
-  } else {
-    for (const w of works) {
-      lines.push(`- **${w.dirName}** — ${w.name}：${w.description}`);
+function parseSimpleYaml(block, file) {
+  const result = {};
+  const lines = block.split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line.trim() || /^\s*#/.test(line)) continue;
+    const match = line.match(/^([A-Za-z0-9_-]+):(?:\s*(.*))?$/);
+    if (!match) continue;
+    const [, key, raw = ''] = match;
+    if (raw === '>' || raw === '|') {
+      const parts = [];
+      while (i + 1 < lines.length && (/^\s+/.test(lines[i + 1]) || !lines[i + 1].trim())) {
+        i += 1;
+        parts.push(lines[i].trim());
+      }
+      result[key] = raw === '>' ? parts.filter(Boolean).join(' ') : parts.join('\n').trim();
+    } else {
+      result[key] = raw.trim().replace(/^['"]|['"]$/g, '');
     }
   }
-  return lines.join('\n');
+  if (!result.name || !result.description) {
+    throw new Error(`${file}: frontmatter must contain non-empty name and description`);
+  }
+  return result;
 }
 
-// --- AUTO-INDEX 标记 ---
-const INDEX_START = '<!-- AUTO-INDEX-START -->';
-const INDEX_END = '<!-- AUTO-INDEX-END -->';
+function count(haystack, needle) {
+  return haystack.split(needle).length - 1;
+}
 
-// --- 主流程 ---
-async function main() {
-  const resolved = join(process.cwd(), workflowPath);
-  const workflowDirName = basename(resolved);
-
-  console.log(`扫描 workflow: ${resolved}`);
-
-  const workDirs = await discoverWorks(resolved);
-  console.log(`发现 ${workDirs.length} 个 work 条目: ${workDirs.join(', ') || '(无)'}`);
+async function collectWorks(workflowPath) {
+  const entries = await fs.readdir(workflowPath, { withFileTypes: true });
+  const dirs = entries
+    .filter((entry) => entry.isDirectory() && /^[A-Z]-[a-z0-9][a-z0-9-]*$/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b, 'en'));
 
   const works = [];
-  for (const dirName of workDirs) {
-    const entryFile = join(resolved, dirName, `${dirName}.md`);
+  for (const dir of dirs) {
+    const entryPath = path.join(workflowPath, dir, `${dir}.md`);
+    let text;
     try {
-      const raw = await readFile(entryFile, 'utf-8');
-      const fm = parseFrontmatter(raw);
-      if (fm && fm.name) {
-        works.push({ dirName, ...fm });
-        console.log(`  ✓ ${dirName} → ${fm.name}`);
-      } else {
-        console.warn(`  ⚠ ${dirName}: 入口文件缺少 name/description`);
-      }
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        console.warn(`  ⚠ ${dirName}: 缺少入口文件 ${entryFile}`);
-      } else {
-        console.warn(`  ⚠ ${dirName}: 读取失败 (${err.message})`);
-      }
+      text = await fs.readFile(entryPath, 'utf8');
+    } catch (error) {
+      throw new Error(`${entryPath}: work directory requires same-named entry file`);
     }
+    const fm = parseSimpleYaml(extractFrontmatter(text, entryPath), entryPath);
+    works.push({ dir, name: fm.name.trim(), description: fm.description.replace(/\s+/g, ' ').trim() });
   }
-
-  const indexPath = join(resolved, 'INDEX.md');
-  const newWorkList = buildWorkList(works);
-
-  let existingContent = '';
-  try {
-    existingContent = await readFile(indexPath, 'utf-8');
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
-
-  let newContent;
-  if (existingContent.includes(INDEX_START) && existingContent.includes(INDEX_END)) {
-    // 替换 AUTO-INDEX 区块内容
-    const startIdx = existingContent.indexOf(INDEX_START) + INDEX_START.length;
-    const endIdx = existingContent.indexOf(INDEX_END);
-    newContent =
-      existingContent.slice(0, startIdx) +
-      '\n\n' +
-      newWorkList +
-      '\n\n' +
-      existingContent.slice(endIdx);
-    console.log('已更新现有 AUTO-INDEX 区块');
-  } else if (existingContent) {
-    // 文件存在但没有标记——在末尾追加
-    newContent =
-      existingContent.trimEnd() +
-      '\n\n' +
-      INDEX_START +
-      '\n\n' +
-      newWorkList +
-      '\n\n' +
-      INDEX_END +
-      '\n';
-    console.log('已追加 AUTO-INDEX 区块到文件末尾');
-  } else {
-    // 文件不存在——创建新文件
-    newContent =
-      '---\n' +
-      `id: ${workflowDirName}/index\n` +
-      'type: workflow-index\n' +
-      `workflow: ${workflowDirName}\n` +
-      'auto_generated: true\n' +
-      '---\n\n' +
-      `# ${workflowDirName} — Work Index\n\n` +
-      '> 本文件由 `generate-index.mjs` 自动生成，**禁止手动编辑**。\n\n' +
-      newWorkList +
-      '\n';
-    console.log('已创建新 INDEX.md');
-  }
-
-  await writeFile(indexPath, newContent, 'utf-8');
-  console.log(`INDEX.md 已更新: ${indexPath}`);
+  return works;
 }
 
-main().catch((err) => {
-  console.error(err.message);
-  process.exit(1);
+function render(works) {
+  if (works.length === 0) return '';
+  return works.map(({ dir, name, description }) => `- **${dir}** — ${name}：${description}`).join('\n');
+}
+
+async function main() {
+  const { workflowPath, check } = parseArgs(process.argv.slice(2));
+  const indexPath = path.join(workflowPath, 'INDEX.md');
+  const original = (await fs.readFile(indexPath, 'utf8')).replace(/\r\n/g, '\n');
+  if (count(original, START) !== 1 || count(original, END) !== 1) {
+    throw new Error(`${indexPath}: requires exactly one ${START} and one ${END}`);
+  }
+  const start = original.indexOf(START);
+  const end = original.indexOf(END);
+  if (end < start) throw new Error(`${indexPath}: AUTO-INDEX markers are reversed`);
+
+  const works = await collectWorks(workflowPath);
+  const block = render(works);
+  const next = `${original.slice(0, start)}${START}\n\n${block}${block ? '\n\n' : ''}${END}${original.slice(end + END.length)}`;
+
+  if (next === original) {
+    console.log(`AUTO-INDEX is current: ${path.relative(process.cwd(), indexPath) || indexPath} (${works.length} works)`);
+    return;
+  }
+  if (check) {
+    console.error(`AUTO-INDEX is stale: ${path.relative(process.cwd(), indexPath) || indexPath}`);
+    process.exitCode = 1;
+    return;
+  }
+  const tmp = `${indexPath}.tmp-${process.pid}`;
+  await fs.writeFile(tmp, next, 'utf8');
+  await fs.rename(tmp, indexPath);
+  console.log(`Updated ${path.relative(process.cwd(), indexPath) || indexPath} (${works.length} works)`);
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
 });

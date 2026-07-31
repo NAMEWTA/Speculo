@@ -1,126 +1,84 @@
-# INDEX.md 模板与规范
+# Workflow INDEX checklist
 
-编写 workflow 的 INDEX.md 时必须遵守以下结构。所有内容为纯自然 markdown，无 XML 块。
+此文件提供当前 INDEX 的内容清单。按 workflow 实际复杂度编写，不复制固定 SpecDev 字段。
 
-## 格式约束
+## Frontmatter
 
-### 持久化约定：只声明真实存在的目录
-
-**固定骨架**（`speculo init` 创建，始终存在）：
-
-| 项 | 路径 | 说明 |
-|----|------|------|
-| 状态索引 | `status.json` | workflow 全局状态 |
-| 活跃变更 | `changes/` | 所有 change 产物存放目录 |
-| 变更归档 | `archive/` | 已完成并归档的 change |
-
-**可选 lazy 目录**（changes 确认后按需创建，始终反映当前现状）：
-
-| 名称 | 路径 | 说明 |
-|------|------|------|
-| 永久 ADR | `adr/` | changes 中确认后的 ADR 提升至此，随现状演进持续增删改 |
-| 永久词汇表 | `context/` | changes 中确认后的 CONTEXT 提升至此，随现状演进持续增删改 |
-
-**禁止在持久化约定中列出以下内容**：
-- 不存在的目录或文件——不要凭空声明未创建的路径
-- 由具体 work 运行时按需创建的临时产物——那是 work 内部行为
-- 只在某些 work 中才会出现的目录
-
-### 状态字段：必须写清楚 status.json 的每个字段
-
-`status.json` 中每个字段必须列出：字段名、类型、用途、可能值。示例：
-
-```
-- schema_version（数字）— 状态 schema 版本号，当前为 1
-- workflow（字符串）— workflow 标识，固定为 "xxx"
-- active（数组）— 当前活跃 change 的目录名列表，每个元素为 "YYYY-MM-DD-<topic>" 格式的字符串
+```yaml
+---
+id: <workflow>
+type: workflow
+workflow: <workflow>
+name: <显示名>
+description: <从摄入到长期结果的一句话>
+keywords: [<真实触发词>]
+---
 ```
 
-不允许仅写"维护以下字段"然后只列字段名不说明类型和用途。
+简化、自动生成的 INDEX 可以使用该 workflow 已建立的 `type: workflow-index` 形态；修改前以真实加载器与现有调用为准。不要在同一 workflow 混用两套入口合同。
 
-## 完整模板
+## 必要内容
+
+### 目标与工件链
+
+说明该 workflow 解决什么问题，以及 works 如何把外部输入推进为权威工件、证据和长期状态。列出冲突裁决规则。
+
+### 运行时根
 
 ```markdown
----
-id: <workflow-name>
-type: workflow
-workflow: <workflow-name>
-name: <中文名称>
-description: <一句话描述>
-keywords: [<关键词>]
----
+- 工作流根：`<Path>{roots.workflows}/<workflow>/</Path>`
+- 状态根：`<Path>{roots.state}/<workflow>/</Path>`
+```
 
-# <Workflow 标题>
+### 持久化约定
 
-本文件是 `<workflow-name>` 的唯一入口——包含运行时根、持久化约定、启动协议、状态字段、路径分配、副作用边界以及 work 条目索引。
+逐项说明：
 
-## 运行时根
+- 固定初始化项；
+- 首次 work 运行生成项；
+- change 内按需产物；
+- 经确认提升的长期 namespace；
+- command 拥有的 sidecar。
 
-- **workflow 根**（`{roots.workflows}`）解析为 `<Path>{roots.workflows}/<workflow-name>/</Path>`，指向 work 入口和子文件所在目录
-- **state 根**（`{roots.state}`）解析为 `<Path>{roots.state}/<workflow-name>/</Path>`，指向持久化状态和变更产物所在目录
+每项都写生成者和时机。没有生成者的路径不列入合同。
 
-## 持久化约定
+### 启动与恢复
 
-在 state 根下维护以下结构：
+说明 roots 解析、配置初始化、change 选择/消歧、work 开始记录、按需加载和完成记录。多个 active change 是否允许由当前 schema 决定。
 
-**固定骨架**（`speculo init` 创建，始终存在）：
+### 状态字段
 
-| 名称 | 路径 | 说明 |
-|------|------|------|
-| 状态索引 | `<Path>{roots.state}/<workflow-name>/status.json</Path>` | workflow 全局状态 |
-| 活跃变更 | `<Path>{roots.state}/<workflow-name>/changes/</Path>` | 进行中的 change 产物存放目录 |
-| 变更归档 | `<Path>{roots.state}/<workflow-name>/archive/</Path>` | 已完成并归档的历史 change |
+对每个 JSON 字段说明类型、必需性、格式/枚举、owner 和更新时机。若 workflow 与 change 各有 status，分别说明。
 
-**确认后按需创建**（changes 中的产物经确认后提升至此，始终反映当前现状）：
+### 路径与所有权
 
-| 名称 | 路径 | 说明 |
-|------|------|------|
-| 永久 ADR | `<Path>{roots.state}/<workflow-name>/adr/</Path>` | changes 中确认后的 ADR 提升至此，随现状演进持续增删改 |
-| 永久词汇表 | `<Path>{roots.state}/<workflow-name>/context/</Path>` | changes 中确认后的 CONTEXT 提升至此，随现状演进持续增删改
+区分 workflow state、change state、项目路径、长期知识和 command sidecar。说明并发时的 path owner 或 claim 规则（适用时）。
 
-## 启动协议
+### 副作用边界
 
-1. 解析 workspace 配置和 workflow/state roots。已解析时复用。
-2. 读取 `<Path>{roots.state}/<workflow-name>/status.json</Path>` 确定当前 change：
-   - 用户指定 → 直接使用
-   - 唯一活跃 change → 直接使用
-   - 无活跃 → 创建 `changes/<YYYY-MM-DD>-<kebab-topic>/`，注册到 `active` 数组
-   - 多个候选 → 先消歧
+列出需要明确授权的动作，以及允许直接执行的只读探索、静态产物生成和验证。
 
-## 状态字段
+### Work 条目
 
-`<Path>{roots.state}/<workflow-name>/status.json</Path>` 包含以下字段：
-
-- **`schema_version`**（数字）— 状态 schema 版本号，当前为 1
-- **`workflow`**（字符串）— workflow 标识，固定为 `"<workflow-name>"`
-- **`active`**（字符串数组）— 当前活跃 change 的目录名列表，每个元素为 `"YYYY-MM-DD-<topic>"` 格式。空数组表示无活跃 change
-- **`current_work`**（字符串或 null）— 当前正在执行的 work id，如 `"specdev/grill-with-docs"`。无正在执行的 work 时为 null
-- **`work_history`**（对象数组）— work 调用记录，每条包含：
-  - `work_id` — work 标识
-  - `started_at` — 开始时间（ISO 8601）
-  - `completed_at` — 完成时间（ISO 8601），未完成时为 null
-  - `result` — 完成结果，如 `"completed"`、`"aborted"`
-  - `artifacts` — 产物的项目相对路径列表
-
-`active` 数组支持多 change 并行（如 W-wayfinder 同时追踪多个 ticket），但大多数场景下仅有一个活跃 change。
-
-## 路径分配
-
-1. 产物写入当前 change 目录（`<Path>{roots.state}/<workflow-name>/changes/{change}/</Path>`）
-2. 领域文档（ADR.md、LOG.md、CONTEXT.md）由设计类 work 维护
-3. Spec、tickets、map 等产物由对应 work 写入当前 change 目录
-4. 项目代码、测试写入项目相对路径，验证指针记录到 change
-5. 所有引用使用 `<Path>{roots.workflows}/<workflow-name>/...</Path>` 或 `<Path>{roots.state}/<workflow-name>/...</Path>` 格式
-
-## 副作用边界
-
-确认前不得执行：提交代码、合并/删除 worktree、发布/部署。结果记录到 `<Path>{roots.state}/<workflow-name>/changes/{change}/LOG.md</Path>`。敏感值不得写入。
-
-## Work 条目
-
+```markdown
 <!-- AUTO-INDEX-START -->
 
-- **<X-workname>** — <中文名>：<一句话描述>
+- **X-work** — 名称：description
 
 <!-- AUTO-INDEX-END -->
 ```
+
+区块由脚本生成，手写部分不包含重复 work 清单。
+
+### Common 与验证
+
+列出 common 的总览入口、规则/schema/tools/skills（实际存在者），以及包级和 change 级验证命令。
+
+## 完成检查
+
+- INDEX 单独可用于恢复 workflow；
+- 所有 state 字段和 namespace 有 owner；
+- 每个 work 的输入可追溯、输出有消费者；
+- 所有 `<Path>` 静态目标存在；
+- AUTO-INDEX 二次生成无 diff；
+- INDEX 不声明虚构目录或旧兼容字段。

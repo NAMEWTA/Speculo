@@ -73,8 +73,7 @@ npm install -g @namewta/speculo
 
 - [AGENTS.md](./AGENTS.md) — AI 代理手册（权威）
 - [CHANGELOG.md](./CHANGELOG.md) — 发布历史
-- [docs/](./docs/) — commands、skills、workflows 与持久化的编写契约
-- [.agents/skills/](./.agents/skills/) — Speculo 维护者内部编写工具
+- [.agents/skills/](./.agents/skills/) — Speculo 维护者内部编写工具（编写契约自包含于 `_shared/` 与各 skill 的 `references/`）
 - [README.md](./README.md) — English version
 
 ## 致敬与开源传承

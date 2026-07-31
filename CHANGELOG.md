@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.1] - 2026-07-31
+
+### Added
+- **E-engineering-cognitive-mentor workflow**：specdev 新增“工程认知导师”非执行型 work，面向 Bug、源码、需求方案、架构与陌生技术领域提供证据驱动、可复述、可恢复的认知指导；含 mode-routing、interaction-protocol、evidence-and-options、五类场景指南、comprehension-and-closure、persistence-and-resume 与 mentor-report-template 等渐进披露子文件。
+- **E canonical 纳入生成流水线**：`generate-specdev-canonical.mjs` 注册 E 入口与引用闭包，`canonical-specdev-engineering-cognitive-mentor.md` 改为从源自动生成（取代早期手工版），纳入 `--check` 幂等校验。
+
+### Changed
+- **内部创作契约自包含化**：废弃集中式 `docs/`（skill/command/canonical/persistence-authoring），契约迁入各 speculo-write-* skill 的 `references/<type>-contract.md` 与 `.agents/skills/_shared/`（project-model、path-and-reference-rules、authoring-quality、validation-gates）；新增 `.agents/skills/README.md`。
+- **AGENTS.md 刷新**：更新版本号至 v0.3.1、目录图（移除 `docs/`）、workflows 盘点（specdev 12 works 含 E）、Validation Pipeline（补 `generate-specdev-canonical --check`、`validate-speculo-assets.mjs`、`generate-index.mjs` 双 INDEX 模式）与 Internal Authoring Skills 引用说明。
+- **specdev INDEX**：AUTO-INDEX 重建至 12 works（新增 E-engineering-cognitive-mentor）。
+- **README / README-ZH**：文档索引移除已废弃的 `docs/` 链接，指向自包含的 `.agents/skills/`。
+
+### Fixed
+- **maintainer 校验器 `validate-speculo-assets.mjs`**：修正项目相对路径（`<Path>src/example.ts</Path>` 等，符合 path-reference-contract §3）被误判为“必须以 root alias 开头”；识别 `type: workflow-index` 整文件自动生成模式（person），不再对其强制 AUTO-INDEX 标记；豁免散文文档（README、`.speculo/`）与讲解性占位（省略号、`{roots.X}`/`{roots.xxx}`）。
+- **E work 引用契约合规**：修正 E 文档中裸 `workspace.json` / `.status.json` code span 与 `<Path>...</Path>`、`<Url>...</Url>` 占位，改用完整 `<Path>` 或散文描述；`common/tools/validate-specdev.mjs` 的 `EXPECTED_WORKS` 白名单登记 E。
+
+---
+
 ## [0.3.0] - 2026-07-28
 
 ### Added

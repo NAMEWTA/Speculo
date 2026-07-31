@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.2.16
+- Package: `@namewta/speculo` v0.3.1
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -21,9 +21,8 @@ template/             Shipped asset bundle
   canonical/          Single-file pure-Markdown distribution format for AI platforms
 test/                 CLI test suite
 scripts/              Build, validation, verification tooling
-.agents/skills/       Internal authoring skills (5 speculo-write-* skills + _shared)
+.agents/skills/       Internal authoring skills (5 speculo-write-* skills + _shared/ + per-skill references/scripts)
 .github/workflows/    CI (build, test, verify-bin) + Release (npm publish + GitHub Release)
-docs/                 Authoring contracts (skill, command, canonical, persistence)
 ```
 
 ## Essential Commands
@@ -61,7 +60,7 @@ speculo update                       Deprecated → delegates to speculo init --
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, handoff, retro, status
 - **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, writing-great-skills
-- **template/workflows/** — specdev（研发全流程: A-archive-and-consolidate, D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/workflows/** — specdev（研发全流程: A-archive-and-consolidate, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；按 `speculo-write-canonical` skill 手动拼接
 
 ## Workflow Package Contract
@@ -82,12 +81,16 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 - **speculo-write-work** — Write individual work entry files and progressive-disclosure sub-files within a workflow
 - **speculo-write-workflows** — Create/audit workflow packages, generate INDEX.md, and track asset changes
 
-All reference: `AGENTS.md`, `docs/<type>-authoring.md`, `docs/persistence-contract.md`, `_shared/authoring-quality.md`.
+每个 skill 先读 `_shared/` 共同事实源（`project-model.md`、`path-and-reference-rules.md`、`authoring-quality.md`、`validation-gates.md`），再读本包内 `references/<type>-contract.md`。创作契约不再集中在 `docs/`，而是随各 skill 自包含（`docs/` 已废弃）。
 
 ## Validation Pipeline
 
-- `validate-framework-assets.mjs` — Validates INDEX frontmatter/sections, `_state/` skeleton, `<Path>` root aliases, docs-sync templates, agent skills.
-- `check-template-links.mjs` — Validates markdown links and `<Path>` pointers in `template/` (and markdown links in `.agents/`).
+- `pnpm validate-assets` 依次运行三步：
+  - `generate-specdev-canonical.mjs --check` — 确认 `template/canonical/canonical-specdev-*` 与源文件闭包一致（stale 即失败）。
+  - `validate-framework-assets.mjs` — Validates INDEX frontmatter/sections, `_state/` skeleton, `<Path>` root aliases, docs-sync templates, agent skills.
+  - `check-template-links.mjs` — Validates markdown links and `<Path>` pointers in `template/` (and markdown links in `.agents/`).
+- `.agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .` — 维护者 skill 自带的最低门校验器，检查 skill 链接、frontmatter、`<Path>`、command/workflow/work 结构；由各 speculo-write-* skill 手动调用。
+- `generate-index.mjs <workflow>` — 从 `<Letter>-<slug>` work 目录重建 AUTO-INDEX（specdev 用 AUTO-INDEX 标记，person 用整文件自动生成）。
 - Tests use `mkdtemp` for temp directories, always clean up.
 
 ## Dangerous Patterns (verified regressions)
