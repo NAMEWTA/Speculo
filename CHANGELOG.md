@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.4] - 2026-08-02
+
+### Added
+- **`typescript-engineering-standards` Skill**：为 TypeScript、JavaScript、React、Node.js、Electron、CLI、npm 库与 Monorepo 项目提供渐进披露的工程规范。轻量主入口按任务最小化读取 `references/` 主题文档（规则优先级、架构与目录、命名、模块、类型系统、异步/错误、注释、测试、React、Node CLI、格式化/Lint、配置/CI、安全/性能/i18n、Git/评审、迁移治理、Orca 工程习惯），并附带 `templates/`（tsconfig/prettier/editorconfig/AGENTS/PR/评审清单）与 `examples/`。随 `skills` 核心资产自动安装。
+
+---
+
 ## [0.3.3] - 2026-07-31
 
 ### Added

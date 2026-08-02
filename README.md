@@ -49,7 +49,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 6 Skills
+### 7 Skills
 
 | Skill | Purpose |
 |---|---|
@@ -58,7 +58,8 @@ After initialization, the target project gains the following AI agent-callable a
 | `docs-sync` | Core documentation audit and synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `speculo-retro` | Retrospective analysis |
-| `dev-worktree` | Git worktree isolation for development |
+| `typescript-engineering-standards` | Progressive TypeScript/JS/React/Node engineering standards with references, templates, and examples |
+| `writing-great-skills` | Authoring guidance for agent skills |
 
 ### 2 Workflow Packages
 

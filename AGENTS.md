@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.3.2
+- Package: `@namewta/speculo` v0.3.4
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -62,7 +62,7 @@ speculo update                           Deprecated → delegates to speculo ini
 
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, handoff, retro, status
-- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, writing-great-skills
+- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, typescript-engineering-standards, writing-great-skills
 - **template/workflows/** — specdev（研发全流程: A-archive-and-consolidate, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；按 `speculo-write-canonical` skill 手动拼接
 
