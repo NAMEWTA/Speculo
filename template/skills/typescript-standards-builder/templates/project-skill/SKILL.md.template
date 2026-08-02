@@ -1,0 +1,34 @@
+---
+name: typescript-standards
+description: {{PROJECT_NAME}} 项目专属的 TypeScript 编码、目录、测试与工程质量规范。处理本项目中的 TypeScript 相关任务时必须使用。
+---
+
+# {{PROJECT_NAME}} TypeScript Standards
+
+> 规范范围：{{SCOPE}}
+> 最近确认：{{DATE}}
+
+## 优先级
+
+1. 本轮用户明确决定。
+2. 平台、框架、协议和公共 API 硬约束。
+3. 当前仓库配置与 CI。
+4. 本 Skill 的项目规则。
+
+## 核心规则
+
+{{CORE_RULES}}
+
+## 工作流程
+
+修改代码前：读取 `references/00-project-profile.md` 及与任务相关的最小参考文档。
+
+修改代码后：运行项目规定的格式、Lint、类型、测试和构建命令；无法执行时明确报告。
+
+## 参考路由
+
+{{REFERENCE_ROUTING}}
+
+## 例外
+
+所有例外记录在 `references/11-decisions-and-exceptions.md`。不得通过扩大 `any`、关闭核心规则或删除测试绕过门禁。

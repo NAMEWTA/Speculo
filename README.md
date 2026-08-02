@@ -58,7 +58,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `docs-sync` | Core documentation audit and synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `speculo-retro` | Retrospective analysis |
-| `typescript-engineering-standards` | Progressive TypeScript/JS/React/Node engineering standards with references, templates, and examples |
+| `typescript-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
 
 ### 2 Workflow Packages

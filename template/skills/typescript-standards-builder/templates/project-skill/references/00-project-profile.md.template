@@ -1,0 +1,17 @@
+# 项目画像
+
+> 来源：仓库事实 + 用户确认
+
+- 项目名称：{{PROJECT_NAME}}
+- 规范范围：{{SCOPE}}
+- 项目类型：{{PROJECT_TYPES}}
+- 运行环境：{{RUNTIMES}}
+- 包管理器：{{PACKAGE_MANAGER}}
+- 模块系统：{{MODULE_SYSTEM}}
+- TypeScript：{{TSCONFIG_SUMMARY}}
+- 格式化：{{FORMATTER}}
+- Lint：{{LINTER}}
+- 测试：{{TEST_TOOLS}}
+- 构建：{{BUILD_TOOLS}}
+- CI：{{CI_SUMMARY}}
+- 自动生成或豁免目录：{{EXCLUDED_PATHS}}

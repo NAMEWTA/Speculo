@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **`typescript-standards-builder` Skill 取代 `typescript-engineering-standards`**：由静态工程规范合集重构为规范生成器——先扫描仓库事实，再通过自适应问答确认分歧点，为当前项目生成专属 TypeScript Standards Skill。输出正式规范到 `.agents/skills/typescript-standards/`，并为 `.claude/skills/` 创建强制引用入口；主 Skill 精简、详细规则拆分进项目内 `references/`，随 `skills` 核心资产自动安装。
+
 ---
 
 ## [0.3.4] - 2026-08-02
