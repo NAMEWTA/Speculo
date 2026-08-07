@@ -11,7 +11,7 @@ description: 设计、创建、合并或重构完整 Speculo workflow 包；当�
 
 ### 1. 建立包快照
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[Workflow contract](references/workflow-contract.md)、[INDEX reference](references/index-template.md)，以及目标 workflow 的全部 INDEX、work 入口、common、schema/tools 和 `_state` 种子。
+读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Workflow contract](references/workflow-contract.md)、[INDEX reference](references/index-template.md)，以及目标 workflow 的全部 INDEX、work 入口、common、schema/tools 和 `_state` 种子。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
 
 **完成标准**：每个文件的职责、调用方、静态依赖、runtime owner 和生成关系进入清单；所有现有 works 与状态字段已覆盖。
 

@@ -20,7 +20,7 @@ description: 设计、创建、迁移、合并或重构 Speculo 的 template/ski
 - `../../../template/skills/writing-great-skills/SKILL.md`
 - 目标 skill、所有调用它的 command/work/workflow，以及同类 skill
 
-先搜索再判断；不存在的文档不作为契约。
+先搜索再判断；不存在的文档不作为契约。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
 
 **完成标准**：目标职责、真实调用分支、现有重复能力、所有调用方和所有持久化写入已逐项列出。
 

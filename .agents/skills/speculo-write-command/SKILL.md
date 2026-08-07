@@ -11,7 +11,7 @@ description: 设计、创建、合并或重构 Speculo 的 template/commands 单
 
 ### 1. 建立调用合同
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[Command contract](references/command-contract.md)、所有当前 commands、被调用 skills，以及目标 command 的 CLI/文档/测试调用方。
+读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Command contract](references/command-contract.md)、所有当前 commands、被调用 skills，以及目标 command 的 CLI/文档/测试调用方。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
 
 **完成标准**：用户触发、参数、scope、读取、写入、副作用、报告、state 和调用 skill 已逐项确定；未知项明确标记而非猜测。
 

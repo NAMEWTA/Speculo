@@ -11,7 +11,7 @@ description: 编译、重建或审计 Speculo canonical 单文件分发物；当
 
 ### 1. 选择源入口
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[Canonical contract](references/canonical-contract.md) 和 `../../../template/canonical/README.md`。确定一个入口：skill `SKILL.md`、command `.md`、workflow `INDEX.md` 或 work 入口。
+读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Canonical contract](references/canonical-contract.md) 和 `../../../template/canonical/README.md`。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则；然后确定一个入口：skill `SKILL.md`、command `.md`、workflow `INDEX.md` 或 work 入口。
 
 **完成标准**：入口真实存在；输出位于 `template/canonical/`；源与输出不是同一文件；运行时 state 和历史产物不在源范围。
 
