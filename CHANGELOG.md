@@ -4,6 +4,15 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] - 2026-08-07
+
+### Added
+- **参考内容复用规则（作者技能）**：`authoring-quality.md` 共享规则新增"参考内容复用"——用户提供参考内容时视为待复用实现而非灵感来源，默认尽可能直接复制原文，只对 Speculo 集成所必需的路径解析、持久化、状态、缓存/临时目录、输出位置及直接相关脚本配置做最小修改；方法、步骤顺序、问题、判断条件、模板语义与完成标准不得顺带改变。
+- **写技能接入质量模型**：`speculo-write-canonical` / `speculo-write-command` / `speculo-write-skill` / `speculo-write-work` / `speculo-write-workflows` 五个技能全部接入 `_shared/authoring-quality.md` 读取，并在用户提供参考内容时先应用复用规则再继续设计。
+- **验证门证据要求**：`validation-gates.md` Gate 5 新增参考内容修改核对——列出相对原文的实质修改及 Speculo 集成理由，无法说明必要性的改写恢复原文。
+
+---
+
 ## [0.5.0] - 2026-08-07
 
 ### Added
