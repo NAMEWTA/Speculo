@@ -23,6 +23,8 @@ description: 为并行写代码的 Ready Ticket 建立隔离 worktree，并由 L
 ## 边界
 
 - 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`。
-- 持久状态只保存 `workspace_ref`，不保存机器绝对路径。
+- Git provider 固定使用 `<project-root>/specdev-worktree/<ticket-id>/`，持久化 `workspace_ref: specdev-worktree/<ticket-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
+- native/external provider 保留其可迁移 opaque locator；所有 provider 都不保存机器绝对路径、认证秘密或真实用户数据。
+- 项目根 `.gitignore` 的 `specdev-worktree/` 条目由 `speculo init` 单一维护；缺失时创建流程阻塞并提示重新运行 init。
 - E2E 仅由 Lead 在集成阶段执行，且仅适用于用户界面交互受影响的变更。
 - 合并、推送、PR、删除分支或 worktree 仍需用户授权。

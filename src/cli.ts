@@ -21,7 +21,7 @@ function usage(): string {
     "Commands:",
     "  init           Install or refresh Speculo core assets and selected workflow packages.",
     "                 Existing workflow state under speculo/.speculo/ is never overwritten.",
-    "  migrate        Preview migration from v2 or transitional v3 state to the current v3 contract.",
+    "  migrate        Preview migration from v2, transitional v3, or SpecDev status v3 state.",
     "                 Pass --apply to perform the staged, rollback-safe migration.",
     "  mirror-skills  Mirror .agents/skills/* canonical skills into .claude/skills/* pointers.",
     "                 Idempotent; relocates full .claude skills into .agents canonical first.",
@@ -134,7 +134,7 @@ async function main(argv: string[]): Promise<number> {
         apply: applyFlag,
       });
       if (!result.legacyDetected) {
-        console.log("No legacy Speculo state detected in " + result.target);
+        console.log("No Speculo state migration required in " + result.target);
         return 0;
       }
 

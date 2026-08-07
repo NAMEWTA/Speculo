@@ -404,11 +404,10 @@ resolution: answered
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "workflow": "specdev",
   "active": [],
-  "work_history": [],
-  "completed": []
+  "archived": []
 }
 ```
 
@@ -419,19 +418,18 @@ resolution: answered
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v3",
+  "$id": "urn:speculo:specdev:status:v4",
   "title": "SpecDev Global Status",
   "type": "object",
   "required": [
     "schema_version",
     "workflow",
     "active",
-    "work_history",
-    "completed"
+    "archived"
   ],
   "properties": {
     "schema_version": {
-      "const": 3
+      "const": 4
     },
     "workflow": {
       "const": "specdev"
@@ -443,30 +441,27 @@ resolution: answered
         "required": [
           "change",
           "current_work",
-          "works_run",
-          "result"
+          "works_run"
         ],
         "properties": {
           "change": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "current_work": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^specdev/"
           },
           "works_run": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
-          },
-          "result": {
-            "type": [
-              "string",
-              "null"
-            ]
+              "type": "string",
+              "pattern": "^specdev/"
+            },
+            "uniqueItems": true
           },
           "claimed_investigations": {
             "type": "array",
@@ -494,77 +489,23 @@ resolution: answered
                   "type": "string"
                 }
               },
-              "additionalProperties": true
+              "additionalProperties": false
             }
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       }
     },
-    "work_history": {
+    "archived": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "change",
-          "work_id",
-          "started_at",
-          "completed_at",
-          "result"
-        ],
-        "properties": {
-          "change": {
-            "type": "string"
-          },
-          "work_id": {
-            "type": "string",
-            "pattern": "^specdev/"
-          },
-          "started_at": {
-            "type": "string"
-          },
-          "completed_at": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "result": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": true
-      }
-    },
-    "completed": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "change",
-          "archived_at",
-          "archive_path"
-        ],
-        "properties": {
-          "change": {
-            "type": "string"
-          },
-          "archived_at": {
-            "type": "string"
-          },
-          "archive_path": {
-            "type": "string",
-            "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
-          }
-        },
-        "additionalProperties": true
-      }
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 
@@ -742,6 +683,49 @@ resolution: answered
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "worktrees": {
+            "contains": {
+              "properties": {
+                "provider": {
+                  "const": "git"
+                }
+              },
+              "required": [
+                "provider"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "worktrees": {
+            "items": {
+              "if": {
+                "properties": {
+                  "provider": {
+                    "const": "git"
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "workspace_ref": {
+                    "pattern": "^specdev-worktree/T-[0-9]{2,}$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {

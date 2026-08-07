@@ -46,6 +46,8 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - 共享高冲突路径的类型，例如根依赖清单、锁文件、全局导出、共享 schema、迁移索引和全局路由；
 - 项目中已有的提交、分支和发布约定。
 
+同时确认项目根 `.gitignore` 存在且包含 `specdev-worktree/`（`/specdev-worktree/` 视为等价）。该条目由 `speculo init` 单一维护；缺失时停止并提示用户以当前 Speculo 版本重新运行 `speculo init`，本 Work 不作为第二写入者修改它。
+
 ### 3. 询问不可发现偏好
 
 仅在上下文未提供时询问：
@@ -82,6 +84,8 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - `<Path>{roots.state}/specdev/research/</Path>`
 - `<Path>{roots.state}/specdev/archive/</Path>`
 
+若全局状态已存在，先检查 `schema_version`。版本为 `3`、未知版本或 JSON 不可解析时停止，不得以模板覆盖；提示先运行 `speculo migrate` 预览，再运行 `speculo migrate --apply`。只有状态不存在时才从 schema v4 模板创建。
+
 从模板生成：
 
 - `<Path>{roots.workflows}/specdev/I-init-setup/tracking-template.md</Path>` → `<Path>{roots.state}/specdev/.config/tracking.md</Path>`
@@ -97,7 +101,8 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 3. 确认 `<Path>{roots.workflows}/specdev/I-init-setup/change-status-template.json</Path>` 的字段与 `<Path>{roots.workflows}/specdev/common/schemas/change-status.schema.json</Path>` 对齐；实际创建 change 时替换模板占位符后再执行 Schema 验证；
 4. 确认所有必需目录存在；
 5. 确认三个配置文档均已从对应模板生成；
-6. 运行：
+6. 确认项目根 `.gitignore` 已忽略 `specdev-worktree/`；
+7. 运行：
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
@@ -105,7 +110,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 
 ### 7. 更新状态并汇报
 
-在 `<Path>{roots.state}/specdev/status.json</Path>` 中记录本 work 的开始、完成时间和结果。向用户汇报：状态根、语言、验证命令、并发策略、人工批准策略和任何仍为 `null` 的配置项。
+若本 Work 由某个 active change 调用，开始时把该 entry 的 `current_work` 设为 `specdev/init-setup`，完成时将该 id 去重加入 `works_run` 并清空；纯工作流初始化没有 active change 时不创建虚假的 change。时间和验证结果写入本次回复或 change 自有 Evidence/LOG，不写入全局索引。向用户汇报：状态根、语言、验证命令、并发策略、人工批准策略和任何仍为 `null` 的配置项。
 
 ## 完成标准
 
@@ -113,9 +118,10 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 - 状态目录、永久知识目录和归档目录齐全；
 - 三个配置文档已就位；
 - 验证命令与并发规则有来源；
+- 项目根 `.gitignore` 已包含 `specdev-worktree/`；
 - 无敏感值被写入；
 - 包级自检无 error；
-- `<Path>{roots.state}/specdev/status.json</Path>` 已记录本 work 完成。
+- 存在调用 change 时，其 `works_run` 已包含本 work且 `current_work` 已清空；纯初始化时全局 active 保持真实为空。
 
 ## 子文件引用
 

@@ -11,7 +11,11 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { pathExists } from "./utils.js";
 
 type LegacyWorkflow = "dev" | "doc" | "person";
-type MigrationSourceLayout = "none" | "v2" | "transitional-v3";
+type MigrationSourceLayout =
+  | "none"
+  | "v2"
+  | "transitional-v3"
+  | "specdev-status-v3";
 
 type LegacyChange = {
   sourceWorkflow: LegacyWorkflow;
@@ -65,6 +69,7 @@ const TRANSITIONAL_DOCS_STATE = join(
   ".config",
   "docs-sync-state.json"
 );
+const SPECDEV_STATUS = join("specdev", "status.json");
 const COMMAND_RUN_RE = /^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const LEGACY_ROOT_ENTRIES = new Set([
@@ -83,6 +88,117 @@ const LEGACY_ROOT_ENTRIES = new Set([
 
 const CHANGE_NAME_RE =
   /^(\d{4})-(\d{2})-(\d{2})-([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+
+type SpecdevActiveEntry = {
+  change: string;
+  current_work: string | null;
+  works_run: string[];
+  claimed_investigations?: Array<Record<string, unknown>>;
+};
+
+type SpecdevStatusV4 = {
+  schema_version: 4;
+  workflow: "specdev";
+  active: SpecdevActiveEntry[];
+  archived: string[];
+};
+
+function validateSpecdevStatusV4(
+  status: Record<string, unknown>
+): string[] {
+  const errors: string[] = [];
+  const expectedTopLevel = ["active", "archived", "schema_version", "workflow"];
+  const actualTopLevel = Object.keys(status).sort();
+  if (JSON.stringify(actualTopLevel) !== JSON.stringify(expectedTopLevel)) {
+    errors.push("top-level fields must be schema_version, workflow, active, and archived");
+  }
+  if (status.schema_version !== 4 || status.workflow !== "specdev") {
+    errors.push("schema_version must be 4 and workflow must be specdev");
+  }
+  if (!Array.isArray(status.active) || !Array.isArray(status.archived)) {
+    errors.push("active and archived must be arrays");
+    return errors;
+  }
+
+  const activeNames = new Set<string>();
+  for (const entry of status.active) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      errors.push("active entries must be objects");
+      continue;
+    }
+    const value = entry as Record<string, unknown>;
+    const allowed = new Set([
+      "change",
+      "current_work",
+      "works_run",
+      "claimed_investigations",
+    ]);
+    if (Object.keys(value).some((key) => !allowed.has(key))) {
+      errors.push("active entries contain unsupported fields");
+    }
+    if (typeof value.change !== "string" || !CHANGE_NAME_RE.test(value.change)) {
+      errors.push("active change names must use YYYY-MM-DD-kebab format");
+      continue;
+    }
+    if (activeNames.has(value.change)) {
+      errors.push("active change names must be unique: " + value.change);
+    }
+    activeNames.add(value.change);
+    if (
+      value.current_work !== null &&
+      (typeof value.current_work !== "string" ||
+        !value.current_work.startsWith("specdev/"))
+    ) {
+      errors.push("current_work must be null or a specdev work id: " + value.change);
+    }
+    if (
+      !Array.isArray(value.works_run) ||
+      value.works_run.some(
+        (work) => typeof work !== "string" || !work.startsWith("specdev/")
+      ) ||
+      new Set(value.works_run).size !== value.works_run.length
+    ) {
+      errors.push("works_run must contain unique specdev work ids: " + value.change);
+    }
+    if (value.claimed_investigations !== undefined) {
+      if (Array.isArray(value.claimed_investigations)) {
+        const allowedClaimKeys = new Set(["id", "owner", "session", "claimed_at"]);
+        if (
+          value.claimed_investigations.some(
+            (claim) =>
+              claim &&
+              typeof claim === "object" &&
+              !Array.isArray(claim) &&
+              Object.keys(claim as Record<string, unknown>).some(
+                (key) => !allowedClaimKeys.has(key)
+              )
+          )
+        ) {
+          errors.push("investigation claims contain unsupported fields: " + value.change);
+        }
+      }
+      const claimErrors: string[] = [];
+      mergeClaims([], value.claimed_investigations, value.change, claimErrors);
+      if (claimErrors.length > 0) errors.push(...claimErrors);
+    }
+  }
+
+  const archivedNames = new Set<string>();
+  for (const change of status.archived) {
+    if (typeof change !== "string" || !CHANGE_NAME_RE.test(change)) {
+      errors.push("archived change names must use YYYY-MM-DD-kebab format");
+      continue;
+    }
+    if (archivedNames.has(change)) {
+      errors.push("archived change names must be unique: " + change);
+    }
+    if (activeNames.has(change)) {
+      errors.push("change appears in both active and archived: " + change);
+    }
+    archivedNames.add(change);
+  }
+  return errors;
+}
 
 function installRoot(target: string): string {
   return join(resolve(target), "speculo");
@@ -113,6 +229,195 @@ async function readStatus(
     blockers.push("Invalid change status JSON: " + path);
     return undefined;
   }
+}
+
+async function readJsonObject(
+  path: string,
+  blockers: string[],
+  label: string
+): Promise<Record<string, unknown> | undefined> {
+  if (!(await pathExists(path))) return undefined;
+  try {
+    const value = JSON.parse(await readFile(path, "utf8")) as unknown;
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      blockers.push(label + " must be a JSON object: " + path);
+      return undefined;
+    }
+    return value as Record<string, unknown>;
+  } catch {
+    blockers.push("Invalid " + label + " JSON: " + path);
+    return undefined;
+  }
+}
+
+function mergeClaims(
+  target: Array<Record<string, unknown>>,
+  source: unknown,
+  change: string,
+  blockers: string[]
+): void {
+  if (source === undefined) return;
+  if (!Array.isArray(source)) {
+    blockers.push("Invalid claimed_investigations for active change: " + change);
+    return;
+  }
+
+  const byId = new Map(
+    target.map((claim) => [String(claim.id), claim] as const)
+  );
+  for (const claim of source) {
+    if (!claim || typeof claim !== "object" || Array.isArray(claim)) {
+      blockers.push("Invalid investigation claim for active change: " + change);
+      continue;
+    }
+    const value = claim as Record<string, unknown>;
+    if (
+      typeof value.id !== "string" ||
+      typeof value.owner !== "string" ||
+      typeof value.claimed_at !== "string" ||
+      (value.session !== undefined &&
+        value.session !== null &&
+        typeof value.session !== "string")
+    ) {
+      blockers.push("Invalid investigation claim fields for active change: " + change);
+      continue;
+    }
+    const normalized: Record<string, unknown> = {
+      id: value.id,
+      owner: value.owner,
+      claimed_at: value.claimed_at,
+    };
+    if (value.session !== undefined) normalized.session = value.session;
+    const existing = byId.get(value.id);
+    if (existing && JSON.stringify(existing) !== JSON.stringify(normalized)) {
+      blockers.push(
+        "Conflicting investigation claim " + value.id + " for active change: " + change
+      );
+      continue;
+    }
+    if (!existing) {
+      target.push(normalized);
+      byId.set(value.id, normalized);
+    }
+  }
+}
+
+export async function migrateSpecdevStatusV3(
+  status: Record<string, unknown>,
+  root: string,
+  blockers: string[] = []
+): Promise<SpecdevStatusV4> {
+  if (status.schema_version !== 3 || status.workflow !== "specdev") {
+    blockers.push("SpecDev status migration requires schema_version 3 and workflow specdev");
+  }
+  if (!Array.isArray(status.active)) {
+    blockers.push("SpecDev v3 status active must be an array");
+  }
+  if (!Array.isArray(status.work_history)) {
+    blockers.push("SpecDev v3 status work_history must be an array");
+  }
+  if (!Array.isArray(status.completed)) {
+    blockers.push("SpecDev v3 status completed must be an array");
+  }
+
+  const activeByChange = new Map<string, SpecdevActiveEntry>();
+  for (const entry of Array.isArray(status.active) ? status.active : []) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      blockers.push("SpecDev v3 status contains an invalid active entry");
+      continue;
+    }
+    const value = entry as Record<string, unknown>;
+    if (typeof value.change !== "string" || !CHANGE_NAME_RE.test(value.change)) {
+      blockers.push("Invalid active change name in SpecDev v3 status");
+      continue;
+    }
+    if (
+      value.current_work !== null &&
+      (typeof value.current_work !== "string" ||
+        !value.current_work.startsWith("specdev/"))
+    ) {
+      blockers.push("Invalid current_work for active change: " + value.change);
+      continue;
+    }
+    if (
+      !Array.isArray(value.works_run) ||
+      value.works_run.some(
+        (work) => typeof work !== "string" || !work.startsWith("specdev/")
+      )
+    ) {
+      blockers.push("Invalid works_run for active change: " + value.change);
+      continue;
+    }
+
+    const existing = activeByChange.get(value.change);
+    if (
+      existing &&
+      existing.current_work !== value.current_work &&
+      existing.current_work !== null &&
+      value.current_work !== null
+    ) {
+      blockers.push("Conflicting current_work values for active change: " + value.change);
+      continue;
+    }
+    const migrated = existing ?? {
+      change: value.change,
+      current_work: value.current_work as string | null,
+      works_run: [],
+    };
+    if (migrated.current_work === null && typeof value.current_work === "string") {
+      migrated.current_work = value.current_work;
+    }
+    migrated.works_run = [
+      ...new Set([...migrated.works_run, ...value.works_run as string[]]),
+    ];
+    const claims = migrated.claimed_investigations ?? [];
+    mergeClaims(claims, value.claimed_investigations, value.change, blockers);
+    if (claims.length > 0 || value.claimed_investigations !== undefined) {
+      migrated.claimed_investigations = claims;
+    }
+    activeByChange.set(value.change, migrated);
+  }
+
+  const archived: string[] = [];
+  const archivedNames = new Set<string>();
+  for (const entry of Array.isArray(status.completed) ? status.completed : []) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      blockers.push("SpecDev v3 status contains an invalid completed entry");
+      continue;
+    }
+    const change = (entry as Record<string, unknown>).change;
+    if (typeof change !== "string" || !CHANGE_NAME_RE.test(change)) {
+      blockers.push("Invalid archived change name in SpecDev v3 status");
+      continue;
+    }
+    if (!archivedNames.has(change)) {
+      const archivePath = join(root, "specdev", "archive", monthFromName(change), change);
+      if (!(await pathExists(archivePath))) {
+        blockers.push("Archived change directory is missing: " + archivePath);
+      }
+      archived.push(change);
+      archivedNames.add(change);
+    }
+  }
+
+  for (const change of activeByChange.keys()) {
+    if (archivedNames.has(change)) {
+      blockers.push("SpecDev change appears in both active and archived: " + change);
+    }
+  }
+
+  const migrated: SpecdevStatusV4 = {
+    schema_version: 4,
+    workflow: "specdev",
+    active: [...activeByChange.values()],
+    archived,
+  };
+  blockers.push(
+    ...validateSpecdevStatusV4(migrated).map(
+      (issue) => "Migrated SpecDev status would be invalid: " + issue
+    )
+  );
+  return migrated;
 }
 
 async function validateLegacyIndex(
@@ -297,7 +602,18 @@ export async function detectLegacyState(target: string): Promise<boolean> {
     if (await pathExists(join(root, marker))) return true;
   }
   if (await pathExists(join(root, TRANSITIONAL_DOCS_STATE))) return true;
-  return (await legacyCommandRunNames(root)).length > 0;
+  if ((await legacyCommandRunNames(root)).length > 0) return true;
+
+  const statusPath = join(root, SPECDEV_STATUS);
+  if (!(await pathExists(statusPath))) return false;
+  try {
+    const value = JSON.parse(await readFile(statusPath, "utf8")) as unknown;
+    if (!value || typeof value !== "object" || Array.isArray(value)) return true;
+    const status = value as Record<string, unknown>;
+    return status.schema_version !== 4 || validateSpecdevStatusV4(status).length > 0;
+  } catch {
+    return true;
+  }
 }
 
 async function detectV2State(target: string): Promise<boolean> {
@@ -324,19 +640,44 @@ export async function planMigration(
 ): Promise<MigrationPlan> {
   const resolvedTarget = resolve(target);
   const root = stateRoot(resolvedTarget);
+  const blockers: string[] = [];
+  const actions: MigrationAction[] = [];
+  const changes: LegacyChange[] = [];
   const v2Detected = await detectV2State(resolvedTarget);
   const transitionalDetected =
     (await pathExists(join(root, TRANSITIONAL_DOCS_STATE))) ||
     (await legacyCommandRunNames(root)).length > 0;
+  const specdevStatus = await readJsonObject(
+    join(root, SPECDEV_STATUS),
+    blockers,
+    "SpecDev status"
+  );
+  const statusVersion = specdevStatus?.schema_version;
+  const statusV3Detected = statusVersion === 3;
+  if (
+    specdevStatus &&
+    statusVersion !== 3 &&
+    statusVersion !== 4
+  ) {
+    blockers.push(
+      "Unsupported SpecDev status schema_version: " + String(statusVersion)
+    );
+  }
+  if (specdevStatus && statusVersion === 4) {
+    blockers.push(
+      ...validateSpecdevStatusV4(specdevStatus).map(
+        (issue) => "Invalid SpecDev status v4: " + issue
+      )
+    );
+  }
   const sourceLayout: MigrationSourceLayout = v2Detected
     ? "v2"
     : transitionalDetected
       ? "transitional-v3"
+      : statusV3Detected
+        ? "specdev-status-v3"
       : "none";
-  const legacyDetected = sourceLayout !== "none";
-  const blockers: string[] = [];
-  const actions: MigrationAction[] = [];
-  const changes: LegacyChange[] = [];
+  const legacyDetected = sourceLayout !== "none" || blockers.length > 0;
 
   if (!legacyDetected) {
     return {
@@ -361,7 +702,10 @@ export async function planMigration(
     };
   }
 
-  if (sourceLayout === "transitional-v3") {
+  if (
+    sourceLayout === "transitional-v3" ||
+    sourceLayout === "specdev-status-v3"
+  ) {
     const oldState = join(root, TRANSITIONAL_DOCS_STATE);
     const newState = join(root, "commands", "docs-sync", "state.json");
     if (await pathExists(oldState)) {
@@ -386,6 +730,15 @@ export async function planMigration(
         from: ".speculo/commands/" + name,
         to: ".speculo/commands/_legacy/" + name,
         detail: "Preserve the old report directory without rewriting history",
+      });
+    }
+    if (statusV3Detected && specdevStatus) {
+      await migrateSpecdevStatusV3(specdevStatus, root, blockers);
+      actions.push({
+        kind: "migrate-specdev-status",
+        from: ".speculo/specdev/status.json (schema v3)",
+        to: ".speculo/specdev/status.json (schema v4)",
+        detail: "Reduce the global index to active and archived changes",
       });
     }
     return {
@@ -581,7 +934,7 @@ function migratedDocsSyncState(
 
 function reportMarkdown(plan: MigrationPlan, now: string): string {
   const lines = [
-    "# Speculo v3 Migration Report",
+    "# Speculo Migration Report",
     "",
     "- Generated: " + now,
     "- Target: " + plan.target,
@@ -635,9 +988,9 @@ async function writeMigrationReport(
 ): Promise<void> {
   const reportRoot = join(stage, "commands", "migrate");
   await mkdir(reportRoot, { recursive: true });
-  const stem = now.slice(0, 10) + "-workspace-layout-v3";
+  const stem = now.slice(0, 10) + "-workspace-migration";
   let reportPath = join(reportRoot, stem + ".md");
-  let suffix = 2;
+  let suffix = 1;
   while (await pathExists(reportPath)) {
     reportPath = join(reportRoot, stem + "-" + String(suffix).padStart(2, "0") + ".md");
     suffix += 1;
@@ -654,7 +1007,10 @@ async function buildMigratedState(
   const now = new Date().toISOString();
   const templateRoot = join(packageRoot, "template");
 
-  if (plan.sourceLayout === "transitional-v3") {
+  if (
+    plan.sourceLayout === "transitional-v3" ||
+    plan.sourceLayout === "specdev-status-v3"
+  ) {
     await cp(root, stage, { recursive: true, force: true });
     const workspaceDestination = join(stage, "workspace.json");
     if (!(await pathExists(workspaceDestination))) {
@@ -688,6 +1044,31 @@ async function buildMigratedState(
       const oldConfigDir = dirname(oldState);
       if ((await readdir(oldConfigDir)).length === 0) {
         await rm(oldConfigDir, { recursive: true, force: true });
+      }
+    }
+
+    const statusPath = join(stage, SPECDEV_STATUS);
+    if (await pathExists(statusPath)) {
+      const status = JSON.parse(await readFile(statusPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      if (status.schema_version === 3) {
+        const migrationBlockers: string[] = [];
+        const migrated = await migrateSpecdevStatusV3(
+          status,
+          stage,
+          migrationBlockers
+        );
+        if (migrationBlockers.length > 0) {
+          throw new Error(
+            [
+              "SpecDev status changed after migration preview:",
+              ...migrationBlockers.map((item) => "- " + item),
+            ].join("\n")
+          );
+        }
+        await writeFile(statusPath, JSON.stringify(migrated, null, 2) + "\n");
       }
     }
 
@@ -734,6 +1115,7 @@ async function buildMigratedState(
   }
 
   const personActive: Array<Record<string, unknown>> = [];
+  const specdevArchived: string[] = [];
   for (const change of plan.changes) {
     const destination = join(stage, change.destinationRelative);
     await mkdir(dirname(destination), { recursive: true });
@@ -766,7 +1148,24 @@ async function buildMigratedState(
         updated_at: status.updated_at,
       });
     }
+    if (change.sourceWorkflow !== "person" && change.archived) {
+      specdevArchived.push(destinationName);
+    }
   }
+
+  await writeFile(
+    join(stage, "specdev", "status.json"),
+    JSON.stringify(
+      {
+        schema_version: 4,
+        workflow: "specdev",
+        active: [],
+        archived: [...new Set(specdevArchived)],
+      },
+      null,
+      2
+    ) + "\n"
+  );
 
   await writeFile(
     join(stage, "person", "status.json"),

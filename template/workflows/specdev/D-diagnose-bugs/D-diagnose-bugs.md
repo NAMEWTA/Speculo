@@ -66,7 +66,7 @@ keywords: [bug, 诊断, 根因, 复现, 假设]
 
 ### 7. 发布诊断
 
-同步 `<Path>{roots.state}/specdev/status.json</Path>` 的 `current_work`、`work_history` 和当前 change 状态，返回 `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`、状态及下一 Work 的完整路径。
+进入时设置 `<Path>{roots.state}/specdev/status.json</Path>` 当前 change 的 `current_work`；成功完成时将本 Work 去重加入 `works_run` 并清空，暂停或可恢复阻塞时保留。同步 change 自有状态，返回 `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`、状态及下一 Work 的完整路径。
 
 - 单一、局部、低风险且契约完全明确：可进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>` 生成 Lite/Standard Ticket，或在用户批准后由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 使用 Direct Spec 模式；
 - 多行为、公共接口、迁移、安全或高风险：进入 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>` 或 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`；

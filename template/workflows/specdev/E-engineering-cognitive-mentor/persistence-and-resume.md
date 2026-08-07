@@ -25,26 +25,13 @@ change 状态：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path
 ### 开始
 
 - 在 `active` 中找到或创建当前 change；
-- 设置该 change 的 `current_work` 为 `specdev/engineering-cognitive-mentor`；
+- `current_work` 已是 `specdev/engineering-cognitive-mentor` 时恢复，为 null 时设置为该 id；指向其他 Work 时停止并要求先完成显式 handoff；
 - `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `current_work` 同步设置为相同值；
-- 在 `work_history` 中查找该 change 与 work id 的未完成记录；存在唯一一条时复用，不重复创建；不存在时追加：
-
-```json
-{
-  "change": "<change>",
-  "work_id": "specdev/engineering-cognitive-mentor",
-  "started_at": "<ISO-8601>",
-  "completed_at": null,
-  "result": null
-}
-```
-
-若存在两条以上未完成记录，记录状态异常并停止自动写入，先请求消歧或修复。
+- 全局索引不创建逐次调用日志；开始时间与恢复阶段由主产物 frontmatter、MLOG 和 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 承载。
 
 ### 等待用户或跨会话暂停
 
 - 保持 `current_work` 为本 Work；
-- 保持唯一 `work_history` 记录未完成；
 - 更新主产物 `updated_at`、`current_phase`、`next_question`、`unresolved_questions` 与 `last_mlog_id`；
 - 每轮在回复前先落盘，确保用户即使中断也可恢复。
 
@@ -52,10 +39,9 @@ change 状态：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path
 
 ### 正常关闭
 
-- 将唯一未完成 `work_history` 的 `completed_at` 写为当前时间，`result` 写为 `completed`；
 - 将本 Work id 以去重方式加入 active change 的 `works_run`；
 - active change 的 `current_work` 与 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `current_work` 设为 null；
-- 不改变整个 change 的 `result` 或 `change_status`，除非用户明确结束、取消或外部阻塞确实影响整个 change；
+- 不改变整个 change 的 `change_status`，除非用户明确结束或外部阻塞确实影响整个 change；
 - 主产物 `status` 写为 `completed`，记录 `closed_at` 与理解确认状态。
 
 ### 外部阻塞
@@ -64,15 +50,14 @@ change 状态：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path
 
 - 主产物 `status: blocked`；
 - 记录 blocker、已知事实、所需输入和恢复条件；
-- 完成当前 `work_history`，结果为 `blocked`；
+- 保留 `current_work` 作为唯一恢复指针；
 - change 是否设为 blocked 取决于该阻塞是否阻止整个 change，不自动扩大。
 
 ### 用户取消
 
 - 主产物 `status: cancelled`；
 - 保存当前综合和完整 MLOG；
-- `work_history.result` 写为 `cancelled`；
-- 清空 current_work；
+- 清空全局与 change 状态的 `current_work`，但不将本 Work 加入 `works_run`；
 - 不删除工件或日志。
 
 ## 3. 主产物幂等初始化

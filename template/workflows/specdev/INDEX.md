@@ -106,7 +106,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 7. **偏差显式化**：计划与事实冲突时停止、记录、修订，不静默扩大范围或改写契约。
 8. **状态单一来源**：Ticket frontmatter 是单 Ticket 状态权威；Map 和 Goal Plan 是投影与编排。
 9. **知识以当前真相为目标**：归档保留历史，永久知识只保留仍真实且经实现验证的结论。
-10. **恢复依赖权威工件**：跨 Work 或 Agent 边界时同步 `current_work` 与 `work_history`，返回下一 Work 和权威工件的完整路径。
+10. **恢复依赖权威工件**：跨 Work 或 Agent 边界时同步 active change 的 `current_work`，成功完成后去重更新 `works_run`，返回下一 Work 和权威工件的完整路径。
 
 共享规则：
 
@@ -124,24 +124,24 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 1. 解析 workflow 和 state roots。
 2. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时运行 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`。
 3. 读取 `<Path>{roots.state}/specdev/status.json</Path>`：用户指定 change 优先；唯一活跃 change 直接使用；无活跃时创建；多个候选时请求消歧。
-4. 在 `<Path>{roots.state}/specdev/status.json</Path>` 写入 work 开始记录，并更新当前 change 的 `current_work`。
+4. 若当前 change 已有非空 `current_work`，先恢复或显式结束该 Work；否则将 `current_work` 设置为本次 work id。
 5. 只加载当前步骤需要的 work 子文件和共享规则。
 6. 完成后写入产物、运行适用校验、更新状态和 `works_run`。
 
 ## 状态字段
 
-`<Path>{roots.state}/specdev/status.json</Path>` 使用 schema v3：
+`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v4；Spec、Ticket 和 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 等领域工件仍使用各自现有 schema：
 
-- `schema_version`（数字）：状态 schema 版本，固定为 `3`。
+- `schema_version`（数字）：全局状态 schema 版本，固定为 `4`。
 - `workflow`（字符串）：workflow 标识，固定为 `"specdev"`。
 - `active`（对象数组）：当前活跃 change；每项包含：
   - `change`（字符串）：change 目录名，格式 `"YYYY-MM-DD-<kebab-topic>"`。
   - `current_work`（字符串或 null）：当前 work id，如 `"specdev/implement"`；无运行中 work 时为 null。
-  - `works_run`（字符串数组）：已运行的 work id。
-  - `result`（字符串或 null）：整体结果；进行中为 null，结束时记录 `"completed"`、`"blocked"` 或 `"cancelled"`。
+  - `works_run`（去重字符串数组）：已成功完成的 work id；重复运行同一 work 不追加副本。
   - `claimed_investigations`（对象数组，可选）：并行调查领取记录；每项包含 `id`、`owner`、可选 `session` 和 `claimed_at`。
-- `work_history`（对象数组）：work 调用记录；每项包含 `change`、`work_id`、`started_at`、`completed_at` 和 `result`。
-- `completed`（对象数组）：已归档 change；每项包含 `change`、`archived_at` 和 `archive_path`。
+- `archived`（去重字符串数组）：已归档 change 名称。详细归档时间、路径和 promotion 摘要只存在于 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/.status.json</Path>`。
+
+`active[].change` 必须唯一，且不得同时出现在 `archived`。开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
 
 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、分支、可迁移 `workspace_ref` 和生命周期状态。
 

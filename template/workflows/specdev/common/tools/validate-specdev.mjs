@@ -19,6 +19,7 @@ import { dirname, basename, extname, join, relative, resolve, sep } from "node:p
 import { fileURLToPath } from "node:url";
 
 const SCHEMA_VERSION = 3;
+const GLOBAL_STATUS_SCHEMA_VERSION = 4;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
 
@@ -499,6 +500,54 @@ function validateJsonFiles(root) {
   return errors;
 }
 
+function validateGlobalStatusAssets(root) {
+  const errors = [];
+  const paths = [join(root, "I-init-setup", "status-template.json")];
+  if (isDirectory(join(root, "_state"))) {
+    paths.unshift(join(root, "_state", "status.json"));
+  }
+  for (const path of paths) {
+    if (!isFile(path)) {
+      errors.push(`missing global status seed ${toPosix(relative(root, path))}`);
+      continue;
+    }
+    const data = JSON.parse(readText(path));
+    const keys = Object.keys(data).sort();
+    const expected = ["active", "archived", "schema_version", "workflow"];
+    if (JSON.stringify(keys) !== JSON.stringify(expected)) {
+      errors.push(`${toPosix(relative(root, path))}: global status must contain only ${expected.join(", ")}`);
+    }
+    if (
+      data.schema_version !== GLOBAL_STATUS_SCHEMA_VERSION ||
+      data.workflow !== "specdev" ||
+      !Array.isArray(data.active) ||
+      !Array.isArray(data.archived)
+    ) {
+      errors.push(`${toPosix(relative(root, path))}: invalid SpecDev global status v4 seed`);
+    }
+  }
+
+  const schemaPath = join(root, "common", "schemas", "status.schema.json");
+  if (!isFile(schemaPath)) {
+    errors.push("missing common/schemas/status.schema.json");
+    return errors;
+  }
+  const schema = JSON.parse(readText(schemaPath));
+  if (
+    schema.$id !== "urn:speculo:specdev:status:v4" ||
+    schema.properties?.schema_version?.const !== GLOBAL_STATUS_SCHEMA_VERSION ||
+    schema.additionalProperties !== false
+  ) {
+    errors.push("status.schema.json must define the strict SpecDev global status v4 contract");
+  }
+  for (const removed of ["work_history", "completed", "result"]) {
+    if (JSON.stringify(schema).includes(`\"${removed}\"`)) {
+      errors.push(`status.schema.json still contains removed global field ${removed}`);
+    }
+  }
+  return errors;
+}
+
 function capabilityChecks(root) {
   const checks = new Map([
     [
@@ -511,6 +560,7 @@ function capabilityChecks(root) {
           "status-labels-template",
           "config-template",
           "change-status-template",
+          "specdev-worktree/",
         ],
       ],
     ],
@@ -701,6 +751,7 @@ function selfCheck(root) {
   }
 
   errors.push(...validateJsonFiles(root));
+  errors.push(...validateGlobalStatusAssets(root));
   const references = validateDocumentReferences(root);
   errors.push(...references.errors);
   warnings.push(...references.warnings);
@@ -1125,6 +1176,30 @@ function validateChangeStatus(path, expectedChange, errors) {
   }
   if (!Array.isArray(data.blockers) || !Array.isArray(data.deviations)) {
     errors.push(`${basename(path)}: blockers and deviations must be arrays`);
+  }
+  if (data.worktrees !== undefined && !Array.isArray(data.worktrees)) {
+    errors.push(`${basename(path)}: worktrees must be an array when present`);
+  }
+  for (const worktree of Array.isArray(data.worktrees) ? data.worktrees : []) {
+    if (!worktree || typeof worktree !== "object" || Array.isArray(worktree)) {
+      errors.push(`${basename(path)}: invalid worktree entry`);
+      continue;
+    }
+    const ref = worktree.workspace_ref;
+    if (
+      typeof ref !== "string" ||
+      ref.startsWith("/") ||
+      /^[A-Za-z]:[\\/]/.test(ref)
+    ) {
+      errors.push(`${basename(path)}: workspace_ref must be a portable non-absolute locator`);
+      continue;
+    }
+    if (worktree.provider === "git") {
+      const expectedRef = `specdev-worktree/${worktree.ticket_id}`;
+      if (ref !== expectedRef) {
+        errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
+      }
+    }
   }
   if (data.change_status === "archived") {
     if (data.archived !== true) errors.push(`${basename(path)}: archived status requires archived=true`);

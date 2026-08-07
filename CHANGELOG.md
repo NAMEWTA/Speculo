@@ -4,6 +4,15 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- **SpecDev 全局状态 v4（#37）**：`status.json` 收敛为 `active` / `archived` change 索引，删除全局 `work_history`、active `result` 与 `completed` 元数据投影；`speculo migrate` 新增 v3→v4 dry-run、阻塞检查、分阶段替换和回滚安全迁移。
+- **Ticket worktree 固定路径（#36）**：Git provider 固定使用 `<project-root>/specdev-worktree/<ticket-id>`；`speculo init` 在安装 SpecDev 时幂等治理项目根 `.gitignore`，native/external provider 继续使用可迁移 locator。
+
+### Tests
+- 新增 status v3→v4、迁移阻塞、`.gitignore` 换行/幂等、provider 引用校验及真实 Git linked worktree 集成覆盖。
+
 ## [0.6.0] - 2026-08-07
 
 ### Added

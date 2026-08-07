@@ -29,6 +29,7 @@ const INSTALL_SUBDIR = "speculo";
 const WORKFLOW_ENTRY = "INDEX.md";
 const STATE_TEMPLATE_DIR = "_state";
 const SPECULO_TAG_RE = /<SPECULO>[\s\S]*?<\/SPECULO>/;
+const SPECDEV_WORKTREE_IGNORE = "specdev-worktree/";
 
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
@@ -105,6 +106,47 @@ async function copyMissingTree(
       });
     }
   }
+}
+
+function hasSpecdevWorktreeIgnore(content: string): boolean {
+  return content.split(/\r?\n/).some((line) => {
+    const pattern = line.trim();
+    if (!pattern || pattern.startsWith("#") || pattern.startsWith("!")) {
+      return false;
+    }
+    return pattern.replace(/^\//, "").replace(/\/$/, "") === "specdev-worktree";
+  });
+}
+
+async function ensureSpecdevWorktreeIgnore(
+  target: string,
+  root: string
+): Promise<string | undefined> {
+  if (!(await pathExists(join(root, "workflows", "specdev", WORKFLOW_ENTRY)))) {
+    return undefined;
+  }
+
+  const ignorePath = join(target, ".gitignore");
+  if (!(await pathExists(ignorePath))) {
+    await writeFile(ignorePath, SPECDEV_WORKTREE_IGNORE + "\n", "utf8");
+    return ".gitignore (created specdev-worktree/)";
+  }
+
+  const content = await readFile(ignorePath, "utf8");
+  if (hasSpecdevWorktreeIgnore(content)) {
+    return ".gitignore (preserved specdev-worktree/)";
+  }
+
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const separator = content.length === 0 || content.endsWith("\n")
+    ? ""
+    : newline;
+  await writeFile(
+    ignorePath,
+    content + separator + SPECDEV_WORKTREE_IGNORE + newline,
+    "utf8"
+  );
+  return ".gitignore (updated specdev-worktree/)";
 }
 
 function generateSpeculoContent(selection: WorkflowSelection): string {
@@ -271,6 +313,8 @@ async function initFresh(
   copied.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, false)
   );
+  const gitignoreResult = await ensureSpecdevWorktreeIgnore(target, root);
+  if (gitignoreResult) copied.push(gitignoreResult);
   copied.push(...await writeAgentFiles(target, packageRoot, selection));
 
   return { target, mode: "init", copied };
@@ -289,6 +333,8 @@ async function initUpdate(
   updated.push(
     ...await copyWorkflowPackages(packageRoot, root, selection, true)
   );
+  const gitignoreResult = await ensureSpecdevWorktreeIgnore(target, root);
+  if (gitignoreResult) updated.push(gitignoreResult);
   updated.push(...await writeAgentFiles(target, packageRoot, selection));
 
   return { target, mode: "update", updated };
@@ -307,7 +353,7 @@ export async function initSpeculo(
 
   if (await detectLegacyState(target)) {
     throw new Error(
-      "Legacy Speculo state detected. Run `speculo migrate " +
+      "Speculo state migration required. Run `speculo migrate " +
       targetArg + "` to preview, then `speculo migrate --apply " +
       targetArg + "` before updating."
     );

@@ -10,7 +10,7 @@
 - `.status.json` 可解析，`change_status` 字段存在且值为 `completed`。
 - 源位于 `changes_root/<change>` 且真实存在。
 - 目标位于 `archive_root/<YYYY-MM>/<change>`（YYYY-MM 从 change 名称提取），目标目录不存在。
-- Workflow `status.json` 与 change 状态一致：change 条目出现在 `active` 数组中（通过 `change` 字段匹配），且 `result` 为 `"completed"`。
+- Workflow `status.json` 与 change 状态一致：change 条目唯一出现在 `active` 数组中，且不在 `archived`；业务完成状态只由 change `.status.json#change_status: completed` 表达。
 - 若 worktree 模式：已合并回目标分支并清理；未合并则记录 `blocked`。
 - **任一预检失败阻塞整批操作**（批量原子性）。
 
@@ -18,7 +18,7 @@
 
 1. 创建 `archive_root/<YYYY-MM>/` 月目录（如不存在）。
 2. 将 `changes_root/<change>/` 整个目录移动到 `archive_root/<YYYY-MM>/<change>/`。使用原子移动（mv/rename），不用复制后删除。
-3. 从 workflow `status.json` 的 `active` 数组中移除该 change 条目，追加归档记录到 `completed` 数组（`change`、`path`、`archived_at`、`archive_path`）。
+3. 从 workflow `status.json` 的 `active` 数组中移除该 change 条目，将 change 名称去重追加到 `archived`。全局索引不保存路径、时间、Work 或 promotion 明细。
 4. 更新已移动的 `.status.json`：
    - `change_status: archived`
    - `archived: true`
@@ -41,8 +41,8 @@
 
 1. 源路径不存在（移动成功）。
 2. 目标路径完整存在，内容与移动前一致。
-3. Workflow `status.json` 的 `active` 数组已移除该 change 条目，`completed` 数组已追加对应归档记录。
+3. Workflow `status.json` 的 `active` 数组已移除该 change，`archived` 数组已追加其名称，且两者没有重叠。
 4. 归档目录 `.status.json` 字段一致（`change_status: archived`、`archived: true`、`archive_path` 正确）。
 5. 验证失败时报告已完成/未完成清单，不猜测成功。
 
-完成标准：源不存在、目标完整、active 索引已移除且 completed 已追加、归档状态字段一致。
+完成标准：源不存在、目标完整、active 索引已移除且 archived 名称已追加、归档状态字段一致。

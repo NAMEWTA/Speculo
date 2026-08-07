@@ -362,7 +362,7 @@ async function createValidSpecdevChange(root: string): Promise<void> {
   );
 }
 
-describe("Speculo v3 CLI", () => {
+describe("Speculo CLI", () => {
   it("fresh init installs workflow packages and workflow-owned state", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
@@ -413,6 +413,19 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, ".speculo", "specdev", "status.json")),
         true
+      );
+      const specdevStatus = JSON.parse(
+        await readFile(join(root, ".speculo", "specdev", "status.json"), "utf8")
+      );
+      assert.deepEqual(specdevStatus, {
+        schema_version: 4,
+        workflow: "specdev",
+        active: [],
+        archived: [],
+      });
+      assert.equal(
+        await readFile(join(target, ".gitignore"), "utf8"),
+        "specdev-worktree/\n"
       );
       assert.equal(
         await pathExists(join(root, ".speculo", "specdev", "changes")),
@@ -486,6 +499,118 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await pathExists(join(root, ".speculo", "specdev")),
         false
+      );
+      assert.equal(await pathExists(join(target, ".gitignore")), false);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("init appends the SpecDev worktree ignore without changing existing content", async () => {
+    const target = await tempProject();
+    try {
+      await writeFile(join(target, ".gitignore"), "node_modules/\r\n# keep\r\n");
+      const first = await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      assert.equal(
+        await readFile(join(target, ".gitignore"), "utf8"),
+        "node_modules/\r\n# keep\r\nspecdev-worktree/\r\n"
+      );
+      assert.equal(
+        first.copied?.includes(".gitignore (updated specdev-worktree/)"),
+        true
+      );
+
+      const second = await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      assert.equal(
+        await readFile(join(target, ".gitignore"), "utf8"),
+        "node_modules/\r\n# keep\r\nspecdev-worktree/\r\n"
+      );
+      assert.equal(
+        second.updated?.includes(".gitignore (preserved specdev-worktree/)"),
+        true
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("init recognizes an equivalent root-anchored worktree ignore", async () => {
+    const target = await tempProject();
+    try {
+      await writeFile(join(target, ".gitignore"), "node_modules/\n/specdev-worktree\n");
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      assert.equal(
+        await readFile(join(target, ".gitignore"), "utf8"),
+        "node_modules/\n/specdev-worktree\n"
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("init appends the worktree ignore after a file without a final newline", async () => {
+    const target = await tempProject();
+    try {
+      await writeFile(join(target, ".gitignore"), "node_modules/");
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      assert.equal(
+        await readFile(join(target, ".gitignore"), "utf8"),
+        "node_modules/\nspecdev-worktree/\n"
+      );
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("a Git worktree under specdev-worktree leaves the main worktree clean", async () => {
+    const target = await tempProject();
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: target });
+      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: target });
+      execFileSync("git", ["config", "user.name", "Speculo Test"], { cwd: target });
+      await writeFile(join(target, "base.txt"), "base\n");
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      execFileSync("git", ["add", "."], { cwd: target });
+      execFileSync("git", ["commit", "-qm", "baseline"], { cwd: target });
+      execFileSync(
+        "git",
+        [
+          "worktree",
+          "add",
+          "-q",
+          "-b",
+          "speculo/test/T-01",
+          join(target, "specdev-worktree", "T-01"),
+          "HEAD",
+        ],
+        { cwd: target }
+      );
+      const worktrees = execFileSync("git", ["worktree", "list", "--porcelain"], {
+        cwd: target,
+        encoding: "utf8",
+      });
+      assert.match(worktrees, /specdev-worktree\/T-01/);
+      assert.equal(
+        execFileSync("git", ["status", "--short"], {
+          cwd: target,
+          encoding: "utf8",
+        }),
+        ""
       );
     } finally {
       await rm(target, { recursive: true, force: true });
@@ -833,6 +958,65 @@ describe("Speculo v3 CLI", () => {
     }
   });
 
+  it("SpecDev validator enforces the Git worktree reference contract", async () => {
+    const root = await tempProject();
+    const change = join(root, "2026-07-29-node-validator");
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    try {
+      await createValidSpecdevChange(change);
+      const statusPath = join(change, ".status.json");
+      const status = JSON.parse(await readFile(statusPath, "utf8"));
+      status.worktrees = [
+        {
+          ticket_id: "T-01",
+          owner: "worker",
+          provider: "git",
+          base_sha: "abc123",
+          branch: "speculo/change/T-01",
+          workspace_ref: "specdev-worktree/T-01",
+          status: "active",
+          updated_at: "2026-07-29T00:00:00Z",
+        },
+        {
+          ticket_id: "T-02",
+          owner: "worker",
+          provider: "external",
+          base_sha: "abc123",
+          branch: "speculo/change/T-02",
+          workspace_ref: "provider/session-02",
+          status: "active",
+          updated_at: "2026-07-29T00:00:00Z",
+        },
+      ];
+      await writeJson(statusPath, status);
+      const valid = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+
+      status.worktrees[0].workspace_ref = "specdev-worktree/T-99";
+      await writeJson(statusPath, status);
+      const invalid = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(invalid.status, 1);
+      assert.match(
+        invalid.stdout + invalid.stderr,
+        /git workspace_ref must equal specdev-worktree\/T-01/
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("SpecDev Node validator rejects a done Ticket without Evidence", async () => {
     const validator = join(
       packageRoot,
@@ -982,6 +1166,223 @@ describe("Speculo v3 CLI", () => {
     }
   });
 
+  it("migrates SpecDev global status v3 to the strict v4 index", async () => {
+    const target = await tempProject();
+    const state = join(target, "speculo", ".speculo");
+    const activeChange = "2026-08-07-active-change";
+    const archivedChange = "2026-07-21-archived-change";
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      await mkdir(
+        join(state, "specdev", "archive", "2026-07", archivedChange),
+        { recursive: true }
+      );
+      const legacy = {
+        schema_version: 3,
+        workflow: "specdev",
+        active: [
+          {
+            change: activeChange,
+            current_work: "specdev/tickets",
+            works_run: ["specdev/spec", "specdev/spec"],
+            result: "completed",
+            claimed_investigations: [],
+          },
+        ],
+        work_history: [
+          {
+            change: activeChange,
+            work_id: "specdev/spec",
+            started_at: "2026-08-07T00:00:00Z",
+            completed_at: "2026-08-07T01:00:00Z",
+            result: "completed",
+          },
+        ],
+        completed: [
+          { change: archivedChange, archived_at: "2026-07-21T00:00:00Z" },
+          { change: archivedChange, archived_at: "2026-07-21T00:00:00Z" },
+        ],
+      };
+      const statusPath = join(state, "specdev", "status.json");
+      await writeJson(statusPath, legacy);
+
+      await assert.rejects(
+        initSpeculo(target, { packageRoot, all: true }),
+        /state migration required/
+      );
+      const preview = await migrateSpeculo(target, { packageRoot });
+      assert.equal(preview.applied, false);
+      assert.equal(
+        preview.actions.some((action) => action.kind === "migrate-specdev-status"),
+        true
+      );
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), legacy);
+
+      const result = await migrateSpeculo(target, { packageRoot, apply: true });
+      assert.equal(result.applied, true);
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), {
+        schema_version: 4,
+        workflow: "specdev",
+        active: [
+          {
+            change: activeChange,
+            current_work: "specdev/tickets",
+            works_run: ["specdev/spec"],
+            claimed_investigations: [],
+          },
+        ],
+        archived: [archivedChange],
+      });
+      assert.equal(await detectLegacyState(target), false);
+      const second = await migrateSpeculo(target, { packageRoot, apply: true });
+      assert.equal(second.legacyDetected, false);
+      assert.equal(second.applied, false);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks status v3 migration when archived state cannot be resolved", async () => {
+    const target = await tempProject();
+    const statusPath = join(
+      target,
+      "speculo",
+      ".speculo",
+      "specdev",
+      "status.json"
+    );
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      const legacy = {
+        schema_version: 3,
+        workflow: "specdev",
+        active: [],
+        work_history: [],
+        completed: [
+          { change: "2026-07-21-missing-archive" },
+        ],
+      };
+      await writeJson(statusPath, legacy);
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot, apply: true }),
+        /Archived change directory is missing/
+      );
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), legacy);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks unknown SpecDev status versions without mutation", async () => {
+    const target = await tempProject();
+    const statusPath = join(
+      target,
+      "speculo",
+      ".speculo",
+      "specdev",
+      "status.json"
+    );
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      const unknown = {
+        schema_version: 99,
+        workflow: "specdev",
+        active: [],
+        archived: [],
+      };
+      await writeJson(statusPath, unknown);
+      await assert.rejects(
+        initSpeculo(target, { packageRoot, all: true }),
+        /state migration required/
+      );
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot, apply: true }),
+        /Unsupported SpecDev status schema_version: 99/
+      );
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), unknown);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks malformed status that falsely claims schema v4", async () => {
+    const target = await tempProject();
+    const statusPath = join(
+      target,
+      "speculo",
+      ".speculo",
+      "specdev",
+      "status.json"
+    );
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      const malformed = {
+        schema_version: 4,
+        workflow: "specdev",
+        active: [],
+        archived: [],
+        work_history: [],
+      };
+      await writeJson(statusPath, malformed);
+      await assert.rejects(
+        initSpeculo(target, { packageRoot, all: true }),
+        /state migration required/
+      );
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot, apply: true }),
+        /Invalid SpecDev status v4: top-level fields/
+      );
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), malformed);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks a status migration when active and archived indexes overlap", async () => {
+    const target = await tempProject();
+    const state = join(target, "speculo", ".speculo");
+    const change = "2026-07-21-overlap";
+    try {
+      await initSpeculo(target, {
+        packageRoot,
+        selection: { workflowIds: ["specdev"] },
+      });
+      await mkdir(join(state, "specdev", "archive", "2026-07", change), {
+        recursive: true,
+      });
+      const legacy = {
+        schema_version: 3,
+        workflow: "specdev",
+        active: [
+          { change, current_work: null, works_run: [], result: null },
+        ],
+        work_history: [],
+        completed: [{ change }],
+      };
+      const statusPath = join(state, "specdev", "status.json");
+      await writeJson(statusPath, legacy);
+      await assert.rejects(
+        migrateSpeculo(target, { packageRoot, apply: true }),
+        /appears in both active and archived/
+      );
+      assert.deepEqual(JSON.parse(await readFile(statusPath, "utf8")), legacy);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
   it("migrate previews without mutation and applies the v3 mapping", async () => {
     const target = await tempProject();
     const root = join(target, "speculo");
@@ -1092,8 +1493,21 @@ describe("Speculo v3 CLI", () => {
       assert.equal(await pathExists(join(state, "workspace.json")), true);
       const migrationReports = await readdir(join(state, "commands", "migrate"));
       assert.equal(
-        migrationReports.some((name) => /^\d{4}-\d{2}-\d{2}-workspace-layout-v3\.md$/.test(name)),
+        migrationReports.some((name) => /^\d{4}-\d{2}-\d{2}-workspace-migration\.md$/.test(name)),
         true
+      );
+      const specdevIndex = JSON.parse(
+        await readFile(join(state, "specdev", "status.json"), "utf8")
+      );
+      assert.equal(specdevIndex.schema_version, 4);
+      assert.deepEqual(specdevIndex.active, []);
+      assert.deepEqual(
+        specdevIndex.archived,
+        [
+          "2026-06-01-legacy-dev-login",
+          "2026-05-01-legacy-dev-old-code",
+          "2026-06-02-legacy-doc-article",
+        ]
       );
       assert.equal(await pathExists(join(root, "workflows", "dev")), false);
       assert.equal(await pathExists(join(root, "workflows", "doc")), false);
@@ -1113,6 +1527,13 @@ describe("Speculo v3 CLI", () => {
     const state = join(target, "speculo", ".speculo");
     try {
       await initSpeculo(target, { packageRoot, all: true });
+      await writeJson(join(state, "specdev", "status.json"), {
+        schema_version: 3,
+        workflow: "specdev",
+        active: [],
+        work_history: [],
+        completed: [],
+      });
       await writeFile(
         join(state, "specdev", "preserve.txt"),
         "workflow state"
@@ -1155,6 +1576,15 @@ describe("Speculo v3 CLI", () => {
       assert.equal(
         await readFile(join(state, "specdev", "preserve.txt"), "utf8"),
         "workflow state"
+      );
+      assert.deepEqual(
+        JSON.parse(await readFile(join(state, "specdev", "status.json"), "utf8")),
+        {
+          schema_version: 4,
+          workflow: "specdev",
+          active: [],
+          archived: [],
+        }
       );
       assert.equal(await pathExists(join(state, "workspace.json")), true);
       assert.equal(

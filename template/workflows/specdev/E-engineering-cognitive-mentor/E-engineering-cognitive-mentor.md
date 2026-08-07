@@ -74,7 +74,7 @@ keywords: [认知导师, 教学, why, bug, 源码研究, 技术方案, 架构, �
 2. 选择用户指定 change、唯一活跃 change，或按 SpecDev 协议创建新 change；多个候选必须先消歧；
 3. 确认 `<Path>{roots.state}/specdev/config.json</Path>` 存在；不存在时先进入 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`；
 4. 读取全局状态、change 状态和已有主产物；存在未完成会话时从其 `current_phase` 与未决问题恢复，不重新盘问已记录内容；
-5. 以 `specdev/engineering-cognitive-mentor` 更新 `current_work`，创建或复用唯一未完成的 `work_history` 记录；
+5. 若当前 change 的 `current_work` 已是 `specdev/engineering-cognitive-mentor` 则恢复；为 null 时设置为该 id；指向其他 Work 时停止并先完成显式 handoff；
 6. 主产物不存在时按模板初始化，存在时只做兼容性读取和真实增量更新。
 
 **完成标准：**workspace 与 change 唯一；状态已登记；主产物已初始化或成功恢复；没有覆盖历史记录。
@@ -204,7 +204,7 @@ keywords: [认知导师, 教学, why, bug, 源码研究, 技术方案, 架构, �
 - 用户确认当前没有其他问题，或剩余问题被显式延后；
 - 主产物包含完整 `MLOG`、最终综合和后续路线。
 
-关闭时更新全局状态与 change 状态，完成 `work_history`，将本 Work 加入 `works_run`，并返回主产物完整路径及适用的下一 Work 完整路径。关闭本 Work 不等于完成或归档整个 change。
+关闭时更新全局状态与 change 状态，将本 Work 去重加入 `works_run` 并清空 `current_work`，返回主产物完整路径及适用的下一 Work 完整路径。关闭本 Work 不等于完成或归档整个 change。
 
 **完成标准：**主产物状态与全局状态一致；完整日志可恢复；未伪造理解或 change 完成状态。
 

@@ -10,7 +10,7 @@
 ## 清理
 
 1. 取得用户对删除 worktree 和分支的授权。
-2. 从主工作树或平台管理入口移除已集成 worktree。
-3. 确认 worktree 不再注册后删除对应分支，并将状态更新为 `removed`。
+2. Git provider 从 project root 解析 `specdev-worktree/<ticket-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
+3. 确认 worktree 不再注册且 Ticket 子目录不存在后删除对应分支，将状态更新为 `removed`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
 
 PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明确要求时使用强制删除。

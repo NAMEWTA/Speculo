@@ -32,8 +32,8 @@ npm install -g @namewta/speculo
 
 | 命令 | 说明 |
 |---|---|
-| `speculo init [--all] [target]` | 安装或刷新 Speculo 核心资产与选定的 workflow packages。已有 `speculo/.speculo/` 状态永不被覆盖。 |
-| `speculo migrate [--apply] [target]` | 预览（或执行）从 v2 或过渡期 v3 状态到当前 v3 契约的迁移。默认 dry-run；`--apply` 执行分阶段、可回滚的迁移。 |
+| `speculo init [--all] [target]` | 安装或刷新 Speculo 核心资产与选定的 workflow packages。已有 `speculo/.speculo/` 状态永不被覆盖；安装 SpecDev 后还会幂等确保项目根 `.gitignore` 包含 `specdev-worktree/`。 |
+| `speculo migrate [--apply] [target]` | 预览（或执行）从 v2、过渡期 v3 或 SpecDev 全局状态 v3 到当前契约的迁移。默认 dry-run；`--apply` 执行分阶段、可回滚的迁移。 |
 | `speculo update` | 已弃用。委托给 `speculo init --all`。 |
 
 ## 安装的运行时资产

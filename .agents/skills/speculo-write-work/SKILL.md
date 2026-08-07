@@ -35,7 +35,7 @@ description: 设计、创建或重构 Speculo workflow 中的单个 Letter-name 
 
 ### 5. 验证 change 生命周期
 
-演练新建/恢复 change、输入缺失、验证失败和成功路由。检查 workflow `status.json` 与 change `.status.json` 的更新顺序、结果枚举和 work_history/works_run 语义。
+演练新建/恢复 change、输入缺失、验证失败和成功路由。检查 workflow `status.json` 与 change `.status.json` 的更新顺序，以及目标 workflow 当前 schema 对 `current_work`、`works_run` 和结果状态的所有权语义。
 
 **完成标准**：失败不会推进 Ready/完成状态；恢复不会重复询问已确认事实；成功返回产物完整路径、验证证据和下一 work。
 

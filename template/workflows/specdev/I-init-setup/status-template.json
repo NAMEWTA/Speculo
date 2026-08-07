@@ -1,7 +1,6 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "workflow": "specdev",
   "active": [],
-  "work_history": [],
-  "completed": []
+  "archived": []
 }

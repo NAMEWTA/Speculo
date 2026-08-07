@@ -32,8 +32,8 @@ Requires: Node.js ≥ 22.22.3
 
 | Command | Description |
 |---|---|
-| `speculo init [--all] [target]` | Install or refresh Speculo core assets and selected workflow packages. Existing `speculo/.speculo/` state is never overwritten. |
-| `speculo migrate [--apply] [target]` | Preview (or apply) migration from v2 or transitional v3 state to current v3 contract. Dry-run by default; `--apply` to perform the staged, rollback-safe migration. |
+| `speculo init [--all] [target]` | Install or refresh Speculo core assets and selected workflow packages. Existing `speculo/.speculo/` state is never overwritten. Projects with SpecDev installed also get an idempotent `specdev-worktree/` entry in the project-root `.gitignore`. |
+| `speculo migrate [--apply] [target]` | Preview (or apply) migration from v2, transitional v3, or SpecDev global status v3 state to the current contract. Dry-run by default; `--apply` performs the staged, rollback-safe migration. |
 | `speculo update` | Deprecated. Delegates to `speculo init --all`. |
 
 ## Installed Runtime Assets

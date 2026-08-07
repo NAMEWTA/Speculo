@@ -78,7 +78,7 @@
 2. 选择用户指定 change、唯一活跃 change，或按 SpecDev 协议创建新 change；多个候选必须先消歧；
 3. 确认 `specdev/config.json` 存在；不存在时先进入 “初始化设置阶段”；
 4. 读取全局状态、change 状态和已有主产物；存在未完成会话时从其 `current_phase` 与未决问题恢复，不重新盘问已记录内容；
-5. 以 `specdev/engineering-cognitive-mentor` 更新 `current_work`，创建或复用唯一未完成的 `work_history` 记录；
+5. 若当前 change 的 `current_work` 已是 `specdev/engineering-cognitive-mentor` 则恢复；为 null 时设置为该 id；指向其他 Work 时停止并先完成显式 handoff；
 6. 主产物不存在时按模板初始化，存在时只做兼容性读取和真实增量更新。
 
 **完成标准：**workspace 与 change 唯一；状态已登记；主产物已初始化或成功恢复；没有覆盖历史记录。
@@ -208,7 +208,7 @@
 - 用户确认当前没有其他问题，或剩余问题被显式延后；
 - 主产物包含完整 `MLOG`、最终综合和后续路线。
 
-关闭时更新全局状态与 change 状态，完成 `work_history`，将本 Work 加入 `works_run`，并返回主产物完整路径及适用的下一 Work 完整路径。关闭本 Work 不等于完成或归档整个 change。
+关闭时更新全局状态与 change 状态，将本 Work 去重加入 `works_run` 并清空 `current_work`，返回主产物完整路径及适用的下一 Work 完整路径。关闭本 Work 不等于完成或归档整个 change。
 
 **完成标准：**主产物状态与全局状态一致；完整日志可恢复；未伪造理解或 change 完成状态。
 
@@ -1156,26 +1156,13 @@ change 状态：`specdev/changes/{change}/.status.json`。
 ### 开始
 
 - 在 `active` 中找到或创建当前 change；
-- 设置该 change 的 `current_work` 为 `specdev/engineering-cognitive-mentor`；
+- `current_work` 已是 `specdev/engineering-cognitive-mentor` 时恢复，为 null 时设置为该 id；指向其他 Work 时停止并要求先完成显式 handoff；
 - `specdev/changes/{change}/.status.json` 的 `current_work` 同步设置为相同值；
-- 在 `work_history` 中查找该 change 与 work id 的未完成记录；存在唯一一条时复用，不重复创建；不存在时追加：
-
-```json
-{
-  "change": "<change>",
-  "work_id": "specdev/engineering-cognitive-mentor",
-  "started_at": "<ISO-8601>",
-  "completed_at": null,
-  "result": null
-}
-```
-
-若存在两条以上未完成记录，记录状态异常并停止自动写入，先请求消歧或修复。
+- 全局索引不创建逐次调用日志；开始时间与恢复阶段由主产物 frontmatter、MLOG 和 `specdev/changes/{change}/.status.json` 承载。
 
 ### 等待用户或跨会话暂停
 
 - 保持 `current_work` 为本 Work；
-- 保持唯一 `work_history` 记录未完成；
 - 更新主产物 `updated_at`、`current_phase`、`next_question`、`unresolved_questions` 与 `last_mlog_id`；
 - 每轮在回复前先落盘，确保用户即使中断也可恢复。
 
@@ -1183,10 +1170,9 @@ change 状态：`specdev/changes/{change}/.status.json`。
 
 ### 正常关闭
 
-- 将唯一未完成 `work_history` 的 `completed_at` 写为当前时间，`result` 写为 `completed`；
 - 将本 Work id 以去重方式加入 active change 的 `works_run`；
 - active change 的 `current_work` 与 `specdev/changes/{change}/.status.json` 的 `current_work` 设为 null；
-- 不改变整个 change 的 `result` 或 `change_status`，除非用户明确结束、取消或外部阻塞确实影响整个 change；
+- 不改变整个 change 的 `change_status`，除非用户明确结束或外部阻塞确实影响整个 change；
 - 主产物 `status` 写为 `completed`，记录 `closed_at` 与理解确认状态。
 
 ### 外部阻塞
@@ -1195,15 +1181,14 @@ change 状态：`specdev/changes/{change}/.status.json`。
 
 - 主产物 `status: blocked`；
 - 记录 blocker、已知事实、所需输入和恢复条件；
-- 完成当前 `work_history`，结果为 `blocked`；
+- 保留 `current_work` 作为唯一恢复指针；
 - change 是否设为 blocked 取决于该阻塞是否阻止整个 change，不自动扩大。
 
 ### 用户取消
 
 - 主产物 `status: cancelled`；
 - 保存当前综合和完整 MLOG；
-- `work_history.result` 写为 `cancelled`；
-- 清空 current_work；
+- 清空全局与 change 状态的 `current_work`，但不将本 Work 加入 `works_run`；
 - 不删除工件或日志。
 
 ## 3. 主产物幂等初始化
@@ -1679,11 +1664,10 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "workflow": "specdev",
   "active": [],
-  "work_history": [],
-  "completed": []
+  "archived": []
 }
 ```
 
@@ -1694,19 +1678,18 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v3",
+  "$id": "urn:speculo:specdev:status:v4",
   "title": "SpecDev Global Status",
   "type": "object",
   "required": [
     "schema_version",
     "workflow",
     "active",
-    "work_history",
-    "completed"
+    "archived"
   ],
   "properties": {
     "schema_version": {
-      "const": 3
+      "const": 4
     },
     "workflow": {
       "const": "specdev"
@@ -1718,30 +1701,27 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
         "required": [
           "change",
           "current_work",
-          "works_run",
-          "result"
+          "works_run"
         ],
         "properties": {
           "change": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "current_work": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^specdev/"
           },
           "works_run": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
-          },
-          "result": {
-            "type": [
-              "string",
-              "null"
-            ]
+              "type": "string",
+              "pattern": "^specdev/"
+            },
+            "uniqueItems": true
           },
           "claimed_investigations": {
             "type": "array",
@@ -1769,77 +1749,23 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
                   "type": "string"
                 }
               },
-              "additionalProperties": true
+              "additionalProperties": false
             }
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       }
     },
-    "work_history": {
+    "archived": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "change",
-          "work_id",
-          "started_at",
-          "completed_at",
-          "result"
-        ],
-        "properties": {
-          "change": {
-            "type": "string"
-          },
-          "work_id": {
-            "type": "string",
-            "pattern": "^specdev/"
-          },
-          "started_at": {
-            "type": "string"
-          },
-          "completed_at": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "result": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": true
-      }
-    },
-    "completed": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "change",
-          "archived_at",
-          "archive_path"
-        ],
-        "properties": {
-          "change": {
-            "type": "string"
-          },
-          "archived_at": {
-            "type": "string"
-          },
-          "archive_path": {
-            "type": "string",
-            "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
-          }
-        },
-        "additionalProperties": true
-      }
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 
@@ -2017,6 +1943,49 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "worktrees": {
+            "contains": {
+              "properties": {
+                "provider": {
+                  "const": "git"
+                }
+              },
+              "required": [
+                "provider"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "worktrees": {
+            "items": {
+              "if": {
+                "properties": {
+                  "provider": {
+                    "const": "git"
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "workspace_ref": {
+                    "pattern": "^specdev-worktree/T-[0-9]{2,}$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {

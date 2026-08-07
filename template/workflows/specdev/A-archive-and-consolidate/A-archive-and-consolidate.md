@@ -96,7 +96,7 @@ keywords: [归档, consolidation, ADR, context, research, knowledge, 代码库�
 - 领域上下文：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`；
 - 架构决策：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`。
 
-在 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 中登记该 change，`current_work` 设为 `specdev/archive-and-consolidate`，并在 `work_history` 追加一条未完成记录。恢复已有访谈 change 时先读取三份文档与最后一条 LOG，不重复询问已确认结论。
+在 `<Path>{roots.state}/specdev/status.json</Path>` 的 `active` 中登记该 change并将 `current_work` 设为 `specdev/archive-and-consolidate`；已有其他非空 `current_work` 时先停止并完成显式 handoff。恢复已有访谈 change 时先读取三份文档与最后一条 LOG，不重复询问已确认结论。
 
 ### 2b. consolidate-from-code 模式 · 代码为事实的深度访谈
 
@@ -126,7 +126,7 @@ keywords: [归档, consolidation, ADR, context, research, knowledge, 代码库�
 
 将 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 移动到 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>`。
 
-更新 `<Path>{roots.state}/specdev/status.json</Path>`：从 active 移除，追加 completed/archived 记录，并把当前 `work_history` 记录标记完成；归档内 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/.status.json</Path>` 写入完成时间、归档路径和 promotion 摘要。
+更新 `<Path>{roots.state}/specdev/status.json</Path>`：从 `active` 移除并将 change 名称去重追加到 `archived`；归档内 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/.status.json</Path>` 写入完成时间、归档路径和 promotion 摘要。全局索引不复制 Work、时间或路径明细。
 
 任何删除、移动或 Git 副作用均需用户授权。
 
