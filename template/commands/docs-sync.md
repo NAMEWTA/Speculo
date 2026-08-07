@@ -2,7 +2,7 @@
 id: docs-sync
 type: command
 name: Docs Sync
-description: 清洁并提交工作区，以可复现 Git 区间和确认范围同步项目文档与 workflow 知识
+description: 清洁并提交工作区，以可复现 Git 区间和确认范围同步项目文档、Agent 手册与 workflow 知识
 keywords: [docs-sync, readme, changelog, agents, documentation]
 ---
 
@@ -19,8 +19,8 @@ keywords: [docs-sync, readme, changelog, agents, documentation]
 ## 执行
 
 1. 读取 `../skills/docs-sync/SKILL.md`，解析 `speculo/config.json` 与 `speculo/.speculo/workspace.json`（不存在时以默认值静默降级），获取全部已安装 workflow/state 根。
-2. 将 runtime context、报告路径、全局 state 路径与 Git 副作用责任传给 skill，按 skill 流程执行（清理工作区 → 确认范围 → 生命周期审计 → 同步文档 → 验证）。
+2. 将 runtime context、报告路径、全局 state 路径、Git 副作用责任和 `handbook_mode` 传给 skill。`handbook_mode` 默认为 `incremental`；用户明确要求、手册缺失或 manifest 拓扑变化时使用 `rebuild`。
 3. 整文件/目录删除和受保护知识仍逐次确认；skill 返回原子写入内容后，由本命令显式暂存并创建同步或 no-op commit。
 4. 重新读取 Git、state、报告与 sidecar；只有工作区干净、节点可复现且所有文件已提交时完成。
 
-完成标准：报告含输入节点、checkpoint、确认范围、生命周期动作和验证；全局 state 与每个 workflow sidecar 有效；`git status --short` 为空。
+完成标准：报告含输入节点、checkpoint、确认范围、handbook mode、生命周期动作和验证；全局 state 与每个 workflow sidecar 有效；`git status --short` 为空。

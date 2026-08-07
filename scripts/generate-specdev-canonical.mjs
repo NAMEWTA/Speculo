@@ -54,6 +54,27 @@ const sharedSources = {
     source: `${commonRoot}/skills/dev-worktree/references/finalize.md`,
     tag: "dev-worktree-finalize",
   },
+  subagentDeliverySkill: {
+    source: `${commonRoot}/skills/subagent-delivery/SKILL.md`,
+    tag: "subagent-delivery",
+    discardFrontmatter: true,
+  },
+  subagentDeliveryNative: {
+    source: `${commonRoot}/skills/subagent-delivery/references/native-subagent.md`,
+    tag: "subagent-delivery-native",
+  },
+  subagentDeliveryExternalWeb: {
+    source: `${commonRoot}/skills/subagent-delivery/references/external-web-subagent.md`,
+    tag: "subagent-delivery-external-web",
+  },
+  subagentDeliveryGithubCheckpoints: {
+    source: `${commonRoot}/skills/subagent-delivery/references/github-checkpoints.md`,
+    tag: "subagent-delivery-github-checkpoints",
+  },
+  subagentDeliverySourcePackage: {
+    source: `${commonRoot}/skills/subagent-delivery/references/source-package.md`,
+    tag: "subagent-delivery-source-package",
+  },
   configSchema: {
     source: `${commonRoot}/schemas/config.schema.json`,
     tag: "config-schema",
@@ -99,6 +120,16 @@ const sharedSources = {
     tag: "goal-plan-schema",
     format: "json",
   },
+  designTreeSchema: {
+    source: `${commonRoot}/schemas/design-tree.schema.json`,
+    tag: "design-tree-schema",
+    format: "json",
+  },
+  wayfinderTicketSchema: {
+    source: `${commonRoot}/schemas/wayfinder-ticket.schema.json`,
+    tag: "wayfinder-ticket-schema",
+    format: "json",
+  },
   changeStatusTemplate: {
     source: `${workflowRoot}/I-init-setup/change-status-template.json`,
     tag: "change-status-template",
@@ -121,6 +152,9 @@ const canonicalDocuments = [
     entry: `${workflowRoot}/G-grill-with-docs/G-grill-with-docs.md`,
     references: [
       reference("G-grill-with-docs/grilling-protocol.md"),
+      reference("G-grill-with-docs/design-tree-template.json", {
+        format: "json",
+      }),
       reference("G-grill-with-docs/domain-modeling-rules.md"),
       reference("G-grill-with-docs/adr-format.md"),
       reference("G-grill-with-docs/context-format.md"),
@@ -131,6 +165,7 @@ const canonicalDocuments = [
       sharedSources.deviationControl,
       sharedSources.researchSkill,
       ...persistenceReferences,
+      sharedSources.designTreeSchema,
     ],
   },
   {
@@ -194,6 +229,11 @@ const canonicalDocuments = [
       sharedSources.devWorktreeSkill,
       sharedSources.devWorktreeCreate,
       sharedSources.devWorktreeFinalize,
+      sharedSources.subagentDeliverySkill,
+      sharedSources.subagentDeliveryNative,
+      sharedSources.subagentDeliveryExternalWeb,
+      sharedSources.subagentDeliveryGithubCheckpoints,
+      sharedSources.subagentDeliverySourcePackage,
       ...persistenceReferences,
       sharedSources.goalPlanSchema,
     ],
@@ -208,8 +248,13 @@ const canonicalDocuments = [
       reference("W-wayfinder/wayfinder-map-template.md", {
         preserveArtifactHeader: true,
       }),
+      reference("W-wayfinder/local-tracker-contract.md"),
+      reference("W-wayfinder/solution-comment-template.md", {
+        preserveArtifactHeader: true,
+      }),
       sharedSources.researchSkill,
       ...persistenceReferences,
+      sharedSources.wayfinderTicketSchema,
     ],
   },
   {

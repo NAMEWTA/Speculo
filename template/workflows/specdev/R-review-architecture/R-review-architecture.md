@@ -3,13 +3,20 @@ id: specdev/review-architecture
 type: workflow-entry
 workflow: specdev
 name: 架构审查
-description: 扫描与目标相关的代码区域，识别浅模块、接缝泄漏和局部性问题，以可视化报告呈现候选方案，并通过逐项访谈转化为可执行决策。
-keywords: [architecture, review, module depth, seams, locality, HTML, refactor]
+description: 从用户指定范围或 Git 热点扫描代码库的深化机会，以持久化可视化 HTML 呈现候选，并对用户选择的一个方案运行设计树访谈。
+keywords: [architecture, review, module, interface, depth, seam, adapter, leverage, locality, HTML]
 ---
 
-# 架构审查
+# 改善代码库架构
 
-本 work 保留并强化三项核心能力：从真实代码压力识别深层化机会、输出可视化 HTML 审查报告、与用户逐项访谈候选方案。它不以“更优雅”为由制造无目标重构，也不直接修改产品代码。
+揭示架构摩擦，提出**深化机会**——将 shallow module 转变为 deep module 的重构。目标是可测试性和 AI 可导航性。
+
+本 work 基于项目领域模型，并建立在共享设计词汇之上：
+
+- 读取 `<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`，在每个建议中严格使用 module、interface、depth、seam、adapter、leverage、locality，不滑向含义更松散的替代词。
+- 当前 change 与永久 CONTEXT 中的领域语言为好的 seam 提供名称；ADR 记录本 work 不应重新争论的决定。
+
+本 work 只审查、呈现和访谈，不直接修改产品代码。
 
 ## 输入与产物
 
@@ -22,119 +29,99 @@ keywords: [architecture, review, module depth, seams, locality, HTML, refactor]
 - `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
 - `<Path>{roots.state}/specdev/adr/</Path>`
 - `<Path>{roots.state}/specdev/context/</Path>`
-- 当前代码、测试、依赖、近期变更和缺陷事实。
+- 当前代码、测试、依赖和 Git 历史。
 
 产物：
 
-- 决策记录：`<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
-- 可视化报告：`<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`
-
-模板：
-
-- `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-template.md</Path>`
-- `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-report-template.html</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`
+- 系统临时目录中名称为 architecture-review-&lt;timestamp&gt;.html 的打开副本。
 
 ## 流程
 
-### 1. 明确审查压力与范围
+### 1. 探索
 
-记录触发审查的业务目标、近期变更、缺陷、维护成本、性能或风险，不做无边界全仓巡检。明确：审查入口、相关调用路径、不审查范围和成功标准。
+**扫描前先划定范围——YAGNI。** 深化一个模块的价值在于让未来变更更容易，因此特别关注近期发生过变更的部分。
 
-用户明确要求全仓架构扫描时，可以扩展范围，但仍按领域、模块或调用链分批，避免在单次上下文中生成无证据的泛化结论。
+- 用户指明模块、子系统或痛点时直接采用，跳过热点推断；
+- 否则翻阅足够长的 `git log --oneline`，找出反复出现的文件和位置；
+- 变更散落、没有明确热点时才扩大搜索范围。
 
-### 2. 建立当前结构地图
+首先阅读项目领域词汇和接触区域的 ADR。然后有机探索代码库，注意在哪里遇到摩擦：
 
-只读探索目标区域：
+- 理解一个概念是否需要在多个小模块间反复跳跃；
+- 哪些模块是 shallow，interface 几乎与实现一样复杂；
+- 哪些纯函数仅为可测试性抽出，bug 却藏在缺少 locality 的调用方式中；
+- 哪些紧密耦合模块在 seam 泄漏；
+- 哪些区域未经测试，或难以通过当前 interface 测试。
 
-- 模块及其公共接口；
-- 信息隐藏与调用者负担；
-- 接缝、适配器和依赖类别；
-- 数据、控制和错误流；
-- 时间耦合、共享状态和跨目录跳转；
-- 测试接缝与变更热点；
-- 近期缺陷、重复 workaround 和高频共同修改路径。
+对每个怀疑对象应用删除测试。候选必须有真实路径、调用或测试证据，并说明不做的实际后果。与业务目标、近期变化压力、测试改善或风险降低无关的候选过滤掉。
 
-使用：
+**完成标准**：审查范围、排除范围、领域/ADR 输入和每个候选的代码压力均可追踪。
 
-- `<Path>{roots.workflows}/specdev/I-implement/codebase-design-glossary.md</Path>`
-- `<Path>{roots.workflows}/specdev/I-implement/deepening.md</Path>`
+### 2. 生成 Markdown 与 HTML 报告
 
-外部技术或模式不清楚时使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
+使用 `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-template.md</Path>` 写入 Markdown 决策记录。
 
-### 3. 识别候选深层化机会
+加载 `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-report-contract.md</Path>` 和 `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-report-template.html</Path>`，写入持久化 HTML。报告使用 Tailwind CDN 布局、Mermaid CDN 表达调用/依赖/序列，并混合手写 CSS/SVG 呈现质量图、横截面和调用图坍缩。
 
-候选至少属于一种机制：
+每个候选包含：
 
-- 浅模块把复杂性推给调用者；
-- 接缝泄漏导致多处了解同一协议或状态；
-- 局部性差导致一个行为修改跨越过多路径；
-- 依赖方向或生命周期不清导致测试与替换困难；
-- 时间耦合、共享状态或错误语义造成事故半径；
-- 缺少真正适配器导致 Mock 代替设计；
-- 宽重构压力需要 expand-contract。
+- **文件**——涉及的文件和 modules；
+- **问题**——当前架构造成的摩擦；
+- **解决方案**——简明描述会发生什么；
+- **收益**——用 locality、leverage 和测试改善解释；
+- **前后对比图**——并排展示 shallow 与 deep；
+- **建议强度**——`Strong | Worth exploring | Speculative`；
+- **依赖类别**——`in-process | local-substitutable | ports & adapters | mock`；
+- **ADR 冲突**——只在摩擦真实到值得重审时显示警告。
 
-每个候选必须有项目路径、调用或测试证据，并说明“不做”的实际后果。没有用户或工程收益、近期变化压力或风险降低的候选直接过滤。
+报告以“最佳推荐”结束。此时**不提出 interface**，只询问用户想探索哪一个候选。
 
-### 4. 设计替代方案
+**完成标准**：每个候选字段完整、图表承担主要关系、最佳推荐唯一，Markdown 与 HTML 已原子写入并重读。
 
-每个保留候选至少比较：
+### 3. 持久化并打开报告
 
-- 保持现状；
-- 最小深层化方案；
-- 一个具有实质差异的替代方案。
+从 `$TMPDIR` 解析临时目录，回退 `/tmp`，Windows 使用 `%TEMP%`。把持久化 HTML 复制到全新的 architecture-review-&lt;timestamp&gt;.html，再用平台命令打开：Linux `xdg-open`、macOS `open`、Windows `start`。
 
-比较调用者复杂度、接口稳定性、迁移、兼容、测试、回滚、路径影响和事故半径。局部接口存在多个可行设计时，可使用 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。
+打开失败不删除任一文件；向用户返回 state 主件和临时副本的绝对路径，以及失败命令。敏感值和机器路径不写回持久化报告。
 
-### 5. 生成 Markdown 与 HTML 报告
+**完成标准**：持久化主件可重读；临时副本名称唯一；打开成功或失败证据已报告。
 
-使用 `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-template.md</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`。
+### 4. 访谈用户选择的一个候选
 
-使用 `<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-report-template.html</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`。HTML 应包含：
+用户选择候选后，调用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`，用完整 frontier 遍历约束、依赖、deep module 形状、seam 后面的内容和保留测试。
 
-- 审查范围与结构地图；
-- 候选卡片和严重度；
-- 证据路径；
-- 方案对比；
-- 影响与迁移图；
-- 接受、延后、拒绝状态；
-- 指向 Markdown 决策记录的完整状态路径文本。
+决策结晶时保持领域模型同步：
 
-不得依赖外部 CDN；报告应可作为单文件本地打开。
+- 新概念加入 change CONTEXT；永久 CONTEXT 不存在时延迟到归档提升；
+- 模糊术语当场精炼；
+- 用户以长期有效理由拒绝候选时，询问是否记录 ADR，暂时性或自明理由不制造 ADR；
+- 替代 interface 需要探索时使用 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。
 
-### 6. 逐项访谈候选
+将选择、访谈状态与结论同步到 Markdown/HTML；每次运行只访谈用户选择的候选，不批量迫使用户决定所有卡片。
 
-按价值与风险排序，一次只讨论一个候选：
+**完成标准**：被选候选的设计树达到共识或明确 blocked；领域词汇、LOG、ADR 和审查报告一致。
 
-1. 说明证据和问题机制；
-2. 给出推荐方案与理由；
-3. 展示至少一个替代方案和保持现状的后果；
-4. 询问用户接受、调整、延后或拒绝；
-5. 将结论写回 `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>` 和 `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`；
-6. 架构级决定同步到 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`，讨论轨迹同步到 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`。
+### 5. 转化为执行工作
 
-不得一次抛出所有问题要求用户批量选择。
-
-### 7. 转化为执行工作
-
-只有被接受且有具体变更压力的提案才进入执行。加载 `<Path>{roots.workflows}/specdev/R-review-architecture/proposal-to-ticket.md</Path>`：
-
-- 可独立降低后续实现难度的改进生成 Prefactor Ticket；
-- 常规垂直迁移生成 Standard Ticket；
-- 公共契约、数据、宽迁移或高风险改动生成 Deep Ticket 与 expand-contract；
-- 进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>` 完成正式拆分和 Ready 门禁。
+只有被接受且有具体变更压力的提案进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。加载 `<Path>{roots.workflows}/specdev/R-review-architecture/proposal-to-ticket.md</Path>`，按 Prefactor、Standard 或 Deep/expand-contract 建立 Ready 治理。
 
 ## 完成标准
 
-- 审查压力、范围和不审查范围明确；
-- 每个候选有代码事实、行为影响和不做后果；
-- 保留候选有至少两个实质方案与权衡；
-- Markdown 和无外部依赖的 HTML 报告均已生成；
-- 用户已逐项给出接受、调整、延后或拒绝结论；
-- 接受的架构决定已同步到 ADR；
-- 执行建议已转入 Ticket 治理，而不是直接修改代码。
+- 范围来自用户方向或 Git 热点，未进行无边界扫描；
+- 每个候选通过删除测试并有真实代码压力；
+- 领域使用 CONTEXT 词汇，架构严格使用共享词汇；
+- 持久化 Markdown/HTML 与临时打开副本均可定位；
+- 每个候选有 Before/After、强度、收益和 ADR 冲突处理；
+- 报告阶段没有提前设计 interface；
+- 用户选择的一个候选完成完整 frontier 访谈；
+- 接受项进入 Ticket 治理，没有直接修改产品代码。
 
 ## 子文件引用
 
+- 共享设计规则：`<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
 - Markdown 模板：`<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-template.md</Path>`
+- HTML 报告合同：`<Path>{roots.workflows}/specdev/R-review-architecture/architecture-report-contract.md</Path>`
 - HTML 模板：`<Path>{roots.workflows}/specdev/R-review-architecture/architecture-review-report-template.html</Path>`
 - 提案转 Ticket：`<Path>{roots.workflows}/specdev/R-review-architecture/proposal-to-ticket.md</Path>`

@@ -3,27 +3,38 @@ id: specdev/grill-with-docs
 type: workflow-entry
 workflow: specdev
 name: 设计访谈（带文档）
-description: 通过一次一问的设计访谈打磨方案，同时持续维护设计日志、领域上下文和架构决策。
-keywords: [设计访谈, ADR, LOG, CONTEXT, 决策, 领域建模]
+description: 以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护设计树、日志、领域上下文和架构决策。
+keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决策, 领域建模]
 ---
 
 # 设计访谈（带文档）
 
-本 work 保留原有的 grilling 访谈与 domain-modeling 双重能力：访谈负责沿决策树逐分支达成共识，领域建模负责在决策结晶时同步维护设计轨迹、术语与架构决策。未经用户确认，不进入实现。
+不留情面地访谈用户，直到达成共识。把这件事映射为一棵**设计树（design tree）**：每个决策都会分出挂在它下面的后续决策。
 
-## 输入与权威
+按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些现在就能问、不必猜测尚未得到答案的问题。每轮询问完整 frontier；用户的答案会重塑设计树并解除下一层问题的阻塞。
 
-开始前按需读取：
+本 work 还负责把访谈持久化：设计树保存可恢复状态，LOG 保存讨论轨迹，CONTEXT 保存当前领域真相，ADR 保存长期架构决定。持久化不构成实现授权；在用户确认共识前不进入实现。
 
-- 全局配置：`<Path>{roots.state}/specdev/config.json</Path>`
-- 永久架构决策：`<Path>{roots.state}/specdev/adr/</Path>`
-- 永久领域上下文：`<Path>{roots.state}/specdev/context/</Path>`
-- 原始请求：`<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
-- 分诊结果：`<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
-- Bug 诊断：`<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
-- 当前 Spec（如已存在）：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
-- 工件职责规则：`<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`
-- 规划原则：`<Path>{roots.workflows}/specdev/common/rules/planning-principles.md</Path>`
+## 输入与产物
+
+按存在情况读取：
+
+- `<Path>{roots.state}/specdev/config.json</Path>`
+- `<Path>{roots.state}/specdev/adr/</Path>`
+- `<Path>{roots.state}/specdev/context/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/rules/planning-principles.md</Path>`
+
+本 work 拥有：
+
+- `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
 
 不存在的可选输入静默跳过，不把缺失文件伪装成已知事实。
 
@@ -31,99 +42,93 @@ keywords: [设计访谈, ADR, LOG, CONTEXT, 决策, 领域建模]
 
 ### 1. 启动或恢复 change
 
-创建或恢复 `<Path>{roots.state}/specdev/changes/{change}/</Path>`，其中 `{change}` 使用 `<YYYY-MM-DD>-<topic>`。
+创建或恢复 `<Path>{roots.state}/specdev/changes/{change}/</Path>`。首次启动时创建 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`，并以 `<Path>{roots.workflows}/specdev/G-grill-with-docs/design-tree-template.json</Path>` 为模板创建 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`。
 
-首次启动时创建：
-
-- 生命周期状态：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`（首次创建时使用 `<Path>{roots.workflows}/specdev/I-init-setup/change-status-template.json</Path>`）
-- 架构决策：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
-- 设计日志：`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
-- 领域上下文：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
-
-创建和更新格式分别遵循：
+分别使用：
 
 - `<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`
 - `<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
 - `<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/schemas/design-tree.schema.json</Path>`
 
-恢复已有 change 时必须先读取现有三份文档，避免重复询问已经确认的问题。
+恢复时先读取四份工件，按 design tree 的节点状态恢复，避免重复询问已关闭问题。
 
-**完成标准**：change 目录、生命周期状态和三份设计文档均可读取；已知结论与未决问题已建立初始摘要。
+**完成标准**：四份工件均可读取；节点依赖无环，所有 LOG 指针存在，当前 frontier 可确定。
 
-### 2. 探索可发现事实
+### 2. 查找事实
 
-在提问前只读探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。将未知项分为：
+查找*事实*是 Agent 的工作，永远不是用户的。先探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。
 
-- 可发现事实：继续探索，不询问用户；
-- 高影响偏好或取舍：进入访谈；
-- 低影响实现细节：记录为实现者可自行决定，不升级为产品决策。
+当前沿问题需要来自环境的事实时，派遣独立探索去查找。不要阻塞等待：一次进行中的探索是一个未解决的前置条件，所以只有它下游的问题等待结果；现在就继续处理 frontier 的其余部分。不熟悉的外部技术使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
 
-若涉及不熟悉的外部技术、第三方 API、标准或版本行为，调用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，并把研究结论的来源和置信度写入 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`。
+将未知项分为：
 
-### 3. 一次一问的设计访谈
+- 可发现事实：探索或研究，不询问用户；
+- 高影响决策：进入设计树；
+- 低影响实现细节：记录为实现者可自行决定，不制造决策节点。
 
-加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`。每轮只处理一个会实质改变设计的问题：
+**完成标准**：每个候选问题已分类；用户只接收无法从环境发现的真实决策。
 
-1. 陈述已知事实与证据；
-2. 提出唯一关键问题；
-3. 给出 2–4 个真实选项、权衡和推荐默认值；
-4. 等待用户确认、拒绝或延后；
-5. 将结果立即追加到 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`。
+### 3. 建立设计树
 
-不得把多个独立决策塞进同一个问题；不得为了填模板询问不会改变方案的细节；不得在用户尚未确认前执行实现。
+围绕目标、角色、范围、主要流程、状态与失败、数据与接口、兼容与迁移、安全与隐私、性能与可观测性、验证与验收建立适用节点。
 
-**完成标准**：决策树已覆盖目标、角色、范围、主要流程、状态与失败、数据与接口、兼容与迁移、安全与隐私、性能与可观测性、验证与验收等适用分支。
+每个节点包含稳定 `D-###`、标题、问题、依赖、推荐答案和状态。只有问题本身已经可以精确陈述时才创建节点；依赖尚未确定的节点可以存在，但不进入 frontier。
 
-### 4. 同步领域文档
+**完成标准**：每个高影响已知决策有且只有一个节点；每条依赖指向真实上游节点；没有默默采用的高影响假设。
 
-加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`，按固定顺序同步：
+### 4. 逐轮推进完整 frontier
 
-1. 先把所有确认、延后、拒绝和替代结论写入 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`；
-2. 再把当前仍真实的术语、不变量、示例、反例和代码映射写入 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`；
-3. 最后把满足 ADR 条件的长期架构决策写入 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`。
+加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`。每轮原子增加 `round`，重读设计树并计算完整 frontier。按协议格式给每个问题编号并附推荐答案，然后等待用户回答。
 
-历史轨迹不得写入领域上下文；尚未确认的选项不得写成已接受 ADR；已有 ADR 被替代时必须建立 supersedes 链，不重写历史。
+用户回答后：
 
-### 5. 收敛与就绪判断
+1. 为每个回答更新对应节点；
+2. 每个节点各追加一条 LOG，不把多个决定压成一条；
+3. 根据回答增加、删除或重新连接后续节点；
+4. 重新计算 frontier，进入下一轮。
 
-访谈结束时必须能明确：
+一个答案依赖本轮仍开放问题的提问属于后续轮次。用户延后且该决定会影响外部行为、公共接口、数据、安全、兼容、迁移或验收时，保持 blocked，不把它伪装成共识。
 
-- 目标、目标用户、成功标准；
-- IN、REUSE、OUT；
-- 主要行为路径、失败行为与状态转换；
-- 公共接口、数据、不变量、兼容和迁移影响；
-- 安全、隐私、性能、可靠性和可观测性要求；
-- 验证接缝和可观察验收方式；
-- 剩余未知项及其影响。
+**完成标准**：本轮开始时的完整 frontier 每个节点都有回答、明确延后或阻塞记录；所有状态已原子写入并重读。
 
-仍存在会改变外部行为、范围、公共接口、数据、安全、兼容、迁移或验收的未决问题时，将 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 标为 `blocked` 或保持 `active`，不得伪装为 Ready。
+### 5. 同步领域模型
 
-### 6. 停止与路由
+加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。每轮先写 LOG，再把已确认且当前仍真实的术语、不变量、示例、反例和代码映射同步到 CONTEXT，最后把满足 ADR 条件的长期架构决定写入 ADR。
 
-向用户汇报三份文档的新增/修改条目、已锁定决策、延后事项和风险。根据成熟度明确给出下一步：
+历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 ADR 被替代时建立 supersedes 链。同步文档用于记录共识生长过程，不授权产品实现。
+
+**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个提升结论都有用户回答或事实来源。
+
+### 6. 共识确认与路由
+
+frontier 为空时，向用户确认设计树的每个分支均已走过且已经达成共识。用户指出遗漏时新增节点并继续；只有明确确认后把 design tree 标为 `consensus`。
+
+随后按成熟度路由：
 
 - 通常进入 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>`；
-- 外部行为已经完全明确时可进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`；
-- 极小、局部且已经具备批准执行契约的工作，可在用户确认后进入 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`；
+- 外部行为已经完全明确时进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`；
+- 获批的极小局部工作可进入 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`；
 - 路径或关键事实仍未知时进入 `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>`。
 
-同步 `<Path>{roots.state}/specdev/status.json</Path>` 的 `current_work`、`work_history` 和当前 change 状态，返回三份权威工件及下一 Work 的完整路径。
-
-不得在本 work 中自动读取实现源码并开始修改代码。
+同步 workflow/change 状态，返回四份权威工件和下一 work 的完整路径。不自动执行下一 work。
 
 ## 完成标准
 
-- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 已记录全部设计结论和状态变化；
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 只包含当前领域真相；
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 只包含满足条件的架构决策；
-- 高影响未决问题已关闭或明确标记为阻塞；
-- 状态、权威工件和下一 Work 路径已返回；
-- 下一 work 已明确，但未自动执行实现。
+- 设计树的每个适用分支都已走过，没有高影响事项被默默假定；
+- 每轮询问的是完整 frontier，依赖未关闭的问题没有提前出现；
+- 可发现事实由 Agent 查找，没有转交用户；
+- design tree 通过 schema，LOG 指针完整；
+- CONTEXT 只包含当前领域真相，ADR 只包含满足条件的架构决定；
+- frontier 为空且用户明确确认共识；
+- 状态、权威工件和下一 work 路径已返回；
+- 未执行产品实现。
 
 ## 子文件引用
 
-- 访谈协议：`<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`
-- 领域建模规则：`<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`
+- 质询协议：`<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`
+- 设计树模板：`<Path>{roots.workflows}/specdev/G-grill-with-docs/design-tree-template.json</Path>`
+- 领域建模：`<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`
 - ADR 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`
-- 领域上下文格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
-- 设计日志格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
+- CONTEXT 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
+- LOG 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`

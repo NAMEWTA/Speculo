@@ -443,6 +443,11 @@ describe("Speculo v3 CLI", () => {
       assert.equal(await pathExists(join(root, "commands", "grill-me.md")), false);
       assert.equal(await pathExists(join(root, "commands", "handoff.md")), true);
       assert.equal(await pathExists(join(root, "commands", "docs-sync.md")), true);
+      assert.equal(
+        await pathExists(join(root, "skills", "docs-sync", "references", "agents", "agent-writing.md")),
+        true
+      );
+      assert.equal(await pathExists(join(root, "skills", "agents-md-builder")), false);
       assert.equal(await pathExists(join(root, "commands", "finalize.md")), false);
       assert.equal(await pathExists(join(root, "commands", "knowledge-prune.md")), false);
       assert.equal(await pathExists(join(root, "commands", "archive.md")), false);
@@ -525,6 +530,23 @@ describe("Speculo v3 CLI", () => {
         ),
         true
       );
+      const deliverySkillRoot = join(
+        root,
+        "workflows",
+        "specdev",
+        "common",
+        "skills",
+        "subagent-delivery"
+      );
+      for (const relativePath of [
+        "SKILL.md",
+        join("references", "native-subagent.md"),
+        join("references", "external-web-subagent.md"),
+        join("references", "github-checkpoints.md"),
+        join("references", "source-package.md"),
+      ]) {
+        assert.equal(await pathExists(join(deliverySkillRoot, relativePath)), true);
+      }
       assert.equal(
         await pathExists(
           join(
@@ -550,9 +572,21 @@ describe("Speculo v3 CLI", () => {
         "utf8"
       );
       assert.match(orchestrationProtocol, /## 8\. Evidence 返回与集成/);
+      assert.match(
+        orchestrationProtocol,
+        /common\/skills\/subagent-delivery\/SKILL\.md/
+      );
       assert.doesNotMatch(
         orchestrationProtocol,
         /common\/skills\/handoff|changes\/\{change\}\/handoff/
+      );
+      const implementWork = await readFile(
+        join(root, "workflows", "specdev", "I-implement", "I-implement.md"),
+        "utf8"
+      );
+      assert.match(
+        implementWork,
+        /common\/skills\/subagent-delivery\/SKILL\.md/
       );
       const validator = join(
         root,
@@ -627,6 +661,11 @@ describe("Speculo v3 CLI", () => {
         "keep unselected"
       );
       await writeFile(join(root, "commands", "local.md"), "remove");
+      await mkdir(join(root, "skills", "agents-md-builder"), { recursive: true });
+      await writeFile(
+        join(root, "skills", "agents-md-builder", "SKILL.md"),
+        "obsolete merged skill\n"
+      );
 
       // Write custom config.json to verify it is not overwritten during update
       await writeJson(join(root, "config.json"), {
@@ -693,6 +732,11 @@ describe("Speculo v3 CLI", () => {
         "keep unselected"
       );
       assert.equal(await pathExists(join(root, "commands", "local.md")), false);
+      assert.equal(await pathExists(join(root, "skills", "agents-md-builder")), false);
+      assert.equal(
+        await pathExists(join(root, "skills", "docs-sync", "references", "agents", "agent-writing.md")),
+        true
+      );
 
       // Verify custom config.json was preserved (not overwritten by update)
       const configAfter = JSON.parse(
@@ -813,6 +857,109 @@ describe("Speculo v3 CLI", () => {
       });
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /status is done but Evidence is missing/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("SpecDev Node validator rejects a malformed design tree", async () => {
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    const root = await tempProject();
+    try {
+      const change = join(root, "2026-07-29-node-validator");
+      await createValidSpecdevChange(change);
+      await writeJson(join(change, "design-tree.json"), {
+        schema_version: 1,
+        artifact: "design-tree",
+        change: "2026-07-29-node-validator",
+        status: "consensus",
+        round: 1,
+        nodes: [
+          {
+            id: "D-001",
+            title: "范围",
+            question: "范围是什么？",
+            depends_on: ["D-999"],
+            recommendation: "保持最小范围",
+            status: "open",
+            round: null,
+            answer: null,
+            log_ref: null,
+          },
+        ],
+      });
+      const result = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /depends on missing D-999/);
+      assert.match(result.stdout + result.stderr, /consensus design tree cannot contain open/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("SpecDev Node validator rejects malformed Wayfinder closure", async () => {
+    const validator = join(
+      packageRoot,
+      "template",
+      "workflows",
+      "specdev",
+      "common",
+      "tools",
+      "validate-specdev.mjs"
+    );
+    const root = await tempProject();
+    try {
+      const change = join(root, "2026-07-29-node-validator");
+      await createValidSpecdevChange(change);
+      await writeFile(
+        join(change, "wayfinder-map.md"),
+        [
+          "---",
+          "artifact: wayfinder-map",
+          "change: 2026-07-29-node-validator",
+          "status: active",
+          "---",
+          "",
+          "# Wayfinder Map",
+          "",
+        ].join("\n")
+      );
+      await mkdir(join(change, "investigation"), { recursive: true });
+      await writeFile(
+        join(change, "investigation", "INV-01-scope.md"),
+        [
+          "---",
+          "artifact: wayfinder-ticket",
+          "id: INV-01",
+          "name: Scope",
+          "parent_map: <Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>",
+          "label: wayfinder:grilling",
+          "status: closed",
+          "blocked_by: [INV-99]",
+          "resolution: null",
+          "---",
+          "",
+          "# Scope",
+          "",
+        ].join("\n")
+      );
+      const result = spawnSync(process.execPath, [validator, change], {
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /blocked_by references missing INV-99/);
+      assert.match(result.stdout + result.stderr, /closed Wayfinder Ticket needs a resolution/);
+      assert.match(result.stdout + result.stderr, /has no solution comment/);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

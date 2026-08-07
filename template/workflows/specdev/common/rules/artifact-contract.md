@@ -9,6 +9,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
 | 诊断 | `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
+| 设计树 | `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
 | 领域上下文 | `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
 | 架构决策 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
 | Spec | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
@@ -16,6 +17,10 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| Wayfinder 地图 | `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
+| Wayfinder Ticket | `<Path>{roots.state}/specdev/changes/{change}/investigation/{investigation-id}.md</Path>` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
+| Wayfinder solution comment | `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md</Path>` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
+| 架构审查 | `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
 
 ## 2. 权威顺序
 

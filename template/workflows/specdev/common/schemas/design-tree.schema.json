@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:design-tree:v1",
+  "title": "SpecDev Grilling Design Tree",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status", "round", "nodes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "artifact": { "const": "design-tree" },
+    "change": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["active", "consensus", "blocked"] },
+    "round": { "type": "integer", "minimum": 0 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "question", "depends_on", "recommendation", "status", "round", "answer", "log_ref"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]{3,}$" },
+          "title": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 },
+          "depends_on": { "type": "array", "items": { "type": "string", "pattern": "^D-[0-9]{3,}$" } },
+          "recommendation": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["open", "answered", "deferred", "rejected"] },
+          "round": { "type": ["integer", "null"], "minimum": 1 },
+          "answer": { "type": ["string", "null"] },
+          "log_ref": { "type": ["string", "null"], "pattern": "^LOG-[0-9]{3,}$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

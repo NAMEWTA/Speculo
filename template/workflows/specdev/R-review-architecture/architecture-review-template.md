@@ -16,53 +16,44 @@ status: draft
 - 相关行为或 Ticket：
 - 不审查范围：
 - 成功标准：
+- 热点依据：用户指定 / Git 历史
 
 ## 2. 当前结构地图
 
-### 模块与接口
+### Modules 与 Interfaces
 
-### 数据、控制与错误流
+### 数据、控制与错误流及 Seams
 
-### 变化热点与测试接缝
+### 变化热点、Locality 与测试表面
 
 ## 3. 候选提案
 
 ### AR-001: <标题>
 
-- **机制：** shallow-module / seam-leak / locality / dependency / temporal-coupling / shared-state / migration
-- **严重度：** low / medium / high / critical
-- **证据：** `<Path>project/relative/path</Path>`
-- **问题如何发生：**
-- **用户或工程影响：**
-- **当前 workaround：**
-- **不做后果：**
+- **文件：** `<Path>project/relative/path</Path>`
+- **问题：** 当前架构如何造成摩擦
+- **解决方案：** 将发生什么变化；报告阶段不提出具体 interface
+- **收益：** locality、leverage 与测试改善
+- **建议强度：** Strong / Worth exploring / Speculative
+- **依赖类别：** in-process / local-substitutable / ports & adapters / mock
+- **删除测试：** 删除当前 shallow module 会集中复杂性 / 只移动复杂性
+- **ADR 冲突：** 无 / ADR-###，值得重审因为 ...
 
-#### 方案 A：保持现状
+#### Before / After
 
-#### 方案 B：推荐最小深层化
-
-#### 方案 C：替代方案
-
-| 维度 | A | B | C |
-|---|---|---|---|
-| 调用者复杂度 | | | |
-| 接口稳定性 | | | |
-| 迁移与兼容 | | | |
-| 测试与验证 | | | |
-| 回滚 | | | |
-| 事故半径 | | | |
+- Before：shallow interface、leaking seam 与分散 locality。
+- After：deep module、稳定 interface 与集中测试表面。
 
 - **推荐：**
-- **建议 Planning Depth：** lite / standard / deep
-- **访谈状态：** proposed / accepted / adjusted / deferred / rejected
+- **访谈状态：** unselected / selected / consensus / blocked / rejected
 - **用户结论：**
 - **ADR 影响：** 无 / `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 中的 ADR-###
 
-## 4. 优先级与依赖
+## 4. 最佳推荐
 
-| Candidate | Value | Risk Reduction | Cost | Dependency | Decision |
-|---|---|---|---|---|---|
+首先探索：AR-###。原因：<一句话>。
 
 ## 5. 下一步
 
-- 接受项进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。
+- 报告生成后询问用户选择一个候选，不批量访谈。
+- 达成共识的接受项进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。

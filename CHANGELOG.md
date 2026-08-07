@@ -4,6 +4,22 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-08-07
+
+### Added
+- **`subagent-delivery` Skill（specdev 工作流）**：为 Goal Plan 生成可恢复的 direct、原生或外部网页 Agent 派单，并在 Implement 阶段按同一交付合同核对基线、候选交付、修正与 Lead 验收；随 specdev 工作流作为 common skill 自动安装。
+- **`design-tree.schema.json` 与 `wayfinder-ticket.schema.json`**：为设计树与 Wayfinder Ticket 新增正式 JSON Schema，`validate-specdev.mjs` 与 canonical 生成脚本同步接入。
+- **specdev 契约扩展**：artifact-contract 新增设计树、Wayfinder 地图/Ticket/solution comment、架构审查等工件；新增 `architecture-report-contract.md`、`local-tracker-contract.md`、`solution-comment-template.md` 契约文档与 `design-tree-template.json` 模板。
+- **`codebase-design` 规则**：新增深层模块设计语言（小接口承载大行为、缝合点、可测试性），并入 specdev common rules。
+
+### Changed
+- **`docs-sync` Skill 重构为手册树构建器，取代 `agents-md-builder`**：基于可复现 Git 区间、确认范围和 workflow 规则审计项目文档，在增量维护或重建分支中生成可预测的 AGENTS.md / CLAUDE.md 手册树；`agents-md-builder` skill 及其模板与引用全部移除。
+- **specdev 各 work 更新**：G-grill-with-docs（设计树模板与 grilling 协议）、I-implement（design-it-twice、evidence-template、execution-preflight）、P-goal-plan（规划模式与编排协议）、R-review-architecture（架构审查报告契约）、W-wayfinder（地图与 investigation 契约）同步演进至新工件契约。
+- **canonical 单文件分发物重新生成**：全部 canonical-specdev-* 文件与源码同步（新增 subagent-delivery、设计树与 Wayfinder ticket schema 内联）。
+- **测试扩展**：cli.test.ts 新增 specdev 契约相关用例。
+
+---
+
 ## [0.4.0] - 2026-08-02
 
 ### Changed

@@ -44,7 +44,7 @@ npm install -g @namewta/speculo
 
 | Command | 用途 |
 |---|---|
-| `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档 |
+| `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档与 Agent 手册 |
 | `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
@@ -53,12 +53,12 @@ npm install -g @namewta/speculo
 
 | Skill | 用途 |
 |---|---|
-| `agents-md-builder` | 多层 AGENTS.md / CLAUDE.md 手册树构建器 |
 | `archive-and-consolidate` | 归档过期内容、合并分散知识、清理过时资产 |
-| `docs-sync` | 核心文档审计与同步 |
+| `docs-sync` | 文档审计，以及 AGENTS.md / CLAUDE.md 手册的增量维护或完整重建 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
 | `speculo-retro` | 回顾分析 |
-| `dev-worktree` | Git worktree 开发隔离 |
+| `typescript-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
+| `writing-great-skills` | Agent Skill 编写参考 |
 
 ### 2 个 Workflow Packages
 

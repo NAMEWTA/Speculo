@@ -10,7 +10,7 @@
 Speculo agent handbook: see [AGENTS.md](./AGENTS.md).
 ```
 
-此格式与 `../../docs-sync/references/agents-contract.md` 的规定一致（该契约为权威）：`AGENTS.md` 始终是唯一的权威代理手册，`CLAUDE.md` 永远只是入口指针。
+此格式与 [`../agents-contract.md`](../agents-contract.md) 的规定一致（该契约为权威）：`AGENTS.md` 始终是唯一的权威代理手册，`CLAUDE.md` 永远只是入口指针。
 
 ## 设计缘由
 

@@ -9,7 +9,7 @@ keywords: [实现, TDD, 代码审查, 模块设计, 证据, ticket]
 
 # 实现
 
-本 work 保留原有完整实现能力：深层模块设计检查、接缝和依赖分类、design-it-twice、TDD 红→绿垂直循环、标准轴与规范轴审查、项目级验证、提交和状态更新。治理升级增加 Ready、路径所有权、Evidence 和偏差门禁，但不把实现退化为机械照单执行。
+本 work 保留原有完整实现能力：深模块设计检查、接缝和依赖分类、design-it-twice、TDD 红→绿垂直循环、标准轴与规范轴审查、项目级验证、提交和状态更新。治理升级增加 Ready、路径所有权、Evidence 和偏差门禁，但不把实现退化为机械照单执行。
 
 ## 执行模式
 
@@ -22,6 +22,8 @@ keywords: [实现, TDD, 代码审查, 模块设计, 证据, ticket]
 - 可选 Goal Plan：`<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
 
 Ticket 模式适用于多 Ticket、Standard/Deep、并行、迁移或需要完整证据治理的工作。
+
+若 Goal Plan 的 Delivery Contract 选择 `native-subagent` 或 `external-web-subagent`，这是 Ticket 模式的 delegated execution 分支。Lead 在派单、恢复或验收候选交付时调用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；Worker 的局部实现仍完整遵循本 work，不由 provider 改写。
 
 ### Direct Spec 模式（保留原能力）
 
@@ -61,6 +63,7 @@ Ticket 模式检查：
 - Ticket 与 Spec/ADR/Goal Plan 无冲突；
 - 可写、只读、共享路径明确且无并发冲突；
 - 并行执行时，Ticket 的 worktree 记录为 `active`，`base_sha` 与派单一致；
+- delegated execution 时，派单块的 execution model、Lead、checkpoint、workspace/session locator、路径合同、修正上限和授权矩阵与当前事实一致；
 - 验证命令和 Evidence 位置可用；
 - 当前代码事实没有使核心契约失效。
 
@@ -76,10 +79,7 @@ Direct Spec 模式检查：
 
 ### 2. 设计检查
 
-加载：
-
-- `<Path>{roots.workflows}/specdev/I-implement/codebase-design-glossary.md</Path>`
-- `<Path>{roots.workflows}/specdev/I-implement/deepening.md</Path>`
+加载 `<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`，并严格使用其中的模块、接口、深度、接缝、适配器、杠杆和局部性术语。
 
 在写代码前检查：
 
@@ -91,7 +91,7 @@ Direct Spec 模式检查：
 - 测试应在哪个稳定接缝观察行为；
 - Ticket/Spec 已锁定的公共契约是否被保持。
 
-存在多个局部接口设计且不改变已锁定契约时，可以运行 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。若方案会改变外部行为、公共接口、数据、兼容、安全或范围，返回规划工件，不使用 design-it-twice 绕过决策。
+存在多个局部接口设计且不改变已锁定契约时，可以运行 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。若设计摩擦已经超出当前 Ticket 范围，返回 `<Path>{roots.workflows}/specdev/R-review-architecture/R-review-architecture.md</Path>`；若方案会改变产品行为、公共接口、数据、兼容、安全或范围，返回 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 或相应规划工件，不使用 design-it-twice 绕过决策。
 
 若不熟悉外部库、框架 API 或依赖能力边界，调用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
 
@@ -159,6 +159,8 @@ Direct Spec 模式写入：
 
 Evidence 必须包含实际修改范围、命令与结果、验收逐条映射、未运行项、偏差、残余风险和提交引用。
 
+delegated execution 还必须记录 execution model、provider、派单与最终 checkpoint、workspace/session locator、候选交付核对、修正轮次和未验证声明。Lead 使用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>` 的 `operation=execute` 分支完成核对；provider 自报结果不能直接标记为 `pass`。
+
 Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使用 `blocked`，实际实现与批准契约不一致使用 `deviated`。验证无法运行或存在未批准偏差时不得标 `done`。
 
 同步：
@@ -177,12 +179,12 @@ Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使�
 5. 返回 Ticket ID 与状态、Evidence 完整路径、`workspace_ref`、commit 或 PR 引用，以及仅在用户界面交互受影响时由 Lead 执行的待办 E2E；
 6. Direct Spec 模式返回 change、状态和 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`。
 
-若由 Lead 编排，遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>` 的 Evidence 返回协议。
+若由 Lead 编排，遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>` 的 Evidence 返回协议；delegated execution 同时返回稳定 workspace/session locator、最终 checkpoint、修正轮次和未验证项。
 
 ## 完成标准
 
 - 执行前预检通过；
-- 设计检查保留深层模块、接缝和依赖分类能力；
+- 设计检查严格使用共享术语，并保留深模块、接缝、适配器和依赖分类能力；
 - 每个行为通过真实红→绿循环实现；
 - 定向与适用回归验证完成；
 - 双轴审查通过；
@@ -196,11 +198,11 @@ Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使�
 ## 子文件引用
 
 - 执行前预检：`<Path>{roots.workflows}/specdev/I-implement/execution-preflight.md</Path>`
-- 代码库设计术语：`<Path>{roots.workflows}/specdev/I-implement/codebase-design-glossary.md</Path>`
-- 深化与依赖策略：`<Path>{roots.workflows}/specdev/I-implement/deepening.md</Path>`
+- 代码库设计规则：`<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
 - Design It Twice：`<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`
 - TDD 规则：`<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`
 - TDD 示例：`<Path>{roots.workflows}/specdev/I-implement/tdd-examples.md</Path>`
 - 代码注释规则：`<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`
 - 双轴审查：`<Path>{roots.workflows}/specdev/I-implement/code-review-process.md</Path>`
 - Evidence 模板：`<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</Path>`
+- Agent 交付合同：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`

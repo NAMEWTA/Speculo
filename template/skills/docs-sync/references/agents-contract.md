@@ -1,6 +1,28 @@
 # AI 代理手册同步契约
 
-本契约用于差量维护已确认范围内的 `AGENTS.md`、`CLAUDE.md` 和工具专属入口。创建或重建多层手册树时调用 `../../agents-md-builder/SKILL.md`，不要在 docs-sync 中复制其扫描和模板逻辑。
+本契约用于差量维护或重建已确认范围内的 `AGENTS.md`、`CLAUDE.md` 和工具专属入口。调用方传入 `handbook_mode=incremental|rebuild`；默认使用 `incremental`，仅在用户显式要求、手册缺失或 manifest 拓扑变化时进入 `rebuild`。
+
+## 分支路由
+
+### Incremental
+
+读取当前手册、Git 输入区间和直接事实源，逐段执行下方内容优先级、生命周期和验证规则。不重新分类未受影响目录，也不加载重建模板。
+
+**完成标准**：所有被 Git 区间或当前事实命中的手册均已整份审计，未命中手册保持不变。
+
+### Rebuild
+
+按顺序读取：
+
+1. `agents/manifest-discovery.md`，发现 manifest、忽略目录、父子树和孤立手册；
+2. `agents/role-classification.md`，为每个目录判定唯一角色；
+3. `agents/evidence-collection.md`，为每个输出结论收集真实文件证据；
+4. `agents/content-contract.md`、`agents/writing-style.md` 和对应 `agents/templates/*`，自底向上生成 AGENTS.md；
+5. `agents/claude-redirect.md`，生成或修复同层 CLAUDE.md。
+
+展示创建、更新和删除候选；整文件删除或把多行 CLAUDE.md 改成重定向前取得明确确认。
+
+**完成标准**：扫描范围内每个合法目录恰好一个 AGENTS.md，每个 AGENTS.md 有唯一 CLAUDE.md 重定向，父子 routing 完整，所有处置均有证据和确认状态。
 
 ## 内容优先级
 

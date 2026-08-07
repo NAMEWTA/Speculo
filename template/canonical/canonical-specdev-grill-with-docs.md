@@ -13,21 +13,32 @@
 - 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
 - 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
 
-本 work 保留原有的 grilling 访谈与 domain-modeling 双重能力：访谈负责沿决策树逐分支达成共识，领域建模负责在决策结晶时同步维护设计轨迹、术语与架构决策。未经用户确认，不进入实现。
+不留情面地访谈用户，直到达成共识。把这件事映射为一棵**设计树（design tree）**：每个决策都会分出挂在它下面的后续决策。
 
-## 输入与权威
+按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些现在就能问、不必猜测尚未得到答案的问题。每轮询问完整 frontier；用户的答案会重塑设计树并解除下一层问题的阻塞。
 
-开始前按需读取：
+本 work 还负责把访谈持久化：设计树保存可恢复状态，LOG 保存讨论轨迹，CONTEXT 保存当前领域真相，ADR 保存长期架构决定。持久化不构成实现授权；在用户确认共识前不进入实现。
 
-- 全局配置：`specdev/config.json`
-- 永久架构决策：`specdev/adr/`
-- 永久领域上下文：`specdev/context/`
-- 原始请求：`specdev/changes/{change}/source-issue.md`
-- 分诊结果：`specdev/changes/{change}/triage.md`
-- Bug 诊断：`specdev/changes/{change}/diagnosis.md`
-- 当前 Spec（如已存在）：`specdev/changes/{change}/spec.md`
-- 工件职责规则：下方 `<artifact-contract>` 标签
-- 规划原则：下方 `<planning-principles>` 标签
+## 输入与产物
+
+按存在情况读取：
+
+- `specdev/config.json`
+- `specdev/adr/`
+- `specdev/context/`
+- `specdev/changes/{change}/source-issue.md`
+- `specdev/changes/{change}/triage.md`
+- `specdev/changes/{change}/diagnosis.md`
+- `specdev/changes/{change}/spec.md`
+- 下方 `<artifact-contract>` 标签
+- 下方 `<planning-principles>` 标签
+
+本 work 拥有：
+
+- `specdev/changes/{change}/design-tree.json`
+- `specdev/changes/{change}/LOG.md`
+- `specdev/changes/{change}/CONTEXT.md`
+- `specdev/changes/{change}/ADR.md`
 
 不存在的可选输入静默跳过，不把缺失文件伪装成已知事实。
 
@@ -35,102 +46,96 @@
 
 ### 1. 启动或恢复 change
 
-创建或恢复 `specdev/changes/{change}/`，其中 `{change}` 使用 `<YYYY-MM-DD>-<topic>`。
+创建或恢复 `specdev/changes/{change}/`。首次启动时创建 `specdev/changes/{change}/.status.json`、`specdev/changes/{change}/ADR.md`、`specdev/changes/{change}/LOG.md`、`specdev/changes/{change}/CONTEXT.md`，并以 下方 `<design-tree-template>` 标签 为模板创建 `specdev/changes/{change}/design-tree.json`。
 
-首次启动时创建：
-
-- 生命周期状态：`specdev/changes/{change}/.status.json`（首次创建时使用 下方 `<change-status-template>` 标签）
-- 架构决策：`specdev/changes/{change}/ADR.md`
-- 设计日志：`specdev/changes/{change}/LOG.md`
-- 领域上下文：`specdev/changes/{change}/CONTEXT.md`
-
-创建和更新格式分别遵循：
+分别使用：
 
 - 下方 `<adr-format>` 标签
 - 下方 `<log-format>` 标签
 - 下方 `<context-format>` 标签
+- 下方 `<design-tree-schema>` 标签
 
-恢复已有 change 时必须先读取现有三份文档，避免重复询问已经确认的问题。
+恢复时先读取四份工件，按 design tree 的节点状态恢复，避免重复询问已关闭问题。
 
-**完成标准**：change 目录、生命周期状态和三份设计文档均可读取；已知结论与未决问题已建立初始摘要。
+**完成标准**：四份工件均可读取；节点依赖无环，所有 LOG 指针存在，当前 frontier 可确定。
 
-### 2. 探索可发现事实
+### 2. 查找事实
 
-在提问前只读探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。将未知项分为：
+查找*事实*是 Agent 的工作，永远不是用户的。先探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。
 
-- 可发现事实：继续探索，不询问用户；
-- 高影响偏好或取舍：进入访谈；
-- 低影响实现细节：记录为实现者可自行决定，不升级为产品决策。
+当前沿问题需要来自环境的事实时，派遣独立探索去查找。不要阻塞等待：一次进行中的探索是一个未解决的前置条件，所以只有它下游的问题等待结果；现在就继续处理 frontier 的其余部分。不熟悉的外部技术使用 下方 `<research>` 标签。
 
-若涉及不熟悉的外部技术、第三方 API、标准或版本行为，调用 下方 `<research>` 标签，并把研究结论的来源和置信度写入 `specdev/changes/{change}/LOG.md`。
+将未知项分为：
 
-### 3. 一次一问的设计访谈
+- 可发现事实：探索或研究，不询问用户；
+- 高影响决策：进入设计树；
+- 低影响实现细节：记录为实现者可自行决定，不制造决策节点。
 
-加载 下方 `<grilling-protocol>` 标签。每轮只处理一个会实质改变设计的问题：
+**完成标准**：每个候选问题已分类；用户只接收无法从环境发现的真实决策。
 
-1. 陈述已知事实与证据；
-2. 提出唯一关键问题；
-3. 给出 2–4 个真实选项、权衡和推荐默认值；
-4. 等待用户确认、拒绝或延后；
-5. 将结果立即追加到 `specdev/changes/{change}/LOG.md`。
+### 3. 建立设计树
 
-不得把多个独立决策塞进同一个问题；不得为了填模板询问不会改变方案的细节；不得在用户尚未确认前执行实现。
+围绕目标、角色、范围、主要流程、状态与失败、数据与接口、兼容与迁移、安全与隐私、性能与可观测性、验证与验收建立适用节点。
 
-**完成标准**：决策树已覆盖目标、角色、范围、主要流程、状态与失败、数据与接口、兼容与迁移、安全与隐私、性能与可观测性、验证与验收等适用分支。
+每个节点包含稳定 `D-###`、标题、问题、依赖、推荐答案和状态。只有问题本身已经可以精确陈述时才创建节点；依赖尚未确定的节点可以存在，但不进入 frontier。
 
-### 4. 同步领域文档
+**完成标准**：每个高影响已知决策有且只有一个节点；每条依赖指向真实上游节点；没有默默采用的高影响假设。
 
-加载 下方 `<domain-modeling-rules>` 标签，按固定顺序同步：
+### 4. 逐轮推进完整 frontier
 
-1. 先把所有确认、延后、拒绝和替代结论写入 `specdev/changes/{change}/LOG.md`；
-2. 再把当前仍真实的术语、不变量、示例、反例和代码映射写入 `specdev/changes/{change}/CONTEXT.md`；
-3. 最后把满足 ADR 条件的长期架构决策写入 `specdev/changes/{change}/ADR.md`。
+加载 下方 `<grilling-protocol>` 标签。每轮原子增加 `round`，重读设计树并计算完整 frontier。按协议格式给每个问题编号并附推荐答案，然后等待用户回答。
 
-历史轨迹不得写入领域上下文；尚未确认的选项不得写成已接受 ADR；已有 ADR 被替代时必须建立 supersedes 链，不重写历史。
+用户回答后：
 
-### 5. 收敛与就绪判断
+1. 为每个回答更新对应节点；
+2. 每个节点各追加一条 LOG，不把多个决定压成一条；
+3. 根据回答增加、删除或重新连接后续节点；
+4. 重新计算 frontier，进入下一轮。
 
-访谈结束时必须能明确：
+一个答案依赖本轮仍开放问题的提问属于后续轮次。用户延后且该决定会影响外部行为、公共接口、数据、安全、兼容、迁移或验收时，保持 blocked，不把它伪装成共识。
 
-- 目标、目标用户、成功标准；
-- IN、REUSE、OUT；
-- 主要行为路径、失败行为与状态转换；
-- 公共接口、数据、不变量、兼容和迁移影响；
-- 安全、隐私、性能、可靠性和可观测性要求；
-- 验证接缝和可观察验收方式；
-- 剩余未知项及其影响。
+**完成标准**：本轮开始时的完整 frontier 每个节点都有回答、明确延后或阻塞记录；所有状态已原子写入并重读。
 
-仍存在会改变外部行为、范围、公共接口、数据、安全、兼容、迁移或验收的未决问题时，将 `specdev/changes/{change}/.status.json` 标为 `blocked` 或保持 `active`，不得伪装为 Ready。
+### 5. 同步领域模型
 
-### 6. 停止与路由
+加载 下方 `<domain-modeling-rules>` 标签。每轮先写 LOG，再把已确认且当前仍真实的术语、不变量、示例、反例和代码映射同步到 CONTEXT，最后把满足 ADR 条件的长期架构决定写入 ADR。
 
-向用户汇报三份文档的新增/修改条目、已锁定决策、延后事项和风险。根据成熟度明确给出下一步：
+历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 ADR 被替代时建立 supersedes 链。同步文档用于记录共识生长过程，不授权产品实现。
+
+**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个提升结论都有用户回答或事实来源。
+
+### 6. 共识确认与路由
+
+frontier 为空时，向用户确认设计树的每个分支均已走过且已经达成共识。用户指出遗漏时新增节点并继续；只有明确确认后把 design tree 标为 `consensus`。
+
+随后按成熟度路由：
 
 - 通常进入 “编写 Spec 阶段”；
-- 外部行为已经完全明确时可进入 “拆分 Tickets 阶段”；
-- 极小、局部且已经具备批准执行契约的工作，可在用户确认后进入 “实现阶段”；
+- 外部行为已经完全明确时进入 “拆分 Tickets 阶段”；
+- 获批的极小局部工作可进入 “实现阶段”；
 - 路径或关键事实仍未知时进入 “寻路阶段”。
 
-同步 `specdev/status.json` 的 `current_work`、`work_history` 和当前 change 状态，返回三份权威工件及下一 Work 的完整路径。
-
-不得在本 work 中自动读取实现源码并开始修改代码。
+同步 workflow/change 状态，返回四份权威工件和下一 work 的完整路径。不自动执行下一 work。
 
 ## 完成标准
 
-- `specdev/changes/{change}/LOG.md` 已记录全部设计结论和状态变化；
-- `specdev/changes/{change}/CONTEXT.md` 只包含当前领域真相；
-- `specdev/changes/{change}/ADR.md` 只包含满足条件的架构决策；
-- 高影响未决问题已关闭或明确标记为阻塞；
-- 状态、权威工件和下一 Work 路径已返回；
-- 下一 work 已明确，但未自动执行实现。
+- 设计树的每个适用分支都已走过，没有高影响事项被默默假定；
+- 每轮询问的是完整 frontier，依赖未关闭的问题没有提前出现；
+- 可发现事实由 Agent 查找，没有转交用户；
+- design tree 通过 schema，LOG 指针完整；
+- CONTEXT 只包含当前领域真相，ADR 只包含满足条件的架构决定；
+- frontier 为空且用户明确确认共识；
+- 状态、权威工件和下一 work 路径已返回；
+- 未执行产品实现。
 
 ## 子文件引用
 
-- 访谈协议：下方 `<grilling-protocol>` 标签
-- 领域建模规则：下方 `<domain-modeling-rules>` 标签
+- 质询协议：下方 `<grilling-protocol>` 标签
+- 设计树模板：下方 `<design-tree-template>` 标签
+- 领域建模：下方 `<domain-modeling-rules>` 标签
 - ADR 格式：下方 `<adr-format>` 标签
-- 领域上下文格式：下方 `<context-format>` 标签
-- 设计日志格式：下方 `<log-format>` 标签
+- CONTEXT 格式：下方 `<context-format>` 标签
+- LOG 格式：下方 `<log-format>` 标签
 
 ---
 
@@ -140,53 +145,49 @@
 
 <grilling-protocol>
 
-# 设计访谈协议
+# 设计树质询协议
 
-目标是关闭会影响产品行为、架构边界、风险或验收的关键决策，不是把所有可能问题都问一遍。
+不留情面地访谈用户，直到达成共识。把这件事映射为一棵**设计树（design tree）**：每个决策都会分出挂在它下面的后续决策。
 
-## 1. 开始前先发现事实
+按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些你现在就能问、不必猜测还没听到的答案的问题。在一轮中问完整条前沿：给每个问题编号，并附上你的推荐答案。然后等待用户的回答，再进入下一轮。
 
-先读取代码、配置、测试、现有 Spec、ADR、CONTEXT 和 LOG。可从环境获得的事实不得转交给用户回答；只有偏好、风险承受度、业务取舍或互斥目标需要用户决策。
+每个问题按如下格式呈现：
 
-## 2. 决策树
+```
+❓ **Q1** - **<问题标题>**：<问题正文，可以是多个段落，包括多个选项>
 
-按风险和信息缺口覆盖，不机械提问：
+➡️ <你的推荐答案>
+```
 
-1. 用户问题与成功状态；
-2. 参与者、权限与主要流程；
-3. 范围边界和明确非目标；
-4. 状态、数据、不变量与失败模式；
-5. 接口、兼容、迁移和发布；
-6. 安全、隐私、性能、可观测性；
-7. 验收与验证接缝。
+每一轮用户的回答都会重塑这棵树——已确定的决策把前沿向外推，解除依赖它们的阻塞问题。重新计算前沿，然后问下一轮。一个答案依赖本轮仍在开放中的问题的提问，属于*更晚的*轮次，而不是本轮。
 
-## 3. 每轮只关闭一个关键决定
+查找*事实*是你的工作，永远不是用户的。当前沿问题需要来自环境的事实（文件系统、工具等）时，派遣一个子 agent 去查找——不要就任何你自己能查到的东西去问用户。不要阻塞等待：一次正在进行的探索是一个未解决的前置条件，所以只有它下游的问题需要等子 agent 报告——现在就把前沿的其余部分问完。*决策*是用户的——把每个决策摆到他们面前并等待。
 
-每轮格式：
+当前沿为空时，会话结束：设计树的每个分支都已走过，没有任何东西被默默假定。在用户确认我们已达成共识之前，不要对结果采取行动。
 
-1. **已知事实：** 简短说明当前共识和证据；
-2. **唯一问题：** 不使用复合问题；
-3. **可行选项：** 只列实质不同的方案；
-4. **权衡：** 对范围、体验、架构、风险和未来成本的影响；
-5. **推荐：** 明确给出默认建议及原因；
-6. **用户结论：** confirmed / deferred / rejected；
-7. **落盘：** 更新 LOG，并按需要更新 ADR 或 CONTEXT。
+## SpecDev 持久化适配
 
-## 4. 记录规则
-
-- 所有已确认或显式延后的决策写入 `specdev/changes/{change}/LOG.md`；
-- 长期架构决策追加到 `specdev/changes/{change}/ADR.md`；
-- 稳定领域知识追加或合并到 `specdev/changes/{change}/CONTEXT.md`；
-- 不因追求“文档完整”而复制同一事实；工件冲突按 下方 `<artifact-contract>` 标签 裁决。
-
-## 5. 停止条件
-
-- 关键决策已关闭，足以进入 Spec；或
-- 用户明确延后，且该延后不会伪装成 Ready；或
-- 缺少外部信息，change 标 blocked；或
-- 继续提问只会产生低影响实现细节，应交给 Ticket 或实现阶段决定。
+- 设计树当前状态写入 `specdev/changes/{change}/design-tree.json`，结构遵循 下方 `<design-tree-schema>` 标签。
+- 每个已回答、延后或拒绝的节点追加一条 `specdev/changes/{change}/LOG.md` 记录，并把 `LOG-###` 写回节点的 `log_ref`。
+- 每轮开始前原子更新 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
+- LOG、设计树及已确认的 CONTEXT/ADR 同步只用于恢复和领域建模，不构成实现授权。只有 frontier 为空且用户确认共识后才路由下游 work。
 
 </grilling-protocol>
+
+<design-tree-template>
+
+```json
+{
+  "schema_version": 1,
+  "artifact": "design-tree",
+  "change": "{change}",
+  "status": "active",
+  "round": 0,
+  "nodes": []
+}
+```
+
+</design-tree-template>
 
 <domain-modeling-rules>
 
@@ -277,6 +278,8 @@ CONTEXT 保存跨 change 可复用的领域语言、关系和不变量，不保�
 
 ```markdown
 ## LOG-### — <时间> — <主题>
+- **设计树节点：** D-### / 不适用
+- **轮次与依赖：** round <n> / D-###, D-### / 无
 - **状态：** confirmed / deferred / rejected / superseded
 - **问题：** 本条只记录一个决策或未知
 - **事实与来源：** 代码、测试、用户确认或外部规范
@@ -307,6 +310,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
+| 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
 | 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
 | 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
@@ -314,6 +318,10 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
+| Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
+| Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
+| 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
 
 ## 2. 权威顺序
 
@@ -1027,3 +1035,44 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 ```
 
 </change-status-schema>
+
+<design-tree-schema>
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:design-tree:v1",
+  "title": "SpecDev Grilling Design Tree",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status", "round", "nodes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "artifact": { "const": "design-tree" },
+    "change": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["active", "consensus", "blocked"] },
+    "round": { "type": "integer", "minimum": 0 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "question", "depends_on", "recommendation", "status", "round", "answer", "log_ref"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]{3,}$" },
+          "title": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 },
+          "depends_on": { "type": "array", "items": { "type": "string", "pattern": "^D-[0-9]{3,}$" } },
+          "recommendation": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["open", "answered", "deferred", "rejected"] },
+          "round": { "type": ["integer", "null"], "minimum": 1 },
+          "answer": { "type": ["string", "null"] },
+          "log_ref": { "type": ["string", "null"], "pattern": "^LOG-[0-9]{3,}$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+</design-tree-schema>

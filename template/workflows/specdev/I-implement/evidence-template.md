@@ -7,6 +7,10 @@
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
 - **基线/分支：**
 - **Worktree 引用：** 不适用 / `<workspace_ref>`
+- **执行模型/Provider：** direct / native-subagent / external-web-subagent；provider 或不适用
+- **Session/Package locator：** 不适用 / `<portable-locator>`
+- **派单/最终 Checkpoint：** `<sha-or-local-baseline>` / `<sha-or-local-baseline>`
+- **修正轮次：** 0 / `<count>`
 - **实现者：**
 - **开始/结束：**
 - **状态：** review / done / blocked / deviated
@@ -38,6 +42,8 @@
 - **失败后修复与重跑：** 无 / ...
 - **未运行检查：** 无 / 原因与风险 ...
 - **Lead E2E：** 不适用 / 待执行：场景与预期 / 通过 / 失败
+- **反向验证：** 不适用 / 受控失败信号与恢复结果
+- **外部声明：** 无 / 已核对 / `unverified`：原因
 
 ## 5. 路径所有权审计
 
@@ -66,4 +72,5 @@
 ## 8. 交付定位
 
 - **Commit / PR：**
+- **最终 Workspace/Session locator：** 不适用 / `<portable-locator>`
 - **Evidence 文件：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`

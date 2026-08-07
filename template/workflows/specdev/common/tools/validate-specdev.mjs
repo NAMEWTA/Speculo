@@ -56,6 +56,22 @@ const VALID_PLAN_MODES = new Set([
   "reference-conformance",
   "release-coordination",
 ]);
+const VALID_DESIGN_TREE_STATUS = new Set(["active", "consensus", "blocked"]);
+const VALID_DESIGN_NODE_STATUS = new Set(["open", "answered", "deferred", "rejected"]);
+const VALID_WAYFINDER_LABEL = new Set([
+  "wayfinder:research",
+  "wayfinder:prototype",
+  "wayfinder:grilling",
+  "wayfinder:task",
+]);
+const VALID_WAYFINDER_STATUS = new Set(["open", "closed"]);
+const VALID_WAYFINDER_RESOLUTION = new Set([
+  null,
+  "answered",
+  "out-of-scope",
+  "superseded",
+  "cancelled",
+]);
 const REQUIRED_TICKET_KEYS = new Set([
   "schema_version",
   "artifact",
@@ -108,6 +124,7 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "architecture-review.md",
   "architecture-review.html",
   "wayfinder-map.md",
+  "design-tree.json",
 ]);
 const FORBIDDEN_OBSOLETE_BASENAMES = new Set([
   "input-validation.md",
@@ -522,28 +539,38 @@ function capabilityChecks(root) {
       "goal-plan",
       [
         join(root, "P-goal-plan", "P-goal-plan.md"),
-        ["Outcome", "Authority", "DAG", "Gate", "Wave", "Lead", "Definition of Done"],
+        [
+          "Outcome",
+          "Authority",
+          "DAG",
+          "Gate",
+          "Wave",
+          "Lead",
+          "Dispatch Packet",
+          "subagent-delivery",
+          "Definition of Done",
+        ],
       ],
     ],
     [
       "implement",
       [
         join(root, "I-implement", "I-implement.md"),
-        ["design-it-twice", "TDD", "双轴审查", "Evidence", "提交"],
+        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "delegated execution", "subagent-delivery", "提交"],
       ],
     ],
     [
       "wayfinder",
       [
         join(root, "W-wayfinder", "W-wayfinder.md"),
-        ["共享地图", "claimed_investigations", "research", "decision", "并行"],
+        ["共享地图", "claimed_investigations", "wayfinder:prototype", "wayfinder:grilling", "solution comment", "每个会话"],
       ],
     ],
     [
       "architecture-review",
       [
         join(root, "R-review-architecture", "R-review-architecture.md"),
-        ["浅模块", "接缝泄漏", "局部性", "architecture-review.html", "逐项"],
+        ["shallow", "interface", "locality", "Tailwind CDN", "Mermaid CDN", "最佳推荐"],
       ],
     ],
     [
@@ -557,7 +584,7 @@ function capabilityChecks(root) {
       "grill",
       [
         join(root, "G-grill-with-docs", "G-grill-with-docs.md"),
-        ["一次一问", "LOG.md", "CONTEXT.md", "ADR.md", "推荐默认值"],
+        ["完整 frontier", "design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md", "推荐答案"],
       ],
     ],
     [
@@ -583,6 +610,28 @@ function capabilityChecks(root) {
   }
   if (!isFile(join(root, "R-review-architecture", "architecture-review-report-template.html"))) {
     errors.push("architecture review lost its visual HTML report template");
+  } else {
+    const html = readText(join(root, "R-review-architecture", "architecture-review-report-template.html"));
+    for (const marker of ["cdn.tailwindcss.com", "mermaid", "Before", "After", "top-recommendation"]) {
+      if (!html.includes(marker)) errors.push(`architecture HTML template lost marker ${marker}`);
+    }
+  }
+
+  for (const required of [
+    "common/rules/codebase-design.md",
+    "common/schemas/design-tree.schema.json",
+    "common/schemas/wayfinder-ticket.schema.json",
+    "G-grill-with-docs/design-tree-template.json",
+    "W-wayfinder/local-tracker-contract.md",
+    "W-wayfinder/solution-comment-template.md",
+    "R-review-architecture/architecture-report-contract.md",
+  ]) {
+    if (!isFile(join(root, required))) errors.push(`missing architecture/wayfinding contract ${required}`);
+  }
+
+  const mapTemplate = join(root, "W-wayfinder", "wayfinder-map-template.md");
+  if (isFile(mapTemplate) && /^## (?:开放 Tickets|调查清单)/m.test(readText(mapTemplate))) {
+    errors.push("Wayfinder map template must query open Tickets instead of caching them");
   }
   return errors;
 }
@@ -777,6 +826,176 @@ function validateGoalPlan(path, errors) {
   return { path, meta, body };
 }
 
+function validateDesignTree(path, change, errors) {
+  if (!isFile(path)) return null;
+  let data;
+  try {
+    data = JSON.parse(readText(path));
+  } catch (error) {
+    errors.push(`${basename(path)}: invalid JSON: ${error.message}`);
+    return null;
+  }
+
+  if (data.schema_version !== 1 || data.artifact !== "design-tree") {
+    errors.push(`${basename(path)}: artifact/schema_version must be design-tree/1`);
+  }
+  if (data.change !== basename(change)) {
+    errors.push(`${basename(path)}: change must equal directory name ${basename(change)}`);
+  }
+  if (!VALID_DESIGN_TREE_STATUS.has(data.status)) {
+    errors.push(`${basename(path)}: invalid status ${data.status}`);
+  }
+  if (!Number.isInteger(data.round) || data.round < 0) {
+    errors.push(`${basename(path)}: round must be a non-negative integer`);
+  }
+  if (!Array.isArray(data.nodes)) {
+    errors.push(`${basename(path)}: nodes must be a list`);
+    return data;
+  }
+
+  const nodes = new Map();
+  const graph = new Map();
+  for (const node of data.nodes) {
+    const id = String(node?.id ?? "");
+    if (!/^D-\d{3,}$/.test(id)) errors.push(`${basename(path)}: invalid design node id ${id}`);
+    if (nodes.has(id)) errors.push(`${basename(path)}: duplicate design node id ${id}`);
+    nodes.set(id, node);
+    const dependencies = Array.isArray(node?.depends_on) ? node.depends_on.map(String) : [];
+    graph.set(id, dependencies);
+    if (!Array.isArray(node?.depends_on)) {
+      errors.push(`${basename(path)}: ${id} depends_on must be a list`);
+    }
+    for (const key of ["title", "question", "recommendation"]) {
+      if (!String(node?.[key] ?? "").trim()) errors.push(`${basename(path)}: ${id} ${key} is required`);
+    }
+    if (!VALID_DESIGN_NODE_STATUS.has(node?.status)) {
+      errors.push(`${basename(path)}: ${id} has invalid status ${node?.status}`);
+    }
+    if (node?.round !== null && (!Number.isInteger(node?.round) || node.round < 1)) {
+      errors.push(`${basename(path)}: ${id} round must be null or a positive integer`);
+    }
+    if (node?.status !== "open") {
+      if (!String(node?.answer ?? "").trim()) errors.push(`${basename(path)}: ${id} closed node needs an answer`);
+      if (!/^LOG-\d{3,}$/.test(String(node?.log_ref ?? ""))) {
+        errors.push(`${basename(path)}: ${id} closed node needs a LOG-### reference`);
+      }
+    }
+  }
+
+  for (const [id, dependencies] of graph) {
+    for (const dependency of dependencies) {
+      if (!nodes.has(dependency)) errors.push(`${basename(path)}: ${id} depends on missing ${dependency}`);
+      if (dependency === id) errors.push(`${basename(path)}: ${id} cannot depend on itself`);
+    }
+  }
+  const cycle = findCycle(graph);
+  if (cycle) errors.push(`Design tree dependency cycle: ${cycle.join(" -> ")}`);
+  if (
+    data.status === "consensus" &&
+    data.nodes.some((node) => new Set(["open", "deferred"]).has(node?.status))
+  ) {
+    errors.push(`${basename(path)}: consensus design tree cannot contain open or deferred nodes`);
+  }
+
+  const logPath = join(change, "LOG.md");
+  const logText = isFile(logPath) ? readText(logPath) : "";
+  for (const node of data.nodes) {
+    if (node?.log_ref && !logText.includes(String(node.log_ref))) {
+      errors.push(`${basename(path)}: ${node.id} points to missing ${node.log_ref} in LOG`);
+    }
+  }
+  return data;
+}
+
+function validateWayfinder(change, errors) {
+  const mapPath = join(change, "wayfinder-map.md");
+  const investigationDir = join(change, "investigation");
+  if (!isFile(mapPath) && !isDirectory(investigationDir)) return null;
+  if (!isFile(mapPath)) errors.push("Wayfinder investigations exist but the map is missing");
+  if (!isDirectory(investigationDir)) {
+    errors.push("Wayfinder map exists but the investigation directory is missing");
+    return null;
+  }
+
+  if (isFile(mapPath)) {
+    const { meta } = parseFrontmatter(mapPath);
+    if (meta.artifact !== "wayfinder-map") errors.push("wayfinder-map.md: artifact must be wayfinder-map");
+    if (meta.change !== basename(change)) {
+      errors.push(`wayfinder-map.md: change must equal directory name ${basename(change)}`);
+    }
+  }
+
+  const ticketPaths = readdirSync(investigationDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => join(investigationDir, entry.name))
+    .sort();
+  const tickets = new Map();
+  const graph = new Map();
+  for (const path of ticketPaths) {
+    const { meta } = parseFrontmatter(path);
+    const id = String(meta.id ?? "");
+    if (meta.artifact !== "wayfinder-ticket") {
+      errors.push(`${basename(path)}: artifact must be wayfinder-ticket`);
+    }
+    if (!/^INV-\d{2,}$/.test(id)) errors.push(`${basename(path)}: invalid Wayfinder Ticket id ${id}`);
+    if (tickets.has(id)) errors.push(`duplicate Wayfinder Ticket id ${id}`);
+    tickets.set(id, { path, meta });
+    if (!basename(path).startsWith(id)) errors.push(`${basename(path)}: filename must start with ${id}`);
+    if (!String(meta.name ?? "").trim()) errors.push(`${basename(path)}: name is required`);
+    const parentMap = typeof meta.parent_map === "string" ? stripPathTag(meta.parent_map) : null;
+    if (parentMap === null || !parentMap.endsWith("/wayfinder-map.md")) {
+      errors.push(`${basename(path)}: parent_map must be a rooted Wayfinder map Path`);
+    }
+    if (!VALID_WAYFINDER_LABEL.has(meta.label)) {
+      errors.push(`${basename(path)}: invalid Wayfinder label ${meta.label}`);
+    }
+    if (!VALID_WAYFINDER_STATUS.has(meta.status)) {
+      errors.push(`${basename(path)}: invalid Wayfinder status ${meta.status}`);
+    }
+    const dependencies = Array.isArray(meta.blocked_by) ? meta.blocked_by.map(String) : [];
+    if (!Array.isArray(meta.blocked_by)) errors.push(`${basename(path)}: blocked_by must be a list`);
+    graph.set(id, dependencies);
+    if (!VALID_WAYFINDER_RESOLUTION.has(meta.resolution)) {
+      errors.push(`${basename(path)}: invalid Wayfinder resolution ${meta.resolution}`);
+    }
+    if (meta.status === "open" && meta.resolution !== null) {
+      errors.push(`${basename(path)}: open Wayfinder Ticket must have resolution: null`);
+    }
+    if (meta.status === "closed" && meta.resolution === null) {
+      errors.push(`${basename(path)}: closed Wayfinder Ticket needs a resolution`);
+    }
+  }
+
+  for (const [id, dependencies] of graph) {
+    for (const dependency of dependencies) {
+      if (!tickets.has(dependency)) errors.push(`${id}: blocked_by references missing ${dependency}`);
+      if (dependency === id) errors.push(`${id}: Wayfinder Ticket cannot block itself`);
+    }
+  }
+  const cycle = findCycle(graph);
+  if (cycle) errors.push(`Wayfinder dependency cycle: ${cycle.join(" -> ")}`);
+
+  const commentsRoot = join(investigationDir, "comments");
+  for (const [id, ticket] of tickets) {
+    if (ticket.meta.status !== "closed") continue;
+    const commentDir = join(commentsRoot, id);
+    const comments = isDirectory(commentDir)
+      ? readdirSync(commentDir).filter((name) => /^\d{2,}-solution\.md$/.test(name)).sort()
+      : [];
+    if (!comments.length) {
+      errors.push(`${id}: closed Wayfinder Ticket has no solution comment`);
+      continue;
+    }
+    for (const name of comments) {
+      const { meta } = parseFrontmatter(join(commentDir, name));
+      if (meta.artifact !== "wayfinder-solution-comment" || meta.ticket !== id) {
+        errors.push(`${toPosix(relative(change, join(commentDir, name)))}: invalid solution comment identity`);
+      }
+    }
+  }
+  return tickets;
+}
+
 function validateTicket(path, errors) {
   const { meta, body } = parseFrontmatter(path);
   const missing = [...REQUIRED_TICKET_KEYS].filter((key) => !(key in meta));
@@ -930,6 +1149,8 @@ function validateChange(change) {
   const spec = validateSpec(join(change, "spec.md"), errors, warnings);
   const ticketsMap = validateMap(join(change, "tickets-map.md"), errors);
   const goalPlan = validateGoalPlan(join(change, "goal-plan.md"), errors);
+  validateDesignTree(join(change, "design-tree.json"), change, errors);
+  validateWayfinder(change, errors);
   for (const artifact of [spec, ticketsMap, goalPlan]) {
     if (artifact && artifact.meta.change !== basename(change)) {
       errors.push(`${basename(artifact.path)}: change must equal directory name ${basename(change)}`);

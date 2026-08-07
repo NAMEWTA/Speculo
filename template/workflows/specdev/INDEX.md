@@ -46,6 +46,9 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
 
 工件职责和冲突裁决位于 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`。
@@ -80,12 +83,14 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
@@ -112,6 +117,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>`
 - `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>`
 - `<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
 
 ## 启动协议
 
@@ -143,7 +149,8 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 
 - change：`active | blocked | completed | archived`
 - Ticket：`draft | ready | in_progress | blocked | review | done | deviated | cancelled`
-- Investigation：`open | claimed | confirmed | disproved | decision-needed | unresolved | superseded | cancelled`
+- Investigation status：`open | closed`
+- Investigation resolution：`answered | out-of-scope | superseded | cancelled | null`
 - Planning Depth：`lite | standard | deep`
 - Worktree：`planned | active | review | integrated | removed | blocked`
 
@@ -165,15 +172,15 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - **A-archive-and-consolidate** — 归档与沉淀：双模式沉淀 Work——归档已验证完成的 change 并提升其知识，或在没有可归档 change 时以当前代码为基本事实深度访谈用户，把经验证的架构决策与领域术语提升为永久知识。
 - **D-diagnose-bugs** — 诊断 Bug：通过复现、反馈回路、可证伪假设与最小插桩定位根因，输出修复契约而不是猜测性补丁。
 - **E-engineering-cognitive-mentor** — 工程认知导师：面向 Bug、项目源码、需求技术方案、架构设计与陌生技术领域的非执行型认知指导 Work；以证据、因果 Why、候选方案对比和逐轮澄清帮助用户形成可复述理解，并将完整问答轨迹持续持久化到当前 change。
-- **G-grill-with-docs** — 设计访谈（带文档）：通过一次一问的设计访谈打磨方案，同时持续维护设计日志、领域上下文和架构决策。
+- **G-grill-with-docs** — 设计访谈（带文档）：以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护设计树、日志、领域上下文和架构决策。
 - **I-implement** — 实现：基于 Ready Ticket 或获批的小型 Spec 执行设计检查、TDD 红绿循环、持续验证、双轴审查、证据回写和提交。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、追踪约定、领域知识布局、验证命令和并发治理。
 - **P-goal-plan** — 目标规划：在协调复杂度需要时，将 Ready Spec、Tickets、架构决策与外部约束综合为决策完备的跨 Ticket 编排计划。
-- **R-review-architecture** — 架构审查：扫描与目标相关的代码区域，识别浅模块、接缝泄漏和局部性问题，以可视化报告呈现候选方案，并通过逐项访谈转化为可执行决策。
+- **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库的深化机会，以持久化可视化 HTML 呈现候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 拆分 Tickets：将 Spec、计划或已确认对话拆成曳光弹式垂直切片；每个 Ticket 决策完备、可独立验证、适配单一上下文，并建立阻塞 DAG、路径所有权和执行就绪门禁。
 - **T-triage** — 请求分诊：完整摄入外部请求，判断问题类型、影响、风险、缺失信息和下一 work，不在分诊阶段过早设计或实现。
-- **W-wayfinder** — 寻路：为路径未知、跨域或超出单次上下文的工作建立共享调查地图，通过可领取的研究与决策 Ticket 关闭未知项并收敛到可执行路线。
+- **W-wayfinder** — 寻路：为超出单次会话且路径尚不可见的工作建立本地共享地图，逐个解决 research、prototype、grilling 或 task Ticket，直到目的地路线决策完备。
 
 <!-- AUTO-INDEX-END -->
 

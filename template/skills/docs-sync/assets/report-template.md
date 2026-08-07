@@ -1,6 +1,7 @@
 ---
 command: docs-sync
 mode: <bootstrap|incremental|no-op>
+handbook_mode: <incremental|rebuild>
 scope: <workspace|multi-workflow|workflow>
 workflows: []
 changes: []

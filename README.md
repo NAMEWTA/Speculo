@@ -44,18 +44,17 @@ After initialization, the target project gains the following AI agent-callable a
 
 | Command | Purpose |
 |---|---|
-| `docs-sync` | Clean workspace, sync project documentation from reproducible Git ranges |
+| `docs-sync` | Clean workspace, sync project documentation and Agent handbooks from reproducible Git ranges |
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 7 Skills
+### 6 Skills
 
 | Skill | Purpose |
 |---|---|
-| `agents-md-builder` | Multi-layer AGENTS.md / CLAUDE.md handbook tree builder |
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
-| `docs-sync` | Core documentation audit and synchronization |
+| `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `speculo-retro` | Retrospective analysis |
 | `typescript-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |

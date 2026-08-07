@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:wayfinder-ticket:v1",
+  "title": "SpecDev Wayfinder Ticket Frontmatter",
+  "type": "object",
+  "required": ["artifact", "id", "name", "parent_map", "label", "status", "blocked_by", "resolution"],
+  "properties": {
+    "artifact": { "const": "wayfinder-ticket" },
+    "id": { "type": "string", "pattern": "^INV-[0-9]{2,}$" },
+    "name": { "type": "string", "minLength": 1 },
+    "parent_map": { "type": "string", "minLength": 1 },
+    "label": { "enum": ["wayfinder:research", "wayfinder:prototype", "wayfinder:grilling", "wayfinder:task"] },
+    "status": { "enum": ["open", "closed"] },
+    "blocked_by": { "type": "array", "items": { "type": "string", "pattern": "^INV-[0-9]{2,}$" } },
+    "resolution": { "enum": [null, "answered", "out-of-scope", "superseded", "cancelled"] }
+  },
+  "additionalProperties": false
+}
+

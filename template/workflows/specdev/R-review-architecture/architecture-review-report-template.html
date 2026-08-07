@@ -1,58 +1,106 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SpecDev Architecture Review</title>
-  <style>
-    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-    body { max-width: 1180px; margin: 0 auto; padding: 32px; line-height: 1.55; }
-    header, section { margin-bottom: 28px; }
-    .meta, .card { border: 1px solid #8886; border-radius: 12px; padding: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .badge { display: inline-block; border: 1px solid currentColor; border-radius: 999px; padding: 2px 9px; margin-right: 6px; font-size: 0.85rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #8886; padding: 8px; text-align: left; vertical-align: top; }
-    code { overflow-wrap: anywhere; }
-    path::before { content: "<Path>"; }
-    path::after { content: "</Path>"; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Architecture Review: &lt;范围&gt;</h1>
-    <div class="meta">
-      <p>决策记录：<code><Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path></code></p>
-      <p>本报告：<code><Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path></code></p>
-    </div>
-  </header>
-  <section>
-    <h2>审查压力与结构地图</h2>
-    <p>&lt;填写触发目标、范围、模块、接口、数据流和变化热点。&gt;</p>
-  </section>
-  <section>
-    <h2>候选提案</h2>
-    <div class="grid">
-      <article class="card">
-        <h3>AR-001 · &lt;标题&gt;</h3>
-        <p><span class="badge">severity</span><span class="badge">status</span></p>
-        <p><strong>证据：</strong><code><Path>project/relative/path</Path></code></p>
-        <p><strong>问题机制：</strong>&lt;...&gt;</p>
-        <p><strong>实际影响：</strong>&lt;...&gt;</p>
-        <p><strong>推荐：</strong>&lt;...&gt;</p>
-      </article>
-    </div>
-  </section>
-  <section>
-    <h2>方案对比</h2>
-    <table>
-      <thead><tr><th>维度</th><th>保持现状</th><th>推荐方案</th><th>替代方案</th></tr></thead>
-      <tbody><tr><td>调用者复杂度</td><td></td><td></td><td></td></tr></tbody>
-    </table>
-  </section>
-  <section>
-    <h2>决策与下一步</h2>
-    <p>&lt;逐项记录 accepted / adjusted / deferred / rejected。&gt;</p>
-  </section>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Architecture review - {{repo name}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      * { letter-spacing: 0 !important; }
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .module-label { font-size: 0.72rem; text-transform: uppercase; }
+      .quality-bar { min-height: 2.75rem; }
+      code { overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-5xl space-y-12 px-4 py-10 sm:px-6 sm:py-12">
+      <header class="space-y-4 border-b border-slate-300 pb-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold text-emerald-700">{{repo name}} / {{date}}</p>
+            <h1 class="mt-1 font-serif text-3xl font-semibold sm:text-4xl">Architecture review</h1>
+          </div>
+          <p class="text-sm text-slate-600">{{review scope}}</p>
+        </div>
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600" aria-label="图例">
+          <span><span class="mr-1 inline-block h-3 w-5 border border-slate-700 align-middle"></span>module</span>
+          <span><span class="mr-1 inline-block h-3 w-5 border border-dashed border-slate-700 align-middle"></span>seam</span>
+          <span><span class="mr-1 inline-block h-0 w-5 border-t-2 border-red-600 align-middle"></span>leak</span>
+          <span><span class="mr-1 inline-block h-3 w-5 border-4 border-slate-900 align-middle"></span>deep module</span>
+        </div>
+        <p class="text-xs text-slate-500">
+          Decision record: <code><Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path></code>
+        </p>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+        <article id="ar-001" class="rounded-lg border border-slate-300 bg-white p-5 shadow-sm sm:p-7">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold text-emerald-700">AR-001</p>
+              <h2 class="mt-1 font-serif text-2xl font-semibold">Collapse the Order intake pipeline</h2>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs font-semibold">
+              <span class="rounded border border-emerald-700 bg-emerald-50 px-2 py-1 text-emerald-800">Strong</span>
+              <span class="rounded border border-slate-400 bg-slate-50 px-2 py-1 text-slate-700">in-process</span>
+            </div>
+          </div>
+
+          <div class="mt-5 border-y border-slate-200 py-3">
+            <p class="text-xs font-semibold uppercase text-slate-500">Files</p>
+            <p class="mt-1 font-mono text-sm">src/order/handler.ts · src/order/validator.ts · test/order.test.ts</p>
+          </div>
+
+          <div class="mt-6 grid gap-6 lg:grid-cols-2">
+            <section aria-labelledby="before-title">
+              <h3 id="before-title" class="text-sm font-semibold">Before</h3>
+              <div class="mt-2 min-h-80 rounded-lg border border-slate-200 bg-stone-50 p-4">
+                <pre class="mermaid">
+flowchart LR
+  A[OrderHandler] --> B[OrderValidator]
+  B --> C[OrderRepo]
+  C -. leak .-> D[PricingClient]
+  classDef leaking stroke:#dc2626,stroke-width:2px
+  class C,D leaking
+                </pre>
+              </div>
+            </section>
+            <section aria-labelledby="after-title">
+              <h3 id="after-title" class="text-sm font-semibold">After</h3>
+              <div class="mt-2 flex min-h-80 flex-col justify-center rounded-lg border-4 border-slate-900 bg-white p-5">
+                <p class="module-label font-semibold text-slate-500">Interface</p>
+                <div class="quality-bar mt-2 flex items-center rounded border border-emerald-700 bg-emerald-50 px-4 text-sm font-semibold text-emerald-900">one narrow interface</div>
+                <p class="module-label mt-6 font-semibold text-slate-500">Hidden implementation</p>
+                <div class="mt-2 space-y-2 text-sm text-slate-500">
+                  <div class="rounded border border-slate-200 bg-slate-50 p-3">validation</div>
+                  <div class="rounded border border-slate-200 bg-slate-50 p-3">pricing protocol</div>
+                  <div class="rounded border border-slate-200 bg-slate-50 p-3">persistence</div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <dl class="mt-6 grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-3">
+            <div><dt class="text-xs font-semibold uppercase text-slate-500">Problem</dt><dd class="mt-1 text-sm">Callers coordinate three shallow modules and absorb the failure order.</dd></div>
+            <div><dt class="text-xs font-semibold uppercase text-slate-500">Solution</dt><dd class="mt-1 text-sm">Move the intake policy behind one deep module.</dd></div>
+            <div><dt class="text-xs font-semibold uppercase text-slate-500">Wins</dt><dd class="mt-1 text-sm">One test surface · Local failure policy · Fewer leaking seams</dd></div>
+          </dl>
+
+          <p class="mt-5 rounded border border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-950">ADR note: {{none or conflict explanation}}</p>
+        </article>
+      </section>
+
+      <section id="top-recommendation" class="border-t-4 border-emerald-700 pt-6">
+        <p class="text-sm font-semibold text-emerald-700">Best recommendation</p>
+        <h2 class="mt-1 font-serif text-2xl font-semibold"><a class="underline decoration-emerald-600 decoration-2 underline-offset-4" href="#ar-001">Collapse the Order intake pipeline</a></h2>
+        <p class="mt-2 max-w-3xl text-slate-700">It removes the hottest coordination seam while preserving the domain language and existing behavior.</p>
+      </section>
+    </main>
+  </body>
 </html>
