@@ -2,35 +2,20 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
-import { migrateSpeculo } from "./migrate.js";
-import { mirrorSkills } from "./skills-mirror.js";
-import {
-  checkForUpdate,
-  formatVersionBanner,
-  type VersionInfo,
-} from "./version.js";
+import { checkForUpdate, formatVersionBanner, type VersionInfo } from "./version.js";
+
+const REMOVED_COMMANDS = new Set(["migrate", "mirror-skills", "update"]);
+const REMOVED_OPTIONS = new Set(["--all", "--apply", "--dry-run"]);
 
 function usage(): string {
   return [
     "Usage:",
-    "  speculo init [--all] [target]",
-    "  speculo migrate [--apply] [target]",
-    "  speculo mirror-skills [--dry-run] [target]",
+    "  speculo [init] [target]",
     "  speculo version",
     "",
     "Commands:",
-    "  init           Install or refresh Speculo core assets and selected workflow packages.",
-    "                 Existing workflow state under speculo/.speculo/ is never overwritten.",
-    "  migrate        Preview migration from v2, transitional v3, or SpecDev status v3 state.",
-    "                 Pass --apply to perform the staged, rollback-safe migration.",
-    "  mirror-skills  Mirror .agents/skills/* canonical skills into .claude/skills/* pointers.",
-    "                 Idempotent; relocates full .claude skills into .agents canonical first.",
-    "  version        Print the current Speculo version and check for updates.",
-    "",
-    "Options:",
-    "  --all      Select every workflow and fully refresh all assets during init.",
-    "  --apply    Apply a migration; without this flag migrate is always dry-run.",
-    "  --dry-run  Preview mirror-skills actions without writing to disk.",
+    "  init      Install or directly refresh Speculo assets and selected workflow packages.",
+    "  version   Print the current Speculo version and check for updates.",
   ].join("\n");
 }
 
@@ -38,168 +23,60 @@ function isInteractive(): boolean {
   return process.stdin.isTTY === true;
 }
 
-async function showVersionWithCheck(
-  packageRoot: string,
-  packageName: string
-): Promise<VersionInfo> {
+async function showVersionWithCheck(packageRoot: string, packageName: string): Promise<VersionInfo> {
   const info = await checkForUpdate(packageRoot, packageName);
   console.log(formatVersionBanner(info));
   return info;
 }
 
 async function confirmContinue(): Promise<boolean> {
-  if (!isInteractive()) {
-    return true;
-  }
-
+  if (!isInteractive()) return true;
   const { confirm } = await import("@inquirer/prompts");
-  return confirm({
-    message: "是否继续运行 speculo init？",
-    default: true,
-  });
+  return confirm({ message: "是否继续运行 speculo init？", default: true });
+}
+
+function assertNoRemovedOption(argv: string[]): void {
+  const option = argv.find((argument) => REMOVED_OPTIONS.has(argument));
+  if (option) throw new Error(option + " has been removed. Run speculo init [target] to refresh Speculo.");
 }
 
 async function main(argv: string[]): Promise<number> {
-  const allFlag = argv.includes("--all");
-  const applyFlag = argv.includes("--apply");
-  const dryRunFlag = argv.includes("--dry-run");
-  const positional = argv.filter(
-    (argument) =>
-      argument !== "--all" &&
-      argument !== "--apply" &&
-      argument !== "--dry-run"
-  );
-  const [command, targetArg, extra] = positional;
-
-  if (command === "--help" || command === "-h") {
+  if (argv[0] === "--help" || argv[0] === "-h") {
     console.log(usage());
     return 0;
   }
 
-  if (extra) {
-    console.error("Unexpected argument: " + extra);
-    console.error(usage());
+  const [command, ...rest] = argv;
+  if (command && REMOVED_COMMANDS.has(command)) {
+    console.error("speculo " + command + " has been removed. Run speculo init [target] to refresh Speculo.");
     return 1;
   }
 
-  const target = resolve(targetArg ?? ".");
-  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-  const packageName = "@namewta/speculo";
-
   try {
-    // ── version ──────────────────────────────────────────────
+    assertNoRemovedOption(argv);
+    const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+    const packageName = "@namewta/speculo";
     if (command === "version") {
+      if (rest.length > 0) throw new Error("speculo version does not accept arguments.");
       await showVersionWithCheck(packageRoot, packageName);
       return 0;
     }
 
-    // ── init (or no command → default to init) ───────────────
-    if (!command || command === "init") {
-      if (applyFlag) {
-        throw new Error("--apply is only valid with `speculo migrate`.");
-      }
+    const targetArg = command === "init" ? rest[0] : command;
+    const extra = command === "init" ? rest[1] : rest[0];
+    if (extra) throw new Error("Unexpected argument: " + extra);
+    if (targetArg?.startsWith("-")) throw new Error("Unknown option: " + targetArg);
 
-      // Show version info and check for updates
-      await showVersionWithCheck(packageRoot, packageName);
-
-      // Confirm before proceeding
-      const proceed = await confirmContinue();
-      if (!proceed) {
-        console.log("已取消。");
-        return 0;
-      }
-
-      const result = await initSpeculo(targetArg ?? ".", {
-        packageRoot,
-        all: command === "init" ? allFlag : false,
-      });
-      console.log(
-        result.mode === "init"
-          ? "Speculo initialized in " + result.target
-          : "Speculo updated in " + result.target
-      );
-      for (const item of result.copied ?? result.updated ?? []) {
-        console.log("  " + (result.mode === "init" ? "copied " : "updated ") + item);
-      }
+    await showVersionWithCheck(packageRoot, packageName);
+    if (!(await confirmContinue())) {
+      console.log("已取消。");
       return 0;
     }
 
-    // ── migrate ──────────────────────────────────────────────
-    if (command === "migrate") {
-      if (allFlag) {
-        throw new Error("--all is only valid with `speculo init`.");
-      }
-      const result = await migrateSpeculo(target, {
-        packageRoot,
-        apply: applyFlag,
-      });
-      if (!result.legacyDetected) {
-        console.log("No Speculo state migration required in " + result.target);
-        return 0;
-      }
-
-      console.log(
-        result.applied
-          ? "Speculo state migrated in " + result.target
-          : "Speculo migration preview for " + result.target
-      );
-      for (const action of result.actions) {
-        const mapping = action.from
-          ? action.from + (action.to ? " -> " + action.to : "")
-          : action.detail;
-        console.log("  " + action.kind + " " + mapping);
-      }
-      if (!result.applied) {
-        console.log("Dry-run only. Re-run with --apply to perform this migration.");
-      }
-      return 0;
-    }
-
-    // ── mirror-skills ────────────────────────────────────────
-    if (command === "mirror-skills") {
-      if (allFlag) {
-        throw new Error("--all is only valid with `speculo init`.");
-      }
-      if (applyFlag) {
-        throw new Error("--apply is only valid with `speculo migrate`.");
-      }
-      const result = await mirrorSkills(targetArg ?? ".", {
-        apply: !dryRunFlag,
-      });
-      console.log(
-        result.applied
-          ? "Skills mirrored in " + result.target
-          : "Skills mirror preview for " + result.target
-      );
-      for (const action of result.actions) {
-        console.log(
-          "  " + action.kind + " " + action.name +
-          (action.detail ? " (" + action.detail + ")" : "")
-        );
-      }
-      if (result.actions.length === 0) {
-        console.log("  No skills found under .agents/skills or .claude/skills.");
-      }
-      if (!result.applied) {
-        console.log("Dry-run only. Re-run without --dry-run to apply.");
-      }
-      return 0;
-    }
-
-    // ── update (deprecated) ──────────────────────────────────
-    if (command === "update") {
-      console.error("Warning: `speculo update` is deprecated. Use `speculo init`.");
-      const result = await initSpeculo(target, {
-        packageRoot,
-        all: true,
-      });
-      console.log("Speculo updated in " + result.target);
-      return 0;
-    }
-
-    console.error("Unknown command: " + command);
-    console.error(usage());
-    return 1;
+    const result = await initSpeculo(targetArg ?? ".", { packageRoot });
+    console.log(result.mode === "init" ? "Speculo initialized in " + result.target : "Speculo refreshed in " + result.target);
+    for (const asset of result.assets) console.log("  refreshed " + asset);
+    return 0;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;

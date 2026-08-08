@@ -4,6 +4,20 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] - 2026-08-09
+
+### Changed
+- **Direct refresh is the only upgrade path**: `speculo init` now stages a complete replacement installation and refreshes managed template assets without inspecting or migrating old state. It replaces `config.json`, workspace metadata, commands, skills, and selected workflow packages; selected workflow state is reset to the current skeleton while `changes/`, `archive/`, and command Markdown reports are retained.
+- **State cleanup contract**: selected workflow sidecars, workflow configuration, unknown state files, and command `state.json` files are removed during refresh. Current supported workflows not selected in the prompt remain untouched.
+- **Build output hygiene**: `pnpm build` clears `dist/` before compiling so deleted source modules cannot be packaged accidentally.
+
+### Removed
+- **Migration and skill-mirror CLI surface**: removed `speculo migrate`, `speculo mirror-skills`, `speculo update`, and `--all` / `--apply` / `--dry-run`. Calling a removed command or option exits nonzero and directs users to `speculo init`.
+- Removed the migration and skills-mirror source modules, their legacy compatibility tests, and workflow instructions that directed users to migrate state.
+
+### Tests
+- Added direct-refresh coverage for malformed schema v2 state, unknown legacy files, state cleanup, retained audit history, unselected workflow preservation, staging failure rollback, and the reduced CLI surface.
+
 ## [0.6.1] - 2026-08-08
 
 ### Added

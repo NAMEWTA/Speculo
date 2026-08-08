@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.6.1
+- Package: `@namewta/speculo` v0.7.0
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -12,7 +12,7 @@
 ## Directory Map
 
 ```
-src/                 CLI source (cli.ts, index.ts, migrate.ts, skills-mirror.ts, workflows.ts, utils.ts)
+src/                 CLI source (cli.ts, index.ts, version.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
   commands/           6 command definitions
@@ -29,7 +29,7 @@ scripts/              Build, validation, verification tooling
 
 | Command | What it does |
 |---|---|
-| `pnpm build` | `tsc -p tsconfig.json` |
+| `pnpm build` | Clean `dist/`, then run `tsc -p tsconfig.json` |
 | `pnpm test` | `node --test dist/test/*.test.js` (builds first via pretest) |
 | `pnpm validate-source-parity` | Check all `temp/skills` sources against their adopted, excluded, or pending SpecDev targets |
 | `pnpm validate-assets` | Check source parity, canonical freshness, framework assets, and template links |
@@ -38,26 +38,21 @@ scripts/              Build, validation, verification tooling
 
 ## Architecture
 
-- **cli.ts** — Thin command router: parse command → delegate to index.ts (init) or migrate.ts (migrate). `update` is deprecated.
-- **index.ts** — `initSpeculo()` copies template assets to `<target>/speculo/`. Core assets (`.speculo`, `commands`, `skills`) always installed. Workflow packages selected interactively or via `--all`.
-- **migrate.ts** — `planMigration()` + `migrateSpeculo()`: v2/transitional-v3 and SpecDev global status v3 → current v4 state. Staged, rollback-safe with backup/restore.
+- **cli.ts** — Thin command router exposing only init (also the bare command) and version.
+- **index.ts** — `initSpeculo()` builds a staged installation before atomically replacing `<target>/speculo/`. It always refreshes template-managed core assets and selected workflow packages.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
-- **skills-mirror.ts** — `mirrorSkills()`: mirror `.agents/skills/*` canonicals into `.claude/skills/*` pointers; reverse-relocate full `.claude` skills into `.agents`; idempotent. Pointer detected via `<!-- speculo:pointer -->` sentinel.
 - **utils.ts** — Single `pathExists()` helper.
 
 ## CLI Usage
 
 ```
-speculo init [--all] [target]           Install/refresh core + selected workflows
-speculo migrate [--apply] [target]      Preview/apply legacy state migration
-speculo mirror-skills [--dry-run] [t]   Mirror .agents/skills/* canonical → .claude/skills/* pointers
-speculo update                           Deprecated → delegates to speculo init --all
+speculo [init] [target]                 Initialize/refresh core + selected workflows
+speculo version                          Show local version and check npm for updates
 ```
 
-- `--all` only valid with `init`; `--apply` only valid with `migrate`; `--dry-run` only valid with `mirror-skills`.
-- Existing `.speculo/` state is never overwritten on init; existing `config.json` is preserved on update.
-- `mirror-skills` keeps `.agents/skills/<name>/SKILL.md` as the single source of truth and regenerates `.claude/skills/<name>/SKILL.md` as a thin pointer (frontmatter + relative-path reference, sentinel `<!-- speculo:pointer -->`). Idempotent; relocates a full `.claude` skill into `.agents` first when no canonical exists.
-- `update` command is deprecated and will be removed in a future version.
+- Bare `speculo` is an alias for `speculo init`; `init` accepts at most one target path and shows the workflow picker in a TTY. Non-TTY installs all template workflows.
+- Every refresh replaces managed `config.json`, workspace metadata, commands, skills, and selected workflow assets. Selected workflow state is rebuilt from its current skeleton while retaining only `changes/` and `archive/`; command reports are retained while command `state.json` files are removed.
+- Current template workflows not selected in the refresh remain untouched. Unknown/removed managed commands, skills, workflows, and state are removed. No migration or compatibility layer exists.
 
 ## Template Asset Layout
 
@@ -101,9 +96,9 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 ## Dangerous Patterns (verified regressions)
 
 - **Do not** put `docs-sync.json` in workflow `_state/` template — it's a lazy command sidecar.
-- **Do not** overwrite existing `.speculo/` state on init (merge/copy-missing only).
-- **Do not** mutate state when migration blockers exist — all or nothing.
-- **Do not** leave legacy workflow directories (`workflows/dev`, `workflows/doc`) after migration.
+- **Do not** add migration/compatibility branches or preserve stale managed state outside `changes/`, `archive/`, and command reports.
+- **Do not** replace an existing installation until staging the complete next installation succeeds.
+- **Do not** retain legacy workflow directories (such as `workflows/dev` or `workflows/doc`) in a refreshed installation.
 
 ## Release
 

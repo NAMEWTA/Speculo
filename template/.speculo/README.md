@@ -2,6 +2,10 @@
 
 本目录是 Speculo 运行时状态的唯一持久化根。
 
+## 刷新契约
+
+重新运行 `speculo init` 会直接以当前模板刷新 Speculo 管理的配置与静态资产，不执行旧状态迁移或兼容。对本次选中的 workflow，刷新只保留 `changes/` 与 `archive/` 历史；workflow 配置、sidecar、未知运行文件与 command `state.json` 会被删除。Command Markdown 报告保留作审计记录，但不保证旧工件可被新 workflow 恢复。
+
 ## 读取顺序
 
 1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。

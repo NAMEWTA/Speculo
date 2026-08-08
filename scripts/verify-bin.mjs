@@ -22,8 +22,12 @@ if (!firstLine.startsWith("#!/usr/bin/env node")) {
 
 try {
   const out = execFileSync(process.execPath, [bin, "--help"], { encoding: "utf8" });
-  if (!/speculo init/.test(out) || !/speculo migrate/.test(out)) {
+  if (!/speculo \[init\] \[target\]/.test(out) || !/speculo version/.test(out)) {
     console.error("verify-bin: `speculo --help` did not print the expected usage banner.");
+    process.exit(1);
+  }
+  if (/^\s+(?:migrate|mirror-skills|update)\b|--all|--apply|--dry-run/m.test(out)) {
+    console.error("verify-bin: help exposes a removed command or option.");
     process.exit(1);
   }
 } catch (err) {
@@ -31,4 +35,4 @@ try {
   process.exit(1);
 }
 
-console.log("verify-bin: OK - dist/src/cli.js exposes init and migrate through --help.");
+console.log("verify-bin: OK - dist/src/cli.js exposes only init and version through --help.");

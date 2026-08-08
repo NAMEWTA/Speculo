@@ -1,6 +1,5 @@
-import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
-import { detectLegacyState } from "./migrate.js";
+import { cp, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { basename, dirname, join, resolve } from "node:path";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
@@ -8,19 +7,18 @@ import {
   promptWorkflowSelection,
   scanInstalledWorkflows,
   selectAllFromCatalog,
+  type WorkflowCatalog,
   type WorkflowSelection,
 } from "./workflows.js";
 
 export type SpeculoCommandResult = {
   target: string;
-  mode: "init" | "update";
-  copied?: string[];
-  updated?: string[];
+  mode: "init" | "refresh";
+  assets: string[];
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
-  all?: boolean;
   selection?: WorkflowSelection;
 };
 
@@ -39,10 +37,7 @@ function installRoot(target: string): string {
   return join(target, INSTALL_SUBDIR);
 }
 
-async function ensureAssetSource(
-  packageRoot: string,
-  asset: string
-): Promise<string> {
+async function ensureAssetSource(packageRoot: string, asset: string): Promise<string> {
   const source = join(assetRoot(packageRoot), asset);
   if (!(await pathExists(source))) {
     throw new Error("Missing packaged Speculo asset: template/" + asset);
@@ -50,60 +45,39 @@ async function ensureAssetSource(
   return source;
 }
 
-async function copyCoreAssets(
-  packageRoot: string,
-  root: string,
-  overwrite: boolean
-): Promise<string[]> {
-  const copied: string[] = [];
-  for (const asset of CORE_ASSETS) {
-    const source = await ensureAssetSource(packageRoot, asset);
-    const destination = join(root, asset);
-    if (asset === ".speculo" && overwrite) {
-      await copyMissingTree(source, destination);
-      copied.push(asset);
-      continue;
-    }
-    if (asset === "config.json" && overwrite) {
-      if (!(await pathExists(destination))) {
-        await cp(source, destination);
-        copied.push(asset);
-      } else {
-        // Never overwrite a user-edited config on update; report the skip so
-        // the init output makes the preservation explicit (issue #33).
-        copied.push(asset + " (preserved)");
-      }
-      continue;
-    }
-    if (overwrite && asset !== ".speculo") {
-      await rm(destination, { recursive: true, force: true });
-    }
-    await cp(source, destination, {
-      recursive: true,
-      force: overwrite,
-      errorOnExist: !overwrite,
+async function copyDirectoryContents(source: string, destination: string): Promise<void> {
+  if (!(await pathExists(source))) return;
+  await mkdir(destination, { recursive: true });
+  const entries = await readdir(source, { withFileTypes: true });
+  for (const entry of entries) {
+    await cp(join(source, entry.name), join(destination, entry.name), {
+      recursive: entry.isDirectory(),
+      force: true,
     });
-    copied.push(asset);
   }
-  return copied;
 }
 
-async function copyMissingTree(
-  source: string,
-  destination: string
-): Promise<void> {
-  await mkdir(destination, { recursive: true });
+async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<void> {
+  for (const asset of CORE_ASSETS) {
+    const source = await ensureAssetSource(packageRoot, asset);
+    await cp(source, join(stagedRoot, asset), {
+      recursive: asset !== "config.json",
+      force: true,
+    });
+  }
+}
+
+async function copyCommandReports(source: string, destination: string): Promise<void> {
+  if (!(await pathExists(source))) return;
   const entries = await readdir(source, { withFileTypes: true });
   for (const entry of entries) {
     const sourceEntry = join(source, entry.name);
     const destinationEntry = join(destination, entry.name);
     if (entry.isDirectory()) {
-      await copyMissingTree(sourceEntry, destinationEntry);
-    } else if (!(await pathExists(destinationEntry))) {
-      await cp(sourceEntry, destinationEntry, {
-        force: false,
-        errorOnExist: true,
-      });
+      await copyCommandReports(sourceEntry, destinationEntry);
+    } else if (entry.isFile() && entry.name.endsWith(".md")) {
+      await mkdir(dirname(destinationEntry), { recursive: true });
+      await cp(sourceEntry, destinationEntry, { force: true });
     }
   }
 }
@@ -111,253 +85,179 @@ async function copyMissingTree(
 function hasSpecdevWorktreeIgnore(content: string): boolean {
   return content.split(/\r?\n/).some((line) => {
     const pattern = line.trim();
-    if (!pattern || pattern.startsWith("#") || pattern.startsWith("!")) {
-      return false;
-    }
+    if (!pattern || pattern.startsWith("#") || pattern.startsWith("!")) return false;
     return pattern.replace(/^\//, "").replace(/\/$/, "") === "specdev-worktree";
   });
 }
 
-async function ensureSpecdevWorktreeIgnore(
-  target: string,
-  root: string
-): Promise<string | undefined> {
-  if (!(await pathExists(join(root, "workflows", "specdev", WORKFLOW_ENTRY)))) {
-    return undefined;
-  }
-
+async function ensureSpecdevWorktreeIgnore(target: string, root: string): Promise<string | undefined> {
+  if (!(await pathExists(join(root, "workflows", "specdev", WORKFLOW_ENTRY)))) return undefined;
   const ignorePath = join(target, ".gitignore");
   if (!(await pathExists(ignorePath))) {
     await writeFile(ignorePath, SPECDEV_WORKTREE_IGNORE + "\n", "utf8");
     return ".gitignore (created specdev-worktree/)";
   }
-
   const content = await readFile(ignorePath, "utf8");
-  if (hasSpecdevWorktreeIgnore(content)) {
-    return ".gitignore (preserved specdev-worktree/)";
-  }
-
+  if (hasSpecdevWorktreeIgnore(content)) return ".gitignore (preserved specdev-worktree/)";
   const newline = content.includes("\r\n") ? "\r\n" : "\n";
-  const separator = content.length === 0 || content.endsWith("\n")
-    ? ""
-    : newline;
-  await writeFile(
-    ignorePath,
-    content + separator + SPECDEV_WORKTREE_IGNORE + newline,
-    "utf8"
-  );
+  const separator = content.length === 0 || content.endsWith("\n") ? "" : newline;
+  await writeFile(ignorePath, content + separator + SPECDEV_WORKTREE_IGNORE + newline, "utf8");
   return ".gitignore (updated specdev-worktree/)";
 }
 
 function generateSpeculoContent(selection: WorkflowSelection): string {
-  const lines: string[] = [];
-
-  lines.push("## Speculo 运行时配置");
-  lines.push("");
-  lines.push("### 初始化状态检查");
-  lines.push("");
-  lines.push("运行时必须读取以下文件以确认 Speculo 初始化状态：");
-  lines.push("");
-  lines.push("- `./speculo/.speculo/workspace.json` — 工作区根别名配置");
-  lines.push("- `./speculo/config.json` — 项目配置文件");
-  lines.push("");
-  lines.push("若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。");
-  lines.push("此时必须提示用户：**请先运行 `speculo init` 完成初始化配置。**");
-  lines.push("");
-
+  const lines = [
+    "## Speculo 运行时配置",
+    "",
+    "### 初始化状态检查",
+    "",
+    "运行时必须读取以下文件以确认 Speculo 初始化状态：",
+    "",
+    "- ./speculo/.speculo/workspace.json — 工作区根别名配置",
+    "- ./speculo/config.json — 项目配置文件",
+    "",
+    "若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。",
+    "此时必须提示用户：请先运行 speculo init 完成初始化配置。",
+    "",
+  ];
   if (selection.workflowIds.length > 0) {
-    lines.push("### 工作流入口（强制读取）");
-    lines.push("");
-    lines.push("初始化时已选择以下工作流，运行时必须强制读取对应入口文件：");
-    lines.push("");
+    lines.push("### 工作流入口（强制读取）", "", "初始化时已选择以下工作流，运行时必须强制读取对应入口文件：", "");
     for (const workflowId of [...selection.workflowIds].sort()) {
-      lines.push(`- \`./speculo/workflows/${workflowId}/INDEX.md\``);
+      lines.push("- ./speculo/workflows/" + workflowId + "/INDEX.md");
     }
     lines.push("");
   }
-
-  return `<SPECULO>\n${lines.join("\n")}</SPECULO>`;
+  return "<SPECULO>\n" + lines.join("\n") + "</SPECULO>";
 }
 
-async function writeAgentFiles(
-  target: string,
-  packageRoot: string,
-  selection: WorkflowSelection
-): Promise<string[]> {
+async function writeAgentFiles(target: string, packageRoot: string, selection: WorkflowSelection): Promise<string[]> {
   const written: string[] = [];
   const speculoBlock = generateSpeculoContent(selection);
-
   const claudePath = join(target, "CLAUDE.md");
   if (!(await pathExists(claudePath))) {
     const claudeTemplate = join(assetRoot(packageRoot), "CLAUDE.md");
     if (await pathExists(claudeTemplate)) {
       await cp(claudeTemplate, claudePath);
     } else {
-      await writeFile(
-        claudePath,
-        "# CLAUDE.md\n\n必须查看 [@AGENTS.md](./AGENTS.md) 文档，按照 Speculo 规范进行开发。\n",
-        "utf8"
-      );
+      await writeFile(claudePath, "# CLAUDE.md\n\n必须查看 [@AGENTS.md](./AGENTS.md) 文档，按照 Speculo 规范进行开发。\n", "utf8");
     }
     written.push("CLAUDE.md");
   }
-
   const agentsPath = join(target, "AGENTS.md");
   if (await pathExists(agentsPath)) {
     let content = await readFile(agentsPath, "utf8");
-    if (SPECULO_TAG_RE.test(content)) {
-      content = content.replace(SPECULO_TAG_RE, speculoBlock);
-      written.push("AGENTS.md (updated <SPECULO>)");
-    } else {
-      content = content.trimEnd() + "\n\n" + speculoBlock + "\n";
-      written.push("AGENTS.md (appended <SPECULO>)");
-    }
+    const hasBlock = SPECULO_TAG_RE.test(content);
+    content = hasBlock ? content.replace(SPECULO_TAG_RE, speculoBlock) : content.trimEnd() + "\n\n" + speculoBlock + "\n";
     await writeFile(agentsPath, content, "utf8");
+    written.push(hasBlock ? "AGENTS.md (updated <SPECULO>)" : "AGENTS.md (appended <SPECULO>)");
   } else {
     const agentsTemplate = join(assetRoot(packageRoot), "AGENTS.md");
-    let templateContent: string;
-    if (await pathExists(agentsTemplate)) {
-      templateContent = await readFile(agentsTemplate, "utf8");
-    } else {
-      templateContent = "# AGENTS.md\n\n<SPECULO>\n</SPECULO>\n";
-    }
-    templateContent = templateContent.replace(SPECULO_TAG_RE, speculoBlock);
-    await writeFile(agentsPath, templateContent, "utf8");
+    let content = await (await pathExists(agentsTemplate)
+      ? readFile(agentsTemplate, "utf8")
+      : Promise.resolve("# AGENTS.md\n\n<SPECULO>\n</SPECULO>\n"));
+    content = content.replace(SPECULO_TAG_RE, speculoBlock);
+    await writeFile(agentsPath, content, "utf8");
     written.push("AGENTS.md");
   }
-
   return written;
 }
 
-async function copyWorkflowPackages(
-  packageRoot: string,
-  root: string,
-  selection: WorkflowSelection,
-  overwrite: boolean
-): Promise<string[]> {
-  const copied: string[] = [];
-  const sourceRoot = join(assetRoot(packageRoot), "workflows");
-  const destinationRoot = join(root, "workflows");
-  await mkdir(destinationRoot, { recursive: true });
-
-  for (const workflowId of selection.workflowIds) {
-    const source = join(sourceRoot, workflowId);
-    const entry = join(source, WORKFLOW_ENTRY);
-    if (!(await pathExists(entry))) {
-      throw new Error("Unknown workflow package: " + workflowId);
-    }
-
-    const destination = join(destinationRoot, workflowId);
-    if (overwrite) {
-      await rm(destination, { recursive: true, force: true });
-    }
-
-    await cp(source, destination, {
-      recursive: true,
-      force: overwrite,
-      errorOnExist: !overwrite,
-      filter: (path) => basename(path) !== STATE_TEMPLATE_DIR,
-    });
-    copied.push("workflows/" + workflowId);
-
-    const stateSource = join(source, STATE_TEMPLATE_DIR);
-    const stateDestination = join(root, ".speculo", workflowId);
-    if (!(await pathExists(stateSource))) {
-      throw new Error("Workflow " + workflowId + " is missing _state/");
-    }
-    if (!(await pathExists(stateDestination))) {
-      await cp(stateSource, stateDestination, {
-        recursive: true,
-        force: false,
-        errorOnExist: true,
-      });
-      copied.push(".speculo/" + workflowId);
-    }
-  }
-
-  return copied;
-}
-
-async function resolveSelection(
-  packageRoot: string,
-  root: string,
-  options: SpeculoOptions,
-  mode: "init" | "update"
-): Promise<WorkflowSelection> {
-  if (options.selection) return options.selection;
-
+async function resolveSelection(packageRoot: string, currentRoot: string, options: SpeculoOptions): Promise<WorkflowSelection> {
   const catalog = await discoverWorkflowCatalog(packageRoot);
-  if (options.all || !isInteractive()) return selectAllFromCatalog(catalog);
-
-  if (mode === "update") {
-    const installed = await scanInstalledWorkflows(root);
-    return promptWorkflowSelection(catalog, {
-      preSelectedWorkflowIds: new Set(installed),
-    });
+  if (options.selection) {
+    const ids = [...new Set(options.selection.workflowIds)].sort();
+    for (const id of ids) if (!catalog.has(id)) throw new Error("Unknown workflow package: " + id);
+    return { workflowIds: ids };
   }
-
-  return promptWorkflowSelection(catalog);
+  if (!isInteractive()) return selectAllFromCatalog(catalog);
+  const installed = new Set(await scanInstalledWorkflows(currentRoot));
+  return promptWorkflowSelection(catalog, {
+    preSelectedWorkflowIds: new Set([...installed].filter((workflowId) => catalog.has(workflowId))),
+  });
 }
 
-async function initFresh(
-  targetArg: string,
-  options: SpeculoOptions
-): Promise<SpeculoCommandResult> {
-  const target = resolve(targetArg);
-  const packageRoot = resolve(options.packageRoot ?? process.cwd());
-  const root = installRoot(target);
-  const selection = await resolveSelection(packageRoot, root, options, "init");
-
-  await mkdir(root, { recursive: true });
-  const copied = await copyCoreAssets(packageRoot, root, false);
-  copied.push(
-    ...await copyWorkflowPackages(packageRoot, root, selection, false)
-  );
-  const gitignoreResult = await ensureSpecdevWorktreeIgnore(target, root);
-  if (gitignoreResult) copied.push(gitignoreResult);
-  copied.push(...await writeAgentFiles(target, packageRoot, selection));
-
-  return { target, mode: "init", copied };
+async function copySelectedWorkflow(packageRoot: string, previousRoot: string, stagedRoot: string, workflowId: string): Promise<void> {
+  const source = join(assetRoot(packageRoot), "workflows", workflowId);
+  if (!(await pathExists(join(source, WORKFLOW_ENTRY)))) throw new Error("Unknown workflow package: " + workflowId);
+  await cp(source, join(stagedRoot, "workflows", workflowId), {
+    recursive: true,
+    force: true,
+    filter: (path) => basename(path) !== STATE_TEMPLATE_DIR,
+  });
+  const stateSource = join(source, STATE_TEMPLATE_DIR);
+  if (!(await pathExists(stateSource))) throw new Error("Workflow " + workflowId + " is missing _state/");
+  const stagedState = join(stagedRoot, ".speculo", workflowId);
+  await cp(stateSource, stagedState, { recursive: true, force: true });
+  for (const preservedDirectory of ["changes", "archive"]) {
+    await copyDirectoryContents(join(previousRoot, ".speculo", workflowId, preservedDirectory), join(stagedState, preservedDirectory));
+  }
 }
 
-async function initUpdate(
-  targetArg: string,
-  options: SpeculoOptions
-): Promise<SpeculoCommandResult> {
-  const target = resolve(targetArg);
-  const packageRoot = resolve(options.packageRoot ?? process.cwd());
-  const root = installRoot(target);
-  const selection = await resolveSelection(packageRoot, root, options, "update");
-  const updated = await copyCoreAssets(packageRoot, root, true);
-
-  updated.push(
-    ...await copyWorkflowPackages(packageRoot, root, selection, true)
-  );
-  const gitignoreResult = await ensureSpecdevWorktreeIgnore(target, root);
-  if (gitignoreResult) updated.push(gitignoreResult);
-  updated.push(...await writeAgentFiles(target, packageRoot, selection));
-
-  return { target, mode: "update", updated };
+async function copyUnselectedCurrentWorkflows(catalog: WorkflowCatalog, selection: WorkflowSelection, previousRoot: string, stagedRoot: string): Promise<void> {
+  const selected = new Set(selection.workflowIds);
+  for (const workflowId of catalog.keys()) {
+    if (selected.has(workflowId)) continue;
+    const previousWorkflow = join(previousRoot, "workflows", workflowId);
+    const previousState = join(previousRoot, ".speculo", workflowId);
+    if (await pathExists(previousWorkflow)) await cp(previousWorkflow, join(stagedRoot, "workflows", workflowId), { recursive: true, force: true });
+    if (await pathExists(previousState)) await cp(previousState, join(stagedRoot, ".speculo", workflowId), { recursive: true, force: true });
+  }
 }
 
-export async function initSpeculo(
-  targetArg = ".",
-  options: SpeculoOptions = {}
-): Promise<SpeculoCommandResult> {
-  const target = resolve(targetArg);
-  const root = installRoot(target);
+async function buildStagedInstall(packageRoot: string, target: string, previousRoot: string, catalog: WorkflowCatalog, selection: WorkflowSelection): Promise<string> {
+  await mkdir(target, { recursive: true });
+  const stagedRoot = await mkdtemp(join(target, ".speculo-init-stage-"));
+  try {
+    await copyCoreAssets(packageRoot, stagedRoot);
+    await copyCommandReports(join(previousRoot, ".speculo", "commands"), join(stagedRoot, ".speculo", "commands"));
+    await copyUnselectedCurrentWorkflows(catalog, selection, previousRoot, stagedRoot);
+    for (const workflowId of selection.workflowIds) await copySelectedWorkflow(packageRoot, previousRoot, stagedRoot, workflowId);
+    return stagedRoot;
+  } catch (error) {
+    await rm(stagedRoot, { recursive: true, force: true });
+    throw error;
+  }
+}
 
+async function replaceInstall(stagedRoot: string, root: string): Promise<void> {
   if (!(await pathExists(root))) {
-    return initFresh(targetArg, options);
+    await rename(stagedRoot, root);
+    return;
   }
-
-  if (await detectLegacyState(target)) {
-    throw new Error(
-      "Speculo state migration required. Run `speculo migrate " +
-      targetArg + "` to preview, then `speculo migrate --apply " +
-      targetArg + "` before updating."
-    );
+  const backupRoot = stagedRoot + "-backup";
+  await rename(root, backupRoot);
+  try {
+    await rename(stagedRoot, root);
+  } catch (error) {
+    try {
+      await rename(backupRoot, root);
+    } catch (rollbackError) {
+      throw new Error("Failed to replace Speculo installation and restore the previous installation: " + String(rollbackError));
+    }
+    throw error;
   }
+  await rm(backupRoot, { recursive: true, force: true });
+}
 
-  return initUpdate(targetArg, options);
+export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {}): Promise<SpeculoCommandResult> {
+  const target = resolve(targetArg);
+  const packageRoot = resolve(options.packageRoot ?? process.cwd());
+  const root = installRoot(target);
+  const existed = await pathExists(root);
+  const catalog = await discoverWorkflowCatalog(packageRoot);
+  const selection = await resolveSelection(packageRoot, root, options);
+  let stagedRoot: string | undefined;
+  try {
+    stagedRoot = await buildStagedInstall(packageRoot, target, root, catalog, selection);
+    await replaceInstall(stagedRoot, root);
+    stagedRoot = undefined;
+  } finally {
+    if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
+  }
+  const assets = [".speculo", "config.json", "commands", "skills"];
+  assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
+  const gitignoreResult = await ensureSpecdevWorktreeIgnore(target, root);
+  if (gitignoreResult) assets.push(gitignoreResult);
+  assets.push(...await writeAgentFiles(target, packageRoot, selection));
+  return { target, mode: existed ? "refresh" : "init", assets };
 }

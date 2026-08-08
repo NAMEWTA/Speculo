@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> 将规范驱动开发资产打包为可安装工作流——安装、更新与迁移工具。
+> 将规范驱动开发资产打包为可安装工作流——直接初始化与刷新工具。
 
 Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages——通过统一的 CLI 安装到任意项目中。
 
@@ -10,12 +10,9 @@ Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、
 # 在目标项目中初始化 Speculo
 npx @namewta/speculo init
 
-# 安装所有 workflow packages
-npx @namewta/speculo init --all
-
 # 全局安装
 npm install -g @namewta/speculo
-speculo init [--all] [target]
+speculo init [target]
 ```
 
 初始化后，目标项目的 `speculo/` 目录包含所有核心资产和选定的 workflow packages。
@@ -32,10 +29,10 @@ npm install -g @namewta/speculo
 
 | 命令 | 说明 |
 |---|---|
-| `speculo init [--all] [target]` | 安装或刷新 Speculo 核心资产与选定的 workflow packages。已有 `speculo/.speculo/` 状态永不被覆盖；安装 SpecDev 后还会幂等确保项目根 `.gitignore` 包含 `specdev-worktree/`。 |
-| `speculo migrate [--apply] [target]` | 预览（或执行）从 v2、过渡期 v3 或 SpecDev 全局状态 v3 到当前契约的迁移。默认 dry-run；`--apply` 执行分阶段、可回滚的迁移。 |
-| `speculo mirror-skills [--dry-run] [target]` | 将 `.agents/skills/*` 正本镜像为 `.claude/skills/*` 薄指针；`--dry-run` 仅预览、不写入。 |
-| `speculo update` | 已弃用。委托给 `speculo init --all`。 |
+| `speculo` / `speculo init [target]` | 初始化或直接刷新 Speculo 管理的资产。每次刷新均以当前模板替换 `config.json`、工作区元数据、commands、skills 和本次选中的 workflow 静态包；对选中 workflow 重置受管理状态，仅保留 `changes/` 与 `archive/`，保留 command Markdown 报告但删除 command `state.json`。交互中未选中的当前支持 workflow 完全不变。安装 SpecDev 后还会幂等确保项目根 `.gitignore` 包含 `specdev-worktree/`。 |
+| `speculo version` | 显示本地版本并检查 npm 最新版本。 |
+
+v0.7.0 起已移除 `migrate`、`mirror-skills`、`update` 及相关 flags。旧安装请直接重新运行 `speculo init`；不会执行兼容迁移。
 
 ## 安装的运行时资产
 
@@ -89,7 +86,7 @@ Speculo 站在先行者的肩膀上——也包括我自己的失败。我们怀
 - **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** —— 轻量级 spec 驱动开发框架，其 changes/ 目录结构与归档机制深刻影响了 Speculo 的持久化契约设计。
 - **[Superpowers](https://github.com/obra/superpowers)** —— 完整的 agentic 开发方法论，其技能编排与子代理调度为 workflow 包设计提供了重要参考。
 
-Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt 继承技能方法论，从 OpenSpec 借鉴工程化管理，从 Superpowers 学习编排思想——形成基于包的 workflow 管理、持久化契约以及统一的安装/迁移生命周期。我们将传承他们的精神，继续前行。
+Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt 继承技能方法论，从 OpenSpec 借鉴工程化管理，从 Superpowers 学习编排思想——形成基于包的 workflow 管理、持久化契约以及直接刷新生命周期。我们将传承他们的精神，继续前行。
 
 ## 许可证
 

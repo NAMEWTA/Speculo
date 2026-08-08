@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> Workflow-packaged specification-driven development assets with install, update, and migration tooling.
+> Workflow-packaged specification-driven development assets with direct refresh tooling.
 
 Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
 
@@ -10,12 +10,9 @@ Speculo packages AI coding workflows as installable assets — commands, skills,
 # Initialize Speculo in a target project
 npx @namewta/speculo init
 
-# Install all workflow packages
-npx @namewta/speculo init --all
-
 # Global install
 npm install -g @namewta/speculo
-speculo init [--all] [target]
+speculo init [target]
 ```
 
 After initialization, the target project's `speculo/` directory contains all core assets and selected workflow packages.
@@ -32,10 +29,10 @@ Requires: Node.js ≥ 22.22.3
 
 | Command | Description |
 |---|---|
-| `speculo init [--all] [target]` | Install or refresh Speculo core assets and selected workflow packages. Existing `speculo/.speculo/` state is never overwritten. Projects with SpecDev installed also get an idempotent `specdev-worktree/` entry in the project-root `.gitignore`. |
-| `speculo migrate [--apply] [target]` | Preview (or apply) migration from v2, transitional v3, or SpecDev global status v3 state to the current contract. Dry-run by default; `--apply` performs the staged, rollback-safe migration. |
-| `speculo mirror-skills [--dry-run] [target]` | Mirror `.agents/skills/*` canonical skills into `.claude/skills/*` pointers; preview without writes with `--dry-run`. |
-| `speculo update` | Deprecated. Delegates to `speculo init --all`. |
+| `speculo` / `speculo init [target]` | Initialize or directly refresh the managed Speculo assets. Each refresh replaces `config.json`, workspace metadata, commands, skills, and selected workflow packages with the current template. For selected workflows it resets managed state while retaining only `changes/` and `archive/`; command Markdown reports remain, but command `state.json` files are removed. Existing supported workflows not selected in the prompt remain untouched. Projects with SpecDev installed also get an idempotent `specdev-worktree/` entry in the project-root `.gitignore`. |
+| `speculo version` | Print the installed version and check npm for the latest release. |
+
+Legacy `migrate`, `mirror-skills`, and `update` commands, plus their flags, were removed in v0.7.0. Re-run `speculo init` to refresh old installations; no compatibility migration is performed.
 
 ## Installed Runtime Assets
 
@@ -89,7 +86,7 @@ Speculo stands on the shoulders of pioneers — including our own failures. With
 - **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight spec-driven development framework whose changes/ directory structure and archive mechanism deeply influenced Speculo's persistence contract design.
 - **[Superpowers](https://github.com/obra/superpowers)** — a complete agentic development methodology whose skill orchestration and subagent dispatch provided key reference for workflow package design.
 
-Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a unified install/migrate lifecycle. We carry their spirit forward.
+Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a direct refresh lifecycle. We carry their spirit forward.
 
 ## License
 
