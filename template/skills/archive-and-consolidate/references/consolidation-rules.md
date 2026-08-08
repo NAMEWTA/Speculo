@@ -1,17 +1,16 @@
 # Consolidation Rules
 
-从已完成 change 的知识产物中提取、分类并合并到 workflow `_state/` 声明的持久化 store。
+从已完成 change 的知识产物中提取、分类并合并到 workflow state root 声明的持久化 store。
 
 ## 提取来源
 
 对每个候选 change，扫描以下知识产物：
 
-1. `completion-summary.md` — 交付边界、关键变更、遗留事项
-2. `completion-verification.md` — 验证证据、需求核对、调试残留
-3. Change 自身的 ADR.md — 架构决策记录
-4. LOG.md — 设计决策日志（可能含未正式记录的 ADR）
-5. CONTEXT.md — 领域术语定义
-6. 任何自定义知识产物
+1. Evidence 与 Goal Plan — 交付边界、验证证据和残余风险
+2. Change 自身的 ADR.md — 架构决策记录
+3. LOG.md — 设计决策日志（可能含未正式记录的 ADR）
+4. CONTEXT.md — 项目规范术语
+5. diagnosis、reviews、prototypes、questionnaires 和任何 workflow 自定义知识产物
 
 ## Store 映射与合并策略
 
@@ -22,7 +21,7 @@
 - **文件命名**：`<NNNN>-<kebab-slug>.md`。
 - **内容格式**：标题、状态（Accepted）、日期、决策上下文、决策内容、后果。
 - **Supersede 处理**：若新 ADR 取代旧 ADR，在旧 ADR 开头添加 `> **Superseded by [ADR-NNNN](./NNNN-<slug>.md)**`；不删除旧 ADR。
-- **从 LOG 提升**：LOG.md 中满足 ADR 标准但未正式记录的决策 → 创建正式 ADR，注明"从 LOG.md 提升"。
+- **从 LOG 提升**：LOG.md 中满足 ADR 标准且尚未写入 change ADR.md 的决策 → 创建正式 ADR，注明"从 LOG.md 提升"；已有 change ADR 时只评估该唯一候选，不重复生成。
 
 ### context/（领域词汇表目录）
 

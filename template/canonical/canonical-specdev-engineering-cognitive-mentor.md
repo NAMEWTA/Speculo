@@ -46,7 +46,7 @@
 
 按存在情况读取：
 
-- 原始请求：`specdev/changes/{change}/source-issue.md`
+- 原始请求：`specdev/changes/{change}/source.md`
 - 分诊结果：`specdev/changes/{change}/triage.md`
 - 诊断结果：`specdev/changes/{change}/diagnosis.md`
 - 当前领域上下文：`specdev/changes/{change}/CONTEXT.md`
@@ -1418,33 +1418,44 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
+| 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
 | 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
-| 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
-| 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
+| Change 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
+| Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
+| 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
+| Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
 | Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
 | 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
+
+Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
 ## 2. 权威顺序
 
 同一事项冲突时按下列顺序裁决：
 
 1. 用户最新明确决定；
-2. 当前已接受架构决策：`specdev/changes/{change}/ADR.md`；
-3. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
-4. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-5. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-6. 当前代码与运行事实；
-7. 旧计划、旧日志和未经确认的推断。
+2. 当前 change 已接受的架构决策：`specdev/changes/{change}/ADR.md`；
+3. 永久 ADR 与领域上下文：`specdev/adr/`、`specdev/context/`；
+4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
+5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
+7. 当前代码与运行事实；
+8. 旧计划、旧日志和未经确认的推断。
+
+当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
+
+`specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
 
 代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
 
@@ -1484,7 +1495,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 ## 1. 偏差等级
 
 - **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
-- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得 owner 或 Lead 批准。
+- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得该 Ticket 或计划明确的批准 owner 同意。
 - **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
 - **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
 - **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
@@ -1519,7 +1530,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并发 Agent 时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate。
+- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
 
 </deviation-control>
 
@@ -1527,42 +1538,54 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 # SpecDev Research
 
-## 触发
+## 输入
 
-当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+- `decision`：研究要支持的一个具体决定；
+- `questions`：需要回答的穷尽问题集；
+- `stop_condition`：何时证据已足够；
+- `caller`：D、G、S、W、R、T 或 I；
+- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+
+缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
 
 ## 流程
 
-1. 写清楚要支持的具体决策和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
-3. 核对版本、发布日期、适用环境和已知限制。
-4. 区分：来源明确事实、代码库事实、推断、建议。
-5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
-6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
-7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+1. 固定问题、版本、环境和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
+3. 核对发布日期、版本、适用环境、限制和已知冲突。
+4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
+5. 区分来源事实、代码库事实、推断、建议和未知项。
+6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
 
-## 输出模板
+## 输出
 
 ```markdown
-# Research: <问题>
-- 决策用途：
-- 范围/版本：
-- 停止条件：
+## Research: <问题>
+- Decision / target:
+- Scope / version:
+- Stop condition:
 
-## Findings
 ### R-001
-- 结论：
-- 类型：官方事实 / 代码事实 / 推断 / 建议
-- 来源：
-- 置信度：high / medium / low
-- 适用限制：
-- 对工件影响：
+- Claim:
+- Type: official fact / code fact / inference / recommendation
+- Source:
+- Confidence:
+- Limits:
+- Artifact impact:
 
-## Conflicts and Unknowns
-## Recommendation
+### Conflicts and Unknowns
+### Recommendation
 ```
 
-不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+
+## 完成标准
+
+- 每个输入问题有答案或明确未知；
+- 每个实质声明就近引用一手来源；
+- 版本、限制、冲突和置信度已记录；
+- 结果有唯一 owning artifact；
+- 本 Skill 没有创建自己的 state 路径。
 
 </research>
 
@@ -1581,7 +1604,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

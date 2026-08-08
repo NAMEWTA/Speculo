@@ -1,6 +1,6 @@
 ---
 name: subagent-delivery
-description: 交付合同：为 Goal Plan 生成可恢复的 direct、原生或外部网页 Agent 派单，并在 Implement 阶段核对基线、候选交付、修正和 Lead 验收。
+description: 交付合同：只为用户已选择委派的 Goal Plan 生成可恢复的原生或外部网页 Agent 派单，并在 Implement 阶段核对基线、候选交付、修正和 Lead 验收。
 ---
 
 # SpecDev Subagent Delivery
@@ -10,12 +10,12 @@ description: 交付合同：为 Goal Plan 生成可恢复的 direct、原生或�
 ## 输入
 
 - `operation`：`plan` 或 `execute`；
-- `execution_model`：`direct`、`native-subagent` 或 `external-web-subagent`；
+- `execution_model`：`native-subagent` 或 `external-web-subagent`；
 - Lead、Ticket、Goal Plan、Spec、适用 ADR/CONTEXT、Wave/Gate 和依赖 Evidence；
 - 项目写、只读和 shared 路径，验证矩阵与当前源码基线；
 - provider、会话或 workspace locator、源码交付方式，以及用户当前明确授权。
 
-缺失 Goal Plan 的 `direct` Ticket 可以由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 按 Ticket 契约执行；其他输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
+普通 Goal Plan 和缺失 Goal Plan 的 Ticket 直接由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 执行，不调用本 Skill。委派输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
 
 ## 流程
 
@@ -37,7 +37,6 @@ description: 交付合同：为 Goal Plan 生成可恢复的 direct、原生或�
 
 ### 3. 加载执行分支
 
-- `direct`：直接使用 Ticket、Goal Plan、`<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 和 Evidence 合同，不加载 provider 规则；
 - `native-subagent`：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/native-subagent.md</Path>`，完成隔离派单、恢复和返回；
 - `external-web-subagent`：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/external-web-subagent.md</Path>`，完成能力探测、会话恢复、候选交付与修正。
 
@@ -58,4 +57,3 @@ description: 交付合同：为 Goal Plan 生成可恢复的 direct、原生或�
 恢复时读取 Goal Plan 的派单块、Ticket、最新 Evidence 和 change/worktree 状态，从最后已验证 checkpoint 继续，不重新决定已锁定事项。完成或阻塞后向调用方返回 Ticket 状态、Evidence 完整路径、workspace/session locator、checkpoint、commit/PR 引用、未验证项和待 Lead E2E。
 
 **完成标准**：交付结束于 `review`、`done`、`blocked` 或 `deviated`；状态、Evidence、源码引用和恢复信息一致。
-

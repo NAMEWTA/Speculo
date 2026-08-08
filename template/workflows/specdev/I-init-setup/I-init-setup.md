@@ -3,7 +3,7 @@ id: specdev/init-setup
 type: workflow-entry
 workflow: specdev
 name: 初始化设置
-description: 初始化 SpecDev 的语言、配置、全局状态、追踪约定、领域知识布局、验证命令和并发治理。
+description: 初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 keywords: [初始化, 配置, status, tracking, 验证命令]
 ---
 
@@ -56,7 +56,6 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - 是否允许自动提交；
 - 最大并发数；
 - Deep Ticket 的迁移、发布和不可逆操作是否必须人工批准；
-- 外部任务系统标签是否需要映射。
 
 不询问可由仓库事实回答的文件位置、脚本名或默认分支。
 
@@ -90,7 +89,6 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 
 - `<Path>{roots.workflows}/specdev/I-init-setup/tracking-template.md</Path>` → `<Path>{roots.state}/specdev/.config/tracking.md</Path>`
 - `<Path>{roots.workflows}/specdev/I-init-setup/domain-layout-template.md</Path>` → `<Path>{roots.state}/specdev/.config/domain-layout.md</Path>`
-- `<Path>{roots.workflows}/specdev/I-init-setup/status-labels-template.md</Path>` → `<Path>{roots.state}/specdev/.config/status-labels.md</Path>`
 
 已有永久知识不得被初始化过程清空。已有配置应先验证和展示差异，再按用户授权更新。
 
@@ -100,7 +98,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 2. 对照 `<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>` 与 `<Path>{roots.workflows}/specdev/common/schemas/status.schema.json</Path>`；
 3. 确认 `<Path>{roots.workflows}/specdev/I-init-setup/change-status-template.json</Path>` 的字段与 `<Path>{roots.workflows}/specdev/common/schemas/change-status.schema.json</Path>` 对齐；实际创建 change 时替换模板占位符后再执行 Schema 验证；
 4. 确认所有必需目录存在；
-5. 确认三个配置文档均已从对应模板生成；
+5. 确认两个配置文档均已从对应模板生成；
 6. 确认项目根 `.gitignore` 已忽略 `specdev-worktree/`；
 7. 运行：
 
@@ -116,7 +114,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 
 - `<Path>{roots.state}/specdev/config.json</Path>` 与 `<Path>{roots.state}/specdev/status.json</Path>` 可解析且满足 Schema；
 - 状态目录、永久知识目录和归档目录齐全；
-- 三个配置文档已就位；
+- 两个配置文档已就位；
 - 验证命令与并发规则有来源；
 - 项目根 `.gitignore` 已包含 `specdev-worktree/`；
 - 无敏感值被写入；
@@ -130,4 +128,3 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 - `<Path>{roots.workflows}/specdev/I-init-setup/change-status-template.json</Path>`
 - `<Path>{roots.workflows}/specdev/I-init-setup/tracking-template.md</Path>`
 - `<Path>{roots.workflows}/specdev/I-init-setup/domain-layout-template.md</Path>`
-- `<Path>{roots.workflows}/specdev/I-init-setup/status-labels-template.md</Path>`

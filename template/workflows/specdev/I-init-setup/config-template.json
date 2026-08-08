@@ -10,7 +10,7 @@
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

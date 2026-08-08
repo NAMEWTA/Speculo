@@ -47,7 +47,7 @@ T-01 [READY]
 ## 5. 并行与路径所有权
 
 - 最大并发来自 `<Path>{roots.state}/specdev/config.json</Path>`。
-- shared owner 为 Lead 或专用 Ticket。
+- shared owner 为专用 Ticket 或明确的集成 owner；只有委派 Goal Plan 才使用 Lead 角色。
 - 项目路径契约以 Ticket frontmatter 为准。
 - 并行写代码的 Ticket 使用独立 worktree；只读调查不需要。
 

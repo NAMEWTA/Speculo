@@ -4,7 +4,7 @@ type: skill
 name: Archive and Consolidate
 description: >
   对 workflow 下已完成 change 执行归档移动，从归档 change 中提取知识并合并到 workflow
-  INDEX.md 声明的 _state/ 知识 store（adr/、context/ 等），
+  INDEX.md 声明的 state 知识 store（adr/、context/ 等），
   然后审计并清理过时/重复知识。默认 dry-run 返回可确认计划，所有破坏性动作需用户显式确认后执行。
   触发场景：workflow 中存在 change_status: completed 的 change 需要归档收尾、知识沉淀、清理过时内容时。
 ---
@@ -43,7 +43,7 @@ description: >
    - 识别操作型路径：`status.json`、`changes/`、`archive/`。
    - 识别知识型 store：`adr/`、`context/` 及任何标注为"永久"的目录（其内容在 change 完成后提升至此）。
    - 每个路径解析为完整的项目相对路径。
-5. 派生固定路径：`changes_root = state_root/changes`，`archive_root = state_root/archive`，`commands_root = state_root/commands`。
+5. 派生固定路径：`changes_root = state_root/changes`、`archive_root = state_root/archive`；`commands_root` 从公共 `{roots.state}/commands` 解析，不放进 workflow 私有 state root。
 6. 读取 `speculo/config.json`（若存在）；不存在时静默降级为默认值（`language: "en"`、`confirm_before_external_write: true`）。
 7. 对每个已解析路径执行真实路径包含检查；符号链接逃逸或不存在的静态引用阻塞。
 8. 读取 `status.json`；扫描 changes 时校验 change 名称格式 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`，无日期前缀的历史 change 标注遗留但不阻塞。
@@ -64,11 +64,7 @@ description: >
 
 1. 枚举 `changes_root/` 下所有目录，读取各自的 `.status.json`。
 2. 筛选 `change_status: completed` 的 change。
-3. 对每个候选 change 收集：
-   - `.status.json`（验证可解析、状态字段）
-   - `completion-summary.md`（若存在）
-   - `completion-verification.md`（若存在）
-   - 知识产物：ADR.md、LOG.md、CONTEXT.md 及自定义产物
+3. 对每个候选 change 收集 `.status.json`，以及实际存在的 source、triage、diagnosis、Spec、Tickets Map、Goal Plan、Evidence、reviews、prototypes、questionnaires、ADR、LOG、CONTEXT 和 workflow 自定义产物；不存在的可选项静默跳过。
 4. `archive-single` 模式用户选择一个；`archive-batch` 全选所有 completed。
 
 ### Step 3：生成归档计划

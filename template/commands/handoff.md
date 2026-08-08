@@ -35,6 +35,8 @@ speculo/.speculo/commands/handoff/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
 
 如果用户传入了参数，将其视为对下一个会话重点内容的描述，并据此定制文档。
 
+交接范围包含 SpecDev change 时，引用该 change 的 `source.md`、`triage.md`、`.status.json` 和当前 owning 工件，不复制正文。若 `external_action` 为 `pending-close` 或 `close-failed`，必须记录准确远程 locator、已完成步骤、授权状态和恢复入口 `T-triage`；不得把待关闭误报为本地未完成。
+
 ## 路径引用规范
 
 文档中所有文件/文件夹引用必须使用**项目根目录**的相对路径。

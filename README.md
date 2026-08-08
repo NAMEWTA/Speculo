@@ -34,18 +34,21 @@ Requires: Node.js ≥ 22.22.3
 |---|---|
 | `speculo init [--all] [target]` | Install or refresh Speculo core assets and selected workflow packages. Existing `speculo/.speculo/` state is never overwritten. Projects with SpecDev installed also get an idempotent `specdev-worktree/` entry in the project-root `.gitignore`. |
 | `speculo migrate [--apply] [target]` | Preview (or apply) migration from v2, transitional v3, or SpecDev global status v3 state to the current contract. Dry-run by default; `--apply` performs the staged, rollback-safe migration. |
+| `speculo mirror-skills [--dry-run] [target]` | Mirror `.agents/skills/*` canonical skills into `.claude/skills/*` pointers; preview without writes with `--dry-run`. |
 | `speculo update` | Deprecated. Delegates to `speculo init --all`. |
 
 ## Installed Runtime Assets
 
 After initialization, the target project gains the following AI agent-callable assets:
 
-### 4 Commands
+### 6 Commands
 
 | Command | Purpose |
 |---|---|
 | `docs-sync` | Clean workspace, sync project documentation and Agent handbooks from reproducible Git ranges |
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
+| `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
+| `handoff` | Persist a compact, resumable context handoff for another agent |
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
@@ -64,7 +67,7 @@ After initialization, the target project gains the following AI agent-callable a
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
-| **specdev** | 7 | Full-cycle specification-driven development: init-setup, diagnose-bugs, grill-with-docs, implement, spec, tickets, wayfinder |
+| **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, mentoring, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
 | **person** | 1 | Persona-methodology-based consulting workflow (Mao Zedong Cognitive OS) |
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.

@@ -17,16 +17,16 @@
 
 按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些现在就能问、不必猜测尚未得到答案的问题。每轮询问完整 frontier；用户的答案会重塑设计树并解除下一层问题的阻塞。
 
-本 work 还负责把访谈持久化：设计树保存可恢复状态，LOG 保存讨论轨迹，CONTEXT 保存当前领域真相，ADR 保存长期架构决定。持久化不构成实现授权；在用户确认共识前不进入实现。
+本 work 只把访谈写成当前 change 的可恢复工件：设计树保存进度，LOG 保存讨论轨迹，CONTEXT 保存本 change 已确认的规范语言，ADR 保存已成为本 change 下游合同的架构决定。这些工件不等于项目永久知识，也不构成实现授权；永久 namespace 对 G 只读，只有 “归档与沉淀阶段” 能在实现证据、毕业评估和用户确认通过后执行提升。
 
 ## 输入与产物
 
 按存在情况读取：
 
 - `specdev/config.json`
-- `specdev/adr/`
-- `specdev/context/`
-- `specdev/changes/{change}/source-issue.md`
+- `specdev/adr/`（只读永久基线）
+- `specdev/context/`（只读永久基线）
+- `specdev/changes/{change}/source.md`
 - `specdev/changes/{change}/triage.md`
 - `specdev/changes/{change}/diagnosis.md`
 - `specdev/changes/{change}/spec.md`
@@ -39,6 +39,7 @@
 - `specdev/changes/{change}/LOG.md`
 - `specdev/changes/{change}/CONTEXT.md`
 - `specdev/changes/{change}/ADR.md`
+- `specdev/changes/{change}/questionnaires/`，仅在第三方 stakeholder 持有阻塞答案时延迟创建。
 
 不存在的可选输入静默跳过，不把缺失文件伪装成已知事实。
 
@@ -71,6 +72,8 @@
 - 高影响决策：进入设计树；
 - 低影响实现细节：记录为实现者可自行决定，不制造决策节点。
 
+阻塞答案既不可发现、当前用户也无法回答、但另一个明确 stakeholder 掌握时，加载 下方 `<stakeholder-questionnaire>` 标签，生成问卷并保存恢复条件；不在本轮继续猜测该分支。
+
 **完成标准**：每个候选问题已分类；用户只接收无法从环境发现的真实决策。
 
 ### 3. 建立设计树
@@ -96,17 +99,19 @@
 
 **完成标准**：本轮开始时的完整 frontier 每个节点都有回答、明确延后或阻塞记录；所有状态已原子写入并重读。
 
-### 5. 同步领域模型
+### 5. 同步 change-local 领域模型
 
-加载 下方 `<domain-modeling-rules>` 标签。每轮先写 LOG，再把已确认且当前仍真实的术语、不变量、示例、反例和代码映射同步到 CONTEXT，最后把满足 ADR 条件的长期架构决定写入 ADR。
+加载 下方 `<domain-modeling-rules>` 标签。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
 
-历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 ADR 被替代时建立 supersedes 链。同步文档用于记录共识生长过程，不授权产品实现。
+历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 change ADR 被替代时建立 supersedes 链。同步只更新本 change 工件，不创建、合并或改写永久 `context/`、`adr/`；它记录共识生长过程，不授权产品实现。
 
-**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个提升结论都有用户回答或事实来源。
+**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个同步结论都有用户回答或事实来源；永久 namespace 未被修改。
 
 ### 6. 共识确认与路由
 
 frontier 为空时，向用户确认设计树的每个分支均已走过且已经达成共识。用户指出遗漏时新增节点并继续；只有明确确认后把 design tree 标为 `consensus`。
+
+路由前使用 Speculo Node 校验器 的 `--stage grill` 校验当前 change；失败时保持本 Work 可恢复状态，不发布共识。
 
 随后按成熟度路由：
 
@@ -123,7 +128,8 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - 每轮询问的是完整 frontier，依赖未关闭的问题没有提前出现；
 - 可发现事实由 Agent 查找，没有转交用户；
 - design tree 通过 schema，LOG 指针完整；
-- CONTEXT 只包含当前领域真相，ADR 只包含满足条件的架构决定；
+- CONTEXT 只包含当前 change 已确认的规范语言，ADR 只包含满足条件且已成为本 change 合同的架构决定；
+- 永久 `context/`、`adr/` 保持只读，未在 G 中执行知识提升；
 - frontier 为空且用户明确确认共识；
 - 状态、权威工件和下一 work 路径已返回；
 - 未执行产品实现。
@@ -136,6 +142,7 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - ADR 格式：下方 `<adr-format>` 标签
 - CONTEXT 格式：下方 `<context-format>` 标签
 - LOG 格式：下方 `<log-format>` 标签
+- Stakeholder 问卷：下方 `<stakeholder-questionnaire>` 标签
 
 ---
 
@@ -193,11 +200,16 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 
 # 领域建模规则
 
-- 使用业务语言定义概念，避免用当前类名代替领域定义。
-- 每个术语包含：定义、边界、示例、反例、相关不变量、代码映射。
-- 同义词选择一个规范词，其余标别名；一词多义必须拆分。
-- CONTEXT 描述当前真相；讨论历史只留在 LOG。
-- 与代码不一致时同时记录“期望领域模型”和“当前实现差距”，不得假装已实现。
+本规则只规范当前 change 内的候选领域知识。G 和 A 的 consolidate-from-code 模式都可以用它整理 change 工件，但它不授权写入永久 namespace；永久知识只能由 “归档与沉淀阶段” 在完成证据、毕业评估和用户确认全部通过后提升。
+
+- 当前 change 的 CONTEXT 只保存已确认、供本 change 下游使用的项目规范语言，不保存普通编程概念、代码导航、一次性状态或讨论历史。
+- 每个术语使用规范名称和 1–2 句定义；不推荐的同义词写入 `_Avoid_`。
+- 一词多义必须拆分；多个 bounded context 使用独立 Context Map 描述关系，不把关系塞进术语定义。
+- 讨论、替代和历史只留在 LOG；稳定行为进入 Spec；符合准入条件的取舍写入当前 change 的 ADR，`accepted` 只表示已成为本 change 的下游合同。
+- 当前代码位置按需从仓库发现。只有发现成本被证明很高时，另建有 owner 和刷新策略的缓存工件，CONTEXT 不承担该职责。
+- G 只读永久 `specdev/context/` 与 `specdev/adr/`，用于发现冲突和避免重复；不得创建、合并或改写其中内容。
+
+完成标准：每个 change CONTEXT 条目都是本 change 下游必须使用的项目规范语言；每个 change ADR 都有明确来源和当前 change 的适用范围；没有把候选结论写成永久知识。
 
 </domain-modeling-rules>
 
@@ -205,28 +217,42 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 
 # ADR 格式
 
-只有同时满足“影响多个实现点、存在实质替代方案、结论预计长期有效”时才写 ADR。局部且可逆的实现选择留在 Ticket，不把 ADR 变成日常日志。
+本格式用于 `specdev/changes/{change}/ADR.md`。这里的 ADR 是当前 change 的架构决定合同，不是已经提升到永久 `specdev/adr/` 的项目 ADR。
+
+只有一个决定同时满足以下三个条件才写 ADR：
+
+1. 难以逆转；
+2. 没有上下文会令后续维护者惊讶；
+3. 来自真实可行方案之间的权衡。
+
+局部、可逆或没有实质替代方案的选择留在 Ticket/代码。一个 ADR 只表达一个决定。
 
 ```markdown
 ## ADR-###: <标题>
-- **状态：** proposed / accepted / superseded / deprecated
-- **日期：**
-- **决策范围：** 哪些系统、接口或工件受约束
-- **来源：** LOG-### / 用户结论 / 外部规范
-- **上下文：** 需要解决的长期张力，而非实现步骤
-- **决策驱动：** 必须优化或保护的目标与约束
-- **决策：** 清晰、可测试的规范性结论
-- **替代方案：** 至少列出认真考虑过的可行方案
-- **权衡理由：** 为什么选择当前方案
-- **后果：** 正面 / 负面 / 新风险 / 组织影响
-- **不变量与约束：** 下游 Spec、Ticket 和实现不得破坏的条件
-- **验证方式：** 如何知道决策在真实系统中成立
-- **迁移/采用：** 如适用
-- **替代：** ADR-###（如适用）
-- **被替代于：** ADR-###（如适用）
+
+**Status:** proposed / accepted / superseded / deprecated
+**Source:** LOG-### / user decision / external specification
+**Supersedes:** none / ADR-###
+
+### Context
+<缺少什么背景会让这个决定令人惊讶。>
+
+### Decision
+<清晰、规范且可验证的结论。>
+
+### Trade-off
+<认真考虑的替代方案，以及为什么接受当前代价。>
+
+### Consequences
+<真正重要的正面、负面和风险。>
+
+### Verification / Migration
+<仅在适用时出现。>
 ```
 
-一个 ADR 只表达一个决策。修改已接受决策时，新建 ADR 并建立 supersedes 链；不得重写历史来掩盖决策变化。
+`accepted` 只表示用户已接受该决定作为当前 change 的下游合同；它不证明实现已经落地，也不代表永久知识毕业。修改已接受决定时新建 change ADR 并建立 supersedes 链，不重写历史。
+
+只有 A 在 change 完成后对照代码、测试和 Evidence 重新验证，并通过毕业评估与用户确认，才能把决定写为永久 ADR；不通过的决定随归档 change 保留。
 
 </adr-format>
 
@@ -234,41 +260,21 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 
 # CONTEXT 格式
 
-CONTEXT 保存跨 change 可复用的领域语言、关系和不变量，不保存一次性任务计划。
+本格式用于 `specdev/changes/{change}/CONTEXT.md`。它是当前 change 已确认、供本 change 下游使用的项目规范语言表，不是 workflow 级永久领域知识。每个文件只描述一个 bounded context；多个 context 的关系写入单独 Context Map。
 
 ```markdown
-# <主题> 领域上下文
+# <Bounded Context>
 
-- **Owner：**
-- **最后核验：**
-- **权威来源：** ADR / 代码 / 外部规范 / 用户确认
+**<规范术语>**：<一到两句项目特有定义。>
+_Avoid_: <会造成歧义或已废弃的同义词>
 
-## 术语
-### <规范术语>
-- 定义：
-- 边界：
-- 示例：
-- 反例：
-- 不变量：
-- 代码映射：src/example.ts / 无
-- 别名与禁用词：
-- 来源与最后核验：
-
-## 概念关系
-- 聚合、生命周期、依赖、拥有关系或状态转换
-
-## 全局不变量
-- 始终成立、可被验证且不属于单个 change 的规则
-
-## 当前实现映射
-- 领域概念与模块、接口、存储或事件之间的对应
-
-## 当前实现差距
-- 已知偏离、历史负担和待验证假设；不得伪装成已确认事实
-
-## 变更记录
-- LOG-###：增加、修订或废弃了什么
+**<另一个术语>**：<一到两句定义。>
+_Avoid_: none
 ```
+
+不包含 owner、最后核验、代码路径、实现差距、change 历史、示例大表、普通编程概念或临时假设。来源和演进历史由 LOG/ADR/Spec 保存。
+
+G 不把该文件复制或合并到永久 `specdev/context/`。只有 A 在 change 完成后验证实现证据、应用毕业标准并获得用户确认，才生成或更新永久术语文件；未毕业内容随归档 change 保留。
 
 </context-format>
 
@@ -297,6 +303,56 @@ LOG 追加为主；结论变化时新增条目并引用旧编号，不删除历�
 
 </log-format>
 
+<stakeholder-questionnaire>
+
+# Stakeholder Questionnaire
+
+只有阻塞决定无法从仓库/外部事实发现、当前用户无法回答、且另一个明确 stakeholder 掌握答案时加载。问卷是输入收集工具，不是决策权威。
+
+## 流程
+
+1. 只询问当前用户“发给谁”和“需要对方回什么”：接收者角色/背景/关系，以及用户必须据此行动的具体事实或决定。
+2. 写入 `specdev/changes/{change}/questionnaires/{slug}.md`。问题按重要性排序，每个问题只表达一个差距；超过合理数量时按主题分组。
+3. 把 change 置为 blocked，记录接收者、发送 owner、恢复条件和问卷 Path。Spec/Ticket 不得在答案回来前伪装成 Ready。
+4. 回收答案后逐项验证覆盖情况，把事实和决定分别写入 LOG/design-tree 节点；问卷本身保留原始回答，不直接成为 ADR/Spec 权威。
+5. 未回答项继续 blocked；已解决项不重复询问。
+
+## 模板
+
+```markdown
+# <问卷标题>
+
+**目的：** <承载的决定>
+**来自：** <用户> — **送达：** <接收者>
+**回答将用于：** <Spec/ADR/design-tree 路径>
+
+## 背景
+<足以给出可靠回答的一段上下文>
+
+## 如何回答
+<截止时间、投入量；允许部分回答和“不知道”>
+
+## <主题>
+
+### <一个事实或决定差距>
+_为什么重要：<对行为/风险/范围的影响>_
+
+>
+
+## 还有别的吗？
+<遗漏但接收者认为应知道的事项>
+```
+
+## 完成标准
+
+- 用户要求的每个事实/决定恰有至少一个问题覆盖；
+- 不询问仓库可发现事实；
+- 问题不复合且按重要性排序；
+- blocked/resume 条件可从本地工件恢复；
+- 回答被转录到真正 owning 工件后才解除 blocker。
+
+</stakeholder-questionnaire>
+
 <artifact-contract>
 
 # 工件职责与权威裁决
@@ -307,33 +363,44 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
+| 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
 | 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
-| 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
-| 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
+| Change 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
+| Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
+| 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
+| Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
 | Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
 | 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
+
+Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
 ## 2. 权威顺序
 
 同一事项冲突时按下列顺序裁决：
 
 1. 用户最新明确决定；
-2. 当前已接受架构决策：`specdev/changes/{change}/ADR.md`；
-3. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
-4. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-5. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-6. 当前代码与运行事实；
-7. 旧计划、旧日志和未经确认的推断。
+2. 当前 change 已接受的架构决策：`specdev/changes/{change}/ADR.md`；
+3. 永久 ADR 与领域上下文：`specdev/adr/`、`specdev/context/`；
+4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
+5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
+7. 当前代码与运行事实；
+8. 旧计划、旧日志和未经确认的推断。
+
+当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
+
+`specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
 
 代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
 
@@ -491,7 +558,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 ## 1. 偏差等级
 
 - **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
-- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得 owner 或 Lead 批准。
+- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得该 Ticket 或计划明确的批准 owner 同意。
 - **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
 - **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
 - **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
@@ -526,7 +593,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并发 Agent 时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate。
+- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
 
 </deviation-control>
 
@@ -534,42 +601,54 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 # SpecDev Research
 
-## 触发
+## 输入
 
-当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+- `decision`：研究要支持的一个具体决定；
+- `questions`：需要回答的穷尽问题集；
+- `stop_condition`：何时证据已足够；
+- `caller`：D、G、S、W、R、T 或 I；
+- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+
+缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
 
 ## 流程
 
-1. 写清楚要支持的具体决策和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
-3. 核对版本、发布日期、适用环境和已知限制。
-4. 区分：来源明确事实、代码库事实、推断、建议。
-5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
-6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
-7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+1. 固定问题、版本、环境和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
+3. 核对发布日期、版本、适用环境、限制和已知冲突。
+4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
+5. 区分来源事实、代码库事实、推断、建议和未知项。
+6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
 
-## 输出模板
+## 输出
 
 ```markdown
-# Research: <问题>
-- 决策用途：
-- 范围/版本：
-- 停止条件：
+## Research: <问题>
+- Decision / target:
+- Scope / version:
+- Stop condition:
 
-## Findings
 ### R-001
-- 结论：
-- 类型：官方事实 / 代码事实 / 推断 / 建议
-- 来源：
-- 置信度：high / medium / low
-- 适用限制：
-- 对工件影响：
+- Claim:
+- Type: official fact / code fact / inference / recommendation
+- Source:
+- Confidence:
+- Limits:
+- Artifact impact:
 
-## Conflicts and Unknowns
-## Recommendation
+### Conflicts and Unknowns
+### Recommendation
 ```
 
-不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+
+## 完成标准
+
+- 每个输入问题有答案或明确未知；
+- 每个实质声明就近引用一手来源；
+- 版本、限制、冲突和置信度已记录；
+- 结果有唯一 owning artifact；
+- 本 Skill 没有创建自己的 state 路径。
 
 </research>
 
@@ -588,7 +667,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

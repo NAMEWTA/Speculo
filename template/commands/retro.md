@@ -21,16 +21,16 @@ keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 ## 调用的 skills
 
 - `../skills/speculo-retro/SKILL.md` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
-- `../skills/github-npm-ops/SKILL.md` — 需要用 `gh` 去重（`gh issue list --search`）与创建 issue（`gh issue create`）时读取，其 `references/issue-pr-triage.md` 提供检索、标签体系与命令模板。
+- `../skills/github-npm-ops/SKILL.md` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
 
 ## 执行步骤
 
 1. 读取 `../skills/speculo-retro/SKILL.md`，解析 `speculo/config.json` 与 `speculo/.speculo/workspace.json`（不存在时以默认值静默降级），采集对话、command 报告、change 状态以及各 `INDEX.md` 声明的知识 store。
 2. 用该 skill 产出规范化复盘结论：去重、分级、根因化的 issue-ready 提案清单，附丢弃/合并说明与每条处置建议。
 3. 创建 command 专属目录 `speculo/.speculo/commands/retro/`，把复盘结论写入带 scope 的 Markdown 报告。
-4. **去重**：读取 `../skills/github-npm-ops/SKILL.md` 的 `references/issue-pr-triage.md`，对每条 `disposition: file-issue` 的提案用 `gh issue list --repo NAMEWTA/Speculo --search "<关键词>" --state all --limit 20` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
+4. **去重**：调用 `github-npm-ops` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
 5. **外部写操作边界**：向用户展示将要创建的 issue 清单（标题、类型/优先级标签、正文摘要、目标仓库 `NAMEWTA/Speculo`）与去重结果，等待用户明确确认。没有确认时只输出计划，不调用 `gh`。
-6. 用户确认后，按优先级倒序逐条执行 `gh issue create --repo NAMEWTA/Speculo --title "<title>" --body "<body>" --label "<type>,<priority>[,<area>]"`（多行正文可用 `--body-file` 指向不保留的临时文件）。任一条失败时停止后续创建，报告已建/未建清单，不重复创建同一条。
+6. 用户确认后，按优先级倒序调用 `github-npm-ops` 的 `operation=issue-create` confirmed 分支。任一条失败时停止后续创建，报告已建/未建清单，不重复创建同一条。
 7. 把每条提案的最终 issue 编号/URL 回写进本次报告的「提交结果」小节；返回报告路径、3-5 条复盘摘要和已创建 issue 链接清单。
 
 ## 产物模板

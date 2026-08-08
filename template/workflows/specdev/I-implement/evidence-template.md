@@ -7,10 +7,6 @@
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
 - **基线/分支：**
 - **Worktree 引用：** 不适用 / `<workspace_ref>`
-- **执行模型/Provider：** direct / native-subagent / external-web-subagent；provider 或不适用
-- **Session/Package locator：** 不适用 / `<portable-locator>`
-- **派单/最终 Checkpoint：** `<sha-or-local-baseline>` / `<sha-or-local-baseline>`
-- **修正轮次：** 0 / `<count>`
 - **实现者：**
 - **开始/结束：**
 - **状态：** review / done / blocked / deviated
@@ -41,11 +37,29 @@
 
 - **失败后修复与重跑：** 无 / ...
 - **未运行检查：** 无 / 原因与风险 ...
-- **Lead E2E：** 不适用 / 待执行：场景与预期 / 通过 / 失败
+- **E2E：** 不适用 / 场景、执行者与结果
 - **反向验证：** 不适用 / 受控失败信号与恢复结果
 - **外部声明：** 无 / 已核对 / `unverified`：原因
 
-## 5. 路径所有权审计
+## 5. 双轴审查
+
+### 标准轴
+
+- **结果：** pass / request-changes
+- **来源：** 仓库标准 + Fowler baseline
+- **Findings：** 无 / ...
+- **修正与重跑：** 不适用 / ...
+
+### 规范轴
+
+- **结果：** pass / request-changes / skipped:no-spec
+- **来源：** Spec / Ticket / source / 无
+- **Findings：** 无 / ...
+- **修正与重跑：** 不适用 / ...
+
+两轴保持独立顺序，不合并或跨轴重排 finding。
+
+## 6. 路径所有权审计
 
 - **writable 内修改：**
 - **shared 修改与 owner 批准：** 无 / ...
@@ -53,7 +67,7 @@
 - **未声明路径：** 无
 - **生成文件或锁文件：** 无 / 来源与 owner ...
 
-## 6. 偏差与决策
+## 7. 偏差与决策
 
 - **偏差：** 无 / `<deviation-id>`
 - **偏差记录：** `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` / 不适用
@@ -62,15 +76,15 @@
 
 偏差处理遵守 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>`，不得静默修改 Ticket 目标或验收。
 
-## 7. 残余风险与后续
+## 8. 残余风险与后续
 
 - **残余风险：** 无 / ...
 - **已知限制：** 无 / ...
 - **后续 Ticket：** 无 / `<ticket-id>`
 - **监控或回滚触发条件：** 不适用 / ...
 
-## 8. 交付定位
+## 9. 交付定位
 
 - **Commit / PR：**
-- **最终 Workspace/Session locator：** 不适用 / `<portable-locator>`
+- **最终 Workspace 引用：** 不适用 / `<workspace_ref>`
 - **Evidence 文件：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`

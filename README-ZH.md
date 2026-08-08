@@ -34,18 +34,21 @@ npm install -g @namewta/speculo
 |---|---|
 | `speculo init [--all] [target]` | 安装或刷新 Speculo 核心资产与选定的 workflow packages。已有 `speculo/.speculo/` 状态永不被覆盖；安装 SpecDev 后还会幂等确保项目根 `.gitignore` 包含 `specdev-worktree/`。 |
 | `speculo migrate [--apply] [target]` | 预览（或执行）从 v2、过渡期 v3 或 SpecDev 全局状态 v3 到当前契约的迁移。默认 dry-run；`--apply` 执行分阶段、可回滚的迁移。 |
+| `speculo mirror-skills [--dry-run] [target]` | 将 `.agents/skills/*` 正本镜像为 `.claude/skills/*` 薄指针；`--dry-run` 仅预览、不写入。 |
 | `speculo update` | 已弃用。委托给 `speculo init --all`。 |
 
 ## 安装的运行时资产
 
 初始化后，目标项目获得以下可通过 AI agent 调用的资产：
 
-### 4 个 Commands
+### 6 个 Commands
 
 | Command | 用途 |
 |---|---|
 | `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档与 Agent 手册 |
 | `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
+| `git-repository-audit` | 对一个或多个本地 Git 仓库执行只读、可复现的审计 |
+| `handoff` | 持久化精简且可恢复的上下文，供另一 Agent 接手 |
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
@@ -64,7 +67,7 @@ npm install -g @namewta/speculo
 
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
-| **specdev** | 7 | 全周期规范驱动开发：init-setup、diagnose-bugs、grill-with-docs、implement、spec、tickets、wayfinder |
+| **specdev** | 14 | 本地优先的规范驱动开发：归档、代码审查、诊断、认知指导、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
 | **person** | 1 | 基于人物方法论的咨询 workflow（Mao Zedong Cognitive OS） |
 
 每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。

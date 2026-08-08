@@ -14,7 +14,7 @@
 - [ ] `writable_paths` 非空，或明确为仅文档、调查或无代码变更。
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
-- [ ] 仅当用户界面交互受影响时定义 E2E，且 owner 为 Lead 集成 Gate。
+- [ ] 仅当用户界面交互受影响时定义 E2E 与当前执行 owner；Ticket 不预设 Lead/Worker，委派 Goal Plan 可以显式改由 Lead 集成。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用完整根变量 Path 标签。

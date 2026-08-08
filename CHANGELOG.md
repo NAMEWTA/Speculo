@@ -4,14 +4,30 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.6.1] - 2026-08-08
+
+### Added
+- **SpecDev 本地优先 Triage**：`T-triage` 增加 intake / reconcile 双模式，将远程 Issue、PR、URL、文件或对话冻结为本地 `source.md`，以本地 `triage.md` 记录路由和待处理外部动作；change 完成本地开发后可再次进入 Triage，经明确确认回写并关闭支持的远程 Issue。
+- **GitHub Issue transport**：`github-npm-ops` 新增可复用的 `issue-read`、`pr-read`、`issue-search`、`issue-create` 与 `issue-comment-close` 操作；外部写默认 dry-run，close 重试使用稳定 comment marker 保持幂等。该能力仅作摄入与完成投影，不成为 SpecDev tracker。
+- **C-code-review 与共享双轴审查能力**：固定 commit、branch、tag、merge-base 或 PR 后，分别执行工程标准轴和规范符合轴审查，并把可恢复报告持久化到 change；I-implement 复用同一能力。
+- **P-prototype**：新增 Logic / UI 原型分支、原型记录与 schema；原型只回答一个设计问题，通过可迁移 branch/worktree locator 与 Wayfinder、后续实现和清理状态互相定位。
+- **诊断、问卷与冲突协议**：D-diagnose-bugs 增加 red-loop 硬门、最小化、可证伪假设、单变量探针和 HITL 捕获脚本；G 增加 stakeholder questionnaire 阻塞/恢复分支；I 增加 merge/rebase 冲突处理协议。
+- **上游来源一致性检查**：新增覆盖全部 26 个 `temp/skills` 来源的 source map 与 hash 检查，并接入 `pnpm validate-assets`。
 
 ### Changed
 - **SpecDev 全局状态 v4（#37）**：`status.json` 收敛为 `active` / `archived` change 索引，删除全局 `work_history`、active `result` 与 `completed` 元数据投影；`speculo migrate` 新增 v3→v4 dry-run、阻塞检查、分阶段替换和回滚安全迁移。
 - **Ticket worktree 固定路径（#36）**：Git provider 固定使用 `<project-root>/specdev-worktree/<ticket-id>`；`speculo init` 在安装 SpecDev 时幂等治理项目根 `.gitignore`，native/external provider 继续使用可迁移 locator。
+- **TDD 与完成门收敛**：I-implement 使用严格 red→green 垂直切片、独立真相来源和系统边界 mock；重构移到双轴审查后的独立修正阶段。change 完成与归档分离，未 reconcile 的远程 close 不回滚本地完成，但会阻塞归档，除非显式 waive。
+- **领域工件语义与毕业边界收窄**：change CONTEXT 只保留本 change 已确认的项目规范术语；change ADR 仅在“难以逆转、缺少上下文会令人惊讶、存在真实权衡”三个条件同时成立时创建，并只作为当前 change 合同。永久 `context/` / `adr/` 只能由 Archive 在实现证据、毕业评估和用户确认后写入；Research 不再创建共享 namespace，由调用方声明输出 owner 和目标路径。
+- **归档职责去重**：SpecDev A work 改为全局 `archive-and-consolidate` skill 的 workflow wrapper；Status、Handoff、Archive 与 Retro command 同步理解本地权威与远程 reconcile 状态。
+- **Goal Plan 角色编排改为显式可选**：每次运行 P-goal-plan 由用户选择普通或委派计划；普通计划只保留 DAG/Wave/Gate/owner、证据和恢复，不生成 Lead、Provider、Delivery Contract 或 Dispatch Packet。只有委派分支加载 subagent-delivery；普通计划由最后一个 Implement 完成 change，委派计划仍由 Lead 验收完成。共享路径、E2E、偏差与 worktree 公共契约改用角色中立 owner，只有委派分支才映射为 Lead/Worker。
+
+### Removed
+- 删除 `source-issue.md` 兼容入口、外部 status-label 初始化，以及重复或已过期的 `archive-checklist.md`、`knowledge-promotion-rules.md`、`code-review-process.md` 和 `tdd-examples.md`。旧 `source-issue.md` 会被 validator 明确拒绝，不执行迁移或兼容回退。
 
 ### Tests
 - 新增 status v3→v4、迁移阻塞、`.gitignore` 换行/幂等、provider 引用校验及真实 Git linked worktree 集成覆盖。
+- 新增 Triage 前置摄入、旧来源拒绝、诊断 red-loop、双轴审查 fixed point、原型 locator、远程 close 归档门，以及 GitHub transport dry-run / 幂等重试覆盖。
 
 ## [0.6.0] - 2026-08-07
 

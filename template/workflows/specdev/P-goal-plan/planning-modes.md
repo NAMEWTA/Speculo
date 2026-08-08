@@ -1,6 +1,6 @@
 # Goal Plan 规划模式与输入门禁
 
-本文件由 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>` 在上游验证和模式选择时加载。
+本文件由 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>` 在上游验证和角色分支确认时加载。
 
 ## 1. 必需输入门禁
 
@@ -25,75 +25,45 @@
 - 合同 uncovered 且未批准 deferred；
 - 并行候选写路径相交且无 owner 或顺序；
 - Ticket 改写了 Spec 的外部行为、范围或验收；
-- Ticket 与 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 的已接受决策冲突；
+- Ticket 与 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 的已接受决定冲突；
 - Deep Ticket 缺少关键迁移或恢复信息；
 - 当前代码事实使 Ticket 的核心行为、接口或验证不可执行；
 - 必需外部合同或参考权威不可获得；
-- 选择 delegated execution，但 Lead、checkpoint、可恢复 locator 或交付通道无法建立；
+- 已选择委派，但 Lead、checkpoint、可恢复 locator 或交付通道无法建立；
 - 用户要求的远程或生产动作没有逐动作授权。
 
 按 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 返回真正拥有该决策的工件。
 
-## 3. 可组合模式
+## 3. 可组合规划模式
 
-### coordination
-
-适用于多 Wave、扇出/汇合、shared path 或 Lead/Subagent。重点是 DAG、owner、Evidence 返回、集成和状态同步。
-
-### migration
-
-适用于 expand-contract、数据迁移、协议迁移或兼容窗口。重点是扩展、分批迁移、收缩条件、数据核对、监控和回滚。
-
-### high-assurance
-
-适用于安全、隐私、资金、数据完整性、法规或不可逆操作。重点是独立审查、人工批准、Evidence 完整性和失败恢复。
-
-### reference-conformance
-
-适用于外部合同、标准、官方实现或指定兼容行为。重点是来源版本、符合性矩阵和冲突裁决。
-
-### release-coordination
-
-适用于发布窗口、跨团队依赖、部署顺序或运营交接。重点是环境前置条件、Gate、观察期和回退。
+- **coordination**：多 Wave、扇出/汇合或 shared path；重点是 DAG、owner、Evidence 返回、集成和状态同步。
+- **migration**：expand-contract、数据或协议迁移；重点是扩展、分批迁移、收缩条件、数据核对、监控和回滚。
+- **high-assurance**：安全、隐私、资金、数据完整性、法规或不可逆操作；重点是独立审查、人工批准、Evidence 完整性和失败恢复。
+- **reference-conformance**：外部合同、标准、官方实现或指定兼容行为；重点是来源版本、符合性矩阵和冲突裁决。
+- **release-coordination**：发布窗口、跨团队依赖、部署顺序或运营交接；重点是环境前置条件、Gate、观察期和回退。
 
 模式可以组合。仅有线性低风险 Ticket 时不应为了形式生成重型 Goal Plan。
 
-## 4. 执行模型与交付事实
+## 4. 每次确认角色分支
 
-规划模式描述“为什么需要治理”，execution model 描述“每个 Ticket 怎样被执行”，两者不得混为同一枚举。每份 Goal Plan 只选一个主 execution model：
+规划模式描述为什么需要跨 Ticket 治理，不决定是否启用 Lead/subagent。每次运行 P 都向用户提供两个选择：
 
-- `direct`：Lead 或当前执行者直接运行 Ticket，不创建子代理交付通道；
-- `native-subagent`：Lead 可直接管理隔离 Agent，写代码并行时配合 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；
-- `external-web-subagent`：通过网页 provider 交付，输出在 Lead 独立核对前保持候选状态。
+- **普通 Goal Plan**：由实现者按核心计划推进，不创建严格角色、交付通道或派单合同；最终产物不记录一个名为 direct 的模式。
+- **委派 Goal Plan**：启用唯一 Lead 与 `native-subagent` 或 `external-web-subagent`，并加载委派协议。
 
-选择模型前先发现当前平台能力、项目配置和用户请求。只有用户明确指定 provider 或交付通道时才把偏好当作约束；否则优先使用能保留隔离、checkpoint 和 Evidence 的现有原生能力。
+不得根据 Ticket 数量、并行机会或平台能力静默启用委派。选择普通分支后，AI 自适应决定核心计划的适用细节，不把本次角色选择写入 frontmatter，也不在正文生成空章节或“不适用”说明。
 
-必须固定：
+选择委派后才固定：Lead、provider、repository/branch、不可变 `base_sha` 或等价基线、源码交付方式、`max_correction_rounds` 和逐动作授权。认证秘密和机器绝对路径不得进入 Goal Plan。
 
-- `lead` 与不可转移责任；
-- provider 和稳定 workspace/session locator，direct 时为不适用；
-- repository/branch 与不可变 `base_sha` 或等价本地基线；
-- `source_delivery`：none、repository-url、source-package 或 combination；
-- `max_correction_rounds`，默认 3；
-- local changes、commit、push、PR、merge、deploy、migration、production configuration、production feature、real user data 的逐动作授权。
+## 5. 规划摘要
 
-GitHub checkpoint、源码包和 provider 分支由 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>` 按需加载。认证秘密和机器绝对路径不得进入 Goal Plan。
-
-## 5. 模式摘要
-
-写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 前形成：
+写入前形成核心摘要：
 
 ```text
 modes=<mode-list>
-execution_model=<direct|native-subagent|external-web-subagent>
-lead=<owner>
-provider=<id|none>
 tickets=<count>
 critical_path=<ticket-list>
 parallel_capacity=<n>
-checkpoint=<sha-or-local-baseline>
-source_delivery=<mode>
-max_correction_rounds=<n>
 shared_owners=<owner-map>
 gates=<gate-list>
 authorization=<action-summary>
@@ -101,4 +71,6 @@ hard_stops=<none-or-list>
 adopted_assumptions=<low-impact-only>
 ```
 
-**完成标准**：可组合 modes 与唯一 execution model 分离；源码、交付、权限和恢复字段都有可验证值。
+委派分支额外形成 `execution_model`、`lead`、`provider`、`checkpoint`、`source_delivery`、`max_correction_rounds` 和 locator；这些字段只进入委派附录。
+
+**完成标准**：规划 modes 与角色选择互不代替；普通计划没有委派痕迹；委派计划的源码、交付、权限和恢复字段都有可验证值。

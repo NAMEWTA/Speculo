@@ -24,10 +24,11 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 1. 读取 `../skills/archive-and-consolidate/SKILL.md`，执行路径解析（Step 0），解析 `speculo/config.json`（不存在时静默降级）。
 2. 选择一个 `change_status: completed` 的 change。
-3. 执行 Step 1-5：扫描 stores、扫描 change、生成归档计划、生成合并计划、生成清理候选。
-4. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
-5. 确认后以 mode=`confirmed` 执行 Step 7-8：归档移动、合并写入、清理、重读验证。
-6. 执行结果作为补遗追加到原报告。
+3. 目标为 SpecDev 时先读取其 `common/rules/change-completion.md` 与 `triage.md`：完成门必须通过，`external_action` 必须为 `closed | waived | not-applicable`；pending/failed 返回 Triage，不生成可执行归档计划。
+4. 执行 Step 1-5：扫描 stores、扫描 change、生成归档计划、生成合并计划、生成清理候选。
+5. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
+6. 确认后以 mode=`confirmed` 执行 Step 7-8：归档移动、合并写入、清理、重读验证。
+7. 执行结果作为补遗追加到原报告。
 
 ### archive-batch
 
@@ -35,10 +36,11 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 1. 读取 `../skills/archive-and-consolidate/SKILL.md`，执行路径解析。
 2. 扫描目标 workflow 下所有 `change_status: completed` 的 change。不接受 active 或 broken 状态。
-3. 执行 Step 1-5：扫描 stores、逐 change 扫描、批量预检、合并计划、清理候选。
-4. 批量原子性：任一预检失败阻塞整批。
-5. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
-6. 确认后逐项执行：归档移动 → 合并写入 → 清理 → 重读验证。失败时报告已完成/未完成清单。
+3. SpecDev 候选逐个通过 change completion 与 external reconcile 门；任一 pending/failed 阻塞整批。
+4. 执行 Step 1-5：扫描 stores、逐 change 扫描、批量预检、合并计划、清理候选。
+5. 批量原子性：任一预检失败阻塞整批。
+6. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
+7. 确认后逐项执行：归档移动 → 合并写入 → 清理 → 重读验证。失败时报告已完成/未完成清单。
 
 ## 完成标准
 

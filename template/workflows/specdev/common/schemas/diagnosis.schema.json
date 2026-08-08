@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:diagnosis:v1",
+  "title": "SpecDev Diagnosis Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "status", "feedback_loop_ready", "red_command", "red_evidence", "cleanup_status", "updated_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "diagnosis"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "status": {"enum": ["reproducing", "minimizing", "testing-hypotheses", "root-cause-confirmed", "blocked"]},
+    "feedback_loop_ready": {"type": "boolean"},
+    "red_command": {"type": ["string", "null"]},
+    "red_evidence": {"type": ["string", "null"]},
+    "cleanup_status": {"enum": ["pending", "clean", "registered"]},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

@@ -13,11 +13,11 @@
 
 ## 职责
 
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`：当前术语、不变量、概念关系和代码映射。
+- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`：当前 bounded context 的项目规范术语和 `_Avoid_` 同义词；不保存代码导航或 change 历史。
 - `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`：当前 change 已接受、被替代或废弃的架构决策。
 - `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`：设计讨论轨迹，不作为当前架构的最终权威。
 - `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`：用户问题、外部行为、范围与验收合同。
 - `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`：单个垂直切片的执行契约。
 - `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`：跨 Ticket 的门禁、调度和治理。
 
-change 完成后，只有仍真实、长期有效且有实现证据的知识才能提升到永久目录。
+change 完成后，只有仍真实、跨 change 有用且有实现证据的规范术语或符合三项准入条件的 ADR 才能提升到永久目录。

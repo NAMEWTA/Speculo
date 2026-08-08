@@ -102,7 +102,7 @@ shared_path_owners: []
 
 不适用的关键风险类别必须写“不适用：原因”。
 
-仅当用户界面交互受影响时增加 E2E 行；owner 固定为 Lead 集成 Gate，Worker 只提供场景与预期。
+仅当用户界面交互受影响时增加 E2E 行并指定当前执行 owner。若后续 Goal Plan 含委派附录，再由该计划显式转交 Lead；Ticket 不预设 Lead/Worker 角色。
 
 ## 9. 发布、迁移与恢复
 

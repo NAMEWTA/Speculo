@@ -96,7 +96,7 @@ keywords: [architecture, review, module, interface, depth, seam, adapter, levera
 
 - 新概念加入 change CONTEXT；永久 CONTEXT 不存在时延迟到归档提升；
 - 模糊术语当场精炼；
-- 用户以长期有效理由拒绝候选时，询问是否记录 ADR，暂时性或自明理由不制造 ADR；
+- 用户的选择同时难以逆转、没有上下文会令人惊讶且来自真实权衡时，询问是否记录 ADR；任一条件不满足就留在 LOG/Ticket，不制造 ADR；
 - 替代 interface 需要探索时使用 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。
 
 将选择、访谈状态与结论同步到 Markdown/HTML；每次运行只访谈用户选择的候选，不批量迫使用户决定所有卡片。

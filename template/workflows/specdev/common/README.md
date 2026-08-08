@@ -18,6 +18,7 @@
 - 证据与验证：`<Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>`
 - 偏差控制：`<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>`
 - 路径引用：`<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`
+- Change 完成：`<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`
 - 代码注释：`<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`
 - 代码库设计：`<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
 
@@ -32,14 +33,20 @@
 - Goal Plan：`<Path>{roots.workflows}/specdev/common/schemas/goal-plan.schema.json</Path>`
 - 设计树：`<Path>{roots.workflows}/specdev/common/schemas/design-tree.schema.json</Path>`
 - Wayfinder Ticket：`<Path>{roots.workflows}/specdev/common/schemas/wayfinder-ticket.schema.json</Path>`
+- 来源快照：`<Path>{roots.workflows}/specdev/common/schemas/source.schema.json</Path>`
+- 分诊：`<Path>{roots.workflows}/specdev/common/schemas/triage.schema.json</Path>`
+- 诊断：`<Path>{roots.workflows}/specdev/common/schemas/diagnosis.schema.json</Path>`
+- 代码审查：`<Path>{roots.workflows}/specdev/common/schemas/code-review.schema.json</Path>`
+- 原型记录：`<Path>{roots.workflows}/specdev/common/schemas/prototype-record.schema.json</Path>`
 
 ## 工具与 Skill
 
 - 包与 change 校验器：`<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`
 - 校验器说明：`<Path>{roots.workflows}/specdev/common/tools/README.md</Path>`
 - 外部技术研究 Skill：`<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`
-- 并行 Ticket worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`
-- Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`
+- 隔离 Ticket/原型 worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`，角色中立；委派 Goal Plan 才映射为 Lead/Worker
+- 委派 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`，仅用户选择委派 Goal Plan 时调用
+- 双轴代码审查 Skill：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
 
 ## 加载原则
 

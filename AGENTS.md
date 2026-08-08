@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.3.4
+- Package: `@namewta/speculo` v0.6.1
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -12,10 +12,10 @@
 ## Directory Map
 
 ```
-src/                 CLI source (cli.ts, index.ts, migrate.ts, workflows.ts, utils.ts)
+src/                 CLI source (cli.ts, index.ts, migrate.ts, skills-mirror.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
-  commands/           5 command definitions
+  commands/           6 command definitions
   skills/             6 skill directories
   workflows/          workflow packages with INDEX.md + work entries
   canonical/          Single-file pure-Markdown distribution format for AI platforms
@@ -31,7 +31,8 @@ scripts/              Build, validation, verification tooling
 |---|---|
 | `pnpm build` | `tsc -p tsconfig.json` |
 | `pnpm test` | `node --test dist/test/*.test.js` (builds first via pretest) |
-| `pnpm validate-assets` | `node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs` |
+| `pnpm validate-source-parity` | Check all `temp/skills` sources against their adopted, excluded, or pending SpecDev targets |
+| `pnpm validate-assets` | Check source parity, canonical freshness, framework assets, and template links |
 | `pnpm check` | `pnpm test && pnpm validate-assets` |
 | `pnpm verify-bin` | `node scripts/verify-bin.mjs` |
 
@@ -39,7 +40,7 @@ scripts/              Build, validation, verification tooling
 
 - **cli.ts** — Thin command router: parse command → delegate to index.ts (init) or migrate.ts (migrate). `update` is deprecated.
 - **index.ts** — `initSpeculo()` copies template assets to `<target>/speculo/`. Core assets (`.speculo`, `commands`, `skills`) always installed. Workflow packages selected interactively or via `--all`.
-- **migrate.ts** — `planMigration()` + `migrateSpeculo()`: v2/transitional-v3 → current v3 state. Staged, rollback-safe with backup/restore.
+- **migrate.ts** — `planMigration()` + `migrateSpeculo()`: v2/transitional-v3 and SpecDev global status v3 → current v4 state. Staged, rollback-safe with backup/restore.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
 - **skills-mirror.ts** — `mirrorSkills()`: mirror `.agents/skills/*` canonicals into `.claude/skills/*` pointers; reverse-relocate full `.claude` skills into `.agents`; idempotent. Pointer detected via `<!-- speculo:pointer -->` sentinel.
 - **utils.ts** — Single `pathExists()` helper.
@@ -61,10 +62,10 @@ speculo update                           Deprecated → delegates to speculo ini
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
-- **template/commands/** — archive-and-consolidate, docs-sync, handoff, retro, status
-- **template/skills/** — agents-md-builder, archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, typescript-standards-builder, writing-great-skills
-- **template/workflows/** — specdev（研发全流程: A-archive-and-consolidate, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
-- **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；按 `speculo-write-canonical` skill 手动拼接
+- **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, retro, status
+- **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, typescript-standards-builder, writing-great-skills
+- **template/workflows/** — specdev（14 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
 ## Workflow Package Contract
 
@@ -88,7 +89,8 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 
 ## Validation Pipeline
 
-- `pnpm validate-assets` 依次运行三步：
+- `pnpm validate-assets` 依次运行四步：
+  - `check-specdev-source-parity.mjs` — 确认 `temp/skills` 的 26 个上游来源全部登记为已采用、明确排除或待处理，并校验已采用目标 hash。
   - `generate-specdev-canonical.mjs --check` — 确认 `template/canonical/canonical-specdev-*` 与源文件闭包一致（stale 即失败）。
   - `validate-framework-assets.mjs` — Validates INDEX frontmatter/sections, `_state/` skeleton, `<Path>` root aliases, docs-sync templates, agent skills.
   - `check-template-links.mjs` — Validates markdown links and `<Path>` pointers in `template/` (and markdown links in `.agents/`).

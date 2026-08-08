@@ -42,7 +42,7 @@ keywords: [认知导师, 教学, why, bug, 源码研究, 技术方案, 架构, �
 
 按存在情况读取：
 
-- 原始请求：`<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
+- 原始请求：`<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`
 - 分诊结果：`<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
 - 诊断结果：`<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
 - 当前领域上下文：`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`

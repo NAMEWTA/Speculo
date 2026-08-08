@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:source:v1",
+  "title": "SpecDev Source Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "source_type", "canonical_locator", "captured_at", "content_sha256", "remote_state", "close_capability"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "source"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source_type": {"enum": ["conversation", "pasted", "local-file", "url", "github-issue", "github-pr"]},
+    "canonical_locator": {"type": ["string", "null"]},
+    "captured_at": {"type": "string", "minLength": 1},
+    "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "remote_state": {"enum": ["open", "closed", "unknown", "not-applicable"]},
+    "close_capability": {"enum": ["supported", "unsupported", "not-applicable"]},
+    "supersedes_source": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

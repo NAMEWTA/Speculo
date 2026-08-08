@@ -115,7 +115,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 有序执行路线和安全落点；
 - expected、writable、read-only、shared 路径；
 - 正常、失败和回归验证矩阵；
-- 用户界面交互受影响时的 Lead E2E Gate；
+- 用户界面交互受影响时的 E2E Gate 与执行 owner；后续委派 Goal Plan 可以显式把该 Gate 转交 Lead；
 - Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
 - 可判定验收标准。
 
@@ -128,7 +128,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 3. 识别根 Ticket、汇合点、扇出与收缩点；
 4. 为每个 Spec 验收合同映射至少一个 Ticket；
 5. 检查并行候选的 `writable_paths` 是否相交；
-6. 共享路径必须指定唯一 owner，通常由 Lead 或专门 Ticket 修改；
+6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
 7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
 使用 下方 `<tickets-map-template>` 标签 草拟总体 Map。
@@ -194,8 +194,11 @@ specdev/changes/{change}/ticket/NN-<ticket-name>.md
 
 运行：
 
-> **结构校验：** 本地项目若已安装 Speculo，使用其 Node 校验器检查当前 change；
-> 纯网页环境逐项核对本文内联的 schema、Ready 清单和完成标准，并记录自动校验未运行。
+```bash
+node Speculo Node 校验器 \
+  --stage tickets \
+  specdev/changes/{change}
+```
 
 更新 `specdev/status.json` 与 `specdev/changes/{change}/.status.json`。
 
@@ -307,7 +310,7 @@ specdev/changes/{change}/ticket/NN-<ticket-name>.md
 - [ ] `writable_paths` 非空，或明确为仅文档、调查或无代码变更。
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
-- [ ] 仅当用户界面交互受影响时定义 E2E，且 owner 为 Lead 集成 Gate。
+- [ ] 仅当用户界面交互受影响时定义 E2E 与当前执行 owner；Ticket 不预设 Lead/Worker，委派 Goal Plan 可以显式改由 Lead 集成。
 - [ ] Evidence 位置明确为 `specdev/changes/{change}/evidence/T-NN.md`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用本文约定的逻辑路径。
@@ -449,7 +452,7 @@ shared_path_owners: []
 
 不适用的关键风险类别必须写“不适用：原因”。
 
-仅当用户界面交互受影响时增加 E2E 行；owner 固定为 Lead 集成 Gate，Worker 只提供场景与预期。
+仅当用户界面交互受影响时增加 E2E 行并指定当前执行 owner。若后续 Goal Plan 含委派附录，再由该计划显式转交 Lead；Ticket 不预设 Lead/Worker 角色。
 
 ## 9. 发布、迁移与恢复
 
@@ -527,7 +530,7 @@ T-01 [READY]
 ## 5. 并行与路径所有权
 
 - 最大并发来自 `specdev/config.json`。
-- shared owner 为 Lead 或专用 Ticket。
+- shared owner 为专用 Ticket 或明确的集成 owner；只有委派 Goal Plan 才使用 Lead 角色。
 - 项目路径契约以 Ticket frontmatter 为准。
 - 并行写代码的 Ticket 使用独立 worktree；只读调查不需要。
 
@@ -625,33 +628,44 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
+| 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
 | 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
-| 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
-| 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
+| Change 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
+| Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
+| 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
+| Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
 | Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
 | 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
+
+Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
 ## 2. 权威顺序
 
 同一事项冲突时按下列顺序裁决：
 
 1. 用户最新明确决定；
-2. 当前已接受架构决策：`specdev/changes/{change}/ADR.md`；
-3. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
-4. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-5. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-6. 当前代码与运行事实；
-7. 旧计划、旧日志和未经确认的推断。
+2. 当前 change 已接受的架构决策：`specdev/changes/{change}/ADR.md`；
+3. 永久 ADR 与领域上下文：`specdev/adr/`、`specdev/context/`；
+4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
+5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
+7. 当前代码与运行事实；
+8. 旧计划、旧日志和未经确认的推断。
+
+当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
+
+`specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
 
 代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
 
@@ -765,16 +779,16 @@ shared_paths: ["package.json"]
 1. 可能并行的 Ticket，其 `writable_paths` 不得相交。
 2. glob 与具体路径按覆盖关系判断，不得只比较字符串。
 3. 根依赖清单、锁文件、根导出、共享 schema、迁移索引、全局路由和跨 Ticket 合同文件默认视为 shared。
-4. shared path 只能由 Lead 或专用 owner Ticket 修改；消费者 Ticket 只读。
+4. shared path 只能由专用 owner Ticket 或 Goal Plan 明确指定的唯一集成 owner 修改；消费者 Ticket 只读。委派 Goal Plan 可以把该 owner 指定为 Lead，但普通计划不预设角色。
 5. 需要越界时先停止，按 下方 `<deviation-control>` 标签 提出 ownership change；不得先改后报。
 6. 前置 Ticket 改变目录结构后，后续 Ticket 开始前重新解析项目路径；若授权范围语义未改变，可只更新导航路径。
 7. 不得把“最后解决合并冲突”当作所有权方案。
 
 ## 3. Worktree 与分支
 
-并行写代码的 Ready Ticket 使用隔离 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+需要并行或临时隔离项目写入时使用独立 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
 
-生命周期由 Lead 按 下方 `<dev-worktree>` 标签 管理，编排规则位于 “目标规划阶段的 Lead 编排规则”。
+生命周期由调用方明确的 workspace owner 按 下方 `<dev-worktree>` 标签 管理。普通 Goal Plan 由当前执行或集成 owner 负责；委派 Goal Plan 才把 workspace owner 映射为 Lead。编排规则位于 “目标规划阶段的核心编排规则”。
 
 </path-ownership>
 
@@ -806,7 +820,7 @@ shared_paths: ["package.json"]
 4. 可重复手动步骤、截图或查询结果；
 5. 代码阅读推断。
 
-E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lead 在集成阶段执行。Worker 只记录场景、预期结果和待执行状态。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
+E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由当前实现或集成 owner 运行；委派执行中 Worker 只记录场景、预期结果和待执行状态，由 Lead 在集成阶段运行。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
 
 低层证据不能替代明确要求的用户行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控信号或回滚演练。
 
@@ -849,7 +863,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 ## 1. 偏差等级
 
 - **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
-- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得 owner 或 Lead 批准。
+- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得该 Ticket 或计划明确的批准 owner 同意。
 - **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
 - **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
 - **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
@@ -884,7 +898,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并发 Agent 时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate。
+- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
 
 </deviation-control>
 
@@ -892,42 +906,54 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 
 # SpecDev Research
 
-## 触发
+## 输入
 
-当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+- `decision`：研究要支持的一个具体决定；
+- `questions`：需要回答的穷尽问题集；
+- `stop_condition`：何时证据已足够；
+- `caller`：D、G、S、W、R、T 或 I；
+- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+
+缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
 
 ## 流程
 
-1. 写清楚要支持的具体决策和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
-3. 核对版本、发布日期、适用环境和已知限制。
-4. 区分：来源明确事实、代码库事实、推断、建议。
-5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
-6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
-7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+1. 固定问题、版本、环境和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
+3. 核对发布日期、版本、适用环境、限制和已知冲突。
+4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
+5. 区分来源事实、代码库事实、推断、建议和未知项。
+6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
 
-## 输出模板
+## 输出
 
 ```markdown
-# Research: <问题>
-- 决策用途：
-- 范围/版本：
-- 停止条件：
+## Research: <问题>
+- Decision / target:
+- Scope / version:
+- Stop condition:
 
-## Findings
 ### R-001
-- 结论：
-- 类型：官方事实 / 代码事实 / 推断 / 建议
-- 来源：
-- 置信度：high / medium / low
-- 适用限制：
-- 对工件影响：
+- Claim:
+- Type: official fact / code fact / inference / recommendation
+- Source:
+- Confidence:
+- Limits:
+- Artifact impact:
 
-## Conflicts and Unknowns
-## Recommendation
+### Conflicts and Unknowns
+### Recommendation
 ```
 
-不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+
+## 完成标准
+
+- 每个输入问题有答案或明确未知；
+- 每个实质声明就近引用一手来源；
+- 版本、限制、冲突和置信度已记录；
+- 结果有唯一 owning artifact；
+- 本 Skill 没有创建自己的 state 路径。
 
 </research>
 
@@ -937,55 +963,56 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 
 ## 适用范围
 
-- 仅用于并行写代码且路径所有权不冲突的 Ready Ticket。
+- 用于并行写代码且路径所有权不冲突的 Ready Ticket，或明确要求临时隔离的一次性原型。
 - 只读调查和顺序执行默认共用当前工作区。
-- Lead 管理创建、集成和清理；Worker 只实现、验证并返回 Evidence。
+- 调用方必须明确 workspace owner、implementation owner、固定基线、工作项 ID、持久化 owner 和允许的结束动作。
+- 普通执行不建立额外角色；委派 Goal Plan 才把 workspace owner/implementation owner 分别映射为 Lead/Worker。
 - 平台原生 worktree 优先；不可用时使用 Git worktree。
 
 ## 生命周期
 
 1. 创建或恢复时加载 下方 `<dev-worktree-create>` 标签。
-2. Worker 完成后将记录从 `active` 更新为 `review`，返回 Ticket 状态、Evidence 路径、`workspace_ref`、commit 或 PR 引用，以及条件性 Lead E2E。
-3. Lead 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签。
+2. implementation owner 完成后返回工作项状态、Evidence/record 路径、`workspace_ref`、checkpoint、commit 或 PR 引用和未验证项；Ticket worktree 从 `active` 更新为 `review`。
+3. workspace owner 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签；一次性原型只评估和清理，不合入生产分支。
 
-状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`。记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。
+Ticket worktree 状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`，记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。原型的 branch、`workspace_ref` 和清理结果只写入 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`，不伪造 Ticket worktree 记录。
 
 ## 边界
 
-- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`。
-- Git provider 固定使用 `<project-root>/specdev-worktree/<ticket-id>/`，持久化 `workspace_ref: specdev-worktree/<ticket-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
+- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`；每个原型使用独立 worktree 和分支。
+- Git provider 固定使用 `<project-root>/specdev-worktree/<work-item-id>/`，持久化 `workspace_ref: specdev-worktree/<work-item-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
 - native/external provider 保留其可迁移 opaque locator；所有 provider 都不保存机器绝对路径、认证秘密或真实用户数据。
 - 项目根 `.gitignore` 的 `specdev-worktree/` 条目由 `speculo init` 单一维护；缺失时创建流程阻塞并提示重新运行 init。
-- E2E 仅由 Lead 在集成阶段执行，且仅适用于用户界面交互受影响的变更。
+- E2E 仅适用于用户界面交互受影响的变更。普通执行由当前集成 owner 运行；委派执行由 Lead 在集成阶段运行。
 - 合并、推送、PR、删除分支或 worktree 仍需用户授权。
 
 </dev-worktree>
 
 <dev-worktree-create>
 
-# 创建或恢复 Ticket Worktree
+# 创建或恢复工作项 Worktree
 
 ## 前置
 
-- Ticket `ready: true`，依赖完成，写路径无冲突。
-- `specdev/config.json` 中 `git.worktree_for_parallel: true`。
-- Lead 已固定所有并行 Ticket 共用的 `base_sha`。
+- Ticket `ready: true` 且依赖完成，或原型问题与临时写入范围已锁定；项目写路径无冲突。
+- 并行 Ticket 要求 `specdev/config.json` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
+- 调用方已指定 workspace owner、implementation owner、工作项 ID、持久化 owner，并固定 `base_sha`；并行 Ticket 共用同一基线。
 
 ## 创建
 
-1. 从 Speculo 工作区声明的 `path_base: project-root` 解析 `<project-root>`。若记录的 provider 为 `git`，要求 `workspace_ref` 精确为 `specdev-worktree/<ticket-id>`，拼接后仍位于 project root，且 `specdev-worktree/` 不是逃逸到外部的符号链接。
-2. 若 `specdev/changes/{change}/.status.json` 的 `worktrees` 已有该 Ticket 的 `active` 或 `review` 记录：Git provider 必须在 `git worktree list --porcelain` 中匹配固定路径、分支与 `base_sha`；native/external 由对应 provider 解析 opaque locator。一致则恢复，任一不一致停止。
+1. 从 Speculo 工作区声明的 `path_base: project-root` 解析 `<project-root>`。若记录的 provider 为 `git`，要求 `workspace_ref` 精确为 `specdev-worktree/<work-item-id>`，拼接后仍位于 project root，且 `specdev-worktree/` 不是逃逸到外部的符号链接。
+2. 读取调用方拥有的持久化记录：Ticket 使用 `specdev/changes/{change}/.status.json` 的 `worktrees`；原型使用 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`。若已有可恢复记录，Git provider 必须在 `git worktree list --porcelain` 中匹配固定路径、分支与 `base_sha`；native/external 由对应 provider 解析 opaque locator。一致则恢复，任一不一致停止。
 3. 否则优先调用平台原生 worktree 能力。使用 native/external 时保存 provider 返回的可迁移 locator；不可用时进入 Git fallback。
 4. Git fallback 前确认项目根 `.gitignore` 已包含 `specdev-worktree/` 或等价根模式。缺失时停止并提示重新运行当前版本 `speculo init`，不在本 Skill 内修改 `.gitignore`。
-5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<ticket-id>`、`workspace_ref = specdev-worktree/<ticket-id>`，从 `base_sha` 执行 `git worktree add -b <ticket-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
-6. 分支使用 `speculo/<change>/<ticket-id>`；现有分支未能匹配记录时停止。
-7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 Worker 基线。
-8. 写入 `worktrees`：
+5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<work-item-id>`、`workspace_ref = specdev-worktree/<work-item-id>`，从 `base_sha` 执行 `git worktree add -b <work-item-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
+6. 分支使用 `speculo/<change>/<work-item-id>`；现有分支未能匹配记录时停止。
+7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 implementation owner 的创建基线。
+8. Ticket 将记录写入 `worktrees`：
 
 ```json
 {
   "ticket_id": "T-01",
-  "owner": "<worker>",
+  "owner": "<implementation-owner>",
   "provider": "git",
   "base_sha": "<sha>",
   "branch": "speculo/<change>/T-01",
@@ -995,28 +1022,30 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 }
 ```
 
-native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。
+native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。原型不使用本 JSON 结构，只在 record 的 Run and Assets 中记录源码 branch/commit，并在 frontmatter 写入 `workspace_ref` 与清理状态。
 
-完成条件：工作区可定位、基线可用、状态记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与 Ticket ID 完全一致。失败时设为 `blocked` 并保留现场。
+完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
 
 </dev-worktree-create>
 
 <dev-worktree-finalize>
 
-# 集成与清理 Ticket Worktree
+# 集成与清理工作项 Worktree
 
-## Lead 集成
+## 集成
 
-1. 确认记录为 `review`，读取 Worker Evidence，实际修改未越过路径契约。
+仅生产 Ticket 进入本段；一次性原型不得合入生产分支。
+
+1. workspace owner 确认记录为 `review`，读取 implementation owner 的 Evidence，实际修改未越过路径契约。
 2. 在目标集成基线上应用变更并运行受影响的定向与回归验证。
-3. 仅当变更影响用户界面交互时，由 Lead 运行验收所需的最小 E2E；Worker 只提供场景和预期结果。
+3. 仅当变更影响用户界面交互时，由当前集成 owner 运行验收所需的最小 E2E；委派执行中 implementation owner 只提供场景和预期结果，Lead 负责运行。
 4. 验证通过后将记录更新为 `integrated`；冲突或失败时设为 `blocked` 并保留 worktree。
 
 ## 清理
 
 1. 取得用户对删除 worktree 和分支的授权。
-2. Git provider 从 project root 解析 `specdev-worktree/<ticket-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
-3. 确认 worktree 不再注册且 Ticket 子目录不存在后删除对应分支，将状态更新为 `removed`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
+2. Git provider 从 project root 解析 `specdev-worktree/<work-item-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
+3. 确认 worktree 不再注册且工作项目录不存在后删除对应分支。Ticket 将状态更新为 `removed`；原型把 `cleanup_status` 更新为 `clean`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
 
 PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明确要求时使用强制删除。
 
@@ -1037,7 +1066,7 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

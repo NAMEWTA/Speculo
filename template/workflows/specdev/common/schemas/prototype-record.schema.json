@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:prototype-record:v1",
+  "title": "SpecDev Prototype Record Frontmatter",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "prototype_id", "question", "branch", "status", "workspace_ref", "project_paths", "assets", "winner", "promotion_target", "cleanup_status", "updated_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "prototype-record"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "prototype_id": {"type": "string", "pattern": "^PROTO-[0-9]{3,}$"},
+    "question": {"type": "string", "minLength": 1},
+    "branch": {"enum": ["logic", "ui"]},
+    "status": {"enum": ["active", "answered", "blocked", "discarded"]},
+    "workspace_ref": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"},
+    "project_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "assets": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "winner": {"type": ["string", "null"]},
+    "promotion_target": {"type": ["string", "null"]},
+    "cleanup_status": {"enum": ["pending", "clean", "registered"]},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

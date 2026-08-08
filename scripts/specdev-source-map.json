@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "source": "temp/skills/engineering/ask-matt/SKILL.md",
+      "source_sha256": "03dec2846309d03947fbf143d73fac8dfee2f484f9a876f050c806cd1f48f767",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/INDEX.md"],
+      "integration_deltas": ["Converted conversational routing into the persistent SpecDev work graph"]
+    },
+    {
+      "source": "temp/skills/engineering/code-review/SKILL.md",
+      "source_sha256": "3349fe3453972078a9fc8a44e349db549d1c4488fb94ca85e53456905f9e6ea7",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/C-code-review/C-code-review.md", "template/workflows/specdev/common/skills/code-review/SKILL.md"],
+      "integration_deltas": ["Persists standalone reviews while returning implementation reviews to Evidence"]
+    },
+    {
+      "source": "temp/skills/engineering/codebase-design/SKILL.md",
+      "source_sha256": "e962a1e2a92ca8742830a9b14ee11c70b36fcccfc41b9faadc1a19e1fb88756d",
+      "classification": "direct",
+      "targets": ["template/workflows/specdev/common/rules/codebase-design.md"]
+    },
+    {
+      "source": "temp/skills/engineering/diagnosing-bugs/SKILL.md",
+      "source_sha256": "0e4fc69d7c82690989c16ab47e54ba2e29258238798c9c573364990d0b8a6047",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md"],
+      "integration_deltas": ["Diagnosis owns evidence and a repair contract; production changes remain owned by Implement"]
+    },
+    {
+      "source": "temp/skills/engineering/domain-modeling/SKILL.md",
+      "source_sha256": "72448cebcb37870399dc4907b95d9d350a0e5cab02d660b65143c0b1e454ff99",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/G-grill-with-docs/domain-modeling-rules.md"],
+      "integration_deltas": ["Uses change-local LOG, CONTEXT and ADR ownership before knowledge promotion"]
+    },
+    {
+      "source": "temp/skills/engineering/grill-with-docs/SKILL.md",
+      "source_sha256": "b84e9bc90c2c380439977e8b9f59b34c00c804248c8222952bb353d25196a012",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"],
+      "integration_deltas": ["Adds resumable design-tree, LOG, CONTEXT and ADR artifacts"]
+    },
+    {
+      "source": "temp/skills/engineering/implement/SKILL.md",
+      "source_sha256": "023ae6e791cc6a333ee948818e3e42d8db0611766ab593f0f1393e7712fee244",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/I-implement/I-implement.md"],
+      "integration_deltas": ["Adds Ticket readiness, path ownership, deviations and durable Evidence"]
+    },
+    {
+      "source": "temp/skills/engineering/improve-codebase-architecture/SKILL.md",
+      "source_sha256": "280cdf8a5c60072afcbfe9d85560b7425904f6598a5d0d322efa06e386e01695",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/R-review-architecture/R-review-architecture.md"],
+      "integration_deltas": ["Persists Markdown and HTML review artifacts and returns accepted proposals to Tickets"]
+    },
+    {
+      "source": "temp/skills/engineering/prototype/SKILL.md",
+      "source_sha256": "b9b2cfb1af86d0e92bfaacdd3e1598fa7ffd3013ed4b3387712eb9bed8d1dc55",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/P-prototype/P-prototype.md"],
+      "integration_deltas": ["Records prototype answers and temporary workspace locators without promoting prototype code"]
+    },
+    {
+      "source": "temp/skills/engineering/research/SKILL.md",
+      "source_sha256": "33ec97ac2a7a95ab04a99199c931495694c80fce4be5152a882d6ce7d9a22d98",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/common/skills/research/SKILL.md"],
+      "integration_deltas": ["Caller owns the destination artifact; research creates no shared runtime namespace"]
+    },
+    {
+      "source": "temp/skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "source_sha256": "76e03ecdb749602bc6e81bbc388600b2874c7595022ae455eca55691955eeb6c",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/I-implement/merge-conflict-protocol.md"],
+      "integration_deltas": ["Git continuation and commits remain individually authorized side effects"]
+    },
+    {
+      "source": "temp/skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "source_sha256": "a62550fecfd7259ae9f2e9ad806b50eb3bc7c743fbb0c73246f41ae5e9cad5f8",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/I-init-setup/I-init-setup.md"],
+      "integration_deltas": ["Initializes local SpecDev state and repository-derived verification instead of external trackers"]
+    },
+    {
+      "source": "temp/skills/engineering/tdd/SKILL.md",
+      "source_sha256": "c1d4671821ac34b7333453e480af4348d08172506ab2e5d6dc6acf4dc388c860",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/I-implement/tdd-rules.md", "template/workflows/specdev/I-implement/tdd-test-design.md", "template/workflows/specdev/I-implement/tdd-mocking.md"],
+      "integration_deltas": ["Uses Ready Ticket seams and records each red-green slice in Evidence"]
+    },
+    {
+      "source": "temp/skills/engineering/to-spec/SKILL.md",
+      "source_sha256": "c04d152ec6ea7ca90daa0b685fea251729dcfe3503a192a01f1f27432a717551",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/S-spec/S-spec.md"],
+      "integration_deltas": ["Produces a locally authoritative Ready Spec with stable acceptance identifiers"]
+    },
+    {
+      "source": "temp/skills/engineering/to-tickets/SKILL.md",
+      "source_sha256": "c8ac06b76b7641bf77a8119d667acbcd236149be8ea3034bd796e081fcab257d",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/T-tickets/T-tickets.md"],
+      "integration_deltas": ["Adds local DAG, path ownership, readiness and Evidence contracts"]
+    },
+    {
+      "source": "temp/skills/engineering/triage/SKILL.md",
+      "source_sha256": "e3b993988aaeb65cee3bb6c5640f925f3f4438a9ef938ab000a4006e2c3d51bb",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/T-triage/T-triage.md"],
+      "integration_deltas": ["Remote content is frozen locally; only Triage may reconcile and close a supported source"]
+    },
+    {
+      "source": "temp/skills/engineering/wayfinder/SKILL.md",
+      "source_sha256": "a170d84d54086765aa3e6adbb0e2a74204af0b75247401373402333f0f91c712",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/W-wayfinder/W-wayfinder.md"],
+      "integration_deltas": ["Uses local map, Ticket, claim and solution-comment artifacts as the tracker"]
+    },
+    {
+      "source": "temp/skills/engineering/wizard/SKILL.md",
+      "source_sha256": "90240824c8713c7959faba7628969aaa47a60873a0e57ff3d20a19ae38511d92",
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "Cross-workflow automation has no current caller and would create an unused shipped skill"
+    },
+    {
+      "source": "temp/skills/productivity/grill-me/SKILL.md",
+      "source_sha256": "709e2eb4bd4a5b30f85751247fcfb26c6c421796caa292897274df29da153ef1",
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "The persistent G work owns SpecDev design grilling; a stateless duplicate would be ambiguous"
+    },
+    {
+      "source": "temp/skills/productivity/grilling/SKILL.md",
+      "source_sha256": "03ca43f45bd9c6806d0674132b5ea27a1839a088fef24d9a31c15d267309033b",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/G-grill-with-docs/grilling-protocol.md"],
+      "integration_deltas": ["Each answer updates the resumable frontier and LOG atomically"]
+    },
+    {
+      "source": "temp/skills/productivity/handoff/SKILL.md",
+      "source_sha256": "d83e0daa699b72111b4b49bff3fd59f6e55c0fa8803abfc63f92ade5f94974f1",
+      "classification": "adapted",
+      "targets": ["template/commands/handoff.md"],
+      "integration_deltas": ["Command-owned immutable report naming replaces temporary output"]
+    },
+    {
+      "source": "temp/skills/productivity/teach/SKILL.md",
+      "source_sha256": "fe1e9efd5a57b5781cf446a96148f34eebf5acdc6c98f536e372817ff5d2f779",
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "A teaching curriculum belongs to person or a dedicated teaching workflow, not SpecDev execution"
+    },
+    {
+      "source": "temp/skills/productivity/to-questionnaire/SKILL.md",
+      "source_sha256": "866833766a79a2ab68386ae7fe57f01cf80a9eba14921dd2b0c8fbfa8f5e3255",
+      "classification": "adapted",
+      "targets": ["template/workflows/specdev/G-grill-with-docs/stakeholder-questionnaire.md"],
+      "integration_deltas": ["Questionnaires block and resume the owning change instead of becoming a separate workflow"]
+    },
+    {
+      "source": "temp/skills/productivity/wait-what/SKILL.md",
+      "source_sha256": "b45a1ce7ebe3c3b176eb5926e881256d572f2bd57bdad03f35bda8ed05b3cafb",
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "Immediate conversational repair needs no workflow state or persistent artifact"
+    },
+    {
+      "source": "temp/skills/productivity/writing-for-agents/SKILL.md",
+      "source_sha256": "5a0c83a7efc7ac1fbd8199a0c7d592798ebc43c4367a2fc726a33b2d843d6e86",
+      "classification": "excluded",
+      "targets": [".agents/skills/_shared/authoring-quality.md"],
+      "rationale": "Authoring guidance belongs to the maintainer layer and is not a SpecDev runtime capability"
+    },
+    {
+      "source": "temp/skills/productivity/writing-great-skills/SKILL.md",
+      "source_sha256": "e285f12827365f96a082a41f100db294b64a6aa1efcec3830040559eb302e6d9",
+      "classification": "superseded",
+      "targets": ["template/skills/writing-great-skills/SKILL.md", ".agents/skills/_shared/authoring-quality.md"],
+      "rationale": "The shipped authoring reference and maintainer quality model already provide the stronger single source"
+    }
+  ]
+}

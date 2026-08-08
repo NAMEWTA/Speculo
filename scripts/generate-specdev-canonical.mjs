@@ -36,6 +36,10 @@ const sharedSources = {
     source: `${commonRoot}/rules/deviation-control.md`,
     tag: "deviation-control",
   },
+  changeCompletion: {
+    source: `${commonRoot}/rules/change-completion.md`,
+    tag: "change-completion",
+  },
   researchSkill: {
     source: `${commonRoot}/skills/research/SKILL.md`,
     tag: "research",
@@ -159,6 +163,7 @@ const canonicalDocuments = [
       reference("G-grill-with-docs/adr-format.md"),
       reference("G-grill-with-docs/context-format.md"),
       reference("G-grill-with-docs/log-format.md"),
+      reference("G-grill-with-docs/stakeholder-questionnaire.md"),
       sharedSources.artifactContract,
       sharedSources.planningPrinciples,
       sharedSources.readinessAndDepth,
@@ -217,14 +222,17 @@ const canonicalDocuments = [
     references: [
       reference("P-goal-plan/planning-modes.md"),
       reference("P-goal-plan/orchestration-protocol.md"),
+      reference("P-goal-plan/delegated-execution.md"),
       reference("P-goal-plan/completion-control.md"),
       reference("P-goal-plan/goal-plan-template.md", {
         preserveArtifactHeader: true,
       }),
+      reference("P-goal-plan/delegated-execution-template.md"),
       sharedSources.artifactContract,
       sharedSources.pathOwnership,
       sharedSources.evidenceAndVerification,
       sharedSources.deviationControl,
+      sharedSources.changeCompletion,
       sharedSources.researchSkill,
       sharedSources.devWorktreeSkill,
       sharedSources.devWorktreeCreate,
@@ -285,18 +293,21 @@ const canonicalDocuments = [
 
 const capabilityNames = new Map([
   ["A-archive-and-consolidate/A-archive-and-consolidate.md", "归档与沉淀阶段"],
+  ["C-code-review/C-code-review.md", "独立代码审查阶段"],
   ["D-diagnose-bugs/D-diagnose-bugs.md", "Bug 诊断阶段"],
   ["G-grill-with-docs/G-grill-with-docs.md", "设计访谈能力"],
   ["I-implement/I-implement.md", "实现阶段"],
   ["I-init-setup/I-init-setup.md", "初始化设置阶段"],
   ["P-goal-plan/P-goal-plan.md", "目标规划阶段"],
+  ["P-prototype/P-prototype.md", "原型阶段"],
   [
     "P-goal-plan/orchestration-protocol.md",
-    "目标规划阶段的 Lead 编排规则",
+    "目标规划阶段的核心编排规则",
   ],
   ["R-review-architecture/R-review-architecture.md", "架构审查阶段"],
   ["S-spec/S-spec.md", "编写 Spec 阶段"],
   ["T-tickets/T-tickets.md", "拆分 Tickets 阶段"],
+  ["T-triage/T-triage.md", "请求分诊阶段"],
   ["G-grill-with-docs/log-format.md", "设计访谈阶段的全局 LOG 条目格式"],
   [
     "T-tickets/ticket-readiness.md",

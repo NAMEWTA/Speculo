@@ -49,7 +49,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 每个 Ticket 要么是 **HITL**，与一个代表自己发言的人类一起工作；要么是 **AFK**，由 Agent 独立驱动。HITL Ticket 只能通过实时交流解决，Agent 绝不代替人类一方发言。
 
 - **Research（AFK）**：阅读文档、第三方 API 或知识库等资源，揭示某个决策等待的事实。调用 下方 `<research>` 标签。当需要当前工作目录之外的知识时使用。
-- **Prototype（HITL）**：制作廉价、粗糙、具体的产物提高讨论保真度——大纲、粗略尝试、桩代码或 UI/逻辑原型。将原型链接为资产；当“它应是什么样”或“怎样表现”是关键问题时使用。
+- **Prototype（HITL）**：调用 “原型阶段” 回答一个 UI/逻辑问题，并把 record、临时 branch/worktree 和运行 URL 链接为 solution comment 资产；P 不实现目的地。
 - **Grilling（HITL）**：对话。调用 “设计访谈能力” 的 grilling 与 domain-modeling 能力，但本会话只关闭当前 Wayfinder Ticket。
 - **Task（HITL 或 AFK）**：在决策做出前必须完成的手动工作。它通过为决策解除阻塞赢得位置，不以交付目的地为目标。Agent 能独立驱动时使用 AFK，否则给人类精确清单。
 
@@ -100,6 +100,8 @@ Ticket label 只能是 `wayfinder:research | wayfinder:prototype | wayfinder:gri
 ## 收敛与路由
 
 当前沿为空且“尚未明确”不再包含阻塞目的地的内容时，路径清晰：
+
+路由前使用 Speculo Node 校验器 的 `--stage wayfinder`；Ticket、claim、comment 或地图不一致时保持 blocked。
 
 - 需要产品或架构取舍：“设计访谈能力”；
 - 外部行为已清楚：“编写 Spec 阶段”；
@@ -267,42 +269,54 @@ resolution: answered
 
 # SpecDev Research
 
-## 触发
+## 输入
 
-当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+- `decision`：研究要支持的一个具体决定；
+- `questions`：需要回答的穷尽问题集；
+- `stop_condition`：何时证据已足够；
+- `caller`：D、G、S、W、R、T 或 I；
+- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+
+缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
 
 ## 流程
 
-1. 写清楚要支持的具体决策和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
-3. 核对版本、发布日期、适用环境和已知限制。
-4. 区分：来源明确事实、代码库事实、推断、建议。
-5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
-6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
-7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+1. 固定问题、版本、环境和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
+3. 核对发布日期、版本、适用环境、限制和已知冲突。
+4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
+5. 区分来源事实、代码库事实、推断、建议和未知项。
+6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
 
-## 输出模板
+## 输出
 
 ```markdown
-# Research: <问题>
-- 决策用途：
-- 范围/版本：
-- 停止条件：
+## Research: <问题>
+- Decision / target:
+- Scope / version:
+- Stop condition:
 
-## Findings
 ### R-001
-- 结论：
-- 类型：官方事实 / 代码事实 / 推断 / 建议
-- 来源：
-- 置信度：high / medium / low
-- 适用限制：
-- 对工件影响：
+- Claim:
+- Type: official fact / code fact / inference / recommendation
+- Source:
+- Confidence:
+- Limits:
+- Artifact impact:
 
-## Conflicts and Unknowns
-## Recommendation
+### Conflicts and Unknowns
+### Recommendation
 ```
 
-不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+
+## 完成标准
+
+- 每个输入问题有答案或明确未知；
+- 每个实质声明就近引用一手来源；
+- 版本、限制、冲突和置信度已记录；
+- 结果有唯一 owning artifact；
+- 本 Skill 没有创建自己的 state 路径。
 
 </research>
 
@@ -321,7 +335,7 @@ resolution: answered
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

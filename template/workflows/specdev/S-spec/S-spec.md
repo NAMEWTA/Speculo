@@ -17,7 +17,7 @@ Spec 决定“为什么、为谁、系统应表现为何”。它可以锁定影
 
 按存在情况读取：
 
-- `<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
@@ -121,6 +121,7 @@ Spec 决定“为什么、为谁、系统应表现为何”。它可以锁定影
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
+  --stage spec \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 

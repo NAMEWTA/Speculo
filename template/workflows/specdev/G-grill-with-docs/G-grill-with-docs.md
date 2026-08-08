@@ -3,7 +3,7 @@ id: specdev/grill-with-docs
 type: workflow-entry
 workflow: specdev
 name: 设计访谈（带文档）
-description: 以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护设计树、日志、领域上下文和架构决策。
+description: 以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护当前 change 的设计树、日志、领域上下文和架构决策。
 keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决策, 领域建模]
 ---
 
@@ -13,16 +13,16 @@ keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决
 
 按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些现在就能问、不必猜测尚未得到答案的问题。每轮询问完整 frontier；用户的答案会重塑设计树并解除下一层问题的阻塞。
 
-本 work 还负责把访谈持久化：设计树保存可恢复状态，LOG 保存讨论轨迹，CONTEXT 保存当前领域真相，ADR 保存长期架构决定。持久化不构成实现授权；在用户确认共识前不进入实现。
+本 work 只把访谈写成当前 change 的可恢复工件：设计树保存进度，LOG 保存讨论轨迹，CONTEXT 保存本 change 已确认的规范语言，ADR 保存已成为本 change 下游合同的架构决定。这些工件不等于项目永久知识，也不构成实现授权；永久 namespace 对 G 只读，只有 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md</Path>` 能在实现证据、毕业评估和用户确认通过后执行提升。
 
 ## 输入与产物
 
 按存在情况读取：
 
 - `<Path>{roots.state}/specdev/config.json</Path>`
-- `<Path>{roots.state}/specdev/adr/</Path>`
-- `<Path>{roots.state}/specdev/context/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/source-issue.md</Path>`
+- `<Path>{roots.state}/specdev/adr/</Path>`（只读永久基线）
+- `<Path>{roots.state}/specdev/context/</Path>`（只读永久基线）
+- `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
@@ -35,6 +35,7 @@ keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决
 - `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`，仅在第三方 stakeholder 持有阻塞答案时延迟创建。
 
 不存在的可选输入静默跳过，不把缺失文件伪装成已知事实。
 
@@ -67,6 +68,8 @@ keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决
 - 高影响决策：进入设计树；
 - 低影响实现细节：记录为实现者可自行决定，不制造决策节点。
 
+阻塞答案既不可发现、当前用户也无法回答、但另一个明确 stakeholder 掌握时，加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/stakeholder-questionnaire.md</Path>`，生成问卷并保存恢复条件；不在本轮继续猜测该分支。
+
 **完成标准**：每个候选问题已分类；用户只接收无法从环境发现的真实决策。
 
 ### 3. 建立设计树
@@ -92,17 +95,19 @@ keywords: [设计访谈, grilling, design-tree, frontier, ADR, LOG, CONTEXT, 决
 
 **完成标准**：本轮开始时的完整 frontier 每个节点都有回答、明确延后或阻塞记录；所有状态已原子写入并重读。
 
-### 5. 同步领域模型
+### 5. 同步 change-local 领域模型
 
-加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。每轮先写 LOG，再把已确认且当前仍真实的术语、不变量、示例、反例和代码映射同步到 CONTEXT，最后把满足 ADR 条件的长期架构决定写入 ADR。
+加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
 
-历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 ADR 被替代时建立 supersedes 链。同步文档用于记录共识生长过程，不授权产品实现。
+历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 change ADR 被替代时建立 supersedes 链。同步只更新本 change 工件，不创建、合并或改写永久 `context/`、`adr/`；它记录共识生长过程，不授权产品实现。
 
-**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个提升结论都有用户回答或事实来源。
+**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个同步结论都有用户回答或事实来源；永久 namespace 未被修改。
 
 ### 6. 共识确认与路由
 
 frontier 为空时，向用户确认设计树的每个分支均已走过且已经达成共识。用户指出遗漏时新增节点并继续；只有明确确认后把 design tree 标为 `consensus`。
+
+路由前使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage grill` 校验当前 change；失败时保持本 Work 可恢复状态，不发布共识。
 
 随后按成熟度路由：
 
@@ -119,7 +124,8 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - 每轮询问的是完整 frontier，依赖未关闭的问题没有提前出现；
 - 可发现事实由 Agent 查找，没有转交用户；
 - design tree 通过 schema，LOG 指针完整；
-- CONTEXT 只包含当前领域真相，ADR 只包含满足条件的架构决定；
+- CONTEXT 只包含当前 change 已确认的规范语言，ADR 只包含满足条件且已成为本 change 合同的架构决定；
+- 永久 `context/`、`adr/` 保持只读，未在 G 中执行知识提升；
 - frontier 为空且用户明确确认共识；
 - 状态、权威工件和下一 work 路径已返回；
 - 未执行产品实现。
@@ -132,3 +138,4 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - ADR 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`
 - CONTEXT 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
 - LOG 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
+- Stakeholder 问卷：`<Path>{roots.workflows}/specdev/G-grill-with-docs/stakeholder-questionnaire.md</Path>`

@@ -1,6 +1,6 @@
 # Knowledge Graduation Criteria
 
-判定 change 中的知识是否值得提取到 workflow `_state/` 持久化 store。默认只提取满足标准的；其余归为 `ephemeral`，留在归档 change 中。
+判定 change 中的知识是否值得提取到 workflow state root 声明的持久化 store。默认只提取满足标准的；其余归为 `ephemeral`，留在归档 change 中。
 
 ## 毕业标准（三项满足任一即提取）
 
@@ -21,9 +21,12 @@
 - 仅适用于单次 change 的实现细节（具体行号、临时变量名、中间重构步骤）。
 - 已解决的临时变通方案（workaround 已被正式修复取代）。
 - 调试日志、故障排查过程记录（除非提炼出可复用的诊断方法）。
-- Change 自身的 ADR.md 已充分捕获的决策（不重复提取）。
 - 脱离完整 change 上下文会产生误导的内容。
 - 纯个人偏好且无项目级约束力（"我习惯用 X"）。
+
+## 候选去重
+
+同一决定已由 change 自身的 ADR.md 充分捕获时，以该 ADR 作为唯一毕业候选，不再从 LOG、Evidence 或其他工件生成重复候选。这只消除重复，不跳过永久知识毕业评估；通过标准的 change ADR 仍应进入永久 `adr/` 合并计划。
 
 ## 决策流程
 

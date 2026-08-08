@@ -13,7 +13,9 @@
 - 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
 - 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
 
-Goal Plan 只解决单个 Ticket 无法独立决定的事情：跨 Ticket 顺序、并发、共享所有权、里程碑 Gate、Agent 交付、集成验证、迁移与发布顺序、偏差升级和恢复。它不是 Ticket 的放大版，也不按固定章节数量衡量质量；每个 Ticket 的独立 Dispatch Packet 是 Goal Plan 的执行入口，不是第二份 Ticket。
+Goal Plan 只解决单个 Ticket 无法独立决定的事情：跨 Ticket 顺序、并发、共享所有权、里程碑 Gate、集成验证、迁移与发布顺序、偏差升级和恢复。它不是 Ticket 的放大版，也不按固定章节数量衡量质量。
+
+Lead/subagent 是可选的委派分支，不是 Goal Plan 的固有角色。每次运行都先由用户选择普通 Goal Plan 或委派 Goal Plan；普通计划不写 execution model、Lead、Provider、Delivery Contract、Dispatch Packet、Worker、会话 locator 或修正轮次，也不写“未启用”或“不适用”占位。
 
 产物写入 `specdev/changes/{change}/goal-plan.md`。
 
@@ -22,7 +24,7 @@ Goal Plan 只解决单个 Ticket 无法独立决定的事情：跨 Ticket 顺序
 满足任一条件时运行：
 
 - 多个 Ticket 可以或需要并行；
-- 存在 shared path、共享合同、集中 owner 或 Lead/Subagent；
+- 存在 shared path、共享合同或集中 owner；
 - 存在 Deep Ticket、expand-contract、数据迁移、兼容窗口或不可逆步骤；
 - 存在多个里程碑、外部审批、发布窗口、参考符合性或高事故半径；
 - Ticket DAG 虽不大，但关键路径、汇合点或恢复策略不能仅由 `specdev/changes/{change}/tickets-map.md` 安全表达；
@@ -52,20 +54,21 @@ Spec 或 Tickets Map 不存在时，返回 “编写 Spec 阶段” 或 “拆�
 
 ## 流程
 
-### 1. 验证上游与选择规划模式
+### 1. 验证上游并确认角色分支
 
 加载 下方 `<planning-modes>` 标签：
 
 1. 验证 Spec Ready、Ticket Ready、合同覆盖、DAG、路径所有权和 Deep Ticket 完整性；
 2. 只读探索会影响调度的代码事实和项目约束；
 3. 识别 coordination、migration、high-assurance、reference-conformance 等可组合规划模式；
-4. 在 `direct`、`native-subagent`、`external-web-subagent` 中选择唯一 execution model，并固定 Lead、源码 checkpoint、上下文交付和逐动作授权；
-5. 只对无法发现且会改变 Gate、Wave、owner、执行模型、迁移或批准点的问题向用户提问；
-6. 不熟悉的外部标准或依赖使用 下方 `<research>` 标签。
+4. 每次向用户询问选择普通 Goal Plan 或委派 Goal Plan，不按复杂度静默启用角色委派；
+5. 用户选择委派时，再在 `native-subagent` 与 `external-web-subagent` 中选择实际交付通道；普通分支不形成或持久化执行模式；
+6. 只对无法发现且会改变 Gate、Wave、owner、迁移或批准点的问题继续提问；
+7. 不熟悉的外部标准或依赖使用 下方 `<research>` 标签。
 
 任何硬停止问题都必须退回拥有该决策的上游工件，不得用 Goal Plan 覆盖。
 
-### 2. 构建跨 Ticket 执行模型
+### 2. 构建跨 Ticket 核心计划
 
 加载 下方 `<orchestration-protocol>` 标签：
 
@@ -73,13 +76,24 @@ Spec 或 Tickets Map 不存在时，返回 “编写 Spec 阶段” 或 “拆�
 2. 将 Ready 且项目写路径不相交的 Ticket 分配到 Wave；
 3. 为 shared path、共享合同和集中变更指定唯一 owner；
 4. 为行为闭环、合同稳定、迁移完成、发布就绪等关键状态定义 Gate；
-5. 明确 expand → migrate → contract、Evidence 返回和集成规则；并行写代码时使用 下方 `<dev-worktree>` 标签；
-6. 以 `operation=plan` 调用 下方 `<subagent-delivery>` 标签，生成里程碑 Delivery Contract 和每个 Ticket 可独立投递的 Dispatch Packet；
-7. 派单块只携带实现所需的权威引用、边界、基线、验证、恢复和返回字段，不复制完整历史对话或 Ticket 全文。
+5. 明确 expand → migrate → contract、Evidence 返回和集成规则；
+6. 定义每个 Ticket 的开始条件、执行顺序、验证、Evidence 目标和失败恢复，不复制 Ticket 全文。
 
-**完成标准**：DAG、Wave、Gate 与 Tickets Map 一致；每个计划 Ticket 都有唯一 owner、基线和可恢复派单块。
+**完成标准**：DAG、Wave、Gate 与 Tickets Map 一致；每个计划 Ticket 都有唯一 owner、可验证开始条件、Evidence 目标和恢复路径。
 
-### 3. 定义整体完成、证据与恢复
+### 3. 按确认加载委派分支
+
+只有用户在本次运行选择委派 Goal Plan 时：
+
+1. 加载 下方 `<delegated-execution>` 标签；
+2. 以 `operation=plan` 调用 下方 `<subagent-delivery>` 标签；
+3. 固定唯一 Lead、native/external provider、不可变 checkpoint、可恢复 locator、逐动作授权和修正上限；
+4. 生成里程碑 Delivery Contract 与每个 Ticket 的独立 Dispatch Packet；
+5. 并行写代码时按需调用 下方 `<dev-worktree>` 标签。
+
+普通 Goal Plan 跳过本步骤，不加载上述委派能力，也不在最终产物中留下该分支的标题、字段或占位。
+
+### 4. 定义整体完成、证据与恢复
 
 加载 下方 `<completion-control>` 标签：
 
@@ -87,16 +101,16 @@ Spec 或 Tickets Map 不存在时，返回 “编写 Spec 阶段” 或 “拆�
 2. 定义整体 Definition of Done 和每个 Gate 的关闭证据；
 3. 固化跨 Ticket 不可协商约束；
 4. 区分不可违反约束与可由实现者调整的建议；
-5. 定义实测基线、反向验证、防伪完成、偏差等级、修正上限、暂停范围、批准人和恢复动作；
+5. 定义实测基线、反向验证、防伪完成、偏差等级、暂停范围、批准人和恢复动作；
 6. 定义进度回报、Evidence 汇总、残余风险和回滚要求。
 
-**完成标准**：所有完成声明能映射到实际命令、代码状态、Evidence 或人工批准；没有 provider 自报即通过的门禁。
+**完成标准**：所有完成声明能映射到实际命令、代码状态、Evidence 或人工批准；没有自报即通过的门禁。
 
-### 4. 写入自适应 Goal Plan
+### 5. 写入自适应 Goal Plan
 
 使用 下方 `<goal-plan-template>` 标签 写入 `specdev/changes/{change}/goal-plan.md`。
 
-模板包含六个职责区，但只保留适用内容：
+核心模板包含六个职责区，但只保留适用内容：
 
 1. Outcome and Authority；
 2. Execution Graph；
@@ -105,49 +119,46 @@ Spec 或 Tickets Map 不存在时，返回 “编写 Spec 阶段” 或 “拆�
 5. Constraints, Risk and Recovery；
 6. Progress and Decisions。
 
-Ticket 较多时在 Execution Graph 内增加速查表；不创建独立的第二套状态来源。
+用户选择委派时，在第 4 节加入 下方 `<delegated-execution-template>` 标签 的完整内容；没有选择时不加入任何委派痕迹。Ticket 较多时在 Execution Graph 内增加速查表，不创建独立的第二套状态来源。
 
-Goal Plan 不受单次 `/goal` 字符上限约束。需要粘贴到外部 Agent 时，只投递对应 Ticket 的 Dispatch Packet 及其指向的权威材料。
-
-### 5. 同步与验证
+### 6. 同步与验证
 
 1. 将 Wave、Gate 和 owner 投影同步到 `specdev/changes/{change}/tickets-map.md`；
-2. 对照 下方 `<goal-plan-schema>` 标签；
+2. 对照 下方 `<goal-plan-schema>` 标签；schema 不记录角色分支；
 3. 运行：
 
-> **结构校验：** 本地项目若已安装 Speculo，使用其 Node 校验器检查当前 change；
-> 纯网页环境逐项核对本文内联的 schema、Ready 清单和完成标准，并记录自动校验未运行。
+```bash
+node Speculo Node 校验器 \
+  --stage goal-plan \
+  specdev/changes/{change}
+```
 
 4. 更新 `specdev/status.json` 与 `specdev/changes/{change}/.status.json`；
-5. 原子写入 Goal Plan 和同步投影后重新读取，确认 execution model、Lead、checkpoint、授权、Wave/Gate 与派单块一致；
-6. 向用户汇报规划模式、execution model、关键路径、Wave、Gate、shared owner、checkpoint、迁移策略、主要风险和 Ready 状态；
+5. 原子写入 Goal Plan 和同步投影后重新读取，确认核心 DAG/Wave/Gate/owner/授权一致；存在委派附录时额外确认 Lead、checkpoint、locator、Delivery Contract 与 Dispatch Packet 完整一致；
+6. 向用户汇报规划模式、关键路径、Wave、Gate、shared owner、迁移策略、主要风险和 Ready 状态；选择委派时再汇报交付通道与 Lead；
 7. 未经用户要求，不自动进入实现。
 
 ## 决策完备标准
 
-Goal Plan 必须让执行 Lead 或实现者无需重新决定：
+每份 Goal Plan 必须让实现者无需重新决定：
 
 - 跨 Ticket 先后、并发 Wave 和关键汇合点；
 - shared path 与共享合同的 owner；
 - Gate 开启、关闭和证据；
 - 迁移、兼容、收缩、发布和回滚顺序；
-- Agent 派单上下文、Evidence 返回和集成规则；
-- execution model、Lead、checkpoint、上下文交付、修正上限和逐动作授权；
-- 偏差等级、暂停范围和批准路径。
+- Evidence 返回、集成、偏差、暂停和批准路径。
 
-Goal Plan 不应重复：
+委派 Goal Plan 还必须锁定 Agent 派单上下文、execution model、Lead、checkpoint、locator、修正上限和逐动作授权。普通 Goal Plan 不包含这些内容。
 
-- Ticket 的完整局部执行路线；
-- 每个 Ticket 的全部文件预测；
-- 每条局部验收 checklist；
-- Spec 中的完整用户故事和产品背景。
+Goal Plan 不应重复 Ticket 的局部执行路线、全部文件预测、局部验收 checklist 或 Spec 的完整用户故事。
 
 ## 完成标准
 
 - `specdev/changes/{change}/goal-plan.md` 已写入且只包含适用内容；
 - 所有计划内 Ticket Ready，DAG 无环，合同覆盖明确；
 - Wave、Gate、owner、集成、偏差和恢复可执行；
-- 每个计划 Ticket 的 Dispatch Packet 可独立定位权威输入、路径合同、验证和恢复点；
+- 普通计划没有委派角色、交付合同或空占位；
+- 委派计划的 Delivery Contract 与每个 Dispatch Packet 完整可恢复；
 - Tickets Map 投影已同步；
 - 无未批准高影响假设或硬停止问题；
 - 结构校验无 error；纯网页环境的人工核对结果已记录；
@@ -156,11 +167,12 @@ Goal Plan 不应重复：
 ## 子文件引用
 
 - 规划模式与输入门禁：下方 `<planning-modes>` 标签
-- DAG、Wave、Gate 与 Lead 编排：下方 `<orchestration-protocol>` 标签
+- DAG、Wave、Gate 与核心集成：下方 `<orchestration-protocol>` 标签
+- 委派执行协议：下方 `<delegated-execution>` 标签，仅用户选择委派时加载
 - 完成、证据、偏差与恢复：下方 `<completion-control>` 标签
-- Goal Plan 模板：下方 `<goal-plan-template>` 标签
-- 并行 Ticket worktree：下方 `<dev-worktree>` 标签
-- Agent 交付合同：下方 `<subagent-delivery>` 标签
+- Goal Plan 核心模板：下方 `<goal-plan-template>` 标签
+- 委派附录模板：下方 `<delegated-execution-template>` 标签，仅用户选择委派时加载
+- Agent 交付合同：下方 `<subagent-delivery>` 标签，仅用户选择委派时调用
 
 ---
 
@@ -172,7 +184,7 @@ Goal Plan 不应重复：
 
 # Goal Plan 规划模式与输入门禁
 
-本文件由 “目标规划阶段” 在上游验证和模式选择时加载。
+本文件由 “目标规划阶段” 在上游验证和角色分支确认时加载。
 
 ## 1. 必需输入门禁
 
@@ -197,75 +209,45 @@ Goal Plan 不应重复：
 - 合同 uncovered 且未批准 deferred；
 - 并行候选写路径相交且无 owner 或顺序；
 - Ticket 改写了 Spec 的外部行为、范围或验收；
-- Ticket 与 `specdev/changes/{change}/ADR.md` 的已接受决策冲突；
+- Ticket 与 `specdev/changes/{change}/ADR.md` 的已接受决定冲突；
 - Deep Ticket 缺少关键迁移或恢复信息；
 - 当前代码事实使 Ticket 的核心行为、接口或验证不可执行；
 - 必需外部合同或参考权威不可获得；
-- 选择 delegated execution，但 Lead、checkpoint、可恢复 locator 或交付通道无法建立；
+- 已选择委派，但 Lead、checkpoint、可恢复 locator 或交付通道无法建立；
 - 用户要求的远程或生产动作没有逐动作授权。
 
 按 下方 `<artifact-contract>` 标签 和 下方 `<deviation-control>` 标签 返回真正拥有该决策的工件。
 
-## 3. 可组合模式
+## 3. 可组合规划模式
 
-### coordination
-
-适用于多 Wave、扇出/汇合、shared path 或 Lead/Subagent。重点是 DAG、owner、Evidence 返回、集成和状态同步。
-
-### migration
-
-适用于 expand-contract、数据迁移、协议迁移或兼容窗口。重点是扩展、分批迁移、收缩条件、数据核对、监控和回滚。
-
-### high-assurance
-
-适用于安全、隐私、资金、数据完整性、法规或不可逆操作。重点是独立审查、人工批准、Evidence 完整性和失败恢复。
-
-### reference-conformance
-
-适用于外部合同、标准、官方实现或指定兼容行为。重点是来源版本、符合性矩阵和冲突裁决。
-
-### release-coordination
-
-适用于发布窗口、跨团队依赖、部署顺序或运营交接。重点是环境前置条件、Gate、观察期和回退。
+- **coordination**：多 Wave、扇出/汇合或 shared path；重点是 DAG、owner、Evidence 返回、集成和状态同步。
+- **migration**：expand-contract、数据或协议迁移；重点是扩展、分批迁移、收缩条件、数据核对、监控和回滚。
+- **high-assurance**：安全、隐私、资金、数据完整性、法规或不可逆操作；重点是独立审查、人工批准、Evidence 完整性和失败恢复。
+- **reference-conformance**：外部合同、标准、官方实现或指定兼容行为；重点是来源版本、符合性矩阵和冲突裁决。
+- **release-coordination**：发布窗口、跨团队依赖、部署顺序或运营交接；重点是环境前置条件、Gate、观察期和回退。
 
 模式可以组合。仅有线性低风险 Ticket 时不应为了形式生成重型 Goal Plan。
 
-## 4. 执行模型与交付事实
+## 4. 每次确认角色分支
 
-规划模式描述“为什么需要治理”，execution model 描述“每个 Ticket 怎样被执行”，两者不得混为同一枚举。每份 Goal Plan 只选一个主 execution model：
+规划模式描述为什么需要跨 Ticket 治理，不决定是否启用 Lead/subagent。每次运行 P 都向用户提供两个选择：
 
-- `direct`：Lead 或当前执行者直接运行 Ticket，不创建子代理交付通道；
-- `native-subagent`：Lead 可直接管理隔离 Agent，写代码并行时配合 下方 `<dev-worktree>` 标签；
-- `external-web-subagent`：通过网页 provider 交付，输出在 Lead 独立核对前保持候选状态。
+- **普通 Goal Plan**：由实现者按核心计划推进，不创建严格角色、交付通道或派单合同；最终产物不记录一个名为 direct 的模式。
+- **委派 Goal Plan**：启用唯一 Lead 与 `native-subagent` 或 `external-web-subagent`，并加载委派协议。
 
-选择模型前先发现当前平台能力、项目配置和用户请求。只有用户明确指定 provider 或交付通道时才把偏好当作约束；否则优先使用能保留隔离、checkpoint 和 Evidence 的现有原生能力。
+不得根据 Ticket 数量、并行机会或平台能力静默启用委派。选择普通分支后，AI 自适应决定核心计划的适用细节，不把本次角色选择写入 frontmatter，也不在正文生成空章节或“不适用”说明。
 
-必须固定：
+选择委派后才固定：Lead、provider、repository/branch、不可变 `base_sha` 或等价基线、源码交付方式、`max_correction_rounds` 和逐动作授权。认证秘密和机器绝对路径不得进入 Goal Plan。
 
-- `lead` 与不可转移责任；
-- provider 和稳定 workspace/session locator，direct 时为不适用；
-- repository/branch 与不可变 `base_sha` 或等价本地基线；
-- `source_delivery`：none、repository-url、source-package 或 combination；
-- `max_correction_rounds`，默认 3；
-- local changes、commit、push、PR、merge、deploy、migration、production configuration、production feature、real user data 的逐动作授权。
+## 5. 规划摘要
 
-GitHub checkpoint、源码包和 provider 分支由 下方 `<subagent-delivery>` 标签 按需加载。认证秘密和机器绝对路径不得进入 Goal Plan。
-
-## 5. 模式摘要
-
-写入 `specdev/changes/{change}/goal-plan.md` 前形成：
+写入前形成核心摘要：
 
 ```text
 modes=<mode-list>
-execution_model=<direct|native-subagent|external-web-subagent>
-lead=<owner>
-provider=<id|none>
 tickets=<count>
 critical_path=<ticket-list>
 parallel_capacity=<n>
-checkpoint=<sha-or-local-baseline>
-source_delivery=<mode>
-max_correction_rounds=<n>
 shared_owners=<owner-map>
 gates=<gate-list>
 authorization=<action-summary>
@@ -273,15 +255,17 @@ hard_stops=<none-or-list>
 adopted_assumptions=<low-impact-only>
 ```
 
-**完成标准**：可组合 modes 与唯一 execution model 分离；源码、交付、权限和恢复字段都有可验证值。
+委派分支额外形成 `execution_model`、`lead`、`provider`、`checkpoint`、`source_delivery`、`max_correction_rounds` 和 locator；这些字段只进入委派附录。
+
+**完成标准**：规划 modes 与角色选择互不代替；普通计划没有委派痕迹；委派计划的源码、交付、权限和恢复字段都有可验证值。
 
 </planning-modes>
 
 <orchestration-protocol>
 
-# Goal Plan 编排协议
+# Goal Plan 核心编排协议
 
-本文件定义 DAG、Wave、Gate、路径所有权、Delivery Contract、Dispatch Packet、Evidence 返回和集成规则。
+本文件定义所有 Goal Plan 都需要的 DAG、Wave、Gate、路径所有权、Evidence 返回和集成规则。它不建立 Lead/subagent 角色或 Agent 交付合同。
 
 ## 1. DAG 与关键路径
 
@@ -300,20 +284,13 @@ Wave 内 Ticket 必须同时满足：
 - 项目写路径不相交；
 - shared path 已由 owner 稳定；
 - 适用 Gate 已打开；
-- 基线和外部合同版本一致。
+- 源码基线和外部合同版本一致。
 
-最大并发从 `specdev/config.json` 读取。并发上限是资源约束，不是强制填满的目标。
+最大并发从 `specdev/config.json` 读取。并发上限是资源约束，不是必须填满的目标；Wave 也不意味着必须使用多个 Agent。
 
 ## 3. Gate
 
-Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条件。每个 Gate 必须写明：
-
-- 业务或工程状态；
-- 开启条件；
-- 关闭证据；
-- 阻塞范围；
-- owner 与批准人；
-- 失败时恢复动作。
+Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条件。每个 Gate 必须写明业务或工程状态、开启条件、关闭证据、阻塞范围、owner/批准人和失败恢复。
 
 常见 Gate 包括共享合同稳定、首条垂直路径通过、迁移完成、旧调用点归零、发布就绪和观察期结束。名称按项目语义自定义。
 
@@ -321,11 +298,11 @@ Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条�
 
 规则遵循 下方 `<path-ownership>` 标签：
 
-1. 由专用 owner Ticket 或 Lead 修改共享路径；
+1. 由专用 owner Ticket 或计划指定的唯一 owner 修改共享路径；
 2. 形成可验证稳定基线；
 3. 下游消费者在新基线上重新运行 preflight；
-4. 才允许扇出并行；
-5. 共享契约需要变化时暂停消费者并修订上游，不通过多个 Agent 同时修改解决。
+4. 才允许扇出或继续后续 Ticket；
+5. 共享契约需要变化时暂停消费者并修订上游，不通过多个执行者同时修改解决。
 
 ## 5. Expand-contract
 
@@ -339,11 +316,34 @@ Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条�
 
 收缩不得仅以“所有迁移 Ticket 已完成”为依据。
 
-## 6. Lead 与 Delivery Contract
+## 6. Ticket 执行、Evidence 与集成
+
+每个计划 Ticket 必须写明开始条件、依赖 Evidence、项目路径合同、适用 Gate、必跑验证、Evidence 目标和失败恢复。实际执行仍由 “实现阶段” 与 Ticket 拥有，不在 Goal Plan 复制局部施工步骤。
+
+每个实现者完成或阻塞时：
+
+1. 写入 `specdev/changes/{change}/evidence/T-NN.md`；
+2. 同步 Ticket、Tickets Map、Goal Plan 和 change 状态；
+3. 检查依赖、路径所有权、合同覆盖和适用 Gate；
+4. 返回 Ticket 状态、Evidence 路径、代码引用、未验证项和恢复条件。
+
+最后一个计划内 Implement 按 下方 `<completion-control>` 标签 汇总核心计划的 Gate 和 Evidence。委派分支的候选交付与 Lead 集成由独立委派协议拥有，不写入本文件。
+
+**完成标准**：每个执行结果可追溯到代码状态和 Evidence；普通 Goal Plan 可以在不建立角色交付合同的情况下完整恢复和完成。
+
+</orchestration-protocol>
+
+<delegated-execution>
+
+# Goal Plan 委派执行协议
+
+只有用户在本次 P-goal-plan 运行中选择委派 Goal Plan 时加载。该分支同时启用唯一 Lead 与 native/external subagent；不支持 Lead-only，也不把本协议用于普通 Goal Plan。
+
+## 1. Lead 与 Delivery Contract
 
 Lead 负责源码基线、DAG、Wave、shared owner、Gate、权限、Evidence 汇总和集成；已派发 Ticket 的实现由对应执行者负责，Lead 不制造双重 owner。
 
-Goal Plan 选择唯一 execution model：`direct`、`native-subagent` 或 `external-web-subagent`。Lead 以 `operation=plan` 调用 下方 `<subagent-delivery>` 标签，生成里程碑级 Delivery Contract；Implement 阶段以 `operation=execute` 调用同一 Skill 做恢复和验收。
+委派分支选择唯一 execution model：`native-subagent` 或 `external-web-subagent`。Lead 以 `operation=plan` 调用 下方 `<subagent-delivery>` 标签 生成里程碑 Delivery Contract；Implement 阶段以 `operation=execute` 调用同一 Skill 做恢复和验收。
 
 Delivery Contract 必须固定：
 
@@ -354,52 +354,42 @@ Delivery Contract 必须固定：
 - local changes、commit、push、PR、merge、deploy、migration 和生产动作的逐项授权；
 - 完成、阻塞、偏差、恢复和返回协议。
 
-并行写代码且配置允许时，Lead 为每个 Ticket 调用 下方 `<dev-worktree>` 标签。所有并行 Ticket 固定同一 `base_sha`，每个 Ticket 使用独立分支和 `workspace_ref`；Lead 创建、恢复、集成和清理，Worker 只推进到 `review`。只读调查和顺序执行不为形式创建 worktree。
+并行写代码且配置允许时，Lead 为每个 Ticket 调用 下方 `<dev-worktree>` 标签。所有并行 Ticket 固定同一 `base_sha`，每个 Ticket 使用独立分支和 `workspace_ref`；Lead 创建、恢复、集成和清理，Worker 只推进到 `review`。
 
-**完成标准**：整个 Goal Plan 只有一个 execution model 和 Lead；每个高影响动作都有明确授权状态。
+## 2. Dispatch Packet
 
-## 7. Dispatch Packet
-
-每个计划 Ticket 都生成一个可独立投递的 Dispatch Packet。它不是 Ticket 副本，而是进入权威工件和当前基线的紧凑入口，至少包含：
+每个计划 Ticket 都生成一个可独立投递的 Dispatch Packet，至少包含：
 
 1. Ticket ID、目标、可观察完成结果和优先级冲突裁决；
-2. “实现阶段” 与 `specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+2. “实现阶段” 与具体 Ticket；
 3. 相关 Spec 合同、ADR/CONTEXT 条目、Wave、Gate 和不可协商约束；
-4. 已完成依赖及其 `specdev/changes/{change}/evidence/T-NN.md`；
-5. 项目 `writable_paths`、`read_only_paths`、`shared_paths` 与唯一 shared owner；
+4. 已完成依赖及其 Evidence；
+5. 项目 writable/read-only/shared 路径与唯一 shared owner；
 6. `base_sha`、branch、workspace/session locator 和 source package hash；
-7. 必跑验证、基线指标、可静默失效门禁的反向验证，以及明确不适用项；
+7. 必跑验证、基线、反向验证和明确不适用项；
 8. 当前授权、偏差升级、修正上限、Evidence 路径和返回字段。
 
-派单块将不可违反项写为 Hard Constraints，将低影响实现自由写为 Guidance。执行者必须先核对 checkpoint、项目指令、路径和验证命令，再在 Ticket Evidence 记录不超过 10 行的开工回执：目标、执行顺序、最大风险和发现的基线差异。事实不一致时停止受影响路径并升级，不用更详细文字掩盖失效前提。
+派单块将不可违反项写为 Hard Constraints，将低影响实现自由写为 Guidance。执行者先核对 checkpoint、项目指令、路径和验证命令，再在 Ticket Evidence 写入不超过 10 行的开工回执。事实不一致时停止受影响路径并升级。
 
-Agent 的最小读取顺序为 Implement work、当前 Ticket、Goal Plan 中适用的 Delivery Contract/Dispatch Packet、相关 Spec/ADR/CONTEXT、项目 Agent 指令和当前代码事实。不投递完整历史对话、全部 Ticket 或无关研究。
+## 3. 候选交付、Evidence 与 Lead 集成
 
-**完成标准**：每个 Dispatch Packet 可在新上下文中定位全部权威输入、边界、基线、验证、恢复点和返回目标。
+Worker 完成或阻塞时写入 Ticket Evidence，同步状态，并向 Lead 返回 Ticket ID、Evidence、workspace/session locator、最终 checkpoint、commit/PR、未验证项和条件性 Lead E2E。
 
-## 8. Evidence 返回与集成
+Lead 接收候选交付时：
 
-Agent 完成或阻塞时：
-
-1. 写入 `specdev/changes/{change}/evidence/T-NN.md`，包含实际修改、命令与退出状态、验收映射、反向验证、修正轮次、checkpoint 和未验证项；
-2. 同步 Ticket、Tickets Map、Goal Plan 和 change 状态；
-3. 向 Lead 返回 Ticket ID 与状态、Evidence 完整路径、workspace/session locator、最终 checkpoint、commit/PR 引用和条件性 Lead E2E。
-
-Lead 接收原生或外部候选交付时：
-
-1. 读取 Dispatch Packet、Ticket、Evidence、Goal Plan 和对应代码引用；
+1. 读取 Dispatch Packet、Ticket、Evidence、Goal Plan 和代码引用；
 2. 检查 checkpoint、附件 hash、路径授权、依赖和敏感信息边界；
-3. 在隔离基线上应用交付，复跑定向验证和受影响回归；
-4. 仅当用户界面交互受影响时，由 Lead 运行最小 E2E；
-5. 将 provider 声明、模拟结果和静态推断保持为 `unverified`，直到有独立证据；
+3. 在隔离基线上应用交付并复跑定向验证和受影响回归；
+4. 仅当 UI 交互受影响时运行最小 E2E；
+5. provider 声明、模拟结果和静态推断在独立证据前保持 `unverified`；
 6. 验证通过后集成，并按 dev-worktree Skill 更新或清理 worktree；
 7. 同步 Ticket、Map、Evidence 和 Goal Plan，检查 Gate 是否可关闭。
 
-同一验收项达到修正上限时标记 blocker，记录最后 checkpoint、错误、已通过行为、责任方和恢复条件。逻辑冲突返回契约 owner 解决，不机械选择某一侧版本。
+同一验收项达到修正上限时标记 blocker，记录最后 checkpoint、错误、已通过行为、责任方和恢复条件。
 
-**完成标准**：每个完成声明可追溯到 Lead 核对的代码状态和 Evidence；失败也具有可恢复的最后可信 checkpoint。
+**完成标准**：完整委派附录包含唯一 Lead、完整 Delivery Contract、每 Ticket Dispatch Packet 和候选交付验收协议；任何一部分缺失都不得视为 Ready。
 
-</orchestration-protocol>
+</delegated-execution>
 
 <completion-control>
 
@@ -407,17 +397,7 @@ Lead 接收原生或外部候选交付时：
 
 ## 1. Outcome and Authority
 
-Goal Plan 用紧凑摘要表达：
-
-- 业务或用户目标；
-- 目标受众或运营角色；
-- 所有计划 Ticket 完成后的可观察终态；
-- 关键约束；
-- 明确非目标；
-- 权威来源和冲突规则；
-- 看似有主路径但违反边界、数据、兼容或证据要求的伪完成判据。
-
-不复制 `specdev/changes/{change}/spec.md` 的完整用户故事。
+Goal Plan 用紧凑摘要表达业务目标、受众、所有 Ticket 完成后的可观察终态、关键约束、非目标、权威来源、冲突规则和伪完成判据，不复制 Spec 的完整用户故事。
 
 ## 2. 整体 Definition of Done
 
@@ -425,59 +405,36 @@ Goal Plan 用紧凑摘要表达：
 
 - 所有计划内 Ticket 完成，cancelled 或 deferred 项有批准；
 - 所有 Spec 验收合同和外部符合性要求有 Evidence；
-- 项目类型检查、静态检查、测试、lint、构建和适用 CI 完成，测试数量、skip/todo、覆盖率或等价基线没有未经批准的退化；仅 UI 交互受影响时由 Lead 完成 E2E；
-- 可静默失效的关键门禁完成受控反向验证并恢复绿色；普通门禁有明确不适用结论，不为形式破坏环境；
+- 项目类型检查、静态检查、测试、lint、构建、适用 CI 和受影响 E2E 完成，基线没有未经批准的退化；
+- 可静默失效的关键门禁完成受控反向验证并恢复绿色；
 - 迁移、兼容、调用点清零、监控、回滚和不可逆批准完成；
-- 无未批准偏差和未处置高风险残余问题；
-- Ticket、Map、Goal Plan、Evidence、源码 checkpoint 和状态一致；
-- provider 或 Worker 自报结果均已由 Lead 核对，未核对项保持 `unverified`。
+- 无未批准偏差、未处置高风险残余问题或伪装成通过的 `unverified` 声明；
+- Ticket、Map、Goal Plan、Evidence、代码事实和状态一致。
 
-## 3. Gate 关闭仪式
+## 3. Gate 关闭与 change 完成
 
-每个 Gate 关闭时：
+每个 Gate 关闭时汇总覆盖 Evidence，检查合同、共享接口、数据、兼容、迁移和调用点，运行里程碑验证和适用 E2E，执行必要反向验证，审查偏差/风险/恢复能力，获取适用人工批准，并同步 Goal Plan、Map 和状态。
 
-1. 汇总覆盖的 `specdev/changes/{change}/evidence/T-NN.md`；
-2. 检查对应合同和参考符合性；
-3. 检查共享接口、数据、兼容、迁移和调用点；
-4. 运行里程碑级验证；仅 UI 交互受影响时由 Lead 运行最小 E2E；
-5. 对会出现“坏了但仍绿色”的关键门禁运行受控反向验证，记录失败信号和恢复后的通过证据；
-6. 审查基线退化、失败分类、偏差、残余风险和恢复能力；
-7. 获取适用人工批准；
-8. 同步 `specdev/changes/{change}/goal-plan.md`、`specdev/changes/{change}/tickets-map.md` 和状态工件。
+最后一个 Gate 关闭后加载 下方 `<change-completion>` 标签：
+
+- Goal Plan 不含 `## Delegated Execution Addendum` 时，由最后一个计划内 “实现阶段” 汇总并完成 change；
+- Goal Plan 含完整委派附录时，由 Lead 在独立验收后完成 change。
+
+若 triage 的 `external_action` 为 `pending-close` 或 `close-failed`，下一 Work 为 “请求分诊阶段”，否则进入 Archive。远程动作不参与本地 Gate 判断。
 
 ## 4. 不可协商约束
 
-只记录跨多个 Ticket 且不可由实现者改变的规则，例如数据完整性、wire format 兼容、旧协议收缩条件、shared owner、安全要求、发布窗口、回滚演练和批准点。
-
-每条约束同时说明违反后果。可由实现者沿现有惯例选择、且不改变行为或风险的事项写入 Guidance，不伪装成硬约束。
-
-来源必须指向：
-
-- `specdev/changes/{change}/spec.md`；
-- `specdev/changes/{change}/ADR.md`；
-- 具体 `specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-- 外部 Url 标签；
-- `specdev/config.json`。
+只记录跨多个 Ticket 且不可由实现者改变的规则，例如数据完整性、wire format 兼容、旧协议收缩条件、shared owner、安全要求、发布窗口、回滚演练和批准点。每条约束说明来源和违反后果；可由实现者沿惯例选择的事项写入 Guidance。
 
 ## 5. 偏差与暂停
 
-偏差等级和处理遵循 下方 `<deviation-control>` 标签。
+偏差遵循 下方 `<deviation-control>` 标签。跨 Ticket 偏差还要说明暂停哪些 Wave/Ticket、重新打开哪个 Gate、哪些执行者需要新基线、哪些 Evidence 失效和恢复条件。
 
-跨 Ticket 偏差还必须明确：
+## 6. 风险与恢复
 
-- 暂停哪些 Wave 或 Ticket；
-- 哪个 Gate 重新打开；
-- 哪些 Agent 需要重新基线；
-- 哪些 Evidence 失效；
-- 重新开始的条件。
+每个高风险项写明触发信号、事故半径、预防、检测、恢复、owner 和批准点。迁移或发布计划必须给出回滚不可行时的前向恢复方案。
 
-## 6. 风险、修正与恢复
-
-每个高风险项写明：触发信号、事故半径、预防措施、检测方式、恢复动作、owner 和批准点。迁移或发布计划必须给出回滚不可行时的前向恢复方案。
-
-每个 Dispatch Packet 记录 checkpoint、workspace/session locator、最近已验证 Evidence 和 `max_correction_rounds`。默认同一验收项最多修正 3 轮；达到上限后暂停当前 Ticket 和受影响 Wave，保留已通过行为，形成包含失败命令、最小错误、责任方和恢复条件的 blocker。
-
-恢复时依次读取 `specdev/changes/{change}/goal-plan.md`、当前 Ticket、最新 Evidence 和 `specdev/changes/{change}/.status.json`。从最后已验证 checkpoint 继续，不重复询问已确认事实，也不创建额外进度或阻塞文件。
+恢复时依次读取 Goal Plan、当前 Ticket、最新 Evidence 和 change 状态，从最后已验证事实继续，不重复询问已确认事项，也不创建额外进度或阻塞文件。委派专属的 checkpoint、locator 和修正轮次由委派附录管理。
 
 ## 7. 进度与决策回报
 
@@ -487,14 +444,13 @@ Goal Plan 用紧凑摘要表达：
 WAVE_STATUS wave=<n> ready=<ids> active=<ids> done=<ids> blocked=<ids>
 GATE_STATUS gate=<name> state=open|closed evidence=<paths> risks=<summary>
 TICKET_STATUS id=<id> state=<state> evidence=<path> deviation=<none|id>
-DELIVERY_STATUS id=<id> model=<model> checkpoint=<sha> locator=<ref> corrections=<n> unverified=<items|none>
 BLOCKER id=<id> owner=<owner> needed=<decision-or-input> impact=<scope>
 DECISION id=<id> owner=<owner> status=pending|approved|rejected impact=<scope>
 ```
 
-具体路径必须以本文约定的逻辑路径形式填写。
+委派 Goal Plan 的交付状态格式由委派协议提供，不加入普通 Goal Plan。
 
-**完成标准**：进度可由权威工件恢复；所有通过、阻塞和未验证声明均能定位到具体 Evidence 与源码 checkpoint。
+**完成标准**：进度可由权威工件恢复；普通计划由最后一个 Implement 完成，委派计划由 Lead 完成；所有通过、阻塞和未验证声明均能定位到具体 Evidence 与代码事实。
 
 </completion-control>
 
@@ -534,7 +490,7 @@ ready_for_execution: false
 | 优先级 | 来源 | 负责内容 | 冲突处理 |
 |---|---|---|---|
 | 1 | 用户最新明确决定 | 产品取舍与批准 | 更新真正拥有该决策的工件 |
-| 2 | `specdev/changes/{change}/ADR.md` | 已接受架构决策 | 通过新决策替代 |
+| 2 | `specdev/changes/{change}/ADR.md` | 当前 change 架构决定 | 通过新决定替代 |
 | 3 | `specdev/changes/{change}/spec.md` | 外部行为、范围与验收 | 下游不得改写 |
 | 4 | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单 Ticket 契约 | Goal Plan 只编排 |
 | 5 | 当前代码事实 | 现状与可行性 | 冲突时触发偏差 |
@@ -554,11 +510,9 @@ ready_for_execution: false
 
 ### Ticket Quick Reference
 
-<!-- Ticket 较多或执行者需要时添加；数据从 Ticket 与 Tickets Map 提取。 -->
-
 | ID | Ticket | 行为产出 | Depth/Risk | Dependencies | Wave/Gate | Owner | Evidence |
 |---|---|---|---|---|---|---|---|
-| T-01 | `specdev/changes/{change}/ticket/01-<name>.md` | ... | standard/medium | — | W0/G0 | lead | `specdev/changes/{change}/evidence/T-01.md` |
+| T-01 | `specdev/changes/{change}/ticket/01-<name>.md` | ... | standard/medium | — | W0/G0 | `<owner>` | `specdev/changes/{change}/evidence/T-01.md` |
 
 ## 3. Gates and Completion Evidence
 
@@ -576,17 +530,10 @@ ready_for_execution: false
 
 ## 4. Execution and Integration Protocol
 
-### Delivery Contract
+### Ticket Execution Order
 
-| 字段 | 值 |
-|---|---|
-| Execution model | direct / native-subagent / external-web-subagent |
-| Lead / Provider | `<owner>` / `<provider-or-none>` |
-| Repository / Branch | `<repository-or-local>` / `<branch-or-n/a>` |
-| Checkpoint policy | immutable SHA / local baseline |
-| Source delivery | none / repository-url / source-package / combination |
-| Max concurrency / corrections | `<n>` / `3` |
-| Review | standards + spec + Lead verification + conditional E2E |
+| Ticket | 开始条件 | 执行 owner | 必跑验证 | Evidence | 集成条件 |
+|---|---|---|---|---|---|
 
 ### Authorization Matrix
 
@@ -598,31 +545,9 @@ ready_for_execution: false
 | Deploy / Migration | allowed / not-authorized | ... |
 | Production configuration / feature / real user data | allowed / not-authorized | ... |
 
-### Per-Ticket Dispatch Packets
-
-#### Dispatch: T-01
-
-- **Goal / observable result：**
-- **Priority on conflict：** correctness > contract completeness > speed，或当前项目裁决
-- **Implement / Ticket：** “实现阶段”；`specdev/changes/{change}/ticket/01-<name>.md`
-- **Authority / dependencies：** 相关合同、ADR/CONTEXT、已完成依赖 Evidence
-- **Wave / Gate / hard constraints：**
-- **Writable / read-only / shared owner：**
-- **Baseline / branch / workspace or session locator / package hash：**
-- **Preflight receipt：** 在 `specdev/changes/{change}/evidence/T-01.md` 记录目标、顺序、最大风险和基线差异，不超过 10 行
-- **Verification / baseline / reverse check：**
-- **Authorization / deviation / correction limit：**
-- **Return：** 状态、Evidence、locator、最终 checkpoint、commit/PR、未验证项、待 Lead E2E
-
-并行写代码时记录统一 `base_sha`，并为每个 Ticket 指定分支、`workspace_ref` 和 worktree owner。每个派单块可以独立投递，但不复制完整 Ticket 或历史对话。
-
-### Ticket Execution
-
-引用 “实现阶段” 和对应 `specdev/changes/{change}/ticket/NN-<ticket-name>.md`，不复制 Ticket 全文。
-
 ### Evidence Return and Integration
 
-Worker 将 Ticket 推进到 `review`，返回 Ticket ID 与状态、Evidence 路径、`workspace_ref`、commit 或 PR 引用，以及条件性 Lead E2E；Lead 负责集成、回归和 worktree 收尾。
+每个实现者按 I-implement 与对应 Ticket 执行，写入 Evidence 并同步 Ticket/Map/Goal Plan。最后一个计划内 Implement 汇总 Gate、运行适用集成验证，并按完成合同关闭 change。
 
 ## 5. Constraints, Risk and Recovery
 
@@ -646,15 +571,15 @@ Worker 将 Ticket 推进到 `review`，返回 Ticket ID 与状态、Evidence 路
 
 ### Current Status
 
-记录 Wave/Gate、Ticket、checkpoint、workspace/session locator、修正轮次和未验证项；不使用主观百分比。
+记录 Wave/Gate、Ticket、最近验证证据和未验证项；不使用主观百分比。
 
 ### Pending Decisions and Blockers
 
-达到修正上限时记录最后可信 checkpoint、失败命令、已通过行为、owner 和恢复条件。
+记录失败命令、已通过行为、owner 和恢复条件。
 
 ### Resume Protocol
 
-恢复时读取本 Goal Plan、当前 Ticket、最新 Evidence 和 change 状态，从最后已验证 checkpoint 继续。
+恢复时读取本 Goal Plan、当前 Ticket、最新 Evidence 和 change 状态，从最后已验证事实继续。
 
 ### Reporting Format
 
@@ -663,6 +588,44 @@ Worker 将 Ticket 推进到 `review`，返回 Ticket ID 与状态、Evidence 路
 仅记录低影响、可逆且有验证方式的假设。高影响假设存在时，`ready_for_execution` 必须为 `false`。
 
 </goal-plan-template>
+
+<delegated-execution-template>
+
+## Delegated Execution Addendum
+
+### Delivery Contract
+
+| 字段 | 值 |
+|---|---|
+| Execution model | native-subagent / external-web-subagent |
+| Lead / Provider | `<owner>` / `<provider>` |
+| Repository / Branch | `<repository-or-local>` / `<branch>` |
+| Checkpoint policy | immutable SHA / equivalent fixed baseline |
+| Source delivery | repository-url / source-package / combination |
+| Max concurrency / corrections | `<n>` / `3` |
+| Review | standards + spec + Lead verification + conditional E2E |
+
+### Per-Ticket Dispatch Packets
+
+#### Dispatch: T-01
+
+- **Goal / observable result：**
+- **Priority on conflict：** correctness > contract completeness > speed，或当前项目裁决
+- **Implement / Ticket：** “实现阶段”；`specdev/changes/{change}/ticket/01-<name>.md`
+- **Authority / dependencies：** 相关合同、ADR/CONTEXT、已完成依赖 Evidence
+- **Wave / Gate / hard constraints：**
+- **Writable / read-only / shared owner：**
+- **Baseline / branch / workspace or session locator / package hash：**
+- **Preflight receipt：** 在 `specdev/changes/{change}/evidence/T-01.md` 记录目标、顺序、最大风险和基线差异，不超过 10 行
+- **Verification / baseline / reverse check：**
+- **Authorization / deviation / correction limit：**
+- **Return：** 状态、Evidence、locator、最终 checkpoint、commit/PR、未验证项、待 Lead E2E
+
+### Candidate Delivery Return and Lead Integration
+
+Worker 将 Ticket 推进到 `review` 并返回候选交付；Lead 负责独立验证、适用 E2E、集成、Gate 关闭和 worktree 收尾。达到修正上限时保留最后可信 checkpoint、失败命令、已通过行为和恢复条件。
+
+</delegated-execution-template>
 
 <artifact-contract>
 
@@ -674,33 +637,44 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入和下一 work | 详细实现方案 |
+| 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
 | 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
-| 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 当前领域术语、语义和稳定不变量 | 临时会议记录 |
-| 架构决策 | `specdev/changes/{change}/ADR.md` | 已接受架构决策、原因、后果和替代关系 | 尚未决定的方案集合 |
+| Change 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
+| Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
+| 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
+| Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
 | Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
 | 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
+
+Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
 ## 2. 权威顺序
 
 同一事项冲突时按下列顺序裁决：
 
 1. 用户最新明确决定；
-2. 当前已接受架构决策：`specdev/changes/{change}/ADR.md`；
-3. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
-4. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-5. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-6. 当前代码与运行事实；
-7. 旧计划、旧日志和未经确认的推断。
+2. 当前 change 已接受的架构决策：`specdev/changes/{change}/ADR.md`；
+3. 永久 ADR 与领域上下文：`specdev/adr/`、`specdev/context/`；
+4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
+5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
+7. 当前代码与运行事实；
+8. 旧计划、旧日志和未经确认的推断。
+
+当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
+
+`specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
 
 代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
 
@@ -758,16 +732,16 @@ shared_paths: ["package.json"]
 1. 可能并行的 Ticket，其 `writable_paths` 不得相交。
 2. glob 与具体路径按覆盖关系判断，不得只比较字符串。
 3. 根依赖清单、锁文件、根导出、共享 schema、迁移索引、全局路由和跨 Ticket 合同文件默认视为 shared。
-4. shared path 只能由 Lead 或专用 owner Ticket 修改；消费者 Ticket 只读。
+4. shared path 只能由专用 owner Ticket 或 Goal Plan 明确指定的唯一集成 owner 修改；消费者 Ticket 只读。委派 Goal Plan 可以把该 owner 指定为 Lead，但普通计划不预设角色。
 5. 需要越界时先停止，按 下方 `<deviation-control>` 标签 提出 ownership change；不得先改后报。
 6. 前置 Ticket 改变目录结构后，后续 Ticket 开始前重新解析项目路径；若授权范围语义未改变，可只更新导航路径。
 7. 不得把“最后解决合并冲突”当作所有权方案。
 
 ## 3. Worktree 与分支
 
-并行写代码的 Ready Ticket 使用隔离 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+需要并行或临时隔离项目写入时使用独立 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
 
-生命周期由 Lead 按 下方 `<dev-worktree>` 标签 管理，编排规则位于 下方 `<orchestration-protocol>` 标签。
+生命周期由调用方明确的 workspace owner 按 下方 `<dev-worktree>` 标签 管理。普通 Goal Plan 由当前执行或集成 owner 负责；委派 Goal Plan 才把 workspace owner 映射为 Lead。编排规则位于 下方 `<orchestration-protocol>` 标签。
 
 </path-ownership>
 
@@ -799,7 +773,7 @@ shared_paths: ["package.json"]
 4. 可重复手动步骤、截图或查询结果；
 5. 代码阅读推断。
 
-E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lead 在集成阶段执行。Worker 只记录场景、预期结果和待执行状态。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
+E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由当前实现或集成 owner 运行；委派执行中 Worker 只记录场景、预期结果和待执行状态，由 Lead 在集成阶段运行。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
 
 低层证据不能替代明确要求的用户行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控信号或回滚演练。
 
@@ -842,7 +816,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 ## 1. 偏差等级
 
 - **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
-- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得 owner 或 Lead 批准。
+- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得该 Ticket 或计划明确的批准 owner 同意。
 - **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
 - **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
 - **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
@@ -877,50 +851,100 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并发 Agent 时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate。
+- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
 
 </deviation-control>
+
+<change-completion>
+
+# Change Completion
+
+本规则是 change 从 active/blocked 转为 completed 的唯一合同，并由 Implement、Goal Plan、Triage、Status 与 Archive 共同读取。
+
+## 完成门
+
+一个 change 只有同时满足以下条件才能设置 `change_status: completed`：
+
+1. 所有计划内 Ticket 为 `done`，或有明确批准理由的 `cancelled`；无 Ticket 的 Direct Spec/非实现流程有等价的验收清单。
+2. 每个完成行为有 Evidence，全部 Spec 验收合同和适用 Goal Gate 可定位。
+3. 项目级验证通过；既有或环境失败已分类、接受并记录风险。
+4. 迁移、发布、监控、回滚和不可逆批准已完成或明确不适用。
+5. 没有未批准 deviation、未处置 blocker 或伪装成通过的 `unverified` 声明。
+6. Ticket、Map、Goal Plan、Evidence、源码 checkpoint 和 change 状态一致。
+
+## 转换 Owner
+
+- Goal Plan 含完整 `## Delegated Execution Addendum`：Lead 在独立验收并关闭最后一个 Gate 后拥有完成转换。
+- Goal Plan 不含委派附录，或无 Goal Plan 的 Ticket/Direct Spec 实现：最后一个计划内 Implement 在最后一项验收通过后拥有完成转换。
+- 非实现型终点：最后一个拥有最终验收工件的 Work 使用本规则完成转换。
+
+Owner 原子更新 `specdev/changes/{change}/.status.json` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读验证。全局 `specdev/status.json` 继续只保存 active 索引，不复制完成详情。
+
+## 远程来源与归档
+
+远程动作不参与本地完成判定。完成后若 `specdev/changes/{change}/triage.md` 的 `external_action` 为 `pending-close` 或 `close-failed`，下一路线是 Triage reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive 移动 change。归档后工件只读，不在归档目录补写远程结果。
+
+## 完成标准
+
+- 完成声明可以从本地工件和实际验证重建；
+- 当前 change 只有一个条件命中的转换 owner；
+- 远程失败不会把 completed 改回 active；
+- Archive 不接收尚未 reconcile 或 waive 的远程来源。
+
+</change-completion>
 
 <research>
 
 # SpecDev Research
 
-## 触发
+## 输入
 
-当外部 API、库版本、协议、法规、产品能力或最佳实践会改变设计/实现决策，且当前材料不足时使用。
+- `decision`：研究要支持的一个具体决定；
+- `questions`：需要回答的穷尽问题集；
+- `stop_condition`：何时证据已足够；
+- `caller`：D、G、S、W、R、T 或 I；
+- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+
+缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
 
 ## 流程
 
-1. 写清楚要支持的具体决策和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题优先一手来源。
-3. 核对版本、发布日期、适用环境和已知限制。
-4. 区分：来源明确事实、代码库事实、推断、建议。
-5. 对关键结论至少交叉验证；来源冲突时并列呈现，不强行调和。
-6. 记录摘要、证据、置信度、对 ADR/Spec/Ticket 的影响和仍未知项。
-7. 长期有效且经实现验证后才可由 Archive 提升到永久 research。
+1. 固定问题、版本、环境和停止条件。
+2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
+3. 核对发布日期、版本、适用环境、限制和已知冲突。
+4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
+5. 区分来源事实、代码库事实、推断、建议和未知项。
+6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
 
-## 输出模板
+## 输出
 
 ```markdown
-# Research: <问题>
-- 决策用途：
-- 范围/版本：
-- 停止条件：
+## Research: <问题>
+- Decision / target:
+- Scope / version:
+- Stop condition:
 
-## Findings
 ### R-001
-- 结论：
-- 类型：官方事实 / 代码事实 / 推断 / 建议
-- 来源：
-- 置信度：high / medium / low
-- 适用限制：
-- 对工件影响：
+- Claim:
+- Type: official fact / code fact / inference / recommendation
+- Source:
+- Confidence:
+- Limits:
+- Artifact impact:
 
-## Conflicts and Unknowns
-## Recommendation
+### Conflicts and Unknowns
+### Recommendation
 ```
 
-不得长篇复制受版权保护的来源；使用短引文和自己的准确摘要。
+不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+
+## 完成标准
+
+- 每个输入问题有答案或明确未知；
+- 每个实质声明就近引用一手来源；
+- 版本、限制、冲突和置信度已记录；
+- 结果有唯一 owning artifact；
+- 本 Skill 没有创建自己的 state 路径。
 
 </research>
 
@@ -930,55 +954,56 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 
 ## 适用范围
 
-- 仅用于并行写代码且路径所有权不冲突的 Ready Ticket。
+- 用于并行写代码且路径所有权不冲突的 Ready Ticket，或明确要求临时隔离的一次性原型。
 - 只读调查和顺序执行默认共用当前工作区。
-- Lead 管理创建、集成和清理；Worker 只实现、验证并返回 Evidence。
+- 调用方必须明确 workspace owner、implementation owner、固定基线、工作项 ID、持久化 owner 和允许的结束动作。
+- 普通执行不建立额外角色；委派 Goal Plan 才把 workspace owner/implementation owner 分别映射为 Lead/Worker。
 - 平台原生 worktree 优先；不可用时使用 Git worktree。
 
 ## 生命周期
 
 1. 创建或恢复时加载 下方 `<dev-worktree-create>` 标签。
-2. Worker 完成后将记录从 `active` 更新为 `review`，返回 Ticket 状态、Evidence 路径、`workspace_ref`、commit 或 PR 引用，以及条件性 Lead E2E。
-3. Lead 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签。
+2. implementation owner 完成后返回工作项状态、Evidence/record 路径、`workspace_ref`、checkpoint、commit 或 PR 引用和未验证项；Ticket worktree 从 `active` 更新为 `review`。
+3. workspace owner 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签；一次性原型只评估和清理，不合入生产分支。
 
-状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`。记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。
+Ticket worktree 状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`，记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。原型的 branch、`workspace_ref` 和清理结果只写入 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`，不伪造 Ticket worktree 记录。
 
 ## 边界
 
-- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`。
-- Git provider 固定使用 `<project-root>/specdev-worktree/<ticket-id>/`，持久化 `workspace_ref: specdev-worktree/<ticket-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
+- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`；每个原型使用独立 worktree 和分支。
+- Git provider 固定使用 `<project-root>/specdev-worktree/<work-item-id>/`，持久化 `workspace_ref: specdev-worktree/<work-item-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
 - native/external provider 保留其可迁移 opaque locator；所有 provider 都不保存机器绝对路径、认证秘密或真实用户数据。
 - 项目根 `.gitignore` 的 `specdev-worktree/` 条目由 `speculo init` 单一维护；缺失时创建流程阻塞并提示重新运行 init。
-- E2E 仅由 Lead 在集成阶段执行，且仅适用于用户界面交互受影响的变更。
+- E2E 仅适用于用户界面交互受影响的变更。普通执行由当前集成 owner 运行；委派执行由 Lead 在集成阶段运行。
 - 合并、推送、PR、删除分支或 worktree 仍需用户授权。
 
 </dev-worktree>
 
 <dev-worktree-create>
 
-# 创建或恢复 Ticket Worktree
+# 创建或恢复工作项 Worktree
 
 ## 前置
 
-- Ticket `ready: true`，依赖完成，写路径无冲突。
-- `specdev/config.json` 中 `git.worktree_for_parallel: true`。
-- Lead 已固定所有并行 Ticket 共用的 `base_sha`。
+- Ticket `ready: true` 且依赖完成，或原型问题与临时写入范围已锁定；项目写路径无冲突。
+- 并行 Ticket 要求 `specdev/config.json` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
+- 调用方已指定 workspace owner、implementation owner、工作项 ID、持久化 owner，并固定 `base_sha`；并行 Ticket 共用同一基线。
 
 ## 创建
 
-1. 从 Speculo 工作区声明的 `path_base: project-root` 解析 `<project-root>`。若记录的 provider 为 `git`，要求 `workspace_ref` 精确为 `specdev-worktree/<ticket-id>`，拼接后仍位于 project root，且 `specdev-worktree/` 不是逃逸到外部的符号链接。
-2. 若 `specdev/changes/{change}/.status.json` 的 `worktrees` 已有该 Ticket 的 `active` 或 `review` 记录：Git provider 必须在 `git worktree list --porcelain` 中匹配固定路径、分支与 `base_sha`；native/external 由对应 provider 解析 opaque locator。一致则恢复，任一不一致停止。
+1. 从 Speculo 工作区声明的 `path_base: project-root` 解析 `<project-root>`。若记录的 provider 为 `git`，要求 `workspace_ref` 精确为 `specdev-worktree/<work-item-id>`，拼接后仍位于 project root，且 `specdev-worktree/` 不是逃逸到外部的符号链接。
+2. 读取调用方拥有的持久化记录：Ticket 使用 `specdev/changes/{change}/.status.json` 的 `worktrees`；原型使用 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`。若已有可恢复记录，Git provider 必须在 `git worktree list --porcelain` 中匹配固定路径、分支与 `base_sha`；native/external 由对应 provider 解析 opaque locator。一致则恢复，任一不一致停止。
 3. 否则优先调用平台原生 worktree 能力。使用 native/external 时保存 provider 返回的可迁移 locator；不可用时进入 Git fallback。
 4. Git fallback 前确认项目根 `.gitignore` 已包含 `specdev-worktree/` 或等价根模式。缺失时停止并提示重新运行当前版本 `speculo init`，不在本 Skill 内修改 `.gitignore`。
-5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<ticket-id>`、`workspace_ref = specdev-worktree/<ticket-id>`，从 `base_sha` 执行 `git worktree add -b <ticket-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
-6. 分支使用 `speculo/<change>/<ticket-id>`；现有分支未能匹配记录时停止。
-7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 Worker 基线。
-8. 写入 `worktrees`：
+5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<work-item-id>`、`workspace_ref = specdev-worktree/<work-item-id>`，从 `base_sha` 执行 `git worktree add -b <work-item-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
+6. 分支使用 `speculo/<change>/<work-item-id>`；现有分支未能匹配记录时停止。
+7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 implementation owner 的创建基线。
+8. Ticket 将记录写入 `worktrees`：
 
 ```json
 {
   "ticket_id": "T-01",
-  "owner": "<worker>",
+  "owner": "<implementation-owner>",
   "provider": "git",
   "base_sha": "<sha>",
   "branch": "speculo/<change>/T-01",
@@ -988,28 +1013,30 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵，并且只由 Lea
 }
 ```
 
-native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。
+native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。原型不使用本 JSON 结构，只在 record 的 Run and Assets 中记录源码 branch/commit，并在 frontmatter 写入 `workspace_ref` 与清理状态。
 
-完成条件：工作区可定位、基线可用、状态记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与 Ticket ID 完全一致。失败时设为 `blocked` 并保留现场。
+完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
 
 </dev-worktree-create>
 
 <dev-worktree-finalize>
 
-# 集成与清理 Ticket Worktree
+# 集成与清理工作项 Worktree
 
-## Lead 集成
+## 集成
 
-1. 确认记录为 `review`，读取 Worker Evidence，实际修改未越过路径契约。
+仅生产 Ticket 进入本段；一次性原型不得合入生产分支。
+
+1. workspace owner 确认记录为 `review`，读取 implementation owner 的 Evidence，实际修改未越过路径契约。
 2. 在目标集成基线上应用变更并运行受影响的定向与回归验证。
-3. 仅当变更影响用户界面交互时，由 Lead 运行验收所需的最小 E2E；Worker 只提供场景和预期结果。
+3. 仅当变更影响用户界面交互时，由当前集成 owner 运行验收所需的最小 E2E；委派执行中 implementation owner 只提供场景和预期结果，Lead 负责运行。
 4. 验证通过后将记录更新为 `integrated`；冲突或失败时设为 `blocked` 并保留 worktree。
 
 ## 清理
 
 1. 取得用户对删除 worktree 和分支的授权。
-2. Git provider 从 project root 解析 `specdev-worktree/<ticket-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
-3. 确认 worktree 不再注册且 Ticket 子目录不存在后删除对应分支，将状态更新为 `removed`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
+2. Git provider 从 project root 解析 `specdev-worktree/<work-item-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
+3. 确认 worktree 不再注册且工作项目录不存在后删除对应分支。Ticket 将状态更新为 `removed`；原型把 `cleanup_status` 更新为 `clean`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
 
 PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明确要求时使用强制删除。
 
@@ -1024,12 +1051,12 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
 ## 输入
 
 - `operation`：`plan` 或 `execute`；
-- `execution_model`：`direct`、`native-subagent` 或 `external-web-subagent`；
+- `execution_model`：`native-subagent` 或 `external-web-subagent`；
 - Lead、Ticket、Goal Plan、Spec、适用 ADR/CONTEXT、Wave/Gate 和依赖 Evidence；
 - 项目写、只读和 shared 路径，验证矩阵与当前源码基线；
 - provider、会话或 workspace locator、源码交付方式，以及用户当前明确授权。
 
-缺失 Goal Plan 的 `direct` Ticket 可以由 “实现阶段” 按 Ticket 契约执行；其他输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
+普通 Goal Plan 和缺失 Goal Plan 的 Ticket 直接由 “实现阶段” 执行，不调用本 Skill。委派输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
 
 ## 流程
 
@@ -1051,7 +1078,6 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
 
 ### 3. 加载执行分支
 
-- `direct`：直接使用 Ticket、Goal Plan、“实现阶段” 和 Evidence 合同，不加载 provider 规则；
 - `native-subagent`：加载 下方 `<subagent-delivery-native>` 标签，完成隔离派单、恢复和返回；
 - `external-web-subagent`：加载 下方 `<subagent-delivery-external-web>` 标签，完成能力探测、会话恢复、候选交付与修正。
 
@@ -1216,7 +1242,7 @@ Manifest 至少记录 repository、branch、checkpoint、工作区状态、包 l
   "execution": {
     "max_parallel": 3,
     "deep_ticket_human_approval": true,
-    "shared_path_owner": "lead"
+    "shared_path_owner": "explicit"
   },
   "verification": {
     "test": null,

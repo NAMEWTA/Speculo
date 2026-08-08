@@ -111,7 +111,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 有序执行路线和安全落点；
 - expected、writable、read-only、shared 路径；
 - 正常、失败和回归验证矩阵；
-- 用户界面交互受影响时的 Lead E2E Gate；
+- 用户界面交互受影响时的 E2E Gate 与执行 owner；后续委派 Goal Plan 可以显式把该 Gate 转交 Lead；
 - Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
 - 可判定验收标准。
 
@@ -124,7 +124,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 3. 识别根 Ticket、汇合点、扇出与收缩点；
 4. 为每个 Spec 验收合同映射至少一个 Ticket；
 5. 检查并行候选的 `writable_paths` 是否相交；
-6. 共享路径必须指定唯一 owner，通常由 Lead 或专门 Ticket 修改；
+6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
 7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
 使用 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>` 草拟总体 Map。
@@ -192,6 +192,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
+  --stage tickets \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 

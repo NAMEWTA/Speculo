@@ -22,15 +22,19 @@ const SCHEMA_VERSION = 3;
 const GLOBAL_STATUS_SCHEMA_VERSION = 4;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
+const SKILLS_PREFIX = "{roots.skills}/";
+const COMMANDS_PREFIX = "{roots.commands}/";
 
 const EXPECTED_WORKS = new Set([
   "A-archive-and-consolidate",
+  "C-code-review",
   "D-diagnose-bugs",
   "E-engineering-cognitive-mentor",
   "G-grill-with-docs",
   "I-implement",
   "I-init-setup",
   "P-goal-plan",
+  "P-prototype",
   "R-review-architecture",
   "S-spec",
   "T-tickets",
@@ -73,6 +77,19 @@ const VALID_WAYFINDER_RESOLUTION = new Set([
   "superseded",
   "cancelled",
 ]);
+const VALID_STAGES = new Set([
+  "triage",
+  "diagnosis",
+  "grill",
+  "spec",
+  "tickets",
+  "goal-plan",
+  "implement",
+  "review",
+  "prototype",
+  "wayfinder",
+  "complete",
+]);
 const REQUIRED_TICKET_KEYS = new Set([
   "schema_version",
   "artifact",
@@ -110,6 +127,31 @@ const REQUIRED_GOAL_PLAN_SECTIONS = new Set([
   "## 5. Constraints, Risk and Recovery",
   "## 6. Progress and Decisions",
 ]);
+const DELEGATED_GOAL_PLAN_TRIGGERS = [
+  "## Delegated Execution Addendum",
+  "### Delivery Contract",
+  "### Per-Ticket Dispatch Packets",
+  "### Candidate Delivery Return and Lead Integration",
+  "Lead / Provider",
+  "Lead:",
+  "Lead：",
+  "Worker:",
+  "Worker：",
+  "Subagent",
+  "subagent",
+  "execution_model",
+  "execution model: direct",
+  "max_correction_rounds",
+];
+const REQUIRED_DELEGATED_GOAL_PLAN_MARKERS = [
+  "## Delegated Execution Addendum",
+  "### Delivery Contract",
+  "### Per-Ticket Dispatch Packets",
+  "### Candidate Delivery Return and Lead Integration",
+  "native-subagent / external-web-subagent",
+  "Lead / Provider",
+  "#### Dispatch:",
+];
 const STATE_ARTIFACT_BASENAMES = new Set([
   "spec.md",
   "tickets-map.md",
@@ -121,13 +163,14 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   ".status.json",
   "triage.md",
   "diagnosis.md",
-  "source-issue.md",
+  "source.md",
   "architecture-review.md",
   "architecture-review.html",
   "wayfinder-map.md",
   "design-tree.json",
 ]);
 const FORBIDDEN_OBSOLETE_BASENAMES = new Set([
+  "source-issue.md",
   "input-validation.md",
   "vision-sections.md",
   "execution-sections.md",
@@ -348,8 +391,23 @@ function validatePathValue(value, { allowProject = true } = {}) {
     }
     return null;
   }
+  for (const [prefix, name] of [[SKILLS_PREFIX, "skills"], [COMMANDS_PREFIX, "commands"]]) {
+    if (value.startsWith(prefix)) {
+      const suffix = value.slice(prefix.length);
+      if (
+        !suffix ||
+        suffix.startsWith("/") ||
+        suffix.startsWith("./") ||
+        suffix.startsWith("../") ||
+        suffix.includes("/../")
+      ) {
+        return `${name} Path is not canonical`;
+      }
+      return null;
+    }
+  }
   if (value.includes("{roots.")) {
-    return "unknown or incomplete root variable; use roots.workflows or roots.state";
+    return "unknown or incomplete root variable";
   }
   if (!allowProject) return "this field requires a rooted workflow or state Path";
   if (
@@ -409,6 +467,17 @@ function validateDocumentReferences(root) {
             errors.push(
               `${label}:${lineNumber(text, match.index)}: file workflow Path must not end with /: ${payload}`,
             );
+          }
+        }
+      } else if (payload.startsWith(SKILLS_PREFIX) || payload.startsWith(COMMANDS_PREFIX)) {
+        const isSkill = payload.startsWith(SKILLS_PREFIX);
+        const prefix = isSkill ? SKILLS_PREFIX : COMMANDS_PREFIX;
+        const referenced = payload.slice(prefix.length);
+        if (!PLACEHOLDER_RE.test(referenced)) {
+          const templateRoot = resolve(root, "..", "..");
+          const target = join(templateRoot, isSkill ? "skills" : "commands", referenced);
+          if (!existsSync(target)) {
+            errors.push(`${label}:${lineNumber(text, match.index)}: broken public Path ${payload}`);
           }
         }
       }
@@ -557,7 +626,6 @@ function capabilityChecks(root) {
         [
           "tracking-template",
           "domain-layout-template",
-          "status-labels-template",
           "config-template",
           "change-status-template",
           "specdev-worktree/",
@@ -568,7 +636,7 @@ function capabilityChecks(root) {
       "triage",
       [
         join(root, "T-triage", "T-triage.md"),
-        ["source-issue", "不改写原意", "风险", "未知项分类", "推荐路线"],
+        ["source.md", "intake", "reconcile", "唯一权威", "远程写入为零"],
       ],
     ],
     [
@@ -595,9 +663,10 @@ function capabilityChecks(root) {
           "DAG",
           "Gate",
           "Wave",
-          "Lead",
-          "Dispatch Packet",
-          "subagent-delivery",
+          "普通 Goal Plan",
+          "委派 Goal Plan",
+          "每次向用户询问",
+          "delegated-execution.md",
           "Definition of Done",
         ],
       ],
@@ -607,6 +676,20 @@ function capabilityChecks(root) {
       [
         join(root, "I-implement", "I-implement.md"),
         ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "delegated execution", "subagent-delivery", "提交"],
+      ],
+    ],
+    [
+      "code-review",
+      [
+        join(root, "C-code-review", "C-code-review.md"),
+        ["git diff <fixed>...<head>", "固定点", "标准轴", "规范轴", "未合并排名", "reviews/CR-###.md"],
+      ],
+    ],
+    [
+      "prototype",
+      [
+        join(root, "P-prototype", "P-prototype.md"),
+        ["一个问题", "Logic", "UI", "临时 branch/worktree", "promotion target", "main"],
       ],
     ],
     [
@@ -627,21 +710,21 @@ function capabilityChecks(root) {
       "archive",
       [
         join(root, "A-archive-and-consolidate", "A-archive-and-consolidate.md"),
-        ["create", "update", "merge", "supersede", "deprecate", "skip"],
+        ["archive-single", "dry-run", "external_action", "consolidate-from-code", "archive-and-consolidate"],
       ],
     ],
     [
       "grill",
       [
         join(root, "G-grill-with-docs", "G-grill-with-docs.md"),
-        ["完整 frontier", "design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md", "推荐答案"],
+        ["完整 frontier", "design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md", "推荐答案", "永久 namespace 对 G 只读"],
       ],
     ],
     [
       "diagnosis",
       [
         join(root, "D-diagnose-bugs", "D-diagnose-bugs.md"),
-        ["最短反馈回路", "可证伪", "最小实验", "根因", "回归测试"],
+        ["红灯", "反馈回路", "最小化", "可证伪", "根因", "回归测试"],
       ],
     ],
   ]);
@@ -683,6 +766,46 @@ function capabilityChecks(root) {
   if (isFile(mapTemplate) && /^## (?:开放 Tickets|调查清单)/m.test(readText(mapTemplate))) {
     errors.push("Wayfinder map template must query open Tickets instead of caching them");
   }
+
+  const ordinaryGoalPlanTemplate = join(root, "P-goal-plan", "goal-plan-template.md");
+  if (isFile(ordinaryGoalPlanTemplate)) {
+    const text = readText(ordinaryGoalPlanTemplate);
+    for (const forbidden of [
+      "Lead",
+      "Subagent",
+      "subagent",
+      "Provider",
+      "Delivery Contract",
+      "Dispatch Packet",
+      "Worker",
+      "max_correction_rounds",
+      "execution_model",
+    ]) {
+      if (text.includes(forbidden)) {
+        errors.push(`ordinary Goal Plan template contains delegated marker ${forbidden}`);
+      }
+    }
+  }
+
+  const delegatedTemplate = join(root, "P-goal-plan", "delegated-execution-template.md");
+  if (!isFile(delegatedTemplate)) {
+    errors.push("missing delegated Goal Plan template");
+  } else {
+    const text = readText(delegatedTemplate);
+    const missing = REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.filter((marker) => !text.includes(marker));
+    if (missing.length) errors.push(`delegated Goal Plan template lost markers: ${JSON.stringify(missing)}`);
+  }
+
+  const sampleCore = [...REQUIRED_GOAL_PLAN_SECTIONS].join("\n");
+  const partialErrors = [];
+  validateDelegatedGoalPlan(`${sampleCore}\n## Delegated Execution Addendum\n### Delivery Contract`, "partial delegated self-check", partialErrors);
+  if (!partialErrors.length) errors.push("partial delegated Goal Plan self-check did not fail");
+  const strayRoleErrors = [];
+  validateDelegatedGoalPlan(`${sampleCore}\nLead: owner`, "stray delegated role self-check", strayRoleErrors);
+  if (!strayRoleErrors.length) errors.push("stray delegated role self-check did not fail");
+  const completeErrors = [];
+  validateDelegatedGoalPlan(`${sampleCore}\n${REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.join("\n")}`, "complete delegated self-check", completeErrors);
+  if (completeErrors.length) errors.push(...completeErrors);
   return errors;
 }
 
@@ -799,6 +922,189 @@ function validatePathList(values, label, key, errors) {
   }
 }
 
+function validateSource(path, expectedChange, errors) {
+  if (!isFile(path)) {
+    errors.push("missing source artifact");
+    return null;
+  }
+  const { meta, body } = parseFrontmatter(path);
+  const required = [
+    "schema_version",
+    "artifact",
+    "change",
+    "source_type",
+    "canonical_locator",
+    "captured_at",
+    "content_sha256",
+    "remote_state",
+    "close_capability",
+  ];
+  const missing = required.filter((key) => !(key in meta));
+  if (missing.length) errors.push(`source.md: missing keys ${JSON.stringify(missing)}`);
+  if (meta.schema_version !== 1 || meta.artifact !== "source") {
+    errors.push("source.md: artifact/schema_version must be source/1");
+  }
+  if (meta.change !== expectedChange) errors.push("source.md: change must equal directory name");
+  if (!new Set(["conversation", "pasted", "local-file", "url", "github-issue", "github-pr"]).has(meta.source_type)) {
+    errors.push(`source.md: invalid source_type ${meta.source_type}`);
+  }
+  if (!/^[a-f0-9]{64}$/.test(String(meta.content_sha256 ?? ""))) {
+    errors.push("source.md: content_sha256 must be a SHA-256 digest");
+  }
+  if (!new Set(["open", "closed", "unknown", "not-applicable"]).has(meta.remote_state)) {
+    errors.push(`source.md: invalid remote_state ${meta.remote_state}`);
+  }
+  if (!new Set(["supported", "unsupported", "not-applicable"]).has(meta.close_capability)) {
+    errors.push(`source.md: invalid close_capability ${meta.close_capability}`);
+  }
+  if (typeof meta.canonical_locator === "string" && ABSOLUTE_MACHINE_PATH_RE.test(meta.canonical_locator)) {
+    errors.push("source.md: canonical_locator must not be a machine absolute path");
+  }
+  for (const heading of ["## Capture Metadata", "## Original Content", "## Source Comments"]) {
+    if (!body.includes(heading)) errors.push(`source.md: missing '${heading}'`);
+  }
+  return { path, meta, body };
+}
+
+function validateTriage(path, expectedChange, errors) {
+  if (!isFile(path)) {
+    errors.push("missing triage artifact");
+    return null;
+  }
+  const { meta, body } = parseFrontmatter(path);
+  const required = [
+    "schema_version",
+    "artifact",
+    "change",
+    "mode",
+    "source",
+    "classification",
+    "risk",
+    "route",
+    "ready_for_implementation",
+    "external_action",
+    "updated_at",
+  ];
+  const missing = required.filter((key) => !(key in meta));
+  if (missing.length) errors.push(`triage.md: missing keys ${JSON.stringify(missing)}`);
+  if (meta.schema_version !== 1 || meta.artifact !== "triage") {
+    errors.push("triage.md: artifact/schema_version must be triage/1");
+  }
+  if (meta.change !== expectedChange) errors.push("triage.md: change must equal directory name");
+  if (!new Set(["intake", "reconcile"]).has(meta.mode)) errors.push(`triage.md: invalid mode ${meta.mode}`);
+  if (!VALID_RISK.has(meta.risk)) errors.push(`triage.md: invalid risk ${meta.risk}`);
+  if (typeof meta.route !== "string" || !meta.route.startsWith("specdev/")) {
+    errors.push("triage.md: route must be a specdev work id");
+  }
+  if (typeof meta.ready_for_implementation !== "boolean") {
+    errors.push("triage.md: ready_for_implementation must be boolean");
+  }
+  if (!new Set(["not-applicable", "pending-close", "closed", "close-failed", "waived"]).has(meta.external_action)) {
+    errors.push(`triage.md: invalid external_action ${meta.external_action}`);
+  }
+  if (!String(meta.source ?? "").includes("/source.md</Path>")) {
+    errors.push("triage.md: source must reference the local source.md artifact");
+  }
+  for (const heading of ["## 当前判定", "## 未知项", "## 路由", "## 外部动作"]) {
+    if (!body.includes(heading)) errors.push(`triage.md: missing '${heading}'`);
+  }
+  return { path, meta, body };
+}
+
+function validateDiagnosis(path, expectedChange, errors) {
+  if (!isFile(path)) {
+    errors.push("missing diagnosis artifact");
+    return null;
+  }
+  const { meta, body } = parseFrontmatter(path);
+  if (meta.schema_version !== 1 || meta.artifact !== "diagnosis") {
+    errors.push("diagnosis.md: artifact/schema_version must be diagnosis/1");
+  }
+  if (meta.change !== expectedChange) errors.push("diagnosis.md: change must equal directory name");
+  if (!new Set(["reproducing", "minimizing", "testing-hypotheses", "root-cause-confirmed", "blocked"]).has(meta.status)) {
+    errors.push(`diagnosis.md: invalid status ${meta.status}`);
+  }
+  if (typeof meta.feedback_loop_ready !== "boolean") {
+    errors.push("diagnosis.md: feedback_loop_ready must be boolean");
+  }
+  if (meta.feedback_loop_ready) {
+    if (!String(meta.red_command ?? "").trim() || !String(meta.red_evidence ?? "").trim()) {
+      errors.push("diagnosis.md: ready feedback loop requires red_command and red_evidence");
+    }
+  } else {
+    const hypotheses = sectionBody(body, "## 4. 假设与证伪");
+    const dataRows = hypotheses
+      .split(/\r?\n/)
+      .filter((line) => /^\|/.test(line.trim()))
+      .filter((line) => !/^\|\s*(?:排名|-)/.test(line.trim()));
+    if (dataRows.length) errors.push("diagnosis.md: hypotheses must be empty before red evidence");
+  }
+  if (!new Set(["pending", "clean", "registered"]).has(meta.cleanup_status)) {
+    errors.push(`diagnosis.md: invalid cleanup_status ${meta.cleanup_status}`);
+  }
+  for (const heading of ["## 2. 红灯反馈回路", "## 3. 最小复现", "## 4. 假设与证伪", "## 5. 已确认根因", "## 6. 修复契约", "## 7. 清理"]) {
+    if (!body.includes(heading)) errors.push(`diagnosis.md: missing '${heading}'`);
+  }
+  return { path, meta, body };
+}
+
+function validateReviews(change, required, errors) {
+  const root = join(change, "reviews");
+  const paths = isDirectory(root)
+    ? readdirSync(root).filter((name) => /^CR-\d{3,}\.md$/.test(name)).sort().map((name) => join(root, name))
+    : [];
+  if (required && !paths.length) errors.push("review stage requires a CR-###.md report");
+  for (const path of paths) {
+    const { meta, body } = parseFrontmatter(path);
+    if (meta.schema_version !== 1 || meta.artifact !== "code-review") {
+      errors.push(`${basename(path)}: artifact/schema_version must be code-review/1`);
+    }
+    if (meta.change !== basename(change)) errors.push(`${basename(path)}: change must equal directory name`);
+    if (!/^CR-\d{3,}$/.test(String(meta.review_id ?? ""))) errors.push(`${basename(path)}: invalid review_id`);
+    if (!/^[a-f0-9]{7,40}$/i.test(String(meta.fixed_point ?? "")) || !/^[a-f0-9]{7,40}$/i.test(String(meta.head ?? ""))) {
+      errors.push(`${basename(path)}: fixed_point and head must be commit SHAs`);
+    }
+    if (meta.fixed_point === meta.head) errors.push(`${basename(path)}: fixed_point and head must differ`);
+    if (!new Set(["approved", "request-changes", "blocked"]).has(meta.status)) errors.push(`${basename(path)}: invalid status`);
+    if (!new Set(["pass", "request-changes", "skipped"]).has(meta.standards_result)) errors.push(`${basename(path)}: invalid standards_result`);
+    if (!new Set(["pass", "request-changes", "skipped"]).has(meta.specification_result)) errors.push(`${basename(path)}: invalid specification_result`);
+    for (const heading of ["## Fixed Input", "## 标准", "## 规范", "## Summary"]) {
+      if (!body.includes(heading)) errors.push(`${basename(path)}: missing '${heading}'`);
+    }
+  }
+  return paths;
+}
+
+function validatePrototypes(change, required, errors) {
+  const root = join(change, "prototypes");
+  const paths = isDirectory(root)
+    ? walk(root).filter((path) => isFile(path) && basename(path) === "record.md").sort()
+    : [];
+  if (required && !paths.length) errors.push("prototype stage requires a prototypes/<id>/record.md artifact");
+  for (const path of paths) {
+    const { meta, body } = parseFrontmatter(path);
+    const label = toPosix(relative(change, path));
+    if (meta.schema_version !== 1 || meta.artifact !== "prototype-record") {
+      errors.push(`${label}: artifact/schema_version must be prototype-record/1`);
+    }
+    if (meta.change !== basename(change)) errors.push(`${label}: change must equal directory name`);
+    if (!/^PROTO-\d{3,}$/.test(String(meta.prototype_id ?? ""))) errors.push(`${label}: invalid prototype_id`);
+    if (!new Set(["logic", "ui"]).has(meta.branch)) errors.push(`${label}: invalid prototype branch`);
+    if (!new Set(["active", "answered", "blocked", "discarded"]).has(meta.status)) errors.push(`${label}: invalid prototype status`);
+    if (typeof meta.workspace_ref !== "string" || ABSOLUTE_MACHINE_PATH_RE.test(meta.workspace_ref)) {
+      errors.push(`${label}: workspace_ref must be a portable locator`);
+    }
+    if (meta.status === "answered" && (!String(meta.winner ?? "").trim() || !String(meta.promotion_target ?? "").trim())) {
+      errors.push(`${label}: answered prototype requires winner and promotion_target`);
+    }
+    if (!new Set(["pending", "clean", "registered"]).has(meta.cleanup_status)) errors.push(`${label}: invalid cleanup_status`);
+    for (const heading of ["## Question and Assumption", "## Run and Assets", "## Evaluation", "## Promotion and Cleanup"]) {
+      if (!body.includes(heading)) errors.push(`${label}: missing '${heading}'`);
+    }
+  }
+  return paths;
+}
+
 function validateSpec(path, errors, warnings) {
   if (!isFile(path)) {
     warnings.push("Spec is missing; contract traceability cannot be fully checked");
@@ -849,6 +1155,14 @@ function validateMap(path, errors) {
   return { path, meta, body };
 }
 
+function validateDelegatedGoalPlan(body, label, errors) {
+  if (!DELEGATED_GOAL_PLAN_TRIGGERS.some((marker) => body.includes(marker))) return;
+  const missing = REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
+  if (missing.length) {
+    errors.push(`${label}: incomplete delegated execution addendum; missing ${JSON.stringify(missing)}`);
+  }
+}
+
 function validateGoalPlan(path, errors) {
   if (!isFile(path)) return null;
   const { meta, body } = parseFrontmatter(path);
@@ -860,6 +1174,7 @@ function validateGoalPlan(path, errors) {
   if (invalidModes.length) {
     errors.push(`${basename(path)}: invalid modes ${JSON.stringify(invalidModes)}`);
   }
+  validateDelegatedGoalPlan(body, basename(path), errors);
   if (meta.ready_for_execution === true) {
     if (!new Set(["ready", "in_progress", "completed"]).has(meta.status)) {
       errors.push(`${basename(path)}: ready_for_execution conflicts with status`);
@@ -1213,7 +1528,7 @@ function validateChangeStatus(path, expectedChange, errors) {
   return data;
 }
 
-function validateChange(change) {
+function validateChange(change, stage = null) {
   const errors = [];
   const warnings = [];
   if (!isDirectory(change)) {
@@ -1221,11 +1536,48 @@ function validateChange(change) {
   }
 
   const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
-  const spec = validateSpec(join(change, "spec.md"), errors, warnings);
-  const ticketsMap = validateMap(join(change, "tickets-map.md"), errors);
-  const goalPlan = validateGoalPlan(join(change, "goal-plan.md"), errors);
+  if (isFile(join(change, "source-issue.md"))) {
+    errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
+  }
+  const sourceRequired = stage === "triage";
+  const sourcePath = join(change, "source.md");
+  const source = isFile(sourcePath) || sourceRequired
+    ? validateSource(sourcePath, basename(change), errors)
+    : null;
+  const triagePath = join(change, "triage.md");
+  const triage = isFile(triagePath) || sourceRequired
+    ? validateTriage(triagePath, basename(change), errors)
+    : null;
+  const diagnosisPath = join(change, "diagnosis.md");
+  if (isFile(diagnosisPath) || stage === "diagnosis") {
+    validateDiagnosis(diagnosisPath, basename(change), errors);
+  }
+  validateReviews(change, stage === "review", errors);
+  validatePrototypes(change, stage === "prototype", errors);
+
+  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage);
+  const specPath = join(change, "spec.md");
+  const spec = isFile(specPath) || specRequired
+    ? validateSpec(specPath, errors, warnings)
+    : null;
+  const ticketMode = isDirectory(join(change, "ticket"));
+  const mapRequired = new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode);
+  const mapPath = join(change, "tickets-map.md");
+  const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors) : null;
+  const goalPlanPath = join(change, "goal-plan.md");
+  const goalPlan = isFile(goalPlanPath) || stage === "goal-plan"
+    ? validateGoalPlan(goalPlanPath, errors)
+    : null;
   validateDesignTree(join(change, "design-tree.json"), change, errors);
   validateWayfinder(change, errors);
+  if (stage === "grill") {
+    for (const name of ["design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md"]) {
+      if (!isFile(join(change, name))) errors.push(`grill stage requires ${name}`);
+    }
+  }
+  if (stage === "wayfinder" && !isFile(join(change, "wayfinder-map.md"))) {
+    errors.push("wayfinder stage requires wayfinder-map.md");
+  }
   for (const artifact of [spec, ticketsMap, goalPlan]) {
     if (artifact && artifact.meta.change !== basename(change)) {
       errors.push(`${basename(artifact.path)}: change must equal directory name ${basename(change)}`);
@@ -1233,13 +1585,17 @@ function validateChange(change) {
   }
 
   const ticketDir = join(change, "ticket");
-  if (!isDirectory(ticketDir)) return { errors: [...errors, "missing Ticket directory"], warnings };
-  const ticketFiles = readdirSync(ticketDir)
-    .filter((name) => name.endsWith(".md"))
-    .sort()
-    .map((name) => join(ticketDir, name));
-  if (!ticketFiles.length) {
-    return { errors: [...errors, "Ticket directory contains no Markdown tickets"], warnings };
+  const ticketsRequired = new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode);
+  const ticketFiles = isDirectory(ticketDir)
+    ? readdirSync(ticketDir)
+        .filter((name) => name.endsWith(".md"))
+        .sort()
+        .map((name) => join(ticketDir, name))
+    : [];
+  if (ticketsRequired && !isDirectory(ticketDir)) errors.push("missing Ticket directory");
+  if (ticketsRequired && !ticketFiles.length) errors.push("Ticket directory contains no Markdown tickets");
+  if (stage === "implement" && !ticketMode && !isFile(join(change, "evidence", "direct-spec.md"))) {
+    errors.push("Direct Spec implement stage requires evidence/direct-spec.md");
   }
 
   const tickets = new Map();
@@ -1338,7 +1694,7 @@ function validateChange(change) {
         );
       } else {
         warnings.push(
-          `concurrent Ready Tickets ${leftId}/${rightId} share owned paths; Lead serialization is required`,
+          `concurrent Ready Tickets ${leftId}/${rightId} share owned paths; an explicit owner or serialization is required`,
         );
       }
     }
@@ -1357,9 +1713,10 @@ function validateChange(change) {
       "## 2. 修改范围",
       "## 3. 验收与合同映射",
       "## 4. 验证执行",
-      "## 5. 路径所有权审计",
-      "## 6. 偏差与决策",
-      "## 7. 残余风险与后续",
+      "## 5. 双轴审查",
+      "## 6. 路径所有权审计",
+      "## 7. 偏差与决策",
+      "## 8. 残余风险与后续",
     ]) {
       if (!text.includes(heading)) {
         errors.push(`${toPosix(relative(change, evidence))}: missing '${heading}'`);
@@ -1399,6 +1756,23 @@ function validateChange(change) {
     if (changeStatus.change_status === "archived") {
       warnings.push("validating an archived change in place; normally it lives under the archive root");
     }
+    if (stage === "complete" && changeStatus.change_status !== "completed") {
+      errors.push("complete stage requires change_status=completed");
+    }
+  }
+  if (
+    stage === "complete" &&
+    !ticketFiles.length &&
+    !isFile(join(change, "evidence", "direct-spec.md"))
+  ) {
+    errors.push("complete stage without Tickets requires evidence/direct-spec.md");
+  }
+  if (
+    stage === "complete" &&
+    triage &&
+    new Set(["pending-close", "close-failed"]).has(triage.meta.external_action)
+  ) {
+    errors.push(`complete stage cannot archive external_action=${triage.meta.external_action}`);
   }
 
   for (const path of walk(change).filter((item) => isFile(item) && extname(item) === ".md")) {
@@ -1427,22 +1801,39 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs <change-directory> | --self-check");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] <change-directory> | --self-check");
   return 2;
 }
 
 function main(argv) {
-  const selfCheckRequested = argv.includes("--self-check");
-  const positional = argv.filter((arg) => !arg.startsWith("--"));
+  let selfCheckRequested = false;
+  let stage = null;
+  const positional = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--self-check") {
+      selfCheckRequested = true;
+    } else if (arg === "--stage") {
+      stage = argv[index + 1] ?? null;
+      index += 1;
+    } else if (arg.startsWith("--stage=")) {
+      stage = arg.slice("--stage=".length);
+    } else if (arg.startsWith("--")) {
+      return usage();
+    } else {
+      positional.push(arg);
+    }
+  }
+  if (stage !== null && !VALID_STAGES.has(stage)) return usage();
   if (selfCheckRequested) {
-    if (positional.length) return usage();
+    if (positional.length || stage !== null) return usage();
     const scriptDirectory = dirname(fileURLToPath(import.meta.url));
     const root = resolve(scriptDirectory, "..", "..");
     const result = selfCheck(root);
     return printResults(result.errors, result.warnings);
   }
   if (positional.length === 1) {
-    const result = validateChange(resolve(positional[0]));
+    const result = validateChange(resolve(positional[0]), stage);
     return printResults(result.errors, result.warnings);
   }
   return usage();

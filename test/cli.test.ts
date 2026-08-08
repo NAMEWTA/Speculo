@@ -696,9 +696,24 @@ describe("Speculo CLI", () => {
         ),
         "utf8"
       );
-      assert.match(orchestrationProtocol, /## 8\. Evidence 返回与集成/);
-      assert.match(
+      assert.match(orchestrationProtocol, /## 6\. Ticket 执行、Evidence 与集成/);
+      assert.doesNotMatch(
         orchestrationProtocol,
+        /common\/skills\/subagent-delivery\/SKILL\.md/
+      );
+      const delegatedProtocol = await readFile(
+        join(
+          root,
+          "workflows",
+          "specdev",
+          "P-goal-plan",
+          "delegated-execution.md"
+        ),
+        "utf8"
+      );
+      assert.match(delegatedProtocol, /## 2\. Dispatch Packet/);
+      assert.match(
+        delegatedProtocol,
         /common\/skills\/subagent-delivery\/SKILL\.md/
       );
       assert.doesNotMatch(
