@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> Workflow-packaged specification-driven development assets with direct refresh tooling.
+> Workflow-packaged specification-driven development assets with state-safe refresh tooling.
 
 Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
 
@@ -29,16 +29,16 @@ Requires: Node.js ≥ 22.22.3
 
 | Command | Description |
 |---|---|
-| `speculo` / `speculo init [target]` | Initialize or directly refresh the managed Speculo assets. Each refresh replaces `config.json`, workspace metadata, commands, skills, and selected workflow packages with the current template. For selected workflows it resets managed state while retaining only `changes/` and `archive/`; command Markdown reports remain, but command `state.json` files are removed. Existing supported workflows not selected in the prompt remain untouched. Projects with SpecDev installed also get an idempotent `specdev-worktree/` entry in the project-root `.gitignore`. |
+| `speculo` / `speculo init [target]` | Initialize or refresh Speculo. Static commands, skills, and selected workflow packages come from the current template; compatible v0.7+ project configuration and complete workflow/command runtime state are migrated. Every refresh retains the previous configuration and runtime state in `speculo/.speculo/back/`. Incompatible or damaged state produces a clean active installation plus a pending migration marker and exits with code `2`. Projects with SpecDev installed also get idempotent `specdev-worktree/` and backup entries in the project-root `.gitignore`. |
 | `speculo version` | Print the installed version and check npm for the latest release. |
 
-Legacy `migrate`, `mirror-skills`, and `update` commands, plus their flags, were removed in v0.7.0. Re-run `speculo init` to refresh old installations; no compatibility migration is performed.
+Legacy CLI commands `migrate`, `mirror-skills`, and `update`, plus their flags, remain removed. The CLI still exposes only `init` and `version`. When `init` reports pending migration, run the installed Agent command `migrate-runtime-state`; it inventories the read-only backup, writes a dry-run report, requires explicit confirmation for the complete plan, and applies it through staging with rollback.
 
 ## Installed Runtime Assets
 
 After initialization, the target project gains the following AI agent-callable assets:
 
-### 6 Commands
+### 7 Commands
 
 | Command | Purpose |
 |---|---|
@@ -46,16 +46,18 @@ After initialization, the target project gains the following AI agent-callable a
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
 | `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
 | `handoff` | Persist a compact, resumable context handoff for another agent |
+| `migrate-runtime-state` | Reconcile a pending runtime backup and atomically apply an explicitly confirmed migration plan |
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 6 Skills
+### 7 Skills
 
 | Skill | Purpose |
 |---|---|
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
+| `migrate-runtime-state` | Validate backups, lock source/target fingerprints, and apply runtime migration plans with rollback |
 | `speculo-retro` | Retrospective analysis |
 | `typescript-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
@@ -86,7 +88,7 @@ Speculo stands on the shoulders of pioneers — including our own failures. With
 - **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight spec-driven development framework whose changes/ directory structure and archive mechanism deeply influenced Speculo's persistence contract design.
 - **[Superpowers](https://github.com/obra/superpowers)** — a complete agentic development methodology whose skill orchestration and subagent dispatch provided key reference for workflow package design.
 
-Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a direct refresh lifecycle. We carry their spirit forward.
+Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a state-safe refresh lifecycle. We carry their spirit forward.
 
 ## License
 

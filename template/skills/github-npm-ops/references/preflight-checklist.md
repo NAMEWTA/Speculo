@@ -16,7 +16,7 @@
 | 7 | 包管理器 | `pnpm --version` (或 `npm` / `yarn`) | 版本 ≥ 仓库 lockfile 隐含版本 | 安装匹配版本；不要随意切换包管理器 |
 | 8 | release.yml 存在 | `test -f .github/workflows/release.yml` | 文件存在 | 转 `github-npm-ops` skill 的 `references/workflow-yaml-reference.md` 先落该文件 |
 | 9 | release.yml 形态 | 见 [publish-detection.md](publish-detection.md) | 输出 `PUBLISH_TO_NPM=true` 或 `false` | 见 publish-detection 文档的判定矩阵 |
-| 10 | docs-sync state | `test -f speculo/.speculo/commands/docs-sync/state.json && jq . speculo/.speculo/commands/docs-sync/state.json` | schema v4、scope 已确认，baseline 可解析 | 不存在/未确认 → 走 docs-sync command bootstrap；旧 schema 或损坏 → 重新运行 `speculo init` 刷新受管理状态后再确认范围 |
+| 10 | docs-sync state | `test -f speculo/.speculo/commands/docs-sync/state.json && jq . speculo/.speculo/commands/docs-sync/state.json` | schema v4、scope 已确认，baseline 可解析 | 不存在/未确认 → 走 docs-sync command bootstrap；旧 schema 或损坏 → 运行 `speculo init` 建立 pending 备份，再以 `migrate-runtime-state` command 修复后确认范围 |
 | 11 | tag 名称冲突 | `git rev-parse vX.Y.Z 2>/dev/null` | 退出码非 0（tag 不存在） | 同 tag 已存在：先确认是否真的失败需要重发；若是则 `git tag -d` + `git push origin :refs/tags/vX.Y.Z`，否则 bump 到下一版本 |
 
 ## 失败处理总策略

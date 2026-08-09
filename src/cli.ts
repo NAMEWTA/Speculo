@@ -76,6 +76,18 @@ async function main(argv: string[]): Promise<number> {
     const result = await initSpeculo(targetArg ?? ".", { packageRoot });
     console.log(result.mode === "init" ? "Speculo initialized in " + result.target : "Speculo refreshed in " + result.target);
     for (const asset of result.assets) console.log("  refreshed " + asset);
+    if (result.migration.status === "migrated") {
+      console.log("  migrated runtime state from " + result.migration.sourceVersion);
+      console.log("  retained backup " + result.migration.backupPath);
+    }
+    if (result.migration.status === "pending") {
+      console.error("Speculo runtime migration is pending.");
+      for (const blocker of result.migration.blockers) {
+        console.error("  " + blocker.code + " " + blocker.path + ": " + blocker.message);
+      }
+      console.error("Run the migrate-runtime-state command before using Speculo workflows.");
+      return 2;
+    }
     return 0;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

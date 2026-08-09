@@ -70,6 +70,8 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - 活跃 change：`<Path>{roots.state}/specdev/changes/</Path>`
 - 历史归档：`<Path>{roots.state}/specdev/archive/</Path>`
 
+刷新时 CLI 在 `<Path>{roots.state}/back/</Path>` 保留最近一次旧配置与完整 runtime state，并对 v0.7+ 状态执行兼容迁移。若 `<Path>{roots.state}/migration.json</Path>` 存在且为 pending，所有 SpecDev Works 必须在读取 workflow state 前停止；只有 `<Path>{roots.commands}/migrate-runtime-state.md</Path>` 可以读取备份并在用户确认后修复。`back/`、`install.json` 与 `migration.json` 均不属于 SpecDev 写入 namespace。
+
 初始化设置 work 首次运行时生成配置并创建空的永久 namespace：
 
 - 全局配置：`<Path>{roots.state}/specdev/config.json</Path>`
@@ -136,11 +138,12 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 ## 启动协议
 
 1. 解析 workflow 和 state roots。
-2. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时运行 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`。
-3. 读取 `<Path>{roots.state}/specdev/status.json</Path>`：用户指定 change 优先；唯一活跃 change 直接使用；无活跃时创建；多个候选时请求消歧。
-4. 若当前 change 已有非空 `current_work`，先恢复或显式结束该 Work；否则将 `current_work` 设置为本次 work id。
-5. 只加载当前步骤需要的 work 子文件和共享规则。
-6. 完成后写入产物、运行适用校验、更新状态和 `works_run`。
+2. 检查 `<Path>{roots.state}/migration.json</Path>`；存在且 `status: pending` 时停止，不读取或写入 SpecDev state，并路由到 `<Path>{roots.commands}/migrate-runtime-state.md</Path>`。
+3. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时运行 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`。
+4. 读取 `<Path>{roots.state}/specdev/status.json</Path>`：用户指定 change 优先；唯一活跃 change 直接使用；无活跃时创建；多个候选时请求消歧。
+5. 若当前 change 已有非空 `current_work`，先恢复或显式结束该 Work；否则将 `current_work` 设置为本次 work id。
+6. 只加载当前步骤需要的 work 子文件和共享规则。
+7. 完成后写入产物、运行适用校验、更新状态和 `works_run`。
 
 Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：Goal Plan 含完整委派附录时由 Lead 拥有转换；普通 Goal Plan 或无 Goal Plan 的实现由最后一个 I 拥有；非实现型终点由最终验收工件 owner 拥有。Archive 不补造 completed。
 

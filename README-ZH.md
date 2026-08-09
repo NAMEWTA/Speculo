@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> 将规范驱动开发资产打包为可安装工作流——直接初始化与刷新工具。
+> 将规范驱动开发资产打包为可安装工作流——支持状态安全刷新的初始化工具。
 
 Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages——通过统一的 CLI 安装到任意项目中。
 
@@ -29,16 +29,16 @@ npm install -g @namewta/speculo
 
 | 命令 | 说明 |
 |---|---|
-| `speculo` / `speculo init [target]` | 初始化或直接刷新 Speculo 管理的资产。每次刷新均以当前模板替换 `config.json`、工作区元数据、commands、skills 和本次选中的 workflow 静态包；对选中 workflow 重置受管理状态，仅保留 `changes/` 与 `archive/`，保留 command Markdown 报告但删除 command `state.json`。交互中未选中的当前支持 workflow 完全不变。安装 SpecDev 后还会幂等确保项目根 `.gitignore` 包含 `specdev-worktree/`。 |
+| `speculo` / `speculo init [target]` | 初始化或刷新 Speculo。静态 commands、skills 与本次选中的 workflow 包使用当前模板；兼容的 v0.7+ 项目配置和完整 workflow/command 运行时状态会自动迁移。每次刷新把旧配置与状态保留到 `speculo/.speculo/back/`。不兼容或损坏的状态会生成干净 active 安装与 pending marker，并以退出码 `2` 结束。安装 SpecDev 后还会幂等维护项目根 `.gitignore` 的 `specdev-worktree/` 与备份条目。 |
 | `speculo version` | 显示本地版本并检查 npm 最新版本。 |
 
-v0.7.0 起已移除 `migrate`、`mirror-skills`、`update` 及相关 flags。旧安装请直接重新运行 `speculo init`；不会执行兼容迁移。
+旧 CLI 命令 `migrate`、`mirror-skills`、`update` 及相关 flags 仍保持移除；CLI 只公开 `init` 与 `version`。当 `init` 报告 pending migration 时，运行已安装的 Agent command `migrate-runtime-state`：它盘点只读备份、写入 dry-run 报告、要求用户明确确认完整计划，再通过 staging 与 rollback 原子应用。
 
 ## 安装的运行时资产
 
 初始化后，目标项目获得以下可通过 AI agent 调用的资产：
 
-### 6 个 Commands
+### 7 个 Commands
 
 | Command | 用途 |
 |---|---|
@@ -46,16 +46,18 @@ v0.7.0 起已移除 `migrate`、`mirror-skills`、`update` 及相关 flags。旧
 | `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
 | `git-repository-audit` | 对一个或多个本地 Git 仓库执行只读、可复现的审计 |
 | `handoff` | 持久化精简且可恢复的上下文，供另一 Agent 接手 |
+| `migrate-runtime-state` | 对账 pending 运行时备份，并原子应用已明确确认的迁移计划 |
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 6 个 Skills
+### 7 个 Skills
 
 | Skill | 用途 |
 |---|---|
 | `archive-and-consolidate` | 归档过期内容、合并分散知识、清理过时资产 |
 | `docs-sync` | 文档审计，以及 AGENTS.md / CLAUDE.md 手册的增量维护或完整重建 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
+| `migrate-runtime-state` | 校验备份、锁定来源/目标指纹，并以 rollback 执行运行时迁移计划 |
 | `speculo-retro` | 回顾分析 |
 | `typescript-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
@@ -86,7 +88,7 @@ Speculo 站在先行者的肩膀上——也包括我自己的失败。我们怀
 - **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** —— 轻量级 spec 驱动开发框架，其 changes/ 目录结构与归档机制深刻影响了 Speculo 的持久化契约设计。
 - **[Superpowers](https://github.com/obra/superpowers)** —— 完整的 agentic 开发方法论，其技能编排与子代理调度为 workflow 包设计提供了重要参考。
 
-Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt 继承技能方法论，从 OpenSpec 借鉴工程化管理，从 Superpowers 学习编排思想——形成基于包的 workflow 管理、持久化契约以及直接刷新生命周期。我们将传承他们的精神，继续前行。
+Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt 继承技能方法论，从 OpenSpec 借鉴工程化管理，从 Superpowers 学习编排思想——形成基于包的 workflow 管理、持久化契约以及状态安全刷新生命周期。我们将传承他们的精神，继续前行。
 
 ## 许可证
 

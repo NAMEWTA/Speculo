@@ -4,6 +4,21 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.1] - 2026-08-09
+
+### Added
+- **State-safe refresh migration**: `speculo init` now snapshots the previous project configuration and complete runtime state, keeps the latest backup at `speculo/.speculo/back/`, records file hashes in `back/manifest.json`, and writes `.speculo/install.json` with the installed version and workflows.
+- **Pending migration gate**: incompatible versions, malformed JSON, state symlinks, unknown command state, unsupported workflow schema, or index conflicts install a clean active skeleton plus `.speculo/migration.json`; CLI exits `2`, workflows are blocked, and repeated `init` makes no changes.
+- **Agent-assisted runtime migration**: added the `migrate-runtime-state` command and skill. The deterministic script inspects immutable backup content, fingerprints active targets, requires complete source decisions and explicit confirmation, stages all changes, validates the result, atomically replaces the installation, and rolls back on failure.
+
+### Changed
+- **Compatible v0.7+ refresh**: `speculo init` still refreshes managed static commands, skills, workspace metadata, and selected workflow packages, while recursively merging project configuration defaults and preserving complete compatible workflow/command runtime state, including initialized configuration, state indexes, `.config/`, permanent knowledge, `changes/`, `archive/`, sidecars, reports, and owned command `state.json` files.
+- **Static/runtime ownership split**: stale managed static commands, skills, and selected workflow files are removed by template refresh. Runtime data is migrated when compatible or retained in the immutable backup for explicit reconciliation when pending. Current supported workflows not selected in the prompt remain untouched.
+- **Runtime ignores**: project-root `.gitignore` now idempotently includes `speculo/.speculo/back/` in addition to `specdev-worktree/` when SpecDev is installed.
+
+### Tests
+- Added coverage for fresh install manifests, complete compatible state preservation, backup hashes, pending zero-modification retries, CLI exit code `2`, CRLF/idempotent ignores, backup tampering, confirmation gates, target drift, path escape, invalid-state rollback, unselected workflow preservation, staging failure rollback, and the reduced CLI surface.
+
 ## [0.7.0] - 2026-08-09
 
 ### Changed

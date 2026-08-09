@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.7.0
+- Package: `@namewta/speculo` v0.7.1
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -12,11 +12,11 @@
 ## Directory Map
 
 ```
-src/                 CLI source (cli.ts, index.ts, version.ts, workflows.ts, utils.ts)
+src/                 CLI source (cli.ts, index.ts, migrations.ts, version.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
   .speculo/           workspace.json + README.md (runtime state contract)
-  commands/           6 command definitions
-  skills/             6 skill directories
+  commands/           7 command definitions
+  skills/             7 skill directories
   workflows/          workflow packages with INDEX.md + work entries
   canonical/          Single-file pure-Markdown distribution format for AI platforms
 test/                 CLI test suite
@@ -39,7 +39,8 @@ scripts/              Build, validation, verification tooling
 ## Architecture
 
 - **cli.ts** — Thin command router exposing only init (also the bare command) and version.
-- **index.ts** — `initSpeculo()` builds a staged installation before atomically replacing `<target>/speculo/`. It always refreshes template-managed core assets and selected workflow packages.
+- **index.ts** — `initSpeculo()` builds a staged installation before atomically replacing `<target>/speculo/`. It refreshes template-managed static assets and delegates runtime compatibility to `migrations.ts`.
+- **migrations.ts** — Snapshots the previous runtime, keeps the latest backup, automatically migrates compatible v0.7+ state, and writes the pending marker for Agent-assisted repair.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
 - **utils.ts** — Single `pathExists()` helper.
 
@@ -51,14 +52,16 @@ speculo version                          Show local version and check npm for up
 ```
 
 - Bare `speculo` is an alias for `speculo init`; `init` accepts at most one target path and shows the workflow picker in a TTY. Non-TTY installs all template workflows.
-- Every refresh replaces managed `config.json`, workspace metadata, commands, skills, and selected workflow assets. Selected workflow state is rebuilt from its current skeleton while retaining only `changes/` and `archive/`; command reports are retained while command `state.json` files are removed.
-- Current template workflows not selected in the refresh remain untouched. Unknown/removed managed commands, skills, workflows, and state are removed. No migration or compatibility layer exists.
+- Every refresh replaces managed commands, skills, workspace/install metadata, and selected workflow static assets. Compatible v0.7+ configuration and complete workflow/command runtime state are migrated into the new installation.
+- Before replacement, the previous `config.json` and `.speculo/` state are saved under `speculo/.speculo/back/`; the previous backup and pending marker are excluded, so only the latest backup is retained.
+- Unknown core schema, malformed JSON, state symlinks, command-state ownership gaps, and workflow index conflicts create a clean active state plus `.speculo/migration.json`. CLI exits `2`; repeated `init` blocks without modification until the Agent command `migrate-runtime-state` completes.
+- Current supported workflows not selected in the refresh remain untouched. Unknown/removed static commands, skills, and workflow packages are removed; runtime evidence remains in active state when compatible or in the backup when pending.
 
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
-- **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, retro, status
-- **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, speculo-retro, typescript-standards-builder, writing-great-skills
+- **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, migrate-runtime-state, retro, status
+- **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, migrate-runtime-state, speculo-retro, typescript-standards-builder, writing-great-skills
 - **template/workflows/** — specdev（14 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
@@ -96,7 +99,9 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 ## Dangerous Patterns (verified regressions)
 
 - **Do not** put `docs-sync.json` in workflow `_state/` template — it's a lazy command sidecar.
-- **Do not** add migration/compatibility branches or preserve stale managed state outside `changes/`, `archive/`, and command reports.
+- **Do not** delete initialized workflow configuration, permanent knowledge, sidecars, or command state during a compatible refresh.
+- **Do not** run workflows or repeat `speculo init` while `.speculo/migration.json` is pending; route only to `migrate-runtime-state`.
+- **Do not** modify `.speculo/back/` from workflows or Agent commands; the migration skill treats it as an immutable source.
 - **Do not** replace an existing installation until staging the complete next installation succeeds.
 - **Do not** retain legacy workflow directories (such as `workflows/dev` or `workflows/doc`) in a refreshed installation.
 
@@ -116,9 +121,12 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 
 - `./speculo/.speculo/workspace.json` — 工作区根别名配置
 - `./speculo/config.json` — 项目配置文件
+- `./speculo/.speculo/migration.json` — 运行时迁移状态（存在时读取）
 
 若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。
 此时必须提示用户：**请先运行 `speculo init` 完成初始化配置。**
+
+若 `migration.json` 存在且 `status` 为 `pending`，必须停止所有 workflow 读取和状态写入，提示用户运行 `migrate-runtime-state` command；只有该 command 可以在 pending 期间执行。
 
 ### 工作流入口（强制读取）
 

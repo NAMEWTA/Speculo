@@ -83,7 +83,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - `<Path>{roots.state}/specdev/research/</Path>`
 - `<Path>{roots.state}/specdev/archive/</Path>`
 
-若全局状态已存在，先检查 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户重新运行 `speculo init` 刷新受 Speculo 管理的状态；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从 schema v4 模板创建。
+若全局状态已存在，先检查 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户运行 `speculo init` 建立备份与 pending marker，再运行 `migrate-runtime-state` command 对账修复；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从 schema v4 模板创建。
 
 从模板生成：
 
