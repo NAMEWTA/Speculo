@@ -50,7 +50,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 7 Skills
+### 8 Skills
 
 | Skill | Purpose |
 |---|---|
@@ -58,6 +58,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `migrate-runtime-state` | Validate backups, lock source/target fingerprints, and apply runtime migration plans with rollback |
+| `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `speculo-retro` | Retrospective analysis |
 | `typescript-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |

@@ -102,6 +102,7 @@ describe("Speculo CLI", () => {
       assert.equal(await pathExists(join(root, "commands", "migrate-runtime-state.md")), true);
       assert.equal(await pathExists(join(root, "skills", "docs-sync", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "skills", "migrate-runtime-state", "SKILL.md")), true);
+      assert.equal(await pathExists(join(root, "skills", "optimize-codex-config", "SKILL.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "specdev", "INDEX.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person")), false);
       assert.deepEqual(JSON.parse(await readFile(join(root, ".speculo", "specdev", "status.json"), "utf8")), {

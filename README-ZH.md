@@ -50,7 +50,7 @@ npm install -g @namewta/speculo
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 7 个 Skills
+### 8 个 Skills
 
 | Skill | 用途 |
 |---|---|
@@ -58,6 +58,7 @@ npm install -g @namewta/speculo
 | `docs-sync` | 文档审计，以及 AGENTS.md / CLAUDE.md 手册的增量维护或完整重建 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
 | `migrate-runtime-state` | 校验备份、锁定来源/目标指纹，并以 rollback 执行运行时迁移计划 |
+| `optimize-codex-config` | 体检并优化本机 Codex 配置、第三方 Responses 接口、权限和 compaction 故障 |
 | `speculo-retro` | 回顾分析 |
 | `typescript-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
