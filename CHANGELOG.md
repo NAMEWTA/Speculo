@@ -4,6 +4,30 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+---
+
+## [0.7.2] - 2026-08-09
+
+### Added
+- **Codex configuration audit skill**: added `optimize-codex-config` with a redacting, read-only auditor for local configuration, custom Responses providers, authentication metadata, permissions, Agents, model catalogs, rollout incidents, compaction failures, and configuration drift. It requires an explicit confirmation package before any local configuration mutation.
+- **Independent workspace execution contract**: Goal Plans now model `coordination_mode` and `workspace_strategy` as orthogonal axes, with a separate isolated-workspace addendum, role-neutral implementation/integration ownership, portable workspace locators, and persistent local integration authorization.
+
+### Changed
+- **Agent Team no longer implies worktree use**: `single-session | lead-team` controls collaboration, while `current | worktree | mixed` is selected only from concrete isolation triggers such as parallel writes, protected local state, disposable experiments, background resume, provider requirements, or an explicit user request. The default remains one writing session in the current workspace; read-only subagents do not change that mode.
+- **Automatic local worktree integration**: `terminal_action=integrate` authorizes the integration owner to complete fast-forward or mechanically determined merge-conflict integration without repeated confirmation. Successful integration does not automatically push, open or merge a PR, deploy, migrate, or remove branches/worktrees.
+- **Canonical distributions**: regenerated all six SpecDev canonical documents from the updated workflow dependency closure.
+
+### Fixed
+- **Recoverable worktree integration state**: fast-forward now records its result checkpoint, verification evidence, passed integration result, and `integrated` terminal state. The new `integrating` lock requires a complete contract and can resume from the recorded parent/source checkpoint or matching `MERGE_HEAD`.
+- **Integration evidence invariants**: validation now requires positive attempts, complete parent/source checkpoints, source equality, distinct merge-commit results, and exact fast-forward result equality while preserving legacy v3 worktree records.
+- **Codex writer detection**: replaced broad process-name matching with exact writable-handle evidence for the target `config.toml`, so the invoking Codex CLI and non-writing application helpers no longer block the skill.
+- **Model catalog and 413 attribution**: read reasoning levels from the current `supported_reasoning_levels[].effort` field and keep JSON/provider 413 responses unattributed unless an explicit proxy signature supports external-proxy ownership.
+
+### Tests
+- Added regression coverage for all four coordination/workspace combinations, legacy and new integration records, fast-forward checkpoint invariants, real Codex catalog structure, writable-handle detection, secret redaction, and proxy-evidence thresholds.
+
 ## [0.7.1] - 2026-08-09
 
 ### Added
