@@ -23,7 +23,7 @@ keywords: [实现, TDD, 代码审查, 模块设计, 证据, ticket]
 
 Ticket 模式适用于多 Ticket、Standard/Deep、并行、迁移或需要完整证据治理的工作。
 
-Goal Plan 只有包含完整 `## Delegated Execution Addendum` 时才进入 delegated execution 分支。Lead 在派单、恢复或验收候选交付时调用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；普通 Goal Plan 不建立 Lead/Worker 角色，也不调用该 Skill。
+新 Goal Plan 通过 `coordination_mode` 与 `workspace_strategy` 分别决定协作和工作区；旧计划缺少字段时根据完整 Delegated Execution Addendum 与现有 worktree 记录兼容推导。只有 `lead-team` 进入 delegated execution 分支；`single-session` 可使用只读辅助 Agent，但主会话保持唯一写入 owner。Worktree/mixed 独立加载 dev-worktree 合同，不因是否存在 Lead 而改变。
 
 ### Direct Spec 模式（保留原能力）
 
@@ -64,8 +64,9 @@ Ticket 模式检查：
 - `blocked_by` 全部 done；
 - Ticket 与 Spec/ADR/Goal Plan 无冲突；
 - 可写、只读、共享路径明确且无并发冲突；
-- 并行执行时，Ticket 的 worktree 记录为 `active`，`base_sha` 与派单一致；
-- 存在委派附录时，派单块的 execution model、Lead、checkpoint、workspace/session locator、路径合同、修正上限和授权矩阵与当前事实一致；
+- Ticket 分配到 worktree 时，记录为 `active`，trigger、`base_sha`、父分支、owners、locator 和结束动作与计划一致；
+- `lead-team` 时，派单块的 execution model、Lead、mutation role、checkpoint、workspace/session locator、路径合同、修正上限和授权矩阵与当前事实一致；`worker-write` 必须绑定独立 workspace；
+- current workspace 只有一个项目和 SpecDev 状态写入 owner；read-only Agent 不产生 patch、commit 或状态写入；
 - 验证命令和 Evidence 位置可用；
 - 当前代码事实没有使核心契约失效。
 
@@ -126,7 +127,7 @@ Direct Spec 模式检查：
 - 每个安全落点运行定向验证；
 - 完成前运行 Ticket 验证矩阵，或 Direct Spec 模式的轻量验证契约；
 - 按 `<Path>{roots.state}/specdev/config.json</Path>` 运行适用的类型检查、lint、测试和构建；
-- 普通 Goal Plan 下由当前实现者运行适用 E2E；存在委派附录时 Worker 只记录场景与预期结果，由 Lead 在集成阶段执行；
+- current workspace 由其唯一写入 owner 运行适用 E2E；隔离 workspace 由 integration owner 在集成阶段运行；Lead Team 的 Worker 只记录场景与预期结果；
 - 检查实际修改均在 `writable_paths` 或获批的 Direct Spec 可写范围内；
 - shared path 只由 owner 修改；
 - 越界前停止并提出 ownership change，不先改后报；
@@ -169,11 +170,11 @@ Direct Spec 模式写入：
 
 Evidence 必须包含实际修改范围、命令与结果、验收逐条映射、未运行项、偏差、残余风险和提交引用。
 
-存在委派附录时，加载 `<Path>{roots.workflows}/specdev/I-implement/delegated-evidence-template.md</Path>`，补充 execution model、provider、派单与最终 checkpoint、workspace/session locator、候选交付核对、修正轮次和未验证声明。Lead 使用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>` 的 `operation=execute` 分支完成核对；provider 自报结果不能直接标记为 `pass`。普通 Evidence 不包含这些字段或空占位。
+`lead-team` 时加载 `<Path>{roots.workflows}/specdev/I-implement/delegated-evidence-template.md</Path>`，补充 execution model、provider、mutation role、派单与最终 checkpoint、workspace/session locator、候选交付核对、修正轮次和未验证声明。Lead 使用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>` 的 `operation=execute` 分支完成核对；provider 自报结果不能直接标记为 `pass`。`single-session` Evidence 不包含这些字段或空占位。
 
 Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使用 `blocked`，实际实现与批准契约不一致使用 `deviated`。验证无法运行或存在未批准偏差时不得标 `done`。
 
-最后一个计划内 Ticket 完成后加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：没有 Goal Plan 或 Goal Plan 不含委派附录时，完成门全部通过后由本 Work 原子设置 change 为 completed；存在完整委派附录时只返回 Evidence，由 Lead 独立验收并关闭 change。若 triage 显示 `pending-close` 或 `close-failed`，下一 Work 为 `<Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path>`；否则进入 Archive。
+最后一个计划内 Ticket 完成后加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：没有 Goal Plan 或 `coordination_mode: single-session` 时，完成门全部通过后由本 Work 原子设置 change 为 completed；`lead-team` 时只返回 Evidence，由 Lead 独立验收并关闭 change。旧计划按委派附录兼容推导。若 triage 显示 `pending-close` 或 `close-failed`，下一 Work 为 `<Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path>`；否则进入 Archive。
 
 同步：
 
@@ -187,11 +188,11 @@ Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使�
 1. 运行项目自身的适用验证；
 2. 仅在 `<Path>{roots.state}/specdev/config.json</Path>` 和用户授权允许时提交；
 3. 提交信息引用 Ticket ID 或 Direct Spec change；
-4. 不自动推送、合并、部署、发布或执行不可逆迁移；
-5. 返回 Ticket ID 与状态、Evidence 完整路径、`workspace_ref`、commit 或 PR 引用和适用 E2E 结果；委派 Worker 返回待 Lead 执行的 E2E；
+4. Worktree 记录为 `review` 且 `terminal_action=integrate` 时，由 integration owner 自动加载 finalize 合同完成本地集成；其他 merge、push、PR、部署、发布或不可逆迁移不得自动执行；
+5. 返回 Ticket ID 与状态、Evidence 完整路径、`workspace_ref`、source/result checkpoint、commit 或 PR 引用和适用 E2E 结果；Lead Team Worker 返回待 integration owner 执行的 E2E；
 6. Direct Spec 模式返回 change、状态和 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`。
 
-普通 Goal Plan 遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>` 的 Evidence 返回协议；存在委派附录时遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution.md</Path>`，同时返回稳定 workspace/session locator、最终 checkpoint、修正轮次和未验证项。
+所有 Goal Plan 遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>` 的 Evidence 返回协议；Lead Team 额外遵循 `<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution.md</Path>`，隔离 workspace 额外遵循 dev-worktree Skill，并返回稳定 locator、最终 checkpoint、集成结果、修正轮次和未验证项。
 
 ## 完成标准
 
@@ -218,6 +219,6 @@ Ticket 状态依次为 `ready → in_progress → review → done`；阻塞使�
 - 代码注释规则：`<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`
 - 双轴审查：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
 - Evidence 模板：`<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</Path>`
-- 委派 Evidence 附录：`<Path>{roots.workflows}/specdev/I-implement/delegated-evidence-template.md</Path>`，仅 Goal Plan 含委派附录时加载
+- 委派 Evidence 附录：`<Path>{roots.workflows}/specdev/I-implement/delegated-evidence-template.md</Path>`，仅 lead-team 时加载
 - Agent 交付合同：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`
 - Merge/rebase 冲突：`<Path>{roots.workflows}/specdev/I-implement/merge-conflict-protocol.md</Path>`

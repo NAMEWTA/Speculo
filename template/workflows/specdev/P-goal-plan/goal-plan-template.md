@@ -4,6 +4,8 @@ artifact: goal-plan
 change: <YYYY-MM-DD-topic>
 status: draft
 modes: [coordination]
+coordination_mode: single-session
+workspace_strategy: current
 ready_for_execution: false
 ---
 
@@ -68,6 +70,13 @@ ready_for_execution: false
 
 ## 4. Execution and Integration Protocol
 
+### Execution Topology
+
+| 维度 | 决定 | 事实依据 |
+|---|---|---|
+| Coordination | single-session | 未启用严格角色分派；辅助调查只能返回只读结论 |
+| Workspace | current | 没有并行写入或其他隔离触发条件 |
+
 ### Ticket Execution Order
 
 | Ticket | 开始条件 | 执行 owner | 必跑验证 | Evidence | 集成条件 |
@@ -78,8 +87,8 @@ ready_for_execution: false
 | 动作 | 状态 | 目标与条件 |
 |---|---|---|
 | Local changes | allowed / not-authorized | ... |
-| Commit | allowed / not-authorized | ... |
-| Push / PR / Merge | allowed / not-authorized | ... |
+| Implementation commit | allowed / not-authorized | ... |
+| Remote repository actions | allowed / not-authorized | ... |
 | Deploy / Migration | allowed / not-authorized | ... |
 | Production configuration / feature / real user data | allowed / not-authorized | ... |
 

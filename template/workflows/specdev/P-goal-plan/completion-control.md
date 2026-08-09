@@ -22,8 +22,8 @@ Goal Plan 用紧凑摘要表达业务目标、受众、所有 Ticket 完成后�
 
 最后一个 Gate 关闭后加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：
 
-- Goal Plan 不含 `## Delegated Execution Addendum` 时，由最后一个计划内 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 汇总并完成 change；
-- Goal Plan 含完整委派附录时，由 Lead 在独立验收后完成 change。
+- `coordination_mode: single-session` 时，由最后一个计划内 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 汇总并完成 change；
+- `coordination_mode: lead-team` 时，由 Lead 在独立验收后完成 change；旧 Goal Plan 缺少该字段时，继续按完整 Delegated Execution Addendum 是否存在推导。
 
 若 triage 的 `external_action` 为 `pending-close` 或 `close-failed`，下一 Work 为 `<Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path>`，否则进入 Archive。远程动作不参与本地 Gate 判断。
 
@@ -53,6 +53,6 @@ BLOCKER id=<id> owner=<owner> needed=<decision-or-input> impact=<scope>
 DECISION id=<id> owner=<owner> status=pending|approved|rejected impact=<scope>
 ```
 
-委派 Goal Plan 的交付状态格式由委派协议提供，不加入普通 Goal Plan。
+Lead Team 的交付状态格式由委派协议提供，不加入 single-session Goal Plan。
 
 **完成标准**：进度可由权威工件恢复；普通计划由最后一个 Implement 完成，委派计划由 Lead 完成；所有通过、阻塞和未验证声明均能定位到具体 Evidence 与代码事实。

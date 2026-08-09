@@ -980,6 +980,10 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
             "type": "string",
             "minLength": 1
           },
+          "integration_owner": {
+            "type": "string",
+            "minLength": 1
+          },
           "provider": {
             "enum": [
               "native",
@@ -988,6 +992,10 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
             ]
           },
           "base_sha": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parent_branch": {
             "type": "string",
             "minLength": 1
           },
@@ -1000,11 +1008,76 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
             "minLength": 1,
             "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
           },
+          "terminal_action": {
+            "enum": [
+              "integrate",
+              "retain"
+            ]
+          },
+          "source_checkpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "integration": {
+            "type": "object",
+            "required": [
+              "status",
+              "parent_before_sha",
+              "source_sha",
+              "result_sha",
+              "method",
+              "conflict_paths",
+              "verification",
+              "evidence",
+              "attempts"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "pending",
+                  "running",
+                  "passed",
+                  "blocked"
+                ]
+              },
+              "parent_before_sha": {
+                "type": ["string", "null"]
+              },
+              "source_sha": {
+                "type": ["string", "null"]
+              },
+              "result_sha": {
+                "type": ["string", "null"]
+              },
+              "method": {
+                "enum": [null, "fast-forward", "merge-commit"]
+              },
+              "conflict_paths": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "verification": {
+                "enum": ["pending", "passed", "failed"]
+              },
+              "evidence": {
+                "type": "string",
+                "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": true
+          },
           "status": {
             "enum": [
               "planned",
               "active",
               "review",
+              "integrating",
               "integrated",
               "removed",
               "blocked"
@@ -1015,6 +1088,111 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
             "minLength": 1
           }
         },
+        "dependentRequired": {
+          "terminal_action": [
+            "integration_owner",
+            "parent_branch",
+            "source_checkpoint",
+            "integration"
+          ]
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrating"}
+              },
+              "required": ["status"]
+            },
+            "then": {
+              "required": [
+                "terminal_action",
+                "integration_owner",
+                "parent_branch",
+                "source_checkpoint",
+                "integration"
+              ],
+              "properties": {
+                "terminal_action": {"const": "integrate"}
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"enum": ["integrating", "integrated"]},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "source_checkpoint": {"type": "string", "minLength": 1},
+                "integration": {
+                  "properties": {
+                    "parent_before_sha": {"type": "string", "minLength": 1},
+                    "source_sha": {"type": "string", "minLength": 1},
+                    "attempts": {"type": "integer", "minimum": 1}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrating"},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "integration": {
+                  "properties": {
+                    "status": {"const": "running"}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrated"},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "integration": {
+                  "properties": {
+                    "status": {"const": "passed"},
+                    "result_sha": {"type": "string", "minLength": 1},
+                    "method": {"enum": ["fast-forward", "merge-commit"]},
+                    "verification": {"const": "passed"}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "terminal_action": {"const": "retain"}
+              },
+              "required": ["terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "status": {
+                  "not": {"enum": ["integrating", "integrated"]}
+                }
+              }
+            }
+          }
+        ],
         "additionalProperties": true
       }
     }

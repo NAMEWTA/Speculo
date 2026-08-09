@@ -3,8 +3,8 @@
 ## 前置
 
 - Ticket `ready: true` 且依赖完成，或原型问题与临时写入范围已锁定；项目写路径无冲突。
-- 并行 Ticket 要求 `<Path>{roots.state}/specdev/config.json</Path>` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
-- 调用方已指定 workspace owner、implementation owner、工作项 ID、持久化 owner，并固定 `base_sha`；并行 Ticket 共用同一基线。
+- 调用方已记录允许的 trigger 及其事实。`parallel-write` 还要求 `<Path>{roots.state}/specdev/config.json</Path>` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
+- 调用方已指定 workspace owner、implementation owner、integration owner、父分支、工作项 ID、持久化 owner、`integrate | retain`，并固定 `base_sha`；并行 Ticket 共用同一基线。
 
 ## 创建
 
@@ -15,16 +15,31 @@
 5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<work-item-id>`、`workspace_ref = specdev-worktree/<work-item-id>`，从 `base_sha` 执行 `git worktree add -b <work-item-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
 6. 分支使用 `speculo/<change>/<work-item-id>`；现有分支未能匹配记录时停止。
 7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 implementation owner 的创建基线。
-8. Ticket 将记录写入 `worktrees`：
+8. Ticket 将记录写入 `worktrees`；`owner` 保持 implementation owner 的兼容含义：
 
 ```json
 {
   "ticket_id": "T-01",
   "owner": "<implementation-owner>",
+  "integration_owner": "<integration-owner>",
   "provider": "git",
   "base_sha": "<sha>",
+  "parent_branch": "<parent-branch>",
   "branch": "speculo/<change>/T-01",
   "workspace_ref": "specdev-worktree/T-01",
+  "terminal_action": "integrate",
+  "source_checkpoint": null,
+  "integration": {
+    "status": "pending",
+    "parent_before_sha": null,
+    "source_sha": null,
+    "result_sha": null,
+    "method": null,
+    "conflict_paths": [],
+    "verification": "pending",
+    "evidence": "<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>",
+    "attempts": 0
+  },
   "status": "active",
   "updated_at": "<ISO-8601>"
 }
@@ -32,4 +47,4 @@
 
 native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。原型不使用本 JSON 结构，只在 record 的 Run and Assets 中记录源码 branch/commit，并在 frontmatter 写入 `workspace_ref` 与清理状态。
 
-完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
+`terminal_action=integrate` 不替代来源实现提交授权；进入 `review` 前必须把已获授权的最终 commit 写为 `source_checkpoint`。完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。

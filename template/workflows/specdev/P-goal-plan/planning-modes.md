@@ -30,6 +30,8 @@
 - 当前代码事实使 Ticket 的核心行为、接口或验证不可执行；
 - 必需外部合同或参考权威不可获得；
 - 已选择委派，但 Lead、checkpoint、可恢复 locator 或交付通道无法建立；
+- workspace strategy 为 worktree/mixed，但任一隔离 Ticket 缺少允许的 trigger、父分支、integration owner、可恢复 locator 或结束动作；
+- `lead-team + current` 中存在 `worker-write`，或 current workspace 出现多个项目/状态写入 owner；
 - 用户要求的远程或生产动作没有逐动作授权。
 
 按 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 返回真正拥有该决策的工件。
@@ -44,16 +46,27 @@
 
 模式可以组合。仅有线性低风险 Ticket 时不应为了形式生成重型 Goal Plan。
 
-## 4. 每次确认角色分支
+## 4. 锁定正交执行维度
 
-规划模式描述为什么需要跨 Ticket 治理，不决定是否启用 Lead/subagent。每次运行 P 都向用户提供两个选择：
+规划模式描述为什么需要跨 Ticket 治理，不决定协作或工作区方式。每份新 Goal Plan 都必须分别记录：
 
-- **普通 Goal Plan**：由实现者按核心计划推进，不创建严格角色、交付通道或派单合同；最终产物不记录一个名为 direct 的模式。
-- **委派 Goal Plan**：启用唯一 Lead 与 `native-subagent` 或 `external-web-subagent`，并加载委派协议。
+- `coordination_mode: single-session | lead-team`；
+- `workspace_strategy: current | worktree | mixed`。
 
-不得根据 Ticket 数量、并行机会或平台能力静默启用委派。选择普通分支后，AI 自适应决定核心计划的适用细节，不把本次角色选择写入 frontmatter，也不在正文生成空章节或“不适用”说明。
+`single-session` 是默认协作方式：主会话拥有全部项目和 SpecDev 状态写入，只读探索、日志分析、测试观察和审查 Agent 可以返回结论，但不得成为第二写入者。只有用户明确要求或确认严格角色分派时才能使用 `lead-team`；不得根据 Ticket 数量、并行机会或平台能力静默启用。
 
-选择委派后才固定：Lead、provider、repository/branch、不可变 `base_sha` 或等价基线、源码交付方式、`max_correction_rounds` 和逐动作授权。认证秘密和机器绝对路径不得进入 Goal Plan。
+Workspace 按 Ticket 判断，允许触发只有：`parallel-write`、`protect-local-state`、`disposable-experiment`、`background-resume`、`provider-requirement`、`user-requested`。每个触发必须引用实测事实；Agent Team、Ticket 数量、只读并行、顺序写入或泛化的“更安全”都不是触发条件。全部 Ticket 使用当前工作区时为 `current`；全部项目写入位于隔离 workspace 时为 `worktree`；两者并存时为 `mixed`。
+
+四种组合均合法，但约束不同：
+
+| Coordination | Workspace | 写入约束 |
+|---|---|---|
+| single-session | current | 主会话唯一写入 |
+| single-session | worktree/mixed | 主会话管理并集成隔离写入 |
+| lead-team | current | Lead 唯一写入，Worker 只读 |
+| lead-team | worktree/mixed | `worker-write` 每项绑定独立 workspace，Lead 默认承担 integration owner |
+
+选择 Lead Team 后固定 Lead、provider、repository、不可变 `base_sha` 或等价基线、源码交付方式、`max_correction_rounds` 和逐动作授权。选择 worktree/mixed 后固定每项的 trigger、workspace owner、integration owner、父分支、locator、来源 checkpoint 策略和结束动作。认证秘密和机器绝对路径不得进入 Goal Plan。
 
 ## 5. 规划摘要
 
@@ -61,6 +74,8 @@
 
 ```text
 modes=<mode-list>
+coordination_mode=single-session|lead-team
+workspace_strategy=current|worktree|mixed
 tickets=<count>
 critical_path=<ticket-list>
 parallel_capacity=<n>
@@ -71,6 +86,6 @@ hard_stops=<none-or-list>
 adopted_assumptions=<low-impact-only>
 ```
 
-委派分支额外形成 `execution_model`、`lead`、`provider`、`checkpoint`、`source_delivery`、`max_correction_rounds` 和 locator；这些字段只进入委派附录。
+Lead Team 额外形成 `execution_model`、`lead`、`provider`、`checkpoint`、`source_delivery`、`max_correction_rounds` 和 locator；worktree/mixed 额外形成逐 Ticket workspace allocation。两类字段分别只进入各自附录。
 
-**完成标准**：规划 modes 与角色选择互不代替；普通计划没有委派痕迹；委派计划的源码、交付、权限和恢复字段都有可验证值。
+**完成标准**：规划 modes、coordination mode 与 workspace strategy 互不代替；single-session 没有委派痕迹；current 没有隔离安排；所有条件分支的源码、交付、权限和恢复字段都有可验证值。

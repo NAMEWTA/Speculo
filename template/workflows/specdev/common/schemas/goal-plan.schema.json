@@ -15,7 +15,17 @@
       "minItems": 1,
       "uniqueItems": true
     },
+    "coordination_mode": {
+      "enum": ["single-session", "lead-team"]
+    },
+    "workspace_strategy": {
+      "enum": ["current", "worktree", "mixed"]
+    },
     "ready_for_execution": {"type": "boolean"}
+  },
+  "dependentRequired": {
+    "coordination_mode": ["workspace_strategy"],
+    "workspace_strategy": ["coordination_mode"]
   },
   "additionalProperties": true
 }

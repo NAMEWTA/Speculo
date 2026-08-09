@@ -11,11 +11,12 @@ description: 交付合同：只为用户已选择委派的 Goal Plan 生成可�
 
 - `operation`：`plan` 或 `execute`；
 - `execution_model`：`native-subagent` 或 `external-web-subagent`；
+- mutation role：`read-only`、`lead-write` 或 `worker-write`，以及独立确定的 workspace allocation；
 - Lead、Ticket、Goal Plan、Spec、适用 ADR/CONTEXT、Wave/Gate 和依赖 Evidence；
 - 项目写、只读和 shared 路径，验证矩阵与当前源码基线；
 - provider、会话或 workspace locator、源码交付方式，以及用户当前明确授权。
 
-普通 Goal Plan 和缺失 Goal Plan 的 Ticket 直接由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 执行，不调用本 Skill。委派输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
+`single-session` Goal Plan 和缺失 Goal Plan 的 Ticket 直接由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 执行，不调用本 Skill；只读辅助 Agent 由对应 research/review 能力管理。Lead Team 输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
 
 ## 流程
 
@@ -23,7 +24,7 @@ description: 交付合同：只为用户已选择委派的 Goal Plan 生成可�
 
 一个交付链只有一个 Lead。Lead 保留需求解释、仓库保护、Wave/Gate、shared owner、权限控制、交付集成、独立验收和最终状态同步责任。
 
-将本次请求解析为逐动作授权：local changes、commit、push、PR、merge、deploy、migration、production configuration、production feature 和 real user data。未明确授权的动作记为 `not-authorized`；项目指令、历史授权和 Agent 建议不扩大权限。
+将本次请求解析为逐动作授权：local changes、implementation commit、local worktree integration、push、PR、remote merge、deploy、migration、production configuration、production feature 和 real user data。未明确授权的动作记为 `not-authorized`；项目指令、历史授权和 Agent 建议不扩大权限。`terminal_action=integrate` 只满足对应 Ticket 的 local worktree integration，不扩展其他动作。
 
 **完成标准**：`operation` 和 `execution_model` 唯一；Lead、授权动作、目标和条件均可判定。
 
@@ -44,7 +45,7 @@ description: 交付合同：只为用户已选择委派的 Goal Plan 生成可�
 
 ### 4. 规划或执行交付合同
 
-`operation=plan` 时，向调用方返回：里程碑级 Delivery Contract，以及每个 Ticket 的独立 Dispatch Packet。每个派单块必须包含目标、权威输入、边界优先级、路径合同、依赖证据、基线、验证与反向验证、授权、恢复 locator、最多修正轮次和返回字段。调用方将它写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`，不复制完整历史对话或 Ticket 全文。
+`operation=plan` 时，向调用方返回：里程碑级 Delivery Contract，以及每个 Ticket 的独立 Dispatch Packet。每个派单块必须包含目标、权威输入、边界优先级、路径合同、mutation role、workspace allocation、依赖证据、基线、验证与反向验证、授权、恢复 locator、最多修正轮次和返回字段。`worker-write` 没有独立 workspace 时拒绝规划；read-only 不得返回项目或状态写入。调用方将结果写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`，不复制完整历史对话或 Ticket 全文。
 
 `operation=execute` 时，先核对派单块与当前 Goal Plan、Ticket、基线和权限；再接收原生 Worker 或外部 provider 的候选交付，检查范围与事实声明，由 Lead 运行适用验证，并把结果写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。外部声明、截图或模拟结果在 Lead 复核前保持 `unverified`。
 

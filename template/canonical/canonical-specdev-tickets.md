@@ -786,9 +786,9 @@ shared_paths: ["package.json"]
 
 ## 3. Worktree 与分支
 
-需要并行或临时隔离项目写入时使用独立 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+Worktree 只在存在可观察隔离需求时使用：并行写入、保护当前本地状态、一次性实验、后台恢复、provider 要求或用户明确要求。只读调查和没有其他隔离事实的顺序写入默认共用当前工作区。Agent Team、Ticket 数量和泛化的“更安全”都不构成隔离理由。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
 
-生命周期由调用方明确的 workspace owner 按 下方 `<dev-worktree>` 标签 管理。普通 Goal Plan 由当前执行或集成 owner 负责；委派 Goal Plan 才把 workspace owner 映射为 Lead。编排规则位于 “目标规划阶段的核心编排规则”。
+生命周期由调用方明确的 workspace owner 与 integration owner 按 下方 `<dev-worktree>` 标签 管理。`single-session` 通常把两者映射为主会话；`lead-team` 可以把 integration owner 映射为 Lead，但角色选择不决定是否使用 worktree。同一 current workspace 只允许一个项目与 SpecDev 状态写入 owner；Worker 要写项目文件时必须拥有独立 workspace。编排规则位于 “目标规划阶段的核心编排规则”。
 
 </path-ownership>
 
@@ -963,28 +963,28 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 
 ## 适用范围
 
-- 用于并行写代码且路径所有权不冲突的 Ready Ticket，或明确要求临时隔离的一次性原型。
-- 只读调查和顺序执行默认共用当前工作区。
-- 调用方必须明确 workspace owner、implementation owner、固定基线、工作项 ID、持久化 owner 和允许的结束动作。
-- 普通执行不建立额外角色；委派 Goal Plan 才把 workspace owner/implementation owner 分别映射为 Lead/Worker。
+- 只用于具备 `parallel-write`、`protect-local-state`、`disposable-experiment`、`background-resume`、`provider-requirement` 或 `user-requested` 触发事实的 Ready Ticket/原型。
+- 只读调查、Agent Team 本身和没有其他隔离事实的顺序执行默认共用当前工作区。
+- 调用方必须明确 trigger、workspace owner、implementation owner、integration owner、固定基线、父分支、工作项 ID、持久化 owner 和允许的结束动作。
+- Coordination 与 workspace 正交：`single-session` 可以使用本 Skill；`lead-team` 不自动使用。Current workspace 下 Worker 只读；Worker 写入必须绑定本 Skill 创建的独立 workspace。
 - 平台原生 worktree 优先；不可用时使用 Git worktree。
 
 ## 生命周期
 
 1. 创建或恢复时加载 下方 `<dev-worktree-create>` 标签。
-2. implementation owner 完成后返回工作项状态、Evidence/record 路径、`workspace_ref`、checkpoint、commit 或 PR 引用和未验证项；Ticket worktree 从 `active` 更新为 `review`。
-3. workspace owner 集成或清理时加载 下方 `<dev-worktree-finalize>` 标签；一次性原型只评估和清理，不合入生产分支。
+2. implementation owner 完成后返回工作项状态、Evidence/record 路径、`workspace_ref`、不可变 source checkpoint、commit 或 PR 引用和未验证项；Ticket worktree 从 `active` 更新为 `review`。
+3. `terminal_action=integrate` 时 integration owner 自动加载 下方 `<dev-worktree-finalize>` 标签；`retain` 保持 review。一次性原型只评估和清理，不合入生产分支。
 
-Ticket worktree 状态依次为 `planned → active → review → integrated → removed`；失败进入 `blocked`，记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。原型的 branch、`workspace_ref` 和清理结果只写入 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`，不伪造 Ticket worktree 记录。
+Ticket worktree 状态依次为 `planned → active → review → integrating → integrated → removed`；失败进入 `blocked`，记录写入 `specdev/changes/{change}/.status.json` 的 `worktrees`。`integrating` 是带完整授权、来源和尝试证据的可恢复锁：同一父分支一次只允许一个 integration owner；fast-forward 与 merge-commit 都必须落到可复核的 `integrated/passed` 终态。原型的 branch、`workspace_ref` 和清理结果只写入 `specdev/changes/{change}/prototypes/{prototype-id}/record.md`，不伪造 Ticket worktree 记录。
 
 ## 边界
 
-- 每个并行 Ticket 使用独立 worktree、分支和相同 `base_sha`；每个原型使用独立 worktree 和分支。
+- 每个隔离 Ticket 使用独立 worktree 和分支；同一并行 Wave 固定相同 `base_sha`。每个原型使用独立 worktree 和分支。
 - Git provider 固定使用 `<project-root>/specdev-worktree/<work-item-id>/`，持久化 `workspace_ref: specdev-worktree/<work-item-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
 - native/external provider 保留其可迁移 opaque locator；所有 provider 都不保存机器绝对路径、认证秘密或真实用户数据。
 - 项目根 `.gitignore` 的 `specdev-worktree/` 条目由 `speculo init` 单一维护；缺失时创建流程阻塞并提示重新运行 init。
-- E2E 仅适用于用户界面交互受影响的变更。普通执行由当前集成 owner 运行；委派执行由 Lead 在集成阶段运行。
-- 合并、推送、PR、删除分支或 worktree 仍需用户授权。
+- E2E 仅适用于用户界面交互受影响的变更，由 integration owner 在集成阶段运行。
+- `terminal_action=integrate` 授权本地 fast-forward，以及分叉集成所需的暂存、merge continue 和一次集成专用 merge commit；不授权普通实现提交、push、PR、远端 merge、部署、迁移或删除分支/worktree。
 
 </dev-worktree>
 
@@ -995,8 +995,8 @@ Ticket worktree 状态依次为 `planned → active → review → integrated �
 ## 前置
 
 - Ticket `ready: true` 且依赖完成，或原型问题与临时写入范围已锁定；项目写路径无冲突。
-- 并行 Ticket 要求 `specdev/config.json` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
-- 调用方已指定 workspace owner、implementation owner、工作项 ID、持久化 owner，并固定 `base_sha`；并行 Ticket 共用同一基线。
+- 调用方已记录允许的 trigger 及其事实。`parallel-write` 还要求 `specdev/config.json` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
+- 调用方已指定 workspace owner、implementation owner、integration owner、父分支、工作项 ID、持久化 owner、`integrate | retain`，并固定 `base_sha`；并行 Ticket 共用同一基线。
 
 ## 创建
 
@@ -1007,16 +1007,31 @@ Ticket worktree 状态依次为 `planned → active → review → integrated �
 5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<work-item-id>`、`workspace_ref = specdev-worktree/<work-item-id>`，从 `base_sha` 执行 `git worktree add -b <work-item-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
 6. 分支使用 `speculo/<change>/<work-item-id>`；现有分支未能匹配记录时停止。
 7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 implementation owner 的创建基线。
-8. Ticket 将记录写入 `worktrees`：
+8. Ticket 将记录写入 `worktrees`；`owner` 保持 implementation owner 的兼容含义：
 
 ```json
 {
   "ticket_id": "T-01",
   "owner": "<implementation-owner>",
+  "integration_owner": "<integration-owner>",
   "provider": "git",
   "base_sha": "<sha>",
+  "parent_branch": "<parent-branch>",
   "branch": "speculo/<change>/T-01",
   "workspace_ref": "specdev-worktree/T-01",
+  "terminal_action": "integrate",
+  "source_checkpoint": null,
+  "integration": {
+    "status": "pending",
+    "parent_before_sha": null,
+    "source_sha": null,
+    "result_sha": null,
+    "method": null,
+    "conflict_paths": [],
+    "verification": "pending",
+    "evidence": "specdev/changes/{change}/evidence/T-01.md",
+    "attempts": 0
+  },
   "status": "active",
   "updated_at": "<ISO-8601>"
 }
@@ -1024,7 +1039,7 @@ Ticket worktree 状态依次为 `planned → active → review → integrated �
 
 native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。原型不使用本 JSON 结构，只在 record 的 Run and Assets 中记录源码 branch/commit，并在 frontmatter 写入 `workspace_ref` 与清理状态。
 
-完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
+`terminal_action=integrate` 不替代来源实现提交授权；进入 `review` 前必须把已获授权的最终 commit 写为 `source_checkpoint`。完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
 
 </dev-worktree-create>
 
@@ -1036,10 +1051,17 @@ native/external provider 将示例中的 provider 与 `workspace_ref` 换为对�
 
 仅生产 Ticket 进入本段；一次性原型不得合入生产分支。
 
-1. workspace owner 确认记录为 `review`，读取 implementation owner 的 Evidence，实际修改未越过路径契约。
-2. 在目标集成基线上应用变更并运行受影响的定向与回归验证。
-3. 仅当变更影响用户界面交互时，由当前集成 owner 运行验收所需的最小 E2E；委派执行中 implementation owner 只提供场景和预期结果，Lead 负责运行。
-4. 验证通过后将记录更新为 `integrated`；冲突或失败时设为 `blocked` 并保留 worktree。
+1. integration owner 确认记录为 `review`、`terminal_action=integrate`，读取 implementation owner 的 Evidence，并验证实际修改未越过 writable/shared owner 合同。`source_checkpoint` 必须是不可变 commit，且与记录 branch 当前 tip 一致、从 `base_sha` 可达。
+2. 确认目标 checkout 正位于 `parent_branch`、index 与项目 working tree 干净，并把当前 HEAD 固定为 `parent_before_sha`。目标不干净、父分支不匹配、其他记录已在同一父分支 `integrating` 或 HEAD 在集成期间变化时停止，不覆盖用户工作。
+3. 将记录原子更新为 `integrating`，设置 `integration.status=running`、`parent_before_sha`、`source_sha` 并递增 `attempts`。中断恢复时先核对记录、Git `MERGE_HEAD` 和当前 HEAD，不重复开始第二次集成。
+4. 恢复已有 `integrating` 记录时只进入一个分支：HEAD 仍等于 `parent_before_sha` 且没有 `MERGE_HEAD` 时恢复同一次尝试；HEAD 已等于 `source_checkpoint`、没有 `MERGE_HEAD` 且 `parent_before_sha` 可达来源时，将其视为已完成但尚未落状态的 fast-forward；`MERGE_HEAD` 等于 `source_checkpoint` 时恢复未完成 merge。其他 HEAD、来源或 merge 状态漂移一律设为 `blocked`，不修改 Git 现场。
+5. 若 `parent_before_sha` 是 `source_checkpoint` 的祖先，先在来源 workspace 运行 Ticket 定向验证、受影响回归、项目 typecheck/lint/build 和适用最小 E2E，再从目标 checkout 执行 `git merge --ff-only <source_checkpoint>`。重读目标 HEAD、tree 和 Evidence，确认 HEAD 精确等于 `source_checkpoint` 后，记录 `method=fast-forward`、`result_sha=source_checkpoint`、空 `conflict_paths`、验证命令与结果、`verification=passed`、Evidence 和 `integration.status=passed`，再把 worktree 状态更新为 `integrated`。这是 fast-forward 的终态，不继续执行 merge-commit 步骤。
+6. 若双方已分叉，从干净目标 checkout 执行 `git merge --no-ff --no-commit <source_checkpoint>`。出现冲突时加载 下方 `<merge-conflict-protocol>` 标签，并将本记录作为持久授权来源；不为 `git add`、继续 merge 或集成提交重复请求确认。
+7. 在未提交的合并结果上运行 Ticket 定向验证、受影响回归、项目 typecheck/lint/build 和适用最小 E2E。可由既有意图机械修正的失败最多处理 3 轮；不得放宽断言、删除检查或引入未批准行为。
+8. 验证通过后完成一次集成专用 merge commit，重读 HEAD、parents、tree、diff 和 Evidence，确认父分支为第一 parent、`source_checkpoint` 为第二 parent，记录 `method=merge-commit`、`result_sha`、conflict paths、`verification=passed`、Evidence 与 `integration.status=passed`，再把 worktree 状态更新为 `integrated`。
+9. 冲突需要新产品/架构/安全/迁移决定、修改越过授权路径、验证无法通过、目标状态漂移或提交 hook 无法安全完成时，执行 `git merge --abort`（仅限本流程从干净目标开始的 merge），设置 worktree 与 integration 为 `blocked`，记录最小失败、已通过行为和恢复条件，并保留来源 worktree。
+
+Fast-forward 路径的 `result_sha` 等于 `source_checkpoint`；merge-commit 路径必须保持父分支为第一 parent、来源 checkpoint 为第二 parent。任何成功结果都必须能从记录和 Evidence 复核。
 
 ## 清理
 
@@ -1047,9 +1069,35 @@ native/external provider 将示例中的 provider 与 `workspace_ref` 换为对�
 2. Git provider 从 project root 解析 `specdev-worktree/<work-item-id>`，重验无路径逃逸且与 `git worktree list --porcelain` 的记录一致，再从主工作树移除；native/external 通过对应 provider 管理入口移除。
 3. 确认 worktree 不再注册且工作项目录不存在后删除对应分支。Ticket 将状态更新为 `removed`；原型把 `cleanup_status` 更新为 `clean`。保留项目根 `specdev-worktree/` 统一目录及 `.gitignore` 条目。
 
-PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明确要求时使用强制删除。
+PR、`terminal_action=retain` 或暂缓集成时保留 worktree。成功集成也不自动清理。清理失败时停止；仅在用户明确要求时使用强制删除。
 
 </dev-worktree-finalize>
+
+<merge-conflict-protocol>
+
+# Merge / Rebase Conflict Protocol
+
+只在 `git status` 证明仓库正处于 merge 或 rebase 冲突时加载。普通集成设计冲突继续按 deviation/upstream owner 处理。
+
+## 流程
+
+1. 读取 Git 状态、操作类型、冲突文件、base/ours/theirs commit、当前 Ticket/Evidence，以及是否存在匹配的 `terminal_action=integrate` worktree 记录。
+2. 追溯双方意图：commit message、冻结的 source、Spec、Ticket、ADR、测试和调用者。二者缺失时不凭代码表面猜测产品行为。
+3. 逐 conflict hunk 写出双方意图、共同约束和建议结果。只合并既有意图；需要发明新行为或改变上层合同则停止并登记 deviation。
+4. 在获授权可写范围内解决文本，运行受影响测试、typecheck、lint 和项目要求的验证。能从既有权威唯一推导的冲突直接处理，不把“发生冲突”本身升级为人工确认。
+5. 若当前 merge 来自匹配记录的本地集成，`terminal_action=integrate` 已授权 `git add`、继续 merge 和一次集成专用 commit；验证通过后直接完成，不逐动作请求确认。其他 merge/rebase 仍分别取得 Git 副作用授权；没有授权时保存分析、剩余文件和精确恢复命令。
+6. 需要发明新产品行为、改变 Spec/ADR、安全/迁移决定、越过路径 owner 或无法保持双方既有意图时停止；由从干净目标开始的自动集成执行 `git merge --abort`，记录 blocker 并保留来源 worktree。普通冲突现场不擅自 abort。
+7. 重读 Git 状态、parents 和 diff，确认无 marker、无未声明路径、双方要求及测试仍成立。
+
+## 完成标准
+
+- 每个 hunk 的结果可追溯到双方意图；
+- 新产品决定没有藏在冲突解决中；
+- 项目验证有命令、退出码和关键输出；
+- Git 副作用来自逐动作授权，或来自可核对 worktree 记录中的持久本地集成授权；
+- 完成或暂停状态可以从 Evidence 和 Git 状态恢复。
+
+</merge-conflict-protocol>
 
 <config-template>
 
@@ -1388,6 +1436,10 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
             "type": "string",
             "minLength": 1
           },
+          "integration_owner": {
+            "type": "string",
+            "minLength": 1
+          },
           "provider": {
             "enum": [
               "native",
@@ -1396,6 +1448,10 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
             ]
           },
           "base_sha": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parent_branch": {
             "type": "string",
             "minLength": 1
           },
@@ -1408,11 +1464,76 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
             "minLength": 1,
             "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
           },
+          "terminal_action": {
+            "enum": [
+              "integrate",
+              "retain"
+            ]
+          },
+          "source_checkpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "integration": {
+            "type": "object",
+            "required": [
+              "status",
+              "parent_before_sha",
+              "source_sha",
+              "result_sha",
+              "method",
+              "conflict_paths",
+              "verification",
+              "evidence",
+              "attempts"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "pending",
+                  "running",
+                  "passed",
+                  "blocked"
+                ]
+              },
+              "parent_before_sha": {
+                "type": ["string", "null"]
+              },
+              "source_sha": {
+                "type": ["string", "null"]
+              },
+              "result_sha": {
+                "type": ["string", "null"]
+              },
+              "method": {
+                "enum": [null, "fast-forward", "merge-commit"]
+              },
+              "conflict_paths": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "verification": {
+                "enum": ["pending", "passed", "failed"]
+              },
+              "evidence": {
+                "type": "string",
+                "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": true
+          },
           "status": {
             "enum": [
               "planned",
               "active",
               "review",
+              "integrating",
               "integrated",
               "removed",
               "blocked"
@@ -1423,6 +1544,111 @@ PR 或暂缓集成时保留 worktree。清理失败时停止；仅在用户明�
             "minLength": 1
           }
         },
+        "dependentRequired": {
+          "terminal_action": [
+            "integration_owner",
+            "parent_branch",
+            "source_checkpoint",
+            "integration"
+          ]
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrating"}
+              },
+              "required": ["status"]
+            },
+            "then": {
+              "required": [
+                "terminal_action",
+                "integration_owner",
+                "parent_branch",
+                "source_checkpoint",
+                "integration"
+              ],
+              "properties": {
+                "terminal_action": {"const": "integrate"}
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"enum": ["integrating", "integrated"]},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "source_checkpoint": {"type": "string", "minLength": 1},
+                "integration": {
+                  "properties": {
+                    "parent_before_sha": {"type": "string", "minLength": 1},
+                    "source_sha": {"type": "string", "minLength": 1},
+                    "attempts": {"type": "integer", "minimum": 1}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrating"},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "integration": {
+                  "properties": {
+                    "status": {"const": "running"}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {"const": "integrated"},
+                "terminal_action": {"const": "integrate"}
+              },
+              "required": ["status", "terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "integration": {
+                  "properties": {
+                    "status": {"const": "passed"},
+                    "result_sha": {"type": "string", "minLength": 1},
+                    "method": {"enum": ["fast-forward", "merge-commit"]},
+                    "verification": {"const": "passed"}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "terminal_action": {"const": "retain"}
+              },
+              "required": ["terminal_action"]
+            },
+            "then": {
+              "properties": {
+                "status": {
+                  "not": {"enum": ["integrating", "integrated"]}
+                }
+              }
+            }
+          }
+        ],
         "additionalProperties": true
       }
     }

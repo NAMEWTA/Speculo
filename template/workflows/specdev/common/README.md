@@ -44,8 +44,8 @@
 - 包与 change 校验器：`<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`
 - 校验器说明：`<Path>{roots.workflows}/specdev/common/tools/README.md</Path>`
 - 外部技术研究 Skill：`<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`
-- 隔离 Ticket/原型 worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`，角色中立；委派 Goal Plan 才映射为 Lead/Worker
-- 委派 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`，仅用户选择委派 Goal Plan 时调用
+- 隔离 Ticket/原型 worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`，角色中立；由 change 的隔离事实触发，Agent Team 只影响 owner 映射
+- 委派 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`，仅用户明确选择 lead-team 时调用
 - 双轴代码审查 Skill：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
 
 ## 加载原则

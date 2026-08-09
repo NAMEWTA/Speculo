@@ -30,6 +30,6 @@ shared_paths: ["<Path>package.json</Path>"]
 
 ## 3. Worktree 与分支
 
-需要并行或临时隔离项目写入时使用独立 worktree；只读调查和顺序执行默认共用当前工作区。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+Worktree 只在存在可观察隔离需求时使用：并行写入、保护当前本地状态、一次性实验、后台恢复、provider 要求或用户明确要求。只读调查和没有其他隔离事实的顺序写入默认共用当前工作区。Agent Team、Ticket 数量和泛化的“更安全”都不构成隔离理由。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
 
-生命周期由调用方明确的 workspace owner 按 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。普通 Goal Plan 由当前执行或集成 owner 负责；委派 Goal Plan 才把 workspace owner 映射为 Lead。编排规则位于 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`。
+生命周期由调用方明确的 workspace owner 与 integration owner 按 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。`single-session` 通常把两者映射为主会话；`lead-team` 可以把 integration owner 映射为 Lead，但角色选择不决定是否使用 worktree。同一 current workspace 只允许一个项目与 SpecDev 状态写入 owner；Worker 要写项目文件时必须拥有独立 workspace。编排规则位于 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`。

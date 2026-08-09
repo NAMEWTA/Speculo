@@ -61,6 +61,21 @@ const VALID_PLAN_MODES = new Set([
   "reference-conformance",
   "release-coordination",
 ]);
+const VALID_COORDINATION_MODES = new Set(["single-session", "lead-team"]);
+const VALID_WORKSPACE_STRATEGIES = new Set(["current", "worktree", "mixed"]);
+const VALID_WORKTREE_STATUS = new Set([
+  "planned",
+  "active",
+  "review",
+  "integrating",
+  "integrated",
+  "removed",
+  "blocked",
+]);
+const VALID_TERMINAL_ACTION = new Set(["integrate", "retain"]);
+const VALID_INTEGRATION_STATUS = new Set(["pending", "running", "passed", "blocked"]);
+const VALID_INTEGRATION_METHOD = new Set([null, "fast-forward", "merge-commit"]);
+const VALID_INTEGRATION_VERIFICATION = new Set(["pending", "passed", "failed"]);
 const VALID_DESIGN_TREE_STATUS = new Set(["active", "consensus", "blocked"]);
 const VALID_DESIGN_NODE_STATUS = new Set(["open", "answered", "deferred", "rejected"]);
 const VALID_WAYFINDER_LABEL = new Set([
@@ -131,7 +146,7 @@ const DELEGATED_GOAL_PLAN_TRIGGERS = [
   "## Delegated Execution Addendum",
   "### Delivery Contract",
   "### Per-Ticket Dispatch Packets",
-  "### Candidate Delivery Return and Lead Integration",
+  "### Candidate Delivery Return and Lead Acceptance",
   "Lead / Provider",
   "Lead:",
   "Lead：",
@@ -147,10 +162,19 @@ const REQUIRED_DELEGATED_GOAL_PLAN_MARKERS = [
   "## Delegated Execution Addendum",
   "### Delivery Contract",
   "### Per-Ticket Dispatch Packets",
-  "### Candidate Delivery Return and Lead Integration",
+  "### Candidate Delivery Return and Lead Acceptance",
   "native-subagent / external-web-subagent",
   "Lead / Provider",
   "#### Dispatch:",
+];
+const REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS = [
+  "## Isolated Workspace Addendum",
+  "### Workspace Decision",
+  "### Per-Ticket Workspace Allocation",
+  "### Local Integration Authorization",
+  "Integration owner",
+  "Parent branch",
+  "Terminal action",
 ];
 const STATE_ARTIFACT_BASENAMES = new Set([
   "spec.md",
@@ -663,9 +687,10 @@ function capabilityChecks(root) {
           "DAG",
           "Gate",
           "Wave",
-          "普通 Goal Plan",
-          "委派 Goal Plan",
-          "每次向用户询问",
+          "coordination_mode",
+          "workspace_strategy",
+          "single-session",
+          "lead-team",
           "delegated-execution.md",
           "Definition of Done",
         ],
@@ -770,6 +795,13 @@ function capabilityChecks(root) {
   const ordinaryGoalPlanTemplate = join(root, "P-goal-plan", "goal-plan-template.md");
   if (isFile(ordinaryGoalPlanTemplate)) {
     const text = readText(ordinaryGoalPlanTemplate);
+    for (const required of [
+      "coordination_mode: single-session",
+      "workspace_strategy: current",
+      "### Execution Topology",
+    ]) {
+      if (!text.includes(required)) errors.push(`ordinary Goal Plan template lost marker ${required}`);
+    }
     for (const forbidden of [
       "Lead",
       "Subagent",
@@ -780,11 +812,23 @@ function capabilityChecks(root) {
       "Worker",
       "max_correction_rounds",
       "execution_model",
+      "worktree",
+      "Ticket branch",
+      "merge commit",
     ]) {
       if (text.includes(forbidden)) {
         errors.push(`ordinary Goal Plan template contains delegated marker ${forbidden}`);
       }
     }
+  }
+
+  const workspaceTemplate = join(root, "P-goal-plan", "workspace-execution-template.md");
+  if (!isFile(workspaceTemplate)) {
+    errors.push("missing isolated workspace Goal Plan template");
+  } else {
+    const text = readText(workspaceTemplate);
+    const missing = REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS.filter((marker) => !text.includes(marker));
+    if (missing.length) errors.push(`isolated workspace Goal Plan template lost markers: ${JSON.stringify(missing)}`);
   }
 
   const delegatedTemplate = join(root, "P-goal-plan", "delegated-execution-template.md");
@@ -1163,6 +1207,15 @@ function validateDelegatedGoalPlan(body, label, errors) {
   }
 }
 
+function validateWorkspaceGoalPlan(body, label, errors, required = false) {
+  const hasWorkspaceAddendum = body.includes("## Isolated Workspace Addendum");
+  if (!required && !hasWorkspaceAddendum) return;
+  const missing = REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
+  if (missing.length) {
+    errors.push(`${label}: incomplete isolated workspace addendum; missing ${JSON.stringify(missing)}`);
+  }
+}
+
 function validateGoalPlan(path, errors) {
   if (!isFile(path)) return null;
   const { meta, body } = parseFrontmatter(path);
@@ -1174,7 +1227,34 @@ function validateGoalPlan(path, errors) {
   if (invalidModes.length) {
     errors.push(`${basename(path)}: invalid modes ${JSON.stringify(invalidModes)}`);
   }
+  const coordinationMode = meta.coordination_mode;
+  const workspaceStrategy = meta.workspace_strategy;
+  if ((coordinationMode === undefined) !== (workspaceStrategy === undefined)) {
+    errors.push(`${basename(path)}: coordination_mode and workspace_strategy must appear together`);
+  }
+  if (coordinationMode !== undefined && !VALID_COORDINATION_MODES.has(coordinationMode)) {
+    errors.push(`${basename(path)}: invalid coordination_mode ${coordinationMode}`);
+  }
+  if (workspaceStrategy !== undefined && !VALID_WORKSPACE_STRATEGIES.has(workspaceStrategy)) {
+    errors.push(`${basename(path)}: invalid workspace_strategy ${workspaceStrategy}`);
+  }
+
+  const hasDelegatedMarkers = DELEGATED_GOAL_PLAN_TRIGGERS.some((marker) => body.includes(marker));
+  if (coordinationMode === "lead-team" && !hasDelegatedMarkers) {
+    errors.push(`${basename(path)}: lead-team requires a complete delegated execution addendum`);
+  } else if (coordinationMode === "single-session" && hasDelegatedMarkers) {
+    errors.push(`${basename(path)}: single-session cannot contain delegated execution markers`);
+  }
   validateDelegatedGoalPlan(body, basename(path), errors);
+
+  const hasWorkspaceAddendum = body.includes("## Isolated Workspace Addendum");
+  if (new Set(["worktree", "mixed"]).has(workspaceStrategy)) {
+    validateWorkspaceGoalPlan(body, basename(path), errors, true);
+  } else if (workspaceStrategy === "current" && hasWorkspaceAddendum) {
+    errors.push(`${basename(path)}: current workspace_strategy cannot contain an isolated workspace addendum`);
+  } else if (workspaceStrategy === undefined) {
+    validateWorkspaceGoalPlan(body, basename(path), errors);
+  }
   if (meta.ready_for_execution === true) {
     if (!new Set(["ready", "in_progress", "completed"]).has(meta.status)) {
       errors.push(`${basename(path)}: ready_for_execution conflicts with status`);
@@ -1509,10 +1589,143 @@ function validateChangeStatus(path, expectedChange, errors) {
       errors.push(`${basename(path)}: workspace_ref must be a portable non-absolute locator`);
       continue;
     }
+    if (!VALID_WORKTREE_STATUS.has(worktree.status)) {
+      errors.push(`${basename(path)}: invalid worktree status ${worktree.status}`);
+    }
     if (worktree.provider === "git") {
       const expectedRef = `specdev-worktree/${worktree.ticket_id}`;
       if (ref !== expectedRef) {
         errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
+      }
+    }
+
+    const hasIntegrationContract = worktree.terminal_action !== undefined;
+    if (!hasIntegrationContract) {
+      if (worktree.status === "integrating") {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integrating requires the complete integration contract`);
+      }
+      continue;
+    }
+    const requiredIntegrationKeys = [
+      "integration_owner",
+      "parent_branch",
+      "source_checkpoint",
+      "integration",
+    ];
+    const missingIntegrationKeys = requiredIntegrationKeys.filter((key) => !(key in worktree));
+    if (missingIntegrationKeys.length) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration contract missing ${JSON.stringify(missingIntegrationKeys)}`);
+      continue;
+    }
+    if (!VALID_TERMINAL_ACTION.has(worktree.terminal_action)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid terminal_action ${worktree.terminal_action}`);
+    }
+    if (typeof worktree.integration_owner !== "string" || !worktree.integration_owner.trim()) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration_owner is required`);
+    }
+    if (typeof worktree.parent_branch !== "string" || !worktree.parent_branch.trim()) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch is required`);
+    } else if (worktree.parent_branch === worktree.branch) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch must differ from branch`);
+    }
+
+    const sourceRequired = new Set(["review", "integrating", "integrated"]).has(worktree.status);
+    if (sourceRequired && (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires source_checkpoint`);
+    } else if (
+      worktree.source_checkpoint !== null &&
+      (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())
+    ) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_checkpoint must be null or non-empty`);
+    }
+
+    const integration = worktree.integration;
+    if (!integration || typeof integration !== "object" || Array.isArray(integration)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration must be an object`);
+      continue;
+    }
+    const requiredResultKeys = [
+      "status",
+      "parent_before_sha",
+      "source_sha",
+      "result_sha",
+      "method",
+      "conflict_paths",
+      "verification",
+      "evidence",
+      "attempts",
+    ];
+    const missingResultKeys = requiredResultKeys.filter((key) => !(key in integration));
+    if (missingResultKeys.length) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration missing ${JSON.stringify(missingResultKeys)}`);
+    }
+    if (!VALID_INTEGRATION_STATUS.has(integration.status)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration status ${integration.status}`);
+    }
+    if (!VALID_INTEGRATION_METHOD.has(integration.method)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration method ${integration.method}`);
+    }
+    if (!VALID_INTEGRATION_VERIFICATION.has(integration.verification)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration verification ${integration.verification}`);
+    }
+    if (!Array.isArray(integration.conflict_paths)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} conflict_paths must be an array`);
+    }
+    if (!Number.isInteger(integration.attempts) || integration.attempts < 0) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} attempts must be a non-negative integer`);
+    }
+    if (
+      typeof integration.evidence !== "string" ||
+      !/^<Path>\{roots\.state\}\/specdev\/changes\/[^<]+\/evidence\/T-[0-9]{2,}\.md<\/Path>$/.test(integration.evidence)
+    ) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration evidence must be a rooted Ticket Evidence path`);
+    }
+    if (worktree.terminal_action === "retain" && new Set(["integrating", "integrated"]).has(worktree.status)) {
+      errors.push(`${basename(path)}: retain worktree ${worktree.ticket_id} cannot be ${worktree.status}`);
+    }
+    const integrationLifecycleActive = new Set(["integrating", "integrated"]).has(worktree.status);
+    if (integrationLifecycleActive) {
+      if (worktree.terminal_action !== "integrate") {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires terminal_action=integrate`);
+      }
+      if (typeof integration.parent_before_sha !== "string" || !integration.parent_before_sha.trim()) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires parent_before_sha`);
+      }
+      if (typeof integration.source_sha !== "string" || !integration.source_sha.trim()) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires source_sha`);
+      } else if (integration.source_sha !== worktree.source_checkpoint) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_sha must equal source_checkpoint`);
+      }
+      if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires attempts >= 1`);
+      }
+    }
+    if (worktree.status === "integrating" && integration.status !== "running") {
+      errors.push(`${basename(path)}: integrating worktree ${worktree.ticket_id} requires integration.status=running`);
+    }
+    if (worktree.status === "integrated") {
+      if (
+        integration.status !== "passed" ||
+        integration.verification !== "passed" ||
+        !new Set(["fast-forward", "merge-commit"]).has(integration.method) ||
+        typeof integration.result_sha !== "string" ||
+        !integration.result_sha.trim()
+      ) {
+        errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} requires a passed result checkpoint`);
+      }
+      if (integration.method === "fast-forward") {
+        if (integration.result_sha !== worktree.source_checkpoint) {
+          errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} fast-forward result_sha must equal source_checkpoint`);
+        }
+        if (Array.isArray(integration.conflict_paths) && integration.conflict_paths.length > 0) {
+          errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} fast-forward cannot record conflict_paths`);
+        }
+      } else if (
+        integration.method === "merge-commit" &&
+        typeof integration.result_sha === "string" &&
+        (integration.result_sha === worktree.source_checkpoint || integration.result_sha === integration.parent_before_sha)
+      ) {
+        errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} merge-commit result_sha must be a distinct checkpoint`);
       }
     }
   }

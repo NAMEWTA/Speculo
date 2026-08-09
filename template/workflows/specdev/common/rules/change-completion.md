@@ -15,8 +15,9 @@
 
 ## 转换 Owner
 
-- Goal Plan 含完整 `## Delegated Execution Addendum`：Lead 在独立验收并关闭最后一个 Gate 后拥有完成转换。
-- Goal Plan 不含委派附录，或无 Goal Plan 的 Ticket/Direct Spec 实现：最后一个计划内 Implement 在最后一项验收通过后拥有完成转换。
+- Goal Plan 为 `coordination_mode: lead-team`：Lead 在独立验收并关闭最后一个 Gate 后拥有完成转换。
+- Goal Plan 为 `coordination_mode: single-session`，或无 Goal Plan 的 Ticket/Direct Spec 实现：最后一个计划内 Implement 在最后一项验收通过后拥有完成转换。
+- 旧 Goal Plan 缺少 coordination 字段时，根据完整 `## Delegated Execution Addendum` 是否存在兼容推导，不要求 runtime schema 迁移。
 - 非实现型终点：最后一个拥有最终验收工件的 Work 使用本规则完成转换。
 
 Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读验证。全局 `<Path>{roots.state}/specdev/status.json</Path>` 继续只保存 active 索引，不复制完成详情。

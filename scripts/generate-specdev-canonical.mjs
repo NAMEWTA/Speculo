@@ -58,6 +58,10 @@ const sharedSources = {
     source: `${commonRoot}/skills/dev-worktree/references/finalize.md`,
     tag: "dev-worktree-finalize",
   },
+  mergeConflictProtocol: {
+    source: `${workflowRoot}/I-implement/merge-conflict-protocol.md`,
+    tag: "merge-conflict-protocol",
+  },
   subagentDeliverySkill: {
     source: `${commonRoot}/skills/subagent-delivery/SKILL.md`,
     tag: "subagent-delivery",
@@ -211,6 +215,7 @@ const canonicalDocuments = [
       sharedSources.devWorktreeSkill,
       sharedSources.devWorktreeCreate,
       sharedSources.devWorktreeFinalize,
+      sharedSources.mergeConflictProtocol,
       ...persistenceReferences,
       sharedSources.ticketSchema,
       sharedSources.ticketsMapSchema,
@@ -227,6 +232,7 @@ const canonicalDocuments = [
       reference("P-goal-plan/goal-plan-template.md", {
         preserveArtifactHeader: true,
       }),
+      reference("P-goal-plan/workspace-execution-template.md"),
       reference("P-goal-plan/delegated-execution-template.md"),
       sharedSources.artifactContract,
       sharedSources.pathOwnership,
@@ -237,6 +243,7 @@ const canonicalDocuments = [
       sharedSources.devWorktreeSkill,
       sharedSources.devWorktreeCreate,
       sharedSources.devWorktreeFinalize,
+      sharedSources.mergeConflictProtocol,
       sharedSources.subagentDeliverySkill,
       sharedSources.subagentDeliveryNative,
       sharedSources.subagentDeliveryExternalWeb,

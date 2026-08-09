@@ -23,6 +23,8 @@ Wave 内 Ticket 必须同时满足：
 
 最大并发从 `<Path>{roots.state}/specdev/config.json</Path>` 读取。并发上限是资源约束，不是必须填满的目标；Wave 也不意味着必须使用多个 Agent。
 
+Wave、Agent Team 和 worktree 是三个不同概念。Wave 只表达依赖上可并发；是否委派由 coordination mode 决定，是否隔离写入由 workspace strategy 决定。只读并行不需要 worktree；同一 current workspace 只能有一个项目与状态写入 owner。
+
 ## 3. Gate
 
 Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条件。每个 Gate 必须写明业务或工程状态、开启条件、关闭证据、阻塞范围、owner/批准人和失败恢复。
@@ -53,7 +55,9 @@ Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条�
 
 ## 6. Ticket 执行、Evidence 与集成
 
-每个计划 Ticket 必须写明开始条件、依赖 Evidence、项目路径合同、适用 Gate、必跑验证、Evidence 目标和失败恢复。实际执行仍由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 与 Ticket 拥有，不在 Goal Plan 复制局部施工步骤。
+每个计划 Ticket 必须写明开始条件、依赖 Evidence、项目路径合同、workspace 分配、适用 Gate、必跑验证、Evidence 目标和失败恢复。实际执行仍由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 与 Ticket 拥有，不在 Goal Plan 复制局部施工步骤。
+
+Current workspace Ticket 由该 workspace 的唯一写入 owner 顺序执行。隔离 Ticket 的创建、恢复和本地集成由 workspace addendum 与 dev-worktree Skill 管理；integration owner 是核心编排角色，不预设为 Lead。`single-session` 时通常映射为主会话，`lead-team` 时通常映射为 Lead。
 
 每个实现者完成或阻塞时：
 
@@ -62,6 +66,6 @@ Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条�
 3. 检查依赖、路径所有权、合同覆盖和适用 Gate；
 4. 返回 Ticket 状态、Evidence 路径、代码引用、未验证项和恢复条件。
 
-最后一个计划内 Implement 按 `<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>` 汇总核心计划的 Gate 和 Evidence。委派分支的候选交付与 Lead 集成由独立委派协议拥有，不写入本文件。
+最后一个计划内 Implement 按 `<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>` 汇总核心计划的 Gate 和 Evidence。Lead Team 的候选交付验收由独立委派协议拥有；worktree 的 Git 集成由角色中立的 workspace 协议拥有。
 
-**完成标准**：每个执行结果可追溯到代码状态和 Evidence；普通 Goal Plan 可以在不建立角色交付合同的情况下完整恢复和完成。
+**完成标准**：每个执行结果可追溯到代码状态和 Evidence；single-session Goal Plan 可以在不建立角色交付合同的情况下完整恢复和完成。

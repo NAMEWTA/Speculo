@@ -1,8 +1,9 @@
 # Delegated Evidence Addendum
 
-Goal Plan 含完整 `## Delegated Execution Addendum` 时，把以下字段加入对应 Ticket Evidence；普通执行不生成本附录或空占位。
+Goal Plan 使用 `coordination_mode: lead-team` 时，把以下字段加入对应 Ticket Evidence；旧计划按完整 `## Delegated Execution Addendum` 兼容推导。`single-session` 不生成本附录或空占位。
 
 - **Execution model / Provider：** native-subagent / external-web-subagent；`<provider>`
+- **Mutation role / Workspace allocation：** read-only / lead-write / worker-write；`<allocation-or-current>`
 - **Session/Package locator：** `<portable-locator>`
 - **Dispatch / Final checkpoint：** `<sha-or-fixed-baseline>` / `<sha-or-fixed-baseline>`
 - **Correction rounds：** `<count>`

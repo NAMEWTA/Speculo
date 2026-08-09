@@ -18,7 +18,7 @@
 2. 用户结果、里程碑位置、相关模块、公共契约和领域不变量；
 3. allowed/read-only/shared 路径、保留行为和依赖策略；
 4. 需要返回的方案、修改清单、patch/源码、测试、实际命令和风险；
-5. 当前授权矩阵与逐项验收标准；
+5. mutation role、workspace allocation、当前授权矩阵与逐项验收标准；
 6. 未实际运行的检查必须标记 `unverified`。
 
 公开仓库 URL 使用 `<Url>https://example.com/owner/repository</Url>` 形式并同时给出 branch 与 checkpoint。Provider 无法读取仓库、需要私有上下文或固定工作区快照时使用 source-package 分支。

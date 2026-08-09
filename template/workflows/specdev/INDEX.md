@@ -122,6 +122,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 10. **恢复依赖权威工件**：跨 Work 或 Agent 边界时同步 active change 的 `current_work`，成功完成后去重更新 `works_run`，返回下一 Work 和权威工件的完整路径。
 11. **本地执行权威**：远程 Issue/PR/URL 只作为来源或完成投影；Spec、Ticket、Map、Goal Plan、Evidence 和状态始终以本地工件为准。
 12. **完成与归档分离**：本地完成按 change completion 合同决定；远程 close 失败不回滚完成，但必须 reconcile 或 waive 后才归档。
+13. **协作与工作区正交**：是否使用 Lead Team 只决定角色与交付合同；是否使用 worktree 只由 change 的隔离事实决定。只读辅助 Agent 不成为第二写入者。
 
 共享规则：
 
@@ -145,7 +146,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 6. 只加载当前步骤需要的 work 子文件和共享规则。
 7. 完成后写入产物、运行适用校验、更新状态和 `works_run`。
 
-Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：Goal Plan 含完整委派附录时由 Lead 拥有转换；普通 Goal Plan 或无 Goal Plan 的实现由最后一个 I 拥有；非实现型终点由最终验收工件 owner 拥有。Archive 不补造 completed。
+Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：`coordination_mode: lead-team` 时由 Lead 拥有转换；`single-session` 或无 Goal Plan 的实现由最后一个 I 拥有；旧 Goal Plan 按完整委派附录兼容推导。非实现型终点由最终验收工件 owner 拥有，Archive 不补造 completed。
 
 ## 状态字段
 
@@ -162,7 +163,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 `active[].change` 必须唯一，且不得同时出现在 `archived`。开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
 
-`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、分支、可迁移 `workspace_ref` 和生命周期状态。
+`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、owners、可迁移 `workspace_ref`、结束动作、来源/结果 checkpoint、验证与生命周期状态。旧 v3 记录保持可读；出现 `terminal_action` 时启用完整集成合同。本版本新增的 `integrating` 不属于 legacy 状态，必须始终携带完整合同。
 
 领域状态枚举：
 
@@ -171,7 +172,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - Investigation status：`open | closed`
 - Investigation resolution：`answered | out-of-scope | superseded | cancelled | null`
 - Planning Depth：`lite | standard | deep`
-- Worktree：`planned | active | review | integrated | removed | blocked`
+- Worktree：`planned | active | review | integrating | integrated | removed | blocked`
 
 ## 路径分配
 
@@ -182,7 +183,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 ## 副作用边界
 
-未经用户明确授权不得提交、推送、合并、删除分支或 worktree、部署、发布、移动归档、写入/关闭远程 Issue 或执行不可逆迁移。只读探索、生成 change 工件和已授权验证可以进行。远程开发投影仅由 Triage reconcile 执行；Retro command 的 Speculo 反馈 Issue 是独立 command 边界。敏感值不得写入 `<Path>{roots.state}/specdev/</Path>`。
+未经用户明确授权不得提交、推送、合并、删除分支或 worktree、部署、发布、移动归档、写入/关闭远程 Issue 或执行不可逆迁移。Worktree 记录中的 `terminal_action=integrate` 是对应 Ticket 的持久本地集成授权，包含必要的集成专用 merge commit，但不授权普通实现提交或任何远端/清理动作。只读探索、生成 change 工件和已授权验证可以进行。远程开发投影仅由 Triage reconcile 执行；Retro command 的 Speculo 反馈 Issue 是独立 command 边界。敏感值不得写入 `<Path>{roots.state}/specdev/</Path>`。
 
 ## 场景路由
 

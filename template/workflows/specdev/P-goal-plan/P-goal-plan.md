@@ -11,7 +11,7 @@ keywords: [目标规划, 编排, DAG, Gate, Wave, Lead, Subagent, checkpoint, �
 
 Goal Plan 只解决单个 Ticket 无法独立决定的事情：跨 Ticket 顺序、并发、共享所有权、里程碑 Gate、集成验证、迁移与发布顺序、偏差升级和恢复。它不是 Ticket 的放大版，也不按固定章节数量衡量质量。
 
-Lead/subagent 是可选的委派分支，不是 Goal Plan 的固有角色。每次运行都先由用户选择普通 Goal Plan 或委派 Goal Plan；普通计划不写 execution model、Lead、Provider、Delivery Contract、Dispatch Packet、Worker、会话 locator 或修正轮次，也不写“未启用”或“不适用”占位。
+协作拓扑与工作区拓扑是两个正交决定。`coordination_mode: single-session` 是默认值：主会话拥有全部项目与状态写入，只读探索可以使用辅助 Agent；只有用户明确选择时才进入 `lead-team` 并建立 Lead/Worker 交付合同。`workspace_strategy` 则根据 change/Ticket 的实际隔离需求独立确定，Agent Team 本身既不要求也不禁止 worktree。
 
 产物写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
@@ -50,17 +50,18 @@ Spec 或 Tickets Map 不存在时，返回 `<Path>{roots.workflows}/specdev/S-sp
 
 ## 流程
 
-### 1. 验证上游并确认角色分支
+### 1. 验证上游并锁定执行拓扑
 
 加载 `<Path>{roots.workflows}/specdev/P-goal-plan/planning-modes.md</Path>`：
 
 1. 验证 Spec Ready、Ticket Ready、合同覆盖、DAG、路径所有权和 Deep Ticket 完整性；
 2. 只读探索会影响调度的代码事实和项目约束；
 3. 识别 coordination、migration、high-assurance、reference-conformance 等可组合规划模式；
-4. 每次向用户询问选择普通 Goal Plan 或委派 Goal Plan，不按复杂度静默启用角色委派；
-5. 用户选择委派时，再在 `native-subagent` 与 `external-web-subagent` 中选择实际交付通道；普通分支不形成或持久化执行模式；
-6. 只对无法发现且会改变 Gate、Wave、owner、迁移或批准点的问题继续提问；
-7. 不熟悉的外部标准或依赖使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
+4. 未获得用户对 Lead Team 的明确选择时固定 `coordination_mode: single-session`；只读探索 Agent 不改变该值；
+5. 用户明确选择 Lead Team 时固定 `coordination_mode: lead-team`，再选择 `native-subagent` 或 `external-web-subagent`；
+6. 按每个 Ticket 的可观察事实选择 current 或 worktree，并汇总为 `workspace_strategy: current | worktree | mixed`；
+7. 只对无法发现且会改变 Gate、Wave、owner、迁移、批准点或隔离策略的问题继续提问；
+8. 不熟悉的外部标准或依赖使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
 
 任何硬停止问题都必须退回拥有该决策的上游工件，不得用 Goal Plan 覆盖。
 
@@ -73,21 +74,28 @@ Spec 或 Tickets Map 不存在时，返回 `<Path>{roots.workflows}/specdev/S-sp
 3. 为 shared path、共享合同和集中变更指定唯一 owner；
 4. 为行为闭环、合同稳定、迁移完成、发布就绪等关键状态定义 Gate；
 5. 明确 expand → migrate → contract、Evidence 返回和集成规则；
-6. 定义每个 Ticket 的开始条件、执行顺序、验证、Evidence 目标和失败恢复，不复制 Ticket 全文。
+6. 定义每个 Ticket 的开始条件、执行顺序、workspace 分配、验证、Evidence 目标和失败恢复，不复制 Ticket 全文；
+7. 只有存在允许的隔离触发条件时才规划 worktree，并固定 workspace owner、integration owner、父分支和结束动作。
 
 **完成标准**：DAG、Wave、Gate 与 Tickets Map 一致；每个计划 Ticket 都有唯一 owner、可验证开始条件、Evidence 目标和恢复路径。
 
-### 3. 按确认加载委派分支
+### 3. 按两个维度加载条件分支
 
-只有用户在本次运行选择委派 Goal Plan 时：
+当 `workspace_strategy` 为 `worktree` 或 `mixed` 时：
+
+1. 加载 `<Path>{roots.workflows}/specdev/P-goal-plan/workspace-execution-template.md</Path>`；
+2. 为每个隔离 Ticket 记录合法触发事实、固定基线、父分支、implementation owner、integration owner、可迁移 locator 和 `integrate | retain`；
+3. 按需以规划输入调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`，不在规划阶段创建工作区。
+
+只有 `coordination_mode: lead-team` 时：
 
 1. 加载 `<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution.md</Path>`；
 2. 以 `operation=plan` 调用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；
 3. 固定唯一 Lead、native/external provider、不可变 checkpoint、可恢复 locator、逐动作授权和修正上限；
 4. 生成里程碑 Delivery Contract 与每个 Ticket 的独立 Dispatch Packet；
-5. 并行写代码时按需调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`。
+5. 为每个派单标记 `lead-write | worker-write | read-only`；`worker-write` 必须引用隔离 workspace 分配。
 
-普通 Goal Plan 跳过本步骤，不加载上述委派能力，也不在最终产物中留下该分支的标题、字段或占位。
+`single-session` 跳过委派能力，但仍可加载独立 workspace 附录；`lead-team` 在没有隔离触发条件时也不得制造 worktree。
 
 ### 4. 定义整体完成、证据与恢复
 
@@ -115,12 +123,12 @@ Spec 或 Tickets Map 不存在时，返回 `<Path>{roots.workflows}/specdev/S-sp
 5. Constraints, Risk and Recovery；
 6. Progress and Decisions。
 
-用户选择委派时，在第 4 节加入 `<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution-template.md</Path>` 的完整内容；没有选择时不加入任何委派痕迹。Ticket 较多时在 Execution Graph 内增加速查表，不创建独立的第二套状态来源。
+当 workspace strategy 需要隔离时加入 `<Path>{roots.workflows}/specdev/P-goal-plan/workspace-execution-template.md</Path>`；当 coordination mode 为 Lead Team 时加入 `<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution-template.md</Path>`。两个附录互不蕴含，可单独或同时出现。Ticket 较多时在 Execution Graph 内增加速查表，不创建独立的第二套状态来源。
 
 ### 6. 同步与验证
 
 1. 将 Wave、Gate 和 owner 投影同步到 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`；
-2. 对照 `<Path>{roots.workflows}/specdev/common/schemas/goal-plan.schema.json</Path>`；schema 不记录角色分支；
+2. 对照 `<Path>{roots.workflows}/specdev/common/schemas/goal-plan.schema.json</Path>`，确认 coordination 与 workspace 两个字段成对存在且组合有效；
 3. 运行：
 
 ```bash
@@ -130,8 +138,8 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ```
 
 4. 更新 `<Path>{roots.state}/specdev/status.json</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；
-5. 原子写入 Goal Plan 和同步投影后重新读取，确认核心 DAG/Wave/Gate/owner/授权一致；存在委派附录时额外确认 Lead、checkpoint、locator、Delivery Contract 与 Dispatch Packet 完整一致；
-6. 向用户汇报规划模式、关键路径、Wave、Gate、shared owner、迁移策略、主要风险和 Ready 状态；选择委派时再汇报交付通道与 Lead；
+5. 原子写入 Goal Plan 和同步投影后重新读取，确认核心 DAG/Wave/Gate/owner、两个执行维度和授权一致；存在 workspace 附录时核对触发条件与集成字段，存在委派附录时核对 Lead、checkpoint、locator、Delivery Contract 与 Dispatch Packet；
+6. 向用户汇报规划模式、协作方式、workspace 分配、关键路径、Wave、Gate、shared owner、迁移策略、主要风险和 Ready 状态；Lead Team 再汇报交付通道与 Lead；
 7. 未经用户要求，不自动进入实现。
 
 ## 决策完备标准
@@ -144,7 +152,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - 迁移、兼容、收缩、发布和回滚顺序；
 - Evidence 返回、集成、偏差、暂停和批准路径。
 
-委派 Goal Plan 还必须锁定 Agent 派单上下文、execution model、Lead、checkpoint、locator、修正上限和逐动作授权。普通 Goal Plan 不包含这些内容。
+每份新 Goal Plan 必须锁定 coordination mode 与 workspace strategy。Lead Team 还必须锁定 Agent 派单上下文、execution model、Lead、checkpoint、locator、修正上限和逐动作授权；single-session 不包含这些角色内容。Worktree/mixed 还必须锁定逐 Ticket 隔离触发、父分支、integration owner 与结束动作；current 不包含隔离占位。
 
 Goal Plan 不应重复 Ticket 的局部执行路线、全部文件预测、局部验收 checklist 或 Spec 的完整用户故事。
 
@@ -153,8 +161,8 @@ Goal Plan 不应重复 Ticket 的局部执行路线、全部文件预测、局�
 - `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 已写入且只包含适用内容；
 - 所有计划内 Ticket Ready，DAG 无环，合同覆盖明确；
 - Wave、Gate、owner、集成、偏差和恢复可执行；
-- 普通计划没有委派角色、交付合同或空占位；
-- 委派计划的 Delivery Contract 与每个 Dispatch Packet 完整可恢复；
+- `single-session` 没有委派角色、交付合同或空占位，`lead-team` 的 Delivery Contract 与每个 Dispatch Packet 完整可恢复；
+- current strategy 没有 worktree、Ticket branch 或逐 Ticket merge 安排；worktree/mixed 的每条分配都有实际触发事实和可恢复集成合同；
 - Tickets Map 投影已同步；
 - 无未批准高影响假设或硬停止问题；
 - `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 无 error；
@@ -167,5 +175,6 @@ Goal Plan 不应重复 Ticket 的局部执行路线、全部文件预测、局�
 - 委派执行协议：`<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution.md</Path>`，仅用户选择委派时加载
 - 完成、证据、偏差与恢复：`<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>`
 - Goal Plan 核心模板：`<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>`
+- 隔离 workspace 附录模板：`<Path>{roots.workflows}/specdev/P-goal-plan/workspace-execution-template.md</Path>`，仅 worktree/mixed 时加载
 - 委派附录模板：`<Path>{roots.workflows}/specdev/P-goal-plan/delegated-execution-template.md</Path>`，仅用户选择委派时加载
 - Agent 交付合同：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`，仅用户选择委派时调用
