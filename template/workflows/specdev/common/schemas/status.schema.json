@@ -1,82 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v4",
+  "$id": "urn:speculo:specdev:status:v5",
   "title": "SpecDev Global Status",
   "type": "object",
-  "required": [
-    "schema_version",
-    "workflow",
-    "active",
-    "archived"
-  ],
+  "required": ["schema_version", "workflow", "active", "archived"],
   "properties": {
-    "schema_version": {
-      "const": 4
-    },
-    "workflow": {
-      "const": "specdev"
-    },
+    "schema_version": {"const": 5},
+    "workflow": {"const": "specdev"},
     "active": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "change",
-          "current_work",
-          "works_run"
-        ],
+        "required": ["change"],
         "properties": {
           "change": {
             "type": "string",
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-          },
-          "current_work": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "pattern": "^specdev/"
-          },
-          "works_run": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^specdev/"
-            },
-            "uniqueItems": true
-          },
-          "claimed_investigations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id",
-                "owner",
-                "claimed_at"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "owner": {
-                  "type": "string"
-                },
-                "session": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "claimed_at": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
           }
         },
         "additionalProperties": false
-      }
+      },
+      "uniqueItems": true
     },
     "archived": {
       "type": "array",

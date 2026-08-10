@@ -1,14 +1,12 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
-    "auto_commit": false,
-    "default_branch": null,
-    "worktree_for_parallel": true
+    "default_branch": null
   },
   "execution": {
-    "max_parallel": 3,
+    "max_implementation_agents": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },

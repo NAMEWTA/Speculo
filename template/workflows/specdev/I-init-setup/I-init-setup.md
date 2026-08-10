@@ -42,7 +42,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 
 - 项目测试、类型检查、lint 和构建命令；
 - 是否存在多包或多工作区结构；
-- 是否允许并行 worktree；
+- 默认父分支、Git worktree 支持和项目已有分支/提交约定；
 - 共享高冲突路径的类型，例如根依赖清单、锁文件、全局导出、共享 schema、迁移索引和全局路由；
 - 项目中已有的提交、分支和发布约定。
 
@@ -53,8 +53,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 仅在上下文未提供时询问：
 
 - 交互语言与持久化工件语言；
-- 是否允许自动提交；
-- 最大并发数；
+- implementation subagent 上限（`1..3`，默认 `3`，Lead 不计入）；
 - Deep Ticket 的迁移、发布和不可逆操作是否必须人工批准；
 
 不询问可由仓库事实回答的文件位置、脚本名或默认分支。
@@ -69,7 +68,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - 验证命令来自仓库事实或显式用户决定；
 - 未确认命令写 `null`，不得虚构；
 - 不写入令牌、凭据、Cookie、个人隐私或敏感环境变量值；
-- 自动提交默认关闭，除非用户明确授权。
+- Ticket 的实现 commit 与本地 candidate integration 仍由具体 Goal Plan/I-implement 取得授权，不存为全局自动副作用开关。
 
 ### 5. 初始化目录与状态
 
@@ -83,7 +82,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - `<Path>{roots.state}/specdev/research/</Path>`
 - `<Path>{roots.state}/specdev/archive/</Path>`
 
-若全局状态已存在，先检查 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户运行 `speculo init` 建立备份与 pending marker，再运行 `migrate-runtime-state` command 对账修复；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从 schema v4 模板创建。
+若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户运行 `speculo init` 建立备份与 pending marker，再运行 `migrate-runtime-state` command 对账修复；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从 schema v4 模板创建。
 
 从模板生成：
 

@@ -227,13 +227,11 @@ const canonicalDocuments = [
     references: [
       reference("P-goal-plan/planning-modes.md"),
       reference("P-goal-plan/orchestration-protocol.md"),
-      reference("P-goal-plan/delegated-execution.md"),
+      reference("P-goal-plan/lead-orchestration.md"),
       reference("P-goal-plan/completion-control.md"),
       reference("P-goal-plan/goal-plan-template.md", {
         preserveArtifactHeader: true,
       }),
-      reference("P-goal-plan/workspace-execution-template.md"),
-      reference("P-goal-plan/delegated-execution-template.md"),
       sharedSources.artifactContract,
       sharedSources.pathOwnership,
       sharedSources.evidenceAndVerification,

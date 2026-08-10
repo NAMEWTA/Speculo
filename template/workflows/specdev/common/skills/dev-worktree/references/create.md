@@ -1,43 +1,52 @@
-# 创建或恢复工作项 Worktree
+# Create Or Restore Worktree
 
-## 前置
+## Ticket 前置条件
 
-- Ticket `ready: true` 且依赖完成，或原型问题与临时写入范围已锁定；项目写路径无冲突。
-- 调用方已记录允许的 trigger 及其事实。`parallel-write` 还要求 `<Path>{roots.state}/specdev/config.json</Path>` 中 `git.worktree_for_parallel: true`；一次性原型要求 P-prototype 已取得本次临时 worktree 授权。
-- 调用方已指定 workspace owner、implementation owner、integration owner、父分支、工作项 ID、持久化 owner、`integrate | retain`，并固定 `base_sha`；并行 Ticket 共用同一基线。
+- Ticket Ready，项目根是有效 Git repository，父分支和 `base_sha` 可解析；
+- implementation commit 与 local candidate integration/父分支更新已授权；
+- workspace、implementation、integration owner 唯一；integration owner 必须为 Lead；
+- `specdev-worktree/` 已由 Speculo init 加入项目 `.gitignore`；
+- 目标 branch/worktree 不覆盖现有用户 workspace，路径合同无冲突。
 
-## 创建
+Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问题、owner、locator 和清理策略；它不写 Ticket worktree 状态。
 
-1. 从 Speculo 工作区声明的 `path_base: project-root` 解析 `<project-root>`。若记录的 provider 为 `git`，要求 `workspace_ref` 精确为 `specdev-worktree/<work-item-id>`，拼接后仍位于 project root，且 `specdev-worktree/` 不是逃逸到外部的符号链接。
-2. 读取调用方拥有的持久化记录：Ticket 使用 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees`；原型使用 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{prototype-id}/record.md</Path>`。若已有可恢复记录，Git provider 必须在 `git worktree list --porcelain` 中匹配固定路径、分支与 `base_sha`；native/external 由对应 provider 解析 opaque locator。一致则恢复，任一不一致停止。
-3. 否则优先调用平台原生 worktree 能力。使用 native/external 时保存 provider 返回的可迁移 locator；不可用时进入 Git fallback。
-4. Git fallback 前确认项目根 `.gitignore` 已包含 `specdev-worktree/` 或等价根模式。缺失时停止并提示重新运行当前版本 `speculo init`，不在本 Skill 内修改 `.gitignore`。
-5. Git fallback 固定 `physical_path = <project-root>/specdev-worktree/<work-item-id>`、`workspace_ref = specdev-worktree/<work-item-id>`，从 `base_sha` 执行 `git worktree add -b <work-item-branch> <physical-path> <base-sha>`。已存在但未与同一记录和 Git 注册匹配的目标路径一律阻塞。
-6. 分支使用 `speculo/<change>/<work-item-id>`；现有分支未能匹配记录时停止。
-7. 安装项目所需依赖，运行最小基线检查。E2E 不属于 implementation owner 的创建基线。
-8. Ticket 将记录写入 `worktrees`；`owner` 保持 implementation owner 的兼容含义：
+## 创建 Ticket 来源 worktree
+
+1. 重读父分支 HEAD、工作树、现有 worktrees 与 refs；父 HEAD 与计划基线不一致时由 Lead决定更新 `base_sha` 或阻塞；
+2. 固定 branch `speculo/<change>/<ticket-id>` 与 locator `specdev-worktree/<ticket-id>`；
+3. 确认目标 branch/path 不存在，或其实际记录精确匹配当前 Ticket；
+4. 从 `base_sha` 创建 Git worktree，不复用其他 Ticket/原型目录；
+5. 在来源 worktree 读取项目 Agent 指令、依赖、构建与路径合同；
+6. 安装实际需要的依赖，运行最小非 E2E 基线；
+7. Lead 写入 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`，状态为 `active`。
+
+初始记录：
 
 ```json
 {
   "ticket_id": "T-01",
-  "owner": "<implementation-owner>",
-  "integration_owner": "<integration-owner>",
+  "owner": "lead",
+  "implementation_owner": "lead-or-dynamic-agent",
+  "integration_owner": "lead",
   "provider": "git",
-  "base_sha": "<sha>",
+  "base_sha": "<immutable-sha>",
   "parent_branch": "<parent-branch>",
   "branch": "speculo/<change>/T-01",
   "workspace_ref": "specdev-worktree/T-01",
-  "terminal_action": "integrate",
   "source_checkpoint": null,
   "integration": {
     "status": "pending",
     "parent_before_sha": null,
     "source_sha": null,
+    "candidate_sha": null,
+    "candidate_branch": null,
+    "candidate_workspace_ref": null,
     "result_sha": null,
     "method": null,
     "conflict_paths": [],
     "verification": "pending",
-    "evidence": "<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>",
+    "e2e": {"required": false, "status": "not-required", "evidence": null},
+    "evidence": "<Path>{roots.state}/specdev/changes/<change>/evidence/T-01.md</Path>",
     "attempts": 0
   },
   "status": "active",
@@ -45,6 +54,12 @@
 }
 ```
 
-native/external provider 将示例中的 provider 与 `workspace_ref` 换为对应可迁移 locator，不套用 Git 物理路径。原型不使用本 JSON 结构，只在 record 的 Run and Assets 中记录源码 branch/commit，并在 frontmatter 写入 `workspace_ref` 与清理状态。
+`e2e.required` 与 Ticket/Goal Plan disposition 一致；required 时初始 status 为 `pending`。
 
-`terminal_action=integrate` 不替代来源实现提交授权；进入 `review` 前必须把已获授权的最终 commit 写为 `source_checkpoint`。完成条件：工作区可定位、基线可用、调用方记录与实际 provider、分支和 checkpoint 一致；Git provider 的引用与工作项 ID 完全一致。失败时在调用方拥有的记录中设为 `blocked` 并保留现场。
+## 恢复
+
+恢复时核对 repository、branch、locator、`base_sha`、实际 HEAD、dirty 状态和 owner。状态记录与 Git 不一致、branch 被其他 worktree 占用或出现越界修改时停止；Lead 写 blocker，不重建覆盖。
+
+进入 `review` 前必须由 implementation owner 创建最终 commit；Lead 重读 branch tip、diff 与 `git status`，把精确 SHA 写入 `source_checkpoint`。
+
+**完成标准**：来源 worktree 可定位且唯一；基线、记录与 Git 一致；source 检查不含 E2E；失败时保留现场。

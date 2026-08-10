@@ -1,11 +1,14 @@
 ---
-schema_version: 3
+schema_version: 5
 artifact: goal-plan
 change: <YYYY-MM-DD-topic>
 status: draft
-modes: [coordination]
-coordination_mode: single-session
-workspace_strategy: current
+modes: []
+orchestration: lead-directed
+lead: <owner-or-session-locator>
+implementation_agent_limit: 3
+ticket_workspace_policy: required
+integration_gate: candidate-merge
 ready_for_execution: false
 ---
 
@@ -30,10 +33,11 @@ ready_for_execution: false
 | 优先级 | 来源 | 负责内容 | 冲突处理 |
 |---|---|---|---|
 | 1 | 用户最新明确决定 | 产品取舍与批准 | 更新真正拥有该决策的工件 |
-| 2 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` | 当前 change 架构决定 | 通过新决定替代 |
-| 3 | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 外部行为、范围与验收 | 下游不得改写 |
-| 4 | `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` | 单 Ticket 契约 | Goal Plan 只编排 |
-| 5 | 当前代码事实 | 现状与可行性 | 冲突时触发偏差 |
+| 2 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` | 当前 change 架构决定与领域语义 | 返回 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 更新真正 owner |
+| 3 | `<Path>{roots.state}/specdev/adr/</Path>` 与 `<Path>{roots.state}/specdev/context/</Path>` | 已毕业的永久决定与领域知识 | 当前 change 替代时在 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 明示 |
+| 4 | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 外部行为、范围与验收 | 下游不得改写 |
+| 5 | `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>` | 单 Ticket 契约 | Goal Plan 只编排 |
+| 6 | `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` 与当前代码/运行事实 | 已验证根因、现状与可行性 | 冲突时触发偏差并返回真正 owner |
 
 ## 2. Execution Graph
 
@@ -45,14 +49,14 @@ ready_for_execution: false
 
 ### Waves and Ownership
 
-| Wave | Ticket | 前置条件 | 项目写路径 | Shared owner | 集成点 |
+| Wave | Ticket | 前置条件 | 项目写路径 | Shared owner | Gate/集成序号 |
 |---|---|---|---|---|---|
 
 ### Ticket Quick Reference
 
-| ID | Ticket | 行为产出 | Depth/Risk | Dependencies | Wave/Gate | Owner | Evidence |
-|---|---|---|---|---|---|---|---|
-| T-01 | `<Path>{roots.state}/specdev/changes/{change}/ticket/01-<name>.md</Path>` | ... | standard/medium | — | W0/G0 | `<owner>` | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
+| ID | 可观察产出 | Dependencies | Worktree | Implementation owner | E2E disposition | Evidence |
+|---|---|---|---|---|---|---|
+| T-01 | ... | — | `specdev-worktree/T-01` | Lead / dynamic dispatch | required / not-required: reason | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
 
 ## 3. Gates and Completion Evidence
 
@@ -60,7 +64,7 @@ ready_for_execution: false
 
 ### Gates
 
-| Gate | 开启条件 | 关闭证据 | 阻塞范围 | Owner/批准人 | 失败恢复 |
+| Gate | 开启条件 | 关闭证据 | 阻塞范围 | Lead/批准人 | 失败恢复 |
 |---|---|---|---|---|---|
 
 ### Contract and Reference Coverage
@@ -70,41 +74,44 @@ ready_for_execution: false
 
 ## 4. Execution and Integration Protocol
 
-### Execution Topology
+### Lead Orchestration
 
-| 维度 | 决定 | 事实依据 |
+| 项目 | 决定 | 事实依据 |
 |---|---|---|
-| Coordination | single-session | 未启用严格角色分派；辅助调查只能返回只读结论 |
-| Workspace | current | 没有并行写入或其他隔离触发条件 |
+| Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与父分支 owner |
+| Implementation subagents | `<= 3`，Lead 不计入 | config、依赖和平台能力的最小值 |
+| Read-only agents | 无 SpecDev 数字上限 | review/research/test-observation，不写状态 |
+| Dispatch | execution-time dynamic | provider/模型/派单按 Ticket 事实选择 |
 
-### Ticket Execution Order
+### Ticket Workspace and Candidate Integration
 
-| Ticket | 开始条件 | 执行 owner | 必跑验证 | Evidence | 集成条件 |
-|---|---|---|---|---|---|
+| Ticket | Parent/base | Worktree/branch | Source checks | Source commit | Candidate checks/E2E | Parent result |
+|---|---|---|---|---|---|---|
+
+集成按表中顺序串行进行。source worktree 不运行 E2E；Lead 在最新父分支的 candidate 状态运行集成检查和适用 E2E，通过且父 HEAD 未漂移后才推进父分支。
 
 ### Authorization Matrix
 
 | 动作 | 状态 | 目标与条件 |
 |---|---|---|
-| Local changes | allowed / not-authorized | ... |
-| Implementation commit | allowed / not-authorized | ... |
-| Remote repository actions | allowed / not-authorized | ... |
-| Deploy / Migration | allowed / not-authorized | ... |
-| Production configuration / feature / real user data | allowed / not-authorized | ... |
+| Ticket worktree local changes | allowed / not-authorized | 限 writable/shared owner 合同 |
+| Implementation commit | allowed / not-authorized | 每 Ticket 必需；缺失则 Plan blocked |
+| Local candidate integration and parent update | allowed / not-authorized | Lead-only；缺失则 Plan blocked |
+| Push / PR / remote merge | allowed / not-authorized | 不从本计划本地授权继承 |
+| Branch/worktree cleanup | allowed / not-authorized | 成功集成不自动继承 |
+| Deploy / migration / production actions | allowed / not-authorized | 逐动作、目标和条件 |
 
-### Evidence Return and Integration
+### Evidence Return
 
-每个实现者按 I-implement 与对应 Ticket 执行，写入 Evidence 并同步 Ticket/Map/Goal Plan。最后一个计划内 Implement 汇总 Gate、运行适用集成验证，并按完成合同关闭 change。
+subagent 只返回候选事实与 commit；Lead 独立核对并写 Evidence、状态和最终验收。
 
 ## 5. Constraints, Risk and Recovery
 
 ### Non-negotiable Constraints
 
-每条包含来源和违反后果；局部实现自由进入 Guidance。
-
 ### Verification Integrity
 
-记录不可修改的判卷接缝、基线非退化条件、禁止的伪绿色方式，以及仅对静默失败风险执行的受控反向验证。
+记录判卷接缝、基线、禁止的伪绿色方式，以及 source/candidate 两层验证边界。
 
 ### Migration or Release Sequence
 
@@ -118,18 +125,14 @@ ready_for_execution: false
 
 ### Current Status
 
-记录 Wave/Gate、Ticket、最近验证证据和未验证项；不使用主观百分比。
+记录 Wave/Gate、Ticket、source/candidate/result SHA、最近验证和未验证项；不使用主观百分比。
 
 ### Pending Decisions and Blockers
 
-记录失败命令、已通过行为、owner 和恢复条件。
-
 ### Resume Protocol
 
-恢复时读取本 Goal Plan、当前 Ticket、最新 Evidence 和 change 状态，从最后已验证事实继续。
-
-### Reporting Format
+恢复时读取 Goal Plan、当前 Ticket、change worktree 状态和最新 Evidence；从最后通过的父分支 result 或待修正 source checkpoint 继续。
 
 ## Assumptions
 
-仅记录低影响、可逆且有验证方式的假设。高影响假设存在时，`ready_for_execution` 必须为 `false`。
+只记录低影响且可验证的假设。存在高影响假设时 `ready_for_execution` 必须为 `false`。

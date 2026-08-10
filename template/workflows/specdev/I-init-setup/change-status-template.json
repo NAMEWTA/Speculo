@@ -1,9 +1,22 @@
 {
-  "schema_version": 3,
+  "schema_version": 5,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
   "current_work": null,
+  "works_run": [],
+  "claimed_investigations": [],
+  "execution_authorization": {
+    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket source commits"},
+    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local parent candidate integration and parent update"},
+    "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
+  },
+  "leadership": {
+    "current": "<owner-or-session-locator>",
+    "epoch": 1,
+    "assigned_at": "<ISO-8601>",
+    "history": []
+  },
   "created_at": "<ISO-8601>",
   "updated_at": "<ISO-8601>",
   "completed_at": null,

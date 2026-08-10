@@ -18,10 +18,14 @@ import {
 import { dirname, basename, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCHEMA_VERSION = 3;
-const GLOBAL_STATUS_SCHEMA_VERSION = 4;
+const DOMAIN_SCHEMA_VERSION = 3;
+const CONFIG_SCHEMA_VERSION = 4;
+const GOAL_PLAN_SCHEMA_VERSION = 5;
+const CHANGE_STATUS_SCHEMA_VERSION = 5;
+const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
+const STATE_ROOT_PREFIX = "{roots.state}/";
 const SKILLS_PREFIX = "{roots.skills}/";
 const COMMANDS_PREFIX = "{roots.commands}/";
 
@@ -55,14 +59,11 @@ const VALID_TICKET_STATUS = new Set([
 const VALID_DEPTH = new Set(["lite", "standard", "deep"]);
 const VALID_RISK = new Set(["low", "medium", "high", "critical"]);
 const VALID_PLAN_MODES = new Set([
-  "coordination",
   "migration",
   "high-assurance",
   "reference-conformance",
   "release-coordination",
 ]);
-const VALID_COORDINATION_MODES = new Set(["single-session", "lead-team"]);
-const VALID_WORKSPACE_STRATEGIES = new Set(["current", "worktree", "mixed"]);
 const VALID_WORKTREE_STATUS = new Set([
   "planned",
   "active",
@@ -72,10 +73,10 @@ const VALID_WORKTREE_STATUS = new Set([
   "removed",
   "blocked",
 ]);
-const VALID_TERMINAL_ACTION = new Set(["integrate", "retain"]);
-const VALID_INTEGRATION_STATUS = new Set(["pending", "running", "passed", "blocked"]);
+const VALID_INTEGRATION_STATUS = new Set(["pending", "candidate", "passed", "failed", "stale"]);
 const VALID_INTEGRATION_METHOD = new Set([null, "fast-forward", "merge-commit"]);
 const VALID_INTEGRATION_VERIFICATION = new Set(["pending", "passed", "failed"]);
+const VALID_E2E_STATUS = new Set(["not-required", "pending", "passed", "failed"]);
 const VALID_DESIGN_TREE_STATUS = new Set(["active", "consensus", "blocked"]);
 const VALID_DESIGN_NODE_STATUS = new Set(["open", "answered", "deferred", "rejected"]);
 const VALID_WAYFINDER_LABEL = new Set([
@@ -142,39 +143,16 @@ const REQUIRED_GOAL_PLAN_SECTIONS = new Set([
   "## 5. Constraints, Risk and Recovery",
   "## 6. Progress and Decisions",
 ]);
-const DELEGATED_GOAL_PLAN_TRIGGERS = [
-  "## Delegated Execution Addendum",
-  "### Delivery Contract",
-  "### Per-Ticket Dispatch Packets",
-  "### Candidate Delivery Return and Lead Acceptance",
-  "Lead / Provider",
-  "Lead:",
-  "Lead：",
-  "Worker:",
-  "Worker：",
-  "Subagent",
-  "subagent",
-  "execution_model",
-  "execution model: direct",
-  "max_correction_rounds",
-];
-const REQUIRED_DELEGATED_GOAL_PLAN_MARKERS = [
-  "## Delegated Execution Addendum",
-  "### Delivery Contract",
-  "### Per-Ticket Dispatch Packets",
-  "### Candidate Delivery Return and Lead Acceptance",
-  "native-subagent / external-web-subagent",
-  "Lead / Provider",
-  "#### Dispatch:",
-];
-const REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS = [
-  "## Isolated Workspace Addendum",
-  "### Workspace Decision",
-  "### Per-Ticket Workspace Allocation",
-  "### Local Integration Authorization",
-  "Integration owner",
-  "Parent branch",
-  "Terminal action",
+const REQUIRED_LEAD_GOAL_PLAN_MARKERS = [
+  "### Lead Orchestration",
+  "Implementation subagents",
+  "Read-only agents",
+  "execution-time dynamic",
+  "### Ticket Workspace and Candidate Integration",
+  "source worktree 不运行 E2E",
+  "### Authorization Matrix",
+  "Implementation commit",
+  "Local candidate integration and parent update",
 ];
 const STATE_ARTIFACT_BASENAMES = new Set([
   "spec.md",
@@ -195,6 +173,10 @@ const STATE_ARTIFACT_BASENAMES = new Set([
 ]);
 const FORBIDDEN_OBSOLETE_BASENAMES = new Set([
   "source-issue.md",
+  "delegated-execution.md",
+  "delegated-execution-template.md",
+  "workspace-execution-template.md",
+  "delegated-evidence-template.md",
   "input-validation.md",
   "vision-sections.md",
   "execution-sections.md",
@@ -415,6 +397,19 @@ function validatePathValue(value, { allowProject = true } = {}) {
     }
     return null;
   }
+  if (value.startsWith(STATE_ROOT_PREFIX)) {
+    const suffix = value.slice(STATE_ROOT_PREFIX.length);
+    if (
+      !suffix ||
+      suffix.startsWith("/") ||
+      suffix.startsWith("./") ||
+      suffix.startsWith("../") ||
+      suffix.includes("/../")
+    ) {
+      return "state-root Path is not canonical";
+    }
+    return null;
+  }
   for (const [prefix, name] of [[SKILLS_PREFIX, "skills"], [COMMANDS_PREFIX, "commands"]]) {
     if (value.startsWith(prefix)) {
       const suffix = value.slice(prefix.length);
@@ -616,7 +611,7 @@ function validateGlobalStatusAssets(root) {
       !Array.isArray(data.active) ||
       !Array.isArray(data.archived)
     ) {
-      errors.push(`${toPosix(relative(root, path))}: invalid SpecDev global status v4 seed`);
+      errors.push(`${toPosix(relative(root, path))}: invalid SpecDev global status v5 seed`);
     }
   }
 
@@ -627,16 +622,98 @@ function validateGlobalStatusAssets(root) {
   }
   const schema = JSON.parse(readText(schemaPath));
   if (
-    schema.$id !== "urn:speculo:specdev:status:v4" ||
+    schema.$id !== "urn:speculo:specdev:status:v5" ||
     schema.properties?.schema_version?.const !== GLOBAL_STATUS_SCHEMA_VERSION ||
     schema.additionalProperties !== false
   ) {
-    errors.push("status.schema.json must define the strict SpecDev global status v4 contract");
+    errors.push("status.schema.json must define the strict SpecDev global status v5 index contract");
   }
   for (const removed of ["work_history", "completed", "result"]) {
     if (JSON.stringify(schema).includes(`\"${removed}\"`)) {
       errors.push(`status.schema.json still contains removed global field ${removed}`);
     }
+  }
+  return errors;
+}
+
+function validateExecutionContractAssets(root) {
+  const errors = [];
+  const configTemplatePath = join(root, "I-init-setup", "config-template.json");
+  const changeTemplatePath = join(root, "I-init-setup", "change-status-template.json");
+  const configSchemaPath = join(root, "common", "schemas", "config.schema.json");
+  const goalPlanSchemaPath = join(root, "common", "schemas", "goal-plan.schema.json");
+  const changeSchemaPath = join(root, "common", "schemas", "change-status.schema.json");
+
+  for (const path of [
+    configTemplatePath,
+    changeTemplatePath,
+    configSchemaPath,
+    goalPlanSchemaPath,
+    changeSchemaPath,
+  ]) {
+    if (!isFile(path)) errors.push(`missing execution contract asset ${toPosix(relative(root, path))}`);
+  }
+  if (errors.length) return errors;
+
+  const configTemplate = JSON.parse(readText(configTemplatePath));
+  if (
+    configTemplate.schema_version !== CONFIG_SCHEMA_VERSION ||
+    !Number.isInteger(configTemplate.execution?.max_implementation_agents) ||
+    configTemplate.execution.max_implementation_agents < 1 ||
+    configTemplate.execution.max_implementation_agents > 3
+  ) {
+    errors.push("config-template.json must define SpecDev config v4 with max_implementation_agents from 1 to 3");
+  }
+  for (const obsolete of ["auto_commit", "worktree_for_parallel", "max_parallel"]) {
+    if (JSON.stringify(configTemplate).includes(`\"${obsolete}\"`)) {
+      errors.push(`config-template.json still contains obsolete execution field ${obsolete}`);
+    }
+  }
+
+  const configSchema = JSON.parse(readText(configSchemaPath));
+  const limit = configSchema.properties?.execution?.properties?.max_implementation_agents;
+  if (
+    configSchema.$id !== "urn:speculo:specdev:config:v4" ||
+    configSchema.properties?.schema_version?.const !== CONFIG_SCHEMA_VERSION ||
+    limit?.minimum !== 1 ||
+    limit?.maximum !== 3 ||
+    configSchema.additionalProperties !== false
+  ) {
+    errors.push("config.schema.json must define the strict SpecDev config v4 execution contract");
+  }
+
+  const goalPlanSchema = JSON.parse(readText(goalPlanSchemaPath));
+  if (
+    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v5" ||
+    goalPlanSchema.properties?.schema_version?.const !== GOAL_PLAN_SCHEMA_VERSION ||
+    goalPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
+    goalPlanSchema.properties?.implementation_agent_limit?.maximum !== 3 ||
+    goalPlanSchema.properties?.ticket_workspace_policy?.const !== "required" ||
+    goalPlanSchema.properties?.integration_gate?.const !== "candidate-merge" ||
+    goalPlanSchema.additionalProperties !== false
+  ) {
+    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v5 contract");
+  }
+
+  const changeTemplate = JSON.parse(readText(changeTemplatePath));
+  if (
+    changeTemplate.schema_version !== CHANGE_STATUS_SCHEMA_VERSION ||
+    changeTemplate.artifact !== "change-status" ||
+    !Array.isArray(changeTemplate.worktrees)
+  ) {
+    errors.push("change-status-template.json must define the SpecDev change-status v4 seed");
+  }
+
+  const changeSchema = JSON.parse(readText(changeSchemaPath));
+  const worktreeRequired = new Set(changeSchema.$defs?.worktree?.required ?? []);
+  const integrationRequired = new Set(changeSchema.$defs?.integration?.required ?? []);
+  if (
+    changeSchema.$id !== "urn:speculo:specdev:change-status:v5" ||
+    !["implementation_owner", "integration_owner", "source_checkpoint", "integration"].every((key) => worktreeRequired.has(key)) ||
+    !["parent_ref", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "full_suite", "e2e", "promotion_status"].every((key) => integrationRequired.has(key)) ||
+    changeSchema.additionalProperties !== false
+  ) {
+    errors.push("change-status.schema.json must define the strict Ticket candidate-integration v5 contract");
   }
   return errors;
 }
@@ -683,15 +760,14 @@ function capabilityChecks(root) {
         join(root, "P-goal-plan", "P-goal-plan.md"),
         [
           "Outcome",
-          "Authority",
+          "权威来源",
           "DAG",
           "Gate",
           "Wave",
-          "coordination_mode",
-          "workspace_strategy",
-          "single-session",
-          "lead-team",
-          "delegated-execution.md",
+          "lead-directed",
+          "implementation_agent_limit",
+          "candidate-merge",
+          "lead-orchestration.md",
           "Definition of Done",
         ],
       ],
@@ -700,7 +776,7 @@ function capabilityChecks(root) {
       "implement",
       [
         join(root, "I-implement", "I-implement.md"),
-        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "delegated execution", "subagent-delivery", "提交"],
+        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "parent-candidate", "subagent-delivery", "实现 commit"],
       ],
     ],
     [
@@ -792,64 +868,30 @@ function capabilityChecks(root) {
     errors.push("Wayfinder map template must query open Tickets instead of caching them");
   }
 
-  const ordinaryGoalPlanTemplate = join(root, "P-goal-plan", "goal-plan-template.md");
-  if (isFile(ordinaryGoalPlanTemplate)) {
-    const text = readText(ordinaryGoalPlanTemplate);
+  const goalPlanTemplate = join(root, "P-goal-plan", "goal-plan-template.md");
+  if (!isFile(goalPlanTemplate)) {
+    errors.push("missing Goal Plan template");
+  } else {
+    const text = readText(goalPlanTemplate);
     for (const required of [
-      "coordination_mode: single-session",
-      "workspace_strategy: current",
-      "### Execution Topology",
+      "schema_version: 5",
+      "orchestration: lead-directed",
+      "implementation_agent_limit: 3",
+      "ticket_workspace_policy: required",
+      "integration_gate: candidate-merge",
+      ...REQUIRED_LEAD_GOAL_PLAN_MARKERS,
     ]) {
-      if (!text.includes(required)) errors.push(`ordinary Goal Plan template lost marker ${required}`);
-    }
-    for (const forbidden of [
-      "Lead",
-      "Subagent",
-      "subagent",
-      "Provider",
-      "Delivery Contract",
-      "Dispatch Packet",
-      "Worker",
-      "max_correction_rounds",
-      "execution_model",
-      "worktree",
-      "Ticket branch",
-      "merge commit",
-    ]) {
-      if (text.includes(forbidden)) {
-        errors.push(`ordinary Goal Plan template contains delegated marker ${forbidden}`);
-      }
+      if (!text.includes(required)) errors.push(`Goal Plan template lost marker ${required}`);
     }
   }
-
-  const workspaceTemplate = join(root, "P-goal-plan", "workspace-execution-template.md");
-  if (!isFile(workspaceTemplate)) {
-    errors.push("missing isolated workspace Goal Plan template");
-  } else {
-    const text = readText(workspaceTemplate);
-    const missing = REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS.filter((marker) => !text.includes(marker));
-    if (missing.length) errors.push(`isolated workspace Goal Plan template lost markers: ${JSON.stringify(missing)}`);
+  for (const obsolete of [
+    "P-goal-plan/delegated-execution.md",
+    "P-goal-plan/delegated-execution-template.md",
+    "P-goal-plan/workspace-execution-template.md",
+    "I-implement/delegated-evidence-template.md",
+  ]) {
+    if (isFile(join(root, obsolete))) errors.push(`obsolete topology asset must be removed: ${obsolete}`);
   }
-
-  const delegatedTemplate = join(root, "P-goal-plan", "delegated-execution-template.md");
-  if (!isFile(delegatedTemplate)) {
-    errors.push("missing delegated Goal Plan template");
-  } else {
-    const text = readText(delegatedTemplate);
-    const missing = REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.filter((marker) => !text.includes(marker));
-    if (missing.length) errors.push(`delegated Goal Plan template lost markers: ${JSON.stringify(missing)}`);
-  }
-
-  const sampleCore = [...REQUIRED_GOAL_PLAN_SECTIONS].join("\n");
-  const partialErrors = [];
-  validateDelegatedGoalPlan(`${sampleCore}\n## Delegated Execution Addendum\n### Delivery Contract`, "partial delegated self-check", partialErrors);
-  if (!partialErrors.length) errors.push("partial delegated Goal Plan self-check did not fail");
-  const strayRoleErrors = [];
-  validateDelegatedGoalPlan(`${sampleCore}\nLead: owner`, "stray delegated role self-check", strayRoleErrors);
-  if (!strayRoleErrors.length) errors.push("stray delegated role self-check did not fail");
-  const completeErrors = [];
-  validateDelegatedGoalPlan(`${sampleCore}\n${REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.join("\n")}`, "complete delegated self-check", completeErrors);
-  if (completeErrors.length) errors.push(...completeErrors);
   return errors;
 }
 
@@ -919,6 +961,7 @@ function selfCheck(root) {
 
   errors.push(...validateJsonFiles(root));
   errors.push(...validateGlobalStatusAssets(root));
+  errors.push(...validateExecutionContractAssets(root));
   const references = validateDocumentReferences(root);
   errors.push(...references.errors);
   warnings.push(...references.warnings);
@@ -931,6 +974,10 @@ function selfCheck(root) {
     "P-goal-plan/governance-sections.md",
     "P-goal-plan/lead-orchestration-protocol.md",
     "P-goal-plan/quick-reference-table.md",
+    "P-goal-plan/delegated-execution.md",
+    "P-goal-plan/delegated-execution-template.md",
+    "P-goal-plan/workspace-execution-template.md",
+    "I-implement/delegated-evidence-template.md",
     "schemas",
     "tools",
     "skills",
@@ -1156,8 +1203,8 @@ function validateSpec(path, errors, warnings) {
   }
   const { meta, body } = parseFrontmatter(path);
   const label = basename(path);
-  if (meta.artifact !== "spec" || meta.schema_version !== SCHEMA_VERSION) {
-    errors.push(`${label}: artifact/schema_version must be spec/${SCHEMA_VERSION}`);
+  if (meta.artifact !== "spec" || meta.schema_version !== DOMAIN_SCHEMA_VERSION) {
+    errors.push(`${label}: artifact/schema_version must be spec/${DOMAIN_SCHEMA_VERSION}`);
   }
   const sources = requireList(meta, "sources", label, errors);
   if (!sources.length) errors.push(`${label}: sources must contain at least one source`);
@@ -1185,8 +1232,8 @@ function validateMap(path, errors) {
     return null;
   }
   const { meta, body } = parseFrontmatter(path);
-  if (meta.artifact !== "tickets-map" || meta.schema_version !== SCHEMA_VERSION) {
-    errors.push(`${basename(path)}: artifact/schema_version must be tickets-map/${SCHEMA_VERSION}`);
+  if (meta.artifact !== "tickets-map" || meta.schema_version !== DOMAIN_SCHEMA_VERSION) {
+    errors.push(`${basename(path)}: artifact/schema_version must be tickets-map/${DOMAIN_SCHEMA_VERSION}`);
   }
   for (const heading of [
     "## 2. 执行清单",
@@ -1199,70 +1246,72 @@ function validateMap(path, errors) {
   return { path, meta, body };
 }
 
-function validateDelegatedGoalPlan(body, label, errors) {
-  if (!DELEGATED_GOAL_PLAN_TRIGGERS.some((marker) => body.includes(marker))) return;
-  const missing = REQUIRED_DELEGATED_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
-  if (missing.length) {
-    errors.push(`${label}: incomplete delegated execution addendum; missing ${JSON.stringify(missing)}`);
-  }
-}
-
-function validateWorkspaceGoalPlan(body, label, errors, required = false) {
-  const hasWorkspaceAddendum = body.includes("## Isolated Workspace Addendum");
-  if (!required && !hasWorkspaceAddendum) return;
-  const missing = REQUIRED_WORKSPACE_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
-  if (missing.length) {
-    errors.push(`${label}: incomplete isolated workspace addendum; missing ${JSON.stringify(missing)}`);
-  }
-}
-
 function validateGoalPlan(path, errors) {
   if (!isFile(path)) return null;
   const { meta, body } = parseFrontmatter(path);
-  if (meta.artifact !== "goal-plan" || meta.schema_version !== SCHEMA_VERSION) {
-    errors.push(`${basename(path)}: artifact/schema_version must be goal-plan/${SCHEMA_VERSION}`);
+  const required = [
+    "schema_version",
+    "artifact",
+    "change",
+    "status",
+    "modes",
+    "orchestration",
+    "lead",
+    "implementation_agent_limit",
+    "ticket_workspace_policy",
+    "integration_gate",
+    "ready_for_execution",
+  ];
+  const missing = required.filter((key) => !(key in meta));
+  if (missing.length) errors.push(`${basename(path)}: missing keys ${JSON.stringify(missing.sort())}`);
+  const unexpected = Object.keys(meta).filter((key) => !required.includes(key));
+  if (unexpected.length) errors.push(`${basename(path)}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
+  if (meta.artifact !== "goal-plan" || meta.schema_version !== GOAL_PLAN_SCHEMA_VERSION) {
+    errors.push(`${basename(path)}: artifact/schema_version must be goal-plan/${GOAL_PLAN_SCHEMA_VERSION}`);
   }
   const modes = requireList(meta, "modes", basename(path), errors);
   const invalidModes = modes.filter((mode) => !VALID_PLAN_MODES.has(mode));
   if (invalidModes.length) {
     errors.push(`${basename(path)}: invalid modes ${JSON.stringify(invalidModes)}`);
   }
-  const coordinationMode = meta.coordination_mode;
-  const workspaceStrategy = meta.workspace_strategy;
-  if ((coordinationMode === undefined) !== (workspaceStrategy === undefined)) {
-    errors.push(`${basename(path)}: coordination_mode and workspace_strategy must appear together`);
+  if (meta.orchestration !== "lead-directed") {
+    errors.push(`${basename(path)}: orchestration must be lead-directed`);
   }
-  if (coordinationMode !== undefined && !VALID_COORDINATION_MODES.has(coordinationMode)) {
-    errors.push(`${basename(path)}: invalid coordination_mode ${coordinationMode}`);
+  if (typeof meta.lead !== "string" || !meta.lead.trim()) {
+    errors.push(`${basename(path)}: lead must be a non-empty recoverable locator`);
   }
-  if (workspaceStrategy !== undefined && !VALID_WORKSPACE_STRATEGIES.has(workspaceStrategy)) {
-    errors.push(`${basename(path)}: invalid workspace_strategy ${workspaceStrategy}`);
+  if (!Number.isInteger(meta.implementation_agent_limit) || meta.implementation_agent_limit < 1 || meta.implementation_agent_limit > 3) {
+    errors.push(`${basename(path)}: implementation_agent_limit must be an integer from 1 to 3`);
   }
-
-  const hasDelegatedMarkers = DELEGATED_GOAL_PLAN_TRIGGERS.some((marker) => body.includes(marker));
-  if (coordinationMode === "lead-team" && !hasDelegatedMarkers) {
-    errors.push(`${basename(path)}: lead-team requires a complete delegated execution addendum`);
-  } else if (coordinationMode === "single-session" && hasDelegatedMarkers) {
-    errors.push(`${basename(path)}: single-session cannot contain delegated execution markers`);
+  if (meta.ticket_workspace_policy !== "required") {
+    errors.push(`${basename(path)}: ticket_workspace_policy must be required`);
   }
-  validateDelegatedGoalPlan(body, basename(path), errors);
-
-  const hasWorkspaceAddendum = body.includes("## Isolated Workspace Addendum");
-  if (new Set(["worktree", "mixed"]).has(workspaceStrategy)) {
-    validateWorkspaceGoalPlan(body, basename(path), errors, true);
-  } else if (workspaceStrategy === "current" && hasWorkspaceAddendum) {
-    errors.push(`${basename(path)}: current workspace_strategy cannot contain an isolated workspace addendum`);
-  } else if (workspaceStrategy === undefined) {
-    validateWorkspaceGoalPlan(body, basename(path), errors);
+  if (meta.integration_gate !== "candidate-merge") {
+    errors.push(`${basename(path)}: integration_gate must be candidate-merge`);
+  }
+  for (const obsolete of ["coordination_mode", "workspace_strategy", "terminal_action"]) {
+    if (obsolete in meta) errors.push(`${basename(path)}: obsolete Goal Plan field ${obsolete} is not allowed`);
+  }
+  for (const obsolete of ["## Delegated Execution Addendum", "## Isolated Workspace Addendum"]) {
+    if (body.includes(obsolete)) errors.push(`${basename(path)}: obsolete Goal Plan addendum '${obsolete}' is not allowed`);
+  }
+  const validReadyStates = new Set(["ready", "in_progress"]);
+  const validNotReadyStates = new Set(["draft", "blocked", "completed"]);
+  if (
+    (meta.ready_for_execution === true && !validReadyStates.has(meta.status)) ||
+    (meta.ready_for_execution === false && !validNotReadyStates.has(meta.status))
+  ) {
+    errors.push(`${basename(path)}: ready_for_execution must match status`);
   }
   if (meta.ready_for_execution === true) {
-    if (!new Set(["ready", "in_progress", "completed"]).has(meta.status)) {
-      errors.push(`${basename(path)}: ready_for_execution conflicts with status`);
-    }
     for (const heading of REQUIRED_GOAL_PLAN_SECTIONS) {
       if (!body.includes(heading)) {
         errors.push(`${basename(path)}: ready Goal Plan missing '${heading}'`);
       }
+    }
+    const missingLeadMarkers = REQUIRED_LEAD_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
+    if (missingLeadMarkers.length) {
+      errors.push(`${basename(path)}: ready Goal Plan missing Lead/candidate markers ${JSON.stringify(missingLeadMarkers)}`);
     }
     const assumptions = sectionBody(body, "## Assumptions");
     if (assumptions && assumptions.includes("高影响") && !assumptions.includes("必须为 `false`")) {
@@ -1449,8 +1498,8 @@ function validateTicket(path, errors) {
     errors.push(`${basename(path)}: missing frontmatter keys ${JSON.stringify(missing.sort())}`);
     return null;
   }
-  if (meta.artifact !== "ticket" || meta.schema_version !== SCHEMA_VERSION) {
-    errors.push(`${basename(path)}: artifact/schema_version must be ticket/${SCHEMA_VERSION}`);
+  if (meta.artifact !== "ticket" || meta.schema_version !== DOMAIN_SCHEMA_VERSION) {
+    errors.push(`${basename(path)}: artifact/schema_version must be ticket/${DOMAIN_SCHEMA_VERSION}`);
   }
   const ticketId = String(meta.id);
   if (!/^T-\d{2,}$/.test(ticketId)) errors.push(`${basename(path)}: invalid Ticket id ${ticketId}`);
@@ -1503,13 +1552,7 @@ function validateTicket(path, errors) {
     if (unresolved && !/^无[。.]?$/.test(unresolved.trim())) {
       errors.push(`${basename(path)}: Ready Ticket has unresolved questions`);
     }
-    if (
-      !lists.writable_paths.length &&
-      !body.includes("无代码变更") &&
-      !body.includes("仅文档")
-    ) {
-      errors.push(`${basename(path)}: Ready Ticket has no writable_paths and no no-code explanation`);
-    }
+    if (!lists.writable_paths.length) errors.push(`${basename(path)}: Ready implementation Ticket requires writable_paths`);
     if (new Set(["standard", "deep"]).has(meta.planning_depth)) {
       for (const heading of ["## 5. 实现契约", "## 6. 执行路线"]) {
         if (!body.includes(heading)) {
@@ -1523,6 +1566,9 @@ function validateTicket(path, errors) {
     const verification = sectionBody(body, "## 8. 验证矩阵");
     if (!verification || !verification.includes("|")) {
       errors.push(`${basename(path)}: Ready Ticket has no usable verification matrix`);
+    }
+    if (!verification.includes("E2E disposition") || !verification.includes("parent-candidate")) {
+      errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and parent-candidate owner/environment`);
     }
     const acceptance = sectionBody(body, "## 10. 验收标准").toLowerCase();
     if (!acceptance.includes("- [ ]") && !acceptance.includes("- [x]")) {
@@ -1550,6 +1596,10 @@ function validateChangeStatus(path, expectedChange, errors) {
     "change",
     "change_status",
     "current_work",
+    "works_run",
+    "claimed_investigations",
+    "execution_authorization",
+    "leadership",
     "created_at",
     "updated_at",
     "completed_at",
@@ -1557,11 +1607,14 @@ function validateChangeStatus(path, expectedChange, errors) {
     "archive_path",
     "blockers",
     "deviations",
+    "worktrees",
   ];
   const missing = required.filter((key) => !(key in data));
   if (missing.length) errors.push(`${basename(path)}: missing keys ${JSON.stringify(missing.sort())}`);
-  if (data.schema_version !== SCHEMA_VERSION || data.artifact !== "change-status") {
-    errors.push(`${basename(path)}: artifact/schema_version must be change-status/${SCHEMA_VERSION}`);
+  const unexpected = Object.keys(data).filter((key) => !required.includes(key));
+  if (unexpected.length) errors.push(`${basename(path)}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
+  if (data.schema_version !== CHANGE_STATUS_SCHEMA_VERSION || data.artifact !== "change-status") {
+    errors.push(`${basename(path)}: artifact/schema_version must be change-status/${CHANGE_STATUS_SCHEMA_VERSION}`);
   }
   if (data.change !== expectedChange) {
     errors.push(`${basename(path)}: change must equal directory name ${expectedChange}`);
@@ -1569,17 +1622,45 @@ function validateChangeStatus(path, expectedChange, errors) {
   if (!new Set(["active", "blocked", "completed", "archived"]).has(data.change_status)) {
     errors.push(`${basename(path)}: invalid change_status ${data.change_status}`);
   }
-  if (!Array.isArray(data.blockers) || !Array.isArray(data.deviations)) {
-    errors.push(`${basename(path)}: blockers and deviations must be arrays`);
+  if (!Array.isArray(data.blockers) || !Array.isArray(data.deviations) || !Array.isArray(data.worktrees)) {
+    errors.push(`${basename(path)}: blockers, deviations, and worktrees must be arrays`);
   }
-  if (data.worktrees !== undefined && !Array.isArray(data.worktrees)) {
-    errors.push(`${basename(path)}: worktrees must be an array when present`);
-  }
+  const seenWorktreeTickets = new Set();
   for (const worktree of Array.isArray(data.worktrees) ? data.worktrees : []) {
     if (!worktree || typeof worktree !== "object" || Array.isArray(worktree)) {
       errors.push(`${basename(path)}: invalid worktree entry`);
       continue;
     }
+    const requiredWorktreeKeys = [
+      "ticket_id",
+      "owner",
+      "implementation_owner",
+      "integration_owner",
+      "provider",
+      "base_sha",
+      "parent_branch",
+      "branch",
+      "workspace_ref",
+      "source_checkpoint",
+      "integration",
+      "status",
+      "updated_at",
+    ];
+    const missingWorktreeKeys = requiredWorktreeKeys.filter((key) => !(key in worktree));
+    if (missingWorktreeKeys.length) {
+      errors.push(`${basename(path)}: worktree integration contract missing ${JSON.stringify(missingWorktreeKeys)}`);
+      continue;
+    }
+    const unexpectedWorktreeKeys = Object.keys(worktree).filter((key) => !requiredWorktreeKeys.includes(key));
+    if (unexpectedWorktreeKeys.length) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has unexpected keys ${JSON.stringify(unexpectedWorktreeKeys.sort())}`);
+    }
+    if (!/^T-[0-9]{2,}$/.test(String(worktree.ticket_id))) {
+      errors.push(`${basename(path)}: invalid worktree ticket_id ${worktree.ticket_id}`);
+    } else if (seenWorktreeTickets.has(worktree.ticket_id)) {
+      errors.push(`${basename(path)}: duplicate worktree for ${worktree.ticket_id}`);
+    }
+    seenWorktreeTickets.add(worktree.ticket_id);
     const ref = worktree.workspace_ref;
     if (
       typeof ref !== "string" ||
@@ -1592,21 +1673,20 @@ function validateChangeStatus(path, expectedChange, errors) {
     if (!VALID_WORKTREE_STATUS.has(worktree.status)) {
       errors.push(`${basename(path)}: invalid worktree status ${worktree.status}`);
     }
-    if (worktree.provider === "git") {
-      const expectedRef = `specdev-worktree/${worktree.ticket_id}`;
-      if (ref !== expectedRef) {
-        errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
-      }
+    if (worktree.provider !== "git") {
+      errors.push(`${basename(path)}: Ticket worktree ${worktree.ticket_id} provider must be git`);
+    }
+    const expectedRef = `specdev-worktree/${expectedChange}/${worktree.ticket_id}`;
+    if (ref !== expectedRef) {
+      errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
     }
 
-    const hasIntegrationContract = worktree.terminal_action !== undefined;
-    if (!hasIntegrationContract) {
-      if (worktree.status === "integrating") {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integrating requires the complete integration contract`);
-      }
-      continue;
+    if ("terminal_action" in worktree) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} obsolete terminal_action is not allowed`);
     }
     const requiredIntegrationKeys = [
+      "owner",
+      "implementation_owner",
       "integration_owner",
       "parent_branch",
       "source_checkpoint",
@@ -1617,11 +1697,10 @@ function validateChangeStatus(path, expectedChange, errors) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration contract missing ${JSON.stringify(missingIntegrationKeys)}`);
       continue;
     }
-    if (!VALID_TERMINAL_ACTION.has(worktree.terminal_action)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid terminal_action ${worktree.terminal_action}`);
-    }
-    if (typeof worktree.integration_owner !== "string" || !worktree.integration_owner.trim()) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration_owner is required`);
+    for (const key of ["owner", "implementation_owner", "integration_owner", "base_sha", "parent_branch", "branch", "updated_at"]) {
+      if (typeof worktree[key] !== "string" || !worktree[key].trim()) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${key} is required`);
+      }
     }
     if (typeof worktree.parent_branch !== "string" || !worktree.parent_branch.trim()) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch is required`);
@@ -1629,7 +1708,7 @@ function validateChangeStatus(path, expectedChange, errors) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch must differ from branch`);
     }
 
-    const sourceRequired = new Set(["review", "integrating", "integrated"]).has(worktree.status);
+    const sourceRequired = new Set(["review", "integrating", "integrated", "removed"]).has(worktree.status);
     if (sourceRequired && (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires source_checkpoint`);
     } else if (
@@ -1646,18 +1725,30 @@ function validateChangeStatus(path, expectedChange, errors) {
     }
     const requiredResultKeys = [
       "status",
+      "parent_ref",
       "parent_before_sha",
       "source_sha",
+      "candidate_sha",
+      "candidate_tree_sha",
+      "candidate_branch",
+      "candidate_workspace_ref",
       "result_sha",
       "method",
       "conflict_paths",
       "verification",
+      "full_suite",
+      "e2e",
       "evidence",
       "attempts",
+      "promotion_status",
     ];
     const missingResultKeys = requiredResultKeys.filter((key) => !(key in integration));
     if (missingResultKeys.length) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration missing ${JSON.stringify(missingResultKeys)}`);
+    }
+    const unexpectedResultKeys = Object.keys(integration).filter((key) => !requiredResultKeys.includes(key));
+    if (unexpectedResultKeys.length) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration has unexpected keys ${JSON.stringify(unexpectedResultKeys.sort())}`);
     }
     if (!VALID_INTEGRATION_STATUS.has(integration.status)) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration status ${integration.status}`);
@@ -1680,14 +1771,53 @@ function validateChangeStatus(path, expectedChange, errors) {
     ) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration evidence must be a rooted Ticket Evidence path`);
     }
-    if (worktree.terminal_action === "retain" && new Set(["integrating", "integrated"]).has(worktree.status)) {
-      errors.push(`${basename(path)}: retain worktree ${worktree.ticket_id} cannot be ${worktree.status}`);
+    if (!new Set(["pending", "applying", "applied", "failed", "stale"]).has(integration.promotion_status)) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid promotion_status ${integration.promotion_status}`);
     }
-    const integrationLifecycleActive = new Set(["integrating", "integrated"]).has(worktree.status);
-    if (integrationLifecycleActive) {
-      if (worktree.terminal_action !== "integrate") {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires terminal_action=integrate`);
+    for (const [name, suite] of [["full_suite", integration.full_suite], ["e2e", integration.e2e]]) {
+      if (!suite || typeof suite !== "object" || Array.isArray(suite) || typeof suite.required !== "boolean" || !VALID_E2E_STATUS.has(suite.status)) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${name} contract is invalid`);
+        continue;
       }
+      const unexpectedSuiteKeys = Object.keys(suite).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
+      if (unexpectedSuiteKeys.length) errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${name} has unexpected keys ${JSON.stringify(unexpectedSuiteKeys.sort())}`);
+      if (suite.required === false && (suite.status !== "not-required" || typeof suite.reason !== "string" || !suite.reason.trim())) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} non-required ${name} needs not-required status and reason`);
+      }
+      if (suite.required === true && suite.status === "not-required") {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} required ${name} cannot be not-required`);
+      }
+    }
+    const e2e = integration.e2e;
+    if (
+      !e2e ||
+      typeof e2e !== "object" ||
+      Array.isArray(e2e) ||
+      typeof e2e.required !== "boolean" ||
+      !VALID_E2E_STATUS.has(e2e.status)
+    ) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration e2e contract is invalid`);
+    } else {
+      const unexpectedE2eKeys = Object.keys(e2e).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
+      if (unexpectedE2eKeys.length) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration e2e has unexpected keys ${JSON.stringify(unexpectedE2eKeys.sort())}`);
+      }
+      if (e2e.required === false && e2e.status !== "not-required") {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} non-required E2E must use status=not-required`);
+      }
+      if (e2e.required === true && e2e.status === "not-required") {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} required E2E cannot be not-required`);
+      }
+      if (
+        e2e.required === true &&
+        e2e.status === "passed" &&
+        (typeof e2e.evidence !== "string" || !e2e.evidence.trim())
+      ) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} passed required E2E needs evidence`);
+      }
+    }
+    const integrationLifecycleActive = new Set(["integrating", "integrated", "removed"]).has(worktree.status);
+    if (integrationLifecycleActive) {
       if (typeof integration.parent_before_sha !== "string" || !integration.parent_before_sha.trim()) {
         errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires parent_before_sha`);
       }
@@ -1696,36 +1826,53 @@ function validateChangeStatus(path, expectedChange, errors) {
       } else if (integration.source_sha !== worktree.source_checkpoint) {
         errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_sha must equal source_checkpoint`);
       }
+      if (typeof integration.candidate_sha !== "string" || !integration.candidate_sha.trim()) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires candidate_sha`);
+      }
+      const expectedCandidateBranch = `speculo/integration/${expectedChange}/${worktree.ticket_id}`;
+      if (integration.candidate_branch !== expectedCandidateBranch) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_branch must equal ${expectedCandidateBranch}`);
+      }
+      const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${worktree.ticket_id}`;
+      if (integration.candidate_workspace_ref !== expectedCandidateRef) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_workspace_ref must equal ${expectedCandidateRef}`);
+      }
+      if (!new Set(["fast-forward", "merge-commit"]).has(integration.method)) {
+        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires an integration method`);
+      }
       if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
         errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires attempts >= 1`);
       }
     }
-    if (worktree.status === "integrating" && integration.status !== "running") {
-      errors.push(`${basename(path)}: integrating worktree ${worktree.ticket_id} requires integration.status=running`);
+    if (worktree.status === "integrating" && integration.status !== "candidate") {
+      errors.push(`${basename(path)}: integrating worktree ${worktree.ticket_id} requires integration.status=candidate`);
     }
-    if (worktree.status === "integrated") {
+    if (new Set(["integrated", "removed"]).has(worktree.status)) {
       if (
         integration.status !== "passed" ||
         integration.verification !== "passed" ||
         !new Set(["fast-forward", "merge-commit"]).has(integration.method) ||
         typeof integration.result_sha !== "string" ||
-        !integration.result_sha.trim()
+        !integration.result_sha.trim() ||
+        integration.result_sha !== integration.candidate_sha ||
+        !e2e ||
+        !new Set(["not-required", "passed"]).has(e2e.status)
       ) {
-        errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} requires a passed result checkpoint`);
+        errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} requires passed candidate/result/E2E state`);
       }
       if (integration.method === "fast-forward") {
-        if (integration.result_sha !== worktree.source_checkpoint) {
-          errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} fast-forward result_sha must equal source_checkpoint`);
+        if (integration.candidate_sha !== worktree.source_checkpoint) {
+          errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} fast-forward candidate/result must equal source_checkpoint`);
         }
         if (Array.isArray(integration.conflict_paths) && integration.conflict_paths.length > 0) {
-          errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} fast-forward cannot record conflict_paths`);
+          errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} fast-forward cannot record conflict_paths`);
         }
       } else if (
         integration.method === "merge-commit" &&
-        typeof integration.result_sha === "string" &&
-        (integration.result_sha === worktree.source_checkpoint || integration.result_sha === integration.parent_before_sha)
+        typeof integration.candidate_sha === "string" &&
+        (integration.candidate_sha === worktree.source_checkpoint || integration.candidate_sha === integration.parent_before_sha)
       ) {
-        errors.push(`${basename(path)}: integrated worktree ${worktree.ticket_id} merge-commit result_sha must be a distinct checkpoint`);
+        errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} merge-commit candidate must be a distinct checkpoint`);
       }
     }
   }
@@ -1837,6 +1984,25 @@ function validateChange(change, stage = null) {
     }
   }
 
+  if (stage === "implement" && ticketMode && changeStatus) {
+    const worktreesByTicket = new Map(
+      (Array.isArray(changeStatus.worktrees) ? changeStatus.worktrees : [])
+        .filter((entry) => entry && typeof entry === "object")
+        .map((entry) => [String(entry.ticket_id), entry]),
+    );
+    for (const [ticketId, artifact] of tickets) {
+      if (new Set(["draft", "cancelled"]).has(artifact.meta.status)) continue;
+      if (!worktreesByTicket.has(ticketId)) {
+        errors.push(`${ticketId}: Implement stage requires one Ticket source worktree record`);
+      }
+    }
+    for (const ticketId of worktreesByTicket.keys()) {
+      if (!tickets.has(ticketId)) {
+        errors.push(`${ticketId}: worktree record has no matching Ticket`);
+      }
+    }
+  }
+
   if (spec) {
     const declaredContracts = new Set(spec.body.match(/\bAC-\d+\b/g) ?? []);
     const coveredContracts = new Set(
@@ -1923,17 +2089,28 @@ function validateChange(change, stage = null) {
     }
     const text = readText(evidence);
     for (const heading of [
-      "## 2. 修改范围",
-      "## 3. 验收与合同映射",
-      "## 4. 验证执行",
-      "## 5. 双轴审查",
-      "## 6. 路径所有权审计",
-      "## 7. 偏差与决策",
-      "## 8. 残余风险与后续",
+      "## 2. Lead Dispatch And Candidate Return",
+      "## 3. 修改范围与路径所有权",
+      "## 4. 验收与合同映射",
+      "## 5. Source-worktree 验证",
+      "## 6. 双轴审查",
+      "## 7. Parent-candidate 集成验证",
+      "## 8. 偏差与决策",
+      "## 9. 残余风险与交付定位",
     ]) {
       if (!text.includes(heading)) {
         errors.push(`${toPosix(relative(change, evidence))}: missing '${heading}'`);
       }
+    }
+    const sourceVerification = sectionBody(text, "## 5. Source-worktree 验证");
+    if (/E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(sourceVerification) && !/不得|禁止|not-run/i.test(sourceVerification)) {
+      errors.push(`${toPosix(relative(change, evidence))}: E2E pass cannot come from source-worktree`);
+    }
+    const worktree = Array.isArray(changeStatus?.worktrees)
+      ? changeStatus.worktrees.find((entry) => entry?.ticket_id === ticketId)
+      : null;
+    if (!worktree || !new Set(["integrated", "removed"]).has(worktree.status)) {
+      errors.push(`${ticketId}: status is done but no integrated or removed Ticket worktree exists`);
     }
   }
 

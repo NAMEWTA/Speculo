@@ -1,57 +1,47 @@
 # 证据与验证规范
 
-验证回答“怎样证明行为已经正确发生”，Evidence 回答“实际运行了什么、结果是什么、仍有什么风险”。
+验证回答“怎样证明”，Evidence 记录“实际运行了什么、在哪个状态运行、结果和残余风险是什么”。
 
 ## 1. 验证矩阵
 
-每一行绑定一个行为、合同或风险：
+每行绑定行为、合同或风险，并标记环境：
 
-| 行为或风险 | 验证接缝 | 方法或命令 | 预期结果 | Evidence |
-|---|---|---|---|---|
-| 正常路径 | 公共接口 | 项目定向测试 | 指定外部行为成立 | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` |
-| 无效输入 | schema 或公共接口 | 定向失败测试 | 稳定错误行为成立 | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` |
-| 回归 | 现有测试套件 | 项目回归命令 | 相关既有行为保持 | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` |
+| 行为或风险 | 接缝 | 命令/方法 | 环境 | 预期 | Evidence |
+|---|---|---|---|---|---|
+| 正常/失败路径 | 公共接口或稳定接缝 | 定向测试 | source-worktree | 合同成立 | Ticket Evidence |
+| 跨模块回归 | 集成接缝 | 回归命令 | parent-candidate | 组合状态成立 | Ticket Evidence |
+| E2E required | 真实端到端边界 | 场景步骤 | parent-candidate | 外部行为成立 | Ticket Evidence |
 
-命令引用项目脚本时，项目文件路径使用项目相对 Path 标签，例如 `<Path>package.json</Path>` 或 `<Path>Makefile</Path>`。
+## 2. 两层验证
 
-## 2. 最小充分验证
+### Source-worktree
 
-选择最接近目标行为的稳定接缝：
+implementation owner 运行最接近目标行为的单元/组件测试、静态分析、类型、lint/build 等适用非 E2E 检查。来源实现必须在 clean worktree 形成 commit。任何 source-worktree E2E pass 声明无效。
 
-1. 公共接口或契约集成测试；
-2. 稳定接缝上的单元测试；
-3. 类型检查、静态分析、lint 和构建；
-4. 可重复手动步骤、截图或查询结果；
-5. 代码阅读推断。
+### Parent-candidate
 
-E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由当前实现或集成 owner 运行；委派执行中 Worker 只记录场景、预期结果和待执行状态，由 Lead 在集成阶段运行。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
+Lead 在最新父分支与 source commit 的 candidate 状态运行受影响集成/回归、项目父状态检查和适用 E2E。E2E 由实际跨边界风险决定，不限于 UI；not-required 必须写理由。required E2E 未运行或失败时不得推进父分支。
 
-低层证据不能替代明确要求的用户行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控信号或回滚演练。
+### Direct Spec
 
-## 3. 失败分类
+获批 Direct Spec 不创建 Ticket worktree 或 candidate。Lead 在 current workspace 记录实施前基线，运行轻量合同要求的定向检查、适用回归与 E2E，并记录最终 checkpoint、dirty 状态、运行环境、命令、退出状态和未运行原因。E2E 仍只由 Lead 执行；不得为套用两层验证而伪造 Ticket、source/candidate/result 或父分支推进证据。
 
-每个失败必须分类为：
+低层证据不能替代明确要求的外部行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控或恢复演练。
 
-- 本 Ticket 引入的新失败；
-- 基线已存在的失败；
-- 环境、权限或基础设施失败；
-- 验证本身无效或无法观察目标行为。
+## 3. Agent 声明
 
-不得通过跳过测试、放宽断言、吞错、删除用例或把命令移出验证矩阵来制造绿色。
+subagent 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
 
-## 4. Evidence 最低内容
+## 4. 失败分类与完整性
 
-每个完成 Ticket 在 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` 记录：
+失败分类为本 Ticket 新失败、基线既有失败、环境/权限/基础设施失败、无效验证或 candidate stale。不得通过跳过、放宽断言、吞错、删除用例或迁移验证位置制造绿色。
 
-- 基线、分支或 worktree；
-- 实际修改的项目路径；
-- 每条命令、退出状态和结果摘要；
-- 每条验收合同的证据映射；
-- 未运行项与原因；
-- 新失败、既有失败和环境失败；
-- 偏差及批准；
-- 残余风险；
-- worktree、提交或 PR 引用；
-- 最终结论。
+受控反向验证只用于可能静默通过的关键门禁：证明检查能在目标风险出现时失败，再恢复并重跑。普通测试不为形式执行破坏性操作。
 
-无法运行关键验证、存在未批准偏差或 Evidence 不完整时，Ticket 不得标为 `done`。
+## 5. Evidence 最低内容
+
+每个 Ticket Evidence 至少包含：Lead、Dispatch/返回（若有）、base/source/candidate/result SHA、来源 worktree、实际路径、每条命令/环境/退出状态、合同映射、双轴审查、E2E disposition、未运行项、失败分类、偏差、残余风险和父分支重读结果。
+
+Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 source commit 或 Evidence 不完整时不得 Done。
+
+Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。

@@ -26,6 +26,11 @@
 - `active` 从仍位于 `changes/` 且 change 状态为 active/blocked/completed 的真实目录核对；不得创建虚假 change。
 - `archived` 从 `archive/YYYY-MM/<change>/` 核对，active/archived 不得重叠。
 - `config.json` 保留语言、Git、执行、验证与规划偏好，并补入当前 schema 的必需默认值。
+- SpecDev config v3 升级为 v4 时，`execution.max_parallel` 只作为旧并发偏好的输入，收敛到 `execution.max_implementation_agents: 1..3`；删除旧的自动提交和条件 worktree 开关，不把它们解释为授权。
+- change-status v3 只有在 `worktrees` 缺失或为空时才可确定性升级为 v4；存在旧 worktree 记录时，必须逐 Ticket 重建 implementation owner、source commit、candidate/result、E2E disposition 和父分支包含关系。v4 runtime 不得自动升级为 v5：旧状态无法可靠推断 execution authorization 或 Lead leadership，必须保持 pending 并显式对账。
+- active Goal Plan 不是 v5 时必须重新规划固定 Lead、Ticket worktree 和 candidate integration gate；不能只改 frontmatter 版本号。
+- 已声明为 v4 的 SpecDev config，以及已声明为 v5 的 global status、change-status 和 Goal Plan，必须完整满足当前 schema：必需字段、类型、枚举、嵌套对象和 `additionalProperties` 边界都通过后才能自动保留。不得为不完整状态静默补默认值，也不得只扫描少量标记字段。
+- worktree `removed` 只接受为 `integrated` 后的清理终态；source checkpoint、passed candidate/result、验证、E2E disposition 和 Evidence 必须完整保留。
 - `.config/`、`adr/`、`context/`、`research/`、`changes/`、`archive/` 和声明的 sidecar 都是持久项。
 - Command Markdown 报告和具有当前 owner 的 `state.json` 均迁移；未知 command state 保持 unresolved。
 
@@ -49,10 +54,11 @@
 
 ## 验证
 
-- backup manifest 的每个 file hash、size 和 symlink 条目与现场一致；存在 symlink 时阻塞。
-- plan 的 `backup_manifest_sha256` 与现场一致，`source_decisions` 恰好覆盖 manifest 全部条目，且每个 action 的 `expected_target` 与 active 现场一致。
+- backup manifest 的每个 file hash、size，以及每个 symlink 的类型和 link target 都必须与现场一致；link 本身保留为 pending 事实，不能被自动恢复到 active runtime。
+- plan 的 `backup_manifest_sha256` 与现场一致，`source_decisions` 恰好覆盖 manifest 全部条目；每个 action 必须显式 `source_decision`，且只可实现该 decision 的同目标、同 disposition 动作。除 `keep-current` 外，每个 decision 必须恰有一个 action；每个 action 的 `expected_target` 与 active 现场一致。
+- action 后、删除 staged marker 前、原子替换后都递归拒绝 active runtime 中的 symlink；任何失败均恢复原 active 安装。
 - 所有迁移后 JSON 可解析。
 - workspace、install manifest、项目配置和已安装 workflow 全局状态满足当前版本。
-- SpecDev active/archive 索引与目录一致；person 状态满足 schema v1。
+- SpecDev active/archive 索引与目录一致；SpecDev config 满足 v4 合同，global status、change-status 与 Goal Plan 满足 v5 合同；person 状态满足 schema v1。
 - pending marker 只在全部验证通过后从 staged 安装删除。
 - 执行后 backup manifest 与内容 hash 不变。

@@ -1,34 +1,31 @@
 # Change Completion
 
-本规则是 change 从 active/blocked 转为 completed 的唯一合同，并由 Implement、Goal Plan、Triage、Status 与 Archive 共同读取。
+本规则是 change 从 active/blocked 转为 completed 的唯一合同。
 
 ## 完成门
 
-一个 change 只有同时满足以下条件才能设置 `change_status: completed`：
+一个 change 只有同时满足以下条件才能 completed：
 
-1. 所有计划内 Ticket 为 `done`，或有明确批准理由的 `cancelled`；无 Ticket 的 Direct Spec/非实现流程有等价的验收清单。
-2. 每个完成行为有 Evidence，全部 Spec 验收合同和适用 Goal Gate 可定位。
-3. 项目级验证通过；既有或环境失败已分类、接受并记录风险。
-4. 迁移、发布、监控、回滚和不可逆批准已完成或明确不适用。
-5. 没有未批准 deviation、未处置 blocker 或伪装成通过的 `unverified` 声明。
-6. Ticket、Map、Goal Plan、Evidence、源码 checkpoint 和 change 状态一致。
+1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收。
+2. 每个 done Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；worktree 生命周期为 `integrated` 或完成来源清理后的 `removed`。
+3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
+4. source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
+5. 迁移、发布、监控、恢复和不可逆批准已完成或明确不适用。
+6. 没有未批准 deviation、blocker、unverified、活动 candidate 或未集成 source checkpoint。
+7. Ticket、Map、Goal Plan、Evidence、change status 与实际 Git 一致。
+
+Evidence-only Done 和 empty commit 不满足完成门。
 
 ## 转换 Owner
 
-- Goal Plan 为 `coordination_mode: lead-team`：Lead 在独立验收并关闭最后一个 Gate 后拥有完成转换。
-- Goal Plan 为 `coordination_mode: single-session`，或无 Goal Plan 的 Ticket/Direct Spec 实现：最后一个计划内 Implement 在最后一项验收通过后拥有完成转换。
-- 旧 Goal Plan 缺少 coordination 字段时，根据完整 `## Delegated Execution Addendum` 是否存在兼容推导，不要求 runtime schema 迁移。
-- 非实现型终点：最后一个拥有最终验收工件的 Work 使用本规则完成转换。
+- 有 Goal Plan：其唯一 Lead 在关闭最后 Gate 后拥有转换；
+- 无 Goal Plan 的 Ticket/Direct Spec：当前 I-implement 主会话 owner 拥有转换；
+- 非实现型终点：最终验收工件 owner 使用本规则。
 
-Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读验证。全局 `<Path>{roots.state}/specdev/status.json</Path>` 继续只保存 active 索引，不复制完成详情。
+Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读。全局 status 只维护 active/archived 索引。
 
 ## 远程来源与归档
 
-远程动作不参与本地完成判定。完成后若 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` 的 `external_action` 为 `pending-close` 或 `close-failed`，下一路线是 Triage reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive 移动 change。归档后工件只读，不在归档目录补写远程结果。
+远程动作不参与本地完成判定。Triage 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。归档后工件只读。
 
-## 完成标准
-
-- 完成声明可以从本地工件和实际验证重建；
-- 当前 change 只有一个条件命中的转换 owner；
-- 远程失败不会把 completed 改回 active；
-- Archive 不接收尚未 reconcile 或 waive 的远程来源。
+**完成标准**：完成声明可由本地工件、Git 与验证重建；只有一个 owner 命中；失败 candidate 不污染父分支。

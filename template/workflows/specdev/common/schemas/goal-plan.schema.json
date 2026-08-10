@@ -1,31 +1,39 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:goal-plan:v3",
+  "$id": "urn:speculo:specdev:goal-plan:v5",
   "title": "SpecDev Goal Plan Frontmatter",
   "type": "object",
-  "required": ["schema_version", "artifact", "change", "status", "modes", "ready_for_execution"],
+  "required": [
+    "schema_version", "artifact", "change", "status", "modes", "orchestration",
+    "lead", "implementation_agent_limit", "ticket_workspace_policy", "integration_gate",
+    "ready_for_execution"
+  ],
   "properties": {
-    "schema_version": {"const": 3},
+    "schema_version": {"const": 5},
     "artifact": {"const": "goal-plan"},
     "change": {"type": "string", "minLength": 1},
     "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]},
     "modes": {
       "type": "array",
-      "items": {"enum": ["coordination", "migration", "high-assurance", "reference-conformance", "release-coordination"]},
-      "minItems": 1,
+      "items": {"enum": ["migration", "high-assurance", "reference-conformance", "release-coordination"]},
       "uniqueItems": true
     },
-    "coordination_mode": {
-      "enum": ["single-session", "lead-team"]
-    },
-    "workspace_strategy": {
-      "enum": ["current", "worktree", "mixed"]
-    },
+    "orchestration": {"const": "lead-directed"},
+    "lead": {"type": "string", "minLength": 1},
+    "implementation_agent_limit": {"type": "integer", "minimum": 1, "maximum": 3},
+    "ticket_workspace_policy": {"const": "required"},
+    "integration_gate": {"const": "candidate-merge"},
     "ready_for_execution": {"type": "boolean"}
   },
-  "dependentRequired": {
-    "coordination_mode": ["workspace_strategy"],
-    "workspace_strategy": ["coordination_mode"]
-  },
-  "additionalProperties": true
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"enum": ["draft", "blocked", "completed"]}}, "required": ["status"]},
+      "then": {"properties": {"ready_for_execution": {"const": false}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["ready", "in_progress"]}}, "required": ["status"]},
+      "then": {"properties": {"ready_for_execution": {"const": true}}}
+    }
+  ],
+  "additionalProperties": false
 }

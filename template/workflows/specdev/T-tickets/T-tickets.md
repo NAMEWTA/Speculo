@@ -94,7 +94,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 - `lite`：局部、可逆、沿用既有模式、无公共契约或迁移影响；
 - `standard`：大多数多文件或跨层垂直切片；
-- `deep`：公共 API/schema、数据迁移、安全/隐私/资金、不可逆操作、expand-contract、共享核心路径、多 Agent 或高事故半径。
+- `deep`：公共 API/schema、数据迁移、安全/隐私/资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调或高事故半径。
 
 规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
 
@@ -111,7 +111,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 有序执行路线和安全落点；
 - expected、writable、read-only、shared 路径；
 - 正常、失败和回归验证矩阵；
-- 用户界面交互受影响时的 E2E Gate 与执行 owner；后续委派 Goal Plan 可以显式把该 Gate 转交 Lead；
+- 每个 Ticket 的 source-worktree 非 E2E 检查、父分支 candidate 集成出口，以及按实际跨边界风险判定的 E2E disposition；
+- 每个实现 Ticket 的独立 worktree、implementation commit 与父分支合并完成条件；
 - Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
 - 可判定验收标准。
 
@@ -139,6 +140,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 依赖缺失或 DAG 有环；
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
+- Ticket 未声明 E2E required/not-required 及理由，或把 E2E 安排到 source worktree；
+- 无法形成实现 commit 与 candidate-merge 父分支出口；
 - 单个新上下文无法完成；
 - Standard/Deep 缺少有序执行路线；
 - Deep 缺少迁移、兼容、监控、回滚或批准点。
@@ -219,4 +222,4 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 
 ## 下一步
 
-满足任一情况时建议运行 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>`：Ticket 数量达到或超过 10、存在多 Agent 并行、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。少量线性 Ready Ticket 可直接进入 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`。
+满足任一情况时建议运行 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>`：Ticket 数量达到或超过 10、存在多个 implementation owner 的并行写入协调、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。只读 review/research 并行本身不触发 Goal Plan；少量线性 Ready Ticket 可直接进入 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`。

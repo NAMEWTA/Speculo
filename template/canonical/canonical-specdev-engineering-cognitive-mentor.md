@@ -1530,7 +1530,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
+- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
 
 </deviation-control>
 
@@ -1593,16 +1593,14 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
-    "auto_commit": false,
-    "default_branch": null,
-    "worktree_for_parallel": true
+    "default_branch": null
   },
   "execution": {
-    "max_parallel": 3,
+    "max_implementation_agents": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },
@@ -1627,33 +1625,31 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v3",
+  "$id": "urn:speculo:specdev:config:v4",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
   "properties": {
-    "schema_version": {"const": 3},
+    "schema_version": {"const": 4},
     "interaction_language": {"type": "string", "minLength": 1},
     "artifact_language": {"type": "string", "minLength": 1},
     "git": {
       "type": "object",
-      "required": ["auto_commit", "default_branch", "worktree_for_parallel"],
+      "required": ["default_branch"],
       "properties": {
-        "auto_commit": {"type": "boolean"},
-        "default_branch": {"type": ["string", "null"]},
-        "worktree_for_parallel": {"type": "boolean"}
+        "default_branch": {"type": ["string", "null"]}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "execution": {
       "type": "object",
-      "required": ["max_parallel", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"],
       "properties": {
-        "max_parallel": {"type": "integer", "minimum": 1},
+        "max_implementation_agents": {"type": "integer", "minimum": 1, "maximum": 3},
         "deep_ticket_human_approval": {"type": "boolean"},
         "shared_path_owner": {"type": "string", "minLength": 1}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "verification": {
       "type": "object",
@@ -1677,7 +1673,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
       "additionalProperties": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 
@@ -1798,7 +1794,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
@@ -1821,7 +1817,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v3",
+  "$id": "urn:speculo:specdev:change-status:v4",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
@@ -1836,370 +1832,204 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
     "archived",
     "archive_path",
     "blockers",
-    "deviations"
+    "deviations",
+    "worktrees"
   ],
   "properties": {
-    "schema_version": {
-      "const": 3
-    },
-    "artifact": {
-      "const": "change-status"
-    },
+    "schema_version": {"const": 4},
+    "artifact": {"const": "change-status"},
     "change": {
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
-    "change_status": {
-      "enum": [
-        "active",
-        "blocked",
-        "completed",
-        "archived"
-      ]
-    },
-    "current_work": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "created_at": {
-      "type": "string",
-      "minLength": 1
-    },
-    "updated_at": {
-      "type": "string",
-      "minLength": 1
-    },
-    "completed_at": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "archived": {
-      "type": "boolean"
-    },
+    "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
+    "current_work": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1},
+    "completed_at": {"type": ["string", "null"]},
+    "archived": {"type": "boolean"},
     "archive_path": {
       "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string",
-          "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
-        }
+        {"type": "null"},
+        {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}
       ]
     },
-    "blockers": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "deviations": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "deviations": {"type": "array", "items": {"type": "string"}},
     "worktrees": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "ticket_id",
-          "owner",
-          "provider",
-          "base_sha",
-          "branch",
-          "workspace_ref",
-          "status",
-          "updated_at"
-        ],
-        "properties": {
-          "ticket_id": {
-            "type": "string",
-            "pattern": "^T-[0-9]{2,}$"
-          },
-          "owner": {
-            "type": "string",
-            "minLength": 1
-          },
-          "integration_owner": {
-            "type": "string",
-            "minLength": 1
-          },
-          "provider": {
-            "enum": [
-              "native",
-              "git",
-              "external"
-            ]
-          },
-          "base_sha": {
-            "type": "string",
-            "minLength": 1
-          },
-          "parent_branch": {
-            "type": "string",
-            "minLength": 1
-          },
-          "branch": {
-            "type": "string",
-            "minLength": 1
-          },
-          "workspace_ref": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
-          },
-          "terminal_action": {
-            "enum": [
-              "integrate",
-              "retain"
-            ]
-          },
-          "source_checkpoint": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "integration": {
-            "type": "object",
-            "required": [
-              "status",
-              "parent_before_sha",
-              "source_sha",
-              "result_sha",
-              "method",
-              "conflict_paths",
-              "verification",
-              "evidence",
-              "attempts"
-            ],
+      "items": {"$ref": "#/$defs/worktree"}
+    }
+  },
+  "$defs": {
+    "worktree": {
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "owner",
+        "implementation_owner",
+        "integration_owner",
+        "provider",
+        "base_sha",
+        "parent_branch",
+        "branch",
+        "workspace_ref",
+        "source_checkpoint",
+        "integration",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "ticket_id": {"type": "string", "pattern": "^T-[0-9]{2,}$"},
+        "owner": {"type": "string", "minLength": 1},
+        "implementation_owner": {"type": "string", "minLength": 1},
+        "integration_owner": {"type": "string", "minLength": 1},
+        "provider": {"const": "git"},
+        "base_sha": {"type": "string", "minLength": 1},
+        "parent_branch": {"type": "string", "minLength": 1},
+        "branch": {"type": "string", "minLength": 1},
+        "workspace_ref": {
+          "type": "string",
+          "pattern": "^specdev-worktree/T-[0-9]{2,}$"
+        },
+        "source_checkpoint": {"type": ["string", "null"]},
+        "integration": {"$ref": "#/$defs/integration"},
+        "status": {
+          "enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]
+        },
+        "updated_at": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["review", "integrating", "integrated", "removed"]}}, "required": ["status"]},
+          "then": {"properties": {"source_checkpoint": {"type": "string", "minLength": 1}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "integrating"}}, "required": ["status"]},
+          "then": {
             "properties": {
-              "status": {
-                "enum": [
-                  "pending",
-                  "running",
-                  "passed",
-                  "blocked"
-                ]
-              },
-              "parent_before_sha": {
-                "type": ["string", "null"]
-              },
-              "source_sha": {
-                "type": ["string", "null"]
-              },
-              "result_sha": {
-                "type": ["string", "null"]
-              },
-              "method": {
-                "enum": [null, "fast-forward", "merge-commit"]
-              },
-              "conflict_paths": {
-                "type": "array",
-                "items": {"type": "string"}
-              },
-              "verification": {
-                "enum": ["pending", "passed", "failed"]
-              },
-              "evidence": {
-                "type": "string",
-                "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
-              },
-              "attempts": {
-                "type": "integer",
-                "minimum": 0
+              "integration": {
+                "properties": {
+                  "status": {"const": "candidate"},
+                  "parent_before_sha": {"type": "string", "minLength": 1},
+                  "source_sha": {"type": "string", "minLength": 1},
+                  "candidate_sha": {"type": "string", "minLength": 1},
+                  "candidate_branch": {"type": "string", "minLength": 1},
+                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
+                  "method": {"enum": ["fast-forward", "merge-commit"]},
+                  "attempts": {"type": "integer", "minimum": 1}
+                }
               }
-            },
-            "additionalProperties": true
-          },
-          "status": {
-            "enum": [
-              "planned",
-              "active",
-              "review",
-              "integrating",
-              "integrated",
-              "removed",
-              "blocked"
-            ]
-          },
-          "updated_at": {
-            "type": "string",
-            "minLength": 1
+            }
           }
         },
-        "dependentRequired": {
-          "terminal_action": [
-            "integration_owner",
-            "parent_branch",
-            "source_checkpoint",
-            "integration"
+        {
+          "if": {"properties": {"status": {"enum": ["integrated", "removed"]}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "integration": {
+                "properties": {
+                  "status": {"const": "passed"},
+                  "parent_before_sha": {"type": "string", "minLength": 1},
+                  "source_sha": {"type": "string", "minLength": 1},
+                  "candidate_sha": {"type": "string", "minLength": 1},
+                  "candidate_branch": {"type": "string", "minLength": 1},
+                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
+                  "result_sha": {"type": "string", "minLength": 1},
+                  "method": {"enum": ["fast-forward", "merge-commit"]},
+                  "verification": {"const": "passed"},
+                  "attempts": {"type": "integer", "minimum": 1},
+                  "e2e": {
+                    "properties": {
+                      "status": {"enum": ["not-required", "passed"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "status",
+        "parent_before_sha",
+        "source_sha",
+        "candidate_sha",
+        "candidate_branch",
+        "candidate_workspace_ref",
+        "result_sha",
+        "method",
+        "conflict_paths",
+        "verification",
+        "e2e",
+        "evidence",
+        "attempts"
+      ],
+      "properties": {
+        "status": {"enum": ["pending", "candidate", "passed", "failed", "stale"]},
+        "parent_before_sha": {"type": ["string", "null"]},
+        "source_sha": {"type": ["string", "null"]},
+        "candidate_sha": {"type": ["string", "null"]},
+        "candidate_branch": {"type": ["string", "null"]},
+        "candidate_workspace_ref": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^specdev-worktree/\\.integration/T-[0-9]{2,}$"}
           ]
         },
-        "allOf": [
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrating"}
-              },
-              "required": ["status"]
-            },
-            "then": {
-              "required": [
-                "terminal_action",
-                "integration_owner",
-                "parent_branch",
-                "source_checkpoint",
-                "integration"
-              ],
-              "properties": {
-                "terminal_action": {"const": "integrate"}
-              }
-            }
+        "result_sha": {"type": ["string", "null"]},
+        "method": {"enum": [null, "fast-forward", "merge-commit"]},
+        "conflict_paths": {"type": "array", "items": {"type": "string"}},
+        "verification": {"enum": ["pending", "passed", "failed"]},
+        "e2e": {
+          "type": "object",
+          "required": ["required", "status", "evidence"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "status": {"enum": ["not-required", "pending", "passed", "failed"]},
+            "evidence": {"type": ["string", "null"]}
           },
-          {
-            "if": {
-              "properties": {
-                "status": {"enum": ["integrating", "integrated"]},
-                "terminal_action": {"const": "integrate"}
-              },
-              "required": ["status", "terminal_action"]
+          "allOf": [
+            {
+              "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
+              "then": {"properties": {"status": {"const": "not-required"}}}
             },
-            "then": {
-              "properties": {
-                "source_checkpoint": {"type": "string", "minLength": 1},
-                "integration": {
-                  "properties": {
-                    "parent_before_sha": {"type": "string", "minLength": 1},
-                    "source_sha": {"type": "string", "minLength": 1},
-                    "attempts": {"type": "integer", "minimum": 1}
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrating"},
-                "terminal_action": {"const": "integrate"}
-              },
-              "required": ["status", "terminal_action"]
+            {
+              "if": {"properties": {"required": {"const": true}}, "required": ["required"]},
+              "then": {"properties": {"status": {"enum": ["pending", "passed", "failed"]}}}
             },
-            "then": {
-              "properties": {
-                "integration": {
-                  "properties": {
-                    "status": {"const": "running"}
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrated"},
-                "terminal_action": {"const": "integrate"}
+            {
+              "if": {
+                "properties": {
+                  "required": {"const": true},
+                  "status": {"const": "passed"}
+                },
+                "required": ["required", "status"]
               },
-              "required": ["status", "terminal_action"]
-            },
-            "then": {
-              "properties": {
-                "integration": {
-                  "properties": {
-                    "status": {"const": "passed"},
-                    "result_sha": {"type": "string", "minLength": 1},
-                    "method": {"enum": ["fast-forward", "merge-commit"]},
-                    "verification": {"const": "passed"}
-                  }
-                }
-              }
+              "then": {"properties": {"evidence": {"type": "string", "minLength": 1}}}
             }
-          },
-          {
-            "if": {
-              "properties": {
-                "terminal_action": {"const": "retain"}
-              },
-              "required": ["terminal_action"]
-            },
-            "then": {
-              "properties": {
-                "status": {
-                  "not": {"enum": ["integrating", "integrated"]}
-                }
-              }
-            }
-          }
-        ],
-        "additionalProperties": true
-      }
+          ],
+          "additionalProperties": false
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
+        },
+        "attempts": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "worktrees": {
-            "contains": {
-              "properties": {
-                "provider": {
-                  "const": "git"
-                }
-              },
-              "required": [
-                "provider"
-              ]
-            }
-          }
-        }
-      },
+      "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
       "then": {
         "properties": {
-          "worktrees": {
-            "items": {
-              "if": {
-                "properties": {
-                  "provider": {
-                    "const": "git"
-                  }
-                },
-                "required": [
-                  "provider"
-                ]
-              },
-              "then": {
-                "properties": {
-                  "workspace_ref": {
-                    "pattern": "^specdev-worktree/T-[0-9]{2,}$"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "change_status": {
-            "const": "archived"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "archived": {
-            "const": true
-          },
+          "archived": {"const": true},
           "archive_path": {
             "type": "string",
             "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
@@ -2208,7 +2038,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
       }
     }
   ],
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 

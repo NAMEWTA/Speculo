@@ -1,34 +1,24 @@
-# 原生 Subagent 交付
+# Native Subagent
 
-当前 Lead 能直接创建和管理隔离 Agent 时加载。
+Lead 可以直接创建和管理隔离 Agent 时加载。
 
-## 派单与隔离
+## 派单
 
-每个 Ticket 使用唯一 Agent 标识，并接收一个独立 Dispatch Packet：
+Lead 为每个 Agent 发送一个完整 Dispatch Packet。implementation Agent 只进入指定 Ticket worktree；review/research/test-observation Agent 只读取固定输入。并行前核对 Ticket 依赖与 writable/shared path，不以“不同 Agent”代替路径隔离。
 
-```text
-DISPATCH ticket=<id> wave=<wave> gate=<gate>
-baseline=<sha> branch=<branch> workspace=<workspace-ref>
-ticket_path=<full-ticket-path> evidence_path=<full-evidence-path>
-```
+Packet 对 implementation 明确：
 
-派单块还必须给出项目 `writable_paths`、`read_only_paths`、`shared_paths`、完成的依赖 Evidence、合同 ID、验证矩阵、反向验证、权限和偏差升级方式。Agent 先核对基线与路径，再用不超过 10 行的开工回执记录目标、顺序和最大风险；回执写入 Ticket Evidence，不新增进度文件。
-
-派单必须标记 mutation role。`read-only` Agent 只返回结论；`lead-write` 不把项目写入委派给 Agent；`worker-write` 必须引用已规划的独立 workspace，由其 integration owner 调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。多个并行写入 Ticket 固定同一 `base_sha`，分别使用独立分支和 `workspace_ref`；Agent 只修改获准项目路径，只把 Ticket 推进到 `review`。
-
-## 审查与修正
-
-候选交付必须同时通过：
-
-- 标准轴：正确性、架构、错误处理、安全、依赖和测试质量；
-- 规范轴：Spec、ADR、Ticket、Goal Plan、路径合同和验收映射；
-- Lead 复跑的定向验证与适用回归；
-- 对可能静默失效的门禁执行一次受控反向验证，并恢复绿色基线。
-
-失败时沿用同一 Agent 或建立明确继任者，返回失败标准、命令与退出状态、最小错误、文件位置、正确约束、当前 checkpoint 和必须保留的已通过行为。达到修正上限后标记 blocker，不无限重派。
+- Ticket、Goal Plan、依赖 Evidence 与 `base_sha`；
+- branch、portable `workspace_ref`、writable/read-only/shared paths；
+- 允许 worktree local changes 与 implementation commit；
+- 单元、组件、静态、类型、lint/build 等适用非 E2E 检查；
+- E2E 由 Lead 在 parent-candidate 状态执行；
+- 越界、合同冲突、基线漂移和无法提交时立即停止。
 
 ## 返回
 
-Agent 返回 Ticket 状态、`<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`、`workspace_ref`、checkpoint、commit/PR 引用和待 Lead E2E。Lead 负责候选验收、回归、Gate 判断和状态同步；只有 workspace allocation 指定时才承担 integration owner。逻辑冲突返回契约 owner，不机械选择某一侧版本。
+implementation Agent 返回 Ticket ID、workspace locator、最终 commit、`git status`、修改路径、命令/结果、未运行项、冲突和恢复条件，不写 SpecDev Evidence。只读 Agent 返回固定 checkpoint、findings、来源、命令观察和未验证项。
 
-**完成标准**：派单、工作区、路径修改、审查、修正和返回均可由 Goal Plan、Evidence 与 change 状态恢复。
+Lead 重读 worktree、验证 commit 可达且 tip 一致、检查实际 diff 与路径合同，再决定接受、修正或 blocked。接受的 implementation 候选进入 dev-worktree candidate-merge；只读结论由 Lead 写入对应权威工件。
+
+**完成标准**：原生 Agent 的写入与返回均绑定一个 Packet；Lead 可以独立复现其事实声明。

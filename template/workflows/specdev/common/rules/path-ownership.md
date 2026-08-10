@@ -1,35 +1,33 @@
 # 路径所有权与并发规则
 
-路径所有权是并行执行的硬边界，不是文件预测清单。
+路径所有权是逻辑写入边界；worktree 是物理隔离边界，两者不能互相替代。
 
 ## 1. 四类路径
 
-- `expected_changes`：预计修改的项目路径，仅用于导航；每项写成项目相对 Path 标签。
-- `writable_paths`：实现者获准修改的项目路径或 glob，是硬约束。
-- `read_only_paths`：建立上下文但不得修改的项目路径。
-- `shared_paths`：多个 Ticket 可能需要修改的项目路径，必须指定唯一 owner。
+- `expected_changes`：导航预测；
+- `writable_paths`：当前 Ticket implementation owner 可写的硬边界；
+- `read_only_paths`：只读上下文；
+- `shared_paths`：多个 Ticket 可能触达且必须有唯一 owner 的项目路径。
 
-示例：
-
-```yaml
-expected_changes: ["<Path>src/auth/session.ts</Path>"]
-writable_paths: ["<Path>src/auth/**</Path>"]
-read_only_paths: ["<Path>src/users/**</Path>"]
-shared_paths: ["<Path>package.json</Path>"]
-```
+所有项目路径使用项目相对 Path 标签。根依赖清单、锁文件、根导出、共享 schema、迁移索引、全局路由和跨 Ticket 合同默认视为 shared。
 
 ## 2. 所有权规则
 
-1. 可能并行的 Ticket，其 `writable_paths` 不得相交。
-2. glob 与具体路径按覆盖关系判断，不得只比较字符串。
-3. 根依赖清单、锁文件、根导出、共享 schema、迁移索引、全局路由和跨 Ticket 合同文件默认视为 shared。
-4. shared path 只能由专用 owner Ticket 或 Goal Plan 明确指定的唯一集成 owner 修改；消费者 Ticket 只读。委派 Goal Plan 可以把该 owner 指定为 Lead，但普通计划不预设角色。
-5. 需要越界时先停止，按 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 提出 ownership change；不得先改后报。
-6. 前置 Ticket 改变目录结构后，后续 Ticket 开始前重新解析项目路径；若授权范围语义未改变，可只更新导航路径。
-7. 不得把“最后解决合并冲突”当作所有权方案。
+1. 可能并行的 Ticket，其 writable paths 不得相交；glob 按覆盖关系判断。
+2. shared path 只由专用 owner Ticket 修改；消费者 Ticket 只读。Lead 负责集成，不以冲突解决替代 shared owner。
+3. implementation subagent 只写其 Packet 与 Ticket 授权路径；Lead 自行实现也受同一边界约束。
+4. review/research/test-observation agent 只读项目与 SpecDev 工件。
+5. 越界前停止并按 deviation control 提出 ownership change；不得先改后报。
+6. 上游 Ticket 改变目录/合同后，下游基于已集成父分支重新解析路径和 preflight。
 
-## 3. Worktree 与分支
+## 3. Ticket worktree
 
-Worktree 只在存在可观察隔离需求时使用：并行写入、保护当前本地状态、一次性实验、后台恢复、provider 要求或用户明确要求。只读调查和没有其他隔离事实的顺序写入默认共用当前工作区。Agent Team、Ticket 数量和泛化的“更安全”都不构成隔离理由。Worktree 防止工作区污染，路径所有权防止逻辑冲突，两者不能互相替代。
+每个进入 I-implement 的 Ticket 都使用唯一来源 worktree `specdev-worktree/<ticket-id>`，无论是否并行、是否派遣 subagent。Ticket 切片是隔离依据；Agent Team 不是 worktree 触发器。没有 Ticket 的获批 Direct Spec 可由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
 
-生命周期由调用方明确的 workspace owner 与 integration owner 按 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。`single-session` 通常把两者映射为主会话；`lead-team` 可以把 integration owner 映射为 Lead，但角色选择不决定是否使用 worktree。同一 current workspace 只允许一个项目与 SpecDev 状态写入 owner；Worker 要写项目文件时必须拥有独立 workspace。编排规则位于 `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`。
+workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。只有 Lead 写 SpecDev 状态、建立 parent-candidate、运行适用 E2E 并推进父分支。生命周期由 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。
+
+## 4. 并发
+
+implementation subagent 同时最多三个，Lead 不计入；实际上限取 Goal Plan、config 和平台能力最小值。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+
+**完成标准**：每个项目写入映射到唯一 Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。

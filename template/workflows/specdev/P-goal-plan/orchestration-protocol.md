@@ -1,71 +1,56 @@
 # Goal Plan 核心编排协议
 
-本文件定义所有 Goal Plan 都需要的 DAG、Wave、Gate、路径所有权、Evidence 返回和集成规则。它不建立 Lead/subagent 角色或 Agent 交付合同。
+本文件定义 DAG、Wave、Gate、路径所有权、Ticket worktree、Evidence 返回和父分支集成队列。
 
 ## 1. DAG 与关键路径
 
-- 依赖权威来自 `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` frontmatter 的 `blocked_by`；
-- `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是投影，不是第二套依赖真相；
+- 依赖权威来自 Ticket frontmatter 的 `blocked_by`；Tickets Map 是投影；
 - 计算根节点、扇出、汇合点、关键路径、共享合同 owner 和最终收缩点；
-- 依赖只表示真实开始条件，不表示偏好、人员交接或“最好先做”；
-- 无法独立保持可验证状态的迁移批次必须有隔离集成策略和最终集成 Gate。
+- 依赖只表示真实开始条件，不表达偏好、Agent 交接或“最好先做”；
+- 无法独立保持可验证状态的迁移批次必须有明确 Gate 和恢复策略。
 
-## 2. Wave
+## 2. Wave 与实现并发
 
-Wave 内 Ticket 必须同时满足：
+Wave 内 Ticket 必须 Ready、依赖 Evidence 完整、项目写路径不相交、shared owner 已稳定、适用 Gate 已打开且基线一致。
 
-- `ready: true`；
-- 所有依赖已完成并有 Evidence；
-- 项目写路径不相交；
-- shared path 已由 owner 稳定；
-- 适用 Gate 已打开；
-- 源码基线和外部合同版本一致。
-
-最大并发从 `<Path>{roots.state}/specdev/config.json</Path>` 读取。并发上限是资源约束，不是必须填满的目标；Wave 也不意味着必须使用多个 Agent。
-
-Wave、Agent Team 和 worktree 是三个不同概念。Wave 只表达依赖上可并发；是否委派由 coordination mode 决定，是否隔离写入由 workspace strategy 决定。只读并行不需要 worktree；同一 current workspace 只能有一个项目与状态写入 owner。
+Lead 根据当前事实决定自行实现或派单。同时活跃的 implementation subagent 不得超过 Goal Plan 与 config 中较小的上限，且绝不超过三个；Lead 不计入。Wave 是可并发性，不是必须填满的目标。只读 review/research/test-observation agent 不写固定数字上限，但不得写项目或 SpecDev 状态，也不得争用同一可变测试环境。
 
 ## 3. Gate
 
-Gate 由可验证状态定义，不用“完成若干 Ticket”作为唯一条件。每个 Gate 必须写明业务或工程状态、开启条件、关闭证据、阻塞范围、owner/批准人和失败恢复。
+Gate 用可验证状态定义，必须写明：工程/业务状态、开启条件、关闭证据、阻塞范围、Lead/批准人和失败恢复。常见 Gate 包括共享合同稳定、首条垂直路径、迁移完成、旧调用点归零、候选合并通过、发布就绪和观察期结束。
 
-常见 Gate 包括共享合同稳定、首条垂直路径通过、迁移完成、旧调用点归零、发布就绪和观察期结束。名称按项目语义自定义。
+## 4. Shared path 与合同
 
-## 4. Shared path 与共享合同
+遵循 `<Path>{roots.workflows}/specdev/common/rules/path-ownership.md</Path>`：
 
-规则遵循 `<Path>{roots.workflows}/specdev/common/rules/path-ownership.md</Path>`：
+1. 专用 owner Ticket 修改共享路径；
+2. 在其 worktree 形成 commit 与非 E2E 证据；
+3. 通过 Lead candidate-merge 进入父分支；
+4. 下游 Ticket 基于新的父分支 checkpoint 创建或刷新 worktree；
+5. 共享合同变化时暂停消费者并修订上游，不让多个执行者竞争写入。
 
-1. 由专用 owner Ticket 或计划指定的唯一 owner 修改共享路径；
-2. 形成可验证稳定基线；
-3. 下游消费者在新基线上重新运行 preflight；
-4. 才允许扇出或继续后续 Ticket；
-5. 共享契约需要变化时暂停消费者并修订上游，不通过多个执行者同时修改解决。
+## 5. 每 Ticket worktree
 
-## 5. Expand-contract
+每个进入 I-implement 的 Ticket 建立唯一 `specdev-worktree/<ticket-id>`。记录 workspace/implementation/integration owner、`base_sha`、父分支、branch、portable locator、source checkpoint、candidate/result SHA 与验证状态。Lead 自行实现时仍进入该 worktree；subagent 身份不决定是否隔离。
 
-标准顺序：
+同一 Ticket 在 candidate 验证失败后保留来源 worktree并继续修正。新的 source commit 替换当前 `source_checkpoint`，旧 commit 继续由 Git/Evidence 可追溯。成功集成不自动清理 branch/worktree。
 
-1. **expand**：新旧形式并存，既有调用者继续工作；
-2. **migrate**：按可独立验证的影响范围分批迁移；
-3. **observe**：扫描旧调用点、旧数据或旧协议使用量；
-4. **contract**：收缩条件有证据后删除旧形式；
-5. **verify**：运行兼容、数据、回归、监控和回滚检查。
+## 6. 父分支集成队列
 
-收缩不得仅以“所有迁移 Ticket 已完成”为依据。
+Lead 串行集成 Ready 候选：
 
-## 6. Ticket 执行、Evidence 与集成
+1. 冻结最新 `parent_before_sha`；
+2. 在 Lead-owned parent integration checkout 组合父分支与 `source_checkpoint`；
+3. 生成可定位的 `candidate_sha`；
+4. 在 candidate 状态运行集成检查和适用 E2E；
+5. 重读父 HEAD；若变化，将候选标记 `stale` 并重建；
+6. 检查通过且父 HEAD 未变时，父分支 fast-forward 到 candidate；
+7. 重读父 HEAD/tree，写入 `result_sha` 后才允许 Ticket Done。
 
-每个计划 Ticket 必须写明开始条件、依赖 Evidence、项目路径合同、workspace 分配、适用 Gate、必跑验证、Evidence 目标和失败恢复。实际执行仍由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 与 Ticket 拥有，不在 Goal Plan 复制局部施工步骤。
+父分支是 source checkpoint 的祖先时 candidate/result 可等于 source SHA，方法为 `fast-forward`；否则 candidate 必须是独立 merge commit。候选失败时父分支保持不变，Ticket 回到 `in_progress` 或 `blocked`。
 
-Current workspace Ticket 由该 workspace 的唯一写入 owner 顺序执行。隔离 Ticket 的创建、恢复和本地集成由 workspace addendum 与 dev-worktree Skill 管理；integration owner 是核心编排角色，不预设为 Lead。`single-session` 时通常映射为主会话，`lead-team` 时通常映射为 Lead。
+## 7. Expand-contract
 
-每个实现者完成或阻塞时：
+标准顺序为 expand → migrate → observe → contract → verify。每批迁移独立 commit、candidate 验证和父分支集成；收缩依据旧调用/数据/协议归零证据，不依据 Ticket 数量推断。
 
-1. 写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`；
-2. 同步 Ticket、Tickets Map、Goal Plan 和 change 状态；
-3. 检查依赖、路径所有权、合同覆盖和适用 Gate；
-4. 返回 Ticket 状态、Evidence 路径、代码引用、未验证项和恢复条件。
-
-最后一个计划内 Implement 按 `<Path>{roots.workflows}/specdev/P-goal-plan/completion-control.md</Path>` 汇总核心计划的 Gate 和 Evidence。Lead Team 的候选交付验收由独立委派协议拥有；worktree 的 Git 集成由角色中立的 workspace 协议拥有。
-
-**完成标准**：每个执行结果可追溯到代码状态和 Evidence；single-session Goal Plan 可以在不建立角色交付合同的情况下完整恢复和完成。
+**完成标准**：每个 Ticket 从父基线、source commit、candidate 到 result 都可恢复；父分支只包含已通过候选门禁的 Ticket。

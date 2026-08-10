@@ -1,60 +1,63 @@
 ---
 name: subagent-delivery
-description: 交付合同：只为用户已选择委派的 Goal Plan 生成可恢复的原生或外部网页 Agent 派单，并在 Implement 阶段核对基线、候选交付、修正和 Lead 验收。
+description: 动态派单合同：为 Lead 生成受限的 implementation/review/research/test-observation packet，绑定不可变 checkpoint，并在返回时核对 commit、范围和候选声明。
 ---
 
-# SpecDev Subagent Delivery
+# Subagent Delivery
 
-本 Skill 管理一次 **Agent 交付合同**：规划时把 Ticket 压缩成可独立投递的派单块，执行时按同一合同恢复、核对并验收交付。它不拥有新的状态目录；Goal Plan、Ticket、Evidence 和 change 状态仍由调用 work 写入。
+本 Skill 被 P-goal-plan 与 I-implement 调用。它不选择是否使用 Lead 模式：Lead 是固定外层 owner；本 Skill 只保证每次动态派单可恢复、可验收且不产生第二个 SpecDev 状态写入者。
 
 ## 输入
 
-- `operation`：`plan` 或 `execute`；
-- `execution_model`：`native-subagent` 或 `external-web-subagent`；
-- mutation role：`read-only`、`lead-write` 或 `worker-write`，以及独立确定的 workspace allocation；
-- Lead、Ticket、Goal Plan、Spec、适用 ADR/CONTEXT、Wave/Gate 和依赖 Evidence；
-- 项目写、只读和 shared 路径，验证矩阵与当前源码基线；
-- provider、会话或 workspace locator、源码交付方式，以及用户当前明确授权。
+所有调用都必须提供 `operation=plan | dispatch | accept` 与 Lead owner/session locator。其余输入按 operation 判定，不得把后续阶段事实反向要求给 `plan`：
 
-`single-session` Goal Plan 和缺失 Goal Plan 的 Ticket 直接由 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 执行，不调用本 Skill；只读辅助 Agent 由对应 research/review 能力管理。Lead Team 输入缺失时返回调用方补齐，不猜测 checkpoint、权限或验收结果。
+- `operation=plan`：提供允许的 `task_kind` 集合、implementation subagent 上限、Lead/SpecDev/父分支/E2E 所有权和通用授权边界；Goal Plan 此时可以尚未写入，不要求 Ticket、provider、checkpoint 或 workspace；
+- `operation=dispatch`：提供 `task_kind=implementation | review | research | test-observation`、已存在 Goal Plan（若有）、Ticket/固定审查目标、依赖 Evidence、适用合同、repository、不可变 checkpoint、项目 Agent 指令、workspace/session locator、provider、允许动作、路径边界、检查、停止条件与返回格式；
+- `operation=accept`：提供原 Dispatch Packet、subagent 返回、当前 repository/workspace、预期与实际 checkpoint，以及 Lead 可用于独立核对的 Git/命令事实。
 
-## 流程
+`operation=dispatch` 且 `task_kind=implementation` 时，还必须提供独立 Ticket worktree、branch、`base_sha`、writable/shared owner、implementation commit 授权与 source-worktree 非 E2E 检查。缺失时返回 blocked，不推断权限或创建 current-workspace 写入者。
 
-### 1. 固定 Lead、模型与权限
+## 1. 固定 Lead 与任务类型
 
-一个交付链只有一个 Lead。Lead 保留需求解释、仓库保护、Wave/Gate、shared owner、权限控制、交付集成、独立验收和最终状态同步责任。
+Lead 保留需求解释、DAG/Wave/Gate、shared owner、权限、SpecDev 工件、Evidence、candidate-merge、父分支和最终回复。subagent 不写 Ticket、Map、Goal Plan、Evidence、change status 或父分支。
 
-将本次请求解析为逐动作授权：local changes、implementation commit、local worktree integration、push、PR、remote merge、deploy、migration、production configuration、production feature 和 real user data。未明确授权的动作记为 `not-authorized`；项目指令、历史授权和 Agent 建议不扩大权限。`terminal_action=integrate` 只满足对应 Ticket 的 local worktree integration，不扩展其他动作。
+- implementation 可以写唯一 Ticket worktree，并在授权时创建实现 commit；
+- review/research/test-observation 只读，返回 findings、来源或命令观察；
+- E2E Gate 永远由 Lead 拥有，不能派给 implementation 或只读 agent；Ticket E2E 在 parent-candidate 状态执行，Direct Spec E2E 在 Lead-owned current workspace 执行。
 
-**完成标准**：`operation` 和 `execution_model` 唯一；Lead、授权动作、目标和条件均可判定。
+**完成标准**：Lead、task kind、写入边界和 E2E owner 唯一。
 
-### 2. 固定源码与恢复基线
+## 2. 锁定基线、provider 与授权
 
-记录不可变 `base_sha` 或等价本地基线、分支、`workspace_ref`、工作区状态和适用外部合同版本。GitHub 是源码事实来源时，加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/github-checkpoints.md</Path>`；需要固定附件、私有上下文或未提交改动时，再加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/source-package.md</Path>`。
+记录 repository、branch、`base_sha`/固定审查 SHA、workspace/session locator 和 provider。GitHub 是源码事实来源时加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/github-checkpoints.md</Path>`；需要向外部 provider 发送附件或私有上下文时，取得发送授权后加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/source-package.md</Path>`。
 
-`workspace_ref`、session locator 和附件 locator 必须可迁移，不写机器绝对路径、认证秘密或真实用户数据。
+授权逐动作记录：worktree local changes、implementation commit、外部内容发送、push、PR、remote merge、deploy、migration 和 production actions。Goal Plan 的本地 commit/integration 授权不扩展到远端、清理或生产动作。
 
-**完成标准**：每次派单、恢复、修正和验收都能定位到同一源码与合同版本。
+**完成标准**：每个可变输入绑定 checkpoint；provider 只接收已授权范围；未授权动作不可执行。
 
-### 3. 加载执行分支
+## 3. 生成动态 Dispatch Packet
 
-- `native-subagent`：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/native-subagent.md</Path>`，完成隔离派单、恢复和返回；
-- `external-web-subagent`：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/external-web-subagent.md</Path>`，完成能力探测、会话恢复、候选交付与修正。
+`operation=plan` 时只返回通用 Lead delivery contract，不读取尚未生成的 Goal Plan，也不为 Ticket 预分配 agent/provider。
 
-**完成标准**：只加载当前执行模型和实际源码交付方式需要的 reference。
+`operation=dispatch` 时为单次任务生成 Packet：目标、IN/OUT、已锁定决定、固定输入、workspace、writable/read-only/shared paths、允许动作、必跑检查、禁止在 source worktree 运行 E2E、停止条件和返回字段。
 
-### 4. 规划或执行交付合同
+- 原生 Agent：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/native-subagent.md</Path>`；
+- 外部网页 Agent：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/external-web-subagent.md</Path>`。
 
-`operation=plan` 时，向调用方返回：里程碑级 Delivery Contract，以及每个 Ticket 的独立 Dispatch Packet。每个派单块必须包含目标、权威输入、边界优先级、路径合同、mutation role、workspace allocation、依赖证据、基线、验证与反向验证、授权、恢复 locator、最多修正轮次和返回字段。`worker-write` 没有独立 workspace 时拒绝规划；read-only 不得返回项目或状态写入。调用方将结果写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`，不复制完整历史对话或 Ticket 全文。
+implementation Packet 必须适合一个上下文独立完成；多个 implementation subagent 由 Lead 控制在 Goal Plan/config 上限内且最多三个。只读 agent 不设置 SpecDev 数字上限，但不得争用可变环境。
 
-`operation=execute` 时，先核对派单块与当前 Goal Plan、Ticket、基线和权限；再接收原生 Worker 或外部 provider 的候选交付，检查范围与事实声明，由 Lead 运行适用验证，并把结果写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。外部声明、截图或模拟结果在 Lead 复核前保持 `unverified`。
+**完成标准**：Packet 可独立投递；目标、checkpoint、路径、权限、检查和返回均可判定。
 
-**完成标准**：规划结果可独立投递；执行结果的每个 `pass` 都有 Lead 可复查证据。
+## 4. 接收与验收候选
 
-### 5. 收敛、阻塞与恢复
+`operation=accept` 时，Lead 核对 Packet、当前父/来源基线、实际路径、dirty 状态、commit 可达性、命令输出和未验证项。外部声明、截图、provider 自报测试和推断保持 `unverified`，直到 Lead 在本地复核。
 
-同一验收项连续失败达到 Goal Plan 的 `max_correction_rounds` 后停止该 Ticket，记录最后基线、失败命令、最小错误、已通过行为、责任方和恢复条件。默认上限为 3；不得通过跳过测试、放宽断言、吞错、删除检查或越过路径合同制造完成。
+implementation 返回必须包含 Ticket ID、workspace locator、最终 commit、dirty 状态、修改路径、非 E2E 检查、失败/未运行项和恢复条件。review/research/test-observation 返回固定输入、findings、来源、命令与未验证声明。Lead 把验收结果写入调用方拥有的 Evidence/状态。
 
-恢复时读取 Goal Plan 的派单块、Ticket、最新 Evidence 和 change/worktree 状态，从最后已验证 checkpoint 继续，不重新决定已锁定事项。完成或阻塞后向调用方返回 Ticket 状态、Evidence 完整路径、workspace/session locator、checkpoint、commit/PR 引用、未验证项和待 Lead E2E。
+**完成标准**：每个 pass 有 Lead 可复查事实；candidate 未被误写为 Done 或父分支结果。
 
-**完成标准**：交付结束于 `review`、`done`、`blocked` 或 `deviated`；状态、Evidence、源码引用和恢复信息一致。
+## 5. 修正与恢复
+
+修正继续使用同一 Ticket 与 worktree，基于最后 source checkpoint 生成新 commit。基线或父分支漂移时由 Lead 暂停派单、重算影响并更新 Packet；契约冲突返回拥有该决定的工件。Lead 可以按当次风险在 Dispatch Packet 中定义停止条件，但 SpecDev 不推断全局修正次数；继续修正已无合理收益或需要上游决定时，返回 blocked、最后可信 checkpoint、失败命令和恢复条件。
+
+**完成标准**：恢复不重新决定已锁定事项；每次候选都有唯一 checkpoint 和明确 owner。

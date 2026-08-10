@@ -43,25 +43,25 @@ node scripts/migrate-runtime-state.mjs inspect --project-root <project-root>
 
 ### 3. 生成确定性计划
 
-生成 schema v1 JSON plan。`backup_manifest_sha256` 锁定 inspect 现场；`source_decisions` 必须逐项覆盖 manifest 中的每个文件且不得包含 `unresolved`；`actions` 仅使用脚本支持的动作：
+生成 schema v2 JSON plan。`backup_manifest_sha256` 锁定 inspect 现场；`source_decisions` 必须逐项覆盖 manifest 中的每个文件且不得包含 `unresolved`；每个 action 必须以 `source_decision` 显式引用唯一来源决策，且动作、decision disposition 与目标一一对应：
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "backup_manifest_sha256": "<inspect 返回的 sha256>",
   "source_decisions": [
     {"path": "config.json", "disposition": "merge-json", "target": "config.json"},
+    {"path": "state/specdev/context.md", "disposition": "restore", "target": ".speculo/specdev/context.md"},
     {"path": "state/workspace.json", "disposition": "keep-current", "target": ".speculo/workspace.json"}
   ],
   "actions": [
-    {"kind": "copy", "from": "state/specdev/context", "to": ".speculo/specdev/context", "expected_target": "absent"},
-    {"kind": "replace-json", "to": ".speculo/specdev/status.json", "value": {}, "expected_target": "file:<sha256>"},
-    {"kind": "keep-current", "to": "config.json", "expected_target": "file:<sha256>"}
+    {"kind": "copy", "source_decision": "state/specdev/context.md", "from": "state/specdev/context.md", "to": ".speculo/specdev/context.md", "expected_target": "absent"},
+    {"kind": "replace-json", "source_decision": "config.json", "to": "config.json", "value": {}, "expected_target": "file:<sha256>"}
   ]
 }
 ```
 
-`from` 必须相对 backup root；`to` 只能是 `config.json` 或 `.speculo/` 内非受保护路径。每个 action 都使用 `fingerprint` 输出锁定 `expected_target`；目标相互重叠时拆成不重叠动作。Plan 写入调用方声明的临时位置，报告保存等价 Markdown 表格；正式 state 不保存第二份 plan。
+`from` 必须与 `source_decision` 相同且相对 backup root；`copy ↔ restore`、`replace-json ↔ merge-json|replace-json`、`keep-current ↔ keep-current`、`remove-current ↔ remove-current`。只有 `keep-current` 决策可省略 action。`to` 只能是 `config.json` 或 `.speculo/` 内非受保护路径。每个 action 都使用 `fingerprint` 输出锁定 `expected_target`；目标相互重叠时拆成不重叠动作。Plan 写入调用方声明的临时位置，报告保存等价 Markdown 表格；正式 state 不保存第二份 plan。
 
 **完成标准**：计划可由脚本解析，路径均在授权边界内，受管理静态资产和 `back/` 不会成为目标。
 

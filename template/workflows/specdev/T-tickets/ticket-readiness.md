@@ -11,10 +11,12 @@
 - [ ] 高影响未决问题为零。
 - [ ] `blocked_by` 指向存在的 Ticket，DAG 无环。
 - [ ] `expected_changes`、`writable_paths`、`read_only_paths` 和 `shared_paths` 中的项目路径都使用项目相对 Path 标签。
-- [ ] `writable_paths` 非空，或明确为仅文档、调查或无代码变更。
+- [ ] `writable_paths` 非空；纯 review/research 不伪装成 I-implement Ticket。
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
-- [ ] 仅当用户界面交互受影响时定义 E2E 与当前执行 owner；Ticket 不预设 Lead/Worker，委派 Goal Plan 可以显式改由 Lead 集成。
+- [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
+- [ ] Source-worktree 验证只包含单元、组件、静态、类型、lint/build 等非 E2E 检查；E2E owner 固定为 Lead，运行环境固定为 parent-candidate。
+- [ ] Ticket 完成合同包含独立 worktree、implementation commit、candidate-merge、父分支 result SHA 和 Lead Evidence。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用完整根变量 Path 标签。
@@ -30,7 +32,7 @@
 
 - [ ] 迁移顺序、兼容窗口、监控、回滚或前向恢复、收缩条件和批准点完整。
 - [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
-- [ ] 跨 Agent 路径所有权和集成 Gate 明确。
+- [ ] 跨 implementation owner 的路径所有权和 parent-candidate 集成 Gate 明确。
 - [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。
 
 ## Ready 状态

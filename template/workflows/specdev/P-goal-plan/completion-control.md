@@ -1,58 +1,40 @@
-# Goal Plan 完成、证据与恢复控制
+# Goal Plan 完成、证据与恢复
 
-## 1. Outcome and Authority
+## 1. 整体 Definition of Done
 
-Goal Plan 用紧凑摘要表达业务目标、受众、所有 Ticket 完成后的可观察终态、关键约束、非目标、权威来源、冲突规则和伪完成判据，不复制 Spec 的完整用户故事。
+至少要求：
 
-## 2. 整体 Definition of Done
+- Spec 验收合同全部有通过 Evidence 或明确批准的 deferred；
+- 所有非 cancelled Ticket 都有 source commit、通过的 candidate 和父分支 result SHA；
+- shared path、接口、数据、兼容、迁移、调用点与回滚合同闭合；
+- 项目定向检查、受影响回归、类型检查、lint/build 和适用 E2E 无未经批准退化；
+- change 状态、Ticket、Map、Goal Plan、Evidence 与实际 Git 状态一致；
+- 没有未集成 source checkpoint、活动 integration candidate 或未决高影响偏差。
 
-整体完成至少覆盖：
+无需改动的 Ticket 必须转为 `cancelled` 并记录来源事实；不得用 Evidence-only Done 或 empty commit 关闭。
 
-- 所有计划内 Ticket 完成，cancelled 或 deferred 项有批准；
-- 所有 Spec 验收合同和外部符合性要求有 Evidence；
-- 项目类型检查、静态检查、测试、lint、构建、适用 CI 和受影响 E2E 完成，基线没有未经批准的退化；
-- 可静默失效的关键门禁完成受控反向验证并恢复绿色；
-- 迁移、兼容、调用点清零、监控、回滚和不可逆批准完成；
-- 无未批准偏差、未处置高风险残余问题或伪装成通过的 `unverified` 声明；
-- Ticket、Map、Goal Plan、Evidence、代码事实和状态一致。
+## 2. 两层验证
 
-## 3. Gate 关闭与 change 完成
+- `source-worktree`：implementation owner 运行 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查；
+- `parent-candidate`：Lead 运行受影响集成/回归和 Ticket 标记 required 的 E2E。
 
-每个 Gate 关闭时汇总覆盖 Evidence，检查合同、共享接口、数据、兼容、迁移和调用点，运行里程碑验证和适用 E2E，执行必要反向验证，审查偏差/风险/恢复能力，获取适用人工批准，并同步 Goal Plan、Map 和状态。
+Evidence 必须记录命令运行环境。任何在 source worktree 声称的 E2E pass 都无效；subagent 返回的测试结果在 Lead 核对前保持候选状态。
 
-最后一个 Gate 关闭后加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`：
+## 3. Gate 关闭
 
-- `coordination_mode: single-session` 时，由最后一个计划内 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>` 汇总并完成 change；
-- `coordination_mode: lead-team` 时，由 Lead 在独立验收后完成 change；旧 Goal Plan 缺少该字段时，继续按完整 Delegated Execution Addendum 是否存在推导。
+Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candidate/result SHA、适用 E2E、反向验证、偏差、风险和批准。Gate 不以“完成若干 Ticket”作为唯一关闭条件。
 
-若 triage 的 `external_action` 为 `pending-close` 或 `close-failed`，下一 Work 为 `<Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path>`，否则进入 Archive。远程动作不参与本地 Gate 判断。
+## 4. 失败与恢复
 
-## 4. 不可协商约束
+- source 检查失败：保留 worktree，继续当前 Ticket；
+- candidate 冲突或检查失败：父分支不动，integration 记 `failed`，Ticket 回到 `in_progress`/`blocked`；
+- 父 HEAD 漂移：integration 记 `stale`，从最新父分支重建并重跑；
+- E2E required 失败：父分支不动，保留失败命令、candidate SHA 和恢复条件；
+- 命中当次 Dispatch Packet/候选协议的停止条件、继续修正已无合理收益或需要新产品决定：停止受影响 Wave，按 deviation control 返回契约 owner；
+- Lead 会话变化：读取 Goal Plan、Ticket、change worktree 状态与最新 Evidence，从最后不可变 checkpoint 恢复。
 
-只记录跨多个 Ticket 且不可由实现者改变的规则，例如数据完整性、wire format 兼容、旧协议收缩条件、shared owner、安全要求、发布窗口、回滚演练和批准点。每条约束说明来源和违反后果；可由实现者沿惯例选择的事项写入 Guidance。
+## 5. Change 完成 owner
 
-## 5. 偏差与暂停
+Lead 是 Goal Plan change 的唯一完成 owner。没有 Goal Plan 的单 Ticket/Direct Spec 由当前 I-implement owner 按 change completion 规则完成。Archive 不补造完成证据。
 
-偏差遵循 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>`。跨 Ticket 偏差还要说明暂停哪些 Wave/Ticket、重新打开哪个 Gate、哪些执行者需要新基线、哪些 Evidence 失效和恢复条件。
-
-## 6. 风险与恢复
-
-每个高风险项写明触发信号、事故半径、预防、检测、恢复、owner 和批准点。迁移或发布计划必须给出回滚不可行时的前向恢复方案。
-
-恢复时依次读取 Goal Plan、当前 Ticket、最新 Evidence 和 change 状态，从最后已验证事实继续，不重复询问已确认事项，也不创建额外进度或阻塞文件。委派专属的 checkpoint、locator 和修正轮次由委派附录管理。
-
-## 7. 进度与决策回报
-
-使用可核验状态，不使用主观百分比：
-
-```text
-WAVE_STATUS wave=<n> ready=<ids> active=<ids> done=<ids> blocked=<ids>
-GATE_STATUS gate=<name> state=open|closed evidence=<paths> risks=<summary>
-TICKET_STATUS id=<id> state=<state> evidence=<path> deviation=<none|id>
-BLOCKER id=<id> owner=<owner> needed=<decision-or-input> impact=<scope>
-DECISION id=<id> owner=<owner> status=pending|approved|rejected impact=<scope>
-```
-
-Lead Team 的交付状态格式由委派协议提供，不加入 single-session Goal Plan。
-
-**完成标准**：进度可由权威工件恢复；普通计划由最后一个 Implement 完成，委派计划由 Lead 完成；所有通过、阻塞和未验证声明均能定位到具体 Evidence 与代码事实。
+**完成标准**：所有通过、阻塞、取消和未验证声明均定位到权威工件、命令与 Git checkpoint；失败不会推进父分支或 Done。

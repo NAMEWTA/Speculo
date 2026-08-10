@@ -1,90 +1,102 @@
 # Evidence: <Ticket ID> — <Ticket title>
 
+Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`：Ticket、Goal Plan、source worktree 与 candidate 字段写“不适用：Direct Spec”，以实施前基线和 current workspace 最终 checkpoint 代替 source/candidate/result 链；第 5、7 节分别记录 current workspace 定向检查和 Lead 最终回归/E2E，不伪造 Ticket 状态。
+
 - **Change：** `<change>`
 - **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`
 - **Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
-- **Tickets Map：** `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
-- **基线/分支：**
-- **Worktree 引用：** 不适用 / `<workspace_ref>`
-- **实现者：**
-- **开始/结束：**
-- **状态：** review / done / blocked / deviated
+- **Lead：** `<owner-or-session-locator>`
+- **Source worktree/branch：** `<workspace_ref>` / `<branch>`
+- **Base/source/candidate/result SHA：** `<sha>` / `<sha>` / `<sha>` / `<sha>`
+- **状态：** review / done / blocked / deviated / cancelled
 
 ## 1. 实现摘要
 
-用用户可观察行为和已锁定契约说明实际完成了什么，不复述提交日志。
+用可观察行为与已锁定合同说明实际完成内容。Cancelled 时说明为何无需实现及其权威来源。
 
-## 2. 修改范围
+## 2. Lead Dispatch And Candidate Return
+
+- **Implementation owner：** Lead / `<agent/provider>`
+- **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
+- **允许动作：** worktree changes / implementation commit / ...
+- **返回：** commit、dirty 状态、修改路径、非 E2E 命令、未验证项与恢复条件
+- **Lead 独立核对：** pass / fail；实际读取与命令摘要
+- **只读 Agent findings：** 无 / 固定输入、来源、结论、Lead 核对
+
+subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。
+
+## 3. 修改范围与路径所有权
 
 | 路径 | 所有权 | 改动目的 |
 |---|---|---|
 | `<Path>src/example.ts</Path>` | writable / shared:<owner> | ... |
 
-## 3. 验收与合同映射
+- **read-only 修改：** 无
+- **未声明路径：** 无
+- **生成文件/锁文件：** 无 / 来源与 owner
+
+## 4. 验收与合同映射
 
 | Contract / Acceptance ID | 验证接缝 | 证据 | 结果 |
 |---|---|---|---|
-| AC-... | ... | 测试、截图、日志或人工检查摘要 | pass / fail / not-run |
+| AC-... | ... | 测试、日志或人工检查摘要 | pass / fail / not-run |
 
-每个 Ticket 验收项必须恰好落到一行；不能用“一般测试已通过”替代逐项证据。
+每个 Ticket 验收项恰好落到一行。
 
-## 4. 验证执行
+## 5. Source-worktree 验证
 
-| 命令或步骤 | 运行环境 | 结果 | 摘要或附件 |
+| 命令或步骤 | 运行环境 | 结果 | 摘要 |
 |---|---|---|---|
-| ... | ... | pass / fail / not-run | ... |
+| ... | source-worktree | pass / fail / not-run | ... |
 
 - **失败后修复与重跑：** 无 / ...
-- **未运行检查：** 无 / 原因与风险 ...
-- **E2E：** 不适用 / 场景、执行者与结果
-- **反向验证：** 不适用 / 受控失败信号与恢复结果
-- **外部声明：** 无 / 已核对 / `unverified`：原因
+- **未运行检查：** 无 / 原因与风险
+- **E2E：** 禁止在 source-worktree 声明 pass；此处固定为 not-run: parent-candidate-owned
 
-## 5. 双轴审查
+## 6. 双轴审查
 
 ### 标准轴
 
+- **固定输入：** `<base_sha>..<source_checkpoint>`
 - **结果：** pass / request-changes
-- **来源：** 仓库标准 + Fowler baseline
-- **Findings：** 无 / ...
-- **修正与重跑：** 不适用 / ...
+- **Findings 与修正：** 无 / ...
 
 ### 规范轴
 
+- **固定输入与来源：** Spec / Ticket / Goal Plan / source
 - **结果：** pass / request-changes / skipped:no-spec
-- **来源：** Spec / Ticket / source / 无
-- **Findings：** 无 / ...
-- **修正与重跑：** 不适用 / ...
+- **Findings 与修正：** 无 / ...
 
-两轴保持独立顺序，不合并或跨轴重排 finding。
+两个轴隔离并按上述顺序记录。
 
-## 6. 路径所有权审计
+## 7. Parent-candidate 集成验证
 
-- **writable 内修改：**
-- **shared 修改与 owner 批准：** 无 / ...
-- **read-only 修改：** 无
-- **未声明路径：** 无
-- **生成文件或锁文件：** 无 / 来源与 owner ...
+| 项目 | 结果 |
+|---|---|
+| Parent before SHA | `<sha>` |
+| Source/candidate SHA | `<sha>` / `<sha>` |
+| Candidate branch/workspace | `<branch>` / `<workspace_ref>` |
+| Method/conflicts | fast-forward / merge-commit；无 / paths |
+| Candidate checks | 命令、运行环境 `parent-candidate`、结果 |
+| E2E disposition | required / not-required: reason |
+| E2E result | pending / passed / failed / not-required；场景与证据 |
+| Parent result/re-read | `<sha>`；HEAD/tree/ancestor 核对 |
 
-## 7. 偏差与决策
+Candidate failed/stale 时明确父分支未推进、失败命令、旧 candidate SHA 和恢复条件。
+
+## 8. 偏差与决策
 
 - **偏差：** 无 / `<deviation-id>`
-- **偏差记录：** `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` / 不适用
-- **批准人或决策来源：**
-- **对范围、契约、依赖或后续 Ticket 的影响：** 无 / ...
+- **记录：** `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` / 不适用
+- **批准来源及影响：** ...
 
-偏差处理遵守 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>`，不得静默修改 Ticket 目标或验收。
+## 9. 残余风险与交付定位
 
-## 8. 残余风险与后续
-
-- **残余风险：** 无 / ...
-- **已知限制：** 无 / ...
+- **残余风险/已知限制：** 无 / ...
 - **后续 Ticket：** 无 / `<ticket-id>`
-- **监控或回滚触发条件：** 不适用 / ...
-
-## 9. 交付定位
-
-- **Commit / PR：**
-- **最终 Workspace 引用：** 不适用 / `<workspace_ref>`
-- **Evidence 文件：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`
+- **监控或回滚触发：** 不适用 / ...
+- **Source commit：** `<sha>`
+- **Parent result：** `<sha>`
+- **Source workspace：** `<workspace_ref>`
+- **Evidence：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`

@@ -442,7 +442,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 ### Deep
 
-任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多 Agent 复杂协作、多个实质架构方案或高事故半径。
+任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调、多个实质架构方案或高事故半径。
 
 额外要求：数据流或状态转换、兼容窗口、迁移顺序、可观测性、回滚、风险缓解、收缩条件和人工批准点。
 
@@ -482,61 +482,51 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 # 证据与验证规范
 
-验证回答“怎样证明行为已经正确发生”，Evidence 回答“实际运行了什么、结果是什么、仍有什么风险”。
+验证回答“怎样证明”，Evidence 记录“实际运行了什么、在哪个状态运行、结果和残余风险是什么”。
 
 ## 1. 验证矩阵
 
-每一行绑定一个行为、合同或风险：
+每行绑定行为、合同或风险，并标记环境：
 
-| 行为或风险 | 验证接缝 | 方法或命令 | 预期结果 | Evidence |
-|---|---|---|---|---|
-| 正常路径 | 公共接口 | 项目定向测试 | 指定外部行为成立 | `specdev/changes/{change}/evidence/T-NN.md` |
-| 无效输入 | schema 或公共接口 | 定向失败测试 | 稳定错误行为成立 | `specdev/changes/{change}/evidence/T-NN.md` |
-| 回归 | 现有测试套件 | 项目回归命令 | 相关既有行为保持 | `specdev/changes/{change}/evidence/T-NN.md` |
+| 行为或风险 | 接缝 | 命令/方法 | 环境 | 预期 | Evidence |
+|---|---|---|---|---|---|
+| 正常/失败路径 | 公共接口或稳定接缝 | 定向测试 | source-worktree | 合同成立 | Ticket Evidence |
+| 跨模块回归 | 集成接缝 | 回归命令 | parent-candidate | 组合状态成立 | Ticket Evidence |
+| E2E required | 真实端到端边界 | 场景步骤 | parent-candidate | 外部行为成立 | Ticket Evidence |
 
-命令引用项目脚本时，项目文件路径使用项目根相对路径，例如 `package.json` 或 `Makefile`。
+## 2. 两层验证
 
-## 2. 最小充分验证
+### Source-worktree
 
-选择最接近目标行为的稳定接缝：
+implementation owner 运行最接近目标行为的单元/组件测试、静态分析、类型、lint/build 等适用非 E2E 检查。来源实现必须在 clean worktree 形成 commit。任何 source-worktree E2E pass 声明无效。
 
-1. 公共接口或契约集成测试；
-2. 稳定接缝上的单元测试；
-3. 类型检查、静态分析、lint 和构建；
-4. 可重复手动步骤、截图或查询结果；
-5. 代码阅读推断。
+### Parent-candidate
 
-E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由当前实现或集成 owner 运行；委派执行中 Worker 只记录场景、预期结果和待执行状态，由 Lead 在集成阶段运行。API、CLI、后端、库或数据变更默认使用其稳定接缝，不追加 E2E。
+Lead 在最新父分支与 source commit 的 candidate 状态运行受影响集成/回归、项目父状态检查和适用 E2E。E2E 由实际跨边界风险决定，不限于 UI；not-required 必须写理由。required E2E 未运行或失败时不得推进父分支。
 
-低层证据不能替代明确要求的用户行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控信号或回滚演练。
+### Direct Spec
 
-## 3. 失败分类
+获批 Direct Spec 不创建 Ticket worktree 或 candidate。Lead 在 current workspace 记录实施前基线，运行轻量合同要求的定向检查、适用回归与 E2E，并记录最终 checkpoint、dirty 状态、运行环境、命令、退出状态和未运行原因。E2E 仍只由 Lead 执行；不得为套用两层验证而伪造 Ticket、source/candidate/result 或父分支推进证据。
 
-每个失败必须分类为：
+低层证据不能替代明确要求的外部行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控或恢复演练。
 
-- 本 Ticket 引入的新失败；
-- 基线已存在的失败；
-- 环境、权限或基础设施失败；
-- 验证本身无效或无法观察目标行为。
+## 3. Agent 声明
 
-不得通过跳过测试、放宽断言、吞错、删除用例或把命令移出验证矩阵来制造绿色。
+subagent 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
 
-## 4. Evidence 最低内容
+## 4. 失败分类与完整性
 
-每个完成 Ticket 在 `specdev/changes/{change}/evidence/T-NN.md` 记录：
+失败分类为本 Ticket 新失败、基线既有失败、环境/权限/基础设施失败、无效验证或 candidate stale。不得通过跳过、放宽断言、吞错、删除用例或迁移验证位置制造绿色。
 
-- 基线、分支或 worktree；
-- 实际修改的项目路径；
-- 每条命令、退出状态和结果摘要；
-- 每条验收合同的证据映射；
-- 未运行项与原因；
-- 新失败、既有失败和环境失败；
-- 偏差及批准；
-- 残余风险；
-- worktree、提交或 PR 引用；
-- 最终结论。
+受控反向验证只用于可能静默通过的关键门禁：证明检查能在目标风险出现时失败，再恢复并重跑。普通测试不为形式执行破坏性操作。
 
-无法运行关键验证、存在未批准偏差或 Evidence 不完整时，Ticket 不得标为 `done`。
+## 5. Evidence 最低内容
+
+每个 Ticket Evidence 至少包含：Lead、Dispatch/返回（若有）、base/source/candidate/result SHA、来源 worktree、实际路径、每条命令/环境/退出状态、合同映射、双轴审查、E2E disposition、未运行项、失败分类、偏差、残余风险和父分支重读结果。
+
+Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 source commit 或 Evidence 不完整时不得 Done。
+
+Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。
 
 </evidence-and-verification>
 
@@ -584,7 +574,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响普通并行执行时，当前集成 owner 必须暂停受影响 Wave，重新计算路径所有权、依赖和 Gate；委派执行由 Lead 承担同一责任。
+- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
 
 </deviation-control>
 
@@ -647,16 +637,14 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
-    "auto_commit": false,
-    "default_branch": null,
-    "worktree_for_parallel": true
+    "default_branch": null
   },
   "execution": {
-    "max_parallel": 3,
+    "max_implementation_agents": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },
@@ -681,33 +669,31 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v3",
+  "$id": "urn:speculo:specdev:config:v4",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
   "properties": {
-    "schema_version": {"const": 3},
+    "schema_version": {"const": 4},
     "interaction_language": {"type": "string", "minLength": 1},
     "artifact_language": {"type": "string", "minLength": 1},
     "git": {
       "type": "object",
-      "required": ["auto_commit", "default_branch", "worktree_for_parallel"],
+      "required": ["default_branch"],
       "properties": {
-        "auto_commit": {"type": "boolean"},
-        "default_branch": {"type": ["string", "null"]},
-        "worktree_for_parallel": {"type": "boolean"}
+        "default_branch": {"type": ["string", "null"]}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "execution": {
       "type": "object",
-      "required": ["max_parallel", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"],
       "properties": {
-        "max_parallel": {"type": "integer", "minimum": 1},
+        "max_implementation_agents": {"type": "integer", "minimum": 1, "maximum": 3},
         "deep_ticket_human_approval": {"type": "boolean"},
         "shared_path_owner": {"type": "string", "minLength": 1}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "verification": {
       "type": "object",
@@ -731,7 +717,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
       "additionalProperties": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 
@@ -852,7 +838,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
@@ -875,7 +861,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v3",
+  "$id": "urn:speculo:specdev:change-status:v4",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
@@ -890,370 +876,204 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
     "archived",
     "archive_path",
     "blockers",
-    "deviations"
+    "deviations",
+    "worktrees"
   ],
   "properties": {
-    "schema_version": {
-      "const": 3
-    },
-    "artifact": {
-      "const": "change-status"
-    },
+    "schema_version": {"const": 4},
+    "artifact": {"const": "change-status"},
     "change": {
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
-    "change_status": {
-      "enum": [
-        "active",
-        "blocked",
-        "completed",
-        "archived"
-      ]
-    },
-    "current_work": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "created_at": {
-      "type": "string",
-      "minLength": 1
-    },
-    "updated_at": {
-      "type": "string",
-      "minLength": 1
-    },
-    "completed_at": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "archived": {
-      "type": "boolean"
-    },
+    "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
+    "current_work": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1},
+    "completed_at": {"type": ["string", "null"]},
+    "archived": {"type": "boolean"},
     "archive_path": {
       "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string",
-          "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
-        }
+        {"type": "null"},
+        {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}
       ]
     },
-    "blockers": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "deviations": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "deviations": {"type": "array", "items": {"type": "string"}},
     "worktrees": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "ticket_id",
-          "owner",
-          "provider",
-          "base_sha",
-          "branch",
-          "workspace_ref",
-          "status",
-          "updated_at"
-        ],
-        "properties": {
-          "ticket_id": {
-            "type": "string",
-            "pattern": "^T-[0-9]{2,}$"
-          },
-          "owner": {
-            "type": "string",
-            "minLength": 1
-          },
-          "integration_owner": {
-            "type": "string",
-            "minLength": 1
-          },
-          "provider": {
-            "enum": [
-              "native",
-              "git",
-              "external"
-            ]
-          },
-          "base_sha": {
-            "type": "string",
-            "minLength": 1
-          },
-          "parent_branch": {
-            "type": "string",
-            "minLength": 1
-          },
-          "branch": {
-            "type": "string",
-            "minLength": 1
-          },
-          "workspace_ref": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
-          },
-          "terminal_action": {
-            "enum": [
-              "integrate",
-              "retain"
-            ]
-          },
-          "source_checkpoint": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "integration": {
-            "type": "object",
-            "required": [
-              "status",
-              "parent_before_sha",
-              "source_sha",
-              "result_sha",
-              "method",
-              "conflict_paths",
-              "verification",
-              "evidence",
-              "attempts"
-            ],
+      "items": {"$ref": "#/$defs/worktree"}
+    }
+  },
+  "$defs": {
+    "worktree": {
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "owner",
+        "implementation_owner",
+        "integration_owner",
+        "provider",
+        "base_sha",
+        "parent_branch",
+        "branch",
+        "workspace_ref",
+        "source_checkpoint",
+        "integration",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "ticket_id": {"type": "string", "pattern": "^T-[0-9]{2,}$"},
+        "owner": {"type": "string", "minLength": 1},
+        "implementation_owner": {"type": "string", "minLength": 1},
+        "integration_owner": {"type": "string", "minLength": 1},
+        "provider": {"const": "git"},
+        "base_sha": {"type": "string", "minLength": 1},
+        "parent_branch": {"type": "string", "minLength": 1},
+        "branch": {"type": "string", "minLength": 1},
+        "workspace_ref": {
+          "type": "string",
+          "pattern": "^specdev-worktree/T-[0-9]{2,}$"
+        },
+        "source_checkpoint": {"type": ["string", "null"]},
+        "integration": {"$ref": "#/$defs/integration"},
+        "status": {
+          "enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]
+        },
+        "updated_at": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["review", "integrating", "integrated", "removed"]}}, "required": ["status"]},
+          "then": {"properties": {"source_checkpoint": {"type": "string", "minLength": 1}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "integrating"}}, "required": ["status"]},
+          "then": {
             "properties": {
-              "status": {
-                "enum": [
-                  "pending",
-                  "running",
-                  "passed",
-                  "blocked"
-                ]
-              },
-              "parent_before_sha": {
-                "type": ["string", "null"]
-              },
-              "source_sha": {
-                "type": ["string", "null"]
-              },
-              "result_sha": {
-                "type": ["string", "null"]
-              },
-              "method": {
-                "enum": [null, "fast-forward", "merge-commit"]
-              },
-              "conflict_paths": {
-                "type": "array",
-                "items": {"type": "string"}
-              },
-              "verification": {
-                "enum": ["pending", "passed", "failed"]
-              },
-              "evidence": {
-                "type": "string",
-                "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
-              },
-              "attempts": {
-                "type": "integer",
-                "minimum": 0
+              "integration": {
+                "properties": {
+                  "status": {"const": "candidate"},
+                  "parent_before_sha": {"type": "string", "minLength": 1},
+                  "source_sha": {"type": "string", "minLength": 1},
+                  "candidate_sha": {"type": "string", "minLength": 1},
+                  "candidate_branch": {"type": "string", "minLength": 1},
+                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
+                  "method": {"enum": ["fast-forward", "merge-commit"]},
+                  "attempts": {"type": "integer", "minimum": 1}
+                }
               }
-            },
-            "additionalProperties": true
-          },
-          "status": {
-            "enum": [
-              "planned",
-              "active",
-              "review",
-              "integrating",
-              "integrated",
-              "removed",
-              "blocked"
-            ]
-          },
-          "updated_at": {
-            "type": "string",
-            "minLength": 1
+            }
           }
         },
-        "dependentRequired": {
-          "terminal_action": [
-            "integration_owner",
-            "parent_branch",
-            "source_checkpoint",
-            "integration"
+        {
+          "if": {"properties": {"status": {"enum": ["integrated", "removed"]}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "integration": {
+                "properties": {
+                  "status": {"const": "passed"},
+                  "parent_before_sha": {"type": "string", "minLength": 1},
+                  "source_sha": {"type": "string", "minLength": 1},
+                  "candidate_sha": {"type": "string", "minLength": 1},
+                  "candidate_branch": {"type": "string", "minLength": 1},
+                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
+                  "result_sha": {"type": "string", "minLength": 1},
+                  "method": {"enum": ["fast-forward", "merge-commit"]},
+                  "verification": {"const": "passed"},
+                  "attempts": {"type": "integer", "minimum": 1},
+                  "e2e": {
+                    "properties": {
+                      "status": {"enum": ["not-required", "passed"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "status",
+        "parent_before_sha",
+        "source_sha",
+        "candidate_sha",
+        "candidate_branch",
+        "candidate_workspace_ref",
+        "result_sha",
+        "method",
+        "conflict_paths",
+        "verification",
+        "e2e",
+        "evidence",
+        "attempts"
+      ],
+      "properties": {
+        "status": {"enum": ["pending", "candidate", "passed", "failed", "stale"]},
+        "parent_before_sha": {"type": ["string", "null"]},
+        "source_sha": {"type": ["string", "null"]},
+        "candidate_sha": {"type": ["string", "null"]},
+        "candidate_branch": {"type": ["string", "null"]},
+        "candidate_workspace_ref": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^specdev-worktree/\\.integration/T-[0-9]{2,}$"}
           ]
         },
-        "allOf": [
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrating"}
-              },
-              "required": ["status"]
-            },
-            "then": {
-              "required": [
-                "terminal_action",
-                "integration_owner",
-                "parent_branch",
-                "source_checkpoint",
-                "integration"
-              ],
-              "properties": {
-                "terminal_action": {"const": "integrate"}
-              }
-            }
+        "result_sha": {"type": ["string", "null"]},
+        "method": {"enum": [null, "fast-forward", "merge-commit"]},
+        "conflict_paths": {"type": "array", "items": {"type": "string"}},
+        "verification": {"enum": ["pending", "passed", "failed"]},
+        "e2e": {
+          "type": "object",
+          "required": ["required", "status", "evidence"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "status": {"enum": ["not-required", "pending", "passed", "failed"]},
+            "evidence": {"type": ["string", "null"]}
           },
-          {
-            "if": {
-              "properties": {
-                "status": {"enum": ["integrating", "integrated"]},
-                "terminal_action": {"const": "integrate"}
-              },
-              "required": ["status", "terminal_action"]
+          "allOf": [
+            {
+              "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
+              "then": {"properties": {"status": {"const": "not-required"}}}
             },
-            "then": {
-              "properties": {
-                "source_checkpoint": {"type": "string", "minLength": 1},
-                "integration": {
-                  "properties": {
-                    "parent_before_sha": {"type": "string", "minLength": 1},
-                    "source_sha": {"type": "string", "minLength": 1},
-                    "attempts": {"type": "integer", "minimum": 1}
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrating"},
-                "terminal_action": {"const": "integrate"}
-              },
-              "required": ["status", "terminal_action"]
+            {
+              "if": {"properties": {"required": {"const": true}}, "required": ["required"]},
+              "then": {"properties": {"status": {"enum": ["pending", "passed", "failed"]}}}
             },
-            "then": {
-              "properties": {
-                "integration": {
-                  "properties": {
-                    "status": {"const": "running"}
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "status": {"const": "integrated"},
-                "terminal_action": {"const": "integrate"}
+            {
+              "if": {
+                "properties": {
+                  "required": {"const": true},
+                  "status": {"const": "passed"}
+                },
+                "required": ["required", "status"]
               },
-              "required": ["status", "terminal_action"]
-            },
-            "then": {
-              "properties": {
-                "integration": {
-                  "properties": {
-                    "status": {"const": "passed"},
-                    "result_sha": {"type": "string", "minLength": 1},
-                    "method": {"enum": ["fast-forward", "merge-commit"]},
-                    "verification": {"const": "passed"}
-                  }
-                }
-              }
+              "then": {"properties": {"evidence": {"type": "string", "minLength": 1}}}
             }
-          },
-          {
-            "if": {
-              "properties": {
-                "terminal_action": {"const": "retain"}
-              },
-              "required": ["terminal_action"]
-            },
-            "then": {
-              "properties": {
-                "status": {
-                  "not": {"enum": ["integrating", "integrated"]}
-                }
-              }
-            }
-          }
-        ],
-        "additionalProperties": true
-      }
+          ],
+          "additionalProperties": false
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
+        },
+        "attempts": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "worktrees": {
-            "contains": {
-              "properties": {
-                "provider": {
-                  "const": "git"
-                }
-              },
-              "required": [
-                "provider"
-              ]
-            }
-          }
-        }
-      },
+      "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
       "then": {
         "properties": {
-          "worktrees": {
-            "items": {
-              "if": {
-                "properties": {
-                  "provider": {
-                    "const": "git"
-                  }
-                },
-                "required": [
-                  "provider"
-                ]
-              },
-              "then": {
-                "properties": {
-                  "workspace_ref": {
-                    "pattern": "^specdev-worktree/T-[0-9]{2,}$"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "change_status": {
-            "const": "archived"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "archived": {
-            "const": true
-          },
+          "archived": {"const": true},
           "archive_path": {
             "type": "string",
             "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
@@ -1262,7 +1082,7 @@ E2E 仅在变更影响用户界面交互时加入验证矩阵。普通执行由�
       }
     }
   ],
-  "additionalProperties": true
+  "additionalProperties": false
 }
 ```
 

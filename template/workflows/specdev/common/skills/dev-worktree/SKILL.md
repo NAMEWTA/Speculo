@@ -1,31 +1,52 @@
 ---
-name: specdev-dev-worktree
-description: 为具有明确隔离触发条件的 Ready Ticket 或一次性原型建立可恢复 worktree，并由 workspace owner 与 integration owner 管理基线、自动本地集成或清理。
+name: dev-worktree
+description: 管理 SpecDev Ticket 或原型的 Git worktree；为 Ticket 创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
 ---
 
-# SpecDev Dev Worktree
+# Dev Worktree
 
-## 适用范围
+本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 使用完整 source → candidate → parent 状态机；`purpose=prototype` 只使用调用方批准的临时生命周期。
 
-- 只用于具备 `parallel-write`、`protect-local-state`、`disposable-experiment`、`background-resume`、`provider-requirement` 或 `user-requested` 触发事实的 Ready Ticket/原型。
-- 只读调查、Agent Team 本身和没有其他隔离事实的顺序执行默认共用当前工作区。
-- 调用方必须明确 trigger、workspace owner、implementation owner、integration owner、固定基线、父分支、工作项 ID、持久化 owner 和允许的结束动作。
-- Coordination 与 workspace 正交：`single-session` 可以使用本 Skill；`lead-team` 不自动使用。Current workspace 下 Worker 只读；Worker 写入必须绑定本 Skill 创建的独立 workspace。
-- 平台原生 worktree 优先；不可用时使用 Git worktree。
+## 输入
 
-## 生命周期
+- `operation=create | restore | finalize | remove`；
+- `purpose=ticket | prototype`；
+- repository、父分支、`base_sha`、branch、portable workspace locator；
+- workspace、implementation 和 integration owner；
+- 允许动作、路径合同、验证合同、调用方状态记录位置。
 
-1. 创建或恢复时加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>`。
-2. implementation owner 完成后返回工作项状态、Evidence/record 路径、`workspace_ref`、不可变 source checkpoint、commit 或 PR 引用和未验证项；Ticket worktree 从 `active` 更新为 `review`。
-3. `terminal_action=integrate` 时 integration owner 自动加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>`；`retain` 保持 review。一次性原型只评估和清理，不合入生产分支。
+Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked，不使用 current workspace 代替。
 
-Ticket worktree 状态依次为 `planned → active → review → integrating → integrated → removed`；失败进入 `blocked`，记录写入 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees`。`integrating` 是带完整授权、来源和尝试证据的可恢复锁：同一父分支一次只允许一个 integration owner；fast-forward 与 merge-commit 都必须落到可复核的 `integrated/passed` 终态。原型的 branch、`workspace_ref` 和清理结果只写入 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{prototype-id}/record.md</Path>`，不伪造 Ticket worktree 记录。
+## 1. 创建或恢复
 
-## 边界
+`operation=create` 时加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>`。Ticket 使用 `specdev-worktree/<ticket-id>`；同一 Ticket 只存在一个来源 worktree。`operation=restore` 时重读实际 Git worktree/branch/tip/dirty 状态并与调用方记录核对，漂移时停止。
 
-- 每个隔离 Ticket 使用独立 worktree 和分支；同一并行 Wave 固定相同 `base_sha`。每个原型使用独立 worktree 和分支。
-- Git provider 固定使用 `<project-root>/specdev-worktree/<work-item-id>/`，持久化 `workspace_ref: specdev-worktree/<work-item-id>`；`<project-root>` 由 `workspace.json#path_base: project-root` 解析。
-- native/external provider 保留其可迁移 opaque locator；所有 provider 都不保存机器绝对路径、认证秘密或真实用户数据。
-- 项目根 `.gitignore` 的 `specdev-worktree/` 条目由 `speculo init` 单一维护；缺失时创建流程阻塞并提示重新运行 init。
-- E2E 仅适用于用户界面交互受影响的变更，由 integration owner 在集成阶段运行。
-- `terminal_action=integrate` 授权本地 fast-forward，以及分叉集成所需的暂存、merge continue 和一次集成专用 merge commit；不授权普通实现提交、push、PR、远端 merge、部署、迁移或删除分支/worktree。
+**完成标准**：来源基线、branch、locator、owners 和实际 Git 状态一致；现有用户改动未被覆盖。
+
+## 2. 来源实现门
+
+implementation owner 只在来源 worktree 修改授权项目路径，运行 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查。进入 `review` 前，worktree 必须 clean，branch tip 必须是已授权的 `source_checkpoint` commit，实际 diff 必须符合路径合同。
+
+**完成标准**：source checkpoint 不可变且可达；来源 worktree 没有 E2E pass 声明。
+
+## 3. 候选合并与父分支推进
+
+`operation=finalize` 仅由 Lead/integration owner 调用，并加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>`。Lead 在独立 parent-candidate checkout 组合最新父分支与 source checkpoint，运行集成检查和适用 E2E，通过后才推进父分支。
+
+本地 candidate checkout/branch 的创建、重建和回收属于已授权 local candidate integration；来源 branch/worktree 的删除仍需要独立 cleanup 授权。push、PR、remote merge、deploy、migration 和生产动作不从本 Skill 继承。
+
+**完成标准**：Ticket `integrated` 时父 HEAD 精确等于记录的 result SHA，并包含 source checkpoint；失败或 stale 时父分支未变化。后续 `removed` 只表示来源 branch/worktree 已清理，不撤销该集成事实。
+
+## 4. 移除
+
+`operation=remove` 先验证 Ticket 已 `integrated` 或 prototype 已结束、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
+
+**完成标准**：只删除精确授权目标；失败保留现场与恢复命令。
+
+## 固定规则
+
+- Agent Team 不决定 worktree；Ticket 切片本身决定来源 worktree；
+- Ticket E2E 只在 Lead-owned parent-candidate checkout 运行；
+- 每个 Done Ticket 必须有 source commit 与父分支 result，worktree 状态为 `integrated` 或其清理后终态 `removed`；
+- candidate 失败保留来源 worktree 修正，父分支不动；
+- 成功集成不自动清理来源 branch/worktree。

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -52,15 +52,42 @@ async function migrationPlan(target: string, actions: Record<string, unknown>[] 
   const result = JSON.parse(inspect.stdout) as {
     backup: { manifest_sha256: string; files: { path: string }[] };
   };
-  return {
-    schema_version: 1,
-    backup_manifest_sha256: result.backup.manifest_sha256,
-    source_decisions: result.backup.files.map((entry) => ({
+  const backupSources = new Set(result.backup.files.map((entry) => entry.path));
+  const normalizedActions: Record<string, unknown>[] = actions.map((action) => {
+    const targetPath = String(action.to ?? "config.json");
+    const derivedSource = targetPath === "config.json"
+      ? "config.json"
+      : `state/${targetPath.slice(".speculo/".length)}`;
+    const sourceDecision = backupSources.has(derivedSource) ? derivedSource : "config.json";
+    return { ...action, source_decision: sourceDecision };
+  });
+  const decisions = new Map(result.backup.files.map((entry) => [
+    entry.path,
+    {
       path: entry.path,
       disposition: "keep-current",
       target: entry.path === "config.json" ? "config.json" : `.speculo/${entry.path.slice("state/".length)}`,
-    })),
-    actions,
+    },
+  ]));
+  for (const action of normalizedActions) {
+    const targetPath = String(action.to ?? "config.json");
+    const source = String(action.source_decision);
+    const decision = decisions.get(source);
+    if (!decision) continue;
+    decision.target = targetPath;
+    decision.disposition = action.kind === "copy"
+      ? "restore"
+      : action.kind === "replace-json"
+        ? "replace-json"
+        : action.kind === "remove-current"
+          ? "remove-current"
+          : "keep-current";
+  }
+  return {
+    schema_version: 2,
+    backup_manifest_sha256: result.backup.manifest_sha256,
+    source_decisions: [...decisions.values()],
+    actions: normalizedActions,
   };
 }
 
@@ -106,7 +133,7 @@ describe("Speculo CLI", () => {
       assert.equal(await pathExists(join(root, "workflows", "specdev", "INDEX.md")), true);
       assert.equal(await pathExists(join(root, "workflows", "person")), false);
       assert.deepEqual(JSON.parse(await readFile(join(root, ".speculo", "specdev", "status.json"), "utf8")), {
-        schema_version: 4,
+        schema_version: 5,
         workflow: "specdev",
         active: [],
         archived: [],
@@ -175,7 +202,15 @@ describe("Speculo CLI", () => {
       await writeFile(join(state, "specdev", "archive", "2026-08", archivedChange, "evidence.md"), "archive\n");
       await mkdir(join(state, "specdev", ".config"), { recursive: true });
       await writeFile(join(state, "specdev", ".config", "tracking.md"), "tracking\n");
-      await writeJson(join(state, "specdev", "config.json"), { schema_version: 3, initialized: true });
+      await writeJson(join(state, "specdev", "config.json"), {
+        schema_version: 3,
+        interaction_language: "en-US",
+        artifact_language: "zh-CN",
+        git: { auto_commit: true, default_branch: "main", worktree_for_parallel: false },
+        execution: { max_parallel: 8, deep_ticket_human_approval: true, shared_path_owner: "explicit" },
+        verification: { test: "pnpm test", typecheck: null, lint: null, build: "pnpm build" },
+        planning: { default_depth: "deep", require_ready_gate: true, require_evidence: true },
+      });
       for (const namespace of ["adr", "context", "research"]) {
         await mkdir(join(state, "specdev", namespace), { recursive: true });
         await writeFile(join(state, "specdev", namespace, "keep.md"), namespace + "\n");
@@ -201,7 +236,15 @@ describe("Speculo CLI", () => {
       assert.equal(await readFile(join(state, "specdev", "changes", activeChange, "source.md"), "utf8"), "active history\n");
       assert.equal(await readFile(join(state, "specdev", "archive", "2026-08", archivedChange, "evidence.md"), "utf8"), "archive\n");
       assert.equal(await readFile(join(state, "specdev", ".config", "tracking.md"), "utf8"), "tracking\n");
-      assert.equal((await readJson(join(state, "specdev", "config.json"))).initialized, true);
+      const migratedSpecdevConfig = await readJson(join(state, "specdev", "config.json"));
+      assert.equal(migratedSpecdevConfig.schema_version, 4);
+      assert.equal(migratedSpecdevConfig.execution.max_implementation_agents, 3);
+      assert.equal(migratedSpecdevConfig.git.default_branch, "main");
+      assert.equal(migratedSpecdevConfig.planning.default_depth, "deep");
+      assert.equal("max_parallel" in migratedSpecdevConfig.execution, false);
+      assert.equal("auto_commit" in migratedSpecdevConfig.git, false);
+      assert.equal((await readJson(join(state, "specdev", "changes", activeChange, ".status.json"))).schema_version, 4);
+      assert.equal((await readJson(join(state, "specdev", "archive", "2026-08", archivedChange, ".status.json"))).schema_version, 4);
       for (const namespace of ["adr", "context", "research"]) {
         assert.equal(await readFile(join(state, "specdev", namespace, "keep.md"), "utf8"), namespace + "\n");
       }
@@ -259,7 +302,7 @@ describe("Speculo CLI", () => {
       assert.equal(result.migration.blockers.some((blocker) => blocker.code === "unknown-command-state"), true);
       assert.deepEqual(await readJson(join(root, "config.json")), await readJson(join(packageRoot, "template", "config.json")));
       assert.deepEqual(await readJson(join(state, "specdev", "status.json")), {
-        schema_version: 4,
+        schema_version: 5,
         workflow: "specdev",
         active: [],
         archived: [],
@@ -294,6 +337,178 @@ describe("Speculo CLI", () => {
       assert.equal(result.migration.blockers.some((blocker) => blocker.code === "unsupported-source-version"), true);
     } finally {
       await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("requires explicit reconciliation for legacy Ticket worktrees and Goal Plans", async () => {
+    const target = await tempProject();
+    const root = join(target, "speculo");
+    const state = join(root, ".speculo");
+    const change = "2026-08-09-legacy-plan";
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const install = await readJson(join(state, "install.json"));
+      install.package_version = "0.7.0";
+      await writeJson(join(state, "install.json"), install);
+      await writeJson(join(state, "specdev", "status.json"), {
+        schema_version: 4,
+        workflow: "specdev",
+        active: [{ change, current_work: "specdev/implement", works_run: ["specdev/goal-plan"] }],
+        archived: [],
+      });
+      await writeJson(join(state, "specdev", "changes", change, ".status.json"), {
+        schema_version: 3,
+        artifact: "change-status",
+        change,
+        change_status: "active",
+        worktrees: [{
+          ticket_id: "T-01",
+          owner: "legacy-worker",
+          provider: "git",
+          base_sha: "base",
+          branch: `speculo/${change}/T-01`,
+          workspace_ref: "specdev-worktree/T-01",
+          terminal_action: "retain",
+          status: "active",
+          updated_at: "2026-08-09T00:00:00Z",
+        }],
+      });
+      await writeFile(
+        join(state, "specdev", "changes", change, "goal-plan.md"),
+        "---\nschema_version: 3\nartifact: goal-plan\n---\n\n# Legacy plan\n",
+      );
+
+      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      assert.equal(result.migration.status, "pending");
+      assert.equal(result.migration.blockers.some((blocker) => blocker.code === "ambiguous-ticket-worktree-contract"), true);
+      assert.equal(result.migration.blockers.some((blocker) => blocker.code === "unsupported-goal-plan-contract"), true);
+      assert.equal(await pathExists(join(state, "migration.json")), true);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects incomplete schema-v4 SpecDev config, change status, and Goal Plan during automatic refresh", async () => {
+    const cases = [
+      {
+        blocker: "invalid-specdev-config-v4",
+        mutate: async (state: string) => {
+          const configPath = join(state, "specdev", "config.json");
+          const config = await readJson(join(packageRoot, "template", "workflows", "specdev", "I-init-setup", "config-template.json"));
+          delete config.planning.require_evidence;
+          await writeJson(configPath, config);
+        },
+      },
+      {
+        blocker: "unmapped-change-runtime-authority",
+        mutate: async (state: string) => {
+          const change = "2026-08-10-invalid-status";
+          await writeJson(join(state, "specdev", "status.json"), {
+            schema_version: 4,
+            workflow: "specdev",
+            active: [{ change, current_work: "specdev/implement", works_run: [] }],
+            archived: [],
+          });
+          await writeJson(join(state, "specdev", "changes", change, ".status.json"), {
+            schema_version: 4,
+            artifact: "change-status",
+            change,
+            change_status: "active",
+            current_work: "specdev/implement",
+            created_at: "2026-08-10T00:00:00Z",
+            updated_at: "2026-08-10T00:00:00Z",
+            completed_at: null,
+            archived: false,
+            archive_path: null,
+            blockers: [],
+            deviations: [],
+            worktrees: [{
+              ticket_id: "T-01",
+              owner: "lead-session",
+              implementation_owner: "implementation-agent-1",
+              integration_owner: "lead-session",
+              provider: "git",
+              base_sha: "base-sha",
+              parent_branch: "main",
+              branch: `speculo/${change}/T-01`,
+              workspace_ref: "specdev-worktree/T-01",
+              source_checkpoint: null,
+              integration: {
+                status: "passed",
+                parent_before_sha: null,
+                source_sha: null,
+                candidate_sha: null,
+                candidate_branch: null,
+                candidate_workspace_ref: null,
+                result_sha: null,
+                method: null,
+                conflict_paths: [],
+                verification: "passed",
+                e2e: { required: false, status: "not-required", evidence: null },
+                evidence: `<Path>{roots.state}/specdev/changes/${change}/evidence/T-01.md</Path>`,
+                attempts: 0,
+              },
+              status: "removed",
+              updated_at: "2026-08-10T00:00:00Z",
+            }],
+          });
+        },
+      },
+      {
+        blocker: "unsupported-goal-plan-contract",
+        mutate: async (state: string) => {
+          const change = "2026-08-10-invalid-goal-plan";
+          await writeJson(join(state, "specdev", "status.json"), {
+            schema_version: 4,
+            workflow: "specdev",
+            active: [{ change, current_work: "specdev/goal-plan", works_run: [] }],
+            archived: [],
+          });
+          await writeJson(join(state, "specdev", "changes", change, ".status.json"), {
+            schema_version: 4,
+            artifact: "change-status",
+            change,
+            change_status: "active",
+            current_work: "specdev/goal-plan",
+            created_at: "2026-08-10T00:00:00Z",
+            updated_at: "2026-08-10T00:00:00Z",
+            completed_at: null,
+            archived: false,
+            archive_path: null,
+            blockers: [],
+            deviations: [],
+            worktrees: [],
+          });
+          await writeFile(
+            join(state, "specdev", "changes", change, "goal-plan.md"),
+            [
+              "---",
+              "schema_version: 4",
+              "orchestration: lead-directed",
+              "ticket_workspace_policy: required",
+              "integration_gate: candidate-merge",
+              "---",
+              "",
+              "# Incomplete Goal Plan",
+              "",
+            ].join("\n"),
+          );
+        },
+      },
+    ];
+
+    for (const scenario of cases) {
+      const target = await tempProject();
+      try {
+        await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+        const state = join(target, "speculo", ".speculo");
+        await scenario.mutate(state);
+        const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+        assert.equal(result.migration.status, "pending");
+        assert.equal(result.migration.blockers.some((blocker) => blocker.code === scenario.blocker), true);
+      } finally {
+        await rm(target, { recursive: true, force: true });
+      }
     }
   });
 
@@ -383,6 +598,52 @@ describe("Speculo CLI", () => {
     }
   });
 
+  it("migration script preserves backup link facts but rejects symlinked staged runtime", async () => {
+    const target = await tempProject();
+    const root = join(target, "speculo");
+    const state = join(root, ".speculo");
+    const activeStatusPath = join(state, "specdev", "status.json");
+    const planPath = join(target, "runtime-plan.json");
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      await symlink("status.json", join(state, "specdev", "linked-state.json"));
+      await writeFile(join(root, "config.json"), "{ invalid\n", "utf8");
+      const pending = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      assert.equal(pending.migration.status, "pending");
+      const inspect = runMigrationScript(["inspect", "--project-root", target]);
+      assert.equal(inspect.status, 0, inspect.stderr);
+      const inspection = JSON.parse(inspect.stdout) as {
+        backup: { files: { path: string; type: string; target?: string }[] };
+      };
+      assert.deepEqual(
+        inspection.backup.files.find((entry) => entry.path === "state/specdev/linked-state.json"),
+        { path: "state/specdev/linked-state.json", type: "symlink", target: "status.json" },
+      );
+      const plan = await migrationPlan(target);
+      const decisions = plan.source_decisions as Record<string, unknown>[];
+      const linkDecision = decisions.find((decision) => decision.path === "state/specdev/linked-state.json");
+      assert.ok(linkDecision);
+      linkDecision.disposition = "restore";
+      linkDecision.target = ".speculo/specdev/linked-state.json";
+      plan.actions = [{
+        kind: "copy",
+        source_decision: "state/specdev/linked-state.json",
+        from: "state/specdev/linked-state.json",
+        to: ".speculo/specdev/linked-state.json",
+        expected_target: "absent",
+      }];
+      await writeJson(planPath, plan);
+      const before = await readFile(activeStatusPath, "utf8");
+      const applied = runMigrationScript(["apply", "--project-root", target, "--plan", planPath, "--confirmed"]);
+      assert.equal(applied.status, 1);
+      assert.match(applied.stderr, /Runtime contains a symbolic link/);
+      assert.equal(await readFile(activeStatusPath, "utf8"), before);
+      assert.equal(await pathExists(join(state, "migration.json")), true);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
   it("migration script rejects path escape, target drift, and invalid migrated state without replacing active", async () => {
     const target = await createPendingProject();
     const root = join(target, "speculo");
@@ -425,6 +686,24 @@ describe("Speculo CLI", () => {
       assert.match(invalid.stderr, /Migrated runtime validation failed/);
       assert.equal(await readFile(statusPath, "utf8"), activeStatusBefore);
       assert.equal(await pathExists(join(state, "migration.json")), true);
+
+      const configPath = join(state, "specdev", "config.json");
+      const configFingerprint = runMigrationScript([
+        "fingerprint", "--project-root", target, "--target", ".speculo/specdev/config.json",
+      ]);
+      assert.equal(configFingerprint.status, 0, configFingerprint.stderr);
+      const invalidConfig = await readJson(join(packageRoot, "template", "workflows", "specdev", "I-init-setup", "config-template.json"));
+      delete invalidConfig.verification.build;
+      await writeJson(planPath, await migrationPlan(target, [{
+        kind: "replace-json",
+        to: ".speculo/specdev/config.json",
+        expected_target: configFingerprint.stdout.trim(),
+        value: invalidConfig,
+      }]));
+      const incomplete = runMigrationScript(["apply", "--project-root", target, "--plan", planPath, "--confirmed"]);
+      assert.equal(incomplete.status, 1);
+      assert.match(incomplete.stderr, /complete schema-v4 execution contract/);
+      assert.equal(await pathExists(configPath), false);
       assert.equal((await readdir(target)).some((name) => name.startsWith(".speculo-runtime-migrate-stage-")), false);
     } finally {
       await rm(target, { recursive: true, force: true });

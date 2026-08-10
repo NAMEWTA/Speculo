@@ -1,32 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v3",
+  "$id": "urn:speculo:specdev:config:v4",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
   "properties": {
-    "schema_version": {"const": 3},
+    "schema_version": {"const": 4},
     "interaction_language": {"type": "string", "minLength": 1},
     "artifact_language": {"type": "string", "minLength": 1},
     "git": {
       "type": "object",
-      "required": ["auto_commit", "default_branch", "worktree_for_parallel"],
+      "required": ["default_branch"],
       "properties": {
-        "auto_commit": {"type": "boolean"},
-        "default_branch": {"type": ["string", "null"]},
-        "worktree_for_parallel": {"type": "boolean"}
+        "default_branch": {"type": ["string", "null"]}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "execution": {
       "type": "object",
-      "required": ["max_parallel", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"],
       "properties": {
-        "max_parallel": {"type": "integer", "minimum": 1},
+        "max_implementation_agents": {"type": "integer", "minimum": 1, "maximum": 3},
         "deep_ticket_human_approval": {"type": "boolean"},
         "shared_path_owner": {"type": "string", "minLength": 1}
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "verification": {
       "type": "object",
@@ -50,5 +48,5 @@
       "additionalProperties": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
