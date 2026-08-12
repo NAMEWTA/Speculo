@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.3] - 2026-08-12
+
+### Changed
+- **Lead-directed SpecDev execution**: implementation now runs under a single Lead with bounded Ticket worktrees and a required candidate merge/integration step.
+- **Execution and migration contracts**: updated Goal Plan, Implement, Init, Ticket, migration, and validation assets to record delegated evidence and recoverable integration state.
+- **Canonical distributions**: regenerated the affected SpecDev canonical documents from the updated workflow dependency closure.
+
+### Tests
+- Added and updated coverage for Lead orchestration, Ticket worktree integration, migration state, and the refreshed workflow contracts.
+
+---
+
 ## [0.7.2] - 2026-08-09
 
 ### Added

@@ -727,7 +727,7 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "workflow": "specdev",
   "active": [],
   "archived": []
@@ -741,83 +741,27 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v4",
+  "$id": "urn:speculo:specdev:status:v5",
   "title": "SpecDev Global Status",
   "type": "object",
-  "required": [
-    "schema_version",
-    "workflow",
-    "active",
-    "archived"
-  ],
+  "required": ["schema_version", "workflow", "active", "archived"],
   "properties": {
-    "schema_version": {
-      "const": 4
-    },
-    "workflow": {
-      "const": "specdev"
-    },
+    "schema_version": {"const": 5},
+    "workflow": {"const": "specdev"},
     "active": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "change",
-          "current_work",
-          "works_run"
-        ],
+        "required": ["change"],
         "properties": {
           "change": {
             "type": "string",
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-          },
-          "current_work": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "pattern": "^specdev/"
-          },
-          "works_run": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^specdev/"
-            },
-            "uniqueItems": true
-          },
-          "claimed_investigations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id",
-                "owner",
-                "claimed_at"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "owner": {
-                  "type": "string"
-                },
-                "session": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "claimed_at": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
           }
         },
         "additionalProperties": false
-      }
+      },
+      "uniqueItems": true
     },
     "archived": {
       "type": "array",
@@ -838,11 +782,24 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
   "current_work": null,
+  "works_run": [],
+  "claimed_investigations": [],
+  "execution_authorization": {
+    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket source commits"},
+    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local parent candidate integration and parent update"},
+    "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
+  },
+  "leadership": {
+    "current": "<owner-or-session-locator>",
+    "epoch": 1,
+    "assigned_at": "<ISO-8601>",
+    "history": []
+  },
   "created_at": "<ISO-8601>",
   "updated_at": "<ISO-8601>",
   "completed_at": null,
@@ -861,68 +818,110 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v4",
+  "$id": "urn:speculo:specdev:change-status:v5",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
-    "schema_version",
-    "artifact",
-    "change",
-    "change_status",
-    "current_work",
-    "created_at",
-    "updated_at",
-    "completed_at",
-    "archived",
-    "archive_path",
-    "blockers",
-    "deviations",
-    "worktrees"
+    "schema_version", "artifact", "change", "change_status", "current_work", "works_run",
+    "claimed_investigations", "execution_authorization", "leadership", "created_at", "updated_at",
+    "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
   ],
   "properties": {
-    "schema_version": {"const": 4},
+    "schema_version": {"const": 5},
     "artifact": {"const": "change-status"},
-    "change": {
-      "type": "string",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
-    "current_work": {"type": ["string", "null"]},
+    "current_work": {"type": ["string", "null"], "pattern": "^specdev/"},
+    "works_run": {"type": "array", "items": {"type": "string", "pattern": "^specdev/"}, "uniqueItems": true},
+    "claimed_investigations": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "execution_authorization": {"$ref": "#/$defs/authorization"},
+    "leadership": {"$ref": "#/$defs/leadership"},
     "created_at": {"type": "string", "minLength": 1},
     "updated_at": {"type": "string", "minLength": 1},
     "completed_at": {"type": ["string", "null"]},
     "archived": {"type": "boolean"},
-    "archive_path": {
-      "anyOf": [
-        {"type": "null"},
-        {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}
-      ]
-    },
+    "archive_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}]},
     "blockers": {"type": "array", "items": {"type": "string"}},
     "deviations": {"type": "array", "items": {"type": "string"}},
-    "worktrees": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/worktree"}
-    }
+    "worktrees": {"type": "array", "items": {"$ref": "#/$defs/worktree"}}
   },
   "$defs": {
+    "claim": {
+      "type": "object",
+      "required": ["id", "owner", "session", "claimed_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "session": {"type": ["string", "null"]},
+        "claimed_at": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "authorization-entry": {
+      "type": "object",
+      "required": ["status", "source", "granted_at", "scope"],
+      "properties": {
+        "status": {"enum": ["authorized", "not-authorized", "revoked"]},
+        "source": {"type": ["string", "null"]},
+        "granted_at": {"type": ["string", "null"]},
+        "scope": {"type": "string", "minLength": 1}
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "authorized"}}, "required": ["status"]},
+        "then": {"properties": {"source": {"type": "string", "minLength": 1}, "granted_at": {"type": "string", "minLength": 1}}}
+      }],
+      "additionalProperties": false
+    },
+    "authorization": {
+      "type": "object",
+      "required": ["implementation_commit", "local_candidate_integration", "source_cleanup"],
+      "properties": {
+        "implementation_commit": {"$ref": "#/$defs/authorization-entry"},
+        "local_candidate_integration": {"$ref": "#/$defs/authorization-entry"},
+        "source_cleanup": {"$ref": "#/$defs/authorization-entry"}
+      },
+      "additionalProperties": false
+    },
+    "leadership-history": {
+      "type": "object",
+      "required": ["owner", "epoch", "assigned_at", "ended_at"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "epoch": {"type": "integer", "minimum": 1},
+        "assigned_at": {"type": "string", "minLength": 1},
+        "ended_at": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "leadership": {
+      "type": "object",
+      "required": ["current", "epoch", "assigned_at", "history"],
+      "properties": {
+        "current": {"type": "string", "minLength": 1},
+        "epoch": {"type": "integer", "minimum": 1},
+        "assigned_at": {"type": "string", "minLength": 1},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/leadership-history"}}
+      },
+      "additionalProperties": false
+    },
+    "full-suite": {
+      "type": "object",
+      "required": ["required", "status", "reason", "evidence"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "status": {"enum": ["not-required", "pending", "passed", "failed"]},
+        "reason": {"type": ["string", "null"]},
+        "evidence": {"type": ["string", "null"]}
+      },
+      "allOf": [{
+        "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
+        "then": {"properties": {"status": {"const": "not-required"}, "reason": {"type": "string", "minLength": 1}}}
+      }],
+      "additionalProperties": false
+    },
     "worktree": {
       "type": "object",
-      "required": [
-        "ticket_id",
-        "owner",
-        "implementation_owner",
-        "integration_owner",
-        "provider",
-        "base_sha",
-        "parent_branch",
-        "branch",
-        "workspace_ref",
-        "source_checkpoint",
-        "integration",
-        "status",
-        "updated_at"
-      ],
+      "required": ["ticket_id", "owner", "implementation_owner", "integration_owner", "provider", "base_sha", "parent_branch", "branch", "workspace_ref", "source_checkpoint", "integration", "status", "updated_at"],
       "properties": {
         "ticket_id": {"type": "string", "pattern": "^T-[0-9]{2,}$"},
         "owner": {"type": "string", "minLength": 1},
@@ -932,156 +931,43 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
         "base_sha": {"type": "string", "minLength": 1},
         "parent_branch": {"type": "string", "minLength": 1},
         "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {
-          "type": "string",
-          "pattern": "^specdev-worktree/T-[0-9]{2,}$"
-        },
+        "workspace_ref": {"type": "string", "pattern": "^specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"},
         "source_checkpoint": {"type": ["string", "null"]},
         "integration": {"$ref": "#/$defs/integration"},
-        "status": {
-          "enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]
-        },
+        "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
         "updated_at": {"type": "string", "minLength": 1}
       },
-      "allOf": [
-        {
-          "if": {"properties": {"status": {"enum": ["review", "integrating", "integrated", "removed"]}}, "required": ["status"]},
-          "then": {"properties": {"source_checkpoint": {"type": "string", "minLength": 1}}}
-        },
-        {
-          "if": {"properties": {"status": {"const": "integrating"}}, "required": ["status"]},
-          "then": {
-            "properties": {
-              "integration": {
-                "properties": {
-                  "status": {"const": "candidate"},
-                  "parent_before_sha": {"type": "string", "minLength": 1},
-                  "source_sha": {"type": "string", "minLength": 1},
-                  "candidate_sha": {"type": "string", "minLength": 1},
-                  "candidate_branch": {"type": "string", "minLength": 1},
-                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
-                  "method": {"enum": ["fast-forward", "merge-commit"]},
-                  "attempts": {"type": "integer", "minimum": 1}
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {"properties": {"status": {"enum": ["integrated", "removed"]}}, "required": ["status"]},
-          "then": {
-            "properties": {
-              "integration": {
-                "properties": {
-                  "status": {"const": "passed"},
-                  "parent_before_sha": {"type": "string", "minLength": 1},
-                  "source_sha": {"type": "string", "minLength": 1},
-                  "candidate_sha": {"type": "string", "minLength": 1},
-                  "candidate_branch": {"type": "string", "minLength": 1},
-                  "candidate_workspace_ref": {"type": "string", "minLength": 1},
-                  "result_sha": {"type": "string", "minLength": 1},
-                  "method": {"enum": ["fast-forward", "merge-commit"]},
-                  "verification": {"const": "passed"},
-                  "attempts": {"type": "integer", "minimum": 1},
-                  "e2e": {
-                    "properties": {
-                      "status": {"enum": ["not-required", "passed"]}
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
       "additionalProperties": false
     },
     "integration": {
       "type": "object",
-      "required": [
-        "status",
-        "parent_before_sha",
-        "source_sha",
-        "candidate_sha",
-        "candidate_branch",
-        "candidate_workspace_ref",
-        "result_sha",
-        "method",
-        "conflict_paths",
-        "verification",
-        "e2e",
-        "evidence",
-        "attempts"
-      ],
+      "required": ["status", "parent_ref", "parent_before_sha", "source_sha", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "result_sha", "method", "conflict_paths", "verification", "full_suite", "e2e", "evidence", "attempts", "promotion_status"],
       "properties": {
         "status": {"enum": ["pending", "candidate", "passed", "failed", "stale"]},
+        "parent_ref": {"type": ["string", "null"]},
         "parent_before_sha": {"type": ["string", "null"]},
         "source_sha": {"type": ["string", "null"]},
         "candidate_sha": {"type": ["string", "null"]},
+        "candidate_tree_sha": {"type": ["string", "null"]},
         "candidate_branch": {"type": ["string", "null"]},
-        "candidate_workspace_ref": {
-          "anyOf": [
-            {"type": "null"},
-            {"type": "string", "pattern": "^specdev-worktree/\\.integration/T-[0-9]{2,}$"}
-          ]
-        },
+        "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
         "result_sha": {"type": ["string", "null"]},
         "method": {"enum": [null, "fast-forward", "merge-commit"]},
         "conflict_paths": {"type": "array", "items": {"type": "string"}},
         "verification": {"enum": ["pending", "passed", "failed"]},
-        "e2e": {
-          "type": "object",
-          "required": ["required", "status", "evidence"],
-          "properties": {
-            "required": {"type": "boolean"},
-            "status": {"enum": ["not-required", "pending", "passed", "failed"]},
-            "evidence": {"type": ["string", "null"]}
-          },
-          "allOf": [
-            {
-              "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
-              "then": {"properties": {"status": {"const": "not-required"}}}
-            },
-            {
-              "if": {"properties": {"required": {"const": true}}, "required": ["required"]},
-              "then": {"properties": {"status": {"enum": ["pending", "passed", "failed"]}}}
-            },
-            {
-              "if": {
-                "properties": {
-                  "required": {"const": true},
-                  "status": {"const": "passed"}
-                },
-                "required": ["required", "status"]
-              },
-              "then": {"properties": {"evidence": {"type": "string", "minLength": 1}}}
-            }
-          ],
-          "additionalProperties": false
-        },
-        "evidence": {
-          "type": "string",
-          "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"
-        },
-        "attempts": {"type": "integer", "minimum": 0}
+        "full_suite": {"$ref": "#/$defs/full-suite"},
+        "e2e": {"$ref": "#/$defs/full-suite"},
+        "evidence": {"type": "string", "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"},
+        "attempts": {"type": "integer", "minimum": 0},
+        "promotion_status": {"enum": ["pending", "applying", "applied", "failed", "stale"]}
       },
       "additionalProperties": false
     }
   },
-  "allOf": [
-    {
-      "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
-      "then": {
-        "properties": {
-          "archived": {"const": true},
-          "archive_path": {
-            "type": "string",
-            "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"
-          }
-        }
-      }
-    }
-  ],
+  "allOf": [{
+    "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
+    "then": {"properties": {"archived": {"const": true}, "archive_path": {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}}}
+  }],
   "additionalProperties": false
 }
 ```
