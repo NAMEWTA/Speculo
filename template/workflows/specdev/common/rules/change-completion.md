@@ -7,9 +7,9 @@
 一个 change 只有同时满足以下条件才能 completed：
 
 1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收。
-2. 每个 done Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；worktree 生命周期为 `integrated` 或完成来源清理后的 `removed`。
+2. required Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；current Ticket 有 implementation commit、passed direct-parent 验证和父分支 result SHA；对应 workspace 记录均为完成状态。
 3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
-4. source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
+4. current Ticket 的 current-workspace 检查/回归和适用 E2E，或 required Ticket 的 source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
 5. 迁移、发布、监控、恢复和不可逆批准已完成或明确不适用。
 6. 没有未批准 deviation、blocker、unverified、活动 candidate 或未集成 source checkpoint。
 7. Ticket、Map、Goal Plan、Evidence、change status 与实际 Git 一致。

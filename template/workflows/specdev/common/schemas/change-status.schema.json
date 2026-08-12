@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v5",
+  "$id": "urn:speculo:specdev:change-status:v6",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
@@ -9,7 +9,7 @@
     "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
   ],
   "properties": {
-    "schema_version": {"const": 5},
+    "schema_version": {"const": 6},
     "artifact": {"const": "change-status"},
     "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
@@ -113,12 +113,39 @@
         "base_sha": {"type": "string", "minLength": 1},
         "parent_branch": {"type": "string", "minLength": 1},
         "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {"type": "string", "pattern": "^specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"},
+        "workspace_ref": {"type": "string", "pattern": "^(?:current|specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,})$"},
         "source_checkpoint": {"type": ["string", "null"]},
         "integration": {"$ref": "#/$defs/integration"},
         "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
         "updated_at": {"type": "string", "minLength": 1}
       },
+      "allOf": [
+        {
+          "if": {"properties": {"workspace_ref": {"const": "current"}}, "required": ["workspace_ref"]},
+          "then": {
+            "properties": {
+              "integration": {
+                "allOf": [{
+                  "properties": {
+                    "candidate_sha": {"const": null},
+                    "candidate_tree_sha": {"const": null},
+                    "candidate_branch": {"const": null},
+                    "candidate_workspace_ref": {"const": null},
+                    "method": {"enum": [null, "direct-parent"]}
+                  }
+                }]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "integration": {
+                "allOf": [{"properties": {"method": {"enum": [null, "fast-forward", "merge-commit"]}}}]
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "integration": {
@@ -134,7 +161,7 @@
         "candidate_branch": {"type": ["string", "null"]},
         "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
         "result_sha": {"type": ["string", "null"]},
-        "method": {"enum": [null, "fast-forward", "merge-commit"]},
+        "method": {"enum": [null, "direct-parent", "fast-forward", "merge-commit"]},
         "conflict_paths": {"type": "array", "items": {"type": "string"}},
         "verification": {"enum": ["pending", "passed", "failed"]},
         "full_suite": {"$ref": "#/$defs/full-suite"},

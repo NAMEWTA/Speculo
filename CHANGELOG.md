@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.4] - 2026-08-12
+
+### Added
+- **Configurable SpecDev execution limits**: added configuration for implementation agents, integration attempts, and UI prototype default/maximum variants; Goal Plans snapshot the applicable execution limits without a fixed upper bound of three.
+- **Git-backed completion validation**: `validate-specdev.mjs --repo` now verifies recorded commits, ancestry, branch results, and clean completion state against the actual repository.
+
+### Changed
+- **Goal Plan workspace choice**: Goal Plan creation now asks whether to use worktrees and defaults to serial implementation in the current workspace; choosing worktrees retains per-Ticket source worktrees and candidate integration.
+- **Strategy-neutral execution artifacts**: unified Ticket, subagent, Implement, and Evidence contracts so current/direct-parent and required/candidate-merge use one clean document structure.
+- **Runtime contracts and migration**: upgraded SpecDev config to v5 and Goal Plan/change status to v6, preserving positive legacy concurrency values while adding deterministic defaults for new fields.
+- **Canonical distributions**: regenerated the affected SpecDev canonical documents from the updated workflow dependency closure.
+
+### Tests
+- Added coverage for configurable limits above three, limit violations, integration attempt bounds, runtime migration, current-workspace serialization, and real Git evidence validation.
+
+---
+
 ## [0.7.3] - 2026-08-12
 
 ### Changed

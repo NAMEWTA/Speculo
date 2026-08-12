@@ -8,7 +8,7 @@
 
 ## 变体
 
-默认 3 个，最多 5 个。每个变体必须在布局、信息层级或主要操作入口上结构不同，不能只换颜色或文案。使用项目现有组件和样式系统，但不要共享会限制结构探索的布局抽象。
+变体数量读取 `<Path>{roots.state}/specdev/config.json</Path>` 的 `planning.ui_prototype_default_variants` 与 `planning.ui_prototype_max_variants`。每个变体必须在布局、信息层级或主要操作入口上结构不同，不能只换颜色或文案。使用项目现有组件和样式系统，但不要共享会限制结构探索的布局抽象。
 
 ## 切换器
 

@@ -46,11 +46,11 @@ T-01 [READY]
 
 ## 5. 并行与路径所有权
 
-- implementation subagent 上限来自 `<Path>{roots.state}/specdev/config.json</Path>`，不得超过三个且不含 Lead。
+- implementation subagent 上限来自 `<Path>{roots.state}/specdev/config.json</Path>`，Goal Plan 可进一步降低且不含 Lead。
 - review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
 - shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
 - 项目路径契约以 Ticket frontmatter 为准。
-- 每个实现 Ticket 使用独立 worktree，不以是否派遣 Agent 或是否并行为条件；只读调查不进入 I-implement Ticket。
+- 每个实现 Ticket 的 workspace 由 Goal Plan 选择；current 模式串行使用当前 workspace，required 模式使用独立 worktree；只读调查不进入 I-implement Ticket。
 
 | Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
 |---|---|---|---|---|

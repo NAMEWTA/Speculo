@@ -20,14 +20,14 @@
 5. 越界前停止并按 deviation control 提出 ownership change；不得先改后报。
 6. 上游 Ticket 改变目录/合同后，下游基于已集成父分支重新解析路径和 preflight。
 
-## 3. Ticket worktree
+## 3. Ticket workspace strategy
 
-每个进入 I-implement 的 Ticket 都使用唯一来源 worktree `specdev-worktree/<ticket-id>`，无论是否并行、是否派遣 subagent。Ticket 切片是隔离依据；Agent Team 不是 worktree 触发器。没有 Ticket 的获批 Direct Spec 可由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
+Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 implementation subagent 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
 
-workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。只有 Lead 写 SpecDev 状态、建立 parent-candidate、运行适用 E2E 并推进父分支。生命周期由 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理。
+workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
 
 ## 4. 并发
 
-implementation subagent 同时最多三个，Lead 不计入；实际上限取 Goal Plan、config 和平台能力最小值。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+required 模式 implementation subagent 上限取 Goal Plan、config 和平台能力共同约束，Lead 不计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
 **完成标准**：每个项目写入映射到唯一 Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。

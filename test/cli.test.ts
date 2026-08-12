@@ -120,7 +120,7 @@ describe("Speculo CLI", () => {
       assert.equal(await pathExists(join(root, ".speculo", "workspace.json")), true);
       assert.deepEqual(await readJson(join(root, ".speculo", "install.json")), {
         schema_version: 1,
-        package_version: "0.7.3",
+        package_version: "0.7.4",
         workflows: ["specdev"],
       });
       assert.equal(await pathExists(join(root, ".speculo", "back")), false);
@@ -192,6 +192,24 @@ describe("Speculo CLI", () => {
         change: activeChange,
         change_status: "active",
       });
+      await writeFile(join(state, "specdev", "changes", activeChange, "goal-plan.md"), [
+        "---",
+        "schema_version: 5",
+        "artifact: goal-plan",
+        `change: ${activeChange}`,
+        "status: draft",
+        "modes: []",
+        "orchestration: lead-directed",
+        "lead: lead-session",
+        "implementation_agent_limit: 8",
+        "ticket_workspace_policy: current",
+        "integration_gate: direct-parent",
+        "ready_for_execution: false",
+        "---",
+        "",
+        "# Goal Plan",
+        "",
+      ].join("\n"));
       await writeFile(join(state, "specdev", "changes", activeChange, "source.md"), "active history\n");
       await writeJson(join(state, "specdev", "archive", "2026-08", archivedChange, ".status.json"), {
         schema_version: 3,
@@ -237,14 +255,21 @@ describe("Speculo CLI", () => {
       assert.equal(await readFile(join(state, "specdev", "archive", "2026-08", archivedChange, "evidence.md"), "utf8"), "archive\n");
       assert.equal(await readFile(join(state, "specdev", ".config", "tracking.md"), "utf8"), "tracking\n");
       const migratedSpecdevConfig = await readJson(join(state, "specdev", "config.json"));
-      assert.equal(migratedSpecdevConfig.schema_version, 4);
-      assert.equal(migratedSpecdevConfig.execution.max_implementation_agents, 3);
+      assert.equal(migratedSpecdevConfig.schema_version, 5);
+      assert.equal(migratedSpecdevConfig.execution.max_implementation_agents, 8);
+      assert.equal(migratedSpecdevConfig.execution.max_integration_attempts, 3);
+      assert.equal(migratedSpecdevConfig.planning.ui_prototype_default_variants, 3);
+      assert.equal(migratedSpecdevConfig.planning.ui_prototype_max_variants, 5);
       assert.equal(migratedSpecdevConfig.git.default_branch, "main");
       assert.equal(migratedSpecdevConfig.planning.default_depth, "deep");
       assert.equal("max_parallel" in migratedSpecdevConfig.execution, false);
       assert.equal("auto_commit" in migratedSpecdevConfig.git, false);
-      assert.equal((await readJson(join(state, "specdev", "changes", activeChange, ".status.json"))).schema_version, 4);
-      assert.equal((await readJson(join(state, "specdev", "archive", "2026-08", archivedChange, ".status.json"))).schema_version, 4);
+      assert.equal((await readJson(join(state, "specdev", "changes", activeChange, ".status.json"))).schema_version, 6);
+      assert.equal((await readJson(join(state, "specdev", "archive", "2026-08", archivedChange, ".status.json"))).schema_version, 6);
+      const migratedGoalPlan = await readFile(join(state, "specdev", "changes", activeChange, "goal-plan.md"), "utf8");
+      assert.match(migratedGoalPlan, /^schema_version: 6$/m);
+      assert.match(migratedGoalPlan, /^implementation_agent_limit: 8$/m);
+      assert.match(migratedGoalPlan, /^integration_attempt_limit: 3$/m);
       for (const namespace of ["adr", "context", "research"]) {
         assert.equal(await readFile(join(state, "specdev", namespace, "keep.md"), "utf8"), namespace + "\n");
       }
@@ -391,7 +416,7 @@ describe("Speculo CLI", () => {
   it("rejects incomplete schema-v4 SpecDev config, change status, and Goal Plan during automatic refresh", async () => {
     const cases = [
       {
-        blocker: "invalid-specdev-config-v4",
+        blocker: "invalid-specdev-config-v5",
         mutate: async (state: string) => {
           const configPath = join(state, "specdev", "config.json");
           const config = await readJson(join(packageRoot, "template", "workflows", "specdev", "I-init-setup", "config-template.json"));
@@ -702,7 +727,7 @@ describe("Speculo CLI", () => {
       }]));
       const incomplete = runMigrationScript(["apply", "--project-root", target, "--plan", planPath, "--confirmed"]);
       assert.equal(incomplete.status, 1);
-      assert.match(incomplete.stderr, /complete schema-v4 execution contract/);
+      assert.match(incomplete.stderr, /complete schema-v5 execution contract/);
       assert.equal(await pathExists(configPath), false);
       assert.equal((await readdir(target)).some((name) => name.startsWith(".speculo-runtime-migrate-stage-")), false);
     } finally {

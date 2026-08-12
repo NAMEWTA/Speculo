@@ -1,11 +1,11 @@
 ---
 name: dev-worktree
-description: 管理 SpecDev Ticket 或原型的 Git worktree；为 Ticket 创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
+description: 管理 SpecDev required Ticket 或原型的 Git worktree；为 required Ticket 创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
 ---
 
 # Dev Worktree
 
-本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 使用完整 source → candidate → parent 状态机；`purpose=prototype` 只使用调用方批准的临时生命周期。
+本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 仅在 Goal Plan 选择 `required` 时使用完整 source → candidate → parent 状态机；`current` Ticket 不调用本 Skill。`purpose=prototype` 只使用调用方批准的临时生命周期。
 
 ## 输入
 
@@ -15,7 +15,7 @@ description: 管理 SpecDev Ticket 或原型的 Git worktree；为 Ticket 创建
 - workspace、implementation 和 integration owner；
 - 允许动作、路径合同、验证合同、调用方状态记录位置。
 
-Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked，不使用 current workspace 代替。
+required Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked；current Ticket 应按 I-implement 的 direct-parent 规则执行。
 
 ## 1. 创建或恢复
 

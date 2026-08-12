@@ -122,8 +122,8 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 10. **恢复依赖权威工件**：跨 Work 或 Agent 边界时同步 active change 的 `current_work`，成功完成后去重更新 `works_run`，返回下一 Work 和权威工件的完整路径。
 11. **本地执行权威**：远程 Issue/PR/URL 只作为来源或完成投影；Spec、Ticket、Map、Goal Plan、Evidence 和状态始终以本地工件为准。
 12. **完成与归档分离**：本地完成按 change completion 合同决定；远程 close 失败不回滚完成，但必须 reconcile 或 waive 后才归档。
-13. **Lead 与隔离正交**：Lead 固定拥有 SpecDev 状态、Evidence 与父分支；是否派遣 subagent 由 Lead 动态决定。每个实现 Ticket 都使用独立 worktree，Agent 身份不决定是否隔离。
-14. **候选先验收**：source worktree 只产生实现 commit 与非 E2E 证据；Lead 在 parent-candidate 状态运行集成检查和适用 E2E，通过后才推进父分支。
+13. **Lead 与隔离正交**：Lead 固定拥有 SpecDev 状态、Evidence 与父分支；是否派遣 subagent 由 Lead 动态决定。Goal Plan 创建时询问 Ticket 是否开启 worktree，默认不开启；选择只作用于当前 Goal Plan。
+14. **策略化验收**：current 模式使用当前 workspace 严格串行、direct-parent 验证；required 模式使用 source worktree 与 parent-candidate。只有 required 模式创建独立 Ticket worktree。
 
 共享规则：
 
@@ -151,7 +151,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 ## 状态字段
 
-`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v4；Spec/Ticket/Tickets Map 继续使用各自 schema v3，config、Goal Plan 和 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v4：
+`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 继续使用各自 schema v3，config 使用 schema v5，Goal Plan 使用 schema v6，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
 
 - `schema_version`（数字）：全局状态 schema 版本，固定为 `4`。
 - `workflow`（字符串）：workflow 标识，固定为 `"specdev"`。
@@ -164,9 +164,9 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 `active[].change` 必须唯一，且不得同时出现在 `archived`。开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
 
-`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_implementation_agents` 为 `1..3`，默认 `3`，仅限制 implementation subagent 且不含 Lead；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
+`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_implementation_agents`、`max_integration_attempts` 和 planning 原型变体字段均为可配置正整数，初始化时写入默认值；仅 implementation subagent 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
 
-`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、workspace/implementation/integration owner、portable source workspace、source checkpoint、parent-candidate branch/workspace、candidate/result SHA、验证、E2E disposition 与生命周期状态。每个实现 Ticket 都有一条记录；父分支只有在 candidate passed 后推进。`removed` 是 `integrated` 后来源 branch/worktree 完成清理的终态，必须保留全部集成与 E2E 证据。
+`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、适用 candidate/result SHA、验证、E2E disposition 与生命周期状态。current 记录使用 `workspace_ref=current` 和 direct-parent；required 记录使用 source/parent-candidate。每个实现 Ticket 都有一条记录；父分支只有在对应策略的验证通过后推进。`removed` 是 required 集成后来源 branch/worktree 完成清理的终态，必须保留全部集成与 E2E 证据。
 
 领域状态枚举：
 
@@ -186,7 +186,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 ## 副作用边界
 
-未经用户明确授权不得提交、推送、合并、删除来源 branch/worktree、部署、发布、移动归档、写入/关闭远程 Issue 或执行不可逆迁移。Ready Goal Plan/Ticket 执行必须明确取得 implementation commit 与 local candidate integration/父分支更新授权；该授权包含 transient candidate checkout/branch 生命周期，不扩展到来源 cleanup、远端或生产动作。只读探索、change 工件生成和已授权验证可以进行。远程开发投影仅由 Triage reconcile 执行；Retro command 的 Speculo 反馈 Issue 是独立 command 边界。敏感值不得写入 `<Path>{roots.state}/specdev/</Path>`。
+未经用户明确授权不得提交、推送、合并、删除来源 branch/worktree、部署、发布、移动归档、写入/关闭远程 Issue 或执行不可逆迁移。Ready Goal Plan/Ticket 执行必须明确取得 implementation commit 与所选 direct-parent/candidate integration/父分支更新授权；required 模式该授权包含 transient candidate checkout/branch 生命周期，不扩展到来源 cleanup、远端或生产动作。只读探索、change 工件生成和已授权验证可以进行。远程开发投影仅由 Triage reconcile 执行；Retro command 的 Speculo 反馈 Issue 是独立 command 边界。敏感值不得写入 `<Path>{roots.state}/specdev/</Path>`。
 
 ## 场景路由
 

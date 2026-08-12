@@ -50,6 +50,9 @@ const BACKUP_RELATIVE = ".speculo/back";
 const INSTALL_RELATIVE = ".speculo/install.json";
 const MIGRATION_RELATIVE = ".speculo/migration.json";
 const SNAPSHOT_DIR = ".migration-snapshot";
+const CONFIG_SCHEMA_VERSION = 5;
+const GOAL_PLAN_SCHEMA_VERSION = 6;
+const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const MANAGED_STATE_ENTRIES = new Set([
   "README.md",
   "workspace.json",
@@ -249,7 +252,7 @@ function hasCompleteV4Integration(
   ];
   if (!hasExactKeys(integration, required)) return false;
   if (!new Set(["pending", "candidate", "passed", "failed", "stale"]).has(String(integration.status))) return false;
-  if (![null, "fast-forward", "merge-commit"].includes(integration.method as null | string)) return false;
+  if (![null, "direct-parent", "fast-forward", "merge-commit"].includes(integration.method as null | string)) return false;
   if (!new Set(["pending", "passed", "failed"]).has(String(integration.verification))) return false;
   for (const key of ["parent_before_sha", "source_sha", "candidate_sha", "candidate_branch", "result_sha"]) {
     if (!isStringOrNull(integration[key])) return false;
@@ -275,16 +278,19 @@ function hasCompleteV4Integration(
   if (e2e.required === true && e2e.status === "not-required") return false;
   if (e2e.required === true && e2e.status === "passed" && !isNonEmptyString(e2e.evidence)) return false;
 
+  const currentWorkspace = integration.method === "direct-parent";
   const lifecycleNeedsCandidate = new Set(["integrating", "integrated", "removed"]).has(String(worktreeStatus));
   if (lifecycleNeedsCandidate) {
     if (
       !isNonEmptyString(integration.parent_before_sha) ||
       !isNonEmptyString(integration.source_sha) ||
       integration.source_sha !== sourceCheckpoint ||
-      !isNonEmptyString(integration.candidate_sha) ||
-      integration.candidate_branch !== `speculo/integration/${change}/${ticketId}` ||
-      integration.candidate_workspace_ref !== `specdev-worktree/.integration/${ticketId}` ||
-      !new Set(["fast-forward", "merge-commit"]).has(String(integration.method)) ||
+      (currentWorkspace
+        ? integration.candidate_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null || integration.method !== "direct-parent"
+        : !isNonEmptyString(integration.candidate_sha) ||
+          integration.candidate_branch !== `speculo/integration/${change}/${ticketId}` ||
+          integration.candidate_workspace_ref !== `specdev-worktree/.integration/${ticketId}` ||
+          !new Set(["fast-forward", "merge-commit"]).has(String(integration.method))) ||
       !Number.isInteger(integration.attempts) ||
       Number(integration.attempts) < 1
     ) return false;
@@ -296,7 +302,7 @@ function hasCompleteV4Integration(
       integration.status !== "passed" ||
       integration.verification !== "passed" ||
       !isNonEmptyString(integration.result_sha) ||
-      integration.result_sha !== integration.candidate_sha ||
+      integration.result_sha !== (currentWorkspace ? integration.source_sha : integration.candidate_sha) ||
       !new Set(["not-required", "passed"]).has(String(e2e.status))
     ) return false;
     if (
@@ -381,12 +387,13 @@ function hasCompleteV4ChangeStatus(status: JsonObject): boolean {
     for (const key of ["owner", "implementation_owner", "integration_owner", "base_sha", "parent_branch", "branch", "updated_at"]) {
       if (!isNonEmptyString(entry[key])) return false;
     }
-    if (entry.parent_branch === entry.branch) return false;
-    if (entry.workspace_ref !== `specdev-worktree/${entry.ticket_id}`) return false;
+    const integration = isJsonObject(entry.integration) ? entry.integration : {};
+    const currentWorkspace = entry.workspace_ref === "current" || integration.method === "direct-parent";
+    if (currentWorkspace ? entry.parent_branch !== entry.branch : entry.parent_branch === entry.branch) return false;
+    if (!currentWorkspace && entry.workspace_ref !== `specdev-worktree/${entry.ticket_id}`) return false;
     if (!new Set(["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]).has(String(entry.status))) return false;
     const sourceRequired = new Set(["review", "integrating", "integrated", "removed"]).has(String(entry.status));
     if (sourceRequired ? !isNonEmptyString(entry.source_checkpoint) : !isStringOrNull(entry.source_checkpoint)) return false;
-    const integration = entry.integration;
     return isJsonObject(integration) && hasCompleteV4Integration(
       integration,
       entry.status,
@@ -415,7 +422,7 @@ function hasCompleteV4SpecdevConfig(config: JsonObject): boolean {
   if (!hasExactKeys(config.execution, ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"])) return false;
   const limit = config.execution.max_implementation_agents;
   if (
-    !Number.isInteger(limit) || Number(limit) < 1 || Number(limit) > 3 ||
+    !Number.isInteger(limit) || Number(limit) < 1 ||
     typeof config.execution.deep_ticket_human_approval !== "boolean" ||
     !isNonEmptyString(config.execution.shared_path_owner)
   ) return false;
@@ -425,6 +432,30 @@ function hasCompleteV4SpecdevConfig(config: JsonObject): boolean {
   return new Set(["lite", "standard", "deep"]).has(String(config.planning.default_depth)) &&
     typeof config.planning.require_ready_gate === "boolean" &&
     typeof config.planning.require_evidence === "boolean";
+}
+
+function hasCompleteV5SpecdevConfig(config: JsonObject): boolean {
+  const rootKeys = ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"];
+  if (
+    config.schema_version !== CONFIG_SCHEMA_VERSION || !hasExactKeys(config, rootKeys) ||
+    !isNonEmptyString(config.interaction_language) || !isNonEmptyString(config.artifact_language) ||
+    !isJsonObject(config.git) || !isJsonObject(config.execution) || !isJsonObject(config.verification) || !isJsonObject(config.planning)
+  ) return false;
+  if (!hasExactKeys(config.git, ["default_branch"]) || !(config.git.default_branch === null || typeof config.git.default_branch === "string")) return false;
+  if (!hasExactKeys(config.execution, ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"])) return false;
+  if (
+    !Number.isInteger(config.execution.max_implementation_agents) || Number(config.execution.max_implementation_agents) < 1 ||
+    !Number.isInteger(config.execution.max_integration_attempts) || Number(config.execution.max_integration_attempts) < 1 ||
+    typeof config.execution.deep_ticket_human_approval !== "boolean" || !isNonEmptyString(config.execution.shared_path_owner)
+  ) return false;
+  for (const key of ["test", "typecheck", "lint", "build"]) {
+    if (!(key in config.verification) || !isStringOrNull(config.verification[key])) return false;
+  }
+  return new Set(["lite", "standard", "deep"]).has(String(config.planning.default_depth)) &&
+    typeof config.planning.require_ready_gate === "boolean" &&
+    typeof config.planning.require_evidence === "boolean" &&
+    Number.isInteger(config.planning.ui_prototype_default_variants) && Number(config.planning.ui_prototype_default_variants) >= 1 &&
+    Number.isInteger(config.planning.ui_prototype_max_variants) && Number(config.planning.ui_prototype_max_variants) >= Number(config.planning.ui_prototype_default_variants);
 }
 
 function parseGoalPlanFrontmatter(text: string): JsonObject | null {
@@ -481,10 +512,33 @@ function hasCompleteV5GoalPlan(meta: JsonObject, change: string): boolean {
     (new Set(["draft", "blocked", "completed"]).has(status) && meta.ready_for_execution === false);
 }
 
+function hasCompleteV6GoalPlan(meta: JsonObject, change: string): boolean {
+  const required = [
+    "schema_version", "artifact", "change", "status", "modes", "orchestration", "lead",
+    "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution",
+  ];
+  if (!hasExactKeys(meta, required) || meta.schema_version !== GOAL_PLAN_SCHEMA_VERSION) return false;
+  const { integration_attempt_limit: integrationAttemptLimit, ...previous } = meta;
+  return hasCompleteV5GoalPlan({ ...previous, schema_version: 5 }, change) &&
+    Number.isInteger(integrationAttemptLimit) && Number(integrationAttemptLimit) >= 1;
+}
+
 function normalizeGoalPlanV5(text: string): string {
   const meta = parseGoalPlanFrontmatter(text);
   if (meta === null || !hasCompleteV4GoalPlan(meta, String(meta.change))) return text;
   return text.replace(/^schema_version:\s*4\s*$/m, "schema_version: 5");
+}
+
+function normalizeGoalPlanV6(text: string, config: JsonObject): string {
+  const meta = parseGoalPlanFrontmatter(text);
+  if (meta === null || meta.schema_version !== 5 || !hasCompleteV5GoalPlan(meta, String(meta.change))) return text;
+  const execution = isJsonObject(config.execution) ? config.execution : {};
+  const attempts = Number.isInteger(execution.max_integration_attempts) && Number(execution.max_integration_attempts) >= 1
+    ? Number(execution.max_integration_attempts)
+    : 3;
+  return text
+    .replace(/^schema_version:\s*5\s*$/m, "schema_version: 6")
+    .replace(/^(implementation_agent_limit:\s*[^\n]+)$/m, `$1\nintegration_attempt_limit: ${attempts}`);
 }
 
 function v5Authorization(scope: string): JsonObject {
@@ -501,12 +555,21 @@ function normalizeChangeStatusV5(previous: JsonObject, globalEntry: JsonObject |
     const sourceCheckpoint = isStringOrNull(entry.source_checkpoint) ? entry.source_checkpoint : null;
     return {
       ...entry,
-      workspace_ref: `specdev-worktree/${change}/${ticketId}`,
+      workspace_ref: entry.workspace_ref === "current" || integration.method === "direct-parent"
+        ? "current"
+        : `specdev-worktree/${change}/${ticketId}`,
+      branch: entry.workspace_ref === "current" || integration.method === "direct-parent"
+        ? entry.parent_branch
+        : entry.branch,
       integration: {
         ...integration,
         parent_ref: typeof entry.parent_branch === "string" ? entry.parent_branch : null,
-        candidate_tree_sha: integration.candidate_sha ?? null,
-        candidate_workspace_ref: integration.candidate_workspace_ref === null ? null : `specdev-worktree/.integration/${change}/${ticketId}`,
+        candidate_sha: entry.workspace_ref === "current" || integration.method === "direct-parent" ? null : integration.candidate_sha ?? null,
+        candidate_tree_sha: entry.workspace_ref === "current" || integration.method === "direct-parent" ? null : integration.candidate_sha ?? null,
+        candidate_branch: entry.workspace_ref === "current" || integration.method === "direct-parent" ? null : integration.candidate_branch ?? null,
+        candidate_workspace_ref: entry.workspace_ref === "current" || integration.method === "direct-parent"
+          ? null
+          : integration.candidate_workspace_ref === null ? null : `specdev-worktree/.integration/${change}/${ticketId}`,
         full_suite: { required: true, status: "pending", reason: null, evidence: null },
         promotion_status: integration.status === "passed" ? "applied" : "pending",
         source_sha: integration.source_sha ?? sourceCheckpoint,
@@ -523,8 +586,8 @@ function normalizeChangeStatusV5(previous: JsonObject, globalEntry: JsonObject |
       id: String(claim.id ?? ""), owner: String(claim.owner ?? ""), session: typeof claim.session === "string" ? claim.session : null, claimed_at: String(claim.claimed_at ?? ""),
     } : claim) : [],
     execution_authorization: {
-      implementation_commit: v5Authorization("Ticket source commits"),
-      local_candidate_integration: v5Authorization("Lead-owned local parent candidate integration and parent update"),
+      implementation_commit: v5Authorization("Ticket implementation commits"),
+      local_candidate_integration: v5Authorization("Lead-owned local direct-parent or candidate integration and parent update"),
       source_cleanup: v5Authorization("Source worktree and branch cleanup"),
     },
     leadership: { current: "unassigned", epoch: 1, assigned_at: String(previous.updated_at), history: [] },
@@ -550,8 +613,49 @@ function hasCompleteV5ChangeStatus(status: JsonObject): boolean {
       !isStringOrNull(entry.source) || !isStringOrNull(entry.granted_at)) return false;
   }
   const leadership = status.leadership;
-  return isNonEmptyString(leadership.current) && Number.isInteger(leadership.epoch) && Number(leadership.epoch) >= 1 &&
-    isNonEmptyString(leadership.assigned_at) && Array.isArray(leadership.history);
+  if (!isNonEmptyString(leadership.current) || !Number.isInteger(leadership.epoch) || Number(leadership.epoch) < 1 ||
+    !isNonEmptyString(leadership.assigned_at) || !Array.isArray(leadership.history) || !Array.isArray(status.worktrees)) return false;
+  const change = String(status.change);
+  const worktreeKeys = [
+    "ticket_id", "owner", "implementation_owner", "integration_owner", "provider", "base_sha",
+    "parent_branch", "branch", "workspace_ref", "source_checkpoint", "integration", "status", "updated_at",
+  ];
+  const integrationKeys = [
+    "status", "parent_ref", "parent_before_sha", "source_sha", "candidate_sha", "candidate_tree_sha",
+    "candidate_branch", "candidate_workspace_ref", "result_sha", "method", "conflict_paths", "verification",
+    "full_suite", "e2e", "evidence", "attempts", "promotion_status",
+  ];
+  return status.worktrees.every((entry) => {
+    if (!isJsonObject(entry) || !hasExactKeys(entry, worktreeKeys) || entry.provider !== "git" ||
+      typeof entry.ticket_id !== "string" || !/^T-[0-9]{2,}$/.test(entry.ticket_id) || !isJsonObject(entry.integration)) return false;
+    const current = entry.workspace_ref === "current";
+    if (current ? entry.branch !== entry.parent_branch : entry.workspace_ref !== `specdev-worktree/${change}/${entry.ticket_id}` || entry.branch === entry.parent_branch) return false;
+    const integration = entry.integration;
+    if (!hasExactKeys(integration, integrationKeys) || !Number.isInteger(integration.attempts) || Number(integration.attempts) < 0 ||
+      !isStringArray(integration.conflict_paths) || !isNonEmptyString(integration.evidence)) return false;
+    for (const key of ["full_suite", "e2e"]) {
+      const suite = integration[key];
+      if (!isJsonObject(suite) || !hasExactKeys(suite, ["required", "status", "reason", "evidence"]) || typeof suite.required !== "boolean") return false;
+    }
+    return true;
+  });
+}
+
+function hasCompleteV6ChangeStatus(status: JsonObject): boolean {
+  if (status.schema_version !== CHANGE_STATUS_SCHEMA_VERSION) return false;
+  const previous = { ...status, schema_version: 5 };
+  if (!hasCompleteV5ChangeStatus(previous) || !Array.isArray(status.worktrees)) return false;
+  return status.worktrees.every((entry) => {
+    if (!isJsonObject(entry) || !isJsonObject(entry.integration)) return false;
+    const current = entry.workspace_ref === "current";
+    if (current && entry.parent_branch !== entry.branch) return false;
+    if (!current && entry.parent_branch === entry.branch) return false;
+    const integration = entry.integration;
+    if (current && ["candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref"].some((key) => integration[key] !== null)) return false;
+    if (current && integration.method !== null && integration.method !== "direct-parent") return false;
+    if (!current && integration.method === "direct-parent") return false;
+    return true;
+  });
 }
 
 function hasCompleteV4GoalPlan(meta: JsonObject, change: string): boolean {
@@ -569,9 +673,10 @@ function hasCompleteV4GoalPlan(meta: JsonObject, change: string): boolean {
     !isNonEmptyString(meta.lead) ||
     !Number.isInteger(meta.implementation_agent_limit) ||
     Number(meta.implementation_agent_limit) < 1 ||
-    Number(meta.implementation_agent_limit) > 3 ||
-    meta.ticket_workspace_policy !== "required" ||
-    meta.integration_gate !== "candidate-merge" ||
+    !new Set(["current", "required"]).has(String(meta.ticket_workspace_policy)) ||
+    !new Set(["direct-parent", "candidate-merge"]).has(String(meta.integration_gate)) ||
+    (meta.ticket_workspace_policy === "current" && meta.integration_gate !== "direct-parent") ||
+    (meta.ticket_workspace_policy === "required" && meta.integration_gate !== "candidate-merge") ||
     typeof meta.ready_for_execution !== "boolean" ||
     !Array.isArray(meta.modes)
   ) return false;
@@ -588,12 +693,12 @@ async function inspectGoalPlanVersion(
   const path = join(stateRoot, "specdev", "changes", change, "goal-plan.md");
   if (!(await pathExists(path))) return;
   const frontmatter = parseGoalPlanFrontmatter(await readFile(path, "utf8"));
-  const currentContract = frontmatter !== null && hasCompleteV5GoalPlan(frontmatter, change);
+  const currentContract = frontmatter !== null && (hasCompleteV6GoalPlan(frontmatter, change) || hasCompleteV5GoalPlan(frontmatter, change));
   if (!currentContract) {
     blockers.push({
       code: "unsupported-goal-plan-contract",
       path: `.speculo/specdev/changes/${change}/goal-plan.md`,
-      message: "Goal Plan must contain the complete fixed Lead and candidate-integration v5 frontmatter contract",
+      message: "Goal Plan must contain the complete Lead and workspace/integration v6 frontmatter contract",
     });
   }
 }
@@ -634,12 +739,12 @@ async function inspectSpecdevState(stateRoot: string): Promise<MigrationBlocker[
       try {
         const changeStatus = await readJson(changeStatusPath);
         if (
-          !new Set([3, 4, 5]).has(Number(changeStatus.schema_version)) ||
+          !new Set([3, 4, 5, 6]).has(Number(changeStatus.schema_version)) ||
           changeStatus.artifact !== "change-status" ||
           changeStatus.change !== name ||
           !new Set(["active", "blocked", "completed"]).has(String(changeStatus.change_status))
         ) {
-          blockers.push({ code: "unsupported-change-status", path: `.speculo/specdev/changes/${name}/.status.json`, message: "active change state must use schema v3/v4 and match its index entry" });
+          blockers.push({ code: "unsupported-change-status", path: `.speculo/specdev/changes/${name}/.status.json`, message: "active change state must use schema v3/v4/v5/v6 and match its index entry" });
         } else if (hasLegacyWorktreeState(changeStatus)) {
           blockers.push({
             code: "ambiguous-ticket-worktree-contract",
@@ -664,6 +769,8 @@ async function inspectSpecdevState(stateRoot: string): Promise<MigrationBlocker[
             path: `.speculo/specdev/changes/${name}/.status.json`,
             message: "change-status v5 is missing required runtime authority fields",
           });
+        } else if (changeStatus.schema_version === 6 && !hasCompleteV6ChangeStatus(changeStatus)) {
+          blockers.push({ code: "invalid-change-status-v6", path: `.speculo/specdev/changes/${name}/.status.json`, message: "change-status v6 has inconsistent current/required workspace fields" });
         }
         await inspectGoalPlanVersion(stateRoot, name, blockers);
       } catch {
@@ -692,7 +799,7 @@ async function inspectSpecdevState(stateRoot: string): Promise<MigrationBlocker[
       try {
         const archivedStatus = await readJson(archivedStatusPath);
         if (
-          !new Set([3, 4]).has(Number(archivedStatus.schema_version)) ||
+          !new Set([3, 4, 5, 6]).has(Number(archivedStatus.schema_version)) ||
           archivedStatus.artifact !== "change-status" ||
           archivedStatus.change !== item ||
           archivedStatus.change_status !== "archived"
@@ -716,6 +823,10 @@ async function inspectSpecdevState(stateRoot: string): Promise<MigrationBlocker[
             path: `.speculo/specdev/archive/${month}/${item}/.status.json`,
             message: "archived change-status v4 is incomplete",
           });
+        } else if (archivedStatus.schema_version === 5 && !hasCompleteV5ChangeStatus(archivedStatus)) {
+          blockers.push({ code: "invalid-archived-status-v5", path: `.speculo/specdev/archive/${month}/${item}/.status.json`, message: "archived change-status v5 is incomplete" });
+        } else if (archivedStatus.schema_version === 6 && !hasCompleteV6ChangeStatus(archivedStatus)) {
+          blockers.push({ code: "invalid-archived-status-v6", path: `.speculo/specdev/archive/${month}/${item}/.status.json`, message: "archived change-status v6 has inconsistent current/required workspace fields" });
         }
       } catch {
         // The JSON tree check reports the parse failure with the precise path.
@@ -754,12 +865,14 @@ async function inspectSpecdevState(stateRoot: string): Promise<MigrationBlocker[
   if (await pathExists(configPath)) {
     try {
       const config = await readJson(configPath);
-      if (!new Set([3, 4]).has(Number(config.schema_version))) {
-        blockers.push({ code: "unsupported-specdev-config", path: ".speculo/specdev/config.json", message: "automatic migration supports SpecDev config schema v3/v4 only" });
+      if (!new Set([3, 4, 5]).has(Number(config.schema_version))) {
+        blockers.push({ code: "unsupported-specdev-config", path: ".speculo/specdev/config.json", message: "automatic migration supports SpecDev config schema v3/v4/v5 only" });
       } else if (hasUnsupportedV3SpecdevConfigFields(config)) {
         blockers.push({ code: "unmapped-specdev-config-fields", path: ".speculo/specdev/config.json", message: "SpecDev config v3 contains additional fields that require an explicit migration decision" });
       } else if (config.schema_version === 4 && !hasCompleteV4SpecdevConfig(config)) {
         blockers.push({ code: "invalid-specdev-config-v4", path: ".speculo/specdev/config.json", message: "SpecDev config v4 is incomplete or contains legacy execution fields" });
+      } else if (config.schema_version === 5 && !hasCompleteV5SpecdevConfig(config)) {
+        blockers.push({ code: "invalid-specdev-config-v5", path: ".speculo/specdev/config.json", message: "SpecDev config v5 is incomplete or contains invalid execution limits" });
       }
     } catch {
       // The JSON tree check reports the parse failure with the precise path.
@@ -870,18 +983,23 @@ function mergeDefaults(defaults: unknown, previous: unknown): unknown {
   return previous;
 }
 
-function normalizeSpecdevConfigV4(previous: JsonObject, defaults: JsonObject): JsonObject {
-  if (previous.schema_version === 4) return previous;
+function normalizeSpecdevConfigV5(previous: JsonObject, defaults: JsonObject): JsonObject {
+  if (previous.schema_version === CONFIG_SCHEMA_VERSION) return previous;
   const previousGit = isJsonObject(previous.git) ? previous.git : {};
   const previousExecution = isJsonObject(previous.execution) ? previous.execution : {};
   const defaultGit = isJsonObject(defaults.git) ? defaults.git : {};
   const defaultExecution = isJsonObject(defaults.execution) ? defaults.execution : {};
+  const configuredLimit = Number(previousExecution.max_implementation_agents);
   const legacyLimit = Number(previousExecution.max_parallel);
-  const maxImplementationAgents = Number.isInteger(legacyLimit)
-    ? Math.max(1, Math.min(3, legacyLimit))
+  const maxImplementationAgents = Number.isInteger(configuredLimit) && configuredLimit >= 1
+    ? configuredLimit
+    : Number.isInteger(legacyLimit) && legacyLimit >= 1
+      ? legacyLimit
     : Number(defaultExecution.max_implementation_agents ?? 3);
+  const merged = mergeDefaults(defaults, previous) as JsonObject;
   return {
-    schema_version: 4,
+    ...merged,
+    schema_version: CONFIG_SCHEMA_VERSION,
     interaction_language: typeof previous.interaction_language === "string"
       ? previous.interaction_language
       : defaults.interaction_language,
@@ -895,6 +1013,9 @@ function normalizeSpecdevConfigV4(previous: JsonObject, defaults: JsonObject): J
     },
     execution: {
       max_implementation_agents: maxImplementationAgents,
+      max_integration_attempts: Number.isInteger(previousExecution.max_integration_attempts) && Number(previousExecution.max_integration_attempts) >= 1
+        ? previousExecution.max_integration_attempts
+        : Number(defaultExecution.max_integration_attempts ?? 3),
       deep_ticket_human_approval: typeof previousExecution.deep_ticket_human_approval === "boolean"
         ? previousExecution.deep_ticket_human_approval
         : defaultExecution.deep_ticket_human_approval,
@@ -948,9 +1069,9 @@ async function upgradeSpecdevRuntimeV5(stagedRoot: string): Promise<void> {
   const configPath = join(stateRoot, "config.json");
   if (await pathExists(configPath)) {
     const previous = await readJson(configPath);
-    if (previous.schema_version === 3) {
-      const defaults = await readJson(join(stagedRoot, "workflows", "specdev", "I-init-setup", "config-template.json"));
-      await writeFile(configPath, JSON.stringify(normalizeSpecdevConfigV4(previous, defaults), null, 2) + "\n", "utf8");
+    const defaults = await readJson(join(stagedRoot, "workflows", "specdev", "I-init-setup", "config-template.json"));
+    if (previous.schema_version !== CONFIG_SCHEMA_VERSION) {
+      await writeFile(configPath, JSON.stringify(normalizeSpecdevConfigV5(previous, defaults), null, 2) + "\n", "utf8");
     }
   }
   const statusPath = join(stateRoot, "status.json");
@@ -969,10 +1090,23 @@ async function upgradeSpecdevRuntimeV5(stagedRoot: string): Promise<void> {
     const previous = await readJson(path);
     if (previous.schema_version === 3) {
       await writeFile(path, JSON.stringify(normalizeChangeStatusV4(previous), null, 2) + "\n", "utf8");
-      continue;
     }
-    if (previous.schema_version === 4) {
-      await writeFile(path, JSON.stringify(normalizeChangeStatusV5(previous, entry), null, 2) + "\n", "utf8");
+    let current = await readJson(path);
+    if (current.schema_version === 4) {
+      await writeFile(path, JSON.stringify(normalizeChangeStatusV5(current, entry), null, 2) + "\n", "utf8");
+    }
+    current = await readJson(path);
+    if (current.schema_version === 5) {
+      await writeFile(path, JSON.stringify({ ...current, schema_version: CHANGE_STATUS_SCHEMA_VERSION }, null, 2) + "\n", "utf8");
+    }
+  }
+  const config = await pathExists(configPath) ? await readJson(configPath) : {};
+  for (const { path } of changeStatusPaths) {
+    const goalPlanPath = join(dirname(path), "goal-plan.md");
+    if (!(await pathExists(goalPlanPath))) continue;
+    const goalPlan = await readFile(goalPlanPath, "utf8");
+    if (parseGoalPlanFrontmatter(goalPlan)?.schema_version === 5) {
+      await writeFile(goalPlanPath, normalizeGoalPlanV6(goalPlan, config), "utf8");
     }
   }
   if (status.schema_version === 4) {

@@ -31,7 +31,7 @@
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
 - 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。可由既有合同机械修正的失败最多处理三轮；不得放宽断言、删除检查或发明行为。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。机械修正次数不得超过 Goal Plan 快照的 `integration_attempt_limit`；不得放宽断言、删除检查或发明行为。
 
 ## 4. 推进父分支
 

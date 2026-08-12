@@ -1593,7 +1593,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
@@ -1601,6 +1601,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
   },
   "execution": {
     "max_implementation_agents": 3,
+    "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },
@@ -1613,7 +1614,9 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
   "planning": {
     "default_depth": "standard",
     "require_ready_gate": true,
-    "require_evidence": true
+    "require_evidence": true,
+    "ui_prototype_default_variants": 3,
+    "ui_prototype_max_variants": 5
   }
 }
 ```
@@ -1625,12 +1628,12 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v4",
+  "$id": "urn:speculo:specdev:config:v5",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
   "properties": {
-    "schema_version": {"const": 4},
+    "schema_version": {"const": 5},
     "interaction_language": {"type": "string", "minLength": 1},
     "artifact_language": {"type": "string", "minLength": 1},
     "git": {
@@ -1643,9 +1646,10 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
     },
     "execution": {
       "type": "object",
-      "required": ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
       "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1, "maximum": 3},
+        "max_implementation_agents": {"type": "integer", "minimum": 1},
+        "max_integration_attempts": {"type": "integer", "minimum": 1},
         "deep_ticket_human_approval": {"type": "boolean"},
         "shared_path_owner": {"type": "string", "minLength": 1}
       },
@@ -1664,15 +1668,20 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
     },
     "planning": {
       "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence"],
+      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_prototype_default_variants", "ui_prototype_max_variants"],
       "properties": {
         "default_depth": {"enum": ["lite", "standard", "deep"]},
         "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"}
+        "require_evidence": {"type": "boolean"},
+        "ui_prototype_default_variants": {"type": "integer", "minimum": 1},
+        "ui_prototype_max_variants": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": true
     }
   },
+  "allOf": [{
+    "$comment": "ui_prototype_default_variants <= ui_prototype_max_variants is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
+  }],
   "additionalProperties": false
 }
 ```
@@ -1738,7 +1747,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
@@ -1746,8 +1755,8 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
   "works_run": [],
   "claimed_investigations": [],
   "execution_authorization": {
-    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket source commits"},
-    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local parent candidate integration and parent update"},
+    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket implementation commits"},
+    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local direct-parent or candidate integration and parent update"},
     "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
   },
   "leadership": {
@@ -1774,7 +1783,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v5",
+  "$id": "urn:speculo:specdev:change-status:v6",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
@@ -1783,7 +1792,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
     "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
   ],
   "properties": {
-    "schema_version": {"const": 5},
+    "schema_version": {"const": 6},
     "artifact": {"const": "change-status"},
     "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
@@ -1887,12 +1896,39 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
         "base_sha": {"type": "string", "minLength": 1},
         "parent_branch": {"type": "string", "minLength": 1},
         "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {"type": "string", "pattern": "^specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"},
+        "workspace_ref": {"type": "string", "pattern": "^(?:current|specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,})$"},
         "source_checkpoint": {"type": ["string", "null"]},
         "integration": {"$ref": "#/$defs/integration"},
         "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
         "updated_at": {"type": "string", "minLength": 1}
       },
+      "allOf": [
+        {
+          "if": {"properties": {"workspace_ref": {"const": "current"}}, "required": ["workspace_ref"]},
+          "then": {
+            "properties": {
+              "integration": {
+                "allOf": [{
+                  "properties": {
+                    "candidate_sha": {"const": null},
+                    "candidate_tree_sha": {"const": null},
+                    "candidate_branch": {"const": null},
+                    "candidate_workspace_ref": {"const": null},
+                    "method": {"enum": [null, "direct-parent"]}
+                  }
+                }]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "integration": {
+                "allOf": [{"properties": {"method": {"enum": [null, "fast-forward", "merge-commit"]}}}]
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "integration": {
@@ -1908,7 +1944,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
         "candidate_branch": {"type": ["string", "null"]},
         "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
         "result_sha": {"type": ["string", "null"]},
-        "method": {"enum": [null, "fast-forward", "merge-commit"]},
+        "method": {"enum": [null, "direct-parent", "fast-forward", "merge-commit"]},
         "conflict_paths": {"type": "array", "items": {"type": "string"}},
         "verification": {"enum": ["pending", "passed", "failed"]},
         "full_suite": {"$ref": "#/$defs/full-suite"},

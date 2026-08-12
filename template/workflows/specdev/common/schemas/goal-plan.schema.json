@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:goal-plan:v5",
+  "$id": "urn:speculo:specdev:goal-plan:v6",
   "title": "SpecDev Goal Plan Frontmatter",
   "type": "object",
   "required": [
     "schema_version", "artifact", "change", "status", "modes", "orchestration",
-    "lead", "implementation_agent_limit", "ticket_workspace_policy", "integration_gate",
+    "lead", "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate",
     "ready_for_execution"
   ],
   "properties": {
-    "schema_version": {"const": 5},
+    "schema_version": {"const": 6},
     "artifact": {"const": "goal-plan"},
     "change": {"type": "string", "minLength": 1},
     "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]},
@@ -20,12 +20,21 @@
     },
     "orchestration": {"const": "lead-directed"},
     "lead": {"type": "string", "minLength": 1},
-    "implementation_agent_limit": {"type": "integer", "minimum": 1, "maximum": 3},
-    "ticket_workspace_policy": {"const": "required"},
-    "integration_gate": {"const": "candidate-merge"},
+    "implementation_agent_limit": {"type": "integer", "minimum": 1},
+    "integration_attempt_limit": {"type": "integer", "minimum": 1},
+    "ticket_workspace_policy": {"enum": ["current", "required"]},
+    "integration_gate": {"enum": ["direct-parent", "candidate-merge"]},
     "ready_for_execution": {"type": "boolean"}
   },
   "allOf": [
+    {
+      "if": {"properties": {"ticket_workspace_policy": {"const": "current"}}, "required": ["ticket_workspace_policy"]},
+      "then": {"properties": {"integration_gate": {"const": "direct-parent"}}}
+    },
+    {
+      "if": {"properties": {"ticket_workspace_policy": {"const": "required"}}, "required": ["ticket_workspace_policy"]},
+      "then": {"properties": {"integration_gate": {"const": "candidate-merge"}}}
+    },
     {
       "if": {"properties": {"status": {"enum": ["draft", "blocked", "completed"]}}, "required": ["status"]},
       "then": {"properties": {"ready_for_execution": {"const": false}}}

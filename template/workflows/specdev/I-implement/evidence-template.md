@@ -1,14 +1,14 @@
 # Evidence: <Ticket ID> — <Ticket title>
 
-Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`：Ticket、Goal Plan、source worktree 与 candidate 字段写“不适用：Direct Spec”，以实施前基线和 current workspace 最终 checkpoint 代替 source/candidate/result 链；第 5、7 节分别记录 current workspace 定向检查和 Lead 最终回归/E2E，不伪造 Ticket 状态。
+本模板按 Goal Plan 的 workspace/integration 策略记录实际验证环境；不适用的环境明确写 `not-applicable`，不伪造 source、candidate 或 result 链。Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`，以实施前基线和最终 checkpoint 代替 Ticket 集成链。
 
 - **Change：** `<change>`
 - **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`
 - **Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
 - **Lead：** `<owner-or-session-locator>`
-- **Source worktree/branch：** `<workspace_ref>` / `<branch>`
-- **Base/source/candidate/result SHA：** `<sha>` / `<sha>` / `<sha>` / `<sha>`
+- **Workspace/branch：** `<workspace_ref>` / `<branch>`
+- **Base/implementation-or-source/candidate/result SHA：** `<sha>` / `<sha>` / `<sha>` / `<sha>`
 - **状态：** review / done / blocked / deviated / cancelled
 
 ## 1. 实现摘要
@@ -44,17 +44,21 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 
 每个 Ticket 验收项恰好落到一行。
 
-## 5. Source-worktree 验证
+## 5. Workspace Verification
+
+按 Goal Plan 记录 current workspace 或 source worktree 检查，并注明运行环境。
 
 | 命令或步骤 | 运行环境 | 结果 | 摘要 |
 |---|---|---|---|
-| ... | source-worktree | pass / fail / not-run | ... |
+| ... | current-workspace | pass / fail / not-run | ... |
 
 - **失败后修复与重跑：** 无 / ...
 - **未运行检查：** 无 / 原因与风险
-- **E2E：** 禁止在 source-worktree 声明 pass；此处固定为 not-run: parent-candidate-owned
+- **E2E：** 按 Goal Plan 的 E2E disposition 记录；未在本环境运行时说明 owner 与原因
 
 ## 6. 双轴审查
+
+标准轴与规范轴保持独立，分别记录固定输入、结果和修正。
 
 ### 标准轴
 
@@ -70,20 +74,22 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 
 两个轴隔离并按上述顺序记录。
 
-## 7. Parent-candidate 集成验证
+## 7. Integration Verification
+
+按 Goal Plan 记录 direct-parent 或 parent-candidate 集成；未采用的字段写 `null` 或 `not-applicable`。
 
 | 项目 | 结果 |
 |---|---|
 | Parent before SHA | `<sha>` |
-| Source/candidate SHA | `<sha>` / `<sha>` |
-| Candidate branch/workspace | `<branch>` / `<workspace_ref>` |
-| Method/conflicts | fast-forward / merge-commit；无 / paths |
-| Candidate checks | 命令、运行环境 `parent-candidate`、结果 |
+| Implementation/source SHA | `<sha>` / `<sha>` |
+| Candidate branch/workspace | current / `<branch>` / `not-applicable` |
+| Method/conflicts | direct-parent / fast-forward / merge-commit；无 / paths |
+| Integration checks | 命令、运行环境 `current-workspace`、结果 |
 | E2E disposition | required / not-required: reason |
 | E2E result | pending / passed / failed / not-required；场景与证据 |
 | Parent result/re-read | `<sha>`；HEAD/tree/ancestor 核对 |
 
-Candidate failed/stale 时明确父分支未推进、失败命令、旧 candidate SHA 和恢复条件。
+集成失败时明确父 HEAD 是否推进、失败命令、旧 SHA 和恢复条件。
 
 ## 8. 偏差与决策
 

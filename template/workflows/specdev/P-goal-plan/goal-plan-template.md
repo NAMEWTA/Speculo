@@ -1,5 +1,5 @@
 ---
-schema_version: 5
+schema_version: 6
 artifact: goal-plan
 change: <YYYY-MM-DD-topic>
 status: draft
@@ -7,8 +7,9 @@ modes: []
 orchestration: lead-directed
 lead: <owner-or-session-locator>
 implementation_agent_limit: 3
-ticket_workspace_policy: required
-integration_gate: candidate-merge
+integration_attempt_limit: 3
+ticket_workspace_policy: current
+integration_gate: direct-parent
 ready_for_execution: false
 ---
 
@@ -54,9 +55,9 @@ ready_for_execution: false
 
 ### Ticket Quick Reference
 
-| ID | 可观察产出 | Dependencies | Worktree | Implementation owner | E2E disposition | Evidence |
+| ID | 可观察产出 | Dependencies | Workspace | Implementation owner | E2E disposition | Evidence |
 |---|---|---|---|---|---|---|
-| T-01 | ... | — | `specdev-worktree/T-01` | Lead / dynamic dispatch | required / not-required: reason | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
+| T-01 | ... | — | `current`（required 模式为 `specdev-worktree/<change>/T-01`） | Lead / dynamic dispatch | required / not-required: reason | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
 
 ## 3. Gates and Completion Evidence
 
@@ -79,24 +80,29 @@ ready_for_execution: false
 | 项目 | 决定 | 事实依据 |
 |---|---|---|
 | Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与父分支 owner |
-| Implementation subagents | `<= 3`，Lead 不计入 | config、依赖和平台能力的最小值 |
+| Implementation subagents | `<implementation_agent_limit>`，Lead 不计入 | Goal Plan 快照、依赖和平台能力的最小值 |
+| Integration attempts | `<integration_attempt_limit>` | Goal Plan 创建时从 config 快照 |
 | Read-only agents | 无 SpecDev 数字上限 | review/research/test-observation，不写状态 |
 | Dispatch | execution-time dynamic | provider/模型/派单按 Ticket 事实选择 |
 
-### Ticket Workspace and Candidate Integration
+### Ticket Workspace and Integration
 
-| Ticket | Parent/base | Worktree/branch | Source checks | Source commit | Candidate checks/E2E | Parent result |
+| Ticket | Parent/base | Workspace/branch | Source checks | Implementation commit | Integration checks/E2E | Parent result |
 |---|---|---|---|---|---|---|
 
-集成按表中顺序串行进行。source worktree 不运行 E2E；Lead 在最新父分支的 candidate 状态运行集成检查和适用 E2E，通过且父 HEAD 未漂移后才推进父分支。
+当 `ticket_workspace_policy: current` 时，Ticket 必须严格串行。Lead 每次只允许一个 implementation owner 写入当前 workspace；完成非 E2E 检查并形成 commit 后，Lead 在同一父分支/current workspace 运行适用集成检查和 E2E，验证通过后将该 Ticket 的 `result_sha` 记录为其 implementation commit，再开始下一个 Ticket。不得创建 source/candidate worktree。
+
+当 `ticket_workspace_policy: required` 时，Ticket 使用独立 source worktree；source worktree 不运行 E2E，Lead 在最新父分支的 candidate 状态运行集成检查和适用 E2E，通过且父 HEAD 未漂移后才推进父分支。
 
 ### Authorization Matrix
 
 | 动作 | 状态 | 目标与条件 |
 |---|---|---|
-| Ticket worktree local changes | allowed / not-authorized | 限 writable/shared owner 合同 |
+| Current workspace Ticket changes | allowed / not-authorized | 仅 current 模式；严格串行，单一 implementation writer |
+| Ticket worktree local changes | allowed / not-authorized | 仅 required 模式；限 writable/shared owner 合同 |
 | Implementation commit | allowed / not-authorized | 每 Ticket 必需；缺失则 Plan blocked |
-| Local candidate integration and parent update | allowed / not-authorized | Lead-only；缺失则 Plan blocked |
+| Local direct-parent verification and parent update | allowed / not-authorized | 仅 current 模式；Lead 核对 Ticket commit 后继续 |
+| Local candidate integration and parent update | allowed / not-authorized | 仅 required 模式；Lead-only；缺失则 Plan blocked |
 | Push / PR / remote merge | allowed / not-authorized | 不从本计划本地授权继承 |
 | Branch/worktree cleanup | allowed / not-authorized | 成功集成不自动继承 |
 | Deploy / migration / production actions | allowed / not-authorized | 逐动作、目标和条件 |
@@ -111,7 +117,7 @@ subagent 只返回候选事实与 commit；Lead 独立核对并写 Evidence、�
 
 ### Verification Integrity
 
-记录判卷接缝、基线、禁止的伪绿色方式，以及 source/candidate 两层验证边界。
+记录判卷接缝、基线、禁止的伪绿色方式，以及 current/direct-parent 或 source/candidate 两层验证边界。
 
 ### Migration or Release Sequence
 
@@ -125,13 +131,13 @@ subagent 只返回候选事实与 commit；Lead 独立核对并写 Evidence、�
 
 ### Current Status
 
-记录 Wave/Gate、Ticket、source/candidate/result SHA、最近验证和未验证项；不使用主观百分比。
+记录 Wave/Gate、Ticket、implementation/source、适用 candidate 和 result SHA、最近验证和未验证项；不使用主观百分比。
 
 ### Pending Decisions and Blockers
 
 ### Resume Protocol
 
-恢复时读取 Goal Plan、当前 Ticket、change worktree 状态和最新 Evidence；从最后通过的父分支 result 或待修正 source checkpoint 继续。
+恢复时读取 Goal Plan、当前 Ticket、change workspace 状态和最新 Evidence；从最后通过的父分支 result 或待修正 implementation/source checkpoint 继续。
 
 ## Assumptions
 

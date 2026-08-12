@@ -16,7 +16,33 @@ async function fixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-local-first-"));
   const root = join(parent, changeName);
   await mkdir(root);
+  await writeConfig(root);
   return root;
+}
+
+async function writeConfig(root: string, maxImplementationAgents = 3, maxIntegrationAttempts = 3): Promise<void> {
+  const configRoot = join(dirname(root), ".speculo", "specdev");
+  await mkdir(configRoot, { recursive: true });
+  await writeFile(join(configRoot, "config.json"), JSON.stringify({
+    schema_version: 5,
+    interaction_language: "zh-CN",
+    artifact_language: "zh-CN",
+    git: { default_branch: "main" },
+    execution: {
+      max_implementation_agents: maxImplementationAgents,
+      max_integration_attempts: maxIntegrationAttempts,
+      deep_ticket_human_approval: true,
+      shared_path_owner: "explicit",
+    },
+    verification: { test: null, typecheck: null, lint: null, build: null },
+    planning: {
+      default_depth: "standard",
+      require_ready_gate: true,
+      require_evidence: true,
+      ui_prototype_default_variants: 3,
+      ui_prototype_max_variants: 5,
+    },
+  }, null, 2) + "\n");
 }
 
 async function writeStatus(root: string, status = "active", worktrees: unknown[] = []): Promise<void> {
@@ -25,7 +51,7 @@ async function writeStatus(root: string, status = "active", worktrees: unknown[]
     join(root, ".status.json"),
     JSON.stringify(
       {
-        schema_version: 5,
+        schema_version: 6,
         artifact: "change-status",
         change: changeName,
         change_status: status,
@@ -112,8 +138,11 @@ async function writeSourceAndTriage(root: string, externalAction = "pending-clos
   );
 }
 
-function runValidator(root: string, stage?: string) {
-  const args = stage ? [validator, "--stage", stage, root] : [validator, root];
+function runValidator(root: string, stage?: string, repo?: string) {
+  const args = [validator];
+  if (stage) args.push("--stage", stage);
+  if (repo) args.push("--repo", repo);
+  args.push(root);
   return spawnSync(process.execPath, args, {
     encoding: "utf8",
   });
@@ -124,6 +153,8 @@ async function writeGoalPlan(
   implementationAgentLimit = 3,
   extraFrontmatter: string[] = [],
   extraBody = "",
+  workspacePolicy: "current" | "required" = "current",
+  integrationAttemptLimit = 3,
 ): Promise<void> {
   let content = await readFile(
     join(packageRoot, "template/workflows/specdev/P-goal-plan/goal-plan-template.md"),
@@ -134,6 +165,9 @@ async function writeGoalPlan(
     .replace("status: draft", "status: ready")
     .replaceAll("<owner-or-session-locator>", "lead-session")
     .replace("implementation_agent_limit: 3", `implementation_agent_limit: ${implementationAgentLimit}`)
+    .replace("integration_attempt_limit: 3", `integration_attempt_limit: ${integrationAttemptLimit}`)
+    .replace("ticket_workspace_policy: current", `ticket_workspace_policy: ${workspacePolicy}`)
+    .replace("integration_gate: direct-parent", `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`)
     .replace("ready_for_execution: false", "ready_for_execution: true");
   if (extraFrontmatter.length) {
     content = content.replace(
@@ -210,6 +244,32 @@ function completedTicketWorktree(status: "integrated" | "removed" = "integrated"
   });
 }
 
+function currentTicketWorktree(status: "active" | "integrated" = "active"): Record<string, any> {
+  return ticketWorktree({
+    status,
+    branch: "main",
+    workspace_ref: "current",
+    source_checkpoint: status === "integrated" ? "implementation-sha" : null,
+    integration: status === "integrated" ? {
+      status: "passed",
+      parent_ref: "main",
+      parent_before_sha: "base-sha",
+      source_sha: "implementation-sha",
+      candidate_sha: null,
+      candidate_tree_sha: null,
+      candidate_branch: null,
+      candidate_workspace_ref: null,
+      result_sha: "implementation-sha",
+      method: "direct-parent",
+      verification: "passed",
+      full_suite: { required: true, status: "passed", reason: null, evidence: "full-suite-report" },
+      e2e: { required: false, status: "not-required", reason: "Ticket exempts E2E", evidence: null },
+      attempts: 1,
+      promotion_status: "applied",
+    } : ticketWorktree().integration,
+  });
+}
+
 describe("SpecDev local-first contracts", () => {
   it("defines one Lead, bounded implementation agents, and mandatory Ticket integration", async () => {
     const goalPlan = await readFile(
@@ -219,10 +279,11 @@ describe("SpecDev local-first contracts", () => {
     for (const marker of [
       "orchestration: lead-directed",
       "implementation_agent_limit: 3",
-      "ticket_workspace_policy: required",
-      "integration_gate: candidate-merge",
+      "ticket_workspace_policy: current",
+      "integration_gate: direct-parent",
       "Implementation subagents",
       "Read-only agents",
+      "Local direct-parent verification and parent update",
       "source worktree 不运行 E2E",
       "Local candidate integration and parent update",
     ]) {
@@ -252,12 +313,15 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
 
-    assert.equal(config.schema_version, 4);
+    assert.equal(config.schema_version, 5);
     assert.equal(config.execution.max_implementation_agents, 3);
+    assert.equal(config.execution.max_integration_attempts, 3);
+    assert.equal(config.planning.ui_prototype_default_variants, 3);
+    assert.equal(config.planning.ui_prototype_max_variants, 5);
     assert.equal(config.execution.shared_path_owner, "explicit");
     assert.equal("max_parallel" in config.execution, false);
     assert.equal("auto_commit" in config.git, false);
-    assert.match(pathOwnership, /implementation subagent 同时最多三个，Lead 不计入/);
+    assert.match(pathOwnership, /implementation subagent 上限取 Goal Plan、config 和平台能力共同约束/);
     assert.match(pathOwnership, /review\/research\/test-observation agent 不设置 SpecDev 数字上限/);
     assert.match(evidence, /source-worktree/);
   });
@@ -274,7 +338,7 @@ describe("SpecDev local-first contracts", () => {
 
     for (const marker of [
       "Direct Spec 模式由 Lead 作为 current workspace 唯一写入 owner",
-      "Direct Spec 模式跳过 source worktree、candidate merge 和父分支推进",
+      "Direct Spec 模式同样跳过 source worktree、candidate merge 和父分支推进",
       "evidence/direct-spec.md",
       "common/rules/code-commenting-rule.md",
       "{roots.state}/specdev/adr/",
@@ -288,7 +352,7 @@ describe("SpecDev local-first contracts", () => {
     assert.doesNotMatch(delivery, /达到修正上限后/);
   });
 
-  it("validates the fixed Lead-directed Goal Plan contract", async () => {
+  it("validates the Lead-directed Goal Plan workspace strategy contract", async () => {
     const root = await fixture();
     try {
       await writeStatus(root);
@@ -296,10 +360,29 @@ describe("SpecDev local-first contracts", () => {
       let result = runValidator(root);
       assert.equal(result.status, 0, result.stdout + result.stderr);
 
+      await writeConfig(root, 4);
       await writeGoalPlan(root, 4);
       result = runValidator(root);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      await writeGoalPlan(root, 5);
+      result = runValidator(root);
       assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /implementation_agent_limit must be an integer from 1 to 3/);
+      assert.match(result.stdout + result.stderr, /exceeds config max_implementation_agents 4/);
+
+      await writeGoalPlan(root, 4, [], "", "current", 4);
+      result = runValidator(root);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /exceeds config max_integration_attempts 3/);
+
+      const attempted = currentTicketWorktree("active");
+      attempted.integration = { ...attempted.integration, attempts: 4 };
+      await writeStatus(root, "active", [attempted]);
+      await writeGoalPlan(root, 4, [], "", "current", 3);
+      result = runValidator(root);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /integration attempts 4 exceed Goal Plan limit 3/);
+      await writeStatus(root);
 
       await writeGoalPlan(root, 3, ["coordination_mode: single-session"]);
       result = runValidator(root);
@@ -467,8 +550,9 @@ describe("SpecDev local-first contracts", () => {
 
       let result = runValidator(root, "implement");
       assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /Implement stage requires one Ticket source worktree record/);
+      assert.match(result.stdout + result.stderr, /Implement stage requires one Ticket workspace execution record/);
 
+      await writeGoalPlan(root, 3, [], "", "required");
       await writeStatus(root, "active", [ticketWorktree()]);
       result = runValidator(root, "implement");
       assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -487,6 +571,57 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
+  it("supports current workspace direct-parent completion and rejects concurrent Tickets", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root, "active", [currentTicketWorktree("integrated")]);
+      await writeGoalPlan(root);
+      let result = runValidator(root);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      await writeStatus(root, "active", [currentTicketWorktree("active"), { ...currentTicketWorktree("active"), ticket_id: "T-02" }]);
+      result = runValidator(root);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /strictly serial Ticket execution/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("verifies recorded completion SHAs against an actual Git repository", async () => {
+    const root = await fixture();
+    const repo = await mkdtemp(join(tmpdir(), "specdev-git-evidence-"));
+    try {
+      assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: repo }).status, 0);
+      await writeFile(join(repo, "tracked.txt"), "base\n");
+      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "add", "."], { cwd: repo }).status, 0);
+      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "commit", "-m", "base"], { cwd: repo }).status, 0);
+      const baseSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
+      await writeFile(join(repo, "tracked.txt"), "implemented\n");
+      assert.equal(spawnSync("git", ["add", "."], { cwd: repo }).status, 0);
+      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "commit", "-m", "implementation"], { cwd: repo }).status, 0);
+      const resultSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
+      const completed = currentTicketWorktree("integrated");
+      completed.base_sha = baseSha;
+      completed.source_checkpoint = resultSha;
+      completed.integration = { ...completed.integration, parent_before_sha: baseSha, source_sha: resultSha, result_sha: resultSha };
+      await writeStatus(root, "active", [completed]);
+      await writeGoalPlan(root);
+
+      let result = runValidator(root, undefined, repo);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      completed.base_sha = "f".repeat(40);
+      await writeStatus(root, "active", [completed]);
+      result = runValidator(root, undefined, repo);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /base_sha is not a resolvable Git commit/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+      await rm(repo, { recursive: true, force: true });
+    }
+  });
+
   it("keeps automatic worktree integration local and recoverable", async () => {
     const finalize = await readFile(
       join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/references/finalize.md"),
@@ -501,7 +636,7 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
 
-    for (const marker of ["git merge --ff-only", "git merge --no-ff --no-commit", "git merge --abort", "最多处理三轮", "specdev-worktree/.integration/<ticket-id>"]) {
+    for (const marker of ["git merge --ff-only", "git merge --no-ff --no-commit", "git merge --abort", "integration_attempt_limit", "specdev-worktree/.integration/<ticket-id>"]) {
       assert.match(finalize, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
     assert.match(conflict, /需要新行为或上层决定时停止/);

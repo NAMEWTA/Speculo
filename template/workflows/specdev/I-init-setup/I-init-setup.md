@@ -53,7 +53,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 仅在上下文未提供时询问：
 
 - 交互语言与持久化工件语言；
-- implementation subagent 上限（`1..3`，默认 `3`，Lead 不计入）；
+- implementation subagent、集成尝试次数和原型变体上限（初始化时写入 config，Lead 不计入）；
 - Deep Ticket 的迁移、发布和不可逆操作是否必须人工批准；
 
 不询问可由仓库事实回答的文件位置、脚本名或默认分支。
@@ -82,7 +82,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - `<Path>{roots.state}/specdev/research/</Path>`
 - `<Path>{roots.state}/specdev/archive/</Path>`
 
-若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户运行 `speculo init` 建立备份与 pending marker，再运行 `migrate-runtime-state` command 对账修复；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从 schema v4 模板创建。
+若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work，并提示用户运行 `speculo init` 建立备份与 pending marker，再运行 `migrate-runtime-state` command 对账修复；不得在 Work 内迁移、兼容或猜测旧状态。只有状态不存在时才从当前 schema 模板创建。
 
 从模板生成：
 

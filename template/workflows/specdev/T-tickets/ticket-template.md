@@ -102,12 +102,12 @@ shared_path_owners: []
 
 不适用的关键风险类别必须写“不适用：原因”。
 
-- **Source-worktree checks：** 单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
+- **Workspace checks：** 按 Goal Plan 在 current workspace 或 source worktree 运行单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
 - **E2E disposition：** required / not-required：原因。
-- **E2E owner/environment：** Lead / parent-candidate；required 时写明场景、接缝与预期。
-- **Integration evidence：** source commit、parent before、candidate/result SHA 和父分支包含关系。
+- **E2E owner/environment：** Lead / current-workspace 或 parent-candidate；required 时写明场景、接缝与预期。
+- **Integration evidence：** implementation/source commit、parent before、适用 candidate/result SHA 和父分支包含关系。
 
-E2E 由实际跨边界行为与风险决定，不限于 UI；不得在 Ticket source worktree 运行或声明通过。
+E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不得在 Ticket source worktree 运行或声明通过。
 
 ## 9. 发布、迁移与恢复
 
@@ -125,7 +125,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；不得在 Ticket so
 - [ ] `AC-001`：<可判定结果>。
 - [ ] 验证矩阵全部执行并记录到 `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
-- [ ] Ticket 来源 worktree 已形成非空实现 commit，candidate 验证通过且父分支 result 包含 source commit。
-- [ ] E2E disposition 已执行；required E2E 在 parent-candidate 由 Lead 完成。
+- [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
+- [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
 - [ ] 未发生未批准的范围、契约或发布偏差。
 - [ ] Ticket、Tickets Map 和 Evidence 状态一致。

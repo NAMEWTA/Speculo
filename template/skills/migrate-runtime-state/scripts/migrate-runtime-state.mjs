@@ -16,6 +16,9 @@ import {
 import { dirname, join, relative, resolve, sep } from "node:path";
 
 const STAGE_PREFIX = ".speculo-runtime-migrate-stage-";
+const CONFIG_SCHEMA_VERSION = 5;
+const GOAL_PLAN_SCHEMA_VERSION = 6;
+const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const ROLLBACK_NAME = ".speculo-runtime-migrate-rollback";
 const VALID_ACTIONS = new Set(["copy", "replace-json", "keep-current", "remove-current"]);
 const VALID_DECISIONS = new Set(["restore", "merge-json", "replace-json", "keep-current", "remove-current"]);
@@ -473,6 +476,52 @@ function validChangeStatusV4(status, expectedChange, expectedStatus) {
   });
 }
 
+function validateChangeStatusV6(status, expectedChange, expectedStatus) {
+  const failures = [];
+  if (!isObject(status) || status.schema_version !== CHANGE_STATUS_SCHEMA_VERSION || status.artifact !== "change-status" || status.change !== expectedChange || !expectedStatus.has(status.change_status)) {
+    return ["invalid or incomplete change-status v6 contract: " + expectedChange];
+  }
+  if (!Array.isArray(status.worktrees)) return ["change-status v6 worktrees must be an array: " + expectedChange];
+  const previous = { ...status, schema_version: 5 };
+  if (!isObject(previous.execution_authorization) || !isObject(previous.leadership) || !Array.isArray(previous.works_run) || !Array.isArray(previous.claimed_investigations)) {
+    failures.push("change-status v6 is missing execution authority or leadership state: " + expectedChange);
+  }
+  const worktreeKeys = [
+    "ticket_id", "owner", "implementation_owner", "integration_owner", "provider", "base_sha",
+    "parent_branch", "branch", "workspace_ref", "source_checkpoint", "integration", "status", "updated_at",
+  ];
+  const integrationKeys = [
+    "status", "parent_ref", "parent_before_sha", "source_sha", "candidate_sha", "candidate_tree_sha",
+    "candidate_branch", "candidate_workspace_ref", "result_sha", "method", "conflict_paths", "verification",
+    "full_suite", "e2e", "evidence", "attempts", "promotion_status",
+  ];
+  for (const worktree of status.worktrees) {
+    if (!isObject(worktree)) { failures.push("change-status v6 contains an invalid worktree"); continue; }
+    if (!hasExactKeys(worktree, worktreeKeys) || worktree.provider !== "git" || !/^T-[0-9]{2,}$/.test(String(worktree.ticket_id))) {
+      failures.push("change-status v6 contains an incomplete worktree: " + String(worktree.ticket_id));
+      continue;
+    }
+    const current = worktree.workspace_ref === "current";
+    if (current && worktree.parent_branch !== worktree.branch) failures.push(`${worktree.ticket_id}: current branch must equal parent_branch`);
+    if (!current && worktree.parent_branch === worktree.branch) failures.push(`${worktree.ticket_id}: required branch must differ from parent_branch`);
+    const integration = isObject(worktree.integration) ? worktree.integration : {};
+    if (!hasExactKeys(integration, integrationKeys) || !Number.isInteger(integration.attempts) || integration.attempts < 0 || !Array.isArray(integration.conflict_paths)) {
+      failures.push(`${worktree.ticket_id}: integration contract is incomplete`);
+      continue;
+    }
+    for (const key of ["full_suite", "e2e"]) {
+      const suite = integration[key];
+      if (!isObject(suite) || !hasExactKeys(suite, ["required", "status", "reason", "evidence"]) || typeof suite.required !== "boolean") {
+        failures.push(`${worktree.ticket_id}: ${key} contract is incomplete`);
+      }
+    }
+    if (current && ["candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref"].some((key) => integration[key] !== null)) failures.push(`${worktree.ticket_id}: current workspace cannot contain candidate fields`);
+    if (current && integration.method !== null && integration.method !== "direct-parent") failures.push(`${worktree.ticket_id}: current workspace requires direct-parent`);
+    if (!current && integration.method === "direct-parent") failures.push(`${worktree.ticket_id}: required workspace cannot use direct-parent`);
+  }
+  return failures;
+}
+
 function validateChangeStatusV4(status, expectedChange, expectedStatus) {
   return validChangeStatusV4(status, expectedChange, expectedStatus)
     ? []
@@ -537,14 +586,26 @@ function validGoalPlanV4(meta, change) {
     !nonEmptyString(meta.lead) ||
     !Number.isInteger(meta.implementation_agent_limit) ||
     meta.implementation_agent_limit < 1 ||
-    meta.implementation_agent_limit > 3 ||
-    meta.ticket_workspace_policy !== "required" ||
-    meta.integration_gate !== "candidate-merge" ||
+    !new Set(["current", "required"]).has(meta.ticket_workspace_policy) ||
+    !new Set(["direct-parent", "candidate-merge"]).has(meta.integration_gate) ||
+    (meta.ticket_workspace_policy === "current" && meta.integration_gate !== "direct-parent") ||
+    (meta.ticket_workspace_policy === "required" && meta.integration_gate !== "candidate-merge") ||
     typeof meta.ready_for_execution !== "boolean" ||
     !Array.isArray(meta.modes)
   ) return false;
   return meta.modes.every((mode) => new Set(["migration", "high-assurance", "reference-conformance", "release-coordination"]).has(mode)) &&
     new Set(meta.modes).size === meta.modes.length;
+}
+
+function validGoalPlanV6(meta, change) {
+  const required = [
+    "schema_version", "artifact", "change", "status", "modes", "orchestration", "lead",
+    "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution",
+  ];
+  if (!isObject(meta) || !hasExactKeys(meta, required) || meta.schema_version !== GOAL_PLAN_SCHEMA_VERSION) return false;
+  const { integration_attempt_limit: integrationAttemptLimit, ...previous } = meta;
+  return validGoalPlanV4({ ...previous, schema_version: 4 }, change) &&
+    Number.isInteger(integrationAttemptLimit) && integrationAttemptLimit >= 1;
 }
 
 async function validateGoalPlanV4(changeRoot, change) {
@@ -554,6 +615,14 @@ async function validateGoalPlanV4(changeRoot, change) {
   return validGoalPlanV4(parseGoalPlanFrontmatter(text), change)
     ? []
     : ["Goal Plan is not the complete fixed Lead/candidate-integration v4 contract: " + change];
+}
+
+async function validateGoalPlanV6(changeRoot, change) {
+  const path = join(changeRoot, "goal-plan.md");
+  if (!(await exists(path))) return [];
+  return validGoalPlanV6(parseGoalPlanFrontmatter(await readFile(path, "utf8")), change)
+    ? []
+    : ["Goal Plan is not the complete Lead/workspace v6 contract: " + change];
 }
 
 function validSpecdevConfigV4(config) {
@@ -574,7 +643,6 @@ function validSpecdevConfigV4(config) {
   if (
     !Number.isInteger(config.execution.max_implementation_agents) ||
     config.execution.max_implementation_agents < 1 ||
-    config.execution.max_implementation_agents > 3 ||
     typeof config.execution.deep_ticket_human_approval !== "boolean" ||
     !nonEmptyString(config.execution.shared_path_owner)
   ) return false;
@@ -584,6 +652,16 @@ function validSpecdevConfigV4(config) {
   return new Set(["lite", "standard", "deep"]).has(config.planning.default_depth) &&
     typeof config.planning.require_ready_gate === "boolean" &&
     typeof config.planning.require_evidence === "boolean";
+}
+
+function validSpecdevConfigV5(config) {
+  const rootKeys = ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"];
+  if (!isObject(config) || !hasExactKeys(config, rootKeys) || config.schema_version !== CONFIG_SCHEMA_VERSION || !isObject(config.git) || !isObject(config.execution) || !isObject(config.verification) || !isObject(config.planning)) return false;
+  if (!hasExactKeys(config.git, ["default_branch"]) || !(config.git.default_branch === null || typeof config.git.default_branch === "string")) return false;
+  if (!hasExactKeys(config.execution, ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"])) return false;
+  if (!Number.isInteger(config.execution.max_implementation_agents) || config.execution.max_implementation_agents < 1 || !Number.isInteger(config.execution.max_integration_attempts) || config.execution.max_integration_attempts < 1 || typeof config.execution.deep_ticket_human_approval !== "boolean" || !nonEmptyString(config.execution.shared_path_owner)) return false;
+  for (const key of ["test", "typecheck", "lint", "build"]) if (!(key in config.verification) || !stringOrNull(config.verification[key])) return false;
+  return new Set(["lite", "standard", "deep"]).has(config.planning.default_depth) && typeof config.planning.require_ready_gate === "boolean" && typeof config.planning.require_evidence === "boolean" && Number.isInteger(config.planning.ui_prototype_default_variants) && config.planning.ui_prototype_default_variants >= 1 && Number.isInteger(config.planning.ui_prototype_max_variants) && config.planning.ui_prototype_max_variants >= config.planning.ui_prototype_default_variants;
 }
 
 async function validateSpecdev(speculoRoot) {
@@ -607,12 +685,14 @@ async function validateSpecdev(speculoRoot) {
       failures.push("missing active change state: " + entry.change);
     } else {
       const changeStatus = await readJson(path);
-      failures.push(...validateChangeStatusV4(
-        changeStatus,
-        entry.change,
-        new Set(["active", "blocked", "completed"]),
-      ));
-      failures.push(...await validateGoalPlanV4(dirname(path), entry.change));
+      if (changeStatus.schema_version === CHANGE_STATUS_SCHEMA_VERSION) {
+        failures.push(...validateChangeStatusV6(changeStatus, entry.change, new Set(["active", "blocked", "completed"])));
+      } else {
+        failures.push(...validateChangeStatusV4(changeStatus, entry.change, new Set(["active", "blocked", "completed"])));
+      }
+      failures.push(...(await exists(join(dirname(path), "goal-plan.md")) && (await readFile(join(dirname(path), "goal-plan.md"), "utf8")).startsWith("---\nschema_version: 6")
+        ? await validateGoalPlanV6(dirname(path), entry.change)
+        : await validateGoalPlanV4(dirname(path), entry.change)));
     }
   }
   const archived = new Set();
@@ -629,7 +709,9 @@ async function validateSpecdev(speculoRoot) {
       failures.push("missing archived change state: " + name);
     } else {
       const archivedStatus = await readJson(path);
-      failures.push(...validateChangeStatusV4(archivedStatus, name, new Set(["archived"])));
+      failures.push(...(archivedStatus.schema_version === CHANGE_STATUS_SCHEMA_VERSION
+        ? validateChangeStatusV6(archivedStatus, name, new Set(["archived"]))
+        : validateChangeStatusV4(archivedStatus, name, new Set(["archived"]))));
     }
   }
   const changesRoot = join(speculoRoot, ".speculo", "specdev", "changes");
@@ -655,7 +737,7 @@ async function validateSpecdev(speculoRoot) {
   const configPath = join(speculoRoot, ".speculo", "specdev", "config.json");
   if (await exists(configPath)) {
     const config = await readJson(configPath);
-    if (!validSpecdevConfigV4(config)) failures.push(".speculo/specdev/config.json is not the complete schema-v4 execution contract");
+    if (!validSpecdevConfigV5(config)) failures.push(".speculo/specdev/config.json is not the complete schema-v5 execution contract");
   }
   return failures;
 }

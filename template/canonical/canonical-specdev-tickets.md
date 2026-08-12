@@ -115,8 +115,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 有序执行路线和安全落点；
 - expected、writable、read-only、shared 路径；
 - 正常、失败和回归验证矩阵；
-- 每个 Ticket 的 source-worktree 非 E2E 检查、父分支 candidate 集成出口，以及按实际跨边界风险判定的 E2E disposition；
-- 每个实现 Ticket 的独立 worktree、implementation commit 与父分支合并完成条件；
+- 每个 Ticket 按 Goal Plan 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
+- 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
 - Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
 - 可判定验收标准。
 
@@ -144,8 +144,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 依赖缺失或 DAG 有环；
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
-- Ticket 未声明 E2E required/not-required 及理由，或把 E2E 安排到 source worktree；
-- 无法形成实现 commit 与 candidate-merge 父分支出口；
+- Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
+- 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
 - 单个新上下文无法完成；
 - Standard/Deep 缺少有序执行路线；
 - Deep 缺少迁移、兼容、监控、回滚或批准点。
@@ -314,8 +314,8 @@ node Speculo Node 校验器 \
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
-- [ ] Source-worktree 验证只包含单元、组件、静态、类型、lint/build 等非 E2E 检查；E2E owner 固定为 Lead，运行环境固定为 parent-candidate。
-- [ ] Ticket 完成合同包含独立 worktree、implementation commit、candidate-merge、父分支 result SHA 和 Lead Evidence。
+- [ ] 按 Goal Plan 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
+- [ ] Ticket 完成合同包含 implementation commit、direct-parent 或 candidate-merge、父分支 result SHA 和 Lead Evidence；仅 required 模式需要独立 worktree。
 - [ ] Evidence 位置明确为 `specdev/changes/{change}/evidence/T-NN.md`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用本文约定的逻辑路径。
@@ -331,7 +331,7 @@ node Speculo Node 校验器 \
 
 - [ ] 迁移顺序、兼容窗口、监控、回滚或前向恢复、收缩条件和批准点完整。
 - [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
-- [ ] 跨 implementation owner 的路径所有权和 parent-candidate 集成 Gate 明确。
+- [ ] 跨 implementation owner 的路径所有权和所选 direct-parent/parent-candidate 集成 Gate 明确。
 - [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。
 
 ## Ready 状态
@@ -457,12 +457,12 @@ shared_path_owners: []
 
 不适用的关键风险类别必须写“不适用：原因”。
 
-- **Source-worktree checks：** 单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
+- **Workspace checks：** 按 Goal Plan 在 current workspace 或 source worktree 运行单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
 - **E2E disposition：** required / not-required：原因。
-- **E2E owner/environment：** Lead / parent-candidate；required 时写明场景、接缝与预期。
-- **Integration evidence：** source commit、parent before、candidate/result SHA 和父分支包含关系。
+- **E2E owner/environment：** Lead / current-workspace 或 parent-candidate；required 时写明场景、接缝与预期。
+- **Integration evidence：** implementation/source commit、parent before、适用 candidate/result SHA 和父分支包含关系。
 
-E2E 由实际跨边界行为与风险决定，不限于 UI；不得在 Ticket source worktree 运行或声明通过。
+E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不得在 Ticket source worktree 运行或声明通过。
 
 ## 9. 发布、迁移与恢复
 
@@ -480,8 +480,8 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；不得在 Ticket so
 - [ ] `AC-001`：<可判定结果>。
 - [ ] 验证矩阵全部执行并记录到 `specdev/changes/{change}/evidence/T-01.md`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
-- [ ] Ticket 来源 worktree 已形成非空实现 commit，candidate 验证通过且父分支 result 包含 source commit。
-- [ ] E2E disposition 已执行；required E2E 在 parent-candidate 由 Lead 完成。
+- [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
+- [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
 - [ ] 未发生未批准的范围、契约或发布偏差。
 - [ ] Ticket、Tickets Map 和 Evidence 状态一致。
 
@@ -541,11 +541,11 @@ T-01 [READY]
 
 ## 5. 并行与路径所有权
 
-- implementation subagent 上限来自 `specdev/config.json`，不得超过三个且不含 Lead。
+- implementation subagent 上限来自 `specdev/config.json`，Goal Plan 可进一步降低且不含 Lead。
 - review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
 - shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
 - 项目路径契约以 Ticket frontmatter 为准。
-- 每个实现 Ticket 使用独立 worktree，不以是否派遣 Agent 或是否并行为条件；只读调查不进入 I-implement Ticket。
+- 每个实现 Ticket 的 workspace 由 Goal Plan 选择；current 模式串行使用当前 workspace，required 模式使用独立 worktree；只读调查不进入 I-implement Ticket。
 
 | Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
 |---|---|---|---|---|
@@ -789,15 +789,15 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 5. 越界前停止并按 deviation control 提出 ownership change；不得先改后报。
 6. 上游 Ticket 改变目录/合同后，下游基于已集成父分支重新解析路径和 preflight。
 
-## 3. Ticket worktree
+## 3. Ticket workspace strategy
 
-每个进入 I-implement 的 Ticket 都使用唯一来源 worktree `specdev-worktree/<ticket-id>`，无论是否并行、是否派遣 subagent。Ticket 切片是隔离依据；Agent Team 不是 worktree 触发器。没有 Ticket 的获批 Direct Spec 可由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
+Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 implementation subagent 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
 
-workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。只有 Lead 写 SpecDev 状态、建立 parent-candidate、运行适用 E2E 并推进父分支。生命周期由 下方 `<dev-worktree>` 标签 管理。
+workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 下方 `<dev-worktree>` 标签 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
 
 ## 4. 并发
 
-implementation subagent 同时最多三个，Lead 不计入；实际上限取 Goal Plan、config 和平台能力最小值。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+required 模式 implementation subagent 上限取 Goal Plan、config 和平台能力共同约束，Lead 不计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
 **完成标准**：每个项目写入映射到唯一 Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
 
@@ -815,11 +815,15 @@ implementation subagent 同时最多三个，Lead 不计入；实际上限取 Go
 
 | 行为或风险 | 接缝 | 命令/方法 | 环境 | 预期 | Evidence |
 |---|---|---|---|---|---|
-| 正常/失败路径 | 公共接口或稳定接缝 | 定向测试 | source-worktree | 合同成立 | Ticket Evidence |
-| 跨模块回归 | 集成接缝 | 回归命令 | parent-candidate | 组合状态成立 | Ticket Evidence |
-| E2E required | 真实端到端边界 | 场景步骤 | parent-candidate | 外部行为成立 | Ticket Evidence |
+| 正常/失败路径 | 公共接口或稳定接缝 | 定向测试 | current-workspace 或 source-worktree | 合同成立 | Ticket Evidence |
+| 跨模块回归 | 集成接缝 | 回归命令 | current-workspace 或 parent-candidate | 组合状态成立 | Ticket Evidence |
+| E2E required | 真实端到端边界 | 场景步骤 | current-workspace 或 parent-candidate | 外部行为成立 | Ticket Evidence |
 
 ## 2. 两层验证
+
+### Current workspace
+
+current 模式的 implementation owner 在当前父分支和当前 workspace 工作。Ticket 必须严格串行，workspace clean 后形成非空 implementation commit；Lead 在同一 workspace 执行适用集成/回归和 E2E，并在父 HEAD 未漂移时将 Ticket commit 记录为 result SHA。
 
 ### Source-worktree
 
@@ -827,7 +831,7 @@ implementation owner 运行最接近目标行为的单元/组件测试、静态�
 
 ### Parent-candidate
 
-Lead 在最新父分支与 source commit 的 candidate 状态运行受影响集成/回归、项目父状态检查和适用 E2E。E2E 由实际跨边界风险决定，不限于 UI；not-required 必须写理由。required E2E 未运行或失败时不得推进父分支。
+required 模式下，Lead 在最新父分支与 source commit 的 candidate 状态运行受影响集成/回归、项目父状态检查和适用 E2E。E2E 由实际跨边界风险决定，不限于 UI；not-required 必须写理由。required E2E 未运行或失败时不得推进父分支。
 
 ### Direct Spec
 
@@ -847,9 +851,9 @@ subagent 只返回候选命令与结果，不写 Evidence。Lead 重读 workspac
 
 ## 5. Evidence 最低内容
 
-每个 Ticket Evidence 至少包含：Lead、Dispatch/返回（若有）、base/source/candidate/result SHA、来源 worktree、实际路径、每条命令/环境/退出状态、合同映射、双轴审查、E2E disposition、未运行项、失败分类、偏差、残余风险和父分支重读结果。
+每个 Ticket Evidence 至少包含：Lead、Dispatch/返回（若有）、workspace 策略、base/source/result SHA、candidate 字段（required 模式适用，current 模式明确不适用）、实际路径、每条命令/环境/退出状态、合同映射、双轴审查、E2E disposition、未运行项、失败分类、偏差、残余风险和父分支重读结果。
 
-Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 source commit 或 Evidence 不完整时不得 Done。
+required Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence；current Ticket Done 必须有 implementation commit、通过 direct-parent 验证、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 Ticket commit 或 Evidence 不完整时不得 Done。
 
 Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。
 
@@ -962,7 +966,7 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 
 # Dev Worktree
 
-本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 使用完整 source → candidate → parent 状态机；`purpose=prototype` 只使用调用方批准的临时生命周期。
+本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 仅在 Goal Plan 选择 `required` 时使用完整 source → candidate → parent 状态机；`current` Ticket 不调用本 Skill。`purpose=prototype` 只使用调用方批准的临时生命周期。
 
 ## 输入
 
@@ -972,7 +976,7 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 - workspace、implementation 和 integration owner；
 - 允许动作、路径合同、验证合同、调用方状态记录位置。
 
-Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked，不使用 current workspace 代替。
+required Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked；current Ticket 应按 I-implement 的 direct-parent 规则执行。
 
 ## 1. 创建或恢复
 
@@ -1115,7 +1119,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
 - 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。可由既有合同机械修正的失败最多处理三轮；不得放宽断言、删除检查或发明行为。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。机械修正次数不得超过 Goal Plan 快照的 `integration_attempt_limit`；不得放宽断言、删除检查或发明行为。
 
 ## 4. 推进父分支
 
@@ -1168,7 +1172,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
@@ -1176,6 +1180,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
   },
   "execution": {
     "max_implementation_agents": 3,
+    "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },
@@ -1188,7 +1193,9 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
   "planning": {
     "default_depth": "standard",
     "require_ready_gate": true,
-    "require_evidence": true
+    "require_evidence": true,
+    "ui_prototype_default_variants": 3,
+    "ui_prototype_max_variants": 5
   }
 }
 ```
@@ -1200,12 +1207,12 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v4",
+  "$id": "urn:speculo:specdev:config:v5",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
   "properties": {
-    "schema_version": {"const": 4},
+    "schema_version": {"const": 5},
     "interaction_language": {"type": "string", "minLength": 1},
     "artifact_language": {"type": "string", "minLength": 1},
     "git": {
@@ -1218,9 +1225,10 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
     },
     "execution": {
       "type": "object",
-      "required": ["max_implementation_agents", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
       "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1, "maximum": 3},
+        "max_implementation_agents": {"type": "integer", "minimum": 1},
+        "max_integration_attempts": {"type": "integer", "minimum": 1},
         "deep_ticket_human_approval": {"type": "boolean"},
         "shared_path_owner": {"type": "string", "minLength": 1}
       },
@@ -1239,15 +1247,20 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
     },
     "planning": {
       "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence"],
+      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_prototype_default_variants", "ui_prototype_max_variants"],
       "properties": {
         "default_depth": {"enum": ["lite", "standard", "deep"]},
         "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"}
+        "require_evidence": {"type": "boolean"},
+        "ui_prototype_default_variants": {"type": "integer", "minimum": 1},
+        "ui_prototype_max_variants": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": true
     }
   },
+  "allOf": [{
+    "$comment": "ui_prototype_default_variants <= ui_prototype_max_variants is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
+  }],
   "additionalProperties": false
 }
 ```
@@ -1313,7 +1326,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "artifact": "change-status",
   "change": "<YYYY-MM-DD-topic>",
   "change_status": "active",
@@ -1321,8 +1334,8 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
   "works_run": [],
   "claimed_investigations": [],
   "execution_authorization": {
-    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket source commits"},
-    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local parent candidate integration and parent update"},
+    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket implementation commits"},
+    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local direct-parent or candidate integration and parent update"},
     "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
   },
   "leadership": {
@@ -1349,7 +1362,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v5",
+  "$id": "urn:speculo:specdev:change-status:v6",
   "title": "SpecDev Change Status",
   "type": "object",
   "required": [
@@ -1358,7 +1371,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
     "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
   ],
   "properties": {
-    "schema_version": {"const": 5},
+    "schema_version": {"const": 6},
     "artifact": {"const": "change-status"},
     "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
@@ -1462,12 +1475,39 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
         "base_sha": {"type": "string", "minLength": 1},
         "parent_branch": {"type": "string", "minLength": 1},
         "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {"type": "string", "pattern": "^specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"},
+        "workspace_ref": {"type": "string", "pattern": "^(?:current|specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,})$"},
         "source_checkpoint": {"type": ["string", "null"]},
         "integration": {"$ref": "#/$defs/integration"},
         "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
         "updated_at": {"type": "string", "minLength": 1}
       },
+      "allOf": [
+        {
+          "if": {"properties": {"workspace_ref": {"const": "current"}}, "required": ["workspace_ref"]},
+          "then": {
+            "properties": {
+              "integration": {
+                "allOf": [{
+                  "properties": {
+                    "candidate_sha": {"const": null},
+                    "candidate_tree_sha": {"const": null},
+                    "candidate_branch": {"const": null},
+                    "candidate_workspace_ref": {"const": null},
+                    "method": {"enum": [null, "direct-parent"]}
+                  }
+                }]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "integration": {
+                "allOf": [{"properties": {"method": {"enum": [null, "fast-forward", "merge-commit"]}}}]
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "integration": {
@@ -1483,7 +1523,7 @@ Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问�
         "candidate_branch": {"type": ["string", "null"]},
         "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
         "result_sha": {"type": ["string", "null"]},
-        "method": {"enum": [null, "fast-forward", "merge-commit"]},
+        "method": {"enum": [null, "direct-parent", "fast-forward", "merge-commit"]},
         "conflict_paths": {"type": "array", "items": {"type": "string"}},
         "verification": {"enum": ["pending", "passed", "failed"]},
         "full_suite": {"$ref": "#/$defs/full-suite"},

@@ -15,15 +15,15 @@ description: 动态派单合同：为 Lead 生成受限的 implementation/review
 - `operation=dispatch`：提供 `task_kind=implementation | review | research | test-observation`、已存在 Goal Plan（若有）、Ticket/固定审查目标、依赖 Evidence、适用合同、repository、不可变 checkpoint、项目 Agent 指令、workspace/session locator、provider、允许动作、路径边界、检查、停止条件与返回格式；
 - `operation=accept`：提供原 Dispatch Packet、subagent 返回、当前 repository/workspace、预期与实际 checkpoint，以及 Lead 可用于独立核对的 Git/命令事实。
 
-`operation=dispatch` 且 `task_kind=implementation` 时，还必须提供独立 Ticket worktree、branch、`base_sha`、writable/shared owner、implementation commit 授权与 source-worktree 非 E2E 检查。缺失时返回 blocked，不推断权限或创建 current-workspace 写入者。
+`operation=dispatch` 且 `task_kind=implementation` 时，必须提供 Goal Plan 的 workspace strategy、branch、`base_sha`、writable/shared owner、implementation commit 授权与对应检查。`required` 必须提供独立 Ticket worktree 和 source-worktree 非 E2E 检查；`current` 必须提供 `workspace_ref=current`、parent branch 和 current-workspace 串行锁。缺失时返回 blocked，不推断策略或并发权限。
 
 ## 1. 固定 Lead 与任务类型
 
 Lead 保留需求解释、DAG/Wave/Gate、shared owner、权限、SpecDev 工件、Evidence、candidate-merge、父分支和最终回复。subagent 不写 Ticket、Map、Goal Plan、Evidence、change status 或父分支。
 
-- implementation 可以写唯一 Ticket worktree，并在授权时创建实现 commit；
+- implementation 可以在 required 模式写唯一 Ticket worktree，或在 current 模式按串行锁写当前 workspace，并在授权时创建实现 commit；
 - review/research/test-observation 只读，返回 findings、来源或命令观察；
-- E2E Gate 永远由 Lead 拥有，不能派给 implementation 或只读 agent；Ticket E2E 在 parent-candidate 状态执行，Direct Spec E2E 在 Lead-owned current workspace 执行。
+- E2E Gate 永远由 Lead 拥有，不能派给 implementation 或只读 agent；required Ticket E2E 在 parent-candidate 状态执行，current Ticket 和 Direct Spec E2E 在 Lead-owned current workspace 执行。
 
 **完成标准**：Lead、task kind、写入边界和 E2E owner 唯一。
 
@@ -44,7 +44,7 @@ Lead 保留需求解释、DAG/Wave/Gate、shared owner、权限、SpecDev 工件
 - 原生 Agent：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/native-subagent.md</Path>`；
 - 外部网页 Agent：加载 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/references/external-web-subagent.md</Path>`。
 
-implementation Packet 必须适合一个上下文独立完成；多个 implementation subagent 由 Lead 控制在 Goal Plan/config 上限内且最多三个。只读 agent 不设置 SpecDev 数字上限，但不得争用可变环境。
+implementation Packet 必须适合一个上下文独立完成；required 模式多个 implementation subagent 由 Lead 控制在 Goal Plan、config 与平台能力共同上限内，current 模式保持单 writer 串行。只读 agent 不设置 SpecDev 数字上限，但不得争用可变环境。
 
 **完成标准**：Packet 可独立投递；目标、checkpoint、路径、权限、检查和返回均可判定。
 

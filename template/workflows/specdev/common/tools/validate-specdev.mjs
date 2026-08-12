@@ -15,13 +15,14 @@ import {
   readdirSync,
   statSync,
 } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, basename, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DOMAIN_SCHEMA_VERSION = 3;
-const CONFIG_SCHEMA_VERSION = 4;
-const GOAL_PLAN_SCHEMA_VERSION = 5;
-const CHANGE_STATUS_SCHEMA_VERSION = 5;
+const CONFIG_SCHEMA_VERSION = 5;
+const GOAL_PLAN_SCHEMA_VERSION = 6;
+const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
@@ -74,7 +75,7 @@ const VALID_WORKTREE_STATUS = new Set([
   "blocked",
 ]);
 const VALID_INTEGRATION_STATUS = new Set(["pending", "candidate", "passed", "failed", "stale"]);
-const VALID_INTEGRATION_METHOD = new Set([null, "fast-forward", "merge-commit"]);
+const VALID_INTEGRATION_METHOD = new Set([null, "direct-parent", "fast-forward", "merge-commit"]);
 const VALID_INTEGRATION_VERIFICATION = new Set(["pending", "passed", "failed"]);
 const VALID_E2E_STATUS = new Set(["not-required", "pending", "passed", "failed"]);
 const VALID_DESIGN_TREE_STATUS = new Set(["active", "consensus", "blocked"]);
@@ -148,11 +149,9 @@ const REQUIRED_LEAD_GOAL_PLAN_MARKERS = [
   "Implementation subagents",
   "Read-only agents",
   "execution-time dynamic",
-  "### Ticket Workspace and Candidate Integration",
-  "source worktree 不运行 E2E",
+  "### Ticket Workspace and Integration",
   "### Authorization Matrix",
   "Implementation commit",
-  "Local candidate integration and parent update",
 ];
 const STATE_ARTIFACT_BASENAMES = new Set([
   "spec.md",
@@ -243,6 +242,28 @@ function parseScalar(raw) {
     }
   }
   return value;
+}
+
+function findSpecdevConfig(change) {
+  let current = resolve(change);
+  while (true) {
+    const candidate = join(current, ".speculo", "specdev", "config.json");
+    if (isFile(candidate)) {
+      try {
+        return JSON.parse(readText(candidate));
+      } catch {
+        return null;
+      }
+    }
+    const parent = dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+function positiveConfigLimit(config, key, fallback) {
+  const value = config?.execution?.[key];
+  return Number.isInteger(value) && value >= 1 ? value : fallback;
 }
 
 function parseFrontmatter(path) {
@@ -660,9 +681,14 @@ function validateExecutionContractAssets(root) {
     configTemplate.schema_version !== CONFIG_SCHEMA_VERSION ||
     !Number.isInteger(configTemplate.execution?.max_implementation_agents) ||
     configTemplate.execution.max_implementation_agents < 1 ||
-    configTemplate.execution.max_implementation_agents > 3
+    !Number.isInteger(configTemplate.execution?.max_integration_attempts) ||
+    configTemplate.execution.max_integration_attempts < 1 ||
+    !Number.isInteger(configTemplate.planning?.ui_prototype_default_variants) ||
+    !Number.isInteger(configTemplate.planning?.ui_prototype_max_variants) ||
+    configTemplate.planning.ui_prototype_default_variants < 1 ||
+    configTemplate.planning.ui_prototype_max_variants < configTemplate.planning.ui_prototype_default_variants
   ) {
-    errors.push("config-template.json must define SpecDev config v4 with max_implementation_agents from 1 to 3");
+    errors.push("config-template.json must define SpecDev config v5 with positive execution limits and valid prototype variant bounds");
   }
   for (const obsolete of ["auto_commit", "worktree_for_parallel", "max_parallel"]) {
     if (JSON.stringify(configTemplate).includes(`\"${obsolete}\"`)) {
@@ -673,26 +699,27 @@ function validateExecutionContractAssets(root) {
   const configSchema = JSON.parse(readText(configSchemaPath));
   const limit = configSchema.properties?.execution?.properties?.max_implementation_agents;
   if (
-    configSchema.$id !== "urn:speculo:specdev:config:v4" ||
+    configSchema.$id !== "urn:speculo:specdev:config:v5" ||
     configSchema.properties?.schema_version?.const !== CONFIG_SCHEMA_VERSION ||
     limit?.minimum !== 1 ||
-    limit?.maximum !== 3 ||
+    configSchema.properties?.execution?.properties?.max_integration_attempts?.minimum !== 1 ||
     configSchema.additionalProperties !== false
   ) {
-    errors.push("config.schema.json must define the strict SpecDev config v4 execution contract");
+    errors.push("config.schema.json must define the strict SpecDev config v5 execution contract");
   }
 
   const goalPlanSchema = JSON.parse(readText(goalPlanSchemaPath));
   if (
-    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v5" ||
+    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v6" ||
     goalPlanSchema.properties?.schema_version?.const !== GOAL_PLAN_SCHEMA_VERSION ||
     goalPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
-    goalPlanSchema.properties?.implementation_agent_limit?.maximum !== 3 ||
-    goalPlanSchema.properties?.ticket_workspace_policy?.const !== "required" ||
-    goalPlanSchema.properties?.integration_gate?.const !== "candidate-merge" ||
+    goalPlanSchema.properties?.implementation_agent_limit?.minimum !== 1 ||
+    goalPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
+    !["current", "required"].every((value) => goalPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
+    !["direct-parent", "candidate-merge"].every((value) => goalPlanSchema.properties?.integration_gate?.enum?.includes(value)) ||
     goalPlanSchema.additionalProperties !== false
   ) {
-    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v5 contract");
+    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v6 workspace strategy contract");
   }
 
   const changeTemplate = JSON.parse(readText(changeTemplatePath));
@@ -701,19 +728,19 @@ function validateExecutionContractAssets(root) {
     changeTemplate.artifact !== "change-status" ||
     !Array.isArray(changeTemplate.worktrees)
   ) {
-    errors.push("change-status-template.json must define the SpecDev change-status v4 seed");
+    errors.push("change-status-template.json must define the SpecDev change-status v6 seed");
   }
 
   const changeSchema = JSON.parse(readText(changeSchemaPath));
   const worktreeRequired = new Set(changeSchema.$defs?.worktree?.required ?? []);
   const integrationRequired = new Set(changeSchema.$defs?.integration?.required ?? []);
   if (
-    changeSchema.$id !== "urn:speculo:specdev:change-status:v5" ||
+    changeSchema.$id !== "urn:speculo:specdev:change-status:v6" ||
     !["implementation_owner", "integration_owner", "source_checkpoint", "integration"].every((key) => worktreeRequired.has(key)) ||
     !["parent_ref", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "full_suite", "e2e", "promotion_status"].every((key) => integrationRequired.has(key)) ||
     changeSchema.additionalProperties !== false
   ) {
-    errors.push("change-status.schema.json must define the strict Ticket candidate-integration v5 contract");
+    errors.push("change-status.schema.json must define the strict Ticket integration v6 contract");
   }
   return errors;
 }
@@ -874,12 +901,14 @@ function capabilityChecks(root) {
   } else {
     const text = readText(goalPlanTemplate);
     for (const required of [
-      "schema_version: 5",
+      "schema_version: 6",
       "orchestration: lead-directed",
       "implementation_agent_limit: 3",
-      "ticket_workspace_policy: required",
-      "integration_gate: candidate-merge",
+      "integration_attempt_limit: 3",
+      "ticket_workspace_policy: current",
+      "integration_gate: direct-parent",
       ...REQUIRED_LEAD_GOAL_PLAN_MARKERS,
+      "Local direct-parent verification and parent update",
     ]) {
       if (!text.includes(required)) errors.push(`Goal Plan template lost marker ${required}`);
     }
@@ -1256,8 +1285,9 @@ function validateGoalPlan(path, errors) {
     "status",
     "modes",
     "orchestration",
-    "lead",
-    "implementation_agent_limit",
+      "lead",
+      "implementation_agent_limit",
+      "integration_attempt_limit",
     "ticket_workspace_policy",
     "integration_gate",
     "ready_for_execution",
@@ -1280,14 +1310,23 @@ function validateGoalPlan(path, errors) {
   if (typeof meta.lead !== "string" || !meta.lead.trim()) {
     errors.push(`${basename(path)}: lead must be a non-empty recoverable locator`);
   }
-  if (!Number.isInteger(meta.implementation_agent_limit) || meta.implementation_agent_limit < 1 || meta.implementation_agent_limit > 3) {
-    errors.push(`${basename(path)}: implementation_agent_limit must be an integer from 1 to 3`);
+  if (!Number.isInteger(meta.implementation_agent_limit) || meta.implementation_agent_limit < 1) {
+    errors.push(`${basename(path)}: implementation_agent_limit must be a positive integer`);
   }
-  if (meta.ticket_workspace_policy !== "required") {
-    errors.push(`${basename(path)}: ticket_workspace_policy must be required`);
+  if (!Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) {
+    errors.push(`${basename(path)}: integration_attempt_limit must be a positive integer`);
   }
-  if (meta.integration_gate !== "candidate-merge") {
-    errors.push(`${basename(path)}: integration_gate must be candidate-merge`);
+  if (!new Set(["current", "required"]).has(meta.ticket_workspace_policy)) {
+    errors.push(`${basename(path)}: ticket_workspace_policy must be current or required`);
+  }
+  if (!new Set(["direct-parent", "candidate-merge"]).has(meta.integration_gate)) {
+    errors.push(`${basename(path)}: integration_gate must be direct-parent or candidate-merge`);
+  }
+  if (
+    (meta.ticket_workspace_policy === "current" && meta.integration_gate !== "direct-parent") ||
+    (meta.ticket_workspace_policy === "required" && meta.integration_gate !== "candidate-merge")
+  ) {
+    errors.push(`${basename(path)}: ticket_workspace_policy and integration_gate must use current/direct-parent or required/candidate-merge`);
   }
   for (const obsolete of ["coordination_mode", "workspace_strategy", "terminal_action"]) {
     if (obsolete in meta) errors.push(`${basename(path)}: obsolete Goal Plan field ${obsolete} is not allowed`);
@@ -1309,9 +1348,12 @@ function validateGoalPlan(path, errors) {
         errors.push(`${basename(path)}: ready Goal Plan missing '${heading}'`);
       }
     }
-    const missingLeadMarkers = REQUIRED_LEAD_GOAL_PLAN_MARKERS.filter((marker) => !body.includes(marker));
+    const requiredMarkers = meta.ticket_workspace_policy === "current"
+      ? [...REQUIRED_LEAD_GOAL_PLAN_MARKERS, "Local direct-parent verification and parent update"]
+      : [...REQUIRED_LEAD_GOAL_PLAN_MARKERS, "source worktree 不运行 E2E", "Local candidate integration and parent update"];
+    const missingLeadMarkers = requiredMarkers.filter((marker) => !body.includes(marker));
     if (missingLeadMarkers.length) {
-      errors.push(`${basename(path)}: ready Goal Plan missing Lead/candidate markers ${JSON.stringify(missingLeadMarkers)}`);
+      errors.push(`${basename(path)}: ready Goal Plan missing Lead/workspace markers ${JSON.stringify(missingLeadMarkers)}`);
     }
     const assumptions = sectionBody(body, "## Assumptions");
     if (assumptions && assumptions.includes("高影响") && !assumptions.includes("必须为 `false`")) {
@@ -1319,6 +1361,27 @@ function validateGoalPlan(path, errors) {
     }
   }
   return { path, meta, body };
+}
+
+function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors) {
+  if (!goalPlan) return;
+  const config = findSpecdevConfig(change);
+  if (!config) {
+    errors.push(`${basename(path)}: SpecDev config.json is required to validate execution limits`);
+    return;
+  }
+  const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
+  const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
+  if (config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
+    errors.push(`${basename(path)}: SpecDev config.json must use schema v${CONFIG_SCHEMA_VERSION} with positive execution limits`);
+    return;
+  }
+  if (goalPlan.meta.implementation_agent_limit > configuredAgents) {
+    errors.push(`${basename(path)}: implementation_agent_limit ${goalPlan.meta.implementation_agent_limit} exceeds config max_implementation_agents ${configuredAgents}`);
+  }
+  if (goalPlan.meta.integration_attempt_limit > configuredAttempts) {
+    errors.push(`${basename(path)}: integration_attempt_limit ${goalPlan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
+  }
 }
 
 function validateDesignTree(path, change, errors) {
@@ -1567,8 +1630,8 @@ function validateTicket(path, errors) {
     if (!verification || !verification.includes("|")) {
       errors.push(`${basename(path)}: Ready Ticket has no usable verification matrix`);
     }
-    if (!verification.includes("E2E disposition") || !verification.includes("parent-candidate")) {
-      errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and parent-candidate owner/environment`);
+    if (!verification.includes("E2E disposition") || !/(current-workspace|source-worktree|parent-candidate|direct-parent)/.test(verification)) {
+      errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and an explicit execution environment`);
     }
     const acceptance = sectionBody(body, "## 10. 验收标准").toLowerCase();
     if (!acceptance.includes("- [ ]") && !acceptance.includes("- [x]")) {
@@ -1673,11 +1736,12 @@ function validateChangeStatus(path, expectedChange, errors) {
     if (!VALID_WORKTREE_STATUS.has(worktree.status)) {
       errors.push(`${basename(path)}: invalid worktree status ${worktree.status}`);
     }
+    const currentWorkspace = ref === "current";
     if (worktree.provider !== "git") {
       errors.push(`${basename(path)}: Ticket worktree ${worktree.ticket_id} provider must be git`);
     }
     const expectedRef = `specdev-worktree/${expectedChange}/${worktree.ticket_id}`;
-    if (ref !== expectedRef) {
+    if (!currentWorkspace && ref !== expectedRef) {
       errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
     }
 
@@ -1704,7 +1768,9 @@ function validateChangeStatus(path, expectedChange, errors) {
     }
     if (typeof worktree.parent_branch !== "string" || !worktree.parent_branch.trim()) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch is required`);
-    } else if (worktree.parent_branch === worktree.branch) {
+    } else if (currentWorkspace && worktree.parent_branch !== worktree.branch) {
+      errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} branch must equal parent_branch`);
+    } else if (!currentWorkspace && worktree.parent_branch === worktree.branch) {
       errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch must differ from branch`);
     }
 
@@ -1826,23 +1892,32 @@ function validateChangeStatus(path, expectedChange, errors) {
       } else if (integration.source_sha !== worktree.source_checkpoint) {
         errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_sha must equal source_checkpoint`);
       }
-      if (typeof integration.candidate_sha !== "string" || !integration.candidate_sha.trim()) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires candidate_sha`);
+      if (currentWorkspace) {
+        if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
+          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} cannot record candidate workspace fields`);
+        }
+        if (integration.method !== "direct-parent") {
+          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} requires integration.method=direct-parent`);
+        }
+      } else {
+        if (typeof integration.candidate_sha !== "string" || !integration.candidate_sha.trim()) {
+          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires candidate_sha`);
+        }
+        const expectedCandidateBranch = `speculo/integration/${expectedChange}/${worktree.ticket_id}`;
+        if (integration.candidate_branch !== expectedCandidateBranch) {
+          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_branch must equal ${expectedCandidateBranch}`);
+        }
+        const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${worktree.ticket_id}`;
+        if (integration.candidate_workspace_ref !== expectedCandidateRef) {
+          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_workspace_ref must equal ${expectedCandidateRef}`);
+        }
+        if (!new Set(["fast-forward", "merge-commit"]).has(integration.method)) {
+          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires an integration method`);
+        }
       }
-      const expectedCandidateBranch = `speculo/integration/${expectedChange}/${worktree.ticket_id}`;
-      if (integration.candidate_branch !== expectedCandidateBranch) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_branch must equal ${expectedCandidateBranch}`);
-      }
-      const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${worktree.ticket_id}`;
-      if (integration.candidate_workspace_ref !== expectedCandidateRef) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_workspace_ref must equal ${expectedCandidateRef}`);
-      }
-      if (!new Set(["fast-forward", "merge-commit"]).has(integration.method)) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires an integration method`);
-      }
-      if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires attempts >= 1`);
-      }
+    if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
+      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires attempts >= 1`);
+    }
     }
     if (worktree.status === "integrating" && integration.status !== "candidate") {
       errors.push(`${basename(path)}: integrating worktree ${worktree.ticket_id} requires integration.status=candidate`);
@@ -1851,16 +1926,23 @@ function validateChangeStatus(path, expectedChange, errors) {
       if (
         integration.status !== "passed" ||
         integration.verification !== "passed" ||
-        !new Set(["fast-forward", "merge-commit"]).has(integration.method) ||
+        !(currentWorkspace ? integration.method === "direct-parent" : new Set(["fast-forward", "merge-commit"]).has(integration.method)) ||
         typeof integration.result_sha !== "string" ||
         !integration.result_sha.trim() ||
-        integration.result_sha !== integration.candidate_sha ||
+        (currentWorkspace ? integration.result_sha !== worktree.source_checkpoint : integration.result_sha !== integration.candidate_sha) ||
         !e2e ||
         !new Set(["not-required", "passed"]).has(e2e.status)
       ) {
         errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} requires passed candidate/result/E2E state`);
       }
-      if (integration.method === "fast-forward") {
+      if (currentWorkspace && integration.method === "direct-parent") {
+        if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
+          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} direct-parent cannot record candidate fields`);
+        }
+        if (integration.result_sha !== worktree.source_checkpoint) {
+          errors.push(`${basename(path)}: current workspace ${worktree.status} ${worktree.ticket_id} result_sha must equal source_checkpoint`);
+        }
+      } else if (integration.method === "fast-forward") {
         if (integration.candidate_sha !== worktree.source_checkpoint) {
           errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} fast-forward candidate/result must equal source_checkpoint`);
         }
@@ -1888,7 +1970,96 @@ function validateChangeStatus(path, expectedChange, errors) {
   return data;
 }
 
-function validateChange(change, stage = null) {
+function validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors) {
+  if (goalPlan?.meta.ticket_workspace_policy !== "current") return;
+  const entries = Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : [];
+  const active = [];
+  for (const worktree of entries) {
+    if (worktree.workspace_ref !== "current") {
+      errors.push(`${worktree.ticket_id}: current Goal Plan requires workspace_ref=current; source worktrees are not allowed`);
+    }
+    if (worktree.parent_branch !== worktree.branch) {
+      errors.push(`${worktree.ticket_id}: current workspace execution must commit directly on parent_branch`);
+    }
+    if (new Set(["active", "review", "integrating", "blocked"]).has(worktree.status)) {
+      active.push(worktree.ticket_id);
+    }
+    const integration = worktree.integration;
+    if (integration && typeof integration === "object" && !Array.isArray(integration)) {
+      if (["candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref"].some((key) => integration[key] !== null)) {
+        errors.push(`${worktree.ticket_id}: current workspace execution cannot record candidate workspace fields`);
+      }
+      if (integration.method !== null && integration.method !== "direct-parent") {
+        errors.push(`${worktree.ticket_id}: current workspace execution requires direct-parent integration`);
+      }
+    }
+  }
+  if (active.length > 1) {
+    errors.push(`current Goal Plan requires strictly serial Ticket execution; active worktrees: ${active.join(", ")}`);
+  }
+}
+
+function gitOutput(repoRoot, args) {
+  try {
+    return execFileSync("git", ["-C", repoRoot, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function gitCommitExists(repoRoot, sha) {
+  return typeof sha === "string" && gitSucceeds(repoRoot, ["cat-file", "-e", `${sha}^{commit}`]);
+}
+
+function gitSucceeds(repoRoot, args) {
+  try {
+    execFileSync("git", ["-C", repoRoot, ...args], { stdio: ["ignore", "ignore", "ignore"] });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateGitEvidence(repoRoot, changeStatus, errors) {
+  if (!repoRoot) return;
+  const resolvedRoot = resolve(repoRoot);
+  if (gitOutput(resolvedRoot, ["rev-parse", "--is-inside-work-tree"]) !== "true") {
+    errors.push(`--repo is not a Git worktree: ${resolvedRoot}`);
+    return;
+  }
+  const currentBranch = gitOutput(resolvedRoot, ["branch", "--show-current"]);
+  for (const worktree of Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : []) {
+    const label = String(worktree.ticket_id ?? "worktree");
+    for (const [name, sha] of [
+      ["base_sha", worktree.base_sha],
+      ["source_checkpoint", worktree.source_checkpoint],
+      ["parent_before_sha", worktree.integration?.parent_before_sha],
+      ["source_sha", worktree.integration?.source_sha],
+      ["candidate_sha", worktree.integration?.candidate_sha],
+      ["result_sha", worktree.integration?.result_sha],
+    ]) {
+      if (sha !== null && sha !== undefined && sha !== "" && !gitCommitExists(resolvedRoot, sha)) {
+        errors.push(`${label}: ${name} is not a resolvable Git commit: ${sha}`);
+      }
+    }
+    if (worktree.workspace_ref === "current") {
+      if (currentBranch !== worktree.parent_branch) errors.push(`${label}: current branch ${currentBranch ?? "<detached>"} must equal ${worktree.parent_branch}`);
+      if (new Set(["integrated", "removed"]).has(worktree.status) && worktree.integration?.result_sha && gitOutput(resolvedRoot, ["rev-parse", worktree.parent_branch]) !== worktree.integration.result_sha) {
+        errors.push(`${label}: parent branch HEAD must equal recorded result_sha`);
+      }
+      if (worktree.integration?.source_sha && worktree.base_sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.integration.source_sha])) {
+        errors.push(`${label}: source_sha must descend from base_sha`);
+      }
+    } else if (worktree.integration?.source_sha && worktree.base_sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.integration.source_sha])) {
+      errors.push(`${label}: source_sha must descend from base_sha`);
+    }
+    if (new Set(["integrated", "removed"]).has(worktree.status) && gitOutput(resolvedRoot, ["status", "--porcelain"])) {
+      errors.push(`${label}: repository is dirty while Ticket is recorded as ${worktree.status}`);
+    }
+  }
+}
+
+function validateChange(change, stage = null, repoRoot = null) {
   const errors = [];
   const warnings = [];
   if (!isDirectory(change)) {
@@ -1993,7 +2164,7 @@ function validateChange(change, stage = null) {
     for (const [ticketId, artifact] of tickets) {
       if (new Set(["draft", "cancelled"]).has(artifact.meta.status)) continue;
       if (!worktreesByTicket.has(ticketId)) {
-        errors.push(`${ticketId}: Implement stage requires one Ticket source worktree record`);
+        errors.push(`${ticketId}: Implement stage requires one Ticket workspace execution record`);
       }
     }
     for (const ticketId of worktreesByTicket.keys()) {
@@ -2002,6 +2173,19 @@ function validateChange(change, stage = null) {
       }
     }
   }
+  if (changeStatus && goalPlan) {
+    validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors);
+    const attemptLimit = Number.isInteger(goalPlan.meta.integration_attempt_limit) ? goalPlan.meta.integration_attempt_limit : null;
+    if (attemptLimit !== null) {
+      for (const worktree of changeStatus.worktrees ?? []) {
+        if (worktree?.integration && Number.isInteger(worktree.integration.attempts) && worktree.integration.attempts > attemptLimit) {
+          errors.push(`${worktree.ticket_id}: integration attempts ${worktree.integration.attempts} exceed Goal Plan limit ${attemptLimit}`);
+        }
+      }
+    }
+    validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
+  }
+  validateGitEvidence(repoRoot, changeStatus, errors);
 
   if (spec) {
     const declaredContracts = new Set(spec.body.match(/\bAC-\d+\b/g) ?? []);
@@ -2088,22 +2272,27 @@ function validateChange(change, stage = null) {
       continue;
     }
     const text = readText(evidence);
-    for (const heading of [
+    const currentWorkspace = goalPlan?.meta.ticket_workspace_policy === "current";
+    const requiredHeadings = [
       "## 2. Lead Dispatch And Candidate Return",
       "## 3. 修改范围与路径所有权",
       "## 4. 验收与合同映射",
-      "## 5. Source-worktree 验证",
+      "## 5. Workspace Verification",
       "## 6. 双轴审查",
-      "## 7. Parent-candidate 集成验证",
+      "## 7. Integration Verification",
       "## 8. 偏差与决策",
       "## 9. 残余风险与交付定位",
-    ]) {
+    ];
+    for (const heading of requiredHeadings) {
       if (!text.includes(heading)) {
         errors.push(`${toPosix(relative(change, evidence))}: missing '${heading}'`);
       }
     }
-    const sourceVerification = sectionBody(text, "## 5. Source-worktree 验证");
-    if (/E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(sourceVerification) && !/不得|禁止|not-run/i.test(sourceVerification)) {
+    const workspaceVerification = sectionBody(text, "## 5. Workspace Verification");
+    if (!/(current-workspace|source-worktree)/.test(workspaceVerification)) {
+      errors.push(`${toPosix(relative(change, evidence))}: Workspace Verification must name current-workspace or source-worktree`);
+    }
+    if (!currentWorkspace && /E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(workspaceVerification) && !/不得|禁止|not-run/i.test(workspaceVerification)) {
       errors.push(`${toPosix(relative(change, evidence))}: E2E pass cannot come from source-worktree`);
     }
     const worktree = Array.isArray(changeStatus?.worktrees)
@@ -2191,13 +2380,14 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] <change-directory> | --self-check");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check");
   return 2;
 }
 
 function main(argv) {
   let selfCheckRequested = false;
   let stage = null;
+  let repoRoot = null;
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -2208,6 +2398,11 @@ function main(argv) {
       index += 1;
     } else if (arg.startsWith("--stage=")) {
       stage = arg.slice("--stage=".length);
+    } else if (arg === "--repo") {
+      repoRoot = argv[index + 1] ?? null;
+      index += 1;
+    } else if (arg.startsWith("--repo=")) {
+      repoRoot = arg.slice("--repo=".length);
     } else if (arg.startsWith("--")) {
       return usage();
     } else {
@@ -2223,7 +2418,7 @@ function main(argv) {
     return printResults(result.errors, result.warnings);
   }
   if (positional.length === 1) {
-    const result = validateChange(resolve(positional[0]), stage);
+    const result = validateChange(resolve(positional[0]), stage, repoRoot);
     return printResults(result.errors, result.warnings);
   }
   return usage();

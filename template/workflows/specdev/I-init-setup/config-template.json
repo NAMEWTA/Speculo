@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
@@ -7,6 +7,7 @@
   },
   "execution": {
     "max_implementation_agents": 3,
+    "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
   },
@@ -19,6 +20,8 @@
   "planning": {
     "default_depth": "standard",
     "require_ready_gate": true,
-    "require_evidence": true
+    "require_evidence": true,
+    "ui_prototype_default_variants": 3,
+    "ui_prototype_max_variants": 5
   }
 }

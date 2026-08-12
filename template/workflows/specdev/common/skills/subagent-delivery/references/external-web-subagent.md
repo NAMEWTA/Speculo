@@ -10,7 +10,7 @@
 
 Packet 固定目标、范围、合同、checkpoint、路径边界、非 E2E 验证要求和停止条件。外部 provider 返回 patch/文件、修改清单、推理摘要、模拟或自报测试、未验证项和会话 locator。
 
-Lead 在 Ticket worktree 中核对附件 hash、应用候选、检查 diff、依赖与锁文件、运行本地非 E2E 检查并创建 implementation commit。外部自报结果、截图或模拟保持 `unverified`；适用 E2E 仍只在 parent-candidate 状态运行。
+Lead 在 Goal Plan 指定的 current workspace 或 Ticket worktree 中核对附件 hash、应用候选、检查 diff、依赖与锁文件、运行本地非 E2E 检查并创建 implementation commit。外部自报结果、截图或模拟保持 `unverified`；适用 E2E 由 Lead 在 current workspace 或 parent-candidate 状态运行。
 
 ## 修正与恢复
 
