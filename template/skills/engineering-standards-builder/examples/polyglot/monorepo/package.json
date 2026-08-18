@@ -1,0 +1,11 @@
+{
+  "name": "polyglot-fixture",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "check": "echo fixture"
+  }
+}

@@ -1,0 +1,31 @@
+# 决策、迁移与例外
+
+## 决策
+
+{{DECISIONS}}
+
+推荐格式：
+
+```text
+Decision ID:
+Scope:
+Decision:
+Source: user-decision | repository-fact | official-guidance | builder-baseline
+Rationale:
+Migration:
+Verification:
+```
+
+## 当前状态与目标状态
+
+{{CURRENT_TARGET_MIGRATIONS}}
+
+## 例外
+
+{{EXCEPTIONS}}
+
+每个例外必须包含 ID、Scope、Rule、Owner、Reason、Risk、Compensation、Created、Expires/removal condition 和 Verification。没有 owner 或删除条件的临时例外无效。
+
+## 待确认
+
+{{PENDING_DECISIONS}}

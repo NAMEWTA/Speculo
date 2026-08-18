@@ -4,11 +4,15 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.7.5] - 2026-08-18
 
 ### Added
+- **`source-code-zip` skill**: packs a source directory into a code-only ZIP with editable regex IGNORE rules that exclude node_modules, virtualenvs, build artifacts, archives, `.env`, YAML, secrets, media, and office files. Prefers `uv`, falls back to `python3`/`py -3`/`python`.
 - **Bidirectional Steelman Deliberation work**: added an independent `person/steelman-deliberation` workflow entry that freezes a pre-answer dossier, strengthens the strongest credible cases on both sides, identifies the decisive variable, asks at most one user-specific question, and then produces a validated explicit decision with actions and reversal conditions.
 - **Steelman change validator**: added a dependency-free validator with staged-file support and self-check fixtures for awaiting-answer and completed lifecycles.
+
+### Changed
+- **`engineering-standards-builder` skill replaces `typescript-standards-builder`**: stable Skill ID preserved for existing callers while the generator is generalized into a cross-language Engineering Standards compiler covering TypeScript/JavaScript, React, Vue, Java/Spring Boot, Go, Rust, and polyglot monorepos, with per-language references, adapters, compatibility templates, and self-test fixtures.
 
 ### Fixed
 - **Whole-file workflow index generation**: `generate-index.mjs` now honors both marker-owned `type: workflow` indexes and generator-owned `type: workflow-index` / `auto_generated: true` indexes, matching the existing person package and maintainer validator contracts.
@@ -149,7 +153,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.0] - 2026-08-02
 
 ### Changed
-- **`typescript-standards-builder` Skill 取代 `typescript-engineering-standards`**：由静态工程规范合集重构为规范生成器——先扫描仓库事实，再通过自适应问答确认分歧点，为当前项目生成专属 TypeScript Standards Skill。输出正式规范到 `.agents/skills/typescript-standards/`，并为 `.claude/skills/` 创建强制引用入口；主 Skill 精简、详细规则拆分进项目内 `references/`，随 `skills` 核心资产自动安装。
+- **`engineering-standards-builder` Skill 取代 `typescript-engineering-standards`**：由静态工程规范合集重构为规范生成器——先扫描仓库事实，再通过自适应问答确认分歧点，为当前项目生成专属 TypeScript Standards Skill。输出正式规范到 `.agents/skills/typescript-standards/`，并为 `.claude/skills/` 创建强制引用入口；主 Skill 精简、详细规则拆分进项目内 `references/`，随 `skills` 核心资产自动安装。
 
 ---
 

@@ -1,0 +1,27 @@
+# 模块地图
+
+{{MODULE_TABLE}}
+
+每个模块至少记录：
+
+```text
+id
+path
+languages
+frameworks
+runtimes
+build systems
+source/test roots
+public entrypoints
+generated paths
+quality gates
+evidence/confidence
+```
+
+## 依赖方向
+
+{{DEPENDENCY_DIRECTIONS}}
+
+## 路由
+
+{{MODULE_RULE_ROUTES}}

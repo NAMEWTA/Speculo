@@ -1,0 +1,21 @@
+{
+  "topology": "single-project",
+  "module": {
+    "path": ".",
+    "languages": [
+      "typescript"
+    ],
+    "frameworks": [
+      "react"
+    ],
+    "buildSystems": [
+      "vite"
+    ],
+    "testSystems": [
+      "vitest"
+    ],
+    "runtimes": [
+      "browser"
+    ]
+  }
+}

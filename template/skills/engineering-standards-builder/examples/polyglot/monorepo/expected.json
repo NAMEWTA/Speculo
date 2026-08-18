@@ -1,0 +1,22 @@
+{
+  "topology": "polyglot-monorepo",
+  "minimumModules": 4,
+  "languages": [
+    "typescript",
+    "java",
+    "go"
+  ],
+  "frameworks": [
+    "vue",
+    "spring-boot"
+  ],
+  "buildSystems": [
+    "vite",
+    "maven",
+    "go-modules"
+  ],
+  "ciResponsibilities": [
+    "build-or-package",
+    "test"
+  ]
+}

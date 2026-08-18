@@ -1,0 +1,22 @@
+{
+  "topology": "single-project",
+  "module": {
+    "path": ".",
+    "languages": [
+      "typescript"
+    ],
+    "frameworks": [
+      "vue",
+      "pinia"
+    ],
+    "buildSystems": [
+      "vite"
+    ],
+    "testSystems": [
+      "vitest"
+    ],
+    "runtimes": [
+      "browser"
+    ]
+  }
+}

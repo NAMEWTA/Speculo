@@ -60,7 +60,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `migrate-runtime-state` | Validate backups, lock source/target fingerprints, and apply runtime migration plans with rollback |
 | `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `speculo-retro` | Retrospective analysis |
-| `typescript-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
+| `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
 
 ### 2 Workflow Packages

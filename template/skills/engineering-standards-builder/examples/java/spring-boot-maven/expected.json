@@ -1,0 +1,22 @@
+{
+  "topology": "single-project",
+  "module": {
+    "path": ".",
+    "languages": [
+      "java"
+    ],
+    "frameworks": [
+      "spring-boot"
+    ],
+    "buildSystems": [
+      "maven"
+    ],
+    "testSystems": [
+      "junit",
+      "testcontainers"
+    ],
+    "runtimes": [
+      "jvm"
+    ]
+  }
+}

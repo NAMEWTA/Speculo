@@ -1,0 +1,23 @@
+{
+  "topology": "single-project",
+  "module": {
+    "path": ".",
+    "languages": [
+      "go"
+    ],
+    "frameworks": [],
+    "buildSystems": [
+      "go-modules"
+    ],
+    "testSystems": [
+      "go-test"
+    ],
+    "runtimes": [
+      "native"
+    ],
+    "applicationTypes": [
+      "service",
+      "cli"
+    ]
+  }
+}

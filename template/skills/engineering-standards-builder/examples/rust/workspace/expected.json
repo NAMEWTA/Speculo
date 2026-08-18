@@ -1,0 +1,14 @@
+{
+  "topology": "workspace",
+  "minimumModules": 3,
+  "languages": [
+    "rust"
+  ],
+  "frameworks": [],
+  "buildSystems": [
+    "cargo"
+  ],
+  "testSystems": [
+    "cargo-test"
+  ]
+}

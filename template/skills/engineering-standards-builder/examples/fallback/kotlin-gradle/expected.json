@@ -1,0 +1,12 @@
+{
+  "topology": "single-project",
+  "module": {
+    "path": ".",
+    "languages": ["kotlin"],
+    "buildSystems": ["gradle"],
+    "runtimes": ["jvm"]
+  },
+  "languages": ["kotlin"],
+  "buildSystems": ["gradle"],
+  "absentAdapters": ["java"]
+}

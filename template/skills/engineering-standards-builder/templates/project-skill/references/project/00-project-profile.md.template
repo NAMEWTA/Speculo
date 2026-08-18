@@ -1,0 +1,26 @@
+# 项目画像
+
+## 身份
+
+- Project: {{PROJECT_NAME}}
+- Repository root: {{REPOSITORY_ROOT}}
+- Topology: {{TOPOLOGY}}
+- Inventory schema: {{INVENTORY_SCHEMA_VERSION}}
+
+## 事实来源
+
+{{EVIDENCE_SUMMARY}}
+
+## 工具链与质量门禁
+
+{{QUALITY_GATES}}
+
+每个命令必须包含 scope、working directory、来源和当前状态（active/planned）。
+
+## 排除与冻结区域
+
+{{EXCLUDED_AND_FROZEN_PATHS}}
+
+## 未知与冲突
+
+{{UNKNOWNS_AND_CONFLICTS}}

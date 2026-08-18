@@ -60,7 +60,7 @@ npm install -g @namewta/speculo
 | `migrate-runtime-state` | 校验备份、锁定来源/目标指纹，并以 rollback 执行运行时迁移计划 |
 | `optimize-codex-config` | 体检并优化本机 Codex 配置、第三方 Responses 接口、权限和 compaction 故障 |
 | `speculo-retro` | 回顾分析 |
-| `typescript-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
+| `engineering-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
 
 ### 2 个 Workflow Packages

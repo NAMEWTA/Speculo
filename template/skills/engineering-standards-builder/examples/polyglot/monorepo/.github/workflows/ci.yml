@@ -1,0 +1,11 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm run build
+      - run: mvn -f services/orders/pom.xml test
+      - run: go test ./...
+        working-directory: services/worker

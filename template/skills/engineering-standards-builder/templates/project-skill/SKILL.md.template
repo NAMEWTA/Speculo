@@ -1,0 +1,26 @@
+---
+name: engineering-standards
+description: 为 {{PROJECT_NAME}} 的实现、重构、评审与交付提供按模块路由的工程规范。处理代码、目录、测试、构建、依赖、API 或 CI 变化前使用。
+---
+
+# {{PROJECT_NAME}} Engineering Standards
+
+本 Skill 只描述本项目已确认的规范。先确定变更 scope，再加载最小充分 references；不要把一个模块的语言或框架规则扩散到其他模块。
+
+## 每次执行
+
+1. 读取 [项目画像](references/project/00-project-profile.md) 和 [模块地图](references/project/01-module-map.md)。
+2. 将当前任务映射到 repository、module、language、framework、runtime 或 path scope。
+3. 读取与变更相关的通用规则：{{COMMON_RULE_LINKS}}。
+4. 按模块地图只读取适用语言/框架规则：{{ADAPTER_ROUTE_LINKS}}。
+5. 读取 [决策与例外](references/project/02-decisions-and-exceptions.md)，确认 current、target、migration 与未到期 exception。
+6. 实现前检查 public API、依赖方向、安全、错误/取消/资源和测试影响。
+7. 实现后运行项目画像中该 scope 的真实质量门禁，并按 [评审清单](references/project/review-checklist.md) 报告结果。
+
+## 约束
+
+- MUST 规则只有在 Verification 可执行或有精确 review 证据时成立。
+- 不适用规则不加载；generated/vendor/frozen scope 不手工修改。
+- 不通过删除测试、关闭核心规则、放宽编译配置或扩大例外获得通过。
+- 新代码遵循 Target；存量偏差按 Migration/Ratchet 处理。
+- 项目事实变化时更新 Project Profile/Module Map，再更新规则，不静默猜测。
