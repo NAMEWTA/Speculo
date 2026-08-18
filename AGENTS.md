@@ -62,12 +62,12 @@ speculo version                          Show local version and check npm for up
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, migrate-runtime-state, retro, status
 - **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, migrate-runtime-state, optimize-codex-config, speculo-retro, typescript-standards-builder, writing-great-skills
-- **template/workflows/** — specdev（14 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（1 work entry: M-mao-zedong-cognitive-os）
+- **template/workflows/** — specdev（14 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（2 work entries: M-mao-zedong-cognitive-os, S-steelman-deliberation）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
 ## Workflow Package Contract
 
-- Each workflow must have `INDEX.md` (work catalog with AUTO-INDEX markers; full package contract for `type: workflow`).
+- Each workflow must have `INDEX.md`: `type: workflow` uses one AUTO-INDEX marker pair inside a full package contract; `type: workflow-index` / `auto_generated: true` is a generator-owned whole-file catalog without markers.
 - Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming, with progressive disclosure sub-files.
 - All cross-references use `<Path>{roots.xxx}/...</Path>` format based on workspace.json root aliases.
 - `_state/` skeleton must contain `status.json`, `changes/`, `archive/`; other content decided by workflow.

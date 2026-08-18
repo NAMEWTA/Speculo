@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Bidirectional Steelman Deliberation work**: added an independent `person/steelman-deliberation` workflow entry that freezes a pre-answer dossier, strengthens the strongest credible cases on both sides, identifies the decisive variable, asks at most one user-specific question, and then produces a validated explicit decision with actions and reversal conditions.
+- **Steelman change validator**: added a dependency-free validator with staged-file support and self-check fixtures for awaiting-answer and completed lifecycles.
+
+### Fixed
+- **Whole-file workflow index generation**: `generate-index.mjs` now honors both marker-owned `type: workflow` indexes and generator-owned `type: workflow-index` / `auto_generated: true` indexes, matching the existing person package and maintainer validator contracts.
+
+### Tests
+- Added regression coverage for person work structure, validator failure modes, whole-file index idempotence and stale detection, and preservation of handwritten marker-mode INDEX content.
+
 ---
 
 ## [0.7.4] - 2026-08-12

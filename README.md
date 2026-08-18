@@ -68,7 +68,7 @@ After initialization, the target project gains the following AI agent-callable a
 | Workflow | Work Entries | Description |
 |---|---:|---|
 | **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, mentoring, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
-| **person** | 1 | Persona-methodology-based consulting workflow (Mao Zedong Cognitive OS) |
+| **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
