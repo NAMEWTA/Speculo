@@ -120,7 +120,7 @@ describe("Speculo CLI", () => {
       assert.equal(await pathExists(join(root, ".speculo", "workspace.json")), true);
       assert.deepEqual(await readJson(join(root, ".speculo", "install.json")), {
         schema_version: 1,
-        package_version: "0.7.4",
+        package_version: "0.7.5",
         workflows: ["specdev"],
       });
       assert.equal(await pathExists(join(root, ".speculo", "back")), false);

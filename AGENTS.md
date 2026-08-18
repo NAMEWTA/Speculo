@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.7.4
+- Package: `@namewta/speculo` v0.7.5
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
