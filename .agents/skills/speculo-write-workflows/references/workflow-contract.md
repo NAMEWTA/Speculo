@@ -101,7 +101,11 @@ Schema 变化无需兼容旧版本时，直接提高版本、更新种子、全�
 
 ## AUTO-INDEX
 
-INDEX 中保留且只保留一对：
+生成器扫描当前目录下符合 `^[A-Z]-` 的 work 目录，读取同名入口 frontmatter 的 `name` 和 `description`，按目录名排序。INDEX 只能选择一种生成模式：
+
+### 标记区块模式
+
+`type: workflow` 的完整治理 INDEX 保留且只保留一对：
 
 ```markdown
 <!-- AUTO-INDEX-START -->
@@ -109,7 +113,13 @@ INDEX 中保留且只保留一对：
 <!-- AUTO-INDEX-END -->
 ```
 
-生成器扫描当前目录下符合 `^[A-Z]-` 的 work 目录，读取同名入口 frontmatter 的 `name` 和 `description`，按目录名排序，重建列表。Person 等简化 workflow 也使用同一算法。
+生成器只替换标记之间的 work 清单，保留其余手写合同。
+
+### 整文件模式
+
+`type: workflow-index` 或 `auto_generated: true` 的简化目录由生成器拥有整个文件，不包含 AUTO-INDEX 标记或手写治理内容。生成器按固定 frontmatter、标题、警告和 work 清单重建整文件。
+
+同一 workflow 不混用两种模式。真实加载器或调用方需要完整生命周期合同时使用标记区块模式；已建立简化目录合同的 workflow 可以继续使用整文件模式。
 
 ## Validation
 

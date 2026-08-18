@@ -41,9 +41,9 @@ description: 设计、创建、合并或重构完整 Speculo workflow 包；当�
 node .agents/skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/<workflow>
 ```
 
-脚本只替换唯一标记区块，列表来自当前 work 目录及入口 frontmatter。
+脚本根据 INDEX frontmatter 选择生成模式：`type: workflow` 只替换唯一 AUTO-INDEX 标记区块；`type: workflow-index` 或 `auto_generated: true` 重建整个简化索引文件。列表均来自当前 work 目录及入口 frontmatter。
 
-**完成标准**：索引包含全部且仅包含 Letter-work；顺序确定；再次运行无 diff；手写部分未变化。
+**完成标准**：索引包含全部且仅包含 Letter-work；顺序确定；再次运行无 diff；标记模式的手写部分未变化，整文件模式没有手工内容或 AUTO-INDEX 标记。
 
 ### 6. 包级验证
 

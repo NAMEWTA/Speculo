@@ -1,51 +1,243 @@
 ---
 name: speculo-write-canonical
-description: 编译、重建或审计 Speculo canonical 单文件分发物；当任务涉及把 skill、command、work 或 workflow 的全部静态依赖内联、去除 Path/frontmatter 或验证自包含性时使用。
+description: 将 skill、command、work 或 workflow 语义编译为可在网页 AI 平台孤立运行、同时具备规范化持久化输出与恢复能力的单文件 Markdown；用于新建、重建、批量重构和审计 canonical。
 ---
 
 # Speculo Write Canonical
 
-以**编译**为主导词。Canonical 是源能力的透明单文件构建产物，不是手工维护的第二事实源。
+以**语义编译与可移植持久化**为主导词。Canonical 不是源文件拼接物，也不是无状态 Prompt；它是面向网页 AI 平台的独立能力定义，必须同时满足：
+
+1. 不泄漏仓库内部实现；
+2. 不依赖第二份能力定义文件；
+3. 保留源能力的产物、状态、暂停、恢复和完成合同；
+4. 在任意平台上都给出可落盘、可复制、可继续运行的规范化输出。
+
+读取并遵守 `references/canonical-contract.md`。该合同是本 skill 的完整格式与审计权威。
+
+## 两条绝不能混淆的边界
+
+### 定义隔离
+
+成品不能出现源仓库路径、源文件名、root alias、内部脚本、内部路由、生成 manifest 或源码 provenance。每份 canonical 只允许出现一次项目地址：
+
+```text
+https://github.com/NAMEWTA/Speculo
+```
+
+除此之外不出现其他 URL，也不在正文中重复项目名称。
+
+### 运行时持久化
+
+定义隔离绝不等于删除状态。凡源能力会创建、更新、恢复或交接工件，canonical 必须保留等价能力，并统一写入便携目录：
+
+```text
+ai-workspace/
+```
+
+`ai-workspace/` 是 canonical 自己定义的输出命名空间，不是仓库内部目录。它可以位于用户选择的项目目录、平台可写工作区、挂载文件区或本地保存位置。
+
+禁止把文件持久化简单改写为“只在当前对话中记住”“生成一段恢复摘要即可”。恢复摘要只能是平台无法写文件时的运输形式，不能替代规范化文件合同。
 
 ## 过程
 
-### 1. 选择源入口
+### 1. 选择源入口并建立语义覆盖清单
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Canonical contract](references/canonical-contract.md) 和 `../../../template/canonical/README.md`。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则；然后确定一个入口：skill `SKILL.md`、command `.md`、workflow `INDEX.md` 或 work 入口。
+确定唯一入口：skill、command、workflow 入口或独立 work 入口。递归读取静态文本依赖，排除运行时状态、历史产物、归档、备份、敏感信息和二进制资源。
 
-**完成标准**：入口真实存在；输出位于 `template/canonical/`；源与输出不是同一文件；运行时 state 和历史产物不在源范围。
+建立私有覆盖清单，至少记录：
 
-### 2. 构建传递静态依赖闭包
+- 能力目的、触发条件与不适用条件；
+- 必需输入、可选输入和权威顺序；
+- 核心步骤及不可改变的顺序；
+- 产物所有权、输出目录和文件命名；
+- 全局状态、change 状态、阶段、暂停点和恢复键；
+- 写入顺序、验证、冲突处理和完成声明；
+- 用户已提前回答、缺失材料、多个候选和高风险分支；
+- 平台可写与不可写两种运行模式；
+- 正常、失败、恢复和重入场景。
 
-递归扫描入口和每个新发现文件中的相对 Markdown 链接与 `<Path>`。将 root alias 映射到 `template/`，跟随静态能力文件；记录动态 state 路径、外部 URL 和被排除资源。检测循环并去重，不只扫描入口一层。
+**完成标准**：每项关键行为都有来源依据；状态与产物没有被当作“内部细节”误删。
 
-**完成标准**：队列为空；每个引用被分类为“已内联、运行时说明、外部 URL、排除或阻塞”；所有未解析静态引用都阻塞生成。
+### 2. 区分源实现路径与可移植输出路径
 
-### 3. 规范化每个源
+对每个源路径先判断其语义：
 
-按确定顺序读取所有文件：入口优先，其余按首次 DFS 发现。去除开头 YAML frontmatter；把 `<Path>` 标签替换为可读的反引号路径表达；把指向已内联文件的链接改为对应 XML 标签说明。JSON/text 资源保留原文并使用 fenced code block。
+| 源内容 | Canonical 中的处理 |
+|---|---|
+| 源能力文件、模板、脚本路径 | 吸收语义后删除，不暴露名称 |
+| 仓库 root alias 与安装目录 | 删除并改写为平台能力或用户材料 |
+| 运行时产物路径 | 映射到 `ai-workspace/` 下的便携路径 |
+| 全局状态 | 映射到 `ai-workspace/status.json` |
+| 单次 change 状态 | 映射到 `ai-workspace/changes/{change}/.status.json` |
+| 原始请求 | 映射到 `ai-workspace/changes/{change}/source.md` |
+| 高价值决定轨迹 | 映射到 `ai-workspace/changes/{change}/LOG.md` |
+| 永久知识 | 映射到 `ai-workspace/knowledge/` 下的相应目录 |
+| 临时 staging、锁、回滚实现 | 改写为“先形成完整候选内容、验证后替换、状态最后更新” |
 
-**完成标准**：每个源只出现一次；内容没有 frontmatter；每个内部引用指向唯一标签；路径变量的含义仍可理解。
+路径映射必须保持产物职责和恢复能力，不能只保留标题而删除真实文件输出。
 
-### 4. 组装单文件
+**完成标准**：读者不需要知道源仓库，却能明确知道每个运行产物保存在哪里、何时更新、怎样恢复。
 
-入口正文作为主体；其余源放在 `## 参考内容` 后，用由相对路径生成的唯一 XML 标签隔离。标签碰撞时加入父路径片段或稳定数字后缀。
+### 3. 建立统一便携目录
 
-**完成标准**：输出是普通 Markdown；无 `<canonical>`/`<source-file>` 外壳；每个依赖有且只有一个开闭标签；顺序可重复。
+每份能力文档必须内联足够的持久化规则。公共骨架为：
 
-### 5. 运行生成器和审计
+```text
+ai-workspace/
+├── status.json
+├── changes/
+│   └── YYYY-MM-DD-<topic>/
+│       ├── .status.json
+│       ├── source.md
+│       ├── LOG.md
+│       └── <该能力拥有的工件>
+├── knowledge/
+│   ├── decisions/
+│   ├── context/
+│   └── research/
+└── archive/
+```
+
+不是每份能力都必须使用所有目录，但必须明确列出自己拥有、读取和不得修改的路径。
+
+change 选择顺序固定为：
+
+1. 用户显式给出 change；
+2. `status.json` 中只有一个与当前能力匹配的 active change；
+3. 否则创建 `YYYY-MM-DD-<kebab-topic>`，冲突时追加最小数字后缀；
+4. 多个可恢复候选无法消歧时，列出候选并停止，不自行猜测。
+
+**完成标准**：目录、文件名、ownership、change 选择和恢复输入均明确。
+
+### 4. 编写双模式持久化协议
+
+每份 canonical 必须支持两种运行模式。
+
+#### 平台可直接写文件
+
+- 创建或恢复 `ai-workspace/`；
+- 读取状态与已存在工件；
+- 只修改本能力拥有的文件和共享状态中的对应条目；
+- 先生成候选内容并执行文内质量门禁；
+- 工件替换成功后更新 change 状态；
+- 最后更新全局状态；
+- 返回实际写入路径、阶段和验证结果。
+
+#### 平台不能直接写文件
+
+仍然必须形成持久化交付，而不是只给聊天摘要。每个发生状态变化的回复都输出：
+
+````markdown
+## 持久化交付
+
+- 持久化状态：需要保存
+- change：<change>
+- 更新文件：<路径列表>
+
+### FILE: ai-workspace/status.json
+```json
+<完整内容>
+```
+
+### FILE: ai-workspace/changes/<change>/.status.json
+```json
+<完整内容>
+```
+
+### FILE: ai-workspace/changes/<change>/<owned-artifact>.md
+```markdown
+<完整内容>
+```
+````
+
+不能只输出 diff、片段或“请自行整理”。下一轮必须先读取用户重新提供的完整文件或文件包，再继续。
+
+**完成标准**：无论平台是否可写，都产生可保存、可恢复的完整文件状态；没有伪造写入成功。
+
+### 5. 编译为独立能力文档
+
+成品是普通 Markdown，第一条非空行是一级标题。标题后尽早且只出现一次：
+
+```text
+项目地址：https://github.com/NAMEWTA/Speculo
+```
+
+文档通常包含：定位、适用范围、输入与权威、持久化输出合同、执行协议、产物格式、暂停与恢复、异常分支、质量门禁和使用方式。
+
+不得加入 YAML frontmatter、生成时间、来源清单、hash、源文件 XML 包装或维护者说明。生成的运行时工件可以按能力需要使用 JSON、YAML frontmatter 或 Markdown 模板；禁令只针对 canonical 文档本身。
+
+**完成标准**：能力只凭当前文档即可理解和运行；持久化路径是便携路径而非源仓库路径。
+
+### 6. 单份构建与检查
+
+先由 Agent 完成语义编写，再运行：
 
 ```bash
 node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs \
-  --repo . --entry <entry> --output template/canonical/<name>.md
+  --repo . \
+  --entry <source-entry> \
+  --draft <standalone-draft.md> \
+  --output template/canonical/<canonical-name>.md
+
+node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs \
+  --repo . \
+  --entry <source-entry> \
+  --output template/canonical/<canonical-name>.md \
+  --check
 ```
 
-检查无 YAML frontmatter、无 `<Path>`、无未解析内部 Markdown 链接、无运行时 state 内容，并再次生成比较 hash。
+脚本只做规范化、源码泄漏审计和持久化合同机械检查，不自动拼接或自动改写业务语义。
 
-**完成标准**：两次生成字节一致；依赖 manifest 完整；任何外部配套能力都明确列为非内联外部依赖，而不是静默遗漏。
+**完成标准**：构建与检查退出 0；允许地址恰好一次；不存在其他 URL；不存在源内部路径；存在完整便携持久化合同。
 
-### 6. 更新与交付
+### 7. 行为等价演练
 
-Canonical 仅从源重建。源变化时更新输出和项目已有 canonical 测试/生成命令；不在 canonical 单独修复业务规则。
+至少演练：
 
-**完成标准**：源、生成命令和 canonical 同步；全仓不存在把 canonical 当权威源的反向引用。
+- 首次运行并创建 change；
+- 已有唯一 active change 的恢复；
+- 多个 active change 的消歧阻塞；
+- 平台可写文件；
+- 平台不可写文件并输出完整 FILE bundle；
+- 用户提前提供关键答案；
+- 暂停后从 `.status.json` 与权威工件恢复；
+- 写入或验证失败时不错误推进状态；
+- 完成后移除当前能力的 active 条目但保留历史工件；
+- 高风险或证据不足时的阻塞与恢复条件。
+
+**完成标准**：恢复不依赖模型记忆；完成声明始终由持久化工件和状态支持。
+
+## 整目录重构
+
+覆盖整个 canonical 目录时：
+
+1. 确认所有现有 `.md` 和预期新增文件；
+2. 为每份能力建立独立语义覆盖清单；
+3. 统一使用 `ai-workspace/`，但保留各能力不同的 artifact ownership；
+4. 禁止通过全局替换把所有能力变成同一个空泛模板；
+5. 逐份演练首次运行、暂停、恢复和完成；
+6. 运行整目录审计：
+
+```bash
+node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs \
+  --repo . \
+  --audit-dir template/canonical
+```
+
+7. 从最终 ZIP 解压到空目录，再运行 `--self-check` 和整目录审计，并逐文件比较。
+
+**完成标准**：每份 Markdown 均通过同一隔离规则和持久化门禁；没有旧版“对话快照替代文件”的内容残留。
+
+## 审计器维护
+
+修改审计器后运行：
+
+```bash
+node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs --self-check
+```
+
+自检必须覆盖：合法构建、合法目录审计，以及对额外 URL、项目名称、内部目录、源文件名、frontmatter、manifest、XML 来源标签、缺失 `ai-workspace/`、缺失状态文件、缺失不可写平台交付、路径穿越和未完成占位符的拒绝。
+
+## 权威与更新
+
+源能力始终是业务规则的唯一权威。Canonical 是可移植运行形态，不得反向覆盖源能力。源能力变化时，重新读取静态闭包、更新覆盖清单、检查产物和状态语义、重写成品，再完成单份审计、行为演练和整目录审计。

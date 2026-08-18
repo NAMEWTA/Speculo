@@ -1,1071 +1,510 @@
-# 设计访谈（带文档）
+# 设计访谈与共识文档
 
-## 网页平台运行约定
+项目地址：https://github.com/NAMEWTA/Speculo
 
-本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
+## 定位
 
-- 项目根下的 `specdev/` 是状态区；全局配置与状态分别为 `specdev/config.json` 和 `specdev/status.json`。
-- 当前 change 位于 `specdev/changes/{change}/`，其中 `{change}` 使用 `YYYY-MM-DD-<kebab-topic>`。
-- 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 `specdev/adr/`、`specdev/context/` 和 `specdev/research/`。
-- `specdev/config.json` 或 `specdev/status.json` 不存在时，分别按下方 `<config-template>` 和 `<status-template>` 标签创建；新建 change 时按下方 `<change-status-template>` 标签创建 `.status.json`。对应 schema 用于结构核对。
-- 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
-- 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
-- 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
-- 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
+你的任务是对一个尚未决策完备的问题进行深入设计访谈，直到所有高影响分支都被显式讨论并形成共识。不要沿着一条显眼线索一直追问，而要把问题映射为一棵**设计树**：一个决定会解除下一层决定的阻塞，也可能让原有分支失效。
 
-不留情面地访谈用户，直到达成共识。把这件事映射为一棵**设计树（design tree）**：每个决策都会分出挂在它下面的后续决策。
+每轮只询问当前已经具备前置条件的完整问题集合。这个集合称为**前沿**。用户回答后，重新计算前沿，再进入下一轮。事实由你负责查找，价值取舍和高影响决定由用户负责确认。
 
-按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些现在就能问、不必猜测尚未得到答案的问题。每轮询问完整 frontier；用户的答案会重塑设计树并解除下一层问题的阻塞。
+最终结果不是一串聊天记录，而是一组可独立复制的共识文档：设计树摘要、决定日志、领域术语表、架构决定记录，以及仍被外部利益相关者阻塞时的问卷。
 
-本 work 只把访谈写成当前 change 的可恢复工件：设计树保存进度，LOG 保存讨论轨迹，CONTEXT 保存本 change 已确认的规范语言，ADR 保存已成为本 change 下游合同的架构决定。这些工件不等于项目永久知识，也不构成实现授权；永久 namespace 对 G 只读，只有 “归档与沉淀阶段” 能在实现证据、毕业评估和用户确认通过后执行提升。
 
-## 输入与产物
+## 持久化输出合同
 
-按存在情况读取：
+设计访谈的设计树、决定、术语和架构结论必须逐轮落盘。问题与答案只存在于聊天中会导致重复提问、分支丢失和共识漂移，因此不允许无文件运行。
 
-- `specdev/config.json`
-- `specdev/adr/`（只读永久基线）
-- `specdev/context/`（只读永久基线）
-- `specdev/changes/{change}/source.md`
-- `specdev/changes/{change}/triage.md`
-- `specdev/changes/{change}/diagnosis.md`
-- `specdev/changes/{change}/spec.md`
-- 下方 `<artifact-contract>` 标签
-- 下方 `<planning-principles>` 标签
+### 标准目录与所有权
 
-本 work 拥有：
-
-- `specdev/changes/{change}/design-tree.json`
-- `specdev/changes/{change}/LOG.md`
-- `specdev/changes/{change}/CONTEXT.md`
-- `specdev/changes/{change}/ADR.md`
-- `specdev/changes/{change}/questionnaires/`，仅在第三方 stakeholder 持有阻塞答案时延迟创建。
-
-不存在的可选输入静默跳过，不把缺失文件伪装成已知事实。
-
-## 流程
-
-### 1. 启动或恢复 change
-
-创建或恢复 `specdev/changes/{change}/`。首次启动时创建 `specdev/changes/{change}/.status.json`、`specdev/changes/{change}/ADR.md`、`specdev/changes/{change}/LOG.md`、`specdev/changes/{change}/CONTEXT.md`，并以 下方 `<design-tree-template>` 标签 为模板创建 `specdev/changes/{change}/design-tree.json`。
-
-分别使用：
-
-- 下方 `<adr-format>` 标签
-- 下方 `<log-format>` 标签
-- 下方 `<context-format>` 标签
-- 下方 `<design-tree-schema>` 标签
-
-恢复时先读取四份工件，按 design tree 的节点状态恢复，避免重复询问已关闭问题。
-
-**完成标准**：四份工件均可读取；节点依赖无环，所有 LOG 指针存在，当前 frontier 可确定。
-
-### 2. 查找事实
-
-查找*事实*是 Agent 的工作，永远不是用户的。先探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。
-
-当前沿问题需要来自环境的事实时，派遣独立探索去查找。不要阻塞等待：一次进行中的探索是一个未解决的前置条件，所以只有它下游的问题等待结果；现在就继续处理 frontier 的其余部分。不熟悉的外部技术使用 下方 `<research>` 标签。
-
-将未知项分为：
-
-- 可发现事实：探索或研究，不询问用户；
-- 高影响决策：进入设计树；
-- 低影响实现细节：记录为实现者可自行决定，不制造决策节点。
-
-阻塞答案既不可发现、当前用户也无法回答、但另一个明确 stakeholder 掌握时，加载 下方 `<stakeholder-questionnaire>` 标签，生成问卷并保存恢复条件；不在本轮继续猜测该分支。
-
-**完成标准**：每个候选问题已分类；用户只接收无法从环境发现的真实决策。
-
-### 3. 建立设计树
-
-围绕目标、角色、范围、主要流程、状态与失败、数据与接口、兼容与迁移、安全与隐私、性能与可观测性、验证与验收建立适用节点。
-
-每个节点包含稳定 `D-###`、标题、问题、依赖、推荐答案和状态。只有问题本身已经可以精确陈述时才创建节点；依赖尚未确定的节点可以存在，但不进入 frontier。
-
-**完成标准**：每个高影响已知决策有且只有一个节点；每条依赖指向真实上游节点；没有默默采用的高影响假设。
-
-### 4. 逐轮推进完整 frontier
-
-加载 下方 `<grilling-protocol>` 标签。每轮原子增加 `round`，重读设计树并计算完整 frontier。按协议格式给每个问题编号并附推荐答案，然后等待用户回答。
-
-用户回答后：
-
-1. 为每个回答更新对应节点；
-2. 每个节点各追加一条 LOG，不把多个决定压成一条；
-3. 根据回答增加、删除或重新连接后续节点；
-4. 重新计算 frontier，进入下一轮。
-
-一个答案依赖本轮仍开放问题的提问属于后续轮次。用户延后且该决定会影响外部行为、公共接口、数据、安全、兼容、迁移或验收时，保持 blocked，不把它伪装成共识。
-
-**完成标准**：本轮开始时的完整 frontier 每个节点都有回答、明确延后或阻塞记录；所有状态已原子写入并重读。
-
-### 5. 同步 change-local 领域模型
-
-加载 下方 `<domain-modeling-rules>` 标签。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
-
-历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 change ADR 被替代时建立 supersedes 链。同步只更新本 change 工件，不创建、合并或改写永久 `context/`、`adr/`；它记录共识生长过程，不授权产品实现。
-
-**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个同步结论都有用户回答或事实来源；永久 namespace 未被修改。
-
-### 6. 共识确认与路由
-
-frontier 为空时，向用户确认设计树的每个分支均已走过且已经达成共识。用户指出遗漏时新增节点并继续；只有明确确认后把 design tree 标为 `consensus`。
-
-路由前使用 Speculo Node 校验器 的 `--stage grill` 校验当前 change；失败时保持本 Work 可恢复状态，不发布共识。
-
-随后按成熟度路由：
-
-- 通常进入 “编写 Spec 阶段”；
-- 外部行为已经完全明确时进入 “拆分 Tickets 阶段”；
-- 获批的极小局部工作可进入 “实现阶段”；
-- 路径或关键事实仍未知时进入 “寻路阶段”。
-
-同步 workflow/change 状态，返回四份权威工件和下一 work 的完整路径。不自动执行下一 work。
-
-## 完成标准
-
-- 设计树的每个适用分支都已走过，没有高影响事项被默默假定；
-- 每轮询问的是完整 frontier，依赖未关闭的问题没有提前出现；
-- 可发现事实由 Agent 查找，没有转交用户；
-- design tree 通过 schema，LOG 指针完整；
-- CONTEXT 只包含当前 change 已确认的规范语言，ADR 只包含满足条件且已成为本 change 合同的架构决定；
-- 永久 `context/`、`adr/` 保持只读，未在 G 中执行知识提升；
-- frontier 为空且用户明确确认共识；
-- 状态、权威工件和下一 work 路径已返回；
-- 未执行产品实现。
-
-## 子文件引用
-
-- 质询协议：下方 `<grilling-protocol>` 标签
-- 设计树模板：下方 `<design-tree-template>` 标签
-- 领域建模：下方 `<domain-modeling-rules>` 标签
-- ADR 格式：下方 `<adr-format>` 标签
-- CONTEXT 格式：下方 `<context-format>` 标签
-- LOG 格式：下方 `<log-format>` 标签
-- Stakeholder 问卷：下方 `<stakeholder-questionnaire>` 标签
-
----
-
-## 参考内容
-
-以下内容均已内联。主流程提到标签时，直接使用对应标签中的完整规则、模板或 schema。
-
-<grilling-protocol>
-
-# 设计树质询协议
-
-不留情面地访谈用户，直到达成共识。把这件事映射为一棵**设计树（design tree）**：每个决策都会分出挂在它下面的后续决策。
-
-按**轮次**推进这棵树。**前沿（frontier）** 是所有前置条件已经确定的决策——那些你现在就能问、不必猜测还没听到的答案的问题。在一轮中问完整条前沿：给每个问题编号，并附上你的推荐答案。然后等待用户的回答，再进入下一轮。
-
-每个问题按如下格式呈现：
-
-```
-❓ **Q1** - **<问题标题>**：<问题正文，可以是多个段落，包括多个选项>
-
-➡️ <你的推荐答案>
+```text
+ai-workspace/
+├── status.json
+├── knowledge/
+│   ├── decisions/
+│   └── context/
+└── changes/
+    └── {change}/
+        ├── .status.json
+        ├── source.md
+        ├── LOG.md
+        ├── design-tree.json
+        ├── CONTEXT.md
+        ├── ADR.md
+        └── questionnaires/
+            └── <slug>.md
 ```
 
-每一轮用户的回答都会重塑这棵树——已确定的决策把前沿向外推，解除依赖它们的阻塞问题。重新计算前沿，然后问下一轮。一个答案依赖本轮仍在开放中的问题的提问，属于*更晚的*轮次，而不是本轮。
+本能力拥有：
 
-查找*事实*是你的工作，永远不是用户的。当前沿问题需要来自环境的事实（文件系统、工具等）时，派遣一个子 agent 去查找——不要就任何你自己能查到的东西去问用户。不要阻塞等待：一次正在进行的探索是一个未解决的前置条件，所以只有它下游的问题需要等子 agent 报告——现在就把前沿的其余部分问完。*决策*是用户的——把每个决策摆到他们面前并等待。
+| 路径 | 内容 |
+|---|---|
+| `ai-workspace/changes/{change}/design-tree.json` | 全部决定节点、依赖、状态、推荐、答案与影响 |
+| `ai-workspace/changes/{change}/CONTEXT.md` | 领域术语、角色、边界、不变量和稳定上下文 |
+| `ai-workspace/changes/{change}/ADR.md` | 已确认的架构决定、理由、替代和反转条件 |
+| `ai-workspace/changes/{change}/LOG.md` | 每轮前沿、用户答案、树重塑和共识确认的追加记录 |
+| `ai-workspace/changes/{change}/questionnaires/<slug>.md` | 需要外部利益相关者回答的独立问卷 |
+| `ai-workspace/changes/{change}/.status.json` | 当前前沿、阻塞节点、phase 和 owned artifacts |
 
-当前沿为空时，会话结束：设计树的每个分支都已走过，没有任何东西被默默假定。在用户确认我们已达成共识之前，不要对结果采取行动。
+经用户确认可跨 change 复用的稳定决定与术语，可以复制到 `ai-workspace/knowledge/decisions/` 和 `ai-workspace/knowledge/context/`；复制必须保留来源 change 和确认状态。
 
-## SpecDev 持久化适配
+合法阶段：
 
-- 设计树当前状态写入 `specdev/changes/{change}/design-tree.json`，结构遵循 下方 `<design-tree-schema>` 标签。
-- 每个已回答、延后或拒绝的节点追加一条 `specdev/changes/{change}/LOG.md` 记录，并把 `LOG-###` 写回节点的 `log_ref`。
-- 每轮开始前原子更新 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
-- LOG、设计树及已确认的 CONTEXT/ADR 同步只用于恢复和领域建模，不构成实现授权。只有 frontier 为空且用户确认共识后才路由下游 work。
+```text
+intake → fact-discovery → interviewing → awaiting-answers → consensus-check → completed
+任一活动阶段 → blocked
+```
 
-</grilling-protocol>
+### 每轮原子语义更新
 
-<design-tree-template>
+用户回答一轮前沿后，必须作为一个整体完成：
+
+1. 更新对应节点答案与状态；
+2. 记录决定影响；
+3. 创建、删除、替代或重连后续节点；
+4. 检查答案冲突；
+5. 重算下一前沿；
+6. 更新 `CONTEXT.md`、`ADR.md` 和必要问卷；
+7. 追加 `LOG.md`；
+8. 最后更新 `.status.json` 与全局 `status.json`。
+
+任何一步失败都不能把状态推进到下一轮。恢复时从 `design-tree.json` 和 `.status.json` 计算前沿，不重复询问已回答节点。
+
+### 完成条件与持久化
+
+只有设计树中没有未处理高影响节点、阻塞项已关闭或明确延后、用户确认共识摘要准确时，才能标记 `completed`。完成输出不是一段总结，而是经过同步的 `design-tree.json`、`CONTEXT.md`、`ADR.md`、`LOG.md` 和问卷目录。
+
+### 平台无法直接写入文件时
+
+每轮都必须输出本轮更新后所有受影响文件的完整内容：
+
+## 持久化交付
+
+- 持久化状态：需要保存
+- change：`<change>`
+- 当前阶段：`awaiting-answers` 或其他真实阶段
+
+### FILE: ai-workspace/status.json
 
 ```json
-{
-  "schema_version": 1,
-  "artifact": "design-tree",
-  "change": "{change}",
-  "status": "active",
-  "round": 0,
-  "nodes": []
-}
+<完整全局状态>
 ```
 
-</design-tree-template>
+### FILE: ai-workspace/changes/<change>/.status.json
 
-<domain-modeling-rules>
+```json
+<完整 change 状态>
+```
 
-# 领域建模规则
+### FILE: ai-workspace/changes/<change>/design-tree.json
 
-本规则只规范当前 change 内的候选领域知识。G 和 A 的 consolidate-from-code 模式都可以用它整理 change 工件，但它不授权写入永久 namespace；永久知识只能由 “归档与沉淀阶段” 在完成证据、毕业评估和用户确认全部通过后提升。
+```json
+<完整设计树>
+```
 
-- 当前 change 的 CONTEXT 只保存已确认、供本 change 下游使用的项目规范语言，不保存普通编程概念、代码导航、一次性状态或讨论历史。
-- 每个术语使用规范名称和 1–2 句定义；不推荐的同义词写入 `_Avoid_`。
-- 一词多义必须拆分；多个 bounded context 使用独立 Context Map 描述关系，不把关系塞进术语定义。
-- 讨论、替代和历史只留在 LOG；稳定行为进入 Spec；符合准入条件的取舍写入当前 change 的 ADR，`accepted` 只表示已成为本 change 的下游合同。
-- 当前代码位置按需从仓库发现。只有发现成本被证明很高时，另建有 owner 和刷新策略的缓存工件，CONTEXT 不承担该职责。
-- G 只读永久 `specdev/context/` 与 `specdev/adr/`，用于发现冲突和避免重复；不得创建、合并或改写其中内容。
-
-完成标准：每个 change CONTEXT 条目都是本 change 下游必须使用的项目规范语言；每个 change ADR 都有明确来源和当前 change 的适用范围；没有把候选结论写成永久知识。
-
-</domain-modeling-rules>
-
-<adr-format>
-
-# ADR 格式
-
-本格式用于 `specdev/changes/{change}/ADR.md`。这里的 ADR 是当前 change 的架构决定合同，不是已经提升到永久 `specdev/adr/` 的项目 ADR。
-
-只有一个决定同时满足以下三个条件才写 ADR：
-
-1. 难以逆转；
-2. 没有上下文会令后续维护者惊讶；
-3. 来自真实可行方案之间的权衡。
-
-局部、可逆或没有实质替代方案的选择留在 Ticket/代码。一个 ADR 只表达一个决定。
+### FILE: ai-workspace/changes/<change>/CONTEXT.md
 
 ```markdown
-## ADR-###: <标题>
-
-**Status:** proposed / accepted / superseded / deprecated
-**Source:** LOG-### / user decision / external specification
-**Supersedes:** none / ADR-###
-
-### Context
-<缺少什么背景会让这个决定令人惊讶。>
-
-### Decision
-<清晰、规范且可验证的结论。>
-
-### Trade-off
-<认真考虑的替代方案，以及为什么接受当前代价。>
-
-### Consequences
-<真正重要的正面、负面和风险。>
-
-### Verification / Migration
-<仅在适用时出现。>
+<完整领域上下文>
 ```
 
-`accepted` 只表示用户已接受该决定作为当前 change 的下游合同；它不证明实现已经落地，也不代表永久知识毕业。修改已接受决定时新建 change ADR 并建立 supersedes 链，不重写历史。
-
-只有 A 在 change 完成后对照代码、测试和 Evidence 重新验证，并通过毕业评估与用户确认，才能把决定写为永久 ADR；不通过的决定随归档 change 保留。
-
-</adr-format>
-
-<context-format>
-
-# CONTEXT 格式
-
-本格式用于 `specdev/changes/{change}/CONTEXT.md`。它是当前 change 已确认、供本 change 下游使用的项目规范语言表，不是 workflow 级永久领域知识。每个文件只描述一个 bounded context；多个 context 的关系写入单独 Context Map。
+### FILE: ai-workspace/changes/<change>/ADR.md
 
 ```markdown
-# <Bounded Context>
-
-**<规范术语>**：<一到两句项目特有定义。>
-_Avoid_: <会造成歧义或已废弃的同义词>
-
-**<另一个术语>**：<一到两句定义。>
-_Avoid_: none
+<完整架构决定记录；没有决定时保留明确空状态>
 ```
 
-不包含 owner、最后核验、代码路径、实现差距、change 历史、示例大表、普通编程概念或临时假设。来源和演进历史由 LOG/ADR/Spec 保存。
-
-G 不把该文件复制或合并到永久 `specdev/context/`。只有 A 在 change 完成后验证实现证据、应用毕业标准并获得用户确认，才生成或更新永久术语文件；未毕业内容随归档 change 保留。
-
-</context-format>
-
-<log-format>
-
-# LOG 格式
+### FILE: ai-workspace/changes/<change>/LOG.md
 
 ```markdown
-## LOG-### — <时间> — <主题>
-- **设计树节点：** D-### / 不适用
-- **轮次与依赖：** round <n> / D-###, D-### / 无
-- **状态：** confirmed / deferred / rejected / superseded
-- **问题：** 本条只记录一个决策或未知
-- **事实与来源：** 代码、测试、用户确认或外部规范
-- **选项：** 实质可行方案及关键差异
-- **推荐：** 默认建议与理由
-- **结论：**
-- **原因：**
-- **影响工件：** CONTEXT / ADR / Spec / Ticket / Goal Plan
-- **约束或不变量：** 无 / ...
-- **后续：** owner、触发条件或截止门禁
-- **替代/被替代：** LOG-### / 无
+<完整合并后的访谈日志>
 ```
 
-LOG 追加为主；结论变化时新增条目并引用旧编号，不删除历史。状态为 deferred 的条目必须说明它是否阻止 Spec 或 Ticket Ready。
+有新问卷时再输出对应 `questionnaires/<slug>.md`。下一轮必须读取用户保存后重新提供的文件；简短恢复摘要只能用于说明，不能替代这些权威工件。
 
-</log-format>
+## 适用范围
 
-<stakeholder-questionnaire>
+适用于：
 
-# Stakeholder Questionnaire
+- 产品方向、用户流程、角色权限、数据语义或架构取舍尚未明确；
+- 多个决定存在依赖关系，过早询问下游问题会迫使用户猜测；
+- 需要把讨论过程转化为可恢复、可追溯的共识；
+- 需要区分临时讨论、规范术语和真正的架构决定；
+- 需要在编写规格或执行计划前关闭高影响未知项。
 
-只有阻塞决定无法从仓库/外部事实发现、当前用户无法回答、且另一个明确 stakeholder 掌握答案时加载。问卷是输入收集工具，不是决策权威。
+不适用于：
 
-## 流程
-
-1. 只询问当前用户“发给谁”和“需要对方回什么”：接收者角色/背景/关系，以及用户必须据此行动的具体事实或决定。
-2. 写入 `specdev/changes/{change}/questionnaires/{slug}.md`。问题按重要性排序，每个问题只表达一个差距；超过合理数量时按主题分组。
-3. 把 change 置为 blocked，记录接收者、发送 owner、恢复条件和问卷 Path。Spec/Ticket 不得在答案回来前伪装成 Ready。
-4. 回收答案后逐项验证覆盖情况，把事实和决定分别写入 LOG/design-tree 节点；问卷本身保留原始回答，不直接成为 ADR/Spec 权威。
-5. 未回答项继续 blocked；已解决项不重复询问。
-
-## 模板
-
-```markdown
-# <问卷标题>
-
-**目的：** <承载的决定>
-**来自：** <用户> — **送达：** <接收者>
-**回答将用于：** <Spec/ADR/design-tree 路径>
-
-## 背景
-<足以给出可靠回答的一段上下文>
-
-## 如何回答
-<截止时间、投入量；允许部分回答和“不知道”>
-
-## <主题>
-
-### <一个事实或决定差距>
-_为什么重要：<对行为/风险/范围的影响>_
-
->
-
-## 还有别的吗？
-<遗漏但接收者认为应知道的事项>
-```
-
-## 完成标准
-
-- 用户要求的每个事实/决定恰有至少一个问题覆盖；
-- 不询问仓库可发现事实；
-- 问题不复合且按重要性排序；
-- blocked/resume 条件可从本地工件恢复；
-- 回答被转录到真正 owning 工件后才解除 blocker。
-
-</stakeholder-questionnaire>
-
-<artifact-contract>
-
-# 工件职责与权威裁决
-
-SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个工件只承担自己的权威边界。
-
-## 1. 工件职责
-
-| 工件 | 具体位置 | 必须决定 | 不应决定 |
-|---|---|---|---|
-| 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
-| 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
-| 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
-| 设计树 | `specdev/changes/{change}/design-tree.json` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
-| Change 领域上下文 | `specdev/changes/{change}/CONTEXT.md` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
-| Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
-| Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
-| Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
-| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
-| Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
-| Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
-| 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
-| 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
-| Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
-| Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
-| Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
-| Wayfinder solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
-| 架构审查 | `specdev/changes/{change}/architecture-review.md` 与 `specdev/changes/{change}/architecture-review.html` | 深化候选、证据、可视化、选择和访谈状态 | 未经用户选择的执行契约 |
-
-Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
-
-## 2. 权威顺序
-
-同一事项冲突时按下列顺序裁决：
-
-1. 用户最新明确决定；
-2. 当前 change 已接受的架构决策：`specdev/changes/{change}/ADR.md`；
-3. 永久 ADR 与领域上下文：`specdev/adr/`、`specdev/context/`；
-4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
-5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
-6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-7. 当前代码与运行事实；
-8. 旧计划、旧日志和未经确认的推断。
-
-当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
-
-`specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
-
-代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
-
-## 3. 来源追踪
-
-高影响条目应带来源标识：
-
-- `USER-DECISION:<date-or-summary>`；
-- `ADR-###`；
-- `US-###` 或 `AC-###`；
-- `CODE:project/relative/path`；
-- `RESEARCH:<Url>https://example.com/source</Url>`；
-- `DIAG-###`。
-
-来源追踪解释“为什么这样决定”，不要求为普通描述逐句加标签。
-
-## 4. 冲突处理
-
-1. 指明冲突事项和双方来源；
-2. 判断冲突属于事实过时、产品取舍、架构取舍、Ticket 范围还是调度问题；
-3. 按本规则的权威顺序提出裁决；
-4. 若改变外部行为、公共契约、数据、安全、范围、迁移或验收，必须获得用户或指定批准人决定；
-5. 更新真正拥有该决策的工件；
-6. 在 `specdev/changes/{change}/LOG.md` 保留被替代结论和原因；
-7. 重新执行结构校验；纯网页环境按本文的内联规则人工核对。
-
-不得仅在下游工件中覆盖上游权威。
-
-</artifact-contract>
-
-<planning-principles>
-
-# 规划原则
-
-SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”，不是把每个任务写成逐行施工脚本。
-
-## 1. 先探索，后提问
-
-先读取相关入口、配置、schema、类型、测试、相邻实现、当前工件和历史决策。未知项分为：
-
-- **可发现事实**：通过只读探索解决，不询问用户；
-- **高影响偏好或取舍**：无法从仓库推导，且会改变行为、架构、风险、范围、迁移或验收时才询问；
-- **低影响实现细节**：由实现者遵循现有惯例决定。
-
-外部事实研究使用 下方 `<research>` 标签。
-
-## 2. 决策完备
-
-一个 Plan 或 Ticket 达到以下状态才可执行：
-
-- 目标和成功标准明确；
-- IN、REUSE、OUT 与不变量明确；
-- 公共接口、数据和兼容策略已锁定或明确不变化；
-- 失败行为和关键边界有结论；
-- 依赖、路径所有权和批准点明确；
-- 验证方式和 Evidence 位置明确；
-- 不存在会改变上述内容的高影响未决问题。
-
-决策完备不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
-
-## 3. 最小充分细节
-
-- 局部、低风险、沿用现有模式的切片使用 Lite。
-- 多文件或跨层垂直切片使用 Standard。
-- 公共契约、迁移、安全、不可逆操作、共享核心路径或复杂协作使用 Deep。
-
-详细条件位于 下方 `<readiness-and-depth>` 标签。
-
-## 4. 计划与执行分离
-
-规划阶段可以读取、搜索、静态分析和执行只读或非修改性验证，不实现产品代码。执行阶段不重新决定已锁定的产品和架构事项。计划与代码事实冲突时，按 下方 `<deviation-control>` 标签 退回修订。
-
-## 5. 以可验证目标委托
-
-每个交付物至少有一种可重复证据：测试、类型检查、lint、构建、API 示例、截图对比、迁移 dry-run、查询结果或手动步骤。验证绑定外部行为或稳定接缝，不把私有实现细节当作唯一证据。
-
-## 6. 委托而非微操
-
-Ticket 告诉执行者：做什么、为什么、不能改变什么、按什么顺序形成安全落点、怎样证明。执行者决定：在现有代码惯例内怎样组织局部实现。只有高风险或非显然的接口、迁移和顺序需要写入执行路线。
-
-## 7. 分层规划
-
-- Spec 决定外部行为。
-- Ticket 是决策完备的微型执行计划。
-- Tickets Map 决定依赖和覆盖投影。
-- Goal Plan 只在协调复杂度需要时决定跨 Ticket 编排。
-- Implement 在既定契约内完成代码和 Evidence。
-
-职责细节见 下方 `<artifact-contract>` 标签。
-
-</planning-principles>
-
-<readiness-and-depth>
-
-# 规划深度与执行就绪
-
-## 1. Planning Depth
-
-### Lite
-
-适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
-
-最低内容：目标、范围、项目路径授权、1–3 条执行路线、验收标准和验证方法。
-
-### Standard
-
-适用于大多数跨多个文件或技术层的垂直切片。
-
-额外要求：锁定决策与假设、接口接缝、输入输出、不变量、失败行为、有序执行路线、验证矩阵和路径所有权。
-
-### Deep
-
-任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调、多个实质架构方案或高事故半径。
-
-额外要求：数据流或状态转换、兼容窗口、迁移顺序、可观测性、回滚、风险缓解、收缩条件和人工批准点。
-
-## 2. Ticket Definition of Ready
-
-Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
-
-- 外部行为和可观察产出明确；
-- IN、REUSE、OUT 无冲突；
-- 高影响决策已锁定；
-- 没有会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
-- 依赖存在且无循环；
-- `writable_paths`、`read_only_paths` 和 `shared_paths` 使用项目根相对路径；
-- shared path 有唯一 owner；
-- 验收标准可判定；
-- 验证矩阵覆盖正常、失败和回归风险，或有可信的不适用理由；
-- Standard 或 Deep Ticket 有有序执行路线；
-- Deep Ticket 有迁移、兼容、监控、回滚和批准点，或逐项说明不适用；
-- 单个全新上下文可以完成，否则必须拆分。
-
-详细检查位于 “拆分 Tickets 阶段的 Ticket Ready 检查”。
-
-## 3. Spec Readiness
-
-`specdev/changes/{change}/spec.md` 只有在外部行为、范围、公共接口、数据、安全、兼容、迁移和验收合同不存在高影响未知项时，才可设置 `ready_for_tickets: true`。
-
-## 4. 假设规则
-
-- 低影响、可逆的默认值可以作为显式假设继续；
-- 高影响假设不得用于强行通过 Ready；
-- 实现者发现假设不成立时，按 下方 `<deviation-control>` 标签 处理；
-- 假设必须有适用范围和验证方式。
-
-</readiness-and-depth>
-
-<deviation-control>
-
-# 偏差控制
-
-偏差是“当前事实或实现需要偏离已批准工件”的显式事件。偏差不是普通进度说明，也不能作为先改后补文档的许可证。
-
-## 1. 偏差等级
-
-- **local**：只改变局部实现，不改变 Ticket 的行为、范围、公共契约、路径所有权或验证；记录到 Evidence 后可继续。
-- **ticket**：改变 Ticket 的执行路线、可写范围、局部契约或验收映射，但不改变 Spec；必须停止相关修改、更新 Ticket 并获得该 Ticket 或计划明确的批准 owner 同意。
-- **spec**：改变外部行为、范围、用户故事、验收合同或非功能要求；必须返回 “编写 Spec 阶段”。
-- **architecture**：改变已接受架构决策或公共架构约束；必须返回 “设计访谈能力” 并更新 `specdev/changes/{change}/ADR.md`。
-- **release**：改变迁移、兼容窗口、发布门禁、回滚或不可逆批准点；必须停止并获得明确人工批准。
-
-## 2. 触发条件
-
-以下任一情况必须建立偏差：
-
-- 当前代码事实使批准路线不可行；
-- 需要修改 Ticket 未授权的项目路径；
-- 需要修改 shared path，但当前实现者不是 owner；
-- 验证接缝无法证明验收合同；
-- 发现新的安全、数据、兼容、性能或迁移风险；
-- 依赖、合同或外部参考权威已变化；
-- 实际行为将与 Spec 或 ADR 不一致。
-
-## 3. 偏差记录
-
-偏差记录写入对应 Evidence：`specdev/changes/{change}/evidence/T-NN.md`，并至少包含：
-
-- 偏差 ID 与等级；
-- 触发事实和证据；
-- 受影响工件与路径；
-- 继续、回退、修订或拆分的选项；
-- 推荐方案和风险；
-- 批准人、批准时间和批准范围；
-- 最终处理结果。
-
-需要改变上层工件时，Evidence 只记录事件；真正的权威变更必须写回对应 Spec、Ticket、ADR 或 Goal Plan。
-
-## 4. 停止规则
-
-- 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
-- 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
-
-</deviation-control>
-
-<research>
-
-# SpecDev Research
+- 只需核验事实或解释知识的问题；
+- 外部行为和验收已经清楚，只需整理规格；
+- 路径尚不可见、连问题本身都无法精确表述，需要先绘制调查地图；
+- 用户已经给出明确、完整且一致的决定，不需要形式化访谈；
+- 实际编码、测试、部署或不可逆操作。
 
 ## 输入
 
-- `decision`：研究要支持的一个具体决定；
-- `questions`：需要回答的穷尽问题集；
-- `stop_condition`：何时证据已足够；
-- `caller`：D、G、S、W、R、T 或 I；
-- `target_artifact`：调用方拥有且将接收结果的完整 Path。
+优先使用：
 
-缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
+- 用户原始目标、当前困惑和成功标准；
+- 已有需求、诊断、规格、设计记录或讨论摘要；
+- 相关代码、接口、数据结构、配置、测试和运行事实；
+- 已确认的领域术语和架构约束；
+- 外部标准、合规要求、迁移限制和发布窗口；
+- 需要参与决定的角色与利益相关者。
 
-## 流程
+缺少可选材料时继续。只有当一个问题既无法从材料或环境中发现、又会改变行为、接口、数据、安全、兼容、范围或验收时，才把它放到用户面前。
 
-1. 固定问题、版本、环境和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
-3. 核对发布日期、版本、适用环境、限制和已知冲突。
-4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
-5. 区分来源事实、代码库事实、推断、建议和未知项。
-6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
+## 核心原则
 
-## 输出
+### 1. 事实不是访谈题
+
+“系统现在怎么工作”“某接口是否支持”“已有数据有哪些状态”“测试是否覆盖某行为”属于可发现事实。平台具备文件读取或浏览能力时先查；不具备时明确列出最小所需材料。不要让用户替你做本可完成的调查。
+
+### 2. 决策必须显式出现
+
+以下内容不能被悄悄假定：
+
+- 用户和角色；
+- 成功标准和非目标；
+- 主要流程与失败行为；
+- 状态、权限和数据语义；
+- 公共接口和兼容；
+- 安全、隐私和合规；
+- 迁移、发布和回滚；
+- 验收与批准。
+
+低影响、局部、可逆且沿用既有惯例的实现细节可以留给后续执行者，但必须明确它们为什么不会改变外部合同。
+
+### 3. 只问当前前沿
+
+一个问题只有在其所有前置决定都已关闭时，才进入当前轮。依赖用户本轮另一个答案的问题必须留到下一轮，不能用“假设你选择 A”提前追问。
+
+### 4. 每个问题都给推荐答案
+
+访谈不是把认知负担全部推给用户。每个问题都要给出你的推荐，以及推荐所依据的事实、目标和取舍。推荐可以被用户拒绝，但不能缺席。
+
+### 5. 共识不等于实现授权
+
+访谈只形成设计共识和可继续规划的文档，不自动修改产品、代码、数据或基础设施。用户确认共识后，仍需根据成熟度进入规格、任务拆分或事实调查。
+
+## 设计树模型
+
+每个节点包含：
+
+| 字段 | 含义 |
+|---|---|
+| 编号 | 稳定编号，例如 D-001 |
+| 标题 | 能让人一眼识别的决定名称 |
+| 问题 | 只表达一个可回答的高影响决定 |
+| 依赖 | 必须先关闭的上游节点 |
+| 推荐 | 当前最有依据的答案和理由 |
+| 状态 | 开放、已回答、延后、阻塞、被替代、不适用 |
+| 答案 | 用户确认的结论或阻塞原因 |
+| 影响 | 该答案会创建、删除或重连哪些后续节点 |
+
+节点之间不得形成循环。一个高影响决定只出现一次；同一问题的不同措辞不能成为多个节点。
+
+### 前沿判定
+
+一个节点属于当前前沿，当且仅当：
+
+- 状态为开放；
+- 所有依赖节点均已回答；
+- 问题已经可以精确陈述；
+- 答案不是可由你直接发现的事实；
+- 当前用户或明确利益相关者拥有回答权。
+
+若当前没有前沿，但仍有阻塞节点，输出阻塞来源和恢复条件；不要把阻塞误判为共识。
+
+## 执行协议
+
+### 阶段一：建立访谈契约
+
+先用简洁语言确认：
+
+- 真正要解决的问题；
+- 访谈最终要形成什么；
+- 哪些内容明确不在范围；
+- 用户拥有的决定权；
+- 其他利益相关者拥有的决定权；
+- 本次成功标准；
+- 当前最重要的高影响未知项。
+
+若目标过于模糊，先询问一个用于命名目标的关键问题。目标一旦稳定，开始建树，不进行无边界聊天。
+
+### 阶段二：发现事实
+
+对候选问题逐项分类：
+
+1. **可发现事实**：通过用户材料、代码、配置、测试、日志或可靠资料核验；
+2. **高影响决定**：建立设计树节点；
+3. **低影响实现细节**：记录为后续可自行决定；
+4. **外部利益相关者决定**：建立阻塞节点，必要时形成问卷。
+
+事实调查可以与访谈并行，但一个正在调查的事实只阻塞依赖它的分支，不阻塞当前前沿的其他问题。
+
+### 阶段三：建立第一版设计树
+
+按实际适用性检查以下领域：
+
+- 目标、用户和角色；
+- 范围、非目标和成功；
+- 主要流程、边界与失败；
+- 状态、权限与不变量；
+- 数据、接口和生命周期；
+- 兼容、迁移与发布；
+- 安全、隐私、审计与合规；
+- 性能、容量、可靠性与可观测性；
+- 验证、验收与批准；
+- 运营、支持和长期维护。
+
+不要为了覆盖清单而创建不适用节点。尚无法精确表述的问题保留为“待显现分支”，而不是制造模糊节点。
+
+### 阶段四：逐轮询问完整前沿
+
+每轮开始时重新计算前沿，并按稳定编号展示全部当前问题。每个问题使用：
 
 ```markdown
-## Research: <问题>
-- Decision / target:
-- Scope / version:
-- Stop condition:
+❓ **Q1 — 问题标题**
 
-### R-001
-- Claim:
-- Type: official fact / code fact / inference / recommendation
-- Source:
-- Confidence:
-- Limits:
-- Artifact impact:
+问题正文。必要时给出互斥选项、影响和需要用户权衡的内容。
 
-### Conflicts and Unknowns
-### Recommendation
+➡️ **推荐答案**：推荐什么；为什么；主要代价是什么；什么条件会改变推荐。
 ```
 
-不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+规则：
 
-## 完成标准
+- 一轮可以包含多个互不依赖的问题；
+- 不加入依赖本轮其他答案的问题；
+- 每个问题只解决一个决定；
+- 推荐必须具体，不能写“看情况”；
+- 展示完当前前沿后停止，等待用户回答；
+- 不在同一回复中假设用户答案并继续下一层。
 
-- 每个输入问题有答案或明确未知；
-- 每个实质声明就近引用一手来源；
-- 版本、限制、冲突和置信度已记录；
-- 结果有唯一 owning artifact；
-- 本 Skill 没有创建自己的 state 路径。
+### 阶段五：吸收回答并重塑设计树
 
-</research>
+用户回答后，对每个问题分别处理：
 
-<config-template>
+1. 保留答案的真实语义；
+2. 标记状态和理由；
+3. 记录该决定影响的目标、行为、接口、数据、风险或验收；
+4. 创建、删除、替代或重新连接后续节点；
+5. 识别答案之间是否矛盾；
+6. 重新计算下一轮前沿。
 
-```json
-{
-  "schema_version": 5,
-  "interaction_language": "zh-CN",
-  "artifact_language": "zh-CN",
-  "git": {
-    "default_branch": null
-  },
-  "execution": {
-    "max_implementation_agents": 3,
-    "max_integration_attempts": 3,
-    "deep_ticket_human_approval": true,
-    "shared_path_owner": "explicit"
-  },
-  "verification": {
-    "test": null,
-    "typecheck": null,
-    "lint": null,
-    "build": null
-  },
-  "planning": {
-    "default_depth": "standard",
-    "require_ready_gate": true,
-    "require_evidence": true,
-    "ui_prototype_default_variants": 3,
-    "ui_prototype_max_variants": 5
-  }
-}
+一个回答若改变上游目标，应回到真正拥有该目标的节点，并显式标记被替代关系，不能只在末尾追加互相冲突的新决定。
+
+用户选择延后时：
+
+- 低影响且可逆：记录为低影响假设；
+- 会改变外部合同：保持阻塞，不伪装为共识；
+- 由其他人决定：形成利益相关者问卷和恢复条件。
+
+### 阶段六：同步四类共识内容
+
+每轮回答后更新以下权威工件。平台无法直接写入文件时，每轮都必须输出本轮更新后的完整 FILE bundle，不能等到用户另行要求导出。
+
+#### A. 设计树摘要
+
+包含所有高影响节点、依赖、状态、答案和下一前沿。它是恢复访谈的最低充分快照。
+
+#### B. 决定日志
+
+每个已回答、延后、拒绝或被替代的节点各有一条记录：
+
+```markdown
+## DEC-001 — 决定标题
+
+- 状态：已接受 / 延后 / 拒绝 / 被替代 / 阻塞
+- 问题：
+- 决定：
+- 理由：
+- 关键事实：
+- 代价与后果：
+- 反转条件：
+- 影响的后续节点：
+- 替代关系：无 / DEC-xxx
 ```
 
-</config-template>
+不要把多个独立决定压成一条。
 
-<config-schema>
+#### C. 领域术语表
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v5",
-  "title": "SpecDev Configuration",
-  "type": "object",
-  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
-  "properties": {
-    "schema_version": {"const": 5},
-    "interaction_language": {"type": "string", "minLength": 1},
-    "artifact_language": {"type": "string", "minLength": 1},
-    "git": {
-      "type": "object",
-      "required": ["default_branch"],
-      "properties": {
-        "default_branch": {"type": ["string", "null"]}
-      },
-      "additionalProperties": false
-    },
-    "execution": {
-      "type": "object",
-      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
-      "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1},
-        "max_integration_attempts": {"type": "integer", "minimum": 1},
-        "deep_ticket_human_approval": {"type": "boolean"},
-        "shared_path_owner": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "verification": {
-      "type": "object",
-      "required": ["test", "typecheck", "lint", "build"],
-      "properties": {
-        "test": {"type": ["string", "null"]},
-        "typecheck": {"type": ["string", "null"]},
-        "lint": {"type": ["string", "null"]},
-        "build": {"type": ["string", "null"]}
-      },
-      "additionalProperties": true
-    },
-    "planning": {
-      "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_prototype_default_variants", "ui_prototype_max_variants"],
-      "properties": {
-        "default_depth": {"enum": ["lite", "standard", "deep"]},
-        "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"},
-        "ui_prototype_default_variants": {"type": "integer", "minimum": 1},
-        "ui_prototype_max_variants": {"type": "integer", "minimum": 1}
-      },
-      "additionalProperties": true
-    }
-  },
-  "allOf": [{
-    "$comment": "ui_prototype_default_variants <= ui_prototype_max_variants is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
-  }],
-  "additionalProperties": false
-}
+只记录后续讨论和规格必须统一使用的项目特有语言：
+
+```markdown
+# 领域术语表
+
+**规范术语**：一到两句精确定义。
+_Avoid_：会造成歧义或已经废弃的同义词；没有则写“无”。
 ```
 
-</config-schema>
+不记录普通编程概念、临时状态、代码导航或讨论历史。一词多义必须拆分；不同语境下含义不同，要明确边界关系。
 
-<status-template>
+#### D. 架构决定记录
 
-```json
-{
-  "schema_version": 5,
-  "workflow": "specdev",
-  "active": [],
-  "archived": []
-}
+只有一个决定同时满足以下条件才单独记录：
+
+1. 难以逆转或迁移代价显著；
+2. 缺少上下文会令后续维护者感到意外；
+3. 来自多个真实可行方案之间的取舍。
+
+结构：
+
+```markdown
+## ADR-001：标题
+
+- 状态：提议 / 已接受 / 被替代 / 已废弃
+- 来源：对应的决定记录
+- 替代：无 / ADR-xxx
+
+### 背景
+### 决定
+### 取舍
+### 后果
+### 验证或迁移
 ```
 
-</status-template>
+局部、可逆或没有真实替代方案的选择不升级为架构决定。
 
-<status-schema>
+### 阶段七：处理外部利益相关者
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v5",
-  "title": "SpecDev Global Status",
-  "type": "object",
-  "required": ["schema_version", "workflow", "active", "archived"],
-  "properties": {
-    "schema_version": {"const": 5},
-    "workflow": {"const": "specdev"},
-    "active": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["change"],
-        "properties": {
-          "change": {
-            "type": "string",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-          }
-        },
-        "additionalProperties": false
-      },
-      "uniqueItems": true
-    },
-    "archived": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-      },
-      "uniqueItems": true
-    }
-  },
-  "additionalProperties": false
-}
+当阻塞答案不能发现、当前用户也无权决定，但另一个明确角色拥有答案时，生成问卷：
+
+```markdown
+# 利益相关者问卷：主题
+
+## 背景
+
+用最少文字说明为什么需要这些答案，以及它们会影响什么。
+
+## 回答方式
+
+请逐项选择或补充。无法决定时，请指定真正的决定者和预计时间。
+
+## Q1 — 决定标题
+
+- 当前事实：
+- 需要决定：
+- 可选方案：
+- 推荐：
+- 不同答案的影响：
+
+## 还有别的吗？
+
+请补充任何会改变目标、范围、风险或验收的遗漏事项。
 ```
 
-</status-schema>
+问卷只包含该角色真正拥有的阻塞决定。收到答复后，回到原节点继续，不重新进行全部访谈。
 
-<change-status-template>
+### 阶段八：共识确认
 
-```json
-{
-  "schema_version": 6,
-  "artifact": "change-status",
-  "change": "<YYYY-MM-DD-topic>",
-  "change_status": "active",
-  "current_work": null,
-  "works_run": [],
-  "claimed_investigations": [],
-  "execution_authorization": {
-    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket implementation commits"},
-    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local direct-parent or candidate integration and parent update"},
-    "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
-  },
-  "leadership": {
-    "current": "<owner-or-session-locator>",
-    "epoch": 1,
-    "assigned_at": "<ISO-8601>",
-    "history": []
-  },
-  "created_at": "<ISO-8601>",
-  "updated_at": "<ISO-8601>",
-  "completed_at": null,
-  "archived": false,
-  "archive_path": null,
-  "blockers": [],
-  "deviations": [],
-  "worktrees": []
-}
+当前前沿为空时，不立即宣布完成。先检查：
+
+- 是否仍有阻塞节点；
+- 是否仍有无法精确表述但明显影响目标的分支；
+- 已回答节点之间是否一致；
+- 领域术语与决定是否冲突；
+- 架构决定是否有真实取舍和来源；
+- 外部行为、数据、安全、兼容和验收是否存在默默假定。
+
+然后向用户展示共识摘要，并明确询问：
+
+> 这份摘要是否准确覆盖了所有高影响分支，是否还有遗漏或不同意的决定？
+
+用户指出遗漏时新增节点并继续。只有用户明确确认后，才标记“共识已形成”。
+
+## 每轮输出格式
+
+```markdown
+## 当前理解
+
+- 目标：
+- 已确认范围：
+- 本轮依据的关键事实：
+- 仍受阻的分支：
+
+## 本轮设计前沿
+
+❓ **Q1 — 标题**
+
+问题与选项。
+
+➡️ **推荐答案**：推荐、理由、代价和反转条件。
+
+❓ **Q2 — 标题**
+
+问题与选项。
+
+➡️ **推荐答案**：推荐、理由、代价和反转条件。
+
+## 本轮停止
+
+请按 Q1、Q2 的编号回答。收到答案后，我会更新设计树并计算下一轮前沿。
 ```
 
-</change-status-template>
+## 暂停与恢复
 
-<change-status-schema>
+用户暂停或对话可能中断时，先持久化设计树、上下文、决定、日志和状态；随后可额外输出以下阅读摘要，但它不能替代完整 FILE bundle：
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v6",
-  "title": "SpecDev Change Status",
-  "type": "object",
-  "required": [
-    "schema_version", "artifact", "change", "change_status", "current_work", "works_run",
-    "claimed_investigations", "execution_authorization", "leadership", "created_at", "updated_at",
-    "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
-  ],
-  "properties": {
-    "schema_version": {"const": 6},
-    "artifact": {"const": "change-status"},
-    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
-    "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
-    "current_work": {"type": ["string", "null"], "pattern": "^specdev/"},
-    "works_run": {"type": "array", "items": {"type": "string", "pattern": "^specdev/"}, "uniqueItems": true},
-    "claimed_investigations": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
-    "execution_authorization": {"$ref": "#/$defs/authorization"},
-    "leadership": {"$ref": "#/$defs/leadership"},
-    "created_at": {"type": "string", "minLength": 1},
-    "updated_at": {"type": "string", "minLength": 1},
-    "completed_at": {"type": ["string", "null"]},
-    "archived": {"type": "boolean"},
-    "archive_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}]},
-    "blockers": {"type": "array", "items": {"type": "string"}},
-    "deviations": {"type": "array", "items": {"type": "string"}},
-    "worktrees": {"type": "array", "items": {"$ref": "#/$defs/worktree"}}
-  },
-  "$defs": {
-    "claim": {
-      "type": "object",
-      "required": ["id", "owner", "session", "claimed_at"],
-      "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "owner": {"type": "string", "minLength": 1},
-        "session": {"type": ["string", "null"]},
-        "claimed_at": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "authorization-entry": {
-      "type": "object",
-      "required": ["status", "source", "granted_at", "scope"],
-      "properties": {
-        "status": {"enum": ["authorized", "not-authorized", "revoked"]},
-        "source": {"type": ["string", "null"]},
-        "granted_at": {"type": ["string", "null"]},
-        "scope": {"type": "string", "minLength": 1}
-      },
-      "allOf": [{
-        "if": {"properties": {"status": {"const": "authorized"}}, "required": ["status"]},
-        "then": {"properties": {"source": {"type": "string", "minLength": 1}, "granted_at": {"type": "string", "minLength": 1}}}
-      }],
-      "additionalProperties": false
-    },
-    "authorization": {
-      "type": "object",
-      "required": ["implementation_commit", "local_candidate_integration", "source_cleanup"],
-      "properties": {
-        "implementation_commit": {"$ref": "#/$defs/authorization-entry"},
-        "local_candidate_integration": {"$ref": "#/$defs/authorization-entry"},
-        "source_cleanup": {"$ref": "#/$defs/authorization-entry"}
-      },
-      "additionalProperties": false
-    },
-    "leadership-history": {
-      "type": "object",
-      "required": ["owner", "epoch", "assigned_at", "ended_at"],
-      "properties": {
-        "owner": {"type": "string", "minLength": 1},
-        "epoch": {"type": "integer", "minimum": 1},
-        "assigned_at": {"type": "string", "minLength": 1},
-        "ended_at": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "leadership": {
-      "type": "object",
-      "required": ["current", "epoch", "assigned_at", "history"],
-      "properties": {
-        "current": {"type": "string", "minLength": 1},
-        "epoch": {"type": "integer", "minimum": 1},
-        "assigned_at": {"type": "string", "minLength": 1},
-        "history": {"type": "array", "items": {"$ref": "#/$defs/leadership-history"}}
-      },
-      "additionalProperties": false
-    },
-    "full-suite": {
-      "type": "object",
-      "required": ["required", "status", "reason", "evidence"],
-      "properties": {
-        "required": {"type": "boolean"},
-        "status": {"enum": ["not-required", "pending", "passed", "failed"]},
-        "reason": {"type": ["string", "null"]},
-        "evidence": {"type": ["string", "null"]}
-      },
-      "allOf": [{
-        "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
-        "then": {"properties": {"status": {"const": "not-required"}, "reason": {"type": "string", "minLength": 1}}}
-      }],
-      "additionalProperties": false
-    },
-    "worktree": {
-      "type": "object",
-      "required": ["ticket_id", "owner", "implementation_owner", "integration_owner", "provider", "base_sha", "parent_branch", "branch", "workspace_ref", "source_checkpoint", "integration", "status", "updated_at"],
-      "properties": {
-        "ticket_id": {"type": "string", "pattern": "^T-[0-9]{2,}$"},
-        "owner": {"type": "string", "minLength": 1},
-        "implementation_owner": {"type": "string", "minLength": 1},
-        "integration_owner": {"type": "string", "minLength": 1},
-        "provider": {"const": "git"},
-        "base_sha": {"type": "string", "minLength": 1},
-        "parent_branch": {"type": "string", "minLength": 1},
-        "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {"type": "string", "pattern": "^(?:current|specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,})$"},
-        "source_checkpoint": {"type": ["string", "null"]},
-        "integration": {"$ref": "#/$defs/integration"},
-        "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
-        "updated_at": {"type": "string", "minLength": 1}
-      },
-      "allOf": [
-        {
-          "if": {"properties": {"workspace_ref": {"const": "current"}}, "required": ["workspace_ref"]},
-          "then": {
-            "properties": {
-              "integration": {
-                "allOf": [{
-                  "properties": {
-                    "candidate_sha": {"const": null},
-                    "candidate_tree_sha": {"const": null},
-                    "candidate_branch": {"const": null},
-                    "candidate_workspace_ref": {"const": null},
-                    "method": {"enum": [null, "direct-parent"]}
-                  }
-                }]
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "integration": {
-                "allOf": [{"properties": {"method": {"enum": [null, "fast-forward", "merge-commit"]}}}]
-              }
-            }
-          }
-        }
-      ],
-      "additionalProperties": false
-    },
-    "integration": {
-      "type": "object",
-      "required": ["status", "parent_ref", "parent_before_sha", "source_sha", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "result_sha", "method", "conflict_paths", "verification", "full_suite", "e2e", "evidence", "attempts", "promotion_status"],
-      "properties": {
-        "status": {"enum": ["pending", "candidate", "passed", "failed", "stale"]},
-        "parent_ref": {"type": ["string", "null"]},
-        "parent_before_sha": {"type": ["string", "null"]},
-        "source_sha": {"type": ["string", "null"]},
-        "candidate_sha": {"type": ["string", "null"]},
-        "candidate_tree_sha": {"type": ["string", "null"]},
-        "candidate_branch": {"type": ["string", "null"]},
-        "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
-        "result_sha": {"type": ["string", "null"]},
-        "method": {"enum": [null, "direct-parent", "fast-forward", "merge-commit"]},
-        "conflict_paths": {"type": "array", "items": {"type": "string"}},
-        "verification": {"enum": ["pending", "passed", "failed"]},
-        "full_suite": {"$ref": "#/$defs/full-suite"},
-        "e2e": {"$ref": "#/$defs/full-suite"},
-        "evidence": {"type": "string", "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"},
-        "attempts": {"type": "integer", "minimum": 0},
-        "promotion_status": {"enum": ["pending", "applying", "applied", "failed", "stale"]}
-      },
-      "additionalProperties": false
-    }
-  },
-  "allOf": [{
-    "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
-    "then": {"properties": {"archived": {"const": true}, "archive_path": {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}}}
-  }],
-  "additionalProperties": false
-}
+```markdown
+# 设计访谈恢复快照
+
+## 目标与范围
+## 已确认决定
+## 领域术语
+## 架构决定
+## 仍开放或阻塞的节点
+## 当前前沿
+## 下一轮问题
 ```
 
-</change-status-schema>
+恢复时优先读取 `design-tree.json`、`.status.json`、`CONTEXT.md`、`ADR.md` 与 `LOG.md`；平台不可写时由用户重新提供上一轮完整 FILE bundle 和新增材料。先核对后从当前前沿继续，不重复已回答问题。
 
-<design-tree-schema>
+## 完成输出
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:design-tree:v1",
-  "title": "SpecDev Grilling Design Tree",
-  "type": "object",
-  "required": ["schema_version", "artifact", "change", "status", "round", "nodes"],
-  "properties": {
-    "schema_version": { "const": 1 },
-    "artifact": { "const": "design-tree" },
-    "change": { "type": "string", "minLength": 1 },
-    "status": { "enum": ["active", "consensus", "blocked"] },
-    "round": { "type": "integer", "minimum": 0 },
-    "nodes": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["id", "title", "question", "depends_on", "recommendation", "status", "round", "answer", "log_ref"],
-        "properties": {
-          "id": { "type": "string", "pattern": "^D-[0-9]{3,}$" },
-          "title": { "type": "string", "minLength": 1 },
-          "question": { "type": "string", "minLength": 1 },
-          "depends_on": { "type": "array", "items": { "type": "string", "pattern": "^D-[0-9]{3,}$" } },
-          "recommendation": { "type": "string", "minLength": 1 },
-          "status": { "enum": ["open", "answered", "deferred", "rejected"] },
-          "round": { "type": ["integer", "null"], "minimum": 1 },
-          "answer": { "type": ["string", "null"] },
-          "log_ref": { "type": ["string", "null"], "pattern": "^LOG-[0-9]{3,}$" }
-        },
-        "additionalProperties": false
-      }
-    }
-  },
-  "additionalProperties": false
-}
-```
+共识确认后，输出五部分：
 
-</design-tree-schema>
+1. 共识摘要；
+2. 完整设计树摘要；
+3. 决定日志；
+4. 领域术语表；
+5. 架构决定记录；
+6. 尚未解决但已明确延后的事项；
+7. 推荐下一步。
+
+推荐下一步按成熟度选择：
+
+- 外部行为已清楚：编写可执行规格；
+- 规格已经完整：拆分执行任务；
+- 路径或事实仍不可见：进入寻路与调查；
+- 只是极小、低风险且已获授权的局部变更：可以进入执行，但本能力不代为执行。
+
+## 高风险与诚实边界
+
+- 涉及法律、医疗、财务、安全或合规时，不能把一般建议写成专业确认；
+- 决定性事实无法核验时保持阻塞；
+- 用户强烈偏好某方案时，仍需展示真实代价和最强替代；
+- 不能因为问题很多就一次性铺开所有未来问题；
+- 不能因为格式完整就宣布共识；
+- 不能替不在场的利益相关者作答；
+- 不能把访谈共识描述为已经实现或验证。
+
+## 质量自检
+
+输出前确认：
+
+- 每个高影响决定只有一个节点；
+- 依赖无环；
+- 当前轮包含完整前沿，没有提前询问下游；
+- 可发现事实没有被转问用户；
+- 每个问题都有具体推荐和反转条件；
+- 用户回答被逐项记录，没有压缩成模糊总结；
+- 延后、阻塞、被替代和不适用没有被写成已接受；
+- 术语表只包含规范语言；
+- 架构决定只记录真正难以逆转的取舍；
+- 前沿为空后经过用户明确确认；
+- 最终文档足以让下一位规划者继续，不依赖聊天记忆。
+
+## 使用方式
+
+用户可以直接提供一个尚未想清楚的产品、流程或架构问题，并说“请用设计树访谈我，直到形成共识文档”。先发现事实、建立设计树并提出第一轮完整前沿。每轮等待用户回答后再继续，直到高影响分支全部关闭并获得明确共识确认。

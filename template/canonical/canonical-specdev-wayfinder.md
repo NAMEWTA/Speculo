@@ -1,723 +1,484 @@
-# 寻路
+# 寻路：为模糊目标绘制可推进的调查地图
 
-## 网页平台运行约定
+项目地址：https://github.com/NAMEWTA/Speculo
 
-本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
+## 定位
 
-- 项目根下的 `specdev/` 是状态区；全局配置与状态分别为 `specdev/config.json` 和 `specdev/status.json`。
-- 当前 change 位于 `specdev/changes/{change}/`，其中 `{change}` 使用 `YYYY-MM-DD-<kebab-topic>`。
-- 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 `specdev/adr/`、`specdev/context/` 和 `specdev/research/`。
-- `specdev/config.json` 或 `specdev/status.json` 不存在时，分别按下方 `<config-template>` 和 `<status-template>` 标签创建；新建 change 时按下方 `<change-status-template>` 标签创建 `.status.json`。对应 schema 用于结构核对。
-- 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
-- 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
-- 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
-- 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
+当一个目标太大、跨越多个未知领域，或者从当前状态到目的地的路径尚不可见时，不要直接冲向实现。你的任务是先命名**目的地**，再绘制一张低分辨率的共享地图，把现在已经能够精确表述的决定和调查变成独立 Ticket，把尚不能精确表述的部分保留为**战争迷雾**，然后一次只解决一个前沿 Ticket，直到路径清晰。
 
-一个模糊的想法出现了——太大而无法放入单个 Agent 会话，且从当前状态到**目的地**的路径尚不可见。寻路就是找到那条路，而非冲向目标。此 work 在 change state 中绘制一张**共享地图**，然后逐个处理其 Tickets，直到路径变得清晰。
+寻路解决的是“下一步究竟应该调查或决定什么”，不是把最终产品偷偷做完。
 
-目的地可能是一份待移交和迭代的 Spec、一个在规划开始前需锁定的决策，或一项经说明允许在地图中完成的变更。命名目的地是第一步，它塑造每个 Ticket。
 
-## 核心纪律
+## 持久化输出合同
 
-### 规划，而非执行
+寻路依赖一张共享地图、独立调查 Ticket、领取状态和解决记录。没有持久化文件就无法可靠判断前沿、避免重复领取或在中断后恢复，因此文件输出是强制要求。
 
-Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图完成时路径就清晰了——在某人动手之前没有任何剩余决定。想要直接动手通常说明已经到达地图边缘，是时候移交。只有地图“说明”明确覆盖此行为时，task 才能把解除阻塞的执行带入地图。
+### 标准目录与所有权
 
-### 用名称引用
+```text
+ai-workspace/
+├── status.json
+└── changes/
+    └── {change}/
+        ├── .status.json
+        ├── source.md
+        ├── LOG.md
+        ├── wayfinder-map.md
+        └── investigation/
+            ├── INV-01.md
+            └── comments/
+                └── INV-01/
+                    └── 01-solution.md
+```
 
-每张地图和每个 Ticket 都有一个名称。人类阅读的叙述和“已做出的决策”始终用名称引用；ID 和路径包裹在名称链接里，不以裸 `INV-01` 墙代替名称。
+本能力拥有：
 
-### 每会话一个 Ticket
+- `ai-workspace/changes/{change}/wayfinder-map.md`：目的地、说明、已做决定索引、战争迷雾、超出范围和当前前沿；
+- `ai-workspace/changes/{change}/investigation/INV-NN.md`：单一精确问题、类型、依赖、领取与状态；
+- `ai-workspace/changes/{change}/investigation/comments/INV-NN/NN-solution.md`：一个 Ticket 的完整解决记录；
+- `ai-workspace/changes/{change}/.status.json`：地图阶段、owned artifacts、阻塞和当前会话信息；
+- `ai-workspace/status.json` 中当前能力的 active change 与 claims；
+- `ai-workspace/changes/{change}/LOG.md` 中目的地变化、Ticket 创建/关闭和收敛事件。
 
-无论绘制还是遍历，**每个会话绝不解决超过一个 Ticket**。绘制地图的会话不解决任何 Ticket；并行 research 的每个独立 Agent 也只负责一个 Ticket。
+合法阶段：
 
-## 产物与适配
+```text
+intake → mapping → awaiting-traversal → traversing → awaiting-user → converged
+任一活动阶段 → blocked
+```
 
-- 地图：`specdev/changes/{change}/wayfinder-map.md`
-- 子 Tickets：`specdev/changes/{change}/investigation/`
-- solution comments：`specdev/changes/{change}/investigation/comments/`
-- assignment registry：`specdev/status.json` 的 `claimed_investigations`
+### 绘图会话的落盘点
 
-每次绘制或遍历前加载 下方 `<local-tracker-contract>` 标签。Ticket 和地图模板：
+绘图会话必须：
 
-- 下方 `<investigation-ticket-template>` 标签
-- 下方 `<wayfinder-map-template>` 标签
-- 下方 `<solution-comment-template>` 标签
+1. 保存 `source.md`；
+2. 写入完整 `wayfinder-map.md`；
+3. 写入当前所有可精确表述的 `INV-NN.md`；
+4. 建立依赖并检查无环；
+5. 更新 `.status.json` 和 `status.json`；
+6. 停止，不在同一会话解决 Ticket。
+
+### 遍历会话的原子更新
+
+开始前从 `status.json` 读取 claims，选择 open、unblocked、unclaimed Ticket，并先登记 claim。解决一个 Ticket 后按以下顺序：
+
+```text
+写 solution comment
+→ 关闭 INV-NN.md 并记录 resolution
+→ 更新 wayfinder-map.md 的决定索引、迷雾和前沿
+→ 追加 LOG.md
+→ 释放 claim
+→ 更新 .status.json 与 status.json
+```
+
+写回前重读地图、Ticket 和 claims。发现并发基线变化时停止合并，列出冲突，不覆盖其他会话结果。
+
+### 平台无法直接写入文件时
+
+仍输出完整文件包，但由于没有共享可写状态，**禁止并行领取**。用户保存当前 bundle 并在下一会话重新提供之前，不得假设 claim 已被其他会话看到。
+
+## 持久化交付
+
+- 持久化状态：需要保存
+- change：`<change>`
+- 当前阶段：`mapping`、`awaiting-traversal` 或其他真实阶段
+
+### FILE: ai-workspace/status.json
+
+```json
+<完整全局状态与 claims>
+```
+
+### FILE: ai-workspace/changes/<change>/.status.json
+
+```json
+<完整 change 状态>
+```
+
+### FILE: ai-workspace/changes/<change>/wayfinder-map.md
+
+```markdown
+<完整地图>
+```
+
+### FILE: ai-workspace/changes/<change>/investigation/INV-01.md
+
+```markdown
+<完整调查 Ticket>
+```
+
+关闭 Ticket 时再输出完整 `investigation/comments/INV-01/01-solution.md`、更新后的 Ticket、地图、`LOG.md` 和两个状态文件。下一轮必须读取保存后的完整文件，不能用聊天记忆推算前沿。
+
+## 适用范围
+
+适用于：
+
+- 想法宏大但边界模糊；
+- 多个领域、团队、系统或外部标准相互影响；
+- 当前连完整规格都无法可靠编写；
+- 需要研究、原型、设计访谈或人工任务共同解除未知；
+- 工作将跨多个会话，需要一张可恢复的决策地图；
+- 并行调查可能有价值，但必须避免重复领取同一问题。
+
+不适用于：
+
+- 问题已经精确且只需一个会话完成；
+- 外部行为已经清楚，可以直接编写规格；
+- 已有就绪规格，只需拆分执行任务；
+- 用户只是询问一个事实；
+- 以“寻路”为名进行未经授权的实现、部署或数据变更。
+
+## 核心概念
+
+### 目的地
+
+到达地图终点时应当清楚的东西。它可以是：
+
+- 一份可编写的规格；
+- 一个必须锁定的关键决定；
+- 一条已解释且可执行的故障路线；
+- 一项明确允许在地图内完成的解除阻塞变更。
+
+目的地必须用一到两句话描述，并固定范围。改变目的地意味着建立新地图，而不是悄悄扩大旧地图。
+
+### 地图
+
+地图是低分辨率索引，只保存：
+
+- 目的地；
+- 常设说明和边界；
+- 已做出的决定的一句话索引；
+- 尚未明确的战争迷雾；
+- 已裁定的超出范围事项；
+- 当前 Ticket 的简要清单和依赖。
+
+地图不复制每个 Ticket 的全部答案，也不把所有可能未来问题一次性展开。
+
+### Ticket
+
+一个 Ticket 只解决一个可以精确陈述的决定、调查或解除阻塞任务。问题现在能否回答不重要；关键是现在能否准确说出它要解决什么。
+
+### 战争迷雾
+
+范围内、能够感觉到重要，但尚依赖未解决问题而无法精确表述的内容。迷雾不是失败，也不是待办列表。只有当问题可以准确陈述时，才升级为 Ticket。
+
+### 超出范围
+
+明确不属于当前目的地的工作。它不会随着前沿推进自动升级；若要处理，必须重新命名目的地或创建另一张地图。
+
+### 前沿
+
+当前可以开始的 Ticket 集合。一个 Ticket 属于前沿，当且仅当：
+
+- 仍开放；
+- 所有真实依赖都已关闭；
+- 没有被其他会话或执行者领取；
+- 所需材料和权限已经具备；
+- 问题仍然与当前目的地相关。
 
 ## Ticket 类型
 
-每个 Ticket 要么是 **HITL**，与一个代表自己发言的人类一起工作；要么是 **AFK**，由 Agent 独立驱动。HITL Ticket 只能通过实时交流解决，Agent 绝不代替人类一方发言。
+每个 Ticket 选择一种类型和一种参与模式。
 
-- **Research（AFK）**：阅读文档、第三方 API 或知识库等资源，揭示某个决策等待的事实。调用 下方 `<research>` 标签。当需要当前工作目录之外的知识时使用。
-- **Prototype（HITL）**：调用 “原型阶段” 回答一个 UI/逻辑问题，并把 record、临时 branch/worktree 和运行 URL 链接为 solution comment 资产；P 不实现目的地。
-- **Grilling（HITL）**：对话。调用 “设计访谈能力” 的 grilling 与 domain-modeling 能力，但本会话只关闭当前 Wayfinder Ticket。
-- **Task（HITL 或 AFK）**：在决策做出前必须完成的手动工作。它通过为决策解除阻塞赢得位置，不以交付目的地为目标。Agent 能独立驱动时使用 AFK，否则给人类精确清单。
+### 类型
 
-Ticket label 只能是 `wayfinder:research | wayfinder:prototype | wayfinder:grilling | wayfinder:task`。
+- **Research**：查阅材料、标准、第三方行为、代码或历史信息，为一个决定揭示事实；
+- **Prototype**：用最小、临时、可丢弃的原型回答一个界面或逻辑问题，不交付最终产品；
+- **Grilling**：通过实时设计访谈关闭一个必须由人类决定的问题；
+- **Task**：完成一个在决定形成前必须发生的人工或技术动作，它的价值是解除阻塞，不是交付目的地本身。
 
-## 战争迷雾与范围
+### 参与模式
 
-地图刻意不完整：不要绘制还看不到的内容。活跃 Tickets 之外是**战争迷雾**——能感觉即将到来、但依赖尚未解决问题而无法精确陈述的决策和调查。
+- **人类在线**：需要有权决定的人实时参与，模型不能代替其发言；
+- **代理独立**：可以由模型根据材料和工具独立推进，但必须报告事实、来源和未知项。
 
-**迷雾还是 Ticket？** 判断标准是现在能否精确陈述问题，而非现在能否回答：
+Research 通常独立推进；Grilling 必须有人类在线；Prototype 和 Task 根据权限、风险和是否需要实时判断选择。
 
-- 问题已经清晰时做成 Ticket，即使仍被阻塞；
-- 还无法精确表述时留在“尚未明确”，不预先切成 Ticket 大小碎片。
+## 三条硬纪律
 
-目的地固定范围。目标之外的工作进入**超出范围**，不是战争迷雾。范围之外永不升级；只有重新命名目的地并创建新 change 时才重新考虑。越界 Ticket 关闭为 `out-of-scope`，链接进“超出范围”，不进入“已做出的决策”。
+### 1. 规划优先于执行
 
-## 调用模式
+地图默认只决定路径。一个 Ticket 若开始交付最终目的地，而不是回答决定或解除阻塞，应立即停止并建议转入规格、任务拆分或执行阶段。
 
-### 绘制地图
+只有地图说明中明确允许某类解除阻塞动作，并且用户已经授权时，Task 才能执行该动作。
 
-用户带着模糊想法调用：
+### 2. 每个会话最多关闭一个 Ticket
 
-1. **命名目的地。** 运行一轮 G 的 grilling/domain-modeling，确定正在寻路的 Spec、决策或变更。
-2. **绘制前沿。** 再次质询，这次广度优先，在整个空间展开而非深入一条线索。如果没有浮现任何迷雾，停下并询问用户如何继续，不创建地图。
-3. **创建地图。** 使用模板填写目的地和说明；“已做出的决策”为空，迷雾写入“尚未明确”。
-4. **创建现在可明确的 Tickets。** 先创建全部 Ticket，再第二遍连接 `blocked_by`，因为 ID 必须先存在。
-5. **派出 research Agent。** 每个 research Ticket 使用独立上下文和 claim，各自只解决一个 Ticket；需要 Git 分支时先取得对应授权。
-6. 停止。绘制地图是一个会话的工作，它不亲手解决任何 Ticket。
+绘图会话不关闭任何 Ticket。遍历会话只选择并关闭一个 Ticket。独立并行调查也必须一 Ticket 一上下文，避免答案、范围和责任混在一起。
 
-**完成标准**：目的地、地图、当前可表述 Tickets、阻塞边和战争迷雾已持久化；绘图会话没有关闭 Ticket。
+### 3. 人类叙述使用名称
 
-### 遍历地图
+编号用于稳定引用，标题用于理解。向用户汇报时总是写“编号 + 精确标题”，不能用一墙裸编号代替语义。
 
-用户带来地图，可选指定 Ticket：
+## 调用模式一：绘制地图
 
-1. 加载地图的低分辨率视图，不加载每个 Ticket 正文。
-2. 用户指定 Ticket 时使用它；否则按本地 tracker contract 查询并选择第一个 frontier Ticket。
-3. 在任何工作前领取 Ticket。已领取时跳过并选择其他 frontier。
-4. 按需缩放：只读取当前 Ticket、相关或已关闭 Ticket 的详情，以及“说明”指定的能力。
-5. 解决当前唯一 Ticket，使用下一个未占用编号写 solution comment，原子关闭 Ticket 并释放 claim。
-6. 在地图“已做出的决策”追加名称链接和一句概括；越界则写入“超出范围”。
-7. 创建新浮现的 Tickets，第二遍连接阻塞；从“尚未明确”删除每个已升级补丁；更新或关闭被答案判定无效的 Tickets。
+### 步骤一：命名目的地
 
-写回前重读地图、Ticket 与 claims，预期其他会话并发编辑。
+通过简短访谈确认：
 
-**完成标准**：本会话只关闭一个 Ticket；Ticket、solution comment、claim、地图和新 frontier 一致。
+- 想到达什么状态；
+- 谁会使用或批准结果；
+- 为什么现在需要寻路；
+- 什么明确不属于范围；
+- 地图是否允许任何解除阻塞的实际动作。
 
-## 收敛与路由
+若目的地仍无法命名，只问一个最能定义目的地的问题，然后停止等待。
 
-当前沿为空且“尚未明确”不再包含阻塞目的地的内容时，路径清晰：
+### 步骤二：广度优先展开空间
 
-路由前使用 Speculo Node 校验器 的 `--stage wayfinder`；Ticket、claim、comment 或地图不一致时保持 blocked。
+围绕目的地检查：
 
-- 需要产品或架构取舍：“设计访谈能力”；
-- 外部行为已清楚：“编写 Spec 阶段”；
-- Spec Ready、只需拆分：“拆分 Tickets 阶段”；
-- Bug 根因路线收敛：“Bug 诊断阶段”；
-- 仍有高影响未知项：保持 active/blocked 并返回下一 frontier Ticket 名称。
+- 用户、角色和成功标准；
+- 外部行为和边界；
+- 数据、接口和状态；
+- 架构、依赖和集成；
+- 安全、隐私、合规和权限；
+- 兼容、迁移、发布和运营；
+- 事实缺口、原型问题和利益相关者决定；
+- 验证、验收和批准。
 
-## 完成标准
+此时广度优先，不沿一条线索深入解决。能精确陈述的问题成为 Ticket；仍无法精确陈述的内容进入战争迷雾；范围外内容进入超出范围。
 
-- 目的地塑造每个 Ticket 并固定范围；
-- 地图是低分辨率索引，不列开放 Tickets，不复制答案详情；
-- 四类 Ticket 与 HITL/AFK 语义正确；
-- frontier 由 open、unblocked、unclaimed 事实查询；
-- 名称用于人类叙述，裸 ID 只作内部标识；
-- 战争迷雾、Ticket 与超出范围按可精确表述性和范围区分；
-- 每会话最多解决一个 Ticket，HITL 用户没有被 Agent 代答；
-- 每个关闭 Ticket 有 solution comment，资产通过链接引用；
-- claim、阻塞、地图与 Ticket 状态一致；
-- 路径清晰时返回下一 work，不把产品实现藏进寻路。
+如果没有任何迷雾或 Ticket 浮现，说明目标可能已经足够清晰。停止并建议直接进入下一类能力，不为形式创建空地图。
 
-## 子文件引用
+### 步骤三：创建全部当前 Ticket
 
-- 本地 Tracker：下方 `<local-tracker-contract>` 标签
-- Ticket 模板：下方 `<investigation-ticket-template>` 标签
-- Solution comment：下方 `<solution-comment-template>` 标签
-- 地图模板：下方 `<wayfinder-map-template>` 标签
-- Ticket schema：下方 `<wayfinder-ticket-schema>` 标签
+先创建 Ticket，再连接依赖，因为只有看到完整集合后才能判断真实阻塞边。每个 Ticket 必须包含：
 
----
+```markdown
+## INV-01 — 精确问题名称
 
-## 参考内容
-
-以下内容均已内联。主流程提到标签时，直接使用对应标签中的完整规则、模板或 schema。
-
-<investigation-ticket-template>
-
-## 产物 YAML 头部
-
-生成该工件时，将以下字段写在文档开头的 YAML frontmatter 中：
-
-```yaml
-artifact: wayfinder-ticket
-id: INV-01
-name: <精确问题名称>
-parent_map: specdev/changes/{change}/wayfinder-map.md
-label: wayfinder:grilling
-status: open
-blocked_by: []
-resolution: null
+- 类型：Research / Prototype / Grilling / Task
+- 参与模式：人类在线 / 代理独立
+- 问题：只表达一个决定、调查或解除阻塞动作
+- 为什么属于目的地：
+- 依赖：无 / Ticket 名称
+- 所需材料或权限：
+- 完成证据：
+- 不做什么：
+- 状态：开放
 ```
 
-# <精确问题名称>
+依赖只表示“不先完成上游就无法开始”，不能表达偏好顺序或人员交接。
 
-## 问题
+### 步骤四：检查地图质量
 
-<此 Ticket 要解决的一个决策、调查或解除阻塞工作。>
+- 每个 Ticket 问题可精确陈述；
+- Ticket 之间没有循环依赖；
+- 没有把最终实现切成伪调查 Ticket；
+- 战争迷雾没有被过早碎片化；
+- 超出范围不会重新进入前沿；
+- 当前前沿至少可查询；
+- 并行调查不会争夺相同可变材料或同一决定权。
 
-</investigation-ticket-template>
+### 步骤五：停止
 
-<wayfinder-map-template>
+绘图回复只输出地图、Ticket 清单、依赖和首个前沿建议。不要在同一回复中领取或解决 Ticket。
 
-## 产物 YAML 头部
+## 调用模式二：遍历地图
 
-生成该工件时，将以下字段写在文档开头的 YAML frontmatter 中：
+### 步骤一：加载低分辨率地图
 
-```yaml
-artifact: wayfinder-map
-change: <YYYY-MM-DD-topic>
-status: active
+先阅读目的地、说明、已做决定、战争迷雾、超出范围和 Ticket 索引。不要一开始加载所有已关闭 Ticket 的详细答案。
+
+### 步骤二：选择一个前沿 Ticket
+
+- 用户指定有效前沿 Ticket 时选择它；
+- 未指定时按编号顺序推荐第一个前沿 Ticket；
+- 已被领取、被阻塞或不再相关时跳过并说明原因；
+- 没有前沿但仍有阻塞时，报告阻塞链和恢复条件。
+
+### 步骤三：领取
+
+在回复开头明确：
+
+```markdown
+本会话领取：INV-01 — 精确问题名称
+本会话不会处理其他 Ticket。
 ```
 
-# Wayfinder Map: <地图名称>
+如果多个会话并行，使用地图中的领取表：
+
+| Ticket | 领取者 | 会话标识 | 领取时间 | 状态 |
+|---|---|---|---|---|
+
+平台无法直接写入文件时不得启用并行领取；先输出并保存包含 claims 的完整 `ai-workspace/status.json`，下一会话读取该文件后再选择 Ticket。平台可写但不支持原子锁时，写回前重读状态并检测冲突。
+
+### 步骤四：按类型解决当前 Ticket
+
+#### Research
+
+- 固定一个决定和穷尽问题集；
+- 优先使用原始资料、官方材料和可定位事实；
+- 区分事实、推断、冲突和未知；
+- 达到停止条件后给出对决定的意义；
+- 不把研究扩展为整个领域综述。
+
+#### Prototype
+
+- 说明要回答的唯一假设；
+- 限定最小范围和可丢弃性；
+- 记录观察结果、失败条件和对决定的影响；
+- 未经授权不生成最终产品，也不修改用户业务数据或生产状态；便携调查工件仍按持久化合同写入；
+- 原型不能作为生产完成证据。
+
+#### Grilling
+
+- 只围绕当前 Ticket 进行设计访谈；
+- 先发现事实，再询问真正的决定；
+- 给出推荐、代价和反转条件；
+- 当前 Ticket 关闭后停止，不顺手继续下一个问题。
+
+#### Task
+
+- 明确动作为什么是决定的必要前置；
+- 写清责任人、权限、输入、停止条件和完成证据；
+- 动作越过地图授权、风险升高或开始交付最终目的地时停止；
+- 不能把“做了很多事”当作问题已解决。
+
+### 步骤五：形成解决记录
+
+```markdown
+# Solution：Ticket 名称
+
+- Ticket：INV-01 — 标题
+- 结论或已完成的解除阻塞动作：
+- 事实与证据：
+- 推断与未知：
+- 资产或输出：无 / `ai-workspace/changes/{change}/investigation/comments/INV-01/01-solution.md` 中的完整内容
+- 后续 Ticket 可依赖的事实：
+- 新浮现的 Ticket：无 / 列表
+- 升级的战争迷雾：无 / 列表
+- 对现有 Ticket 的影响：无 / 更新 / 关闭 / 被替代
+- 范围判断：范围内 / 超出范围
+```
+
+### 步骤六：原子更新地图语义
+
+在同一回复中按顺序展示：
+
+1. 当前 Ticket 的解决记录；
+2. Ticket 状态变更；
+3. 已做决定的一句话索引；
+4. 新 Ticket 和依赖；
+5. 从战争迷雾中升级或删除的内容；
+6. 被关闭、被替代或移出范围的 Ticket；
+7. 释放领取；
+8. 新前沿。
+
+平台无法直接写入文件时，输出包含状态、地图、当前 Ticket、solution comment 与日志的完整 FILE bundle；只给更新后的地图仍不算持久化完成。
+
+### 步骤七：停止
+
+关闭当前唯一 Ticket 后立即停止。可以推荐下一前沿 Ticket，但不能在同一会话继续解决它。
+
+## 地图输出格式
+
+```markdown
+# Wayfinder Map：地图名称
 
 ## 目的地
 
-<到达此地图终点时的样子——此工作正在寻路的 spec、决策或变更。一到两行；每个会话在挑选 Ticket 之前以其为定位。>
+一到两句话描述终点。
 
 ## 说明
 
-<领域；每个会话应咨询的 skills；此工作的常设偏好；是否明确把执行带入地图。>
+- 常设边界：
+- 允许的动作：
+- 禁止的动作：
+- 需要遵循的标准或偏好：
 
-## 已做出的决策
+## 已做出的决定
 
-<!-- 索引——每个已关闭 Ticket 一行：足以判断相关性，然后放大链接查看 solution comment 持有的详细信息。开放 Tickets 通过本地 tracker 查询，不列在这里。 -->
+- **Ticket 名称**：一句话结论。详细内容见本地图下方对应解决记录。
 
-- **<已关闭 Ticket 标题>：** `specdev/changes/{change}/investigation/comments/INV-01/01-solution.md` —— <答案的一句话概括>
+## Ticket 索引
 
-## 尚未明确
+| 编号 | 标题 | 类型 | 参与模式 | 依赖 | 状态 | 领取者 |
+|---|---|---|---|---|---|---|
 
-<!-- 范围内但尚无法精确表述为 Ticket 的战争迷雾；随着前沿推进而升级。 -->
+## 战争迷雾
+
+- 范围内但尚无法精确表述的内容。
 
 ## 超出范围
 
-<!-- 被裁定在目的地之外的工作；已关闭，永不升级。 -->
+- 明确不属于当前目的地的事项和原因。
 
-</wayfinder-map-template>
+## 当前前沿
 
-<local-tracker-contract>
+- INV-xx — 标题
 
-# Wayfinder 本地 Tracker 适配
+## 解决记录
 
-最新版 Wayfinder 以 issue tracker 为物理载体。SpecDev 的默认 tracker 是 change state 内的本地 Markdown/JSON；本文件只映射物理原语，不改写 Wayfinder 的地图、Ticket、战争迷雾或遍历语义。
-
-| Tracker 原语 | 本地实现 |
-|---|---|
-| 地图 issue | `specdev/changes/{change}/wayfinder-map.md` |
-| 子 issue | `specdev/changes/{change}/investigation/{investigation-id}.md` |
-| label | Ticket frontmatter 的 `wayfinder:research|prototype|grilling|task` |
-| 阻塞关系 | Ticket frontmatter 的 `blocked_by` |
-| assignment | `specdev/status.json` 当前 change 的 `claimed_investigations` |
-| solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` |
-| 关闭 issue | Ticket frontmatter 的 `status: closed` 与 `resolution` |
-
-## 查询前沿
-
-扫描当前地图的全部子 Ticket。一个 Ticket 同时满足以下条件时属于**前沿**：
-
-1. `status: open`；
-2. `blocked_by` 中的每个 Ticket 都是 `status: closed`；
-3. `claimed_investigations` 中没有相同 `id`。
-
-按文件名中的数字 ID 升序返回。地图正文不缓存开放 Ticket 列表；每次选择前沿都从 Ticket 与 claim 事实重新查询。
-
-## 原子领取
-
-开始任何工作前，重读全局状态并原子写入 `id`、`owner`、可选 `session` 和 `claimed_at`。已领取则选择下一前沿 Ticket。写回结果前再次重读；完成、释放或取消时删除 claim。
-
-Ticket 文件不重复保存 assignee，地图不重复保存 claim。全局 assignment registry 是领取的单一事实源。
-
-## 解决方案评论
-
-Ticket 正文只保存问题。答案写入下一个未占用的 solution comment 文件，资产从评论链接，不粘贴进 Ticket。关闭 Ticket 后，地图的“已做出的决策”只追加名称链接和一句概括；`out-of-scope` 不进入决策索引。
-
-**完成标准**：地图、Ticket、claim、阻塞和 solution comment 可以重建相同前沿；同一事实没有第二份可写副本。
-
-</local-tracker-contract>
-
-<solution-comment-template>
-
-## 产物 YAML 头部
-
-生成该工件时，将以下字段写在文档开头的 YAML frontmatter 中：
-
-```yaml
-artifact: wayfinder-solution-comment
-ticket: INV-01
-sequence: 1
-resolution: answered
+按关闭顺序保存每个 Solution。
 ```
 
-# Solution: <Ticket 名称>
+## 收敛与路由
 
-- **Ticket：** `specdev/changes/{change}/investigation/INV-01.md`
-- **答案：** <此 Ticket 关闭的决定或已完成的解除阻塞工作>
-- **事实与来源：**
-- **资产：** 无 / `project/relative/path` / `<Url>https://example.com</Url>`
-- **后续 Ticket 所依赖的事实：** 无 / ...
-- **新浮现的 Tickets：** 无 / <按名称列出>
-- **升级的战争迷雾：** 无 / ...
-- **对现有 Tickets 的影响：** 无 / update / close / supersede
+当同时满足以下条件时，路径清晰：
 
-</solution-comment-template>
+- 没有开放且未被阻塞的 Ticket；
+- 没有仍影响目的地的战争迷雾；
+- 所有关键决定都有解决记录；
+- 超出范围没有重新进入目标；
+- Ticket、依赖、领取和地图索引一致；
+- 用户确认目的地没有被偷偷改变。
 
-<research>
+然后根据结果选择下一步：
 
-# SpecDev Research
+- 仍需产品或架构取舍：设计访谈；
+- 外部行为已经清楚：编写可执行规格；
+- 规格已就绪：拆分执行任务；
+- 故障路线已经收敛：进入诊断或修复规划；
+- 仍有高影响未知项：保持地图活跃，返回下一个前沿或阻塞条件。
 
-## 输入
+## 暂停与恢复
 
-- `decision`：研究要支持的一个具体决定；
-- `questions`：需要回答的穷尽问题集；
-- `stop_condition`：何时证据已足够；
-- `caller`：D、G、S、W、R、T 或 I；
-- `target_artifact`：调用方拥有且将接收结果的完整 Path。
-
-缺少 owner 或 target 时返回阻塞，不创建 `{change}/research/` 等共享 namespace。
-
-## 流程
-
-1. 固定问题、版本、环境和停止条件。
-2. 优先官方文档、规范、源代码、论文或维护者材料；技术问题使用一手来源。
-3. 核对发布日期、版本、适用环境、限制和已知冲突。
-4. 对每个会改变决定的实质声明就近给出来源；关键结论交叉验证，来源冲突时并列呈现。
-5. 区分来源事实、代码库事实、推断、建议和未知项。
-6. 返回一个 Markdown block，由 caller 原子写入 `target_artifact`；本 Skill 不自行写 state。
-
-## 输出
+对话中断前输出完整地图和一段恢复摘要：
 
 ```markdown
-## Research: <问题>
-- Decision / target:
-- Scope / version:
-- Stop condition:
+# 寻路恢复摘要
 
-### R-001
-- Claim:
-- Type: official fact / code fact / inference / recommendation
-- Source:
-- Confidence:
-- Limits:
-- Artifact impact:
-
-### Conflicts and Unknowns
-### Recommendation
+- 目的地：
+- 当前地图版本的关键决定：
+- 正在领取的 Ticket：无 / 编号与标题
+- 当前前沿：
+- 阻塞链：
+- 战争迷雾：
+- 下一步：绘图 / 遍历某 Ticket / 等待外部材料
 ```
 
-不得长篇复制受版权保护内容。长期有效且经实现验证的结论只能由 Archive 从调用方工件提升到永久 research。
+恢复时先核对领取是否仍有效、地图是否被其他会话更新，再继续。不要假装拥有用户没有重新提供的长期状态。
 
-## 完成标准
+## 失败与高风险边界
 
-- 每个输入问题有答案或明确未知；
-- 每个实质声明就近引用一手来源；
-- 版本、限制、冲突和置信度已记录；
-- 结果有唯一 owning artifact；
-- 本 Skill 没有创建自己的 state 路径。
+- Ticket 问题无法精确陈述：退回战争迷雾；
+- Ticket 依赖形成循环：重新检查是否把同一决定拆成多个节点；
+- 两个会话领取同一 Ticket：停止写回，由主会话选择保留哪个结果；
+- 研究来源冲突：保留冲突和适用范围，不强行合并；
+- 原型开始变成生产实现：停止并移交；
+- Task 需要不可逆权限：必须取得明确授权和回滚方案；
+- HITL 决定没有有权的人参与：保持阻塞；
+- 高风险事实无法核验：不能用一般经验关闭 Ticket。
 
-</research>
+## 质量自检
 
-<config-template>
+输出前确认：
 
-```json
-{
-  "schema_version": 5,
-  "interaction_language": "zh-CN",
-  "artifact_language": "zh-CN",
-  "git": {
-    "default_branch": null
-  },
-  "execution": {
-    "max_implementation_agents": 3,
-    "max_integration_attempts": 3,
-    "deep_ticket_human_approval": true,
-    "shared_path_owner": "explicit"
-  },
-  "verification": {
-    "test": null,
-    "typecheck": null,
-    "lint": null,
-    "build": null
-  },
-  "planning": {
-    "default_depth": "standard",
-    "require_ready_gate": true,
-    "require_evidence": true,
-    "ui_prototype_default_variants": 3,
-    "ui_prototype_max_variants": 5
-  }
-}
-```
+- 目的地具体且固定；
+- 地图保持低分辨率；
+- Ticket 只解决一个精确问题；
+- 战争迷雾没有被过早拆碎；
+- 超出范围不会自动回流；
+- 绘图会话没有关闭 Ticket；
+- 遍历会话只关闭一个 Ticket；
+- 人类决定没有被模型代答；
+- 每个关闭 Ticket 都有解决记录；
+- 新 Ticket、依赖和新前沿从答案自然产生；
+- 平台无法直接写入文件时输出了包含地图、Ticket、状态与解决记录的完整 FILE bundle；
+- 路径清晰后没有继续把寻路当作无限研究。
 
-</config-template>
+## 使用方式
 
-<config-schema>
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v5",
-  "title": "SpecDev Configuration",
-  "type": "object",
-  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
-  "properties": {
-    "schema_version": {"const": 5},
-    "interaction_language": {"type": "string", "minLength": 1},
-    "artifact_language": {"type": "string", "minLength": 1},
-    "git": {
-      "type": "object",
-      "required": ["default_branch"],
-      "properties": {
-        "default_branch": {"type": ["string", "null"]}
-      },
-      "additionalProperties": false
-    },
-    "execution": {
-      "type": "object",
-      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
-      "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1},
-        "max_integration_attempts": {"type": "integer", "minimum": 1},
-        "deep_ticket_human_approval": {"type": "boolean"},
-        "shared_path_owner": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "verification": {
-      "type": "object",
-      "required": ["test", "typecheck", "lint", "build"],
-      "properties": {
-        "test": {"type": ["string", "null"]},
-        "typecheck": {"type": ["string", "null"]},
-        "lint": {"type": ["string", "null"]},
-        "build": {"type": ["string", "null"]}
-      },
-      "additionalProperties": true
-    },
-    "planning": {
-      "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_prototype_default_variants", "ui_prototype_max_variants"],
-      "properties": {
-        "default_depth": {"enum": ["lite", "standard", "deep"]},
-        "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"},
-        "ui_prototype_default_variants": {"type": "integer", "minimum": 1},
-        "ui_prototype_max_variants": {"type": "integer", "minimum": 1}
-      },
-      "additionalProperties": true
-    }
-  },
-  "allOf": [{
-    "$comment": "ui_prototype_default_variants <= ui_prototype_max_variants is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
-  }],
-  "additionalProperties": false
-}
-```
-
-</config-schema>
-
-<status-template>
-
-```json
-{
-  "schema_version": 5,
-  "workflow": "specdev",
-  "active": [],
-  "archived": []
-}
-```
-
-</status-template>
-
-<status-schema>
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:status:v5",
-  "title": "SpecDev Global Status",
-  "type": "object",
-  "required": ["schema_version", "workflow", "active", "archived"],
-  "properties": {
-    "schema_version": {"const": 5},
-    "workflow": {"const": "specdev"},
-    "active": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["change"],
-        "properties": {
-          "change": {
-            "type": "string",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-          }
-        },
-        "additionalProperties": false
-      },
-      "uniqueItems": true
-    },
-    "archived": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
-      },
-      "uniqueItems": true
-    }
-  },
-  "additionalProperties": false
-}
-```
-
-</status-schema>
-
-<change-status-template>
-
-```json
-{
-  "schema_version": 6,
-  "artifact": "change-status",
-  "change": "<YYYY-MM-DD-topic>",
-  "change_status": "active",
-  "current_work": null,
-  "works_run": [],
-  "claimed_investigations": [],
-  "execution_authorization": {
-    "implementation_commit": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Ticket implementation commits"},
-    "local_candidate_integration": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Lead-owned local direct-parent or candidate integration and parent update"},
-    "source_cleanup": {"status": "not-authorized", "source": null, "granted_at": null, "scope": "Source worktree and branch cleanup"}
-  },
-  "leadership": {
-    "current": "<owner-or-session-locator>",
-    "epoch": 1,
-    "assigned_at": "<ISO-8601>",
-    "history": []
-  },
-  "created_at": "<ISO-8601>",
-  "updated_at": "<ISO-8601>",
-  "completed_at": null,
-  "archived": false,
-  "archive_path": null,
-  "blockers": [],
-  "deviations": [],
-  "worktrees": []
-}
-```
-
-</change-status-template>
-
-<change-status-schema>
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:change-status:v6",
-  "title": "SpecDev Change Status",
-  "type": "object",
-  "required": [
-    "schema_version", "artifact", "change", "change_status", "current_work", "works_run",
-    "claimed_investigations", "execution_authorization", "leadership", "created_at", "updated_at",
-    "completed_at", "archived", "archive_path", "blockers", "deviations", "worktrees"
-  ],
-  "properties": {
-    "schema_version": {"const": 6},
-    "artifact": {"const": "change-status"},
-    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
-    "change_status": {"enum": ["active", "blocked", "completed", "archived"]},
-    "current_work": {"type": ["string", "null"], "pattern": "^specdev/"},
-    "works_run": {"type": "array", "items": {"type": "string", "pattern": "^specdev/"}, "uniqueItems": true},
-    "claimed_investigations": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
-    "execution_authorization": {"$ref": "#/$defs/authorization"},
-    "leadership": {"$ref": "#/$defs/leadership"},
-    "created_at": {"type": "string", "minLength": 1},
-    "updated_at": {"type": "string", "minLength": 1},
-    "completed_at": {"type": ["string", "null"]},
-    "archived": {"type": "boolean"},
-    "archive_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}]},
-    "blockers": {"type": "array", "items": {"type": "string"}},
-    "deviations": {"type": "array", "items": {"type": "string"}},
-    "worktrees": {"type": "array", "items": {"$ref": "#/$defs/worktree"}}
-  },
-  "$defs": {
-    "claim": {
-      "type": "object",
-      "required": ["id", "owner", "session", "claimed_at"],
-      "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "owner": {"type": "string", "minLength": 1},
-        "session": {"type": ["string", "null"]},
-        "claimed_at": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "authorization-entry": {
-      "type": "object",
-      "required": ["status", "source", "granted_at", "scope"],
-      "properties": {
-        "status": {"enum": ["authorized", "not-authorized", "revoked"]},
-        "source": {"type": ["string", "null"]},
-        "granted_at": {"type": ["string", "null"]},
-        "scope": {"type": "string", "minLength": 1}
-      },
-      "allOf": [{
-        "if": {"properties": {"status": {"const": "authorized"}}, "required": ["status"]},
-        "then": {"properties": {"source": {"type": "string", "minLength": 1}, "granted_at": {"type": "string", "minLength": 1}}}
-      }],
-      "additionalProperties": false
-    },
-    "authorization": {
-      "type": "object",
-      "required": ["implementation_commit", "local_candidate_integration", "source_cleanup"],
-      "properties": {
-        "implementation_commit": {"$ref": "#/$defs/authorization-entry"},
-        "local_candidate_integration": {"$ref": "#/$defs/authorization-entry"},
-        "source_cleanup": {"$ref": "#/$defs/authorization-entry"}
-      },
-      "additionalProperties": false
-    },
-    "leadership-history": {
-      "type": "object",
-      "required": ["owner", "epoch", "assigned_at", "ended_at"],
-      "properties": {
-        "owner": {"type": "string", "minLength": 1},
-        "epoch": {"type": "integer", "minimum": 1},
-        "assigned_at": {"type": "string", "minLength": 1},
-        "ended_at": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
-    "leadership": {
-      "type": "object",
-      "required": ["current", "epoch", "assigned_at", "history"],
-      "properties": {
-        "current": {"type": "string", "minLength": 1},
-        "epoch": {"type": "integer", "minimum": 1},
-        "assigned_at": {"type": "string", "minLength": 1},
-        "history": {"type": "array", "items": {"$ref": "#/$defs/leadership-history"}}
-      },
-      "additionalProperties": false
-    },
-    "full-suite": {
-      "type": "object",
-      "required": ["required", "status", "reason", "evidence"],
-      "properties": {
-        "required": {"type": "boolean"},
-        "status": {"enum": ["not-required", "pending", "passed", "failed"]},
-        "reason": {"type": ["string", "null"]},
-        "evidence": {"type": ["string", "null"]}
-      },
-      "allOf": [{
-        "if": {"properties": {"required": {"const": false}}, "required": ["required"]},
-        "then": {"properties": {"status": {"const": "not-required"}, "reason": {"type": "string", "minLength": 1}}}
-      }],
-      "additionalProperties": false
-    },
-    "worktree": {
-      "type": "object",
-      "required": ["ticket_id", "owner", "implementation_owner", "integration_owner", "provider", "base_sha", "parent_branch", "branch", "workspace_ref", "source_checkpoint", "integration", "status", "updated_at"],
-      "properties": {
-        "ticket_id": {"type": "string", "pattern": "^T-[0-9]{2,}$"},
-        "owner": {"type": "string", "minLength": 1},
-        "implementation_owner": {"type": "string", "minLength": 1},
-        "integration_owner": {"type": "string", "minLength": 1},
-        "provider": {"const": "git"},
-        "base_sha": {"type": "string", "minLength": 1},
-        "parent_branch": {"type": "string", "minLength": 1},
-        "branch": {"type": "string", "minLength": 1},
-        "workspace_ref": {"type": "string", "pattern": "^(?:current|specdev-worktree/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,})$"},
-        "source_checkpoint": {"type": ["string", "null"]},
-        "integration": {"$ref": "#/$defs/integration"},
-        "status": {"enum": ["planned", "active", "review", "integrating", "integrated", "removed", "blocked"]},
-        "updated_at": {"type": "string", "minLength": 1}
-      },
-      "allOf": [
-        {
-          "if": {"properties": {"workspace_ref": {"const": "current"}}, "required": ["workspace_ref"]},
-          "then": {
-            "properties": {
-              "integration": {
-                "allOf": [{
-                  "properties": {
-                    "candidate_sha": {"const": null},
-                    "candidate_tree_sha": {"const": null},
-                    "candidate_branch": {"const": null},
-                    "candidate_workspace_ref": {"const": null},
-                    "method": {"enum": [null, "direct-parent"]}
-                  }
-                }]
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "integration": {
-                "allOf": [{"properties": {"method": {"enum": [null, "fast-forward", "merge-commit"]}}}]
-              }
-            }
-          }
-        }
-      ],
-      "additionalProperties": false
-    },
-    "integration": {
-      "type": "object",
-      "required": ["status", "parent_ref", "parent_before_sha", "source_sha", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "result_sha", "method", "conflict_paths", "verification", "full_suite", "e2e", "evidence", "attempts", "promotion_status"],
-      "properties": {
-        "status": {"enum": ["pending", "candidate", "passed", "failed", "stale"]},
-        "parent_ref": {"type": ["string", "null"]},
-        "parent_before_sha": {"type": ["string", "null"]},
-        "source_sha": {"type": ["string", "null"]},
-        "candidate_sha": {"type": ["string", "null"]},
-        "candidate_tree_sha": {"type": ["string", "null"]},
-        "candidate_branch": {"type": ["string", "null"]},
-        "candidate_workspace_ref": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^specdev-worktree/\\.integration/[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*/T-[0-9]{2,}$"}]},
-        "result_sha": {"type": ["string", "null"]},
-        "method": {"enum": [null, "direct-parent", "fast-forward", "merge-commit"]},
-        "conflict_paths": {"type": "array", "items": {"type": "string"}},
-        "verification": {"enum": ["pending", "passed", "failed"]},
-        "full_suite": {"$ref": "#/$defs/full-suite"},
-        "e2e": {"$ref": "#/$defs/full-suite"},
-        "evidence": {"type": "string", "pattern": "^\\{roots\\.state\\}/specdev/changes/[^<]+/evidence/T-[0-9]{2,}\\.md$"},
-        "attempts": {"type": "integer", "minimum": 0},
-        "promotion_status": {"enum": ["pending", "applying", "applied", "failed", "stale"]}
-      },
-      "additionalProperties": false
-    }
-  },
-  "allOf": [{
-    "if": {"properties": {"change_status": {"const": "archived"}}, "required": ["change_status"]},
-    "then": {"properties": {"archived": {"const": true}, "archive_path": {"type": "string", "pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"}}}
-  }],
-  "additionalProperties": false
-}
-```
-
-</change-status-schema>
-
-<wayfinder-ticket-schema>
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:wayfinder-ticket:v1",
-  "title": "SpecDev Wayfinder Ticket Frontmatter",
-  "type": "object",
-  "required": ["artifact", "id", "name", "parent_map", "label", "status", "blocked_by", "resolution"],
-  "properties": {
-    "artifact": { "const": "wayfinder-ticket" },
-    "id": { "type": "string", "pattern": "^INV-[0-9]{2,}$" },
-    "name": { "type": "string", "minLength": 1 },
-    "parent_map": { "type": "string", "minLength": 1 },
-    "label": { "enum": ["wayfinder:research", "wayfinder:prototype", "wayfinder:grilling", "wayfinder:task"] },
-    "status": { "enum": ["open", "closed"] },
-    "blocked_by": { "type": "array", "items": { "type": "string", "pattern": "^INV-[0-9]{2,}$" } },
-    "resolution": { "enum": [null, "answered", "out-of-scope", "superseded", "cancelled"] }
-  },
-  "additionalProperties": false
-}
-```
-
-</wayfinder-ticket-schema>
+用户可以说“这个目标太大，我还不知道从哪里开始，请先为我绘制寻路地图”，并提供想法和已有材料。首次回复只命名目的地、绘制地图和创建 Ticket，不解决任何 Ticket。后续用户指定或接受一个前沿 Ticket，每个会话只解决一个，直到路径清晰。

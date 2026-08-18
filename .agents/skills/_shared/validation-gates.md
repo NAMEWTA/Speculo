@@ -15,7 +15,7 @@
 - command 是 `commands/<id>.md`；
 - work 目录和入口同名；
 - workflow 有唯一 `INDEX.md`；
-- AUTO-INDEX 标记成对且唯一。
+- `type: workflow` INDEX 的 AUTO-INDEX 标记成对且唯一；`type: workflow-index` / `auto_generated: true` INDEX 不含标记并由生成器拥有整文件。
 
 每个目标文件都通过后完成。
 
@@ -45,7 +45,7 @@
 
 ## Gate 6 — 生成物
 
-- Workflow AUTO-INDEX 从当前 work 重建；
+- Workflow INDEX 按 frontmatter 选择标记区块或整文件模式，并从当前 work 重建；
 - Canonical 从源的传递静态依赖闭包重建；
 - 生成物没有手工专属规则；
 - 再运行生成器得到无 diff 的结果。

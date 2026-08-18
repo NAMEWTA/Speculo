@@ -60,6 +60,8 @@ keywords: [<真实触发词>]
 
 ### Work 条目
 
+完整 `type: workflow` INDEX 使用标记区块：
+
 ```markdown
 <!-- AUTO-INDEX-START -->
 
@@ -69,6 +71,8 @@ keywords: [<真实触发词>]
 ```
 
 区块由脚本生成，手写部分不包含重复 work 清单。
+
+简化 `type: workflow-index` / `auto_generated: true` INDEX 由脚本拥有整个文件，固定包含 frontmatter、`# <workflow> — Work Index`、禁止手改提示和同一 work 清单，不放 AUTO-INDEX 标记或其他手写合同。
 
 ### Common 与验证
 
@@ -80,5 +84,5 @@ keywords: [<真实触发词>]
 - 所有 state 字段和 namespace 有 owner；
 - 每个 work 的输入可追溯、输出有消费者；
 - 所有 `<Path>` 静态目标存在；
-- AUTO-INDEX 二次生成无 diff；
+- 选定的 INDEX 生成模式与 frontmatter 一致，二次生成无 diff；
 - INDEX 不声明虚构目录或旧兼容字段。
