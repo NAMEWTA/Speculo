@@ -11,7 +11,7 @@ description: Lead-owned 动态派单合同：为原生或外部网页 subagent �
 
 所有调用都必须提供 `operation=plan | dispatch | accept` 与 Lead owner/session locator。其余输入按 operation 判定，不得把后续阶段事实反向要求给 `plan`：
 
-- `operation=plan`：提供允许的 `task_kind` 集合、implementation subagent 上限、Lead/SpecDev/父分支/E2E 所有权和通用授权边界；此时不要求 Ticket、provider、checkpoint、workspace 或外部附件；
+- `operation=plan`：提供允许的 `task_kind` 集合、implementation subagent 上限、Lead/SpecDev/父分支/E2E 所有权和通用授权边界；Goal Plan 此时可以尚未写入，也不要求 Ticket、provider、checkpoint、workspace 或外部附件；
 - `operation=dispatch`：提供 `task_kind=implementation | review | research | test-observation`、已存在 Goal Plan（若有）、Ticket/固定审查目标、依赖 Evidence、适用合同、repository、不可变 checkpoint、项目 Agent 指令、workspace/session locator、provider、`delivery_channel=native | external-web`、允许动作、路径边界、检查、停止条件与返回格式；
 - `operation=accept`：提供原 Dispatch Packet、subagent 返回、当前 repository/workspace、预期与实际 checkpoint，以及 Lead 可用于独立核对的文件、Git 与命令事实。`delivery_channel` 从原 Packet 读取，不在验收时重新推断。
 

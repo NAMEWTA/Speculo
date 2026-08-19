@@ -75,10 +75,6 @@ const sharedSources = {
     source: `${commonRoot}/skills/subagent-delivery/references/external-web-subagent.md`,
     tag: "subagent-delivery-external-web",
   },
-  subagentDeliveryGithubCheckpoints: {
-    source: `${commonRoot}/skills/subagent-delivery/references/github-checkpoints.md`,
-    tag: "subagent-delivery-github-checkpoints",
-  },
   subagentDeliverySourcePackage: {
     source: `${commonRoot}/skills/subagent-delivery/references/source-package.md`,
     tag: "subagent-delivery-source-package",
@@ -245,7 +241,6 @@ const canonicalDocuments = [
       sharedSources.subagentDeliverySkill,
       sharedSources.subagentDeliveryNative,
       sharedSources.subagentDeliveryExternalWeb,
-      sharedSources.subagentDeliveryGithubCheckpoints,
       sharedSources.subagentDeliverySourcePackage,
       ...persistenceReferences,
       sharedSources.goalPlanSchema,
@@ -433,6 +428,11 @@ function replacePaths(content, tagsBySource) {
 
       if (value.startsWith("{roots.workflows}/specdev/")) {
         return workflowPathToCanonical(value, tagsBySource);
+      }
+
+      if (value.startsWith("{roots.skills}/")) {
+        const relative = value.replace(/^\{roots\.skills\}\//, "skills/");
+        return codeDelimiter ? `\`${relative}\`` : `\`${relative}\``;
       }
 
       return codeDelimiter ? `\`${value}\`` : value;

@@ -4,6 +4,14 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.6] - 2026-08-19
+
+### Changed
+- **`source-code-zip` rewritten from Python to Node.js**: the skill's `zip_source_code.js` now depends only on Node.js built-in modules with ZIP64, CRC32, and streaming compression support; the `uv`/Python dependency is removed.
+- **`subagent-delivery` external-web channel hardened to ZIP-only delivery**: delivery is locked to a `native | external-web` channel before dispatch; external packages follow a staging → `source-code-zip` → SHA-256 manifest verification → isolated unpack lifecycle, persisted under `temp/subagent-delivery/` without ever overwriting the same locator. The `github-checkpoints` reference is removed and remote commits/branches are no longer a delivery medium; untrusted self-reported results stay `unverified`.
+
+---
+
 ## [0.7.5] - 2026-08-18
 
 ### Added
