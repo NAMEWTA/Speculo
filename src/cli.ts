@@ -2,6 +2,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
+import { RefreshBlockedError } from "./refresh.js";
 import { checkForUpdate, formatVersionBanner, type VersionInfo } from "./version.js";
 
 const REMOVED_COMMANDS = new Set(["migrate", "mirror-skills", "update"]);
@@ -75,21 +76,25 @@ async function main(argv: string[]): Promise<number> {
 
     const result = await initSpeculo(targetArg ?? ".", { packageRoot });
     console.log(result.mode === "init" ? "Speculo initialized in " + result.target : "Speculo refreshed in " + result.target);
-    for (const asset of result.assets) console.log("  refreshed " + asset);
-    if (result.migration.status === "migrated") {
-      console.log("  migrated runtime state from " + result.migration.sourceVersion);
-      console.log("  retained backup " + result.migration.backupPath);
-    }
-    if (result.migration.status === "pending") {
-      console.error("Speculo runtime migration is pending.");
-      for (const blocker of result.migration.blockers) {
-        console.error("  " + blocker.code + " " + blocker.path + ": " + blocker.message);
-      }
-      console.error("Run the migrate-runtime-state command before using Speculo workflows.");
-      return 2;
+    console.log("  replaced " + result.refresh.managedFiles + " managed files");
+    console.log("  preserved " + result.refresh.preservedFiles + " runtime files");
+    console.log(
+      "  reconciled config: " + result.refresh.config.added + " added, " +
+      result.refresh.config.updated + " updated, " + result.refresh.config.preserved + " preserved, " +
+      result.refresh.config.removed + " removed",
+    );
+    if (result.refresh.structuredUpgrades > 0) console.log("  upgraded " + result.refresh.structuredUpgrades + " structured state files");
+    if (result.refresh.backupPath) console.log("  retained targeted backup " + result.refresh.backupPath);
+    for (const asset of result.assets.filter((asset) => asset.startsWith(".gitignore") || asset.startsWith("AGENTS") || asset.startsWith("CLAUDE"))) {
+      console.log("  updated " + asset);
     }
     return 0;
   } catch (error) {
+    if (error instanceof RefreshBlockedError) {
+      console.error(error.message);
+      for (const blocker of error.blockers) console.error("  " + blocker.code + " " + blocker.path + ": " + blocker.message);
+      return 2;
+    }
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }

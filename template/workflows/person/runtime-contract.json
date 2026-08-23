@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "workflow": "person",
+  "config": null,
+  "structured_state": [
+    ".speculo/person/status.json"
+  ],
+  "opaque_default": "preserve-byte-for-byte"
+}

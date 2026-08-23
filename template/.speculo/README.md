@@ -4,21 +4,22 @@
 
 ## 刷新契约
 
-重新运行 `speculo init` 会以当前模板刷新 commands、skills 与选中的 workflow 静态资产，并对 v0.7+ 运行时执行兼容检查。兼容时递归合并项目配置的当前默认值，并完整保留 workflow 配置、状态索引、`changes/`、`archive/`、永久知识、sidecar、command 报告和具有当前合同的 command `state.json`。
+重新运行 `speculo init` 会以当前模板替换 commands、skills、CLI metadata 与选中的 workflow 静态资产。`.speculo/managed.json` 逐文件记录受管理路径、owner、kind、版本与 SHA-256；未选中的当前受支持 workflow 包保持原样，已移除或未知的静态包不会被带入新安装。
 
-每次刷新先把旧 `config.json` 和旧 `.speculo/` 快照写入 `back/`，排除上一份 `back/` 与旧 pending marker，因此只保留最近一次刷新前备份。`install.json` 记录当前包版本和已安装 workflows；`back/manifest.json` 记录来源/目标版本及每个备份文件的 hash 和大小。
+普通 runtime 文件默认 opaque，由 CLI 按字节复制并在替换前复验 hash，不因为扩展名是 JSON 而解析。只有 workflow `runtime-contract.json` 登记的配置和结构化状态进入 schema migrator；未知结构化版本、损坏内容或符号链接会在替换前阻塞，当前安装保持不变。
 
-若来源版本、核心 schema、JSON、符号链接、command state owner 或 workflow 索引无法证明兼容，刷新安装当前干净模板状态并创建 `migration.json`，其 `status` 为 `pending`。此时所有 workflow 读取和状态写入都必须停止；只能运行 `migrate-runtime-state` command，基于只读 `back/` 逐项对账、确认并原子迁移。再次运行 `speculo init` 会在任何修改前阻塞。
+配置使用 `.speculo/baselines/` 中的上次模板默认值执行 base/local/incoming 三方合并：模板新增项自动增加，模板删除项直接删除，未被用户修改的旧默认值跟随模板更新，用户覆盖值在满足目标合同的前提下保留。只有字段删除、显式 schema 迁移或结构化文件变换时，CLI 才把原文件写入 `back/` 并生成 targeted manifest；opaque 内容不会被整包复制到备份。
+
+`install.json` 使用 schema v2，记录包版本、已安装 workflows、managed manifest 路径和 baseline schema。初始化以项目锁、完整 staging、active fingerprint 复验、原子 rename 与失败 rollback 组成一个事务；冲突不会发布部分结果，也不会创建新的 pending marker。
 
 ## 读取顺序
 
 1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。
-2. 检查 `migration.json`；存在 pending 时停止，仅路由到 `migrate-runtime-state` command。
-3. 从 `../workflows/<workflow>/INDEX.md` 进入 workflow，再通过 `<Path>` 指针进入具体 work 入口文件。
-4. 读取 `<workflow>/status.json`，再读取 `changes/<change>/.status.json` 和当前 work 产物。
-5. 历史 change 只从 `<workflow>/archive/YYYY-MM/<change>/` 读取。
-6. Command 报告位于 `commands/<command>/*.md`，command state 位于 `commands/<command>/state.json`。
-7. 首次 docs-sync 确认后读取 `<workflow>/docs-sync.json`；它分列该 workflow 的项目文档和私有 state 更新范围。
+2. 从 `../workflows/<workflow>/INDEX.md` 进入 workflow，再通过 `<Path>` 指针进入具体 work 入口文件。
+3. 读取 `<workflow>/status.json`，再读取 `changes/<change>/.status.json` 和当前 work 产物。
+4. 历史 change 只从 `<workflow>/archive/YYYY-MM/<change>/` 读取。
+5. Command 报告位于 `commands/<command>/*.md`，command state 位于 `commands/<command>/state.json`。
+6. 首次 docs-sync 确认后读取 `<workflow>/docs-sync.json`；它分列该 workflow 的项目文档和私有 state 更新范围。
 
 ## 写入边界
 
@@ -26,5 +27,5 @@
 - `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar，不进入 `_state`，也不授予越过 workflow 确认规则的权限。
 - `.config` 不是标准目录；只有 workflow 声明时才可使用。
 - Command 报告命名为 `<YYYY-MM-DD>-<scope>-<topic>[-NN].md`，禁止覆盖。
-- `back/` 由 `speculo init` 单一写入，迁移 command 只读；workflow 和其他 commands 不得修改。
-- `install.json` 与 `migration.json` 由 CLI/迁移脚本拥有，workflow 不得创建、修改或删除。
+- `back/` 由 `speculo init` 单一写入；workflow 和 commands 不得修改。
+- `install.json`、`managed.json`、`baselines/` 与 refresh contract 由 CLI 拥有，workflow 不得创建、修改或删除。

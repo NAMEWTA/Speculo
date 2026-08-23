@@ -4,6 +4,23 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.8.0] - 2026-08-23
+
+### Changed
+- **Ownership-driven init refresh**: `speculo init` now replaces managed static assets, preserves opaque runtime files byte-for-byte, reconciles persistent configuration with three-way baselines, and runs explicit structured-state migrators before atomic replacement.
+- **Transactional conflict handling**: refresh uses an exclusive project lock, active-install fingerprints, staging validation, post-swap validation, and rollback. Invalid structured data, unsafe symlinks, concurrent drift, and schema conflicts exit with code `2` without changing the active installation.
+- **Manifest v2**: `.speculo/install.json` points to a per-file SHA-256 ownership manifest, while `.speculo/baselines/` stores the last template defaults used for config reconciliation. Normal refresh no longer duplicates complete runtime state; only destructively changed config or structured files receive targeted backups.
+
+### Removed
+- Removed the `migrate-runtime-state` command and skill from new installations. Existing legacy installations with a pending marker remain unchanged and must complete their already-installed repair command before refreshing.
+
+### Tests
+- Added config reconciliation, v0.7 baseline bootstrap, opaque byte preservation, structured migration, targeted backup, legacy pending, symlink, lock, concurrent drift, staging rollback, workflow selection, and two-command CLI coverage.
+
+---
+
 ## [0.7.6] - 2026-08-19
 
 ### Changed

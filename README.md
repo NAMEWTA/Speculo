@@ -29,16 +29,16 @@ Requires: Node.js ≥ 22.22.3
 
 | Command | Description |
 |---|---|
-| `speculo` / `speculo init [target]` | Initialize or refresh Speculo. Static commands, skills, and selected workflow packages come from the current template; compatible v0.7+ project configuration and complete workflow/command runtime state are migrated. Every refresh retains the previous configuration and runtime state in `speculo/.speculo/back/`. Incompatible or damaged state produces a clean active installation plus a pending migration marker and exits with code `2`. Projects with SpecDev installed also get idempotent `specdev-worktree/` and backup entries in the project-root `.gitignore`. |
+| `speculo` / `speculo init [target]` | Initialize or refresh Speculo. Managed commands, skills, metadata, and selected workflow packages are replaced from the current template. Opaque runtime data is preserved byte-for-byte, structured state uses explicit migrators, and persistent configuration is reconciled against stored baselines. Conflicts stop before replacement with exit code `2`; only destructively changed config or structured files receive a targeted backup. |
 | `speculo version` | Print the installed version and check npm for the latest release. |
 
-Legacy CLI commands `migrate`, `mirror-skills`, and `update`, plus their flags, remain removed. The CLI still exposes only `init` and `version`. When `init` reports pending migration, run the installed Agent command `migrate-runtime-state`; it inventories the read-only backup, writes a dry-run report, requires explicit confirmation for the complete plan, and applies it through staging with rollback.
+Legacy CLI commands `migrate`, `mirror-skills`, and `update`, plus their flags, remain removed. The CLI exposes only `init` and `version`; refresh behavior is automatic and transactional.
 
 ## Installed Runtime Assets
 
 After initialization, the target project gains the following AI agent-callable assets:
 
-### 7 Commands
+### 6 Commands
 
 | Command | Purpose |
 |---|---|
@@ -46,7 +46,6 @@ After initialization, the target project gains the following AI agent-callable a
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
 | `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
 | `handoff` | Persist a compact, resumable context handoff for another agent |
-| `migrate-runtime-state` | Reconcile a pending runtime backup and atomically apply an explicitly confirmed migration plan |
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
@@ -57,8 +56,8 @@ After initialization, the target project gains the following AI agent-callable a
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
-| `migrate-runtime-state` | Validate backups, lock source/target fingerprints, and apply runtime migration plans with rollback |
 | `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
+| `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
 | `speculo-retro` | Retrospective analysis |
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |

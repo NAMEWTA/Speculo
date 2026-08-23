@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.7.6
+- Package: `@namewta/speculo` v0.8.0
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
 - Runtime: Node.js 22.22.3, pnpm@11.1.3
@@ -39,8 +39,8 @@ scripts/              Build, validation, verification tooling
 ## Architecture
 
 - **cli.ts** — Thin command router exposing only init (also the bare command) and version.
-- **index.ts** — `initSpeculo()` builds a staged installation before atomically replacing `<target>/speculo/`. It refreshes template-managed static assets and delegates runtime compatibility to `migrations.ts`.
-- **migrations.ts** — Snapshots the previous runtime, keeps the latest backup, automatically migrates compatible v0.7+ state, and writes the pending marker for Agent-assisted repair.
+- **index.ts** — `initSpeculo()` locks the target, builds and validates a staged installation, detects concurrent drift, then atomically replaces `<target>/speculo/` with rollback.
+- **refresh.ts / config.ts / structured.ts / manifest.ts** — Apply ownership contracts, preserve opaque runtime bytes, reconcile baseline/local/incoming configuration, migrate registered structured state, and write install/managed manifests.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
 - **utils.ts** — Single `pathExists()` helper.
 
@@ -52,16 +52,16 @@ speculo version                          Show local version and check npm for up
 ```
 
 - Bare `speculo` is an alias for `speculo init`; `init` accepts at most one target path and shows the workflow picker in a TTY. Non-TTY installs all template workflows.
-- Every refresh replaces managed commands, skills, workspace/install metadata, and selected workflow static assets. Compatible v0.7+ configuration and complete workflow/command runtime state are migrated into the new installation.
-- Before replacement, the previous `config.json` and `.speculo/` state are saved under `speculo/.speculo/back/`; the previous backup and pending marker are excluded, so only the latest backup is retained.
-- Unknown core schema, malformed JSON, state symlinks, command-state ownership gaps, and workflow index conflicts create a clean active state plus `.speculo/migration.json`. CLI exits `2`; repeated `init` blocks without modification until the Agent command `migrate-runtime-state` completes.
-- Current supported workflows not selected in the refresh remain untouched. Unknown/removed static commands, skills, and workflow packages are removed; runtime evidence remains in active state when compatible or in the backup when pending.
+- Every refresh replaces managed commands, skills, workspace/install metadata, and selected workflow static assets. Opaque runtime data is copied byte-for-byte; registered configuration and structured state use deterministic reconciliation/migration.
+- `.speculo/install.json` schema v2 points to `.speculo/managed.json`; `.speculo/baselines/` stores incoming config defaults. Only config/structured originals changed by deletion or migration are retained under `.speculo/back/`.
+- Invalid structured data, state symlinks, schema conflicts, an active lock, or concurrent drift block before replacement and exit `2`; no new pending marker is created.
+- Current supported workflows not selected in the refresh remain untouched. Unknown/removed static commands, skills, and workflow packages are removed; runtime evidence remains active when preserved, while conflicts stop before replacement.
 
 ## Template Asset Layout
 
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
-- **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, migrate-runtime-state, retro, status
-- **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, migrate-runtime-state, optimize-codex-config, speculo-retro, engineering-standards-builder, writing-great-skills
+- **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, retro, status
+- **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, optimize-codex-config, source-code-zip, speculo-retro, engineering-standards-builder, writing-great-skills
 - **template/workflows/** — specdev（14 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, E-engineering-cognitive-mentor, G-grill-with-docs, I-implement, I-init-setup, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder）, person（2 work entries: M-mao-zedong-cognitive-os, S-steelman-deliberation）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
@@ -87,9 +87,10 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 
 ## Validation Pipeline
 
-- `pnpm validate-assets` 依次运行四步：
+- `pnpm validate-assets` 依次运行五步：
   - `check-specdev-source-parity.mjs` — 确认 `temp/skills` 的 26 个上游来源全部登记为已采用、明确排除或待处理，并校验已采用目标 hash。
   - `generate-specdev-canonical.mjs --check` — 确认 `template/canonical/canonical-specdev-*` 与源文件闭包一致（stale 即失败）。
+  - `validate-refresh-contracts.mjs` — 校验 core/workflow ownership contract、路径边界、配置模板与已移除迁移资产。
   - `validate-framework-assets.mjs` — Validates INDEX frontmatter/sections, `_state/` skeleton, `<Path>` root aliases, docs-sync templates, agent skills.
   - `check-template-links.mjs` — Validates markdown links and `<Path>` pointers in `template/` (and markdown links in `.agents/`).
 - `.agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .` — 维护者 skill 自带的最低门校验器，检查 skill 链接、frontmatter、`<Path>`、command/workflow/work 结构；由各 speculo-write-* skill 手动调用。
@@ -100,8 +101,8 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 
 - **Do not** put `docs-sync.json` in workflow `_state/` template — it's a lazy command sidecar.
 - **Do not** delete initialized workflow configuration, permanent knowledge, sidecars, or command state during a compatible refresh.
-- **Do not** run workflows or repeat `speculo init` while `.speculo/migration.json` is pending; route only to `migrate-runtime-state`.
-- **Do not** modify `.speculo/back/` from workflows or Agent commands; the migration skill treats it as an immutable source.
+- **Do not** mutate registered structured state or config from `init` without an explicit migrator and baseline reconciliation.
+- **Do not** modify `.speculo/back/` from workflows or Agent commands; it is CLI-owned targeted rollback evidence.
 - **Do not** replace an existing installation until staging the complete next installation succeeds.
 - **Do not** retain legacy workflow directories (such as `workflows/dev` or `workflows/doc`) in a refreshed installation.
 

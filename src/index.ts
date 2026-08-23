@@ -1,11 +1,7 @@
 import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import {
-  assertNoPendingMigration,
-  initializeRuntimeManifest,
-  migrateRuntimeState,
-  type RuntimeMigrationResult,
-} from "./migrations.js";
+import { fingerprintTree } from "./manifest.js";
+import { assertNoLegacyPending, prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
@@ -21,12 +17,13 @@ export type SpeculoCommandResult = {
   target: string;
   mode: "init" | "refresh";
   assets: string[];
-  migration: RuntimeMigrationResult;
+  refresh: RefreshSummary;
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
   selection?: WorkflowSelection;
+  beforeCommit?: (installRoot: string) => Promise<void>;
 };
 
 const CORE_ASSETS = [".speculo", "commands", "skills", "config.json"] as const;
@@ -99,12 +96,12 @@ function generateSpeculoContent(selection: WorkflowSelection): string {
     "",
     "- ./speculo/.speculo/workspace.json — 工作区根别名配置",
     "- ./speculo/config.json — 项目配置文件",
-    "- ./speculo/.speculo/migration.json — 运行时迁移状态（存在时读取）",
     "",
     "若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。",
     "此时必须提示用户：请先运行 speculo init 完成初始化配置。",
     "",
-    "若 migration.json 存在且 status 为 pending，必须停止所有 workflow 读取和状态写入，提示用户运行 migrate-runtime-state command；只有该 command 可以在 pending 期间执行。",
+    "`speculo init` 会直接替换受管理静态资产，并依据 refresh contract 保留用户 runtime state、合并持久配置。",
+    "结构化状态不兼容时初始化会在替换前停止，当前安装保持不变。",
     "",
   ];
   if (selection.workflowIds.length > 0) {
@@ -202,7 +199,7 @@ async function buildStagedInstall(
   catalog: WorkflowCatalog,
   selection: WorkflowSelection,
   existed: boolean,
-): Promise<{ stagedRoot: string; migration: RuntimeMigrationResult }> {
+): Promise<{ stagedRoot: string; refresh: RefreshSummary }> {
   await mkdir(target, { recursive: true });
   const stagedRoot = await mkdtemp(join(target, ".speculo-init-stage-"));
   try {
@@ -210,16 +207,15 @@ async function buildStagedInstall(
     await copyUnselectedCurrentWorkflows(catalog, selection, previousRoot, stagedRoot);
     for (const workflowId of selection.workflowIds) await copySelectedWorkflow(packageRoot, stagedRoot, workflowId);
     const unselectedWorkflowIds = await installedUnselectedWorkflowIds(catalog, selection, previousRoot);
-    const migration = existed
-      ? await migrateRuntimeState({
-          packageRoot,
-          previousRoot,
-          stagedRoot,
-          selectedWorkflowIds: selection.workflowIds,
-          unselectedWorkflowIds,
-        })
-      : await initializeRuntimeManifest(packageRoot, stagedRoot, selection.workflowIds);
-    return { stagedRoot, migration };
+    const refresh = await prepareRefresh({
+      packageRoot,
+      previousRoot,
+      stagedRoot,
+      selectedWorkflowIds: selection.workflowIds,
+      installedWorkflowIds: [...new Set([...selection.workflowIds, ...unselectedWorkflowIds])].sort(),
+      existed,
+    });
+    return { stagedRoot, refresh };
   } catch (error) {
     await rm(stagedRoot, { recursive: true, force: true });
     throw error;
@@ -227,16 +223,23 @@ async function buildStagedInstall(
 }
 
 async function replaceInstall(stagedRoot: string, root: string): Promise<void> {
+  const expectedFingerprint = await fingerprintTree(stagedRoot);
   if (!(await pathExists(root))) {
     await rename(stagedRoot, root);
+    if (await fingerprintTree(root) !== expectedFingerprint) {
+      await rename(root, stagedRoot);
+      throw new Error("post-install validation failed");
+    }
     return;
   }
   const backupRoot = stagedRoot + "-backup";
   await rename(root, backupRoot);
   try {
     await rename(stagedRoot, root);
+    if (await fingerprintTree(root) !== expectedFingerprint) throw new Error("post-install validation failed");
   } catch (error) {
     try {
+      if (await pathExists(root)) await rename(root, stagedRoot);
       await rename(backupRoot, root);
     } catch (rollbackError) {
       throw new Error("Failed to replace Speculo installation and restore the previous installation: " + String(rollbackError));
@@ -251,25 +254,43 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
   const existed = await pathExists(root);
-  if (existed) await assertNoPendingMigration(root);
-  const catalog = await discoverWorkflowCatalog(packageRoot);
-  const selection = await resolveSelection(packageRoot, root, options);
-  let stagedRoot: string | undefined;
-  let migration: RuntimeMigrationResult | undefined;
+  await mkdir(target, { recursive: true });
+  const lockRoot = join(target, ".speculo-init.lock");
   try {
+    await mkdir(lockRoot);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    throw new RefreshBlockedError([{ code: "refresh-locked", path: lockRoot, message: "another speculo init is already running" }]);
+  }
+  let stagedRoot: string | undefined;
+  let refresh: RefreshSummary | undefined;
+  try {
+    if (existed) await assertNoLegacyPending(root);
+    const catalog = await discoverWorkflowCatalog(packageRoot);
+    const selection = await resolveSelection(packageRoot, root, options);
+    const initialFingerprint = await fingerprintTree(root);
     const staged = await buildStagedInstall(packageRoot, target, root, catalog, selection, existed);
     stagedRoot = staged.stagedRoot;
-    migration = staged.migration;
+    refresh = staged.refresh;
+    await options.beforeCommit?.(root);
+    if (await fingerprintTree(root) !== initialFingerprint) {
+      throw new RefreshBlockedError([{
+        code: "concurrent-drift",
+        path: "speculo",
+        message: "the active installation changed while refresh staging was in progress",
+      }]);
+    }
     await replaceInstall(stagedRoot, root);
     stagedRoot = undefined;
+    const assets = [".speculo", "config.json", "commands", "skills"];
+    assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
+    const gitignoreResult = await ensureRuntimeIgnores(target, root);
+    assets.push(gitignoreResult);
+    assets.push(...await writeAgentFiles(target, packageRoot, selection));
+    if (!refresh) throw new Error("Speculo refresh result was not produced");
+    return { target, mode: existed ? "refresh" : "init", assets, refresh };
   } finally {
     if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
+    await rm(lockRoot, { recursive: true, force: true });
   }
-  const assets = [".speculo", "config.json", "commands", "skills"];
-  assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
-  const gitignoreResult = await ensureRuntimeIgnores(target, root);
-  assets.push(gitignoreResult);
-  assets.push(...await writeAgentFiles(target, packageRoot, selection));
-  if (!migration) throw new Error("Speculo migration result was not produced");
-  return { target, mode: existed ? "refresh" : "init", assets, migration };
 }

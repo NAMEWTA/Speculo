@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "runtime_root": ".speculo",
+  "managed_roots": [
+    "commands",
+    "skills",
+    "workflows"
+  ],
+  "managed_metadata": [
+    ".speculo/README.md",
+    ".speculo/workspace.json",
+    ".speculo/refresh-contract.json"
+  ],
+  "reserved_runtime": [
+    "README.md",
+    "workspace.json",
+    "refresh-contract.json",
+    "install.json",
+    "managed.json",
+    "migration.json",
+    "baselines",
+    "back"
+  ],
+  "project_config": {
+    "path": "config.json",
+    "baseline": ".speculo/baselines/config.json",
+    "schema_version": 1,
+    "additional_properties": true
+  }
+}
