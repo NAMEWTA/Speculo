@@ -4,7 +4,10 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.8.1] - 2026-08-24
+
+### Added
+- **SpecDev `E-eli5` Work**：完整中文转写并保留原作者“像对五岁的我解释、HTML、大图、少字”的核心，将图解持久化到当前 change 的 `eli5.html`，支持状态恢复和阶段校验。
 
 ## [0.8.0] - 2026-08-23
 

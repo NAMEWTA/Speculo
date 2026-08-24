@@ -34,6 +34,7 @@ const EXPECTED_WORKS = new Set([
   "A-archive-and-consolidate",
   "C-code-review",
   "D-diagnose-bugs",
+  "E-eli5",
   "E-engineering-cognitive-mentor",
   "G-grill-with-docs",
   "I-implement",
@@ -98,6 +99,7 @@ const VALID_STAGES = new Set([
   "triage",
   "diagnosis",
   "grill",
+  "eli5",
   "spec",
   "tickets",
   "goal-plan",
@@ -167,6 +169,7 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "source.md",
   "architecture-review.md",
   "architecture-review.html",
+  "eli5.html",
   "wayfinder-map.md",
   "design-tree.json",
 ]);
@@ -821,6 +824,13 @@ function capabilityChecks(root) {
       ],
     ],
     [
+      "eli5",
+      [
+        join(root, "E-eli5", "E-eli5.md"),
+        ["五岁", "$ARGUMENTS", "大图", "少字", "eli5.html"],
+      ],
+    ],
+    [
       "wayfinder",
       [
         join(root, "W-wayfinder", "W-wayfinder.md"),
@@ -1223,6 +1233,23 @@ function validatePrototypes(change, required, errors) {
     }
   }
   return paths;
+}
+
+function validateEli5(change, required, errors) {
+  const path = join(change, "eli5.html");
+  if (!isFile(path)) {
+    if (required) errors.push("eli5 stage requires eli5.html");
+    return null;
+  }
+
+  const html = readText(path);
+  for (const marker of ["<!doctype html", "<html", "<head", "<title", "<body"]) {
+    if (!html.toLowerCase().includes(marker)) errors.push(`eli5.html: missing '${marker}'`);
+  }
+  if (!/<(?:img|picture|svg|canvas)\b|\brole=["']img["']/i.test(html)) {
+    errors.push("eli5.html: requires a picture, SVG, canvas, or element with role=img");
+  }
+  return path;
 }
 
 function validateSpec(path, errors, warnings) {
@@ -2085,6 +2112,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors);
+  validateEli5(change, stage === "eli5", errors);
 
   const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage);
   const specPath = join(change, "spec.md");

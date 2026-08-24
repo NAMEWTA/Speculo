@@ -3,8 +3,8 @@ id: specdev
 type: workflow
 workflow: specdev
 name: SpecDev Workflow
-description: 以本地工件为唯一开发权威，从来源冻结、诊断、设计、原型、规格、Ticket、编排和审查推进到证据驱动实现、远程 reconcile 与知识归档。
-keywords: [specdev, local-first, 规格驱动开发, decision-complete, prototype, code-review, TDD, 证据]
+description: 以本地工件为唯一开发权威，从来源冻结、诊断、设计、五岁图解、原型、规格、Ticket、编排和审查推进到证据驱动实现、远程 reconcile 与知识归档。
+keywords: [specdev, local-first, 规格驱动开发, decision-complete, eli5, prototype, code-review, TDD, 证据]
 ---
 
 # SpecDev Workflow
@@ -25,7 +25,7 @@ SpecDev 将“理解、决定、规划、执行、验证、沉淀”拆成职责
         ↓
 Triage 冻结为本地 Source
         ↓
-Diagnose / Grill / Wayfinder / Prototype / Code Review / Architecture Review
+Diagnose / Grill / ELI5 / Wayfinder / Prototype / Code Review / Architecture Review
         ↓
 Spec             外部行为、范围、验收合同与关键约束
         ↓
@@ -59,6 +59,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/eli5.html</Path>`
 
 工件职责和冲突裁决位于 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`。
 
@@ -107,6 +108,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/eli5.html</Path>`
 
 ## 全局治理原则
 
@@ -195,6 +197,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 | 本地 change 完成且来源可关闭 | T-triage reconcile | A |
 | 疑难 bug 或性能回归 | D-diagnose-bugs | S / T / I / R / W |
 | 模糊但可通过决策访谈收敛 | G-grill-with-docs | P / S / T / W |
+| 需要向五岁、零背景读者做大图少字的解释 | E-eli5 | 返回用户 / 继续当前 change |
 | 路径超出单次上下文 | W-wayfinder | G / P / D / S / T |
 | 需要用代码回答逻辑/UI 问题 | P-prototype | G / S / T / I |
 | 固定点 diff、branch 或 PR review | C-code-review | completed / T / S / G |
@@ -213,6 +216,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - **A-archive-and-consolidate** — 归档与沉淀：校验本地完成与远程 reconcile 门，复用全局归档能力移动 completed change 并提升当前知识，或从代码访谈形成可归档知识 change。
 - **C-code-review** — 代码审查：将 commit、branch、tag、merge-base 或 PR 解析为本地不可变固定点，执行隔离的标准轴与规范轴审查并持久化可恢复报告。
 - **D-diagnose-bugs** — 诊断 Bug：先建立会在精确症状上变红的紧凑反馈回路，再通过最小化、排名假设和单变量探针确认根因，输出修复契约而不实施生产修复。
+- **E-eli5** — 五岁解释：像对五岁的我一样解释一个主题。当用户输入 /eli5 <主题>，或要求用极其简单的图片解释某件事如何运作时，生成大图、少字的持久化 HTML 图解。
 - **E-engineering-cognitive-mentor** — 工程认知导师：面向 Bug、项目源码、需求技术方案、架构设计与陌生技术领域的非执行型认知指导 Work；以证据、因果 Why、候选方案对比和逐轮澄清帮助用户形成可复述理解，并将完整问答轨迹持续持久化到当前 change。
 - **G-grill-with-docs** — 设计访谈（带文档）：以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护当前 change 的设计树、日志、领域上下文和架构决策。
 - **I-implement** — 实现：基于 Ready Ticket 或获批小型 Spec 执行设计检查、TDD、动态派单、双轴审查、按 Goal Plan 选择的 current workspace 或 Ticket worktree 提交、直接父分支或候选合并验证和 Lead Evidence 回写。
@@ -241,7 +245,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|review|prototype|wayfinder|complete> \
+  --stage <triage|diagnosis|grill|eli5|spec|tickets|goal-plan|implement|review|prototype|wayfinder|complete> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 

@@ -706,6 +706,26 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
+  it("requires a complete visual HTML artifact for the eli5 stage", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+
+      const missing = runValidator(root, "eli5");
+      assert.equal(missing.status, 1);
+      assert.match(missing.stdout + missing.stderr, /eli5 stage requires eli5\.html/);
+
+      await writeFile(
+        join(root, "eli5.html"),
+        "<!doctype html><html><head><title>雨</title></head><body><svg role=\"img\"></svg></body></html>\n",
+      );
+      const valid = runValidator(root, "eli5");
+      assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
   it("rejects mutable review inputs and machine-specific prototype locators", async () => {
     const root = await fixture();
     try {
