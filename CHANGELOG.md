@@ -4,6 +4,11 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.2] - 2026-08-24
+
+### Fixed
+- **SpecDev reference closure**: replaced ambiguous bare filenames in initialization and external subagent delivery contracts with complete static or project-relative paths, restoring package self-check and canonical generation.
+
 ## [0.8.1] - 2026-08-24
 
 ### Added

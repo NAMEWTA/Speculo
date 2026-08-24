@@ -82,7 +82,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 - `<Path>{roots.state}/specdev/research/</Path>`
 - `<Path>{roots.state}/specdev/archive/</Path>`
 
-若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work；不得在 Work 内迁移、兼容或猜测旧状态。`speculo init` 只会对 `runtime-contract.json` 已登记且存在显式 migrator 的旧版本升级，其他冲突会保留当前安装并报告具体 blocker。只有状态不存在时才从当前 schema 模板创建。
+若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work；不得在 Work 内迁移、兼容或猜测旧状态。`speculo init` 只会对 `<Path>{roots.workflows}/specdev/runtime-contract.json</Path>` 已登记且存在显式 migrator 的旧版本升级，其他冲突会保留当前安装并报告具体 blocker。只有状态不存在时才从当前 schema 模板创建。
 
 从模板生成：
 

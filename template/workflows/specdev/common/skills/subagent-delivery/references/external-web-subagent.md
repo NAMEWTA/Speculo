@@ -63,11 +63,11 @@ Lead 只在本地目标 workspace 中应用候选，并重新检查实际 diff�
 
 ### review
 
-固定审查 SHA/文件快照和合同后再派单。返回 `RETURN.md` 与 `FINDINGS.md`，每条 finding 包含严重度、文件/符号/行定位、触发条件、证据、影响、建议和置信度。不存在可定位证据的风格偏好不得冒充缺陷。
+固定审查 SHA/文件快照和合同后再派单。返回 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/RETURN.md</Path>` 与 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/FINDINGS.md</Path>`，每条 finding 包含严重度、文件/符号/行定位、触发条件、证据、影响、建议和置信度。不存在可定位证据的风格偏好不得冒充缺陷。
 
 ### research
 
-`DISPATCH.md` 必须写明决策问题、子问题、来源优先级、时效要求、允许域/禁止域、claim-level 引用格式和停止条件。provider 应：
+`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>` 必须写明决策问题、子问题、来源优先级、时效要求、允许域/禁止域、claim-level 引用格式和停止条件。provider 应：
 
 - 先分解查询，再优先读取规范、官方文档、原始论文、源码或其他一手材料；
 - 对关键 claim 记录 URL、标题、发布/更新时间（可得时）、访问时间、支持片段摘要与适用范围；
@@ -85,7 +85,7 @@ SOURCES.json
 RAW-NOTES/                 # 仅保存必要、可合法保留的摘录或工具结果，可选
 ```
 
-`SOURCES.json` 中每个来源至少记录 `url`、`title`、`publisher`、`published_or_updated`、`accessed_at`、`claims` 和 `limitations`。
+`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/SOURCES.json</Path>` 中每个来源至少记录 `url`、`title`、`publisher`、`published_or_updated`、`accessed_at`、`claims` 和 `limitations`。
 
 ### test-observation
 
@@ -113,7 +113,7 @@ provider 能下载 ZIP 时，将原始字节直接保存到唯一 inbound attemp
 provider 只能返回网页文本或散列文件时：
 
 1. 先原样保存页面文本、导出文件和会话 locator 到 `raw/`；
-2. Lead 创建 `staging/RETURN.md`，记录原始响应定位、dispatch identity、缺失字段和捕获方式；
+2. Lead 创建 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/RETURN.md</Path>`，记录原始响应定位、dispatch identity、缺失字段和捕获方式；
 3. 将候选文件、patch、来源记录放入同一 inbound staging；
 4. 使用 source-code-zip 生成本次 attempt 的 return ZIP；
 5. 保存 ZIP SHA-256 与文件清单，不覆盖原始响应。

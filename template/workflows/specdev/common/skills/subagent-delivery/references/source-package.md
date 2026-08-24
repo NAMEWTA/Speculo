@@ -39,7 +39,7 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 
 ### 必需文件
 
-`DISPATCH.md` 至少包含：
+`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>` 至少包含：
 
 - dispatch identity、task kind、目标与成功定义；
 - 固定 checkpoint、repository label、branch/workspace label；
@@ -50,7 +50,7 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 - 按 task kind 定义的返回文件、字段、引用与未验证声明要求；
 - Lead 本地验收将重新执行的检查。
 
-`MANIFEST.json` 至少包含：
+`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 至少包含：
 
 ```json
 {
@@ -76,7 +76,7 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 }
 ```
 
-归档 SHA-256 不写入归档内部的 `MANIFEST.json`，避免自引用；它写入相邻 `.sha256` 文件并记录到 Dispatch Packet/Evidence。
+归档 SHA-256 不写入归档内部的 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>`，避免自引用；它写入相邻 `.sha256` 文件并记录到 Dispatch Packet/Evidence。
 
 ### 可选内容
 
@@ -85,7 +85,7 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 - `context/workspace.diff`：仅在用户明确授权发送受保护未提交改动时包含，并在 manifest 记录基线和差异范围；
 - `context/expected-output/`：返回模板或 schema。
 
-纯公开网页 research 可以不含 `source/`，但仍需 `DISPATCH.md`、`MANIFEST.json` 和必要 `context/`。implementation/review 若缺少足以独立判断的源码或合同，不得靠 provider 猜测，应返回 blocked 或改用原生通道。
+纯公开网页 research 可以不含 `source/`，但仍需 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 和必要 `context/`。implementation/review 若缺少足以独立判断的源码或合同，不得靠 provider 猜测，应返回 blocked 或改用原生通道。
 
 ## 3. 范围与排除
 
@@ -115,7 +115,7 @@ ARCHIVE="${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.zip"
 ZIP_SCRIPT="speculo/skills/source-code-zip/scripts/zip_source_code.js"
 ```
 
-若当前执行环境仍位于 template 源树而不是安装后的 workspace，按 `workspace.json` 中 `skills` 根别名的实际解析结果定位脚本，不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。
+若当前执行环境仍位于 template 源树而不是安装后的 workspace，从已解析的公共 roots 定位 `<Path>{roots.skills}/source-code-zip/scripts/zip_source_code.js</Path>`，不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。
 
 必须先预览：
 
@@ -137,7 +137,7 @@ node "${ZIP_SCRIPT}" "${STAGING}" \
   --output "${ARCHIVE}"
 ```
 
-这里使用 `--all-files`，因为 staging 已由 Lead 精选，且必须纳入 `DISPATCH.md`、`MANIFEST.json`、patch 和普通项目文件；source-code-zip 的默认 IGNORE 仍然生效。使用 `--contents-only` 使 provider 在 ZIP 根目录直接看到权威文件。
+这里使用 `--all-files`，因为 staging 已由 Lead 精选，且必须纳入 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>`、patch 和普通项目文件；source-code-zip 的默认 IGNORE 仍然生效。使用 `--contents-only` 使 provider 在 ZIP 根目录直接看到权威文件。
 
 禁止：
 
@@ -155,7 +155,7 @@ node -e 'const fs=require("fs"),c=require("crypto");const p=process.argv[1],h=c.
   > "${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.sha256"
 ```
 
-在 Packet、`SESSION.md` 和后续 Evidence 中记录 project-relative ZIP locator、size、SHA-256、secret scan、included/excluded 摘要和 workspace diff 摘要。只有完成这些记录后才能上传。
+在 Packet、`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/SESSION.md</Path>` 和后续 Evidence 中记录 project-relative ZIP locator、size、SHA-256、secret scan、included/excluded 摘要和 workspace diff 摘要。只有完成这些记录后才能上传。
 
 ## 5. Provider 返回与 return ZIP
 
@@ -183,7 +183,7 @@ SOURCES.json               # research 可选
 CHECKS.md                  # implementation/test-observation 可选
 ```
 
-`RETURN.md` 必须标明 `dispatch_id`、`attempt-id`、provider/session locator、原始响应 locator、捕获方式、provider 原始字段与 Lead 补写字段。Lead 补写使用 `captured_by_lead` 标识。
+`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/RETURN.md</Path>` 必须标明 `dispatch_id`、`attempt-id`、provider/session locator、原始响应 locator、捕获方式、provider 原始字段与 Lead 补写字段。Lead 补写使用 `captured_by_lead` 标识。
 
 使用同一个 source-code-zip Skill 预览并生成：
 
@@ -230,7 +230,7 @@ node "${ZIP_SCRIPT}" "${RETURN_STAGING}" \
 - 发送内容或用户授权范围；
 - provider、数据保留边界、允许域或工具权限。
 
-固定输入不变但重新请求答案时生成新的 `attempt-id` 和 return ZIP。任何包都不得覆盖；`ACCEPTANCE.md` 记录 accepted/rejected/blocked、Lead 本地验证、未验证项和恢复条件。
+固定输入不变但重新请求答案时生成新的 `attempt-id` 和 return ZIP。任何包都不得覆盖；`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/ACCEPTANCE.md</Path>` 记录 accepted/rejected/blocked、Lead 本地验证、未验证项和恢复条件。
 
 `temp/subagent-delivery/` 是持久化交付证据，不在 dispatch/accept 中自动删除。清理必须由 Lead 在任务外显式决定，并确保调用方 Evidence 不再依赖唯一 locator。
 
