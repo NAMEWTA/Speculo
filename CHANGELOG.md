@@ -4,6 +4,12 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.3] - 2026-08-24
+
+### Changed
+- **SpecDev `E-eli5` Work**: retargeted explanations from five-year-olds to first-year university students with no professional background. ELI5 now produces Markdown with ASCII structure, data-flow, call-flow, and state diagrams instead of an HTML visual.
+- **ELI5 artifact continuity**: each change now appends `01_<topic>.md`, `02_<topic>.md`, and later diagrams without renumbering existing files. `eli_index.md` is the authoritative index of each file, topic, and short description; validation checks continuous numbering, index/file agreement, Markdown sections, and ASCII diagrams.
+
 ## [0.8.2] - 2026-08-24
 
 ### Fixed

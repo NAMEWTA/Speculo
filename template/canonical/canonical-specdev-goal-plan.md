@@ -559,7 +559,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
 | 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | 原型记录 | `specdev/changes/{change}/prototypes/{prototype-id}/record.md` | 一个问题、分支、资产、答案、promotion 和清理 | 生产实现或多个问题的计划 |
-| 五岁图解 | `specdev/changes/{change}/eli5.html` | 面向五岁、零背景读者的大图少字解释 | 产品决定、架构决定或实现授权 |
+| 零基础新生图解 | `specdev/changes/{change}/eli_index.md` 与 `specdev/changes/{change}/<number>_<topic>.md` | 面向刚上大一、没有专业背景读者的 Markdown 与 ASCII 图解；索引按序号持续追加 | 产品决定、架构决定或实现授权 |
 | Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |

@@ -706,18 +706,48 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
-  it("requires a complete visual HTML artifact for the eli5 stage", async () => {
+  it("requires indexed Markdown artifacts with ASCII diagrams for the eli5 stage", async () => {
     const root = await fixture();
     try {
       await writeStatus(root);
 
       const missing = runValidator(root, "eli5");
       assert.equal(missing.status, 1);
-      assert.match(missing.stdout + missing.stderr, /eli5 stage requires eli5\.html/);
+      assert.match(missing.stdout + missing.stderr, /eli5 stage requires eli_index\.md/);
 
       await writeFile(
-        join(root, "eli5.html"),
-        "<!doctype html><html><head><title>雨</title></head><body><svg role=\"img\"></svg></body></html>\n",
+        join(root, "01_rain-cycle.md"),
+        [
+          "# 雨从哪里来",
+          "",
+          "## 先看全图",
+          "",
+          "```text",
+          "[水] -> [水蒸气] -> [云] -> [雨]",
+          "```",
+          "",
+          "## 一步一步看",
+          "",
+          "太阳让水变成水蒸气，水蒸气在天上聚成云。",
+          "",
+          "## 术语小词典",
+          "",
+          "- 看不见的水汽（蒸发）：水慢慢跑到空气里。",
+          "",
+          "## 你现在能复述什么",
+          "",
+          "- 雨开始前，水先去了哪里？",
+        ].join("\n"),
+      );
+      await writeFile(
+        join(root, "eli_index.md"),
+        [
+          "# ELI5 图解索引",
+          "",
+          "| 编号 | 文件 | 主题 | 简介 |",
+          "| --- | --- | --- | --- |",
+          "| 01 | 01_rain-cycle.md | 雨从哪里来 | 解释水如何变成雨。 |",
+        ].join("\n"),
       );
       const valid = runValidator(root, "eli5");
       assert.equal(valid.status, 0, valid.stdout + valid.stderr);
