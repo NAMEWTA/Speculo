@@ -53,6 +53,14 @@
 - 变量在当前入口中定义；
 - 路径不会穿越到其他 workflow 或 command 的私有 namespace。
 
+标准 owner namespace 为：
+
+- command：`{roots.state}/commands/<command>/`；
+- 独立 skill：`{roots.state}/skills/<skill>/`；
+- workflow：`{roots.state}/<workflow>/`。
+
+模板 instructions 中的持久化路径必须写成完整 `<Path>{roots.state}/...</Path>`，不得写死 `speculo/.speculo/...`。Command/skill/workflow 的静态跨包引用同样使用对应 root alias；同一 skill 包内的渐进披露链接仍使用相对 Markdown 链接。
+
 ### 项目路径
 
 指向安装项目中的代码、测试或文档。使用项目根相对路径，或明确说明由用户/仓库探索得到。不得持久化机器绝对路径。
@@ -77,6 +85,8 @@
 | `..` 穿越到其他包 | 公共 root alias |
 | 裸文件名或裸 work id | 完整 `<Path>` 或明确逻辑 id 字段 |
 | `{roots.workflows}/<wf>/_state/...` 运行时写入 | `{roots.state}/<wf>/...` |
+| `speculo/.speculo/commands/...` 或 `speculo/.speculo/skills/...` | `<Path>{roots.state}/commands/...</Path>` 或 `<Path>{roots.state}/skills/...</Path>` |
+| `../skills/<skill>/SKILL.md` 等跨包穿越 | `<Path>{roots.skills}/{skill}/SKILL.md</Path>` |
 | `docs/*-authoring.md` 等不存在的契约 | 本技能包中的直接 reference |
 | 指向生成 canonical 作为源 | 指向原始 skill/command/workflow 源 |
 

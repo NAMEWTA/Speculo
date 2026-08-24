@@ -85,8 +85,9 @@ Skill 可以：
 - 返回文本、计划或结构化结果；
 - 修改 `template/` 中属于自身维护任务的静态资产；
 - 在运行时写调用方明确提供且已获授权的目标。
+- 独立激活且确有恢复需求时，写入自身明确声明的 `{roots.state}/skills/<skill>/` namespace。
 
-Skill 不可以自行决定 command 报告路径、workflow state namespace 或外部副作用授权。这些由 command/workflow 所有者传入。
+独立 Skill state 必须声明 schema、生成时机、更新原子性和恢复语义；一次运行的 change 使用 `<YYYY-MM-DD>-<kebab-topic>[-NN]` 且不得覆盖。Skill 不可以自行决定 command 报告路径、workflow state namespace 或外部副作用授权。这些由 command/workflow 所有者传入。
 
 ## 合并与拆分
 

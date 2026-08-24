@@ -15,13 +15,13 @@
 
 ## State v4
 
-默认路径为 `speculo/.speculo/commands/docs-sync/state.json`：
+默认路径为 `<Path>{roots.state}/commands/docs-sync/state.json</Path>`：
 
 ```json
 {
   "schema_version": 4,
   "command": "docs-sync",
-  "state_path": "speculo/.speculo/commands/docs-sync/state.json",
+  "state_path": "<Path>{roots.state}/commands/docs-sync/state.json</Path>",
   "baseline": { "mode": "explicit", "sha": null },
   "last_range": { "from_sha": null, "to_sha": null },
   "project_targets": [],

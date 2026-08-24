@@ -88,7 +88,7 @@ GitHub Release 的正文(body)**事后可改**(tag 不可改、npm 包不可改�
 
 ### 3.1 命令行(推荐)
 
-`notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留回填记录或 release notes，由调用方写入 `speculo/.speculo/commands/<command>/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`。
+`notes_file` 只是一次性传给 `gh --notes-file` 的中间文件；若需要保留回填记录或 release notes，由调用方写入 `<Path>{roots.state}/commands/{command}/{date}-{scope}-{topic}[-NN].md</Path>`。
 
 ```bash
 VERSION="0.0.10"

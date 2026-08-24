@@ -79,7 +79,7 @@ describe("Speculo init refresh", () => {
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const root = join(target, "speculo");
-      const opaque = join(root, ".speculo", "custom", "broken.json");
+      const opaque = join(root, ".speculo", "skills", "upstream-fork-sync", "state.json");
       await mkdir(dirname(opaque), { recursive: true });
       await writeFile(opaque, Buffer.from([0, 255, 10, 123, 0, 1]));
       const before = await hash(opaque);

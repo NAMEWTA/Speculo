@@ -25,7 +25,7 @@
 
 ## Gate 4 — 所有权
 
-逐个写路径标记 owner：workflow、change、command、docs-sync 或项目。发现跨 owner 写入时，移动职责或增加明确的调用/确认边界。所有写入只有一个 owner 后完成。
+逐个写路径标记 owner：workflow、change、command、独立 skill、docs-sync 或项目。独立 skill 只能拥有 `{roots.state}/skills/<skill>/`；被 command/work 调用时使用调用方提供的 owner 路径。发现跨 owner 写入时，移动职责或增加明确的调用/确认边界。所有写入只有一个 owner 后完成。
 
 ## Gate 5 — 过程质量
 

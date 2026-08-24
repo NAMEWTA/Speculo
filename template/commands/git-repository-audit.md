@@ -24,13 +24,13 @@ keywords: [git-audit, git-inventory, repository, commit, merge, contribution, �
 唯一持久化产物：
 
 ```text
-speculo/.speculo/commands/git-repository-audit/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
+<Path>{roots.state}/commands/git-repository-audit/{date}-{scope}-{topic}[-NN].md</Path>
 ```
 
-实际路径必须通过 `speculo/.speculo/workspace.json` 的 `roots.state` 解析：
+实际路径必须通过 `<Path>{roots.state}/workspace.json</Path>` 的 `roots.state` 解析：
 
 ```text
-{roots.state}/commands/git-repository-audit/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
+<Path>{roots.state}/commands/git-repository-audit/{date}-{scope}-{topic}[-NN].md</Path>
 ```
 
 规则：
@@ -105,7 +105,7 @@ paths:
   include: []
   exclude:
     - ".git/**"
-    - "speculo/.speculo/**"
+    - "<Path>{roots.state}/**</Path>"
     - ".venv/**"
     - "node_modules/**"
     - "vendor/**"
@@ -161,13 +161,13 @@ options:
 
 ### 1. 解析 Speculo 工作区
 
-1. 从当前目录向上寻找 `speculo/.speculo/workspace.json`。
+1. 从当前目录向上寻找 `<Path>{roots.state}/workspace.json</Path>`。
 2. 第一个命中的目录为 `project_root`；多个候选或用户目录不一致时停止消歧。
 3. 验证 `workspace.json`：
    - 非空且是有效 JSON；
    - `path_base` 为 `project-root`；
    - roots 是 POSIX 项目相对路径。
-4. 读取 `speculo/config.json`。
+4. 读取 `<Path>{roots.config}</Path>`。
 5. 任一初始化文件缺失、为空或不可解析时，停止并提示运行：
 
 ```bash
@@ -208,7 +208,7 @@ uv run --no-project python -V
 
 ```text
 .git
-speculo/.speculo
+<Path>{roots.state}</Path>
 .venv
 node_modules
 vendor

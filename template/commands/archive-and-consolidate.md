@@ -12,7 +12,7 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 ## 报告
 
-统一写入：`speculo/.speculo/commands/archive-and-consolidate/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
+统一写入：`<Path>{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md</Path>`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
 
 报告必须记录：`mode`（dry-run 或 executed）、选中的 workflow、归档计划、合并计划、清理候选、用户确认状态和最终结果。
 
@@ -22,9 +22,9 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 归档并合并单个已完成 change 的知识。
 
-1. 读取 `../skills/archive-and-consolidate/SKILL.md`，执行路径解析（Step 0），解析 `speculo/config.json`（不存在时静默降级）。
+1. 读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`，执行路径解析（Step 0），解析 `<Path>{roots.config}</Path>`（不存在时静默降级）。
 2. 选择一个 `change_status: completed` 的 change。
-3. 目标为 SpecDev 时先读取其 `common/rules/change-completion.md` 与 `triage.md`：完成门必须通过，`external_action` 必须为 `closed | waived | not-applicable`；pending/failed 返回 Triage，不生成可执行归档计划。
+3. 目标为 SpecDev 时先读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` 与当前 change 的 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`：完成门必须通过，`external_action` 必须为 `closed | waived | not-applicable`；pending/failed 返回 Triage，不生成可执行归档计划。
 4. 执行 Step 1-5：扫描 stores、扫描 change、生成归档计划、生成合并计划、生成清理候选。
 5. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
 6. 确认后以 mode=`confirmed` 执行 Step 7-8：归档移动、合并写入、清理、重读验证。
@@ -34,7 +34,7 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 批量归档并合并所有已完成 change 的知识。
 
-1. 读取 `../skills/archive-and-consolidate/SKILL.md`，执行路径解析。
+1. 读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`，执行路径解析。
 2. 扫描目标 workflow 下所有 `change_status: completed` 的 change。不接受 active 或 broken 状态。
 3. SpecDev 候选逐个通过 change completion 与 external reconcile 门；任一 pending/failed 阻塞整批。
 4. 执行 Step 1-5：扫描 stores、逐 change 扫描、批量预检、合并计划、清理候选。

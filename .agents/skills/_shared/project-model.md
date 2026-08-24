@@ -48,13 +48,14 @@ template/
 5. 读取活跃 change 的 `.status.json` 和当前 work 产物。
 6. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取。
 7. command 报告从 `{roots.state}/commands/<command>/` 读取；只有声明了持久游标的 command 才读取自己的 `state.json`。
-8. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。
+8. 独立 skill 的运行记录从 `{roots.state}/skills/<skill>/` 读取；只有该 skill 声明了持久游标时才读取根级 `state.json`。
+9. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。
 
 ## 资产职责
 
 ### Skill
 
-可复用能力。入口为 `template/skills/<name>/SKILL.md`，可带 references、scripts、assets 等渐进披露资源。Skill 不自行发明运行时 namespace；它返回结果，或只写调用方明确提供且符合所有权的路径。
+可复用能力。入口为 `template/skills/<name>/SKILL.md`，可带 references、scripts、assets 等渐进披露资源。被 command/work 调用时，Skill 返回结果或只写调用方明确提供且符合所有权的路径；独立激活且确有跨调用持久化需求时，只写 `{roots.state}/skills/<name>/`，并在自身入口声明 schema、生成时机和恢复语义。
 
 ### Command
 
@@ -88,6 +89,7 @@ Work 读取 workflow state，产生 change 产物，并更新 workflow 与 chang
 
 - Workflow 只写 `{roots.state}/<workflow>/status.json`、`changes/`、`archive/` 和 INDEX 明确声明的 namespace。
 - Change 产物写入 `{roots.state}/<workflow>/changes/{change}/`。
+- 独立 Skill 只写 `{roots.state}/skills/<skill>/`；一次运行需要 change 目录时使用 `{roots.state}/skills/<skill>/<YYYY-MM-DD>-<kebab-topic>[-NN]/`，不得冒充 workflow change。
 - `template/workflows/<workflow>/_state/` 只提供初始化种子或 schema 样本；运行时不得写入 `{roots.workflows}/<workflow>/_state/`。
 - Command 只写 `{roots.state}/commands/<command>/` 下的报告和该 command 明确需要的 `state.json`。
 - `{roots.state}/<workflow>/docs-sync.json` 由 docs-sync command 拥有，是延迟创建的 sidecar。
@@ -106,6 +108,16 @@ Command 报告使用：
 - 同日同 scope/topic 首份无后缀，冲突后从 `-01` 选择最小未占用编号。
 - 已存在报告永不覆盖。
 - 是否需要 `state.json` 由 command 的跨调用游标需求决定，不以方便为由创建。
+
+独立 Skill 的持久化产物使用：
+
+```text
+{roots.state}/skills/<skill>/<YYYY-MM-DD>-<kebab-topic>[-NN]/
+```
+
+- 首次同名 change 无后缀，冲突后从 `-01` 选择最小未占用编号；已存在 change 永不覆盖。
+- 根级 `state.json` 只保存恢复所需的紧凑游标或 checkpoint；完整运行证据属于对应 change。
+- Stateless 或由 command/work 提供 owner 路径的 Skill 不为方便创建自己的 state 目录。
 
 ## Workflow 状态
 

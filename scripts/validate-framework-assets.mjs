@@ -114,6 +114,16 @@ function walkMarkdown(root) {
   return files;
 }
 
+function walkInstructionFiles(root) {
+  const files = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) files.push(...walkInstructionFiles(path));
+    else if (entry.name.endsWith(".md") || entry.name.endsWith(".json")) files.push(path);
+  }
+  return files;
+}
+
 function parseXmlBlock(block, file, index) {
   const valid = XMLValidator.validate(block);
   if (valid !== true) {
@@ -456,11 +466,15 @@ function walkXmlNode(tag, value, context) {
 }
 
 function validatePathTags(file, content) {
+  const open = (content.match(/<Path>/g) ?? []).length;
+  const close = (content.match(/<\/Path>/g) ?? []).length;
+  if (open !== close) fail(`${file}: unbalanced Path tags: ${open} open, ${close} close`);
   const re = /<Path>\{roots\.([a-zA-Z0-9_-]+)\}([^<]*)<\/Path>/g;
   let match;
   while ((match = re.exec(content)) !== null) {
     const alias = match[1];
     const rest = match[2] ?? "";
+    if (alias === "X" || alias === "xxx") continue;
     if (!allowedRootAliases.has(alias)) {
       fail(`${file}: unknown Path root alias {roots.${alias}}`);
     }
@@ -471,6 +485,27 @@ function validatePathTags(file, content) {
     // Reject path-segment ".." only (not prose ellipsis "...")
     if (rest.split("/").includes("..")) {
       fail(`${file}: Path must not escape with ..: ${match[0]}`);
+    }
+  }
+}
+
+function validateCommandAndSkillPaths() {
+  const roots = [join(templateRoot, "commands"), join(templateRoot, "skills")];
+  const legacyPatterns = [
+    [/speculo\/\.speculo(?:\/|\b)/, "runtime state must use <Path>{roots.state}/...</Path>"],
+    [/speculo\/config\.json\b/, "config must use <Path>{roots.config}</Path>"],
+    [/speculo\/workflows(?:\/|\b)/, "workflow assets must use <Path>{roots.workflows}/...</Path>"],
+    [/(?:^|[\s`(])(?:\.\.\/)+skills\//m, "cross-package skill references must use roots.skills"],
+    [/(?:^|[\s`(])(?:\.\.\/)+commands\//m, "cross-package command references must use roots.commands"],
+  ];
+  for (const root of roots) {
+    for (const filePath of walkInstructionFiles(root)) {
+      const file = filePath.slice(packageRoot.length + 1);
+      const content = readFileSync(filePath, "utf8");
+      validatePathTags(file, content);
+      for (const [pattern, message] of legacyPatterns) {
+        if (pattern.test(content)) fail(`${file}: ${message}`);
+      }
     }
   }
 }
@@ -554,7 +589,7 @@ function validateDocsSyncTemplates() {
     if (
       state.schema_version !== 4 ||
       state.command !== "docs-sync" ||
-      state.state_path !== "speculo/.speculo/commands/docs-sync/state.json"
+      state.state_path !== "<Path>{roots.state}/commands/docs-sync/state.json</Path>"
     ) {
       fail("docs-sync state template must use schema v4 and the command state path");
     }
@@ -576,7 +611,7 @@ function validateDocsSyncTemplates() {
     if (
       scope.schema_version !== 1 ||
       scope.workflow !== "{workflow}" ||
-      scope.manifest_path !== "speculo/.speculo/{workflow}/docs-sync.json" ||
+      scope.manifest_path !== "<Path>{roots.state}/{workflow}/docs-sync.json</Path>" ||
       !Array.isArray(scope.project_targets) ||
       !Array.isArray(scope.state_targets)
     ) {
@@ -610,6 +645,7 @@ if (workspace) {
 }
 validateAgentSkills();
 validateDocsSyncTemplates();
+validateCommandAndSkillPaths();
 
 if (errors.length > 0) {
   console.error(`Framework asset validation failed: ${errors.length}`);

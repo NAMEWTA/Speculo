@@ -149,11 +149,28 @@ async function main() {
       const text = await fs.readFile(file, 'utf8').catch(() => null);
       if (text === null) continue;
       checked.files += 1;
-      if (file.endsWith('.json')) {
+      const isJson = file.endsWith('.json');
+      const isMarkdown = file.endsWith('.md');
+      if (isJson) {
         try { JSON.parse(text); checked.json += 1; }
         catch (error) { issue(errors, file, `invalid JSON: ${error.message}`); }
       }
-      if (!file.endsWith('.md')) continue;
+      if (!isMarkdown && !isJson) continue;
+      const underCommandsOrSkills = file.startsWith(path.join(templateRoot, 'commands') + path.sep)
+        || file.startsWith(path.join(templateRoot, 'skills') + path.sep);
+      if (underCommandsOrSkills) {
+        const legacyPatterns = [
+          [/speculo\/\.speculo(?:\/|\b)/, 'runtime state must use <Path>{roots.state}/...</Path>'],
+          [/speculo\/config\.json\b/, 'config must use <Path>{roots.config}</Path>'],
+          [/speculo\/workflows(?:\/|\b)/, 'workflow assets must use <Path>{roots.workflows}/...</Path>'],
+          [/(?:^|[\s`(])(?:\.\.\/)+skills\//m, 'cross-package skill references must use roots.skills'],
+          [/(?:^|[\s`(])(?:\.\.\/)+commands\//m, 'cross-package command references must use roots.commands'],
+        ];
+        for (const [pattern, message] of legacyPatterns) {
+          if (pattern.test(text)) issue(errors, file, message);
+        }
+      }
+      if (isJson && !underCommandsOrSkills) continue;
       // README.md and .speculo/ docs explain <Path> syntax in prose (bare tags, {roots.X}
       // placeholders, ellipses); they are human docs, not instruction assets — skip Path checks.
       const isProseDoc = path.basename(file) === 'README.md' || file.includes('/.speculo/');

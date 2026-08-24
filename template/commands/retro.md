@@ -12,7 +12,7 @@ keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 
 ## 归档路径模式
 
-报告文件：`speculo/.speculo/commands/retro/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`
+报告文件：`<Path>{roots.state}/commands/retro/{date}-{scope}-{topic}[-NN].md</Path>`
 
 - `<YYYY-MM-DD>` 使用当前日期。
 - `<topic>` 从复盘范围或用户主题提取，使用小写 kebab-case；无法判断时使用 `speculo`。
@@ -20,14 +20,14 @@ keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 
 ## 调用的 skills
 
-- `../skills/speculo-retro/SKILL.md` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
-- `../skills/github-npm-ops/SKILL.md` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
+- `<Path>{roots.skills}/speculo-retro/SKILL.md</Path>` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
+- `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
 
 ## 执行步骤
 
-1. 读取 `../skills/speculo-retro/SKILL.md`，解析 `speculo/config.json` 与 `speculo/.speculo/workspace.json`（不存在时以默认值静默降级），采集对话、command 报告、change 状态以及各 `INDEX.md` 声明的知识 store。
+1. 读取 `<Path>{roots.skills}/speculo-retro/SKILL.md</Path>`，解析 `<Path>{roots.config}</Path>` 与 `<Path>{roots.state}/workspace.json</Path>`（不存在时以默认值静默降级），采集对话、command 报告、change 状态以及各 `INDEX.md` 声明的知识 store。
 2. 用该 skill 产出规范化复盘结论：去重、分级、根因化的 issue-ready 提案清单，附丢弃/合并说明与每条处置建议。
-3. 创建 command 专属目录 `speculo/.speculo/commands/retro/`，把复盘结论写入带 scope 的 Markdown 报告。
+3. 创建 command 专属目录 `<Path>{roots.state}/commands/retro/</Path>`，把复盘结论写入带 scope 的 Markdown 报告。
 4. **去重**：调用 `github-npm-ops` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
 5. **外部写操作边界**：向用户展示将要创建的 issue 清单（标题、类型/优先级标签、正文摘要、目标仓库 `NAMEWTA/Speculo`）与去重结果，等待用户明确确认。没有确认时只输出计划，不调用 `gh`。
 6. 用户确认后，按优先级倒序调用 `github-npm-ops` 的 `operation=issue-create` confirmed 分支。任一条失败时停止后续创建，报告已建/未建清单，不重复创建同一条。
@@ -54,7 +54,7 @@ generated_at: [TODO: ISO-8601]
 [TODO: 本次复盘覆盖的 command / workflow 与时间/会话范围。]
 
 ## 信号来源
-[TODO: 列出采集到的证据出处：对话节点、`speculo/.speculo/...` 产物路径、`.status.json` 字段、LESSONS。]
+[TODO: 列出采集到的证据出处：对话节点、`<Path>{roots.state}/...</Path>` 产物路径、`.status.json` 字段、LESSONS。]
 
 ## 改进提案
 [TODO: 按优先级倒序列出每条提案：标题 / 类型 / 优先级 / 根因 / 建议改动 / 验收标准 / 受影响资产 / 去重结论。]

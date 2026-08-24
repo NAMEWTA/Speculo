@@ -49,7 +49,7 @@ npm install -g @namewta/speculo
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 8 个 Skills
+### 9 个 Skills
 
 | Skill | 用途 |
 |---|---|
@@ -59,6 +59,7 @@ npm install -g @namewta/speculo
 | `optimize-codex-config` | 体检并优化本机 Codex 配置、第三方 Responses 接口、权限和 compaction 故障 |
 | `source-code-zip` | 生成无外部依赖、仅含源码的隔离交付 ZIP |
 | `speculo-retro` | 回顾分析 |
+| `upstream-fork-sync` | 从已证明的集成检查点评估 fork/upstream 增量，并持久化可复现的 diff 与冲突报告 |
 | `engineering-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
 

@@ -38,7 +38,7 @@ description: 设计、创建、迁移、合并或重构 Speculo 的 template/ski
 
 ### 4. 实施最小完整包
 
-创建或更新 `template/skills/<name>/SKILL.md` 及必要资源。Frontmatter、description、目录名和调用方同步更新。Skill 只写调用方提供的目标或自身明确拥有的项目资产，不发明 `.speculo` namespace。
+创建或更新 `template/skills/<name>/SKILL.md` 及必要资源。Frontmatter、description、目录名和调用方同步更新。Skill 只写调用方提供的目标、自身明确拥有的项目资产，或标准 `{roots.state}/skills/<name>/` namespace，不发明其他 `.speculo` namespace。
 
 **完成标准**：目录内每个文件都被入口或脚本使用；所有旧名称和旧路径的调用方已迁移；删除后无残余引用。
 

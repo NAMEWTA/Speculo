@@ -1,7 +1,7 @@
 {
   "schema_version": 4,
   "command": "docs-sync",
-  "state_path": "speculo/.speculo/commands/docs-sync/state.json",
+  "state_path": "<Path>{roots.state}/commands/docs-sync/state.json</Path>",
   "baseline": {
     "mode": "explicit",
     "sha": null

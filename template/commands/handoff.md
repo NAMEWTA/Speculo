@@ -15,7 +15,7 @@ disable-model-invocation: true
 报告文件必须写入以下规范路径：
 
 ```
-speculo/.speculo/commands/handoff/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
+<Path>{roots.state}/commands/handoff/{date}-{scope}-{topic}[-NN].md</Path>
 ```
 
 - **<YYYY-MM-DD>** — 使用当前日期。
@@ -43,7 +43,7 @@ speculo/.speculo/commands/handoff/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
 
 - ✅ `src/modules/auth/`
 - ✅ `scripts/migrate/2024-add-index.sql`
-- ✅ `speculo/.speculo/specdev/changes/<YYYY-MM-DD>-<topic>/spec.md`
+- ✅ `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - ❌ `../../specdev/changes/...` — 相对于 handoff 文件，脱离目录后不可定位
 - ❌ `auth` — 裸名，无法判断是目录/文件/子模块
 

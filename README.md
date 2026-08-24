@@ -49,7 +49,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 8 Skills
+### 9 Skills
 
 | Skill | Purpose |
 |---|---|
@@ -59,6 +59,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
 | `speculo-retro` | Retrospective analysis |
+| `upstream-fork-sync` | Assess fork/upstream deltas from proven integration checkpoints and persist reproducible diff and conflict reports |
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
 

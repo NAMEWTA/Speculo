@@ -32,7 +32,7 @@ description: >
 
 ### Step 0：路径解析（内建，不依赖外部 skill）
 
-1. 从 CWD 向上查找 `speculo/.speculo/workspace.json`；第一个命中目录为 `project_root`；多候选或冲突时返回 blocked。
+1. 从 CWD 向上查找 `<Path>{roots.state}/workspace.json</Path>`；第一个命中目录为 `project_root`；多候选或冲突时返回 blocked。
 2. 读取 `workspace.json`，校验 `path_base` 为 `project-root`，所有 roots 使用 POSIX 相对路径。
 3. 读取目标 workflow 的 `INDEX.md`，解析运行时根声明：
    - 查找 `## 运行时根` 或类似标题下的 `<Path>{roots.X}/path/</Path>` 标签。
@@ -43,8 +43,8 @@ description: >
    - 识别操作型路径：`status.json`、`changes/`、`archive/`。
    - 识别知识型 store：`adr/`、`context/` 及任何标注为"永久"的目录（其内容在 change 完成后提升至此）。
    - 每个路径解析为完整的项目相对路径。
-5. 派生固定路径：`changes_root = state_root/changes`、`archive_root = state_root/archive`；`commands_root` 从公共 `{roots.state}/commands` 解析，不放进 workflow 私有 state root。
-6. 读取 `speculo/config.json`（若存在）；不存在时静默降级为默认值（`language: "en"`、`confirm_before_external_write: true`）。
+5. 派生固定路径：`changes_root = state_root/changes`、`archive_root = state_root/archive`；`commands_root` 从公共 `<Path>{roots.state}/commands</Path>` 解析，不放进 workflow 私有 state root。
+6. 读取 `<Path>{roots.config}</Path>`（若存在）；不存在时静默降级为默认值（`language: "en"`、`confirm_before_external_write: true`）。
 7. 对每个已解析路径执行真实路径包含检查；符号链接逃逸或不存在的静态引用阻塞。
 8. 读取 `status.json`；扫描 changes 时校验 change 名称格式 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`，无日期前缀的历史 change 标注遗留但不阻塞。
 

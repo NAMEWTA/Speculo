@@ -4,8 +4,8 @@ docs-sync 必须遵循每个 workflow 的 `INDEX.md`。`docs-sync.json` 是 comm
 
 ## 发现
 
-1. 从 `speculo/workflows/*/INDEX.md` 发现已安装 workflow。
-2. 每个包必须有匹配的 `speculo/.speculo/<workflow>/` 状态根；包或状态根单边缺失时阻塞，不猜测归属。
+1. 从 `<Path>{roots.workflows}/{workflow}/INDEX.md</Path>` 发现已安装 workflow。
+2. 每个包必须有匹配的 `<Path>{roots.state}/{workflow}/</Path>` 状态根；包或状态根单边缺失时阻塞，不猜测归属。
 3. 读取 `INDEX.md` 中声明的运行时根、持久化约定、固定 archive 和知识 store。
 4. 状态根存在但没有已安装 package 时只报告 orphan，不创建 sidecar。
 
@@ -17,7 +17,7 @@ docs-sync 必须遵循每个 workflow 的 `INDEX.md`。`docs-sync.json` 是 comm
 {
   "schema_version": 1,
   "workflow": "example",
-  "manifest_path": "speculo/.speculo/example/docs-sync.json",
+  "manifest_path": "<Path>{roots.state}/example/docs-sync.json</Path>",
   "project_targets": [],
   "state_targets": [],
   "scope_revision": 1,

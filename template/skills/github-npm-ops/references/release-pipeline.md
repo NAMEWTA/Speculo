@@ -5,7 +5,7 @@
 ## Iron Law
 
 - 禁止提交破坏构建的代码；release 前必须运行仓库声明的 lint / test / build 或等价质量闸。
-- docs-sync 必须由调用方按 `../../../commands/docs-sync.md` 执行；输入起点来自最后修改 state 文件的 commit，终点是运行前清洁后的 HEAD，并写入 `last_range`。
+- docs-sync 必须由调用方按 `<Path>{roots.commands}/docs-sync.md</Path>` 执行；输入起点来自最后修改 state 文件的 commit，终点是运行前清洁后的 HEAD，并写入 `last_range`。
 - tag 必须精确指向 release commit，即包含 `package.json` version bump 与 CHANGELOG 迁移的 commit；禁止指向后续 docs / state commit。
 - npm 已成功上传后，同一 version 不可重发；不要通过删 tag 或 unpublish 试图覆盖。
 
@@ -18,7 +18,7 @@
 - Node 与包管理器满足仓库声明
 - `.github/workflows/release.yml` 存在
 - 已确定 `PUBLISH_TO_NPM=true | false`
-- `speculo/.speculo/commands/docs-sync/state.json` 存在且可解析；不存在时转 docs-sync command 的首次 bootstrap
+- `<Path>{roots.state}/commands/docs-sync/state.json</Path>` 存在且可解析；不存在时转 docs-sync command 的首次 bootstrap
 - 目标 tag `vX.Y.Z` 不存在，除非正在执行明确的失败恢复
 
 任一项不通过就停止，输出修复建议。
@@ -32,7 +32,7 @@
 
 ## Phase 2 — Docs Sync
 
-- 由调用方执行 `../../../commands/docs-sync.md`。
+- 由调用方执行 `<Path>{roots.commands}/docs-sync.md</Path>`。
 - 只修改全局 state 与 workflow sidecar 已确认范围中需要同步的文档或知识资产。
 - CHANGELOG 类文档只写 `[Unreleased]`，保留该段落。
 - 本阶段由 docs-sync 自动提交文档、报告与 state；最终 release commit 仍在 Phase 3 创建，发布后再由 Phase 6 记录为新输入终点。
@@ -88,7 +88,7 @@ npm view "<package-name>" dist-tags
 
 ## Phase 6 — 记录 release 输入节点
 
-仅当 Phase 1-5 全绿时执行。再次调用 `../../../commands/docs-sync.md`，并确认运行前 `HEAD` 等于 `RELEASE_COMMIT_SHA`：
+仅当 Phase 1-5 全绿时执行。再次调用 `<Path>{roots.commands}/docs-sync.md</Path>`，并确认运行前 `HEAD` 等于 `RELEASE_COMMIT_SHA`：
 
 - state 的 `last_range.to_sha` 必须等于 `RELEASE_COMMIT_SHA`。
 - `last_range.from_sha` 来自最后修改旧 state 的 commit，或迁移期 explicit baseline。
