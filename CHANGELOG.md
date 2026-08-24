@@ -4,6 +4,17 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.4] - 2026-08-24
+
+### Added
+- **`upstream-fork-sync` skill**: adds generic, repository-map-driven fork/upstream assessment with proven integration checkpoints, non-overwriting skill changes, reproducible diff/conflict reports, and exact merge-parent checkpoint recording under the standard Skill state namespace.
+
+### Changed
+- **Runtime path ownership**: commands and skills now use `<Path>{roots.*}/...</Path>` for persistent and cross-package references; independently persistent skills own only `{roots.state}/skills/<skill>/`.
+
+### Tests
+- Added fork-sync graph checkpoint, dry-run, non-overwrite, exact merge-parent, path escape, missing-ref, and refresh preservation coverage.
+
 ## [0.8.3] - 2026-08-24
 
 ### Changed
