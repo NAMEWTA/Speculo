@@ -11,7 +11,7 @@ description: 设计、创建或重构 Speculo workflow 中的单个 Letter-name 
 
 ### 1. 读取 workflow 上下文
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Work contract](references/work-contract.md)、目标 workflow 的 `INDEX.md`、`common/rules`、相关 schema/tools、`_state` 种子、相邻 works 和真实调用方。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
+读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Work contract](references/work-contract.md)、目标 workflow 的 `INDEX.md`、根 README 激活合同（存在时）、`common/rules`、相关 schema/tools、`_state` 种子、相邻 works 和真实调用方。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
 
 **完成标准**：目标 workflow 的 state schema、change 生命周期、输入权威、输出 owner、路由和副作用边界已逐项列出；没有套用其他 workflow 的固定字段。
 

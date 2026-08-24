@@ -8,6 +8,8 @@ keywords: [eli5, 零基础, 大一新生, Markdown, ASCII]
 ---
 # ELI5：给零基础新生的图解
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 ## 读者与职责
 
 读者是刚入大学、没有专业背景（零专业背景）的新生。读者能理解日常因果和简单流程，但不应被假定知道代码、网络、数学或行业背景。
@@ -77,7 +79,7 @@ ASCII 全图 + 分步图 + 简短说明
 
 ## 执行
 
-1. 读取 `<Path>{roots.workflows}/specdev/INDEX.md</Path>`、全局状态和当前 change 状态。选择用户指定或唯一活跃的 change；没有时按 SpecDev 启动协议创建。`current_work` 为空时设为 `specdev/eli5`；若指向其他 Work，先完成显式交接。
+1. 按 `<Path>{roots.workflows}/specdev/README.md</Path>` 读取全局状态和当前 change 状态。选择用户指定或唯一活跃的 change；没有时按 SpecDev 启动协议创建。`current_work` 为空时设为 `specdev/eli5`；若指向其他 Work，先完成显式交接。
 2. 将调用中的 `$ARGUMENTS` 解析为主题；直接提出的图解请求以用户最新消息为主题。主题缺失时只询问主题，不猜测。先写下读者要带走的三个答案：它是什么、为什么需要它、它怎样流动或被调用。
 3. 按需读取当前 change 工件、项目事实和可靠来源。区分已验证事实、便于理解的类比和未知处；类比只能帮助理解，不能替代事实或掩盖边界。
 4. 先画 `先看全图`，再按实际关系补充结构图、数据流图、调用流图或状态变化图。每张图旁只用短句解释箭头；避免长段落、术语堆叠、缩写和先备知识。

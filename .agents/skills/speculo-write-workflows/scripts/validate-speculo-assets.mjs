@@ -240,13 +240,24 @@ async function main() {
         if (!(await exists(index))) { issue(errors, dir, 'workflow missing INDEX.md'); continue; }
         const text = await fs.readFile(index, 'utf8');
         const indexFm = frontmatter(text);
-        // Two INDEX modes: `type: workflow` uses an in-place AUTO-INDEX marker pair;
+        // Two catalog modes: `type: workflow` uses an AUTO-INDEX marker pair in README.md;
         // `type: workflow-index` (auto_generated: true) is a fully generated file with no markers.
         const wholeFileGenerated = indexFm && !indexFm.error &&
           (indexFm.data.type === 'workflow-index' || indexFm.data.auto_generated === 'true');
-        if (!wholeFileGenerated &&
-            ((text.split(START).length - 1) !== 1 || (text.split(END).length - 1) !== 1)) {
-          issue(errors, index, 'INDEX requires exactly one AUTO-INDEX marker pair');
+        if (!wholeFileGenerated) {
+          if ((text.split(START).length - 1) !== 0 || (text.split(END).length - 1) !== 0) {
+            issue(errors, index, 'type: workflow INDEX must not contain AUTO-INDEX markers');
+          }
+          const activation = path.join(dir, 'README.md');
+          if (!(await exists(activation))) {
+            issue(errors, activation, 'type: workflow requires README.md activation contract');
+          } else {
+            const activationText = await fs.readFile(activation, 'utf8');
+            if ((activationText.split(START).length - 1) !== 1 ||
+                (activationText.split(END).length - 1) !== 1) {
+              issue(errors, activation, 'README requires exactly one AUTO-INDEX marker pair');
+            }
+          }
         }
         const workDirs = (await fs.readdir(dir, { withFileTypes: true }))
           .filter((d) => d.isDirectory() && /^[A-Z]-[a-z0-9][a-z0-9-]*$/.test(d.name));

@@ -4,6 +4,19 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.5] - 2026-08-24
+
+### Changed
+- **Passive SpecDev discovery**: reduced `specdev/INDEX.md` to permanent knowledge discovery and an activation pointer, so installed-but-inactive SpecDev no longer loads runtime state, creates a change, or applies Work execution contracts.
+- **Progressive workflow activation**: moved the full SpecDev runtime contract and generated Work catalog into the workflow root `README.md`; all 15 Work entries load it only after activation.
+- **README-owned Work catalog**: marker-mode workflow generation now maintains the AUTO-INDEX block in `README.md`, while generator-owned `workflow-index` packages continue to rebuild `INDEX.md` as a whole file.
+
+### Fixed
+- Corrected the documented SpecDev global status schema version from v4 to the implemented v5 contract.
+
+### Tests
+- Added regression coverage for passive INDEX behavior, activated README loading, installed workflow packaging, README marker generation, deterministic rebuilds, and validator enforcement.
+
 ## [0.8.4] - 2026-08-24
 
 ### Added

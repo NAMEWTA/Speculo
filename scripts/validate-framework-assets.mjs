@@ -20,14 +20,18 @@ const allowedRootAliases = new Set([
   "skills",
   "workflows",
 ]);
-const requiredIndexSections = [
+const requiredPassiveIndexSections = [
+  "永久知识",
+  "Work 激活",
+];
+const requiredActivationSections = [
+  "Work 条目",
   "运行时根",
   "持久化约定",
   "启动协议",
   "状态字段",
   "路径分配",
   "副作用边界",
-  "Work 条目",
 ];
 const expectedAgentSkills = [
   "speculo-write-skill",
@@ -526,11 +530,54 @@ function validateWorkflow(workflowId, workspace) {
     fail(`${relativeEntry}: id/workflow must match directory ${workflowId}`);
   }
 
-  // Full package contract only for type: workflow (not auto-generated stubs)
+  // Full workflows keep discovery passive and load the root contract only after work activation.
   if (frontmatter.type === "workflow") {
-    for (const section of requiredIndexSections) {
+    for (const section of requiredPassiveIndexSections) {
       if (!entryContent.includes(`## ${section}`)) {
         fail(`${relativeEntry}: missing required section "## ${section}"`);
+      }
+    }
+
+    const activationPath = join(workflowDir, "README.md");
+    const relativeActivation = activationPath.slice(packageRoot.length + 1);
+    const activationRef = `<Path>{roots.workflows}/${workflowId}/README.md</Path>`;
+    if (!entryContent.includes(activationRef)) {
+      fail(`${relativeEntry}: work activation must reference ${activationRef}`);
+    }
+
+    if (entryContent.includes("AUTO-INDEX-START") || entryContent.includes("AUTO-INDEX-END")) {
+      fail(`${relativeEntry}: AUTO-INDEX markers must live in ${relativeActivation}`);
+    }
+
+    for (const section of requiredActivationSections) {
+      if (entryContent.includes(`## ${section}`)) {
+        fail(`${relativeEntry}: activation section "## ${section}" must live in ${relativeActivation}`);
+      }
+    }
+
+    if (!existsSync(activationPath)) {
+      fail(`${relativeActivation}: missing workflow activation contract`);
+    } else {
+      const activationContent = readFileSync(activationPath, "utf8");
+      for (const section of requiredActivationSections) {
+        if (!activationContent.includes(`## ${section}`)) {
+          fail(`${relativeActivation}: missing required section "## ${section}"`);
+        }
+      }
+      if ((activationContent.match(/AUTO-INDEX-START/g) ?? []).length !== 1 ||
+          (activationContent.match(/AUTO-INDEX-END/g) ?? []).length !== 1) {
+        fail(`${relativeActivation}: requires exactly one AUTO-INDEX marker pair`);
+      }
+
+      const workDirs = readdirSync(workflowDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
+      for (const workDir of workDirs) {
+        const workEntry = join(workflowDir, workDir.name, `${workDir.name}.md`);
+        const relativeWorkEntry = workEntry.slice(packageRoot.length + 1);
+        if (!existsSync(workEntry)) continue;
+        if (!readFileSync(workEntry, "utf8").includes(activationRef)) {
+          fail(`${relativeWorkEntry}: activated work must reference ${activationRef}`);
+        }
       }
     }
   }

@@ -9,11 +9,13 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 
 # 初始化设置
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 首次使用 SpecDev、状态根不存在或治理契约发生变化后运行。此 work 只初始化 SpecDev 的状态与配置，不修改项目业务代码。
 
 ## 规范输入
 
-- 工作流总览：`<Path>{roots.workflows}/specdev/INDEX.md</Path>`
+- 工作流运行合同：`<Path>{roots.workflows}/specdev/README.md</Path>`
 - 路径引用契约：`<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`
 - 配置模板：`<Path>{roots.workflows}/specdev/I-init-setup/config-template.json</Path>`
 - 配置 Schema：`<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>`

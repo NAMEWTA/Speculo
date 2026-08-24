@@ -15,12 +15,13 @@
 ## 读取顺序
 
 1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。
-2. 从 `../workflows/<workflow>/INDEX.md` 进入 workflow，再通过 `<Path>` 指针进入具体 work 入口文件。
-3. 读取 `<Path>{roots.state}/{workflow}/status.json</Path>`，再读取 `<Path>{roots.state}/{workflow}/changes/{change}/.status.json</Path>` 和当前 work 产物。
-4. 历史 change 只从 `<Path>{roots.state}/{workflow}/archive/{YYYY-MM}/{change}/</Path>` 读取。
-5. Command 报告位于 `<Path>{roots.state}/commands/{command}/*.md</Path>`，command state 位于 `<Path>{roots.state}/commands/{command}/state.json</Path>`。
-6. 独立 Skill 的运行记录位于 `<Path>{roots.state}/skills/{skill}/</Path>`，根级 `state.json` 仅在该 Skill 声明持久 checkpoint 时读取。
-7. 首次 docs-sync 确认后读取 `<Path>{roots.state}/{workflow}/docs-sync.json</Path>`；它分列该 workflow 的项目文档和私有 state 更新范围。
+2. 从 `../workflows/<workflow>/INDEX.md` 发现 workflow并按需读取其中声明的永久知识；这一步不读取 Work 条目或运行状态。
+3. 用户明确激活 workflow 或 work 后，读取 INDEX 指向的 workflow 根 `README.md`，从其中的 Work 条目选择目标并读取具体入口文件。
+4. 按激活合同读取 `<Path>{roots.state}/{workflow}/status.json</Path>`，再读取 `<Path>{roots.state}/{workflow}/changes/{change}/.status.json</Path>` 和当前 work 产物。
+5. 历史 change 只从 `<Path>{roots.state}/{workflow}/archive/{YYYY-MM}/{change}/</Path>` 读取。
+6. Command 报告位于 `<Path>{roots.state}/commands/{command}/*.md</Path>`，command state 位于 `<Path>{roots.state}/commands/{command}/state.json</Path>`。
+7. 独立 Skill 的运行记录位于 `<Path>{roots.state}/skills/{skill}/</Path>`，根级 `state.json` 仅在该 Skill 声明持久 checkpoint 时读取。
+8. 首次 docs-sync 确认后读取 `<Path>{roots.state}/{workflow}/docs-sync.json</Path>`；它分列该 workflow 的项目文档和私有 state 更新范围。
 
 ## 写入边界
 

@@ -148,14 +148,18 @@ test('whole-file workflow index generation is deterministic and detects stalenes
   assert.equal(second, first);
 });
 
-test('marker-mode generation preserves handwritten INDEX content and sorts works', async (t) => {
+test('marker-mode generation preserves handwritten README content and sorts works', async (t) => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'speculo-marker-index-'));
   t.after(async () => rm(temp, { recursive: true, force: true }));
   const workflowRoot = path.join(temp, 'demo');
   await mkdir(workflowRoot, { recursive: true });
   await writeFile(
     path.join(workflowRoot, 'INDEX.md'),
-    `---\nid: demo\ntype: workflow\nworkflow: demo\nname: Demo\ndescription: Demo workflow\nkeywords: [demo]\n---\n\n# Demo\n\nHandwritten before.\n\n<!-- AUTO-INDEX-START -->\n\nstale\n\n<!-- AUTO-INDEX-END -->\n\nHandwritten after.\n`,
+    `---\nid: demo\ntype: workflow\nworkflow: demo\nname: Demo\ndescription: Demo workflow\nkeywords: [demo]\n---\n\n# Demo\n\nRead README after activation.\n`,
+  );
+  await writeFile(
+    path.join(workflowRoot, 'README.md'),
+    `# Demo Contract\n\nHandwritten before.\n\n<!-- AUTO-INDEX-START -->\n\nstale\n\n<!-- AUTO-INDEX-END -->\n\nHandwritten after.\n`,
   );
   await writeWorkEntry(workflowRoot, 'B-beta', 'Beta', 'Second');
   await writeWorkEntry(workflowRoot, 'A-alpha', 'Alpha', 'First');
@@ -163,11 +167,13 @@ test('marker-mode generation preserves handwritten INDEX content and sorts works
   const generated = runNode(generator, [workflowRoot]);
   assert.equal(generated.status, 0, `${generated.stdout}\n${generated.stderr}`);
   const index = await readFile(path.join(workflowRoot, 'INDEX.md'), 'utf8');
-  assert.match(index, /Handwritten before\./);
-  assert.match(index, /Handwritten after\./);
-  assert.match(index, /A-alpha[\s\S]*B-beta/);
-  assert.equal((index.match(/AUTO-INDEX-START/g) ?? []).length, 1);
-  assert.equal((index.match(/AUTO-INDEX-END/g) ?? []).length, 1);
+  const readme = await readFile(path.join(workflowRoot, 'README.md'), 'utf8');
+  assert.doesNotMatch(index, /AUTO-INDEX-(?:START|END)|A-alpha|B-beta/);
+  assert.match(readme, /Handwritten before\./);
+  assert.match(readme, /Handwritten after\./);
+  assert.match(readme, /A-alpha[\s\S]*B-beta/);
+  assert.equal((readme.match(/AUTO-INDEX-START/g) ?? []).length, 1);
+  assert.equal((readme.match(/AUTO-INDEX-END/g) ?? []).length, 1);
 
   const check = runNode(generator, [workflowRoot, '--check']);
   assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);

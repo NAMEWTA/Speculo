@@ -5,6 +5,7 @@
 ```text
 template/workflows/<workflow>/
   INDEX.md
+  README.md                # type: workflow 的激活合同
   <Letter>-<work>/
     <Letter>-<work>.md
     <branch>.md
@@ -19,21 +20,29 @@ template/workflows/<workflow>/
 
 目录按需要存在。`common` 和 `_state` 的具体内容由 INDEX 和 init 实现决定；不为整齐创建空层级。
 
-## INDEX 是入口合同
+## INDEX 是被动入口
 
-INDEX 必须让 Agent 在不加载全部 work 的情况下知道：
+INDEX 必须让 Agent 在不激活 workflow 状态机、也不加载全部 work 的情况下知道：
 
 - workflow 的身份和目标；
-- workflow/static root 与 state root；
-- 权威工件链和冲突裁决；
-- 初始化与恢复协议；
-- 状态 schema；
-- 写入 namespace；
-- 副作用边界；
-- work 索引；
-- 包级验证命令。
+- 可按当前请求读取的只读永久知识 namespace；
+- work 激活后应读取的根 README；
 
 完整骨架见 `index-template.md`，它是清单而不是强制文字模板。
+
+## README 是激活合同
+
+`type: workflow` 的 INDEX 在用户明确选择 work 后指向 workflow 根 `README.md`。README 负责声明：
+
+- workflow/static root 与 state root；
+- work 索引；
+- 权威工件链和冲突裁决；
+- 初始化与恢复协议；
+- 状态 schema 与生命周期；
+- 写入 namespace 和 owner；
+- 副作用边界、路由和包级验证命令。
+
+仅发现 INDEX 或读取永久知识不得加载 README、读取 active state、创建 change 或设置 `current_work`。每个 work 入口必须显式引用同一根 README，以保证直接路由到 work 时也能到达激活合同。
 
 ## `_state` 的语义
 
@@ -43,11 +52,11 @@ INDEX 必须让 Agent 在不加载全部 work 的情况下知道：
 {roots.state}/<workflow>/
 ```
 
-INDEX 和 works 绝不把 `{roots.workflows}/<workflow>/_state/` 当作运行时写入路径。Init 代码负责从种子创建 runtime state；没有生成者的 seed 不应存在。
+根 README 和 works 绝不把 `{roots.workflows}/<workflow>/_state/` 当作运行时写入路径。Init 代码负责从种子创建 runtime state；没有生成者的 seed 不应存在。
 
 ## 状态 schema
 
-每个 workflow 独立版本化。INDEX 逐字段说明：
+每个 workflow 独立版本化。根 README 激活合同逐字段说明：
 
 - 名称和 JSON 类型；
 - 必需/可选；
@@ -101,11 +110,11 @@ Schema 变化无需兼容旧版本时，直接提高版本、更新种子、全�
 
 ## AUTO-INDEX
 
-生成器扫描当前目录下符合 `^[A-Z]-` 的 work 目录，读取同名入口 frontmatter 的 `name` 和 `description`，按目录名排序。INDEX 只能选择一种生成模式：
+生成器扫描当前目录下符合 `^[A-Z]-` 的 work 目录，读取同名入口 frontmatter 的 `name` 和 `description`，按目录名排序。workflow 只能选择一种生成模式：
 
 ### 标记区块模式
 
-`type: workflow` 的完整治理 INDEX 保留且只保留一对：
+`type: workflow` 的根 README 保留且只保留一对：
 
 ```markdown
 <!-- AUTO-INDEX-START -->
@@ -113,20 +122,23 @@ Schema 变化无需兼容旧版本时，直接提高版本、更新种子、全�
 <!-- AUTO-INDEX-END -->
 ```
 
-生成器只替换标记之间的 work 清单，保留其余手写合同。
+生成器只替换 README 标记之间的 work 清单，保留其余手写合同；INDEX 不包含标记或 Work 条目。
 
 ### 整文件模式
 
 `type: workflow-index` 或 `auto_generated: true` 的简化目录由生成器拥有整个文件，不包含 AUTO-INDEX 标记或手写治理内容。生成器按固定 frontmatter、标题、警告和 work 清单重建整文件。
 
-同一 workflow 不混用两种模式。真实加载器或调用方需要完整生命周期合同时使用标记区块模式；已建立简化目录合同的 workflow 可以继续使用整文件模式。
+同一 workflow 不混用两种模式。需要被动 INDEX 与 README 激活合同分层时使用 README 标记区块模式；已建立简化目录合同的 workflow 可以继续使用 INDEX 整文件模式。
 
 ## Validation
 
 包级验证覆盖：
 
 - INDEX frontmatter 与目录一致；
+- INDEX 只包含被动读取合同并指向根 README，不包含 Work 条目或 AUTO-INDEX 标记；
+- 根 README 包含完整激活合同和唯一 AUTO-INDEX 标记区块；
 - work 目录/入口/frontmatter 一致；
+- 每个 work 入口引用根 README；
 - AUTO-INDEX 与真实 works 一致；
 - 静态 `<Path>` 目标存在；
 - state 路径不指向 `_state`；

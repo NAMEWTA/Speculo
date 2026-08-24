@@ -9,6 +9,8 @@ keywords: [triage, 摄入, import, issue, reconcile, close, 风险, 路由]
 
 # 请求分诊
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 Triage 是 SpecDev 唯一的远程摄入与关闭边界。开发期间，`<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`、Spec、Ticket、Map、Goal Plan、Evidence 和状态文件是唯一权威；远程系统只保存原始请求以及经确认后的完成通知。
 
 ## 模式
@@ -18,7 +20,7 @@ Triage 是 SpecDev 唯一的远程摄入与关闭边界。开发期间，`<Path>
 
 ## 共同启动
 
-1. 解析 roots，读取 `<Path>{roots.workflows}/specdev/INDEX.md</Path>`、全局状态和 change 状态。
+1. 解析 roots，按 `<Path>{roots.workflows}/specdev/README.md</Path>` 读取全局状态和 change 状态。
 2. Intake 可以创建 change；reconcile 必须选择一个已存在的 completed change。
 3. 若该 change 的 `current_work` 为 null，设置为 `specdev/triage`；指向其他 Work 时先恢复或完成显式 handoff。
 4. 重读已有 `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`，不覆盖已冻结的来源。

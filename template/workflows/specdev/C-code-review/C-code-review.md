@@ -9,6 +9,8 @@ keywords: [code-review, review, diff, fixed-point, PR, 标准, 规范]
 
 # 代码审查
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`；I 的最终审查由 I 写入 Evidence，不写本目录。
 
 ## 输入

@@ -9,6 +9,8 @@ keywords: [bug, 诊断, 红灯, tight-loop, 根因, 复现, 假设]
 
 # 诊断 Bug
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 D 的主导词是**红灯**：没有一条已执行且能在此 bug 上变红的紧凑命令，就没有可进入的假设阶段。D 默认只读项目代码，可以创建 change 诊断工件和经授权的临时可撤销探针；生产修复由 Implement 拥有。
 
 ## 输入与所有权

@@ -9,6 +9,8 @@ keywords: [归档, consolidation, ADR, context, research, knowledge, 代码库�
 
 # 归档与沉淀
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 A 是 SpecDev 的归档 wrapper：它拥有模式选择、SpecDev 完成门和代码访谈；机械扫描、dry-run、知识毕业、合并、清理、移动与重读由 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>` 单一维护。
 
 ## 模式

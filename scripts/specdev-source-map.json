@@ -5,7 +5,7 @@
       "source": "temp/skills/engineering/ask-matt/SKILL.md",
       "source_sha256": "03dec2846309d03947fbf143d73fac8dfee2f484f9a876f050c806cd1f48f767",
       "classification": "adapted",
-      "targets": ["template/workflows/specdev/INDEX.md"],
+      "targets": ["template/workflows/specdev/INDEX.md", "template/workflows/specdev/README.md"],
       "integration_deltas": ["Converted conversational routing into the persistent SpecDev work graph"]
     },
     {

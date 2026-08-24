@@ -66,8 +66,12 @@ describe("Speculo init refresh", () => {
       assert.equal(await pathExists(join(root, "commands", "migrate-runtime-state.md")), false);
       assert.equal(await pathExists(join(root, "skills", "migrate-runtime-state")), false);
       assert.equal(await pathExists(join(root, ".speculo", "migration.json")), false);
-      assert.match(await readFile(join(target, "AGENTS.md"), "utf8"), /refresh contract/);
-      assert.doesNotMatch(await readFile(join(target, "AGENTS.md"), "utf8"), /migrate-runtime-state/);
+      assert.equal(await pathExists(join(root, "workflows", "specdev", "README.md")), true);
+      const agents = await readFile(join(target, "AGENTS.md"), "utf8");
+      assert.match(agents, /refresh contract/);
+      assert.match(agents, /speculo\/workflows\/specdev\/INDEX\.md/);
+      assert.doesNotMatch(agents, /speculo\/workflows\/specdev\/README\.md/);
+      assert.doesNotMatch(agents, /migrate-runtime-state/);
       assert.deepEqual(await residue(target), []);
     } finally {
       await rm(target, { recursive: true, force: true });

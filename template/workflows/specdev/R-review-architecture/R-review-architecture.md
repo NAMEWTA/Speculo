@@ -9,6 +9,8 @@ keywords: [architecture, review, module, interface, depth, seam, adapter, levera
 
 # 改善代码库架构
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 揭示架构摩擦，提出**深化机会**——将 shallow module 转变为 deep module 的重构。目标是可测试性和 AI 可导航性。
 
 本 work 基于项目领域模型，并建立在共享设计词汇之上：

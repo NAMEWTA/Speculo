@@ -60,7 +60,7 @@ Work 入口通常包含：
 
 - 必需输入：缺失即阻塞；
 - 可选输入：不存在时静默跳过；
-- 冲突裁决：使用 workflow `artifact-contract` 或当前 INDEX 的规则；
+- 冲突裁决：使用 workflow `artifact-contract` 或根 README 激活合同的规则；
 - 外部事实：代码、测试、schema、配置和经验证文档；
 - 用户决定：只承载无法从仓库发现的高影响取舍。
 
@@ -78,7 +78,7 @@ Work 还可以更新：
 
 - `{roots.state}/<workflow>/status.json`；
 - change `.status.json`；
-- INDEX 明确声明且由该 work 拥有的长期 namespace。
+- 根 README 激活合同明确声明且由该 work 拥有的长期 namespace。
 
 `template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。Work 不写 command 报告或 docs-sync sidecar。
 

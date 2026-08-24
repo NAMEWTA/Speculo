@@ -42,14 +42,15 @@ template/
 能力描述应与运行时的读取顺序一致：
 
 1. 读取 `{roots.state}/workspace.json`，解析公共 roots。
-2. 从 `{roots.workflows}/<workflow>/INDEX.md` 进入 workflow。
-3. 通过 `<Path>` 指针只加载当前 work 及当前分支需要的文件。
-4. 读取 `{roots.state}/<workflow>/status.json`。
-5. 读取活跃 change 的 `.status.json` 和当前 work 产物。
-6. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取。
-7. command 报告从 `{roots.state}/commands/<command>/` 读取；只有声明了持久游标的 command 才读取自己的 `state.json`。
-8. 独立 skill 的运行记录从 `{roots.state}/skills/<skill>/` 读取；只有该 skill 声明了持久游标时才读取根级 `state.json`。
-9. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。
+2. 从 `{roots.workflows}/<workflow>/INDEX.md` 发现 workflow，并按需读取其声明的永久知识；这一步不激活 workflow 状态机。
+3. 用户明确激活 workflow 或 work 后，读取 workflow 根 `README.md`（若 INDEX 声明），从其中的 Work 条目选择目标并读取其入口。
+4. 通过 `<Path>` 指针只加载当前 work 及当前分支需要的文件。
+5. 按激活合同读取 `{roots.state}/<workflow>/status.json`。
+6. 读取活跃 change 的 `.status.json` 和当前 work 产物。
+7. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取。
+8. command 报告从 `{roots.state}/commands/<command>/` 读取；只有声明了持久游标的 command 才读取自己的 `state.json`。
+9. 独立 skill 的运行记录从 `{roots.state}/skills/<skill>/` 读取；只有该 skill 声明了持久游标时才读取根级 `state.json`。
+10. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。
 
 ## 资产职责
 
@@ -63,7 +64,7 @@ template/
 
 ### Workflow
 
-长期流程包。入口为 `template/workflows/<workflow>/INDEX.md`。它声明静态 work、运行时 state root、状态 schema、namespace、启动协议和路由。
+长期流程包。入口 `template/workflows/<workflow>/INDEX.md` 只负责发现、永久知识读取和激活指针；需要共享运行合同的 workflow 由 INDEX 在激活时指向根 `README.md`，后者声明 Work 条目、state root、状态 schema、namespace、启动协议和路由。
 
 ### Work
 
@@ -87,13 +88,13 @@ Work 读取 workflow state，产生 change 产物，并更新 workflow 与 chang
 
 `.speculo` 是安装后唯一运行时持久化根。
 
-- Workflow 只写 `{roots.state}/<workflow>/status.json`、`changes/`、`archive/` 和 INDEX 明确声明的 namespace。
+- Workflow 只写 `{roots.state}/<workflow>/status.json`、`changes/`、`archive/` 和根 README 激活合同明确声明的 namespace。
 - Change 产物写入 `{roots.state}/<workflow>/changes/{change}/`。
 - 独立 Skill 只写 `{roots.state}/skills/<skill>/`；一次运行需要 change 目录时使用 `{roots.state}/skills/<skill>/<YYYY-MM-DD>-<kebab-topic>[-NN]/`，不得冒充 workflow change。
 - `template/workflows/<workflow>/_state/` 只提供初始化种子或 schema 样本；运行时不得写入 `{roots.workflows}/<workflow>/_state/`。
 - Command 只写 `{roots.state}/commands/<command>/` 下的报告和该 command 明确需要的 `state.json`。
 - `{roots.state}/<workflow>/docs-sync.json` 由 docs-sync command 拥有，是延迟创建的 sidecar。
-- `.config/` 不是通用 namespace；只有 workflow INDEX 声明生成者、生成时机和内容所有权后才使用。
+- `.config/` 不是通用 namespace；只有 workflow 根 README 激活合同声明生成者、生成时机和内容所有权后才使用。
 - 项目代码、测试和用户文档写入项目路径；state 中记录项目相对证据指针，不复制代码库内容。
 
 ## 报告契约
@@ -121,9 +122,9 @@ Command 报告使用：
 
 ## Workflow 状态
 
-每个 workflow 自己定义并版本化状态 schema。作者必须以目标 `INDEX.md`、`_state` 种子和现有 work 为事实源，不套用跨 workflow 的固定字段结构。
+每个 workflow 自己定义并版本化状态 schema。作者必须以目标 `INDEX.md`、根 `README.md`、`_state` 种子和现有 work 为事实源，不套用跨 workflow 的固定字段结构。
 
-SpecDev 全局 `status.json` 当前使用 schema v4，仅索引多 active change 与 archived change 名称；active entry 保存 `current_work`、`works_run` 和可选并行 claim。change `.status.json` 及 Spec/Ticket 等领域工件继续使用各自版本并维护生命周期、Ticket/worktree 等细节。其他 workflow 可以更简单，不能被强制迁移为 SpecDev schema。
+SpecDev 全局 `status.json` 当前使用 schema v5，仅索引多 active change 与 archived change 名称；active entry 保存 `current_work`、`works_run` 和可选并行 claim。change `.status.json` 及 Spec/Ticket 等领域工件继续使用各自版本并维护生命周期、Ticket/worktree 等细节。其他 workflow 可以更简单，不能被强制迁移为 SpecDev schema。
 
 ## 副作用
 
@@ -135,7 +136,7 @@ SpecDev 全局 `status.json` 当前使用 schema v4，仅索引多 active change
 
 1. 当前被编辑资产的真实调用方、测试和脚本；
 2. `template/.speculo/README.md` 与 `workspace.json`；
-3. 目标 workflow 的 `INDEX.md`、`common/rules`、schema 和 `_state` 种子；
+3. 目标 workflow 的 `INDEX.md`、根 `README.md` 激活合同、`common/rules`、schema 和 `_state` 种子；
 4. 同类型当前资产的稳定共同模式；
 5. 本目录的作者参考。
 

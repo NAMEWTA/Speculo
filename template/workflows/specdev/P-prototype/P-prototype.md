@@ -9,6 +9,8 @@ keywords: [prototype, 原型, logic, UI, variant, 一次性代码, 设计问题]
 
 # 原型
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 原型是**回答一个问题的一次性代码**。P 不交付生产实现，也不把原型代码提升到 main；它把答案和一手资料 locator 交给后续 G/S/Tickets/I。
 
 ## 输入与所有权

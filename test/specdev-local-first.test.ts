@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -271,6 +271,43 @@ function currentTicketWorktree(status: "active" | "integrated" = "active"): Reco
 }
 
 describe("SpecDev local-first contracts", () => {
+  it("keeps INDEX passive and loads the root contract only after work activation", async () => {
+    const workflowRoot = join(packageRoot, "template/workflows/specdev");
+    const index = await readFile(join(workflowRoot, "INDEX.md"), "utf8");
+    const activation = await readFile(join(workflowRoot, "README.md"), "utf8");
+    const activationRef = "<Path>{roots.workflows}/specdev/README.md</Path>";
+
+    for (const marker of [
+      "## 永久知识",
+      "{roots.state}/specdev/adr/",
+      "{roots.state}/specdev/context/",
+      "{roots.state}/specdev/research/",
+      "## Work 激活",
+      activationRef,
+    ]) {
+      assert.match(index, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+    assert.doesNotMatch(index, /## (Work 条目|运行时根|持久化约定|启动协议|状态字段|路径分配|副作用边界)|AUTO-INDEX-(?:START|END)/);
+    assert.doesNotMatch(index, /specdev\/(?:config|status)\.json|specdev\/changes\/\{change\}/);
+
+    for (const section of ["Work 条目", "运行时根", "持久化约定", "启动协议", "状态字段", "路径分配", "副作用边界"]) {
+      assert.match(activation, new RegExp(`## ${section}`));
+    }
+    assert.equal((activation.match(/AUTO-INDEX-START/g) ?? []).length, 1);
+    assert.equal((activation.match(/AUTO-INDEX-END/g) ?? []).length, 1);
+    assert.match(activation, /A-archive-and-consolidate[\s\S]*W-wayfinder/);
+    assert.match(activation, /全局 schema v5/);
+    assert.match(activation, /schema_version.*固定为 `5`/);
+
+    const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
+    assert.equal(workDirs.length, 15);
+    for (const workDir of workDirs) {
+      const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
+      assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+  });
+
   it("defines one Lead, bounded implementation agents, and mandatory Ticket integration", async () => {
     const goalPlan = await readFile(
       join(packageRoot, "template/workflows/specdev/P-goal-plan/goal-plan-template.md"),

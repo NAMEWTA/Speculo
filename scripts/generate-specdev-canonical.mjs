@@ -489,7 +489,13 @@ function adaptSchema(content, tag) {
 }
 
 function transformContent(content, tagsBySource) {
-  return adaptCanonicalLanguage(replacePaths(content, tagsBySource)).trim();
+  const withoutLocalActivationContract = content.replace(
+    /^> 激活本 Work 后，先读取 `<Path>\{roots\.workflows\}\/specdev\/README\.md<\/Path>`，再执行本入口。\r?\n\r?\n/m,
+    "",
+  );
+  return adaptCanonicalLanguage(
+    replacePaths(withoutLocalActivationContract, tagsBySource),
+  ).trim();
 }
 
 async function renderReference(referenceDefinition, tagsBySource) {

@@ -9,6 +9,8 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 
 # 实现
 
+> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+
 本 work 保留模块设计检查、design-it-twice、TDD 红绿循环、双轴审查和证据治理。Ticket 模式按 Goal Plan 的 `ticket_workspace_policy` 选择 current workspace 串行直接父分支或独立 worktree candidate-merge；Lead 根据实际情况自行实现或动态派单。
 
 ## 执行模式

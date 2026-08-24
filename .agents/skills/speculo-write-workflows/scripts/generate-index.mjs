@@ -120,14 +120,14 @@ function count(source, needle) {
   return source.split(needle).length - 1;
 }
 
-function renderMarkerIndex(original, indexPath, works) {
+function renderMarkerIndex(original, targetPath, works) {
   if (count(original, START) !== 1 || count(original, END) !== 1) {
-    throw new Error(`${indexPath}: marker mode requires exactly one ${START} and one ${END}`);
+    throw new Error(`${targetPath}: marker mode requires exactly one ${START} and one ${END}`);
   }
   const start = original.indexOf(START);
   const end = original.indexOf(END);
   if (end < start) {
-    throw new Error(`${indexPath}: AUTO-INDEX markers are reversed`);
+    throw new Error(`${targetPath}: AUTO-INDEX markers are reversed`);
   }
   const block = renderWorkList(works);
   return `${original.slice(0, start)}${START}\n\n${block}${block ? '\n\n' : ''}${END}${original.slice(end + END.length)}`;
@@ -160,8 +160,8 @@ async function main() {
   const { workflowPath, check } = parseArgs(process.argv.slice(2));
   const workflowName = path.basename(workflowPath);
   const indexPath = path.join(workflowPath, 'INDEX.md');
-  const original = normalize(await readFile(indexPath, 'utf8'));
-  const frontmatter = parseFrontmatter(original, indexPath);
+  const indexOriginal = normalize(await readFile(indexPath, 'utf8'));
+  const frontmatter = parseFrontmatter(indexOriginal, indexPath);
   const mode = chooseMode(frontmatter, indexPath);
 
   if (frontmatter.workflow !== workflowName) {
@@ -171,29 +171,41 @@ async function main() {
   }
 
   const works = await collectWorks(workflowPath);
+  let targetPath;
+  let original;
   let next;
+  let targetLabel;
   if (mode === 'markers') {
-    next = renderMarkerIndex(original, indexPath, works);
+    if (count(indexOriginal, START) !== 0 || count(indexOriginal, END) !== 0) {
+      throw new Error(`${indexPath}: marker mode keeps AUTO-INDEX markers in README.md`);
+    }
+    targetPath = path.join(workflowPath, 'README.md');
+    original = normalize(await readFile(targetPath, 'utf8'));
+    next = renderMarkerIndex(original, targetPath, works);
+    targetLabel = 'README';
   } else {
-    if (count(original, START) !== 0 || count(original, END) !== 0) {
+    targetPath = indexPath;
+    original = indexOriginal;
+    if (count(indexOriginal, START) !== 0 || count(indexOriginal, END) !== 0) {
       throw new Error(`${indexPath}: whole-file mode must not contain AUTO-INDEX markers`);
     }
     next = renderWholeFileIndex(workflowName, works);
+    targetLabel = 'INDEX';
   }
 
   if (next === original) {
-    console.log(`INDEX is current: ${indexPath} (${works.length} works, ${mode})`);
+    console.log(`${targetLabel} is current: ${targetPath} (${works.length} works, ${mode})`);
     return;
   }
 
   if (check) {
-    console.error(`STALE INDEX: ${indexPath} (${works.length} works, ${mode})`);
+    console.error(`STALE ${targetLabel}: ${targetPath} (${works.length} works, ${mode})`);
     process.exitCode = 1;
     return;
   }
 
-  await writeAtomically(indexPath, next);
-  console.log(`Updated INDEX: ${indexPath} (${works.length} works, ${mode})`);
+  await writeAtomically(targetPath, next);
+  console.log(`Updated ${targetLabel}: ${targetPath} (${works.length} works, ${mode})`);
 }
 
 main().catch((error) => {
