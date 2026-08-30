@@ -3,8 +3,8 @@ id: specdev
 type: workflow
 workflow: specdev
 name: SpecDev Workflow
-description: 以本地工件为唯一开发权威，从来源冻结、诊断、设计、零基础新生图解、原型、规格、Ticket、编排和审查推进到证据驱动实现、远程 reconcile 与知识归档。
-keywords: [specdev, local-first, 规格驱动开发, decision-complete, eli5, prototype, code-review, TDD, 证据]
+description: 以本地工件为唯一开发权威，从来源冻结、诊断、设计、原型、规格、Ticket、编排和审查推进到证据驱动实现、远程 reconcile 与知识归档。
+keywords: [specdev, local-first, 规格驱动开发, decision-complete, prototype, code-review, TDD, 证据]
 ---
 
 # SpecDev Index

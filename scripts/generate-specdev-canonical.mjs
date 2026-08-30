@@ -11,6 +11,10 @@ const checkOnly = process.argv.includes("--check");
 const workflowRoot = "template/workflows/specdev";
 const commonRoot = `${workflowRoot}/common`;
 
+function normalizeLineEndings(content) {
+  return content.replace(/\r\n?/g, "\n");
+}
+
 const sharedSources = {
   artifactContract: {
     source: `${commonRoot}/rules/artifact-contract.md`,
@@ -265,30 +269,6 @@ const canonicalDocuments = [
       sharedSources.wayfinderTicketSchema,
     ],
   },
-  {
-    output:
-      "template/canonical/canonical-specdev-engineering-cognitive-mentor.md",
-    entry: `${workflowRoot}/E-engineering-cognitive-mentor/E-engineering-cognitive-mentor.md`,
-    references: [
-      reference("E-engineering-cognitive-mentor/mode-routing.md"),
-      reference("E-engineering-cognitive-mentor/interaction-protocol.md"),
-      reference("E-engineering-cognitive-mentor/evidence-and-options.md"),
-      reference("E-engineering-cognitive-mentor/bug-guidance.md"),
-      reference("E-engineering-cognitive-mentor/codebase-guidance.md"),
-      reference("E-engineering-cognitive-mentor/requirements-guidance.md"),
-      reference("E-engineering-cognitive-mentor/architecture-guidance.md"),
-      reference("E-engineering-cognitive-mentor/domain-learning-guidance.md"),
-      reference("E-engineering-cognitive-mentor/comprehension-and-closure.md"),
-      reference("E-engineering-cognitive-mentor/persistence-and-resume.md"),
-      reference("E-engineering-cognitive-mentor/mentor-report-template.md", {
-        preserveArtifactHeader: true,
-      }),
-      sharedSources.artifactContract,
-      sharedSources.deviationControl,
-      sharedSources.researchSkill,
-      ...persistenceReferences,
-    ],
-  },
 ];
 
 const capabilityNames = new Map([
@@ -500,7 +480,7 @@ function transformContent(content, tagsBySource) {
 
 async function renderReference(referenceDefinition, tagsBySource) {
   const sourcePath = path.join(repositoryRoot, referenceDefinition.source);
-  let content = await readFile(sourcePath, "utf8");
+  let content = normalizeLineEndings(await readFile(sourcePath, "utf8"));
 
   if (referenceDefinition.format === "json") {
     content = adaptSchema(content.trim(), referenceDefinition.tag);
@@ -642,10 +622,10 @@ async function generateCanonical(documentDefinition) {
     documentDefinition.references.map(({ source, tag }) => [source, tag]),
   );
 
-  const entryContent = await readFile(
+  const entryContent = normalizeLineEndings(await readFile(
     path.join(repositoryRoot, documentDefinition.entry),
     "utf8",
-  );
+  ));
   const { body } = splitFrontmatter(entryContent);
   const transformedEntry = insertRuntimeConvention(
     transformContent(body, tagsBySource),
@@ -674,7 +654,7 @@ async function generateCanonical(documentDefinition) {
   assertCanonical(output, documentDefinition);
   const outputPath = path.join(repositoryRoot, documentDefinition.output);
   if (checkOnly) {
-    const currentContent = await readFile(outputPath, "utf8");
+    const currentContent = normalizeLineEndings(await readFile(outputPath, "utf8"));
     if (currentContent !== output) {
       throw new Error(
         `${documentDefinition.output} is stale; run pnpm generate-canonical`,

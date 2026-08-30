@@ -11,6 +11,7 @@ import { pathExists } from "../src/utils.js";
 import { discoverWorkflowCatalog, selectAllFromCatalog } from "../src/workflows.js";
 
 const packageRoot = process.cwd();
+const isWindows = process.platform === "win32";
 
 async function tempProject(prefix = "speculo-test-"): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix));
@@ -252,7 +253,7 @@ describe("Speculo init refresh", () => {
     }
   });
 
-  it("blocks runtime symlinks without replacing active files", async () => {
+  it("blocks runtime symlinks without replacing active files", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
@@ -267,7 +268,7 @@ describe("Speculo init refresh", () => {
     }
   });
 
-  it("replaces symlinked selected static assets instead of treating them as runtime", async () => {
+  it("replaces symlinked selected static assets instead of treating them as runtime", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
@@ -348,12 +349,107 @@ describe("Speculo init refresh", () => {
       await rm(brokenPackage, { recursive: true, force: true });
     }
   });
+
+  it("preserves Learning Markdown knowledge byte-for-byte during refresh", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
+      const root = join(target, "speculo");
+      const knowledge = join(root, ".speculo", "learning", "context", "domains", "speculo", "concepts", "indexes.md");
+      const content = Buffer.from("# Indexes\n\ncustom \u0000 knowledge bytes\n", "utf8");
+      await mkdir(dirname(knowledge), { recursive: true });
+      await writeFile(knowledge, content);
+      const change = "2026-08-30-preserve-learning";
+      const changeStatus = {
+        schema_version: 1,
+        artifact: "learning-change-status",
+        change,
+        domain: "speculo",
+        domain_type: "project",
+        topic: "Preserve Learning",
+        change_status: "active",
+        phase: "teaching",
+        current_work: "learning/eli5",
+        works_run: ["learning/assess-and-plan"],
+        created_at: "2026-08-30T00:00:00.000Z",
+        updated_at: "2026-08-30T00:00:00.000Z",
+        completed_at: null,
+        archived_at: null,
+        archive_path: null,
+        mastery: {
+          immediate: "not_attempted",
+          retention: "not_attempted",
+          score: null,
+          critical_objectives_passed: false,
+          transfer_passed: false,
+          blocking_misconceptions: [],
+          evidence: [],
+          next_review_at: null,
+        },
+        blockers: [],
+      };
+      await writeJson(join(root, ".speculo", "learning", "changes", change, ".status.json"), changeStatus);
+      await writeJson(join(root, ".speculo", "learning", "status.json"), {
+        schema_version: 1,
+        workflow: "learning",
+        active: [{
+          change,
+          domain: changeStatus.domain,
+          topic: changeStatus.topic,
+          current_work: changeStatus.current_work,
+          works_run: changeStatus.works_run,
+        }],
+        archived: [],
+      });
+
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
+
+      assert.deepEqual(await readFile(knowledge), content);
+      assert.deepEqual(await readJson(join(root, ".speculo", "learning", "changes", change, ".status.json")), changeStatus);
+      const managed = await readJson(join(root, ".speculo", "managed.json"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "workflows/learning/runtime-contract.json" && entry.kind === "contract"));
+      assert.equal(managed.files.some((entry: any) => entry.path.includes(".speculo/learning/context")), false);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks malformed Learning structured state before replacing active assets", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
+      const root = join(target, "speculo");
+      const sentinel = join(root, "workflows", "learning", "INDEX.md");
+      await writeFile(sentinel, "active stays\n", "utf8");
+      await writeJson(join(root, ".speculo", "learning", "status.json"), {
+        schema_version: 1,
+        workflow: "learning",
+        active: [{
+          change: "2026-08-30-missing-state",
+          domain: "speculo",
+          topic: "Missing state",
+          current_work: null,
+          works_run: [],
+        }],
+        archived: [],
+      });
+
+      await assert.rejects(
+        initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } }),
+        (error) => expectBlocked(error, "structured-state-conflict"),
+      );
+      assert.equal(await readFile(sentinel, "utf8"), "active stays\n");
+      assert.deepEqual(await residue(target), []);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("CLI surface", () => {
   it("discovers all packaged workflows", async () => {
     const catalog = await discoverWorkflowCatalog(packageRoot);
-    assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["person", "specdev"]);
+    assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["learning", "person", "specdev"]);
   });
 
   it("exposes only init and version", () => {

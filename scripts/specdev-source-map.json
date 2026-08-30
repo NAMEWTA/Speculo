@@ -152,7 +152,7 @@
       "source_sha256": "fe1e9efd5a57b5781cf446a96148f34eebf5acdc6c98f536e372817ff5d2f779",
       "classification": "excluded",
       "targets": [],
-      "rationale": "A teaching curriculum belongs to person or a dedicated teaching workflow, not SpecDev execution"
+      "rationale": "Teaching is implemented by the dedicated Learning workflow and does not belong to SpecDev execution"
     },
     {
       "source": "temp/skills/productivity/to-questionnaire/SKILL.md",

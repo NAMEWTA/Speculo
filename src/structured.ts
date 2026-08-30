@@ -244,9 +244,171 @@ async function validatePersonState(stagedRoot: string): Promise<void> {
   }
 }
 
+function assertLearningWork(value: unknown, label: string): void {
+  if (!(value === null || (typeof value === "string" && /^learning\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)))) {
+    throw new Error(label + " must be null or a learning work id");
+  }
+}
+
+function assertLearningWorks(value: unknown, label: string): void {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !/^learning\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item)) || new Set(value).size !== value.length) {
+    throw new Error(label + " must contain unique learning work ids");
+  }
+}
+
+function assertExactKeys(value: JsonObject, allowed: string[], label: string): void {
+  const allowedKeys = new Set(allowed);
+  const unknown = Object.keys(value).filter((key) => !allowedKeys.has(key));
+  if (unknown.length > 0) throw new Error(label + " has unknown fields: " + unknown.join(", "));
+}
+
+function assertUniqueStrings(value: unknown, label: string): asserts value is string[] {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string") || new Set(value).size !== value.length) {
+    throw new Error(label + " must contain unique strings");
+  }
+}
+
+function isDateTime(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}
+
+function validateLearningChangeStatus(value: JsonObject, change: string, archived: boolean): void {
+  assertExactKeys(value, [
+    "schema_version", "artifact", "change", "domain", "domain_type", "topic",
+    "change_status", "phase", "current_work", "works_run", "created_at", "updated_at",
+    "completed_at", "archived_at", "archive_path", "mastery", "blockers",
+  ], "Learning change status");
+  if (value.schema_version !== 1 || value.artifact !== "learning-change-status" || value.change !== change) {
+    throw new Error("Learning change status has an invalid identity or schema");
+  }
+  if (typeof value.domain !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.domain)) {
+    throw new Error("Learning change status has an invalid domain");
+  }
+  if (!["project", "product", "subject", "language", "skill"].includes(String(value.domain_type)) || typeof value.topic !== "string" || !value.topic.trim()) {
+    throw new Error("Learning change status has an invalid domain type or topic");
+  }
+  const changeStatus = String(value.change_status);
+  if (!["active", "blocked", "awaiting_retention", "completed", "archived"].includes(changeStatus)) {
+    throw new Error("Learning change status has an invalid lifecycle value");
+  }
+  if (!["intake", "assessment", "teaching", "practice", "immediate_quiz", "retention", "ready_to_archive", "archived"].includes(String(value.phase))) {
+    throw new Error("Learning change status has an invalid phase");
+  }
+  assertLearningWork(value.current_work, "Learning change current_work");
+  assertLearningWorks(value.works_run, "Learning change works_run");
+  assertUniqueStrings(value.blockers, "Learning change blockers");
+  if (!isDateTime(value.created_at) || !isDateTime(value.updated_at)) {
+    throw new Error("Learning change timestamps must be date-times");
+  }
+
+  const mastery = object(value.mastery);
+  assertExactKeys(mastery, [
+    "immediate", "retention", "score", "critical_objectives_passed", "transfer_passed",
+    "blocking_misconceptions", "evidence", "next_review_at",
+  ], "Learning mastery");
+  const results = new Set(["not_attempted", "failed", "passed", "needs_review"]);
+  if (!results.has(String(mastery.immediate)) || !results.has(String(mastery.retention))) {
+    throw new Error("Learning change mastery is incomplete");
+  }
+  if (!(mastery.score === null || (typeof mastery.score === "number" && mastery.score >= 0 && mastery.score <= 100))) {
+    throw new Error("Learning mastery score must be null or between 0 and 100");
+  }
+  if (typeof mastery.critical_objectives_passed !== "boolean" || typeof mastery.transfer_passed !== "boolean") {
+    throw new Error("Learning mastery objective and transfer projections must be booleans");
+  }
+  assertUniqueStrings(mastery.blocking_misconceptions, "Learning mastery blocking_misconceptions");
+  assertUniqueStrings(mastery.evidence, "Learning mastery evidence");
+  if (mastery.evidence.some((item) => !/^<Path>\{roots\.state\}\/learning\/(?:changes\/[^<]+|archive\/[0-9]{4}-[0-9]{2}\/[^<]+)\/quiz\/[^<]+\.md<\/Path>$/.test(item))) {
+    throw new Error("Learning mastery evidence contains an invalid path");
+  }
+  if (!(mastery.next_review_at === null || isDateTime(mastery.next_review_at))) {
+    throw new Error("Learning mastery next_review_at must be null or a date-time");
+  }
+  if (changeStatus === "awaiting_retention" && mastery.immediate !== "passed") {
+    throw new Error("Learning awaiting_retention requires an immediate pass");
+  }
+  if (["completed", "archived"].includes(changeStatus)) {
+    if (
+      mastery.immediate !== "passed" || mastery.retention !== "passed" ||
+      typeof mastery.score !== "number" || mastery.score < 80 ||
+      mastery.critical_objectives_passed !== true || mastery.transfer_passed !== true ||
+      mastery.blocking_misconceptions.length > 0 || mastery.evidence.length < 2
+    ) {
+      throw new Error("Learning completed knowledge does not satisfy the mastery gate");
+    }
+  }
+  if (["completed", "archived"].includes(changeStatus)) {
+    if (!isDateTime(value.completed_at)) throw new Error("Learning completed knowledge requires completed_at");
+  } else if (value.completed_at !== null) {
+    throw new Error("Learning incomplete change must keep completed_at null");
+  }
+  if (archived) {
+    const expectedPath = `<Path>{roots.state}/learning/archive/${change.slice(0, 7)}/${change}</Path>`;
+    if (value.phase !== "archived" || value.current_work !== null || !isDateTime(value.archived_at) || value.archive_path !== expectedPath) {
+      throw new Error("Learning archive fields do not match the indexed location");
+    }
+  } else if (value.archived_at !== null || value.archive_path !== null) {
+    throw new Error("Learning active change must keep archive fields null");
+  }
+  if (archived !== (changeStatus === "archived")) {
+    throw new Error("Learning indexed location and change status disagree");
+  }
+}
+
+async function validateLearningState(stagedRoot: string): Promise<void> {
+  const stateRoot = join(stagedRoot, ".speculo", "learning");
+  const statusPath = join(stateRoot, "status.json");
+  if (!(await pathExists(statusPath))) return;
+  const status = await readObject(statusPath, ".speculo/learning/status.json");
+  assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "Learning status");
+  if (status.schema_version !== 1 || status.workflow !== "learning" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
+    throw new Error("Learning status must use schema v1 with active and archived arrays");
+  }
+
+  const active = status.active.map((entry) => {
+    assertJsonObject(entry, "Learning active status entry");
+    assertExactKeys(entry, ["change", "domain", "topic", "current_work", "works_run"], "Learning active status entry");
+    if (typeof entry.change !== "string" || !CHANGE_NAME.test(entry.change)) throw new Error("Learning active change name is invalid");
+    if (typeof entry.domain !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.domain) || typeof entry.topic !== "string" || !entry.topic.trim()) {
+      throw new Error("Learning active entry has an invalid domain or topic");
+    }
+    assertLearningWork(entry.current_work, "Learning active current_work");
+    assertLearningWorks(entry.works_run, "Learning active works_run");
+    return entry;
+  });
+  const archived = status.archived.map((entry) => {
+    if (typeof entry !== "string" || !CHANGE_NAME.test(entry)) throw new Error("Learning archived change name is invalid");
+    return entry;
+  });
+  const activeNames = new Set(active.map((entry) => String(entry.change)));
+  if (activeNames.size !== active.length || new Set(archived).size !== archived.length || archived.some((name) => activeNames.has(name))) {
+    throw new Error("Learning status contains duplicate or overlapping change names");
+  }
+
+  for (const entry of active) {
+    const change = String(entry.change);
+    const path = join(stateRoot, "changes", change, ".status.json");
+    if (!(await pathExists(path))) throw new Error("indexed Learning change is missing " + path);
+    const value = await readObject(path, path);
+    validateLearningChangeStatus(value, change, false);
+    if (value.domain !== entry.domain || value.topic !== entry.topic || value.current_work !== entry.current_work || JSON.stringify(value.works_run) !== JSON.stringify(entry.works_run)) {
+      throw new Error("Learning global and change status projections disagree for " + change);
+    }
+  }
+  for (const change of archived) {
+    const path = join(stateRoot, "archive", change.slice(0, 7), change, ".status.json");
+    if (!(await pathExists(path))) throw new Error("indexed Learning archive is missing " + path);
+    validateLearningChangeStatus(await readObject(path, path), change, true);
+  }
+}
+
 export async function migrateStructuredRuntime(stagedRoot: string, selectedWorkflowIds: string[]): Promise<StructuredChange[]> {
   const changes: StructuredChange[] = [];
-  if (selectedWorkflowIds.includes("specdev")) changes.push(...await migrateSpecdevState(stagedRoot));
-  if (selectedWorkflowIds.includes("person")) await validatePersonState(stagedRoot);
+  const handlers: Record<string, () => Promise<void>> = {
+    learning: async () => validateLearningState(stagedRoot),
+    person: async () => validatePersonState(stagedRoot),
+    specdev: async () => { changes.push(...await migrateSpecdevState(stagedRoot)); },
+  };
+  for (const workflowId of selectedWorkflowIds) await handlers[workflowId]?.();
   return changes;
 }

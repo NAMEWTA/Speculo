@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
+const isWindows = process.platform === "win32";
 const script = join(packageRoot, "template", "skills", "upstream-fork-sync", "scripts", "upstream-sync.mjs");
 
 function command(cwd: string, ...args: string[]): string {
@@ -219,7 +220,7 @@ describe("upstream-fork-sync skill", () => {
     }
   });
 
-  it("rejects escaped state paths and missing refs without publishing a change", async () => {
+  it("rejects escaped state paths and missing refs without publishing a change", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const fixture = await createFixture();
     try {
       const escaped = runSkill(

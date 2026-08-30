@@ -4,6 +4,18 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.8.6] - 2026-08-30
+
+### Added
+- **Learning workflow**: adds seven Works for initialization, evidence-based assessment, plain-language ASCII teaching with explicit learner-facing baselines, active practice, immediate quizzes, delayed review, and knowledge-gated archival.
+- **Book-style Markdown knowledge**: adds hierarchical context/domain indexes, exact-file navigation, review scheduling, and domain support for projects, products, subjects, languages, and skills without RAG, embeddings, or vector storage.
+- **Learning persistence validation**: registers Learning schema v1 with refresh preflight and adds deterministic checks for mastery gates, state projections, evidence paths, duplicate Knowledge IDs, and broken Markdown links.
+
+### Changed
+- Added a `mechanical-only` policy to the shared archive skill so workflow-owned knowledge graduation can remain independent from safe archive movement.
+
 ## [0.8.5] - 2026-08-24
 
 ### Changed

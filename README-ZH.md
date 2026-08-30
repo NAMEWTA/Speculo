@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> 将规范驱动开发资产打包为可安装工作流——支持状态安全刷新的初始化工具。
+> 将 AI 协作资产打包为可安装工作流——支持状态安全刷新的初始化工具。
 
 Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages——通过统一的 CLI 安装到任意项目中。
 
@@ -63,11 +63,12 @@ npm install -g @namewta/speculo
 | `engineering-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
 
-### 2 个 Workflow Packages
+### 3 个 Workflow Packages
 
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
-| **specdev** | 15 | 本地优先的规范驱动开发：归档、代码审查、诊断、五岁图解、认知指导、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
+| **learning** | 7 | 面向项目、产品、学科、语言和技能的证据门控学习：通俗图解、主动练习、即时与延迟测验，以及图书式 Markdown 知识索引 |
+| **specdev** | 13 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 
 每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。

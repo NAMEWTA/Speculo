@@ -34,8 +34,6 @@ const EXPECTED_WORKS = new Set([
   "A-archive-and-consolidate",
   "C-code-review",
   "D-diagnose-bugs",
-  "E-eli5",
-  "E-engineering-cognitive-mentor",
   "G-grill-with-docs",
   "I-implement",
   "I-init-setup",
@@ -99,7 +97,6 @@ const VALID_STAGES = new Set([
   "triage",
   "diagnosis",
   "grill",
-  "eli5",
   "spec",
   "tickets",
   "goal-plan",
@@ -169,7 +166,6 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "source.md",
   "architecture-review.md",
   "architecture-review.html",
-  "eli_index.md",
   "wayfinder-map.md",
   "design-tree.json",
 ]);
@@ -824,13 +820,6 @@ function capabilityChecks(root) {
       ],
     ],
     [
-      "eli5",
-      [
-        join(root, "E-eli5", "E-eli5.md"),
-        ["大一新生", "零专业背景", "$ARGUMENTS", "ASCII", "eli_index.md", "{number}_{topic}.md"],
-      ],
-    ],
-    [
       "wayfinder",
       [
         join(root, "W-wayfinder", "W-wayfinder.md"),
@@ -1233,62 +1222,6 @@ function validatePrototypes(change, required, errors) {
     }
   }
   return paths;
-}
-
-function validateEli5(change, required, errors) {
-  const indexPath = join(change, "eli_index.md");
-  const diagramFiles = readdirSync(change, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /^\d{2,}_[^/\\\\\s]+\.md$/.test(entry.name))
-    .map((entry) => entry.name)
-    .sort();
-
-  if (!isFile(indexPath)) {
-    if (required) errors.push("eli5 stage requires eli_index.md");
-    return null;
-  }
-
-  const index = readText(indexPath);
-  if (!index.includes("# ELI5 图解索引")) errors.push("eli_index.md: missing index heading");
-  const entries = Array.from(index.matchAll(/^\|\s*(\d{2,})\s*\|\s*([^|\s]+\.md)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*$/gm));
-  if (!entries.length && required) errors.push("eli_index.md: requires at least one diagram entry");
-
-  const indexedFiles = new Set();
-  let previousNumber = 0;
-  for (const entry of entries) {
-    const [, number, fileName, topic, summary] = entry;
-    const numericNumber = Number(number);
-    if (!/^\d{2,}_[^/\\\\\s]+\.md$/.test(fileName)) {
-      errors.push(`eli_index.md: invalid diagram filename '${fileName}'`);
-      continue;
-    }
-    if (numericNumber <= previousNumber) errors.push("eli_index.md: diagram numbers must increase");
-    if (numericNumber !== previousNumber + 1) errors.push("eli_index.md: diagram numbers must start at 01 and be continuous");
-    previousNumber = numericNumber;
-    if (!fileName.startsWith(`${number}_`)) errors.push(`eli_index.md: '${fileName}' must start with '${number}_'`);
-    if (!topic.trim() || !summary.trim()) errors.push(`eli_index.md: '${fileName}' requires a topic and summary`);
-    indexedFiles.add(fileName);
-  }
-
-  for (const fileName of diagramFiles) {
-    if (!indexedFiles.has(fileName)) errors.push(`eli_index.md: missing entry for '${fileName}'`);
-  }
-  for (const fileName of indexedFiles) {
-    if (!diagramFiles.includes(fileName)) errors.push(`eli_index.md: '${fileName}' does not exist`);
-  }
-
-  for (const fileName of diagramFiles) {
-    const markdown = readText(join(change, fileName));
-    for (const heading of ["## 先看全图", "## 一步一步看", "## 术语小词典", "## 你现在能复述什么"]) {
-      if (!markdown.includes(heading)) errors.push(`${fileName}: missing '${heading}'`);
-    }
-    if (!/```(?:text)?\s*[\s\S]*?(?:->|\||\+--)[\s\S]*?```/.test(markdown)) {
-      errors.push(`${fileName}: requires an ASCII diagram in a fenced code block`);
-    }
-    if (/<\/?(?:html|head|body|svg|canvas|img|picture)\b/i.test(markdown)) {
-      errors.push(`${fileName}: must be Markdown, not HTML`);
-    }
-  }
-  return indexPath;
 }
 
 function validateSpec(path, errors, warnings) {
@@ -2151,7 +2084,6 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors);
-  validateEli5(change, stage === "eli5", errors);
 
   const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage);
   const specPath = join(change, "spec.md");

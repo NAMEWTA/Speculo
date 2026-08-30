@@ -66,7 +66,8 @@ function readJson(path, label) {
 }
 
 function parseFrontmatter(content, file) {
-  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  const normalized = content.replace(/\r\n?/g, "\n");
+  const match = normalized.match(/^---\s*\n([\s\S]*?)\n---/);
   if (!match) {
     fail(`${file}: missing frontmatter`);
     return {};

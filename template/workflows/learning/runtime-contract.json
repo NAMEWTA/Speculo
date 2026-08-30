@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "workflow": "learning",
+  "config": null,
+  "structured_state": [
+    ".speculo/learning/status.json",
+    ".speculo/learning/changes/*/.status.json",
+    ".speculo/learning/archive/*/*/.status.json"
+  ],
+  "opaque_default": "preserve-byte-for-byte"
+}

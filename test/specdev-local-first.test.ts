@@ -160,6 +160,7 @@ async function writeGoalPlan(
     join(packageRoot, "template/workflows/specdev/P-goal-plan/goal-plan-template.md"),
     "utf8",
   );
+  content = content.replace(/\r\n?/g, "\n");
   content = content
     .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
     .replace("status: draft", "status: ready")
@@ -301,7 +302,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
-    assert.equal(workDirs.length, 15);
+    assert.equal(workDirs.length, 13);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -738,56 +739,6 @@ describe("SpecDev local-first contracts", () => {
       const result = runValidator(root, "diagnosis");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /hypotheses must be empty before red evidence/);
-    } finally {
-      await rm(dirname(root), { recursive: true, force: true });
-    }
-  });
-
-  it("requires indexed Markdown artifacts with ASCII diagrams for the eli5 stage", async () => {
-    const root = await fixture();
-    try {
-      await writeStatus(root);
-
-      const missing = runValidator(root, "eli5");
-      assert.equal(missing.status, 1);
-      assert.match(missing.stdout + missing.stderr, /eli5 stage requires eli_index\.md/);
-
-      await writeFile(
-        join(root, "01_rain-cycle.md"),
-        [
-          "# 雨从哪里来",
-          "",
-          "## 先看全图",
-          "",
-          "```text",
-          "[水] -> [水蒸气] -> [云] -> [雨]",
-          "```",
-          "",
-          "## 一步一步看",
-          "",
-          "太阳让水变成水蒸气，水蒸气在天上聚成云。",
-          "",
-          "## 术语小词典",
-          "",
-          "- 看不见的水汽（蒸发）：水慢慢跑到空气里。",
-          "",
-          "## 你现在能复述什么",
-          "",
-          "- 雨开始前，水先去了哪里？",
-        ].join("\n"),
-      );
-      await writeFile(
-        join(root, "eli_index.md"),
-        [
-          "# ELI5 图解索引",
-          "",
-          "| 编号 | 文件 | 主题 | 简介 |",
-          "| --- | --- | --- | --- |",
-          "| 01 | 01_rain-cycle.md | 雨从哪里来 | 解释水如何变成雨。 |",
-        ].join("\n"),
-      );
-      const valid = runValidator(root, "eli5");
-      assert.equal(valid.status, 0, valid.stdout + valid.stderr);
     } finally {
       await rm(dirname(root), { recursive: true, force: true });
     }

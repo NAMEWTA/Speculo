@@ -5,7 +5,8 @@ name: Archive and Consolidate
 description: >
   对 workflow 下已完成 change 执行归档移动，从归档 change 中提取知识并合并到 workflow
   INDEX.md 声明的 state 知识 store（adr/、context/ 等），
-  然后审计并清理过时/重复知识。默认 dry-run 返回可确认计划，所有破坏性动作需用户显式确认后执行。
+  然后审计并清理过时/重复知识；也支持由调用方拥有知识策略的 mechanical-only 模式。
+  默认 dry-run 返回可确认计划，所有破坏性动作需用户显式确认后执行。
   触发场景：workflow 中存在 change_status: completed 的 change 需要归档收尾、知识沉淀、清理过时内容时。
 ---
 
@@ -26,7 +27,10 @@ description: >
 - 目标 workflow `INDEX.md` 中的运行时根声明和持久化约定表。
 - 模式：`dry-run`（默认）| `confirmed`。
 - 范围：`archive-single`（单个 change）| `archive-batch`（全部已完成 change）。
+- 知识策略：`generic`（默认）| `mechanical-only`（调用方拥有知识策略，本 Skill 只处理移动与状态）。
 - 可选指定 change 名称（`archive-single` 模式）。
+
+`mechanical-only` 必须由调用方提供已经确认的知识处理结果或明确说明无知识写入。本 Skill 不读取、判断、创建、合并、改写或清理知识 store；它仍执行全部路径包含、目标冲突、状态一致性、dry-run/confirmed 和重读验证门。
 
 ## 流程
 
@@ -48,7 +52,7 @@ description: >
 7. 对每个已解析路径执行真实路径包含检查；符号链接逃逸或不存在的静态引用阻塞。
 8. 读取 `status.json`；扫描 changes 时校验 change 名称格式 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`，无日期前缀的历史 change 标注遗留但不阻塞。
 
-### Step 1：扫描知识 stores
+### Step 1：扫描知识 stores（仅 `generic`）
 
 1. 从 `INDEX.md` 持久化约定表中提取所有知识型 store（名称含"永久"或在 `adr/`、`context/` 等公认目录下）。
 2. 验证 store 路径在 state 根下真实存在。若不存在：
@@ -76,7 +80,7 @@ description: >
 3. **批量原子性**：所有预检通过 → ready；任一失败 → 整批 blocked，报告具体阻塞原因。
 4. 生成计划表格（使用 `assets/archive-plan-template.md` 格式）。
 
-### Step 4：生成知识合并计划
+### Step 4：生成知识合并计划（仅 `generic`）
 
 读取 `references/consolidation-rules.md` 和 `references/knowledge-graduation.md`，执行：
 
@@ -91,7 +95,7 @@ description: >
 4. 对冲突项标记 `needs-confirmation`，提供双方版本和建议。
 5. 生成合并计划表格（使用 `assets/consolidation-plan-template.md` 格式）。
 
-### Step 5：生成清理候选清单
+### Step 5：生成清理候选清单（仅 `generic`）
 
 读取 `references/cleanup-rules.md`，执行：
 
@@ -111,6 +115,7 @@ description: >
 1. 组合三部分计划为一个完整报告：
    - **阶段一**：归档移动 + 知识合并写入
    - **阶段二**：清理候选
+   - `mechanical-only` 只展示归档移动和状态变化，并注明知识动作由调用方策略拥有
 2. 报告内容：每项含来源、目标、动作、理由、风险等级。
 3. 显式标注所有破坏性动作（移动、删除、改写）。
 4. 报告摘要：待归档 change 数、待合并知识项数、待清理候选数、需确认项数。
@@ -121,20 +126,20 @@ description: >
 
 **仅在 mode=`confirmed` 且用户显式批准后执行：**
 
-1. **重新验证**：路径包含检查、预检重跑（确认计划生成后无新 change 插入）、store 存在性重验。
+1. **重新验证**：路径包含检查、预检重跑（确认计划生成后无新 change 插入）；`generic` 额外重验 store 存在性。
 2. **执行顺序**：
-   a. **归档移动**（原子批处理）：创建月目录 → 移动 change 目录 → 更新归档 `.status.json` → 从全局 `status.json` 的 `active` 移除对应条目，将 change 名称去重追加到 `archived`
-   b. **知识合并写入**：创建 lazy stores（如 `adr/`、`context/` 不存在则创建）→ 写入新 ADR → 合并术语到 `context/` → 标记 superseded ADR
-   c. **清理**：删除已批准文件 → 合并已批准内容 → 改写已批准条目
+   a. **归档移动**（原子批处理）：创建月目录 → 移动 change 目录 → 按调用方 workflow 的状态 schema 更新归档 `.status.json` → 从全局 `status.json` 的 `active` 移除对应条目，将 change 名称去重追加到 `archived`。不得写入调用方 schema 未声明的 SpecDev 专属字段
+   b. **知识合并写入**（仅 `generic`）：创建 lazy stores（如 `adr/`、`context/` 不存在则创建）→ 写入新 ADR → 合并术语到 `context/` → 标记 superseded ADR
+   c. **清理**（仅 `generic`）：删除已批准文件 → 合并已批准内容 → 改写已批准条目
 3. 任一步骤失败：报告已完成/失败清单，停止，不猜测成功。
 
 ### Step 8：重新验证所有状态变更
 
 1. 重读源路径：归档 change 必须不存在于 `changes_root/`。
-2. 重读目标路径：归档 change 完整存在于 `archive_root/<YYYY-MM>/`，知识 store 内容正确。
+2. 重读目标路径：归档 change 完整存在于 `archive_root/<YYYY-MM>/`；`generic` 同时验证知识 store 内容正确。
 3. 重读 `status.json`：`active` 数组不包含已归档 change，`archived` 数组已追加其名称，二者没有重叠。
-4. 重读归档 `.status.json`：`change_status: archived`、`archived: true`、`archive_path` 一致。
-5. 对照知识 stores：新内容存在，无不期望的修改。
+4. 重读归档 `.status.json`：按调用方 workflow schema 验证归档终态和 archive path；只有 schema 声明 `archived` 布尔字段时才要求 `archived: true`。
+5. `generic` 对照知识 stores：新内容存在，无不期望的修改；`mechanical-only` 验证知识路径未被本 Skill 修改。
 6. 任一不一致 → `blocked`，报告具体差异；全部通过 → `verified`。
 7. 验证结果作为补遗追加到原 dry-run 报告。
 
@@ -144,6 +149,7 @@ description: >
 {
   mode: "dry-run" | "executed",
   scope: "archive-single" | "archive-batch",
+  knowledge_policy: "generic" | "mechanical-only",
   path_context: { project_root, workflow_root, state_root, changes_root, archive_root, commands_root },
   knowledge_stores: [{ name, path, exists }],
   archive_plan: [{ source, target, status: "ready" | "blocked" | "moved" | "failed", notes }],
@@ -156,10 +162,9 @@ description: >
 
 ## 完成标准
 
-- 所有 `INDEX.md` 持久化约定表中声明的知识 stores 已扫描。
+- `generic` 已扫描所有 `INDEX.md` 声明的知识 stores；`mechanical-only` 未读取或修改知识内容。
 - 每个归档 change：源不存在、目标完整、status.json 已更新。
-- 每次合并写入：冲突已解决或标记需确认、目标 store 在 state 根内。
-- 每个清理动作：路径包含已验证、无跨 workflow 修改。
+- `generic` 的每次合并写入已解决或标记冲突，目标 store 在 state 根内；每个清理动作完成路径包含验证且无跨 workflow 修改。
 - 未确认或 mode=`dry-run` 时无文件系统修改。
 - 执行后重读验证通过或不一致已记录。
 - 本 skill 未自行选择报告路径或自行持久化。

@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
+const isWindows = process.platform === "win32";
 const skillRoot = join(packageRoot, "template", "skills", "optimize-codex-config");
 const auditor = join(skillRoot, "scripts", "audit-codex-config.mjs");
 
@@ -24,7 +25,8 @@ async function fixture(): Promise<string> {
 describe("optimize-codex-config skill", () => {
   it("ships focused model-invoked metadata and explicit mutation gates", async () => {
     const skill = await readFile(join(skillRoot, "SKILL.md"), "utf8");
-    const frontmatter = skill.match(/^---\n([\s\S]*?)\n---/);
+    const normalizedSkill = skill.replace(/\r\n?/g, "\n");
+    const frontmatter = normalizedSkill.match(/^---\n([\s\S]*?)\n---/);
     assert.ok(frontmatter);
     const keys = frontmatter[1]
       .split("\n")
@@ -136,7 +138,7 @@ describe("optimize-codex-config skill", () => {
       assert.equal(report.schema_version, 1);
       assert.equal(report.scope, "local_codex_only");
       assert.equal(report.codex_home, "<codex-home>");
-      assert.equal(report.files.auth.mode, "0600");
+      if (!isWindows) assert.equal(report.files.auth.mode, "0600");
       assert.equal(report.config.safe_settings.model, "gpt-5.6-sol");
       assert.equal(report.config.safe_settings.model_provider, "<custom-provider>");
       assert.equal(report.config.custom_providers[0].base_url_scheme, "http");
@@ -162,7 +164,7 @@ describe("optimize-codex-config skill", () => {
     }
   });
 
-  it("parses redacted command probes even when doctor reports an unhealthy exit", async () => {
+  it("parses redacted command probes even when doctor reports an unhealthy exit", { skip: isWindows ? "requires POSIX executable probe fixtures" : false }, async () => {
     const root = await fixture();
     const fakeCodex = join(root, "codex-fixture");
     const providerHost = "doctor.secret.example";
@@ -216,7 +218,7 @@ describe("optimize-codex-config skill", () => {
     }
   });
 
-  it("does not classify non-writing Codex processes as active config writers", async () => {
+  it("does not classify non-writing Codex processes as active config writers", { skip: isWindows ? "requires POSIX lsof and executable probe fixtures" : false }, async () => {
     const root = await fixture();
     const fakeBin = join(root, "bin");
     const fakeLsof = join(fakeBin, "lsof");

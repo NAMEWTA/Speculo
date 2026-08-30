@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "artifact": "learning-change-status",
+  "change": "{change}",
+  "domain": "{domain}",
+  "domain_type": "{domain_type}",
+  "topic": "{topic}",
+  "change_status": "active",
+  "phase": "intake",
+  "current_work": "learning/assess-and-plan",
+  "works_run": [],
+  "created_at": "{timestamp}",
+  "updated_at": "{timestamp}",
+  "completed_at": null,
+  "archived_at": null,
+  "archive_path": null,
+  "mastery": {
+    "immediate": "not_attempted",
+    "retention": "not_attempted",
+    "score": null,
+    "critical_objectives_passed": false,
+    "transfer_passed": false,
+    "blocking_misconceptions": [],
+    "evidence": [],
+    "next_review_at": null
+  },
+  "blockers": []
+}

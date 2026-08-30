@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:learning:status:v1",
+  "title": "Learning Global Status",
+  "type": "object",
+  "required": ["schema_version", "workflow", "active", "archived"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "workflow": {"const": "learning"},
+    "active": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["change", "domain", "topic", "current_work", "works_run"],
+        "properties": {
+          "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "domain": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "topic": {"type": "string", "minLength": 1},
+          "current_work": {"type": ["string", "null"], "pattern": "^learning/"},
+          "works_run": {"type": "array", "items": {"type": "string", "pattern": "^learning/"}, "uniqueItems": true}
+        },
+        "additionalProperties": false
+      }
+    },
+    "archived": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

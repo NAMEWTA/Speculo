@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:learning:change-status:v1",
+  "title": "Learning Change Status",
+  "type": "object",
+  "required": ["schema_version", "artifact", "change", "domain", "domain_type", "topic", "change_status", "phase", "current_work", "works_run", "created_at", "updated_at", "completed_at", "archived_at", "archive_path", "mastery", "blockers"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "learning-change-status"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "domain": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "domain_type": {"enum": ["project", "product", "subject", "language", "skill"]},
+    "topic": {"type": "string", "minLength": 1},
+    "change_status": {"enum": ["active", "blocked", "awaiting_retention", "completed", "archived"]},
+    "phase": {"enum": ["intake", "assessment", "teaching", "practice", "immediate_quiz", "retention", "ready_to_archive", "archived"]},
+    "current_work": {"type": ["string", "null"], "pattern": "^learning/"},
+    "works_run": {"type": "array", "items": {"type": "string", "pattern": "^learning/"}, "uniqueItems": true},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "archived_at": {"type": ["string", "null"], "format": "date-time"},
+    "archive_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^<Path>\\{roots\\.state\\}/learning/archive/[0-9]{4}-[0-9]{2}/[^<]+</Path>$"}]},
+    "mastery": {
+      "type": "object",
+      "required": ["immediate", "retention", "score", "critical_objectives_passed", "transfer_passed", "blocking_misconceptions", "evidence", "next_review_at"],
+      "properties": {
+        "immediate": {"enum": ["not_attempted", "failed", "passed", "needs_review"]},
+        "retention": {"enum": ["not_attempted", "failed", "passed", "needs_review"]},
+        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "critical_objectives_passed": {"type": "boolean"},
+        "transfer_passed": {"type": "boolean"},
+        "blocking_misconceptions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "evidence": {"type": "array", "items": {"type": "string", "pattern": "^<Path>\\{roots\\.state\\}/learning/(?:changes/[^<]+|archive/[0-9]{4}-[0-9]{2}/[^<]+)/quiz/[^<]+\\.md</Path>$"}, "uniqueItems": true},
+        "next_review_at": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> Workflow-packaged specification-driven development assets with state-safe refresh tooling.
+> Workflow-packaged AI collaboration assets with state-safe refresh tooling.
 
 Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
 
@@ -63,11 +63,12 @@ After initialization, the target project gains the following AI agent-callable a
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
 
-### 2 Workflow Packages
+### 3 Workflow Packages
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
-| **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, five-year-old visual explanation, mentoring, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
+| **learning** | 7 | Evidence-gated learning for projects, products, subjects, languages, and skills, using plain-language visual teaching, active practice, immediate and delayed quizzes, and book-style Markdown knowledge indexes |
+| **specdev** | 13 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
