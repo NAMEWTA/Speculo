@@ -47,7 +47,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 每个 Ticket 要么是 **HITL**，与一个代表自己发言的人类一起工作；要么是 **AFK**，由 Agent 独立驱动。HITL Ticket 只能通过实时交流解决，Agent 绝不代替人类一方发言。
 
 - **Research（AFK）**：阅读文档、第三方 API 或知识库等资源，揭示某个决策等待的事实。调用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。当需要当前工作目录之外的知识时使用。
-- **Prototype（HITL）**：调用 `<Path>{roots.workflows}/specdev/P-prototype/P-prototype.md</Path>` 回答一个 UI/逻辑问题，并把 record、临时 branch/worktree 和运行 URL 链接为 solution comment 资产；P 不实现目的地。
+- **Prototype（HITL）**：调用 `<Path>{roots.workflows}/specdev/P-prototype/P-prototype.md</Path>` 检测项目 UI、比较功能风格候选并逐步确认设计方向，把 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>` 与 comparison locator 链接为 solution comment 资产；`{design-id}` 使用 P 返回的 `UI-NNN`，P 不实现目的地。
 - **Grilling（HITL）**：对话。调用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 的 grilling 与 domain-modeling 能力，但本会话只关闭当前 Wayfinder Ticket。
 - **Task（HITL 或 AFK）**：在决策做出前必须完成的手动工作。它通过为决策解除阻塞赢得位置，不以交付目的地为目标。Agent 能独立驱动时使用 AFK，否则给人类精确清单。
 

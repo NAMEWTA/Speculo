@@ -465,10 +465,21 @@ function validateDocumentReferences(root) {
   const errors = [];
   const warnings = [];
   const entries = walk(root);
-  const knownFiles = new Set(entries.filter(isFile).map((path) => basename(path)));
-  const knownDirectories = new Set(entries.filter(isDirectory).map((path) => basename(path)));
+  const frozenResearchRoot = join(
+    root,
+    "P-prototype",
+    "design-library",
+    "research-snapshot",
+  );
+  const governedEntries = entries.filter(
+    (path) => path !== frozenResearchRoot && !path.startsWith(`${frozenResearchRoot}${sep}`),
+  );
+  const knownFiles = new Set(governedEntries.filter(isFile).map((path) => basename(path)));
+  const knownDirectories = new Set(governedEntries.filter(isDirectory).map((path) => basename(path)));
 
-  for (const path of entries.filter(
+  // The pinned research snapshot preserves its upstream relative links and HTML
+  // asset paths byte-for-byte. Global template link checks still validate it.
+  for (const path of governedEntries.filter(
     (item) => isFile(item) && [".md", ".html"].includes(extname(item).toLowerCase()),
   )) {
     const label = toPosix(relative(root, path));
@@ -682,12 +693,13 @@ function validateExecutionContractAssets(root) {
     configTemplate.execution.max_implementation_agents < 1 ||
     !Number.isInteger(configTemplate.execution?.max_integration_attempts) ||
     configTemplate.execution.max_integration_attempts < 1 ||
-    !Number.isInteger(configTemplate.planning?.ui_prototype_default_variants) ||
-    !Number.isInteger(configTemplate.planning?.ui_prototype_max_variants) ||
-    configTemplate.planning.ui_prototype_default_variants < 1 ||
-    configTemplate.planning.ui_prototype_max_variants < configTemplate.planning.ui_prototype_default_variants
+    !Number.isInteger(configTemplate.planning?.ui_design_default_candidates) ||
+    !Number.isInteger(configTemplate.planning?.ui_design_max_candidates) ||
+    configTemplate.planning.ui_design_default_candidates < 2 ||
+    configTemplate.planning.ui_design_max_candidates > 4 ||
+    configTemplate.planning.ui_design_max_candidates < configTemplate.planning.ui_design_default_candidates
   ) {
-    errors.push("config-template.json must define SpecDev config v5 with positive execution limits and valid prototype variant bounds");
+    errors.push("config-template.json must define SpecDev config v5 with positive execution limits and valid UI design candidate bounds");
   }
   for (const obsolete of ["auto_commit", "worktree_for_parallel", "max_parallel"]) {
     if (JSON.stringify(configTemplate).includes(`\"${obsolete}\"`)) {
@@ -816,7 +828,7 @@ function capabilityChecks(root) {
       "prototype",
       [
         join(root, "P-prototype", "P-prototype.md"),
-        ["一个问题", "Logic", "UI", "临时 branch/worktree", "promotion target", "main"],
+        ["设计定向", "风格", "design-system.md", "comparison", "HTML/CSS/JS", "design-library/INDEX.md"],
       ],
     ],
     [
@@ -1196,30 +1208,77 @@ function validateReviews(change, required, errors) {
 
 function validatePrototypes(change, required, errors) {
   const root = join(change, "prototypes");
-  const paths = isDirectory(root)
-    ? walk(root).filter((path) => isFile(path) && basename(path) === "record.md").sort()
-    : [];
-  if (required && !paths.length) errors.push("prototype stage requires a prototypes/<id>/record.md artifact");
-  for (const path of paths) {
-    const { meta, body } = parseFrontmatter(path);
-    const label = toPosix(relative(change, path));
-    if (meta.schema_version !== 1 || meta.artifact !== "prototype-record") {
-      errors.push(`${label}: artifact/schema_version must be prototype-record/1`);
+  if (!isDirectory(root)) {
+    if (required) errors.push("prototype stage requires a prototypes/UI-NNN/design-system.md artifact");
+    return [];
+  }
+
+  const validator = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "..",
+    "P-prototype",
+    "tools",
+    "validate-design-package.mjs",
+  );
+  const paths = [];
+  let readyCount = 0;
+
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const entryPath = join(root, entry.name);
+    const label = toPosix(relative(change, entryPath));
+    if (entry.isSymbolicLink()) {
+      errors.push(`${label}: prototype design directories and files must not be symlinks`);
+      continue;
     }
-    if (meta.change !== basename(change)) errors.push(`${label}: change must equal directory name`);
-    if (!/^PROTO-\d{3,}$/.test(String(meta.prototype_id ?? ""))) errors.push(`${label}: invalid prototype_id`);
-    if (!new Set(["logic", "ui"]).has(meta.branch)) errors.push(`${label}: invalid prototype branch`);
-    if (!new Set(["active", "answered", "blocked", "discarded"]).has(meta.status)) errors.push(`${label}: invalid prototype status`);
-    if (typeof meta.workspace_ref !== "string" || ABSOLUTE_MACHINE_PATH_RE.test(meta.workspace_ref)) {
-      errors.push(`${label}: workspace_ref must be a portable locator`);
+    if (!entry.isDirectory()) {
+      errors.push(`${label}: prototypes may only contain UI-NNN design directories`);
+      continue;
     }
-    if (meta.status === "answered" && (!String(meta.winner ?? "").trim() || !String(meta.promotion_target ?? "").trim())) {
-      errors.push(`${label}: answered prototype requires winner and promotion_target`);
+    if (!/^UI-\d{3,}$/.test(entry.name)) {
+      errors.push(`${label}: prototype design directory must use UI-NNN`);
+      continue;
     }
-    if (!new Set(["pending", "clean", "registered"]).has(meta.cleanup_status)) errors.push(`${label}: invalid cleanup_status`);
-    for (const heading of ["## Question and Assumption", "## Run and Assets", "## Evaluation", "## Promotion and Cleanup"]) {
-      if (!body.includes(heading)) errors.push(`${label}: missing '${heading}'`);
+
+    const designPath = join(entryPath, "design-system.md");
+    if (!isFile(designPath)) {
+      errors.push(`${label}: missing design-system.md`);
+      continue;
     }
+    paths.push(designPath);
+    const { meta } = parseFrontmatter(designPath);
+    if (meta.status === "ready") readyCount += 1;
+    try {
+      execFileSync(process.execPath, [validator, designPath], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (error) {
+      const details = String(error.stderr || error.stdout || error.message)
+        .trim()
+        .split(/\r?\n/)
+        .filter(Boolean);
+      if (!details.length) errors.push(`${label}: design package validation failed`);
+      for (const detail of details) errors.push(`${label}: ${detail}`);
+    }
+  }
+
+  const obsoleteRecords = walk(root).filter(
+    (path) => isFile(path) && basename(path) === "record.md",
+  );
+  for (const path of obsoleteRecords) {
+    errors.push(`${toPosix(relative(change, path))}: obsolete prototype record is forbidden; use UI-NNN/design-system.md`);
+  }
+  const discoveredDesigns = walk(root).filter(
+    (path) => isFile(path) && basename(path) === "design-system.md",
+  );
+  for (const path of discoveredDesigns) {
+    if (!paths.includes(path)) {
+      errors.push(`${toPosix(relative(change, path))}: design-system.md must be directly under prototypes/UI-NNN`);
+    }
+  }
+  if (required && readyCount === 0) {
+    errors.push("prototype stage requires at least one ready UI design package");
   }
   return paths;
 }

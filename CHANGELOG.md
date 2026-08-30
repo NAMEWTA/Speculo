@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.7] - 2026-08-30
+
+### Added
+- **Evidence-backed UI design packages**: adds existing-style detection, guided design selection, eight reference styles, six layout patterns, and a pinned open-source research snapshot with offline visual examples.
+- **Deterministic prototype tooling**: adds schema validation and source materialization for persistent `design-system.md` packages, comparison variants, and final HTML/CSS/JS output.
+
+### Changed
+- **SpecDev prototype workflow**: replaces disposable logic/UI prototype records with resumable `UI-NNN` design packages that preserve decisions, research provenance, responsive behavior, accessibility contracts, and implementation-ready source.
+- Renamed prototype planning bounds to `ui_design_default_candidates` and `ui_design_max_candidates`, with supported candidate counts constrained to two through four.
+
+### Tests
+- Added coverage for ready and resumable design packages, materialized-source drift, malformed source markers, missing comparisons, obsolete prototype records, and updated configuration contracts.
+
 ## [0.8.6] - 2026-08-30
 
 ### Added

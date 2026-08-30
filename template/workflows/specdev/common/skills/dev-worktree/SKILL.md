@@ -1,16 +1,16 @@
 ---
 name: dev-worktree
-description: 管理 SpecDev required Ticket 或原型的 Git worktree；为 required Ticket 创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
+description: 管理 SpecDev required Ticket 的 Git worktree；创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
 ---
 
 # Dev Worktree
 
-本 Skill 由 T-tickets/P-goal-plan/I-implement 和 P-prototype 复用。`purpose=ticket` 仅在 Goal Plan 选择 `required` 时使用完整 source → candidate → parent 状态机；`current` Ticket 不调用本 Skill。`purpose=prototype` 只使用调用方批准的临时生命周期。
+本 Skill 由 T-tickets、P-goal-plan 和 I-implement 复用。仅在 Goal Plan 选择 `required` 时使用完整 source → candidate → parent 状态机；`current` Ticket 不调用本 Skill。
 
 ## 输入
 
 - `operation=create | restore | finalize | remove`；
-- `purpose=ticket | prototype`；
+- `purpose=ticket`；
 - repository、父分支、`base_sha`、branch、portable workspace locator；
 - workspace、implementation 和 integration owner；
 - 允许动作、路径合同、验证合同、调用方状态记录位置。
@@ -39,7 +39,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 ## 4. 移除
 
-`operation=remove` 先验证 Ticket 已 `integrated` 或 prototype 已结束、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
+`operation=remove` 先验证 Ticket 已 `integrated`、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
 
 **完成标准**：只删除精确授权目标；失败保留现场与恢复命令。
 

@@ -10,7 +10,7 @@
 - Tickets Map 与全部 Ticket 存在、Ready、DAG 无环；
 - 每个验收合同被 Ticket 覆盖；
 - writable/shared path 有唯一 owner，Wave 候选无写冲突；
-- config schema v5，`max_implementation_agents` 与 `max_integration_attempts` 为正整数；原型变体范围读取 planning 配置；
+- config schema v5，`max_implementation_agents` 与 `max_integration_attempts` 为正整数；UI 设计候选范围读取 planning 配置；
 - 父分支可定位，implementation commit 与本地 integration 已获授权；
 - Deep Ticket 的迁移、兼容、监控、恢复和不可逆批准点完整。
 - Ticket 与 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`、`<Path>{roots.state}/specdev/adr/</Path>`、`<Path>{roots.state}/specdev/context/</Path>` 和当前代码事实不存在未处理冲突；

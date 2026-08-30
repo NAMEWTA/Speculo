@@ -50,8 +50,12 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/prototypes/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
+
+`{design-id}` 由 P-prototype 在当前 change 内分配为最小未占用的 `UI-NNN`；设计系统文档是设计权威，comparison 与 final 是其可运行投影。
 
 工件职责和冲突裁决位于 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`。
 
@@ -98,7 +102,9 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/prototypes/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
 
 ## 全局治理原则
@@ -156,7 +162,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 `active[].change` 必须唯一，且不得同时出现在 `archived`。开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
 
-`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_implementation_agents`、`max_integration_attempts` 和 planning 原型变体字段均为可配置正整数，初始化时写入默认值；仅 implementation subagent 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
+`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_implementation_agents`、`max_integration_attempts` 和 planning UI 设计候选字段均为可配置正整数；候选默认值与上限必须落在 2-4 且默认值不大于上限。仅 implementation subagent 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
 
 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、适用 candidate/result SHA、验证、E2E disposition 与生命周期状态。current 记录使用 `workspace_ref=current` 和 direct-parent；required 记录使用 source/parent-candidate。每个实现 Ticket 都有一条记录；父分支只有在对应策略的验证通过后推进。`removed` 是 required 集成后来源 branch/worktree 完成清理的终态，必须保留全部集成与 E2E 证据。
 
@@ -189,7 +195,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 | 疑难 bug 或性能回归 | D-diagnose-bugs | S / T / I / R / W |
 | 模糊但可通过决策访谈收敛 | G-grill-with-docs | P / S / T / W |
 | 路径超出单次上下文 | W-wayfinder | G / P / D / S / T |
-| 需要用代码回答逻辑/UI 问题 | P-prototype | G / S / T / I |
+| 需要检测项目 UI、选择设计方向并生成可运行设计包 | P-prototype | G / S / T / I |
 | 固定点 diff、branch 或 PR review | C-code-review | completed / T / S / G |
 | 外部行为已清楚 | S-spec | T-tickets |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
@@ -210,7 +216,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - **I-implement** — 实现：基于 Ready Ticket 或获批小型 Spec 执行设计检查、TDD、动态派单、双轴审查、按 Goal Plan 选择的 current workspace 或 Ticket worktree 提交、直接父分支或候选合并验证和 Lead Evidence 回写。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 - **P-goal-plan** — 目标规划：在跨 Ticket 协调复杂度需要时，以固定 Lead、动态派单、DAG/Gate 和候选合并门禁生成决策完备且可恢复的执行计划。
-- **P-prototype** — 原型：在获授权的临时 branch/worktree 中构建一次性 Logic 或 UI 原型，回答一个明确设计问题并持久化答案、资产定位和清理状态。
+- **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
 - **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库的深化机会，以持久化可视化 HTML 呈现候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 拆分 Tickets：将 Spec、计划或已确认对话拆成曳光弹式垂直切片；每个 Ticket 决策完备、可独立验证、适配单一上下文，并建立阻塞 DAG、路径所有权和执行就绪门禁。

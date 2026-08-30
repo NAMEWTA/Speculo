@@ -40,19 +40,19 @@
     },
     "planning": {
       "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_prototype_default_variants", "ui_prototype_max_variants"],
+      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_design_default_candidates", "ui_design_max_candidates"],
       "properties": {
         "default_depth": {"enum": ["lite", "standard", "deep"]},
         "require_ready_gate": {"type": "boolean"},
         "require_evidence": {"type": "boolean"},
-        "ui_prototype_default_variants": {"type": "integer", "minimum": 1},
-        "ui_prototype_max_variants": {"type": "integer", "minimum": 1}
+        "ui_design_default_candidates": {"type": "integer", "minimum": 2, "maximum": 4},
+        "ui_design_max_candidates": {"type": "integer", "minimum": 2, "maximum": 4}
       },
       "additionalProperties": true
     }
   },
   "allOf": [{
-    "$comment": "ui_prototype_default_variants <= ui_prototype_max_variants is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
+    "$comment": "ui_design_default_candidates <= ui_design_max_candidates is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
   }],
   "additionalProperties": false
 }

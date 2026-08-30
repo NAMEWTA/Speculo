@@ -61,7 +61,7 @@
       "source_sha256": "b9b2cfb1af86d0e92bfaacdd3e1598fa7ffd3013ed4b3387712eb9bed8d1dc55",
       "classification": "adapted",
       "targets": ["template/workflows/specdev/P-prototype/P-prototype.md"],
-      "integration_deltas": ["Records prototype answers and temporary workspace locators without promoting prototype code"]
+      "integration_deltas": ["Detects project UI evidence, persists incremental style decisions in design-system.md, and materializes an offline HTML/CSS/JS design package without modifying production UI"]
     },
     {
       "source": "temp/skills/engineering/research/SKILL.md",

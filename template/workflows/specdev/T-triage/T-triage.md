@@ -38,7 +38,7 @@ Triage 是 SpecDev 唯一的远程摄入与关闭边界。开发期间，`<Path>
    - 根因未知的 bug → `<Path>{roots.workflows}/specdev/D-diagnose-bugs/D-diagnose-bugs.md</Path>`；
    - 产品或架构决定未锁定 → `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`；
    - 路径超出单次上下文 → `<Path>{roots.workflows}/specdev/W-wayfinder/W-wayfinder.md</Path>`；
-   - 需要可运行原型回答设计问题 → `<Path>{roots.workflows}/specdev/P-prototype/P-prototype.md</Path>`；
+   - 需要检测项目 UI、比较风格候选并固化可运行设计包 → `<Path>{roots.workflows}/specdev/P-prototype/P-prototype.md</Path>`；
    - 外部行为明确 → `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>`；
    - 固定点 diff 或 PR 审查 → `<Path>{roots.workflows}/specdev/C-code-review/C-code-review.md</Path>`；
    - 小型明确变更 → `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>` 或获批 Direct Spec。

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:ui-design-system:v2",
+  "title": "SpecDev UI design system frontmatter",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "design_id",
+    "status",
+    "project_kind",
+    "platforms",
+    "style_candidates",
+    "research_snapshot",
+    "prototype_files",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "artifact": { "const": "ui-design-system" },
+    "change": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "design_id": { "type": "string", "pattern": "^UI-\\d{3,}$" },
+    "status": { "enum": ["detecting", "selecting", "ready", "blocked"] },
+    "project_kind": { "enum": ["existing", "new"] },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["desktop", "web", "mobile"] }
+    },
+    "detected_style": { "type": ["string", "null"] },
+    "style_candidates": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "selected_style": { "type": ["string", "null"] },
+    "density": { "enum": ["compact", "default", "comfortable", "touch", null] },
+    "color_mode": { "enum": ["light", "dark", "system", "both", null] },
+    "research_snapshot": { "const": "49b5659" },
+    "prototype_files": {
+      "type": "array",
+      "uniqueItems": true,
+      "allOf": [
+        { "contains": { "const": "final/index.html" } },
+        { "contains": { "const": "final/styles.css" } },
+        { "contains": { "const": "final/app.js" } }
+      ],
+      "items": { "type": "string" }
+    },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ready" } } },
+      "then": {
+        "required": ["selected_style", "density", "color_mode"],
+        "properties": {
+          "selected_style": { "type": "string", "minLength": 1 },
+          "density": { "type": "string" },
+          "color_mode": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

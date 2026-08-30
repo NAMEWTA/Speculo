@@ -8,14 +8,12 @@
 - `specdev-worktree/` 已由 Speculo init 加入项目 `.gitignore`；
 - 目标 branch/worktree 不覆盖现有用户 workspace，路径合同无冲突。
 
-Prototype 只要求调用方已记录本次临时 branch/worktree 授权、问题、owner、locator 和清理策略；它不写 Ticket worktree 状态。
-
 ## 创建 Ticket 来源 worktree
 
 1. 重读父分支 HEAD、工作树、现有 worktrees 与 refs；父 HEAD 与计划基线不一致时由 Lead决定更新 `base_sha` 或阻塞；
 2. 固定 branch `speculo/<change>/<ticket-id>` 与 locator `specdev-worktree/<ticket-id>`；
 3. 确认目标 branch/path 不存在，或其实际记录精确匹配当前 Ticket；
-4. 从 `base_sha` 创建 Git worktree，不复用其他 Ticket/原型目录；
+4. 从 `base_sha` 创建 Git worktree，不复用其他 Ticket 目录；
 5. 在来源 worktree 读取项目 Agent 指令、依赖、构建与路径合同；
 6. 安装实际需要的依赖，运行最小非 E2E 基线；
 7. Lead 写入 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`，状态为 `active`。

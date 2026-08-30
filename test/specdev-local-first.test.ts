@@ -11,6 +11,14 @@ const validator = join(
   packageRoot,
   "template/workflows/specdev/common/tools/validate-specdev.mjs",
 );
+const prototypeTemplate = join(
+  packageRoot,
+  "template/workflows/specdev/P-prototype/design-system-template.md",
+);
+const prototypeMaterializer = join(
+  packageRoot,
+  "template/workflows/specdev/P-prototype/tools/materialize-prototype.mjs",
+);
 
 async function fixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-local-first-"));
@@ -39,8 +47,8 @@ async function writeConfig(root: string, maxImplementationAgents = 3, maxIntegra
       default_depth: "standard",
       require_ready_gate: true,
       require_evidence: true,
-      ui_prototype_default_variants: 3,
-      ui_prototype_max_variants: 5,
+      ui_design_default_candidates: 3,
+      ui_design_max_candidates: 4,
     },
   }, null, 2) + "\n");
 }
@@ -77,6 +85,39 @@ async function writeStatus(root: string, status = "active", worktrees: unknown[]
       2,
     ) + "\n",
   );
+}
+
+async function writeDesignPackage(
+  root: string,
+  status: "detecting" | "selecting" | "ready" | "blocked" = "ready",
+  withComparison = true,
+): Promise<string> {
+  const designRoot = join(root, "prototypes", "UI-001");
+  await mkdir(designRoot, { recursive: true });
+  let content = (await readFile(prototypeTemplate, "utf8")).replace(/\r\n?/g, "\n");
+  content = content
+    .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("status: detecting", `status: ${status}`)
+    .replace("updated_at: <ISO-8601>", "updated_at: 2026-08-07T00:00:00Z")
+    .replace("# UI Design System UI-001: <产品或功能名称>", "# UI Design System UI-001: Workspace");
+  if (status === "ready") {
+    content = content
+      .replace("selected_style: null", "selected_style: dense-ide")
+      .replace("density: null", "density: compact")
+      .replace("color_mode: null", "color_mode: both");
+  }
+  const designPath = join(designRoot, "design-system.md");
+  await writeFile(designPath, content);
+  const materialized = spawnSync(process.execPath, [prototypeMaterializer, designPath], { encoding: "utf8" });
+  assert.equal(materialized.status, 0, materialized.stdout + materialized.stderr);
+  if (withComparison) {
+    const variants = join(designRoot, "comparison", "variants");
+    await mkdir(variants, { recursive: true });
+    await writeFile(join(designRoot, "comparison", "index.html"), "<!doctype html><title>Compare</title>\n");
+    await writeFile(join(variants, "dense-ide.html"), "<!doctype html><title>Dense IDE</title>\n");
+    await writeFile(join(variants, "responsive-web.html"), "<!doctype html><title>Responsive Web</title>\n");
+  }
+  return designPath;
 }
 
 async function writeSourceAndTriage(root: string, externalAction = "pending-close"): Promise<void> {
@@ -354,8 +395,8 @@ describe("SpecDev local-first contracts", () => {
     assert.equal(config.schema_version, 5);
     assert.equal(config.execution.max_implementation_agents, 3);
     assert.equal(config.execution.max_integration_attempts, 3);
-    assert.equal(config.planning.ui_prototype_default_variants, 3);
-    assert.equal(config.planning.ui_prototype_max_variants, 5);
+    assert.equal(config.planning.ui_design_default_candidates, 3);
+    assert.equal(config.planning.ui_design_max_candidates, 4);
     assert.equal(config.execution.shared_path_owner, "explicit");
     assert.equal("max_parallel" in config.execution, false);
     assert.equal("auto_commit" in config.git, false);
@@ -744,7 +785,7 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
-  it("rejects mutable review inputs and machine-specific prototype locators", async () => {
+  it("rejects mutable review inputs and obsolete prototype records", async () => {
     const root = await fixture();
     try {
       await writeStatus(root);
@@ -812,7 +853,67 @@ describe("SpecDev local-first contracts", () => {
       );
       const prototype = runValidator(root, "prototype");
       assert.equal(prototype.status, 1);
-      assert.match(prototype.stdout + prototype.stderr, /workspace_ref must be a portable locator/);
+      assert.match(prototype.stdout + prototype.stderr, /obsolete prototype record is forbidden/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("accepts a ready UI design package with materialized sources and comparison variants", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+      await writeDesignPackage(root);
+      const result = runValidator(root, "prototype");
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("allows resumable design drafts but does not complete the prototype stage", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+      await writeDesignPackage(root, "selecting", false);
+      const resumable = runValidator(root);
+      assert.equal(resumable.status, 0, resumable.stdout + resumable.stderr);
+      const completion = runValidator(root, "prototype");
+      assert.equal(completion.status, 1);
+      assert.match(completion.stdout + completion.stderr, /requires at least one ready UI design package/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("rejects drift between design-system.md and materialized prototype files", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+      const designPath = await writeDesignPackage(root);
+      await writeFile(join(dirname(designPath), "final", "app.js"), "// drift\n");
+      const result = runValidator(root, "prototype");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /app\.js: differs from design-system\.md/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("rejects malformed prototype source markers and missing comparisons", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+      const designPath = await writeDesignPackage(root, "ready", false);
+      const malformed = (await readFile(designPath, "utf8")).replace(
+        "<!-- /PROTOTYPE-FILE -->",
+        "<!-- /BROKEN-PROTOTYPE-FILE -->",
+      );
+      await writeFile(designPath, malformed);
+      const result = runValidator(root, "prototype");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /exactly three paired PROTOTYPE-FILE blocks/);
+      assert.match(result.stdout + result.stderr, /requires comparison\/index\.html/);
     } finally {
       await rm(dirname(root), { recursive: true, force: true });
     }

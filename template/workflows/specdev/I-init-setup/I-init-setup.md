@@ -55,7 +55,7 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 仅在上下文未提供时询问：
 
 - 交互语言与持久化工件语言；
-- implementation subagent、集成尝试次数和原型变体上限（初始化时写入 config，Lead 不计入）；
+- implementation subagent、集成尝试次数和 UI 设计候选上限（初始化时写入 config，Lead 不计入）；
 - Deep Ticket 的迁移、发布和不可逆操作是否必须人工批准；
 
 不询问可由仓库事实回答的文件位置、脚本名或默认分支。

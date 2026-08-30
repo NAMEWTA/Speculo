@@ -37,14 +37,14 @@
 - 分诊：`<Path>{roots.workflows}/specdev/common/schemas/triage.schema.json</Path>`
 - 诊断：`<Path>{roots.workflows}/specdev/common/schemas/diagnosis.schema.json</Path>`
 - 代码审查：`<Path>{roots.workflows}/specdev/common/schemas/code-review.schema.json</Path>`
-- 原型记录：`<Path>{roots.workflows}/specdev/common/schemas/prototype-record.schema.json</Path>`
+- UI 设计包：`<Path>{roots.workflows}/specdev/P-prototype/design-package.schema.json</Path>`
 
 ## 工具与 Skill
 
 - 包与 change 校验器：`<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`
 - 校验器说明：`<Path>{roots.workflows}/specdev/common/tools/README.md</Path>`
 - 外部技术研究 Skill：`<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`
-- Ticket/原型 worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；仅 required Ticket 使用 source → parent-candidate → parent 状态机，current Ticket 使用 current workspace/direct-parent，原型保持临时生命周期
+- Ticket worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；仅 required Ticket 使用 source → parent-candidate → parent 状态机，current Ticket 使用 current workspace/direct-parent
 - 动态 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；P-goal-plan 建立 Lead 合同，I-implement 在执行期派单与验收
 - 双轴代码审查 Skill：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
 

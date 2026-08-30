@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>高密度 IDE 风格</title>
+  <link rel="stylesheet" href="styles/base.css"><link rel="stylesheet" href="styles/pages.css">
+</head>
+<body class="theme-ide density-default">
+  <div class="app-frame">
+    <header class="utility-bar">
+      <a class="icon-btn" href="index.html" title="返回总览"><i data-lucide="layout-grid"></i></a>
+      <div class="utility-brand"><span class="utility-mark"><i data-lucide="braces"></i></span><span class="utility-title">Atlas Workspace</span><span class="utility-kind">高密度 IDE</span></div>
+      <div class="utility-actions">
+        <div class="segmented desktop-only"><button data-density="compact">紧凑</button><button class="active" data-density="default">默认</button><button data-density="comfortable">舒适</button></div>
+        <button class="icon-btn" data-theme-toggle></button>
+        <button class="icon-btn" data-token-toggle aria-expanded="false" title="设计 Token"><i data-lucide="swatch-book"></i></button>
+      </div>
+    </header>
+    <main class="workspace">
+      <aside class="ide-rail" aria-label="工具栏">
+        <button class="tool-btn active" title="文件"><i data-lucide="files"></i></button><button class="tool-btn" title="搜索"><i data-lucide="search"></i></button><button class="tool-btn" title="Git"><i data-lucide="git-branch"></i></button><button class="tool-btn" title="运行"><i data-lucide="play"></i></button><button class="tool-btn" title="扩展"><i data-lucide="blocks"></i></button><span class="ide-rail-spacer"></span><button class="tool-btn" title="账户"><i data-lucide="user-round"></i></button><button class="tool-btn" title="设置"><i data-lucide="settings"></i></button>
+      </aside>
+      <aside class="ide-explorer">
+        <div class="panel-header"><span class="panel-title">EXPLORER</span><span class="panel-actions"><button class="tool-btn" title="新文件"><i data-lucide="file-plus"></i></button><button class="tool-btn" title="折叠"><i data-lucide="chevrons-up"></i></button></span></div>
+        <div class="scroll-area ide-tree">
+          <div class="tree-row"><i data-lucide="chevron-down"></i><i data-lucide="folder-open"></i><b>atlas-app</b></div>
+          <div class="tree-row"><span class="indent"></span><i data-lucide="chevron-down"></i><i data-lucide="folder-open"></i>src</div>
+          <div class="tree-row active"><span class="indent"></span><span class="indent"></span><i class="file-ts" data-lucide="file-code-2"></i>AppShell.tsx</div>
+          <div class="tree-row"><span class="indent"></span><span class="indent"></span><i class="file-ts" data-lucide="file-code-2"></i>SessionPane.tsx</div>
+          <div class="tree-row"><span class="indent"></span><span class="indent"></span><i class="file-css" data-lucide="file-type-2"></i>tokens.css</div>
+          <div class="tree-row"><span class="indent"></span><i data-lucide="chevron-right"></i><i data-lucide="folder"></i>components</div>
+          <div class="tree-row"><span class="indent"></span><i data-lucide="chevron-right"></i><i data-lucide="folder"></i>lib</div>
+          <div class="tree-row"><span class="indent"></span><i class="file-md" data-lucide="file-text"></i>README.md</div>
+        </div>
+      </aside>
+      <section class="ide-center">
+        <div class="ide-tabbar"><div class="ide-tab active"><i class="file-ts" data-lucide="file-code-2"></i>AppShell.tsx</div><div class="ide-tab"><i class="file-css" data-lucide="file-type-2"></i>tokens.css</div></div>
+        <div class="ide-editor">
+          <div class="editor-pane"><div class="editor-title">AppShell.tsx</div><div class="ide-code">
+            <div class="code-line"><span class="ln">1</span><span><b class="tok-key">import</b> { PanelGroup } <b class="tok-key">from</b> <span class="tok-str">"./ui/panels"</span>;</span></div>
+            <div class="code-line"><span class="ln">2</span><span><b class="tok-key">import</b> { SessionList } <b class="tok-key">from</b> <span class="tok-str">"./session"</span>;</span></div>
+            <div class="code-line"><span class="ln">3</span></div>
+            <div class="code-line"><span class="ln">4</span><span><b class="tok-key">export function</b> <span class="tok-fn">AppShell</span>() {</span></div>
+            <div class="code-line"><span class="ln">5</span><span>&nbsp;&nbsp;<b class="tok-key">return</b> (</span></div>
+            <div class="code-line active"><span class="ln">6</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tok-fn">PanelGroup</span> direction=<span class="tok-str">"horizontal"</span>&gt;</span></div>
+            <div class="code-line"><span class="ln">7</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tok-fn">SessionList</span> defaultSize={22} /&gt;</span></div>
+            <div class="code-line"><span class="ln">8</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tok-fn">AgentWorkspace</span> /&gt;</span></div>
+            <div class="code-line"><span class="ln">9</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tok-fn">ReviewPane</span> minSize={28} /&gt;</span></div>
+            <div class="code-line"><span class="ln">10</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="tok-fn">PanelGroup</span>&gt;</span></div>
+            <div class="code-line"><span class="ln">11</span><span>&nbsp;&nbsp;);</span></div><div class="code-line"><span class="ln">12</span><span>}</span></div>
+          </div></div>
+          <div class="editor-pane"><div class="editor-title">Working tree diff</div><div>
+            <div class="diff-line"><span class="diff-mark"> </span>@@ -24,6 +24,10 @@ export function AppShell()</div>
+            <div class="diff-line del"><span class="diff-mark">-</span>&lt;SessionList /&gt;</div>
+            <div class="diff-line add"><span class="diff-mark">+</span>&lt;SessionList defaultSize={22} /&gt;</div>
+            <div class="diff-line add"><span class="diff-mark">+</span>&lt;AgentWorkspace /&gt;</div>
+            <div class="diff-line add"><span class="diff-mark">+</span>&lt;ReviewPane minSize={28} /&gt;</div>
+          </div></div>
+        </div>
+        <div class="ide-terminal"><div class="terminal-head"><span class="active">TERMINAL</span><span>PROBLEMS <b>0</b></span><span>OUTPUT</span><span class="panel-actions"><i data-lucide="plus"></i><i data-lucide="trash-2"></i></span></div><div class="terminal-body"><div><span class="prompt">atlas-app</span> <span class="quiet">git:(feature/panes)</span> npm run test</div><div>✓ 28 tests passed <span class="quiet">in 1.42s</span></div><div><span class="prompt">atlas-app</span> <span class="quiet">git:(feature/panes)</span> <span class="tok-comment">_</span></div></div></div>
+      </section>
+      <aside class="ide-review"><div class="panel-header"><span class="panel-title">CHANGES</span><span class="badge info">3 files</span></div><div class="change-group"><div class="change-title"><i class="file-ts" data-lucide="file-code-2"></i>AppShell.tsx <span class="change-stats"><b class="plus">+8</b> <b class="minus">-1</b></span></div></div><div class="change-group"><div class="change-title"><i class="file-css" data-lucide="file-type-2"></i>tokens.css <span class="change-stats"><b class="plus">+14</b></span></div></div><div class="change-group"><div class="change-title"><i class="file-ts" data-lucide="file-code-2"></i>panels.test.ts <span class="change-stats"><b class="plus">+22</b></span></div></div><div class="panel-header"><span class="panel-title">REVIEW</span></div><div style="padding:12px;color:var(--text-2);font-size:12px;line-height:1.6">三栏在 1024px 以上并列，右栏低于 1180px 自动收起。编辑器与 diff 保持 12px 等宽字体。</div></aside>
+    </main>
+    <footer class="ide-statusbar"><span><i data-lucide="git-branch" style="display:inline;width:11px;height:11px"></i> feature/panes</span><span>0 errors</span><span class="push">Ln 6, Col 34 &nbsp; UTF-8 &nbsp; TypeScript React</span></footer>
+  </div>
+  <aside class="token-drawer" aria-label="高密度 IDE Token"><div class="panel-header"><span class="panel-title">高密度 IDE / Token</span><button class="icon-btn panel-actions" data-token-close><i data-lucide="x"></i></button></div><div class="token-body"><div class="token-group"><h3>颜色</h3><div class="swatches"><div class="swatch"><div class="swatch-color" style="--swatch:#111315"></div><label>#111315</label></div><div class="swatch"><div class="swatch-color" style="--swatch:#181b1e"></div><label>#181b1e</label></div><div class="swatch"><div class="swatch-color" style="--swatch:#2b3035"></div><label>#2b3035</label></div><div class="swatch"><div class="swatch-color" style="--swatch:#e47c38"></div><label>#e47c38</label></div><div class="swatch"><div class="swatch-color" style="--swatch:#f3f4f5"></div><label>#f3f4f5</label></div></div></div><div class="token-group"><h3>尺寸</h3><div class="token-table"><div class="token-row"><span>侧栏</span><code>230px</code></div><div class="token-row"><span>控件</span><code>30px</code></div><div class="token-row"><span>正文</span><code>13px</code></div><div class="token-row"><span>代码</span><code>12/21px</code></div><div class="token-row"><span>圆角</span><code>2 / 3 / 4px</code></div></div></div></div></aside>
+  <script src="assets/lucide.js"></script><script src="scripts/gallery.js"></script>
+</body></html>

@@ -21,7 +21,7 @@
     "default_depth": "standard",
     "require_ready_gate": true,
     "require_evidence": true,
-    "ui_prototype_default_variants": 3,
-    "ui_prototype_max_variants": 5
+    "ui_design_default_candidates": 3,
+    "ui_design_max_candidates": 4
   }
 }
