@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.8] - 2026-09-01
+
+### Added
+- **Parent implementation orchestration**: adds `O-orchestrate-implementation`, a Ready Spec/Tickets-only Work that compiles multiple changes into a persistent composite Ticket super-DAG and continuously drives `I-implement` from one recoverable Lead session.
+- **Cross-change execution contracts**: adds versioned Implementation Map and Implementation Plan schemas, dependency and serialization ownership, global workspace/agent limits, repository integration queues, aggregate Evidence, and an isolated canonical distribution with the full implementation dependency closure.
+
+### Changed
+- **Implementation integration**: parent plans can provide the workspace and integration strategy when a child Goal Plan is absent; child plans retain their internal Gates but cannot conflict with the parent strategy.
+- **Validation and archive gates**: validates Ready child inputs, exact composite task projection, internal and cross-change dependencies, writable-path conflicts, unique unfinished parent ownership, execution limits, completion Evidence, and non-cascading archive behavior.
+
+### Fixed
+- Normalized legacy fields out of the strict SpecDev global status v5 index while preserving their values in change-owned status, and corrected Wayfinder claim ownership to the change status artifact.
+
+### Tests
+- Added regression coverage for resumable parent implementation graphs, cross-change serialization, invalid or stale inputs, duplicate ownership, aggregate completion, and legacy global-status normalization.
+
 ## [0.8.7] - 2026-08-30
 
 ### Added

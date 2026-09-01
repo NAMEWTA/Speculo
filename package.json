@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "Workflow-packaged AI collaboration assets with state-safe refresh tooling.",
   "type": "module",
   "bin": {
