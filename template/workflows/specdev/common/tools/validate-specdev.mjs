@@ -11,6 +11,7 @@
 
 import {
   existsSync,
+  lstatSync,
   readFileSync,
   readdirSync,
   statSync,
@@ -40,6 +41,7 @@ const EXPECTED_WORKS = new Set([
   "G-grill-with-docs",
   "I-implement",
   "I-init-setup",
+  "L-learn-change",
   "O-orchestrate-implementation",
   "P-goal-plan",
   "P-prototype",
@@ -105,6 +107,7 @@ const VALID_STAGES = new Set([
   "tickets",
   "goal-plan",
   "implement",
+  "learn-change",
   "review",
   "prototype",
   "wayfinder",
@@ -874,6 +877,13 @@ function capabilityChecks(root) {
       ],
     ],
     [
+      "learn-change",
+      [
+        join(root, "L-learn-change", "L-learn-change.md"),
+        ["开发完成后", "零专业背景", "$ARGUMENTS", "ASCII", "learning/index.md", "{number}_{topic}.md", "{roots.state}/learning/"],
+      ],
+    ],
+    [
       "wayfinder",
       [
         join(root, "W-wayfinder", "W-wayfinder.md"),
@@ -1330,6 +1340,100 @@ function validatePrototypes(change, required, errors) {
     errors.push("prototype stage requires at least one ready UI design package");
   }
   return paths;
+}
+
+function validateChangeLearning(change, required, errors) {
+  const learningRoot = join(change, "learning");
+  const indexPath = join(learningRoot, "index.md");
+  const diagramName = /^\d{2,}_[\p{L}\p{N}_-]+\.md$/u;
+
+  if (!existsSync(learningRoot)) {
+    if (required) errors.push("learn-change stage requires learning/index.md");
+    return null;
+  }
+  if (lstatSync(learningRoot).isSymbolicLink() || !isDirectory(learningRoot)) {
+    errors.push("learning/: change learning directory must be a real directory");
+    return null;
+  }
+
+  const diagramFiles = [];
+  for (const entry of readdirSync(learningRoot, { withFileTypes: true })) {
+    if (entry.isSymbolicLink()) {
+      errors.push(`learning/${entry.name}: learning artifacts must not be symlinks`);
+    } else if (entry.isFile() && diagramName.test(entry.name)) {
+      diagramFiles.push(entry.name);
+    }
+  }
+  diagramFiles.sort();
+
+  if (!isFile(indexPath)) {
+    errors.push("learn-change stage requires learning/index.md");
+    return null;
+  }
+
+  const index = readText(indexPath);
+  if (!index.includes("# Change 学习图解索引")) {
+    errors.push("learning/index.md: missing index heading");
+  }
+  const entries = Array.from(
+    index.matchAll(/^\|\s*(\d{2,})\s*\|\s*([^|\s]+\.md)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*$/gm),
+  );
+  if (!entries.length && required) {
+    errors.push("learning/index.md: requires at least one diagram entry");
+  }
+
+  const indexedFiles = new Set();
+  let previousNumber = 0;
+  for (const entry of entries) {
+    const [, number, fileName, topic, summary] = entry;
+    const numericNumber = Number(number);
+    if (!diagramName.test(fileName)) {
+      errors.push(`learning/index.md: invalid diagram filename '${fileName}'`);
+      continue;
+    }
+    if (numericNumber <= previousNumber) {
+      errors.push("learning/index.md: diagram numbers must increase");
+    }
+    if (numericNumber !== previousNumber + 1) {
+      errors.push("learning/index.md: diagram numbers must start at 01 and be continuous");
+    }
+    previousNumber = numericNumber;
+    if (!fileName.startsWith(`${number}_`)) {
+      errors.push(`learning/index.md: '${fileName}' must start with '${number}_'`);
+    }
+    if (!topic.trim() || !summary.trim()) {
+      errors.push(`learning/index.md: '${fileName}' requires a topic and summary`);
+    }
+    indexedFiles.add(fileName);
+  }
+
+  for (const fileName of diagramFiles) {
+    if (!indexedFiles.has(fileName)) {
+      errors.push(`learning/index.md: missing entry for '${fileName}'`);
+    }
+  }
+  for (const fileName of indexedFiles) {
+    if (!diagramFiles.includes(fileName)) {
+      errors.push(`learning/index.md: '${fileName}' does not exist`);
+    }
+  }
+
+  for (const fileName of diagramFiles) {
+    const markdown = readText(join(learningRoot, fileName));
+    for (const heading of ["## 先看全图", "## 一步一步看", "## 术语小词典", "## 你现在能复述什么"]) {
+      if (!markdown.includes(heading)) errors.push(`learning/${fileName}: missing '${heading}'`);
+    }
+    if (!/```(?:text)?\s*[\s\S]*?(?:->|\||\+--)[\s\S]*?```/.test(markdown)) {
+      errors.push(`learning/${fileName}: requires an ASCII diagram in a fenced code block`);
+    }
+    if (
+      /<\/?(?:html|head|body|svg|canvas|img|picture)\b/i.test(markdown) ||
+      /!\[[^\]]*\]\([^)]+\)/.test(markdown)
+    ) {
+      errors.push(`learning/${fileName}: must be pure Markdown without HTML or image dependencies`);
+    }
+  }
+  return indexPath;
 }
 
 function validateSpec(path, errors, warnings) {
@@ -2625,6 +2729,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors);
+  validateChangeLearning(change, stage === "learn-change", errors);
 
   const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isFile(join(change, "implementation-map.md"));
   const specPath = join(change, "spec.md");

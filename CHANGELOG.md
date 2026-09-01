@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **SpecDev `L-learn-change` Work**: adds a post-implementation question and explanation stage that appends beginner-friendly Markdown and ASCII diagrams under the owning SpecDev change, independently from the Learning workflow.
+
 ## [0.8.8] - 2026-09-01
 
 ### Added

@@ -501,7 +501,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
-    assert.equal(workDirs.length, 14);
+    assert.equal(workDirs.length, 15);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -1069,6 +1069,79 @@ describe("SpecDev local-first contracts", () => {
       const result = runValidator(root, "diagnosis");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /hypotheses must be empty before red evidence/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it("validates indexed SpecDev change-learning diagrams independently from Learning state", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root);
+
+      const missing = runValidator(root, "learn-change");
+      assert.equal(missing.status, 1);
+      assert.match(missing.stdout + missing.stderr, /learn-change stage requires learning\/index\.md/);
+
+      const learningRoot = join(root, "learning");
+      await mkdir(learningRoot);
+      await writeFile(
+        join(learningRoot, "01_request-flow.md"),
+        [
+          "# 请求怎样流过这个 change",
+          "",
+          "## 先看全图",
+          "",
+          "```text",
+          "[用户请求] -> [入口] -> [处理] -> [回应]",
+          "```",
+          "",
+          "## 一步一步看",
+          "",
+          "请求先进入入口，再交给处理步骤，最后形成回应。",
+          "",
+          "## 术语小词典",
+          "",
+          "- 门口（入口）：接住用户请求的第一个位置。",
+          "",
+          "## 你现在能复述什么",
+          "",
+          "- 这个 change 让请求依次经过入口、处理和回应。",
+        ].join("\n"),
+      );
+      await writeFile(
+        join(learningRoot, "index.md"),
+        [
+          "# Change 学习图解索引",
+          "",
+          "| 编号 | 文件 | 主题 | 简介 |",
+          "| --- | --- | --- | --- |",
+          "| 01 | 01_request-flow.md | 请求流 | 解释请求如何经过当前 change。 |",
+        ].join("\n"),
+      );
+
+      const valid = runValidator(root, "learn-change");
+      assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+
+      await writeFile(
+        join(learningRoot, "02_unindexed.md"),
+        [
+          "# 未登记图解",
+          "## 先看全图",
+          "```text",
+          "[输入] -> [输出]",
+          "```",
+          "## 一步一步看",
+          "输入变成输出。",
+          "## 术语小词典",
+          "- 结果（输出）：处理后得到的内容。",
+          "## 你现在能复述什么",
+          "- 输入会变成输出。",
+        ].join("\n"),
+      );
+      const unindexed = runValidator(root, "learn-change");
+      assert.equal(unindexed.status, 1);
+      assert.match(unindexed.stdout + unindexed.stderr, /missing entry for '02_unindexed\.md'/);
     } finally {
       await rm(dirname(root), { recursive: true, force: true });
     }

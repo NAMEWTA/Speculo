@@ -32,6 +32,8 @@ Implement        在既定契约内设计、TDD、审查、验证和交接
         ↓
 Evidence         实际修改、命令、结果、偏差和残余风险
         ↓
+Learn Change     围绕已完成实现提问并追加零基础 Markdown / ASCII 图解（按需）
+        ↓
 Triage           本地完成后按确认回写/关闭支持的远程 Issue
         ↓
 Archive          归档历史并将经验证知识提升为当前长期知识
@@ -58,8 +60,9 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>`
 
-`{design-id}` 由 P-prototype 在当前 change 内分配为最小未占用的 `UI-NNN`；设计系统文档是设计权威，comparison 与 final 是其可运行投影。
+`{design-id}` 由 P-prototype 在当前 change 内分配为最小未占用的 `UI-NNN`；设计系统文档是设计权威，comparison 与 final 是其可运行投影。`{number}` 与 `{topic}` 由 L-learn-change 根据已有学习索引和当前问题分配，不属于 Learning workflow 的知识编号。
 
 工件职责和冲突裁决位于 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`。
 
@@ -112,6 +115,7 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
+- `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>`
 
 ## 全局治理原则
 
@@ -207,6 +211,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 | 多 Ticket 协调 | P-goal-plan | I / Triage / A |
 | 多个 Ready change 的持续实现 | O-orchestrate-implementation | I-implement 循环 / completed / blocked |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
+| 开发完成后需要理解当前 change 或追问实现 | L-learn-change | 返回用户 / 继续提问 / Triage / A |
 | 架构健康扫描 | R-review-architecture | G / T |
 
 同 change 下一阶段需要当前一手推理且上下文健康时继续；切换 repo/person/harness 或旁路时使用 `<Path>{roots.commands}/handoff.md</Path>`；严格限定且可独立派单时使用 Dispatch Packet；其他长上下文以权威工件路径恢复。平台不支持 clear/compact 时不虚构操作。
@@ -221,6 +226,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - **G-grill-with-docs** — 设计访谈（带文档）：以完整 frontier 逐轮推进设计树，直到每个决策分支都已关闭并获得用户共识，同时持续维护当前 change 的设计树、日志、领域上下文和架构决策。
 - **I-implement** — 实现：基于 Ready Ticket 或获批小型 Spec 执行设计检查、TDD、动态派单、双轴审查、按 Goal Plan 选择的 current workspace 或 Ticket worktree 提交、直接父分支或候选合并验证和 Lead Evidence 回写。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
+- **L-learn-change** — Change 学习：在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。
 - **O-orchestrate-implementation** — 编排实现：将两个或以上已完成 Ready Spec 与 Ready Tickets 的 change 编译为跨 change implementation super-DAG，并由单一 Lead 在一个会话中持续调度实现、验证和集成。
 - **P-goal-plan** — 目标规划：在跨 Ticket 协调复杂度需要时，以固定 Lead、动态派单、DAG/Gate 和候选合并门禁生成决策完备且可恢复的执行计划。
 - **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
@@ -246,7 +252,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage <triage|diagnosis|grill|eli5|spec|tickets|goal-plan|implement|review|prototype|wayfinder|complete> \
+  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn-change|review|prototype|wayfinder|orchestrate-implementation|complete> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
