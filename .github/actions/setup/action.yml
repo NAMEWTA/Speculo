@@ -11,10 +11,12 @@ runs:
   using: composite
   steps:
     - name: Install pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/setup@v2
+      with:
+        install: false
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: '22.22.3'
         registry-url: ${{ inputs.registry-url }}
