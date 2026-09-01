@@ -652,6 +652,9 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
 | Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
+| Implementation Map | `specdev/changes/{change}/implementation-map.md` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
+| Implementation Plan | `specdev/changes/{change}/implementation-plan.md` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
+| Implementation Orchestration Evidence | `specdev/changes/{change}/evidence/implementation-orchestration.md` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
 | 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | UI 设计包 | `specdev/changes/{change}/prototypes/{design-id}/design-system.md`、`specdev/changes/{change}/prototypes/{design-id}/comparison/` 与 `specdev/changes/{change}/prototypes/{design-id}/final/` | 项目 UI 证据、功能风格候选、逐层用户决定、设计 token、交互合同和可运行 HTML/CSS/JS 投影 | 生产 UI 实现或替用户确认高影响偏好 |
@@ -675,8 +678,9 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 4. 当前外部行为权威：`specdev/changes/{change}/spec.md`；
 5. 当前 Ticket 契约：`specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
 6. 当前跨 Ticket 编排：`specdev/changes/{change}/goal-plan.md`；
-7. 当前代码与运行事实；
-8. 旧计划、旧日志和未经确认的推断。
+7. 若当前 change 属于父实现 change，父 Implementation Map 对组合 Ticket dependency/serialization 具有权威，父 Implementation Plan 拥有全局 workspace、frontier 与 integration queue；
+8. 当前代码与运行事实；
+9. 旧计划、旧日志和未经确认的推断。
 
 当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
 
@@ -801,7 +805,9 @@ workspace/implementation owner 可以是 Lead 或动态 implementation subagent�
 
 required 模式 implementation subagent 上限取 Goal Plan、config 和平台能力共同约束，Lead 不计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
-**完成标准**：每个项目写入映射到唯一 Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
+子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 implementation subagent 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
+
+**完成标准**：每个项目写入映射到唯一 change、Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
 
 </path-ownership>
 
@@ -859,6 +865,8 @@ required Ticket Done 必须有 source commit、通过 candidate、父分支 resu
 
 Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。
 
+父实现 change 的 Implementation Orchestration Evidence 不能替代子 Evidence。它至少记录最终 Map revision、全部成员最终状态和子证据指针、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、stale candidate 处理、偏差和残余风险。任何成员未 completed 或整体验证未通过时不得形成父完成证据。
+
 </evidence-and-verification>
 
 <deviation-control>
@@ -886,6 +894,7 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 - 发现新的安全、数据、兼容、性能或迁移风险；
 - 依赖、合同或外部参考权威已变化；
 - 实际行为将与 Spec 或 ADR 不一致。
+- 父 Implementation Map 的成员、组合 Ticket、dependency、serialization 或 revision 已与子状态、路径或 Git 事实不一致。
 
 ## 3. 偏差记录
 
@@ -906,8 +915,41 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
 - 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
+- 偏差跨越多个成员时，父 Lead 先递增 Implementation Map revision，再重算 Implementation Plan；旧派单和 candidate 全部标记 stale。
 
 </deviation-control>
+
+<parent-implementation-orchestration>
+
+# Parent Implementation Orchestration
+
+本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供 O-orchestrate-implementation、I-implement 与 A-archive-and-consolidate 读取。
+
+## 输入边界
+
+父实现 change 只能在所有成员通过 Ready Spec/Tickets 输入门后创建。父 Work 不调用或代行 Triage、Grill、Wayfinder、Spec、Tickets 或普通 Goal Plan；输入不足时不留下父状态或父工件。
+
+## 权威边界
+
+- 父 Implementation Map：成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision 的唯一权威投影。
+- 父 Implementation Plan：Lead、全局 workspace 策略、implementation agent/integration attempt 上限、frontier、Wave、locks 和 integration queue 的唯一权威。
+- 子 change：自己的 Spec、Ticket、内部 Goal Gate、workspace、Git、Evidence 和完成状态的唯一权威。
+
+父工件不得复制完整子合同。子权威变化时停止旧派单、递增父 Map revision 并重算父 Plan；不能从旧父投影覆盖子工件。
+
+## 唯一所有权
+
+一个 active/blocked 子 change 最多属于一个未完成父实现 change。v1 不支持父实现 change 嵌套。父 Lead 是父工件、全部 SpecDev 状态写入、E2E、repository/ref integration queue 和父分支推进的唯一 owner；implementation agent 只写授权项目 workspace。
+
+## I-implement 调用
+
+父 Plan 可以替代缺失的子 Goal Plan 提供 workspace/integration 策略和全局执行边界。子 Goal Plan 存在时继续拥有子 change 内 Gate，但不得与父策略冲突。I-implement 完成或阻塞一个组合 Ticket 后返回父 O Work，不要求用户重新激活 change。
+
+## 归档与完成
+
+未完成父实现 change 的成员不得归档。成员满足普通 change completion 时可以先 completed，但不自动归档。父 change 只有全部成员 completed、Map/Plan completed、aggregate Evidence 完整且无 active dispatch/candidate/lock 后才能 completed；完成或归档均不自动级联。
+
+</parent-implementation-orchestration>
 
 <research>
 

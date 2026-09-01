@@ -22,6 +22,8 @@ import { fileURLToPath } from "node:url";
 const DOMAIN_SCHEMA_VERSION = 3;
 const CONFIG_SCHEMA_VERSION = 5;
 const GOAL_PLAN_SCHEMA_VERSION = 6;
+const IMPLEMENTATION_MAP_SCHEMA_VERSION = 1;
+const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 1;
 const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
@@ -29,6 +31,7 @@ const STATE_PREFIX = "{roots.state}/specdev/";
 const STATE_ROOT_PREFIX = "{roots.state}/";
 const SKILLS_PREFIX = "{roots.skills}/";
 const COMMANDS_PREFIX = "{roots.commands}/";
+const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const EXPECTED_WORKS = new Set([
   "A-archive-and-consolidate",
@@ -37,6 +40,7 @@ const EXPECTED_WORKS = new Set([
   "G-grill-with-docs",
   "I-implement",
   "I-init-setup",
+  "O-orchestrate-implementation",
   "P-goal-plan",
   "P-prototype",
   "R-review-architecture",
@@ -104,6 +108,7 @@ const VALID_STAGES = new Set([
   "review",
   "prototype",
   "wayfinder",
+  "orchestrate-implementation",
   "complete",
 ]);
 const REQUIRED_TICKET_KEYS = new Set([
@@ -156,6 +161,8 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "spec.md",
   "tickets-map.md",
   "goal-plan.md",
+  "implementation-map.md",
+  "implementation-plan.md",
   "ADR.md",
   "CONTEXT.md",
   "LOG.md",
@@ -168,6 +175,7 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "architecture-review.html",
   "wayfinder-map.md",
   "design-tree.json",
+  "implementation-orchestration.md",
 ]);
 const FORBIDDEN_OBSOLETE_BASENAMES = new Set([
   "source-issue.md",
@@ -674,6 +682,8 @@ function validateExecutionContractAssets(root) {
   const configSchemaPath = join(root, "common", "schemas", "config.schema.json");
   const goalPlanSchemaPath = join(root, "common", "schemas", "goal-plan.schema.json");
   const changeSchemaPath = join(root, "common", "schemas", "change-status.schema.json");
+  const implementationMapSchemaPath = join(root, "common", "schemas", "implementation-map.schema.json");
+  const implementationPlanSchemaPath = join(root, "common", "schemas", "implementation-plan.schema.json");
 
   for (const path of [
     configTemplatePath,
@@ -681,6 +691,8 @@ function validateExecutionContractAssets(root) {
     configSchemaPath,
     goalPlanSchemaPath,
     changeSchemaPath,
+    implementationMapSchemaPath,
+    implementationPlanSchemaPath,
   ]) {
     if (!isFile(path)) errors.push(`missing execution contract asset ${toPosix(relative(root, path))}`);
   }
@@ -753,6 +765,29 @@ function validateExecutionContractAssets(root) {
   ) {
     errors.push("change-status.schema.json must define the strict Ticket integration v6 contract");
   }
+
+  const implementationMapSchema = JSON.parse(readText(implementationMapSchemaPath));
+  if (
+    implementationMapSchema.$id !== "urn:speculo:specdev:implementation-map:v1" ||
+    implementationMapSchema.properties?.schema_version?.const !== IMPLEMENTATION_MAP_SCHEMA_VERSION ||
+    implementationMapSchema.properties?.members?.minItems !== 2 ||
+    implementationMapSchema.properties?.tasks?.minItems !== 1 ||
+    implementationMapSchema.additionalProperties !== false
+  ) {
+    errors.push("implementation-map.schema.json must define the strict parent implementation graph contract v1");
+  }
+  const implementationPlanSchema = JSON.parse(readText(implementationPlanSchemaPath));
+  if (
+    implementationPlanSchema.$id !== "urn:speculo:specdev:implementation-plan:v1" ||
+    implementationPlanSchema.properties?.schema_version?.const !== IMPLEMENTATION_PLAN_SCHEMA_VERSION ||
+    implementationPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
+    implementationPlanSchema.properties?.implementation_agent_limit?.minimum !== 1 ||
+    implementationPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
+    !["current", "required"].every((value) => implementationPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
+    implementationPlanSchema.additionalProperties !== false
+  ) {
+    errors.push("implementation-plan.schema.json must define the strict parent implementation projection contract v1");
+  }
   return errors;
 }
 
@@ -808,6 +843,13 @@ function capabilityChecks(root) {
           "lead-orchestration.md",
           "Definition of Done",
         ],
+      ],
+    ],
+    [
+      "orchestrate-implementation",
+      [
+        join(root, "O-orchestrate-implementation", "O-orchestrate-implementation.md"),
+        ["Ready Spec", "Ready Tickets", "Implementation Map", "Implementation Plan", "lead-directed", "implementation_agent_limit", "serialization", "I-implement"],
       ],
     ],
     [
@@ -897,6 +939,13 @@ function capabilityChecks(root) {
     "W-wayfinder/local-tracker-contract.md",
     "W-wayfinder/solution-comment-template.md",
     "R-review-architecture/architecture-report-contract.md",
+    "common/rules/parent-implementation-orchestration.md",
+    "common/schemas/implementation-map.schema.json",
+    "common/schemas/implementation-plan.schema.json",
+    "O-orchestrate-implementation/input-readiness.md",
+    "O-orchestrate-implementation/implementation-map-template.md",
+    "O-orchestrate-implementation/implementation-plan-template.md",
+    "O-orchestrate-implementation/implementation-evidence-template.md",
   ]) {
     if (!isFile(join(root, required))) errors.push(`missing architecture/wayfinding contract ${required}`);
   }
@@ -2117,6 +2166,438 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
   }
 }
 
+function validateParentImplementation(change, parentStatus, stage, errors, warnings) {
+  const required = stage === "orchestrate-implementation";
+  const mapPath = join(change, "implementation-map.md");
+  const planPath = join(change, "implementation-plan.md");
+  if (!required && !isFile(mapPath) && !isFile(planPath)) return null;
+  if (!isFile(mapPath)) errors.push("orchestrate-implementation stage requires implementation-map.md");
+  if (!isFile(planPath)) errors.push("orchestrate-implementation stage requires implementation-plan.md");
+  if (!isFile(mapPath) || !isFile(planPath)) return null;
+
+  const parentName = basename(change);
+  const map = parseFrontmatter(mapPath);
+  const plan = parseFrontmatter(planPath);
+  const mapKeys = ["schema_version", "artifact", "change", "status", "revision", "members", "tasks", "dependencies", "serializations"];
+  const planKeys = ["schema_version", "artifact", "change", "status", "source_map_revision", "orchestration", "lead", "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution"];
+  for (const [label, meta, expected] of [
+    ["implementation-map.md", map.meta, mapKeys],
+    ["implementation-plan.md", plan.meta, planKeys],
+  ]) {
+    const missing = expected.filter((key) => !(key in meta));
+    const unexpected = Object.keys(meta).filter((key) => !expected.includes(key));
+    if (missing.length) errors.push(`${label}: missing keys ${JSON.stringify(missing)}`);
+    if (unexpected.length) errors.push(`${label}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
+  }
+  if (map.meta.schema_version !== IMPLEMENTATION_MAP_SCHEMA_VERSION || map.meta.artifact !== "implementation-map") {
+    errors.push("implementation-map.md: artifact/schema_version must be implementation-map/1");
+  }
+  if (plan.meta.schema_version !== IMPLEMENTATION_PLAN_SCHEMA_VERSION || plan.meta.artifact !== "implementation-plan") {
+    errors.push("implementation-plan.md: artifact/schema_version must be implementation-plan/1");
+  }
+  if (map.meta.change !== parentName || plan.meta.change !== parentName) {
+    errors.push("parent implementation artifacts must name their containing change");
+  }
+  const artifactStatuses = new Set(["ready", "in_progress", "blocked", "completed"]);
+  if (!artifactStatuses.has(map.meta.status)) errors.push(`implementation-map.md: invalid status ${map.meta.status}`);
+  if (!artifactStatuses.has(plan.meta.status)) errors.push(`implementation-plan.md: invalid status ${plan.meta.status}`);
+  if (!Number.isInteger(map.meta.revision) || map.meta.revision < 1) {
+    errors.push("implementation-map.md: revision must be a positive integer");
+  }
+  if (plan.meta.source_map_revision !== map.meta.revision) {
+    errors.push("implementation-plan.md: source_map_revision must equal Implementation Map revision");
+  }
+  if (plan.meta.orchestration !== "lead-directed" || typeof plan.meta.lead !== "string" || !plan.meta.lead.trim()) {
+    errors.push("implementation-plan.md: lead-directed orchestration requires a recoverable Lead");
+  }
+  for (const key of ["implementation_agent_limit", "integration_attempt_limit"]) {
+    if (!Number.isInteger(plan.meta[key]) || plan.meta[key] < 1) {
+      errors.push(`implementation-plan.md: ${key} must be a positive integer`);
+    }
+  }
+  const validStrategy =
+    (plan.meta.ticket_workspace_policy === "current" && plan.meta.integration_gate === "direct-parent") ||
+    (plan.meta.ticket_workspace_policy === "required" && plan.meta.integration_gate === "candidate-merge");
+  if (!validStrategy) {
+    errors.push("implementation-plan.md: workspace/integration strategy must be current/direct-parent or required/candidate-merge");
+  }
+  const readyStatuses = new Set(["ready", "in_progress"]);
+  if (
+    typeof plan.meta.ready_for_execution !== "boolean" ||
+    (plan.meta.ready_for_execution === true) !== readyStatuses.has(plan.meta.status)
+  ) {
+    errors.push("implementation-plan.md: ready_for_execution must match status");
+  }
+  for (const heading of [
+    "## 1. Members and Source Authority",
+    "## 2. Composite Ticket Inventory",
+    "## 3. Implementation Super-DAG",
+    "## 4. Conflict and Serialization",
+    "## 5. Contract and Path Coverage",
+    "## 6. Revision Log",
+  ]) {
+    if (!map.body.includes(heading)) errors.push(`implementation-map.md: missing '${heading}'`);
+  }
+  for (const heading of [
+    "## 1. Outcome and Authority",
+    "## 2. Ready Frontier and Waves",
+    "## 3. Workspace and Dispatch Contract",
+    "## 4. Repository Integration Queue",
+    "## 5. Gates and Aggregate Verification",
+    "## 6. Conflict, Drift and Recovery",
+    "## 7. Progress and Decisions",
+  ]) {
+    if (!plan.body.includes(heading)) errors.push(`implementation-plan.md: missing '${heading}'`);
+  }
+
+  const members = requireList(map.meta, "members", "implementation-map.md", errors).map(String);
+  const tasks = requireList(map.meta, "tasks", "implementation-map.md", errors).map(String);
+  const dependencies = requireList(map.meta, "dependencies", "implementation-map.md", errors).map(String);
+  const serializations = requireList(map.meta, "serializations", "implementation-map.md", errors).map(String);
+  if (members.length < 2) errors.push("implementation-map.md: parent implementation requires at least two members");
+  if (!tasks.length) errors.push("implementation-map.md: tasks must contain the child Ticket inventory");
+  for (const [key, values] of [["members", members], ["tasks", tasks], ["dependencies", dependencies], ["serializations", serializations]]) {
+    if (new Set(values).size !== values.length) errors.push(`implementation-map.md: ${key} must be unique`);
+  }
+  if (members.includes(parentName)) errors.push("implementation-map.md: parent change cannot include itself");
+
+  const changesRoot = dirname(change);
+  const memberSet = new Set(members);
+  const memberStatuses = new Map();
+  const ticketByTask = new Map();
+  const expectedTasks = new Set();
+  const expectedInternalEdges = new Set();
+  let activeImplementations = 0;
+  let activeCurrentWriters = 0;
+  const integratingByRef = new Map();
+
+  for (const member of members) {
+    if (!CHANGE_NAME.test(member)) {
+      errors.push(`implementation-map.md: invalid member change name ${member}`);
+      continue;
+    }
+    const memberRoot = join(changesRoot, member);
+    if (!isDirectory(memberRoot)) {
+      errors.push(`implementation-map.md: member change does not exist: ${member}`);
+      continue;
+    }
+    if (isFile(join(memberRoot, "implementation-map.md"))) {
+      errors.push(`implementation-map.md: nested parent implementation is not supported in v1: ${member}`);
+    }
+
+    const memberErrors = [];
+    const memberWarnings = [];
+    const status = validateChangeStatus(join(memberRoot, ".status.json"), member, memberErrors);
+    if (status) {
+      memberStatuses.set(member, status);
+      if (status.change_status === "archived") memberErrors.push("archived change cannot be an implementation member");
+      if (status.current_work !== null && status.current_work !== "specdev/implement") {
+        memberErrors.push(`current_work=${status.current_work} conflicts with parent implementation ownership`);
+      }
+      for (const worktree of Array.isArray(status.worktrees) ? status.worktrees : []) {
+        if (worktree?.status === "active") {
+          activeImplementations += 1;
+          if (worktree.workspace_ref === "current") activeCurrentWriters += 1;
+          if (plan.meta.ticket_workspace_policy === "current" && worktree.workspace_ref !== "current") {
+            memberErrors.push(`${worktree.ticket_id}: active workspace must follow parent current policy`);
+          }
+          if (plan.meta.ticket_workspace_policy === "required" && worktree.workspace_ref === "current") {
+            memberErrors.push(`${worktree.ticket_id}: active workspace must follow parent required policy`);
+          }
+        }
+        if (worktree?.status === "integrating") {
+          const key = String(worktree.parent_branch ?? "<unknown-ref>");
+          integratingByRef.set(key, (integratingByRef.get(key) ?? 0) + 1);
+        }
+        if (Number.isInteger(worktree?.integration?.attempts) && worktree.integration.attempts > plan.meta.integration_attempt_limit) {
+          memberErrors.push(`${worktree.ticket_id}: integration attempts ${worktree.integration.attempts} exceed parent limit ${plan.meta.integration_attempt_limit}`);
+        }
+      }
+    }
+
+    const specPath = join(memberRoot, "spec.md");
+    const childSpec = isFile(specPath) ? validateSpec(specPath, memberErrors, memberWarnings) : null;
+    if (!childSpec) memberErrors.push("Ready Spec is required before parent creation");
+    else {
+      if (childSpec.meta.change !== member) memberErrors.push("spec.md: change must equal member directory name");
+      if (childSpec.meta.status !== "ready" || childSpec.meta.ready_for_tickets !== true) {
+        memberErrors.push("Spec must have status=ready and ready_for_tickets=true");
+      }
+    }
+
+    const childMapPath = join(memberRoot, "tickets-map.md");
+    const childMap = isFile(childMapPath) ? validateMap(childMapPath, memberErrors) : null;
+    if (!childMap) memberErrors.push("Ready Tickets Map is required before parent creation");
+    else {
+      if (childMap.meta.change !== member) memberErrors.push("tickets-map.md: change must equal member directory name");
+      if (!new Set(["ready", "in_progress", "completed"]).has(childMap.meta.status)) {
+        memberErrors.push("Tickets Map status must be ready, in_progress, or completed");
+      }
+    }
+
+    const ticketRoot = join(memberRoot, "ticket");
+    const ticketFiles = isDirectory(ticketRoot)
+      ? readdirSync(ticketRoot).filter((name) => name.endsWith(".md")).sort()
+      : [];
+    if (!ticketFiles.length) memberErrors.push("Ready Tickets are required before parent creation");
+    const childTickets = new Map();
+    for (const name of ticketFiles) {
+      const artifact = validateTicket(join(ticketRoot, name), memberErrors);
+      if (!artifact) continue;
+      const ticketId = String(artifact.meta.id);
+      if (artifact.meta.change !== member) memberErrors.push(`${name}: change must equal member directory name`);
+      if (childTickets.has(ticketId)) memberErrors.push(`duplicate Ticket id ${ticketId}`);
+      childTickets.set(ticketId, artifact);
+      const numericId = ticketId.replace(/^T-/, "");
+      if (!name.startsWith(`${numericId}-`)) memberErrors.push(`${name}: filename prefix must match ${ticketId}`);
+      if (childMap && !childMap.body.includes(ticketId)) memberErrors.push(`${name}: Ticket id is absent from Tickets Map`);
+      if (childSpec) {
+        for (const contractId of artifact.meta.contract_ids ?? []) {
+          if (!childSpec.body.includes(String(contractId))) memberErrors.push(`${name}: contract ${contractId} not found in Spec`);
+        }
+      }
+
+      const taskId = `${member}::${ticketId}`;
+      expectedTasks.add(taskId);
+      ticketByTask.set(taskId, { artifact, member, memberRoot, status });
+      const terminal = new Set(["done", "cancelled"]).has(artifact.meta.status);
+      if (!terminal) {
+        if (map.meta.status === "ready" && (artifact.meta.status !== "ready" || artifact.meta.ready !== true)) {
+          memberErrors.push(`${ticketId}: parent creation requires status=ready and ready=true`);
+        } else if (new Set(["ready", "in_progress", "review"]).has(artifact.meta.status) && artifact.meta.ready !== true) {
+          memberErrors.push(`${ticketId}: executable Ticket must keep ready=true`);
+        } else if (new Set(["blocked", "deviated"]).has(artifact.meta.status) && map.meta.status !== "blocked" && plan.meta.status !== "blocked") {
+          memberErrors.push(`${ticketId}: blocked/deviated Ticket requires blocked parent artifacts`);
+        } else if (artifact.meta.status === "draft") {
+          memberErrors.push(`${ticketId}: draft Ticket cannot belong to a parent implementation`);
+        }
+      }
+    }
+
+    for (const [ticketId, artifact] of childTickets) {
+      for (const dependency of (artifact.meta.blocked_by ?? []).map(String)) {
+        if (!childTickets.has(dependency)) memberErrors.push(`${ticketId}: blocked_by references missing ${dependency}`);
+        expectedInternalEdges.add(`${member}::${ticketId} <- ${member}::${dependency}`);
+      }
+    }
+    const childGraph = new Map([...childTickets].map(([ticketId, artifact]) => [ticketId, (artifact.meta.blocked_by ?? []).map(String)]));
+    const childCycle = findCycle(childGraph);
+    if (childCycle) memberErrors.push(`Ticket dependency cycle: ${childCycle.join(" -> ")}`);
+
+    if (childSpec) {
+      const declared = new Set(childSpec.body.match(/\bAC-\d+\b/g) ?? []);
+      const covered = new Set([...childTickets.values()].flatMap((artifact) => (artifact.meta.contract_ids ?? []).map(String)));
+      const uncovered = [...declared].filter((id) => !covered.has(id) && !(childMap && new RegExp(`${escapeRegExp(id)}.*\\bdeferred\\b`, "i").test(childMap.body)));
+      if (uncovered.length) memberErrors.push(`Spec acceptance contracts are not covered by Tickets: ${JSON.stringify(uncovered.sort())}`);
+    }
+    if (status?.change_status === "completed") {
+      const unfinished = [...childTickets].filter(([, artifact]) => !new Set(["done", "cancelled"]).has(artifact.meta.status)).map(([id]) => id);
+      if (unfinished.length) memberErrors.push(`completed member has unfinished Tickets: ${JSON.stringify(unfinished)}`);
+    }
+
+    const goalPath = join(memberRoot, "goal-plan.md");
+    if (isFile(goalPath)) {
+      const goal = validateGoalPlan(goalPath, memberErrors);
+      if (goal && (
+        goal.meta.ticket_workspace_policy !== plan.meta.ticket_workspace_policy ||
+        goal.meta.integration_gate !== plan.meta.integration_gate
+      )) {
+        memberErrors.push("Goal Plan workspace/integration strategy conflicts with parent Implementation Plan");
+      }
+    }
+    errors.push(...memberErrors.map((message) => `${member}: ${message}`));
+    warnings.push(...memberWarnings.map((message) => `${member}: ${message}`));
+  }
+
+  const taskSet = new Set(tasks);
+  for (const task of tasks) {
+    if (!/^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*::T-\d{2,}$/.test(task)) {
+      errors.push(`implementation-map.md: invalid composite task '${task}'`);
+    }
+  }
+  const missingTasks = [...expectedTasks].filter((task) => !taskSet.has(task)).sort();
+  const extraTasks = tasks.filter((task) => !expectedTasks.has(task)).sort();
+  if (missingTasks.length || extraTasks.length) {
+    errors.push(`implementation-map.md: tasks must exactly match child Tickets; missing=${JSON.stringify(missingTasks)} extra=${JSON.stringify(extraTasks)}`);
+  }
+
+  const graph = new Map(tasks.map((task) => [task, []]));
+  const dependencySet = new Set(dependencies);
+  for (const edge of dependencies) {
+    const match = /^([^ ]+::T-\d{2,}) <- ([^ ]+::T-\d{2,})$/.exec(edge);
+    if (!match) {
+      errors.push(`implementation-map.md: invalid dependency '${edge}'`);
+      continue;
+    }
+    const [, dependent, prerequisite] = match;
+    if (!taskSet.has(dependent) || !taskSet.has(prerequisite)) {
+      errors.push(`implementation-map.md: dependency endpoints must be composite tasks: ${edge}`);
+    } else if (dependent === prerequisite) {
+      errors.push(`implementation-map.md: dependency cannot be self-referential: ${edge}`);
+    } else {
+      graph.get(dependent).push(prerequisite);
+      const dependentMember = dependent.split("::")[0];
+      const prerequisiteMember = prerequisite.split("::")[0];
+      if (dependentMember === prerequisiteMember && !expectedInternalEdges.has(edge)) {
+        errors.push(`implementation-map.md: same-member dependency must come from child blocked_by: ${edge}`);
+      }
+    }
+  }
+  const missingInternalEdges = [...expectedInternalEdges].filter((edge) => !dependencySet.has(edge)).sort();
+  if (missingInternalEdges.length) {
+    errors.push(`implementation-map.md: missing child Ticket dependencies ${JSON.stringify(missingInternalEdges)}`);
+  }
+  const cycle = findCycle(graph);
+  if (cycle) errors.push(`implementation super-DAG cycle: ${cycle.join(" -> ")}`);
+
+  const serializationPairs = new Set();
+  for (const edge of serializations) {
+    const match = /^([^ ]+::T-\d{2,}) <> ([^ ]+::T-\d{2,})$/.exec(edge);
+    if (!match) {
+      errors.push(`implementation-map.md: invalid serialization '${edge}'`);
+      continue;
+    }
+    const [, left, right] = match;
+    if (!taskSet.has(left) || !taskSet.has(right)) {
+      errors.push(`implementation-map.md: serialization endpoints must be composite tasks: ${edge}`);
+      continue;
+    }
+    if (left === right) {
+      errors.push(`implementation-map.md: serialization cannot be self-referential: ${edge}`);
+      continue;
+    }
+    const key = [left, right].sort().join("\0");
+    if (serializationPairs.has(key)) errors.push(`implementation-map.md: duplicate unordered serialization pair: ${edge}`);
+    serializationPairs.add(key);
+  }
+
+  const unfinishedTasks = [...ticketByTask]
+    .filter(([, value]) => !new Set(["done", "cancelled"]).has(value.artifact.meta.status))
+    .map(([task]) => task);
+  for (let index = 0; index < unfinishedTasks.length; index += 1) {
+    const leftId = unfinishedTasks[index];
+    const left = ticketByTask.get(leftId).artifact;
+    for (const rightId of unfinishedTasks.slice(index + 1)) {
+      if (leftId.split("::")[0] === rightId.split("::")[0]) continue;
+      if (
+        transitivelyDepends(graph, leftId, rightId) ||
+        transitivelyDepends(graph, rightId, leftId) ||
+        serializationPairs.has([leftId, rightId].sort().join("\0"))
+      ) continue;
+      const right = ticketByTask.get(rightId).artifact;
+      const overlaps = [];
+      for (const leftPath of left.meta.writable_paths ?? []) {
+        for (const rightPath of right.meta.writable_paths ?? []) {
+          if (pathsOverlap(String(leftPath), String(rightPath))) overlaps.push([String(leftPath), String(rightPath)]);
+        }
+      }
+      if (overlaps.length) {
+        errors.push(`composite tasks ${leftId}/${rightId} have writable overlap without dependency or serialization: ${JSON.stringify(overlaps.slice(0, 3))}`);
+      }
+    }
+  }
+
+  for (const entry of readdirSync(changesRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name === parentName) continue;
+    const otherMapPath = join(changesRoot, entry.name, "implementation-map.md");
+    if (!isFile(otherMapPath)) continue;
+    const otherMap = parseFrontmatter(otherMapPath).meta;
+    if (!Array.isArray(otherMap.members)) continue;
+    let otherStatus = null;
+    try {
+      otherStatus = JSON.parse(readText(join(changesRoot, entry.name, ".status.json"))).change_status;
+    } catch {
+      // Invalid competing parents still own their members conservatively.
+    }
+    if (new Set(["completed", "archived"]).has(otherStatus)) continue;
+    const overlap = otherMap.members.map(String).filter((member) => memberSet.has(member));
+    if (overlap.length) errors.push(`member changes already belong to unfinished parent implementation ${entry.name}: ${JSON.stringify(overlap)}`);
+  }
+
+  const config = findSpecdevConfig(change);
+  const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
+  const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
+  if (!config || config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
+    errors.push("implementation-plan.md: SpecDev config v5 with positive execution limits is required");
+  } else {
+    if (plan.meta.implementation_agent_limit > configuredAgents) {
+      errors.push(`implementation-plan.md: implementation_agent_limit ${plan.meta.implementation_agent_limit} exceeds config max_implementation_agents ${configuredAgents}`);
+    }
+    if (plan.meta.integration_attempt_limit > configuredAttempts) {
+      errors.push(`implementation-plan.md: integration_attempt_limit ${plan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
+    }
+  }
+  if (activeImplementations > plan.meta.implementation_agent_limit) {
+    errors.push(`parent implementation agent limit exceeded: ${activeImplementations} active for limit ${plan.meta.implementation_agent_limit}`);
+  }
+  if (plan.meta.ticket_workspace_policy === "current" && activeCurrentWriters > 1) {
+    errors.push(`parent current policy permits only one active implementation writer; found ${activeCurrentWriters}`);
+  }
+  for (const [ref, count] of integratingByRef) {
+    if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
+  }
+
+  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && parentStatus.current_work !== "specdev/orchestrate-implementation") {
+    errors.push("parent active/blocked status must keep current_work=specdev/orchestrate-implementation");
+  }
+  if (parentStatus?.change_status === "completed") {
+    const incomplete = members.filter((member) => memberStatuses.get(member)?.change_status !== "completed");
+    if (incomplete.length) errors.push(`parent implementation is completed while members remain incomplete: ${JSON.stringify(incomplete)}`);
+    const unfinished = [...ticketByTask].filter(([, value]) => !new Set(["done", "cancelled"]).has(value.artifact.meta.status)).map(([task]) => task);
+    if (unfinished.length) errors.push(`completed parent implementation has unfinished composite tasks: ${JSON.stringify(unfinished)}`);
+    if (map.meta.status !== "completed" || plan.meta.status !== "completed") {
+      errors.push("completed parent requires completed Implementation Map and Implementation Plan");
+    }
+    if (
+      parentStatus.current_work !== null ||
+      !Array.isArray(parentStatus.blockers) || parentStatus.blockers.length > 0 ||
+      !Array.isArray(parentStatus.deviations) || parentStatus.deviations.length > 0
+    ) {
+      errors.push("completed parent requires null current_work and no blockers or deviations");
+    }
+    const activeMemberWork = [...memberStatuses]
+      .flatMap(([member, status]) => (status.worktrees ?? []).map((worktree) => ({ member, worktree })))
+      .filter(({ worktree }) => new Set(["planned", "active", "review", "integrating", "blocked"]).has(worktree?.status) || worktree?.integration?.status === "candidate")
+      .map(({ member, worktree }) => `${member}::${worktree.ticket_id}`);
+    if (activeMemberWork.length) {
+      errors.push(`completed parent has active member worktrees or candidates: ${JSON.stringify(activeMemberWork)}`);
+    }
+    for (const [task, value] of ticketByTask) {
+      if (value.artifact.meta.status !== "done") continue;
+      if (!isFile(join(value.memberRoot, "evidence", `${value.artifact.meta.id}.md`))) {
+        errors.push(`${task}: completed parent requires child Ticket Evidence`);
+      }
+      const worktree = value.status?.worktrees?.find((entry) => entry?.ticket_id === value.artifact.meta.id);
+      if (!worktree || !new Set(["integrated", "removed"]).has(worktree.status)) {
+        errors.push(`${task}: completed parent requires integrated or removed child workspace record`);
+      }
+    }
+    const evidencePath = join(change, "evidence", "implementation-orchestration.md");
+    if (!isFile(evidencePath)) {
+      errors.push("completed parent requires evidence/implementation-orchestration.md");
+    } else {
+      const evidence = readText(evidencePath);
+      for (const heading of [
+        "## 1. Parent Plan and Final Revision",
+        "## 2. Member and Ticket Completion",
+        "## 3. Dependency and Serialization Audit",
+        "## 4. Repository Integration Audit",
+        "## 5. Aggregate Verification",
+        "## 6. Contract, Drift and Deviation Audit",
+        "## 7. Residual Risk and Boundary",
+      ]) {
+        if (!evidence.includes(heading)) errors.push(`evidence/implementation-orchestration.md: missing '${heading}'`);
+      }
+    }
+  } else if (map.meta.status === "completed" || plan.meta.status === "completed") {
+    errors.push("completed Implementation Map/Plan requires completed parent change status");
+  }
+  if (plan.meta.ready_for_execution === true && !new Set(["ready", "in_progress"]).has(map.meta.status)) {
+    errors.push("ready Implementation Plan requires a ready or in_progress Implementation Map");
+  }
+  return { map, plan, members, tasks, memberStatuses, ticketByTask };
+}
+
 function validateChange(change, stage = null, repoRoot = null) {
   const errors = [];
   const warnings = [];
@@ -2125,6 +2606,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
 
   const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
+  validateParentImplementation(change, changeStatus, stage, errors, warnings);
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
   }
@@ -2144,7 +2626,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors);
 
-  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage);
+  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isFile(join(change, "implementation-map.md"));
   const specPath = join(change, "spec.md");
   const spec = isFile(specPath) || specRequired
     ? validateSpec(specPath, errors, warnings)
@@ -2400,6 +2882,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   if (
     stage === "complete" &&
     !ticketFiles.length &&
+    !isFile(join(change, "implementation-map.md")) &&
     !isFile(join(change, "evidence", "direct-spec.md"))
   ) {
     errors.push("complete stage without Tickets requires evidence/direct-spec.md");

@@ -21,6 +21,7 @@
 - 发现新的安全、数据、兼容、性能或迁移风险；
 - 依赖、合同或外部参考权威已变化；
 - 实际行为将与 Spec 或 ADR 不一致。
+- 父 Implementation Map 的成员、组合 Ticket、dependency、serialization 或 revision 已与子状态、路径或 Git 事实不一致。
 
 ## 3. 偏差记录
 
@@ -41,3 +42,4 @@
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
 - 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
+- 偏差跨越多个成员时，父 Lead 先递增 Implementation Map revision，再重算 Implementation Plan；旧派单和 candidate 全部标记 stale。

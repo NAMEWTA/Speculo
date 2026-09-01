@@ -36,7 +36,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 - 地图：`specdev/changes/{change}/wayfinder-map.md`
 - 子 Tickets：`specdev/changes/{change}/investigation/`
 - solution comments：`specdev/changes/{change}/investigation/comments/`
-- assignment registry：`specdev/status.json` 的 `claimed_investigations`
+- assignment registry：`specdev/changes/{change}/.status.json` 的 `claimed_investigations`
 
 每次绘制或遍历前加载 下方 `<local-tracker-contract>` 标签。Ticket 和地图模板：
 
@@ -211,7 +211,7 @@ status: active
 | 子 issue | `specdev/changes/{change}/investigation/{investigation-id}.md` |
 | label | Ticket frontmatter 的 `wayfinder:research|prototype|grilling|task` |
 | 阻塞关系 | Ticket frontmatter 的 `blocked_by` |
-| assignment | `specdev/status.json` 当前 change 的 `claimed_investigations` |
+| assignment | `specdev/changes/{change}/.status.json` 的 `claimed_investigations` |
 | solution comment | `specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md` |
 | 关闭 issue | Ticket frontmatter 的 `status: closed` 与 `resolution` |
 
@@ -227,9 +227,9 @@ status: active
 
 ## 原子领取
 
-开始任何工作前，重读全局状态并原子写入 `id`、`owner`、可选 `session` 和 `claimed_at`。已领取则选择下一前沿 Ticket。写回结果前再次重读；完成、释放或取消时删除 claim。
+开始任何工作前，重读当前 change 状态并原子写入 `id`、`owner`、可选 `session` 和 `claimed_at`。已领取则选择下一前沿 Ticket。写回结果前再次重读；完成、释放或取消时删除 claim。
 
-Ticket 文件不重复保存 assignee，地图不重复保存 claim。全局 assignment registry 是领取的单一事实源。
+Ticket 文件不重复保存 assignee，地图不重复保存 claim。change assignment registry 是领取的单一事实源。
 
 ## 解决方案评论
 

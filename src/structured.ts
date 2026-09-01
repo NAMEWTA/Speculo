@@ -187,11 +187,14 @@ async function migrateSpecdevState(stagedRoot: string): Promise<StructuredChange
   if (![4, 5].includes(Number(status.schema_version)) || status.workflow !== "specdev" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
     throw new Error("SpecDev status must use schema v4/v5 with active and archived arrays");
   }
-  const active = status.active.map((entry) => {
+  assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "SpecDev status");
+  const legacyActive = status.active.map((entry) => {
     assertJsonObject(entry, "SpecDev active status entry");
+    assertExactKeys(entry, ["change", "current_work", "works_run", "claimed_investigations"], "SpecDev active status entry");
     if (typeof entry.change !== "string" || !CHANGE_NAME.test(entry.change)) throw new Error("SpecDev active change name is invalid");
     return entry;
   });
+  const active = legacyActive.map((entry) => ({ change: entry.change }));
   const archived = status.archived.map((entry) => {
     if (typeof entry !== "string" || !CHANGE_NAME.test(entry)) throw new Error("SpecDev archived change name is invalid");
     return entry;
@@ -201,13 +204,14 @@ async function migrateSpecdevState(stagedRoot: string): Promise<StructuredChange
     throw new Error("SpecDev status contains duplicate or overlapping change names");
   }
 
-  if (status.schema_version === 4) {
+  const hasLegacyActiveFields = legacyActive.some((entry) => Object.keys(entry).some((key) => key !== "change"));
+  if (status.schema_version === 4 || hasLegacyActiveFields) {
     await rewriteIfChanged(statusPath, JSON.stringify({
       schema_version: 5,
       workflow: "specdev",
       active,
       archived,
-    }, null, 2) + "\n", "upgrade SpecDev global status schema v4 to v5", changes);
+    }, null, 2) + "\n", "normalize SpecDev global status to the strict v5 index", changes);
   }
 
   let attempts = 3;
@@ -218,7 +222,7 @@ async function migrateSpecdevState(stagedRoot: string): Promise<StructuredChange
   }
 
   const indexed: Array<{ path: string; entry: JsonObject | null }> = [
-    ...active.map((entry) => ({ path: join(stateRoot, "changes", String(entry.change), ".status.json"), entry })),
+    ...legacyActive.map((entry) => ({ path: join(stateRoot, "changes", String(entry.change), ".status.json"), entry })),
     ...archived.map((name) => ({ path: join(stateRoot, "archive", name.slice(0, 7), name, ".status.json"), entry: null })),
   ];
   for (const item of indexed) {

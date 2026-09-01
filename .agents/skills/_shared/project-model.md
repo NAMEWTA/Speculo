@@ -124,7 +124,7 @@ Command 报告使用：
 
 每个 workflow 自己定义并版本化状态 schema。作者必须以目标 `INDEX.md`、根 `README.md`、`_state` 种子和现有 work 为事实源，不套用跨 workflow 的固定字段结构。
 
-SpecDev 全局 `status.json` 当前使用 schema v5，仅索引多 active change 与 archived change 名称；active entry 保存 `current_work`、`works_run` 和可选并行 claim。change `.status.json` 及 Spec/Ticket 等领域工件继续使用各自版本并维护生命周期、Ticket/worktree 等细节。其他 workflow 可以更简单，不能被强制迁移为 SpecDev schema。
+SpecDev 全局 `status.json` 当前使用 schema v5，仅索引多 active change 与 archived change 名称；active entry 只能包含 `change`。`current_work`、`works_run`、可选并行 claim、生命周期和 Ticket/worktree 细节由 change `.status.json` 保存，Spec/Ticket 等领域工件继续使用各自版本。其他 workflow 可以更简单，不能被强制迁移为 SpecDev schema。
 
 ## 副作用
 

@@ -11,13 +11,15 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
 
-本 work 保留模块设计检查、design-it-twice、TDD 红绿循环、双轴审查和证据治理。Ticket 模式按 Goal Plan 的 `ticket_workspace_policy` 选择 current workspace 串行直接父分支或独立 worktree candidate-merge；Lead 根据实际情况自行实现或动态派单。
+本 work 保留模块设计检查、design-it-twice、TDD 红绿循环、双轴审查和证据治理。Ticket 模式按子 Goal Plan 或父 Implementation Plan 的 `ticket_workspace_policy` 选择 current workspace 串行直接父分支或独立 worktree candidate-merge；Lead 根据实际情况自行实现或动态派单。
+
+若当前 change 是未完成父 Implementation Map 的成员，必须读取 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`、父 Map 与父 Plan。父 Plan 提供跨 change dependency/serialization、全局 workspace 策略、组合派单标识、implementation agent cap 和 integration queue；子 Goal Plan 只能增加子内 Gate，不能放宽或冲突。
 
 ## 执行模式
 
 ### Ticket 模式（默认）
 
-读取 Ready Ticket、Tickets Map 和可选 Goal Plan。存在 Goal Plan 时使用其中的 Lead 与 workspace 策略；没有 Goal Plan 时，当前主会话作为该 Ticket 的 Lead，并按 Direct Spec 规则执行，不推断 worktree 策略。`required` 模式每个 Ticket 建立独立 worktree；`current` 模式所有 Ticket 严格串行，使用当前分支和当前 workspace。
+读取 Ready Ticket、Tickets Map、可选子 Goal Plan 和可选父 Implementation Plan。存在父 Plan 时使用其 Lead、workspace/integration 策略和全局门，即使子 Goal Plan 不存在也可以执行；两者都存在时必须策略一致。没有父 Plan 时沿用子 Goal Plan；两者都不存在时，当前主会话作为该 Ticket 的 Lead，并按 Direct Spec 规则执行，不推断 worktree 策略。`required` 模式每个 Ticket 建立独立 worktree；`current` 模式所有受同一计划约束的 Ticket 严格串行，使用当前分支和当前 workspace。
 
 ### Direct Spec 模式
 
@@ -30,7 +32,7 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 - 当前 Spec：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - 项目配置：`<Path>{roots.state}/specdev/config.json</Path>`
 
-Ticket 模式还必须读取当前 Ticket `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`；存在 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 时必须读取。Direct Spec 模式必须读取用户对轻量执行合同和直接实现的明确批准。
+Ticket 模式还必须读取当前 Ticket `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`；存在 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 时必须读取。若当前 change 被父 Implementation Map 声明，还必须读取该父 change 的 Map/Plan。Direct Spec 模式必须读取用户对轻量执行合同和直接实现的明确批准。
 
 按存在情况读取：
 
@@ -54,7 +56,7 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 Ticket 模式：
 
 1. 验证 Ready、依赖 Evidence、Spec/ADR/Goal Plan、一致性、路径 owner 和验证接缝；
-2. 确认 Goal Plan schema v6（若存在）、Lead、动态 implementation/integration 上限与授权；
+2. 确认子 Goal Plan schema v6（若存在）与父 Implementation Plan schema v1（若存在）、唯一 Lead、workspace 策略、动态 implementation/integration 上限与授权；
 3. `required` 模式以 `purpose=ticket, operation=create|restore` 调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；`current` 模式读取当前 branch、HEAD、dirty 状态并确认没有其他 Ticket implementation writer；
 4. Lead 把 Ticket 设为 `in_progress`；`required` 模式将 change worktree 记录设为 `active`，`current` 模式建立 current workspace 执行记录；
 5. 当前代码使合同失效时停止并返回对应上游 owner。
@@ -67,7 +69,8 @@ Direct Spec 模式验证用户批准、轻量合同和 current workspace 唯一�
 
 Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风险和平台能力决定。派单时以 `operation=dispatch` 调用 `<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`。`current` 模式仍可派遣一个 implementation subagent 写当前 workspace，但必须等待其返回、Lead 验收并形成 commit 后才进入下一个 Ticket；`required` 模式 implementation subagent 绑定独立 Ticket worktree。Direct Spec 模式由 Lead 作为 current workspace 唯一写入 owner，不派遣 implementation subagent 写入。
 
-- implementation subagent 同时取 Goal Plan/config/平台能力的共同上限；current 模式保持单 writer 串行安全不变量；Lead 不计入；
+- implementation subagent 同时取适用子 Goal Plan、父 Implementation Plan、config 和平台能力的共同上限；current 模式保持单 writer 串行安全不变量；Lead 不计入；
+- 父实现编排存在时，派单与返回都使用 `<member-change>::<ticket-id>`，并占用父 Plan 的 task/serialization/integration slot；
 - review/research/test-observation agent 不设置 SpecDev 数字上限，但保持只读；
 - implementation Packet 按策略绑定唯一 Ticket workspace 或 current workspace、checkpoint、路径、非 E2E 检查与 commit 返回；
 - subagent 不写 SpecDev 工件、Evidence、父分支或 E2E 结果；
@@ -145,6 +148,8 @@ Lead 使用 `<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</P
 Ticket 正常状态：`ready → in_progress → review → done`。`required` 的 `done` 要求 change worktree 已完成集成（`integrated` 或 `removed`）、父 HEAD=result SHA 且包含 source commit；`current` 的 `done` 要求 current workspace clean、direct-parent 验证通过且父 HEAD=result SHA。阻塞使用 `blocked`，契约偏差使用 `deviated`，无需改动使用 `cancelled`。Direct Spec 由当前 I-implement owner 按 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` 关闭 change。
 
 按存在和当前模式同步 Ticket、Tickets Map、Goal Plan、`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 和全局状态；Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 时返回 T-triage，否则进入 Archive。
+
+当前 change 属于未完成父实现 change 时，单个组合 Ticket 的子状态与 Evidence 验证完成后必须自动返回 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/O-orchestrate-implementation.md</Path>`，由父 Lead 重读全部成员并继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
 
 运行：
 

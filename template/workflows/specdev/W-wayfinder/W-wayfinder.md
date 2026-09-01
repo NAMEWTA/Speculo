@@ -34,7 +34,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 - 地图：`<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
 - 子 Tickets：`<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
 - solution comments：`<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
-- assignment registry：`<Path>{roots.state}/specdev/status.json</Path>` 的 `claimed_investigations`
+- assignment registry：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `claimed_investigations`
 
 每次绘制或遍历前加载 `<Path>{roots.workflows}/specdev/W-wayfinder/local-tracker-contract.md</Path>`。Ticket 和地图模板：
 

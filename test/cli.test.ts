@@ -220,6 +220,58 @@ describe("Speculo init refresh", () => {
     }
   });
 
+  it("normalizes legacy fields out of an existing SpecDev global status v5 index", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const root = join(target, "speculo");
+      const state = join(root, ".speculo", "specdev");
+      const change = "2026-08-24-strict-global-index";
+      await writeJson(join(state, "status.json"), {
+        schema_version: 5,
+        workflow: "specdev",
+        active: [{
+          change,
+          current_work: "specdev/wayfinder",
+          works_run: ["specdev/triage"],
+          claimed_investigations: [{ id: "INV-01", owner: "session-a" }],
+        }],
+        archived: [],
+      });
+      await writeJson(join(state, "changes", change, ".status.json"), {
+        schema_version: 4,
+        artifact: "change-status",
+        change,
+        change_status: "active",
+        current_work: null,
+        created_at: "2026-08-24T00:00:00.000Z",
+        updated_at: "2026-08-24T00:00:00.000Z",
+        completed_at: null,
+        archived: false,
+        archive_path: null,
+        blockers: [],
+        deviations: [],
+        worktrees: [],
+      });
+
+      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      assert.deepEqual(await readJson(join(state, "status.json")), {
+        schema_version: 5,
+        workflow: "specdev",
+        active: [{ change }],
+        archived: [],
+      });
+      const changeStatus = await readJson(join(state, "changes", change, ".status.json"));
+      assert.equal(changeStatus.schema_version, 6);
+      assert.equal(changeStatus.current_work, "specdev/wayfinder");
+      assert.deepEqual(changeStatus.works_run, ["specdev/triage"]);
+      assert.deepEqual(changeStatus.claimed_investigations, [{ id: "INV-01", owner: "session-a" }]);
+      assert.equal(result.refresh.structuredUpgrades, 2);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
   it("blocks malformed config before replacement and creates no pending marker", async () => {
     const target = await tempProject();
     try {

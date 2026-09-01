@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
@@ -18,6 +18,18 @@ const prototypeTemplate = join(
 const prototypeMaterializer = join(
   packageRoot,
   "template/workflows/specdev/P-prototype/tools/materialize-prototype.mjs",
+);
+const specTemplate = join(
+  packageRoot,
+  "template/workflows/specdev/S-spec/spec-template.md",
+);
+const ticketsMapTemplate = join(
+  packageRoot,
+  "template/workflows/specdev/T-tickets/tickets-map-template.md",
+);
+const ticketTemplate = join(
+  packageRoot,
+  "template/workflows/specdev/T-tickets/ticket-template.md",
 );
 
 async function fixture(): Promise<string> {
@@ -85,6 +97,152 @@ async function writeStatus(root: string, status = "active", worktrees: unknown[]
       2,
     ) + "\n",
   );
+}
+
+async function writeNamedStatus(
+  root: string,
+  name: string,
+  status = "active",
+  currentWork: string | null = null,
+  worktrees: unknown[] = [],
+): Promise<void> {
+  await mkdir(root, { recursive: true });
+  await writeFile(join(root, ".status.json"), JSON.stringify({
+    schema_version: 6,
+    artifact: "change-status",
+    change: name,
+    change_status: status,
+    current_work: currentWork,
+    works_run: [],
+    claimed_investigations: [],
+    execution_authorization: {
+      implementation_commit: { status: "not-authorized", source: null, granted_at: null, scope: "Ticket source commits" },
+      local_candidate_integration: { status: "not-authorized", source: null, granted_at: null, scope: "Lead-owned local parent candidate integration and parent update" },
+      source_cleanup: { status: "not-authorized", source: null, granted_at: null, scope: "Source worktree and branch cleanup" },
+    },
+    leadership: { current: "lead-session", epoch: 1, assigned_at: "2026-08-07T00:00:00Z", history: [] },
+    created_at: "2026-08-07T00:00:00Z",
+    updated_at: "2026-08-07T00:00:00Z",
+    completed_at: status === "completed" ? "2026-08-07T01:00:00Z" : null,
+    archived: false,
+    archive_path: null,
+    blockers: [],
+    deviations: [],
+    worktrees,
+  }, null, 2) + "\n");
+}
+
+async function writeImplementationArtifacts(
+  root: string,
+  members: string[],
+  options: {
+    dependencies?: string[];
+    serializations?: string[];
+    status?: "ready" | "in_progress" | "blocked" | "completed";
+    sourceMapRevision?: number;
+    workspacePolicy?: "current" | "required";
+  } = {},
+): Promise<void> {
+  const status = options.status ?? "ready";
+  const ready = new Set(["ready", "in_progress"]).has(status);
+  const tasks = members.map((member) => `${member}::T-01`);
+  await writeFile(join(root, "implementation-map.md"), [
+    "---",
+    "schema_version: 1",
+    "artifact: implementation-map",
+    `change: ${basename(root)}`,
+    `status: ${status}`,
+    "revision: 1",
+    `members: [${members.join(", ")}]`,
+    `tasks: [${tasks.join(", ")}]`,
+    `dependencies: [${(options.dependencies ?? []).map((value) => `"${value}"`).join(", ")}]`,
+    `serializations: [${(options.serializations ?? []).map((value) => `"${value}"`).join(", ")}]`,
+    "---",
+    "## 1. Members and Source Authority",
+    "members",
+    "## 2. Composite Ticket Inventory",
+    "tasks",
+    "## 3. Implementation Super-DAG",
+    "edges",
+    "## 4. Conflict and Serialization",
+    "locks",
+    "## 5. Contract and Path Coverage",
+    "coverage",
+    "## 6. Revision Log",
+    "revision 1",
+  ].join("\n"));
+  const workspacePolicy = options.workspacePolicy ?? "current";
+  await writeFile(join(root, "implementation-plan.md"), [
+    "---",
+    "schema_version: 1",
+    "artifact: implementation-plan",
+    `change: ${basename(root)}`,
+    `status: ${status}`,
+    `source_map_revision: ${options.sourceMapRevision ?? 1}`,
+    "orchestration: lead-directed",
+    "lead: lead-session",
+    "implementation_agent_limit: 3",
+    "integration_attempt_limit: 3",
+    `ticket_workspace_policy: ${workspacePolicy}`,
+    `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`,
+    `ready_for_execution: ${ready}`,
+    "---",
+    "## 1. Outcome and Authority",
+    "outcome",
+    "## 2. Ready Frontier and Waves",
+    "frontier",
+    "## 3. Workspace and Dispatch Contract",
+    "workspace",
+    "## 4. Repository Integration Queue",
+    "queue",
+    "## 5. Gates and Aggregate Verification",
+    "gates",
+    "## 6. Conflict, Drift and Recovery",
+    "recovery",
+    "## 7. Progress and Decisions",
+    "progress",
+  ].join("\n"));
+}
+
+async function writeReadyChild(
+  root: string,
+  name: string,
+  writablePath: string,
+  options: { changeStatus?: "active" | "blocked" | "completed"; ticketStatus?: "ready" | "done" | "cancelled" } = {},
+): Promise<void> {
+  const changeStatus = options.changeStatus ?? "active";
+  const ticketStatus = options.ticketStatus ?? "ready";
+  const worktrees = ticketStatus === "done" ? [currentTicketWorktree("integrated")] : [];
+  await writeNamedStatus(root, name, changeStatus, null, worktrees);
+
+  let spec = (await readFile(specTemplate, "utf8")).replace(/\r\n?/g, "\n");
+  spec = spec
+    .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("status: draft", "status: ready")
+    .replace("ready_for_tickets: false", "ready_for_tickets: true")
+    .replace("\n存在高影响未决问题时，`ready_for_tickets` 必须为 `false`。", "");
+  await writeFile(join(root, "spec.md"), spec);
+
+  let map = (await readFile(ticketsMapTemplate, "utf8")).replace(/\r\n?/g, "\n");
+  map = map
+    .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("status: draft", ticketStatus === "ready" ? "status: ready" : "status: completed");
+  await writeFile(join(root, "tickets-map.md"), map);
+
+  let ticket = (await readFile(ticketTemplate, "utf8")).replace(/\r\n?/g, "\n");
+  ticket = ticket
+    .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("status: draft", `status: ${ticketStatus}`)
+    .replace("ready: false", `ready: ${ticketStatus === "cancelled" ? "false" : "true"}`)
+    .replace('expected_changes: ["<Path>src/example.ts</Path>"]', `expected_changes: ["<Path>${writablePath}</Path>"]`)
+    .replace('writable_paths: ["<Path>src/example/**</Path>"]', `writable_paths: ["<Path>${writablePath}</Path>"]`)
+    .replace("\n存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。", "");
+  await mkdir(join(root, "ticket"), { recursive: true });
+  await writeFile(join(root, "ticket", "01-implementation.md"), ticket);
+  if (ticketStatus === "done") {
+    await mkdir(join(root, "evidence"), { recursive: true });
+    await writeFile(join(root, "evidence", "T-01.md"), "# Ticket Evidence\n\nverified\n");
+  }
 }
 
 async function writeDesignPackage(
@@ -343,7 +501,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
-    assert.equal(workDirs.length, 13);
+    assert.equal(workDirs.length, 14);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -403,6 +561,137 @@ describe("SpecDev local-first contracts", () => {
     assert.match(pathOwnership, /implementation subagent 上限取 Goal Plan、config 和平台能力共同约束/);
     assert.match(pathOwnership, /review\/research\/test-observation agent 不设置 SpecDev 数字上限/);
     assert.match(evidence, /source-worktree/);
+  });
+
+  it("validates a resumable parent implementation and its composite Ticket DAG", async () => {
+    const root = await fixture();
+    const changesRoot = dirname(root);
+    const members = ["2026-08-05-api", "2026-08-06-profile"];
+    try {
+      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**");
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**");
+      await writeImplementationArtifacts(root, members, {
+        dependencies: [`${members[1]}::T-01 <- ${members[0]}::T-01`],
+      });
+
+      let result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      await writeImplementationArtifacts(root, members, {
+        dependencies: [
+          `${members[1]}::T-01 <- ${members[0]}::T-01`,
+          `${members[0]}::T-01 <- ${members[1]}::T-01`,
+        ],
+      });
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /implementation super-DAG cycle/);
+    } finally {
+      await rm(changesRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("requires dependency or serialization for cross-change writable overlap", async () => {
+    const root = await fixture();
+    const changesRoot = dirname(root);
+    const members = ["2026-08-05-api", "2026-08-06-profile"];
+    try {
+      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeReadyChild(join(changesRoot, members[0]), members[0], "src/shared.ts");
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/shared.ts");
+      await writeImplementationArtifacts(root, members);
+      let result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /composite tasks .* have writable overlap without dependency or serialization/);
+
+      await writeImplementationArtifacts(root, members, {
+        serializations: [`${members[0]}::T-01 <> ${members[1]}::T-01`],
+      });
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+    } finally {
+      await rm(changesRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects missing or unready inputs, stale revisions, and duplicate parent ownership", async () => {
+    const root = await fixture();
+    const changesRoot = dirname(root);
+    const members = ["2026-08-05-api", "2026-08-06-profile"];
+    try {
+      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**");
+      await writeImplementationArtifacts(root, members);
+      let result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /member change does not exist/);
+
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**");
+      await writeFile(
+        join(changesRoot, members[1], "spec.md"),
+        (await readFile(join(changesRoot, members[1], "spec.md"), "utf8")).replace("status: ready", "status: draft"),
+      );
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /Spec must have status=ready/);
+
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**");
+      await writeImplementationArtifacts(root, members, { sourceMapRevision: 2 });
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /source_map_revision must equal Implementation Map revision/);
+
+      await writeImplementationArtifacts(root, members);
+      const competingParent = join(changesRoot, "2026-08-08-competing-parent");
+      await writeNamedStatus(competingParent, basename(competingParent), "active", "specdev/orchestrate-implementation");
+      await writeImplementationArtifacts(competingParent, members);
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /already belong to unfinished parent implementation/);
+    } finally {
+      await rm(changesRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("closes a parent implementation only after child Evidence and aggregate Evidence complete", async () => {
+    const root = await fixture();
+    const changesRoot = dirname(root);
+    const members = ["2026-08-05-api", "2026-08-06-profile"];
+    try {
+      await writeNamedStatus(root, changeName, "completed");
+      await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**", { changeStatus: "completed", ticketStatus: "done" });
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**", { changeStatus: "active", ticketStatus: "done" });
+      await writeImplementationArtifacts(root, members, { status: "completed" });
+      let result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /members remain incomplete/);
+      assert.match(result.stdout + result.stderr, /requires evidence\/implementation-orchestration\.md/);
+
+      await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**", { changeStatus: "completed", ticketStatus: "done" });
+      await mkdir(join(root, "evidence"));
+      await writeFile(join(root, "evidence", "implementation-orchestration.md"), [
+        "# Implementation Orchestration Evidence",
+        "## 1. Parent Plan and Final Revision",
+        "revision 1",
+        "## 2. Member and Ticket Completion",
+        "all completed",
+        "## 3. Dependency and Serialization Audit",
+        "audited",
+        "## 4. Repository Integration Audit",
+        "integrated",
+        "## 5. Aggregate Verification",
+        "passed",
+        "## 6. Contract, Drift and Deviation Audit",
+        "clean",
+        "## 7. Residual Risk and Boundary",
+        "none",
+      ].join("\n"));
+      result = runValidator(root, "orchestrate-implementation");
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+    } finally {
+      await rm(changesRoot, { recursive: true, force: true });
+    }
   });
 
   it("keeps Direct Spec executable and separates planning from dispatch inputs", async () => {

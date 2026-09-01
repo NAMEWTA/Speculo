@@ -16,11 +16,14 @@
 
 Evidence-only Done 和 empty commit 不满足完成门。
 
+父实现 change 还必须满足 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`：全部成员 completed，Implementation Map 与 Implementation Plan completed 且 revision 一致，跨 change 全套验证通过，`<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` 完整，没有活动派单、candidate、serialization lock 或未裁决冲突。父完成不自动归档或移动任何成员。
+
 ## 转换 Owner
 
 - 有 Goal Plan：其唯一 Lead 在关闭最后 Gate 后拥有转换；
 - 无 Goal Plan 的 Ticket/Direct Spec：当前 I-implement 主会话 owner 拥有转换；
 - 非实现型终点：最终验收工件 owner 使用本规则。
+- 父实现 change：Implementation Plan 的唯一 Lead 在全部成员与 aggregate gate 关闭后拥有转换。
 
 Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读。全局 status 只维护 active/archived 索引。
 
