@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:project:v1",
+  "title": "Ops Project Identity",
+  "type": "object",
+  "required": ["schema_version", "artifact", "project_id", "display_name", "aliases", "identities", "source_hints", "created_at", "updated_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "ops-project"},
+    "project_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "aliases": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "identities": {"type": "array", "items": {"type": "object", "required": ["kind", "value", "source"], "properties": {"kind": {"enum": ["vcs", "monorepo-component", "workspace", "package", "user-confirmed", "digest"]}, "value": {"type": "string", "minLength": 1}, "source": {"type": "string", "minLength": 1}}, "additionalProperties": false}, "minItems": 1},
+    "source_hints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

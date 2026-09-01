@@ -62,7 +62,7 @@ speculo version                          Show local version and check npm for up
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, retro, status
 - **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, optimize-codex-config, source-code-zip, speculo-retro, upstream-fork-sync, engineering-standards-builder, writing-great-skills
-- **template/workflows/** — learning（7 works: A-archive-and-consolidate, A-assess-and-plan, E-eli5, I-init-setup, P-practice, Q-quiz, R-review），specdev（15 works: A-archive-and-consolidate, C-code-review, D-diagnose-bugs, G-grill-with-docs, I-implement, I-init-setup, L-learn-change, O-orchestrate-implementation, P-goal-plan, P-prototype, R-review-architecture, S-spec, T-tickets, T-triage, W-wayfinder），person（2 work entries: M-mao-zedong-cognitive-os, S-steelman-deliberation）
+- **template/workflows/** — learning（7 works），specdev（15 works），ops（4 works: A-archive-and-learn, E-execute-and-stabilize, I-intake-and-assess, P-plan-and-approve），person（2 works）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
 ## Workflow Package Contract

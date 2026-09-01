@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:promotion-approval:v1",
+  "title": "Ops Promotion Approval",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "change", "manifest_path", "manifest_digest", "decision", "decision_summary", "decided_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "ops-promotion-approval"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "change": {"type": "string"},
+    "manifest_path": {"const": "promotion/manifest.json"},
+    "manifest_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "decision": {"const": "approved"},
+    "decision_summary": {"type": "string", "minLength": 1},
+    "decided_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

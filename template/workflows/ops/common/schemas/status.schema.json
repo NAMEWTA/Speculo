@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:status:v2",
+  "title": "Ops Global Status",
+  "type": "object",
+  "required": ["schema_version", "workflow", "active", "archived"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "workflow": {"const": "ops"},
+    "active": {"type": "array", "items": {"$ref": "#/$defs/entry"}, "uniqueItems": true},
+    "archived": {"type": "array", "items": {"$ref": "#/$defs/entry"}, "uniqueItems": true}
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["scope", "project_id", "change"],
+      "properties": {
+        "scope": {"enum": ["global", "project"]},
+        "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"}
+      },
+      "allOf": [
+        {"if": {"properties": {"scope": {"const": "global"}}}, "then": {"properties": {"project_id": {"const": null}}}},
+        {"if": {"properties": {"scope": {"const": "project"}}}, "then": {"properties": {"project_id": {"type": "string"}}}}
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

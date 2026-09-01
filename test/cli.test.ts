@@ -501,7 +501,7 @@ describe("Speculo init refresh", () => {
 describe("CLI surface", () => {
   it("discovers all packaged workflows", async () => {
     const catalog = await discoverWorkflowCatalog(packageRoot);
-    assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["learning", "person", "specdev"]);
+    assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["learning", "ops", "person", "specdev"]);
   });
 
   it("exposes only init and version", () => {

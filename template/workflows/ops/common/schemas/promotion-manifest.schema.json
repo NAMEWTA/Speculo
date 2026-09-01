@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:promotion-manifest:v1",
+  "title": "Ops Promotion Manifest",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "change", "created_at", "source_path", "archive_path", "retrospective_path", "writes", "archive_only", "summary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "ops-promotion-manifest"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "change": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source_path": {"type": "string", "minLength": 1},
+    "archive_path": {"type": "string", "minLength": 1},
+    "retrospective_path": {"const": "RETROSPECTIVE.md"},
+    "writes": {"type": "array", "items": {"type": "object", "required": ["stable_key", "knowledge_scope", "action", "staging_path", "target_path", "content_digest", "expected_target_digest", "evidence"], "properties": {"stable_key": {"type": "string", "minLength": 1}, "knowledge_scope": {"enum": ["project-context", "project-adr", "project-runbook", "global-context", "global-adr", "global-runbook"]}, "action": {"enum": ["create", "merge", "supersede"]}, "staging_path": {"type": "string", "minLength": 1}, "target_path": {"type": "string", "minLength": 1}, "content_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "expected_target_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true}}, "additionalProperties": false}},
+    "archive_only": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "summary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

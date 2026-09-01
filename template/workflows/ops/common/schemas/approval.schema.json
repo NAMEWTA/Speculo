@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:approval:v2",
+  "title": "Ops Plan Approval",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "approval_id", "change", "plan_path", "plan_digest", "source_revision", "target_fingerprint", "approved_batches", "excluded_batches", "confirmed_global_environment_keys", "conditions", "decision", "decision_summary", "decided_at", "expires_at"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "artifact": {"const": "ops-plan-approval"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "approval_id": {"type": "string", "pattern": "^APPROVAL-[0-9]{3}$"},
+    "change": {"type": "string"},
+    "plan_path": {"type": "string", "pattern": "^plan/plan-[0-9]{3}\\.json$"},
+    "plan_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_revision": {"type": "string", "minLength": 1},
+    "target_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "approved_batches": {"type": "array", "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "minItems": 1, "uniqueItems": true},
+    "excluded_batches": {"type": "array", "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "uniqueItems": true},
+    "confirmed_global_environment_keys": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "conditions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "decision": {"const": "approved"},
+    "decision_summary": {"type": "string", "minLength": 1},
+    "decided_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

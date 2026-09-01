@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:implementation-plan:v3",
+  "title": "Ops Implementation Plan",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "plan_id", "change", "created_at", "supersedes_plan_path", "triggered_by_attempt", "depth", "status", "input_bindings", "scope_definition", "batches", "external_mutations", "global_environment_changes", "operations", "artifact_requirements", "gates", "data_protection", "retention_policy", "verification", "rollback_strategy", "blockers"],
+  "properties": {
+    "schema_version": {"const": 3},
+    "artifact": {"const": "ops-implementation-plan"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "plan_id": {"type": "string", "pattern": "^PLAN-[0-9]{3}$"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "supersedes_plan_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^plan/plan-[0-9]{3}\\.json$"}]},
+    "triggered_by_attempt": {"type": ["string", "null"], "pattern": "^ATTEMPT-[0-9]{3}$"},
+    "depth": {"enum": ["lite", "standard", "deep"]},
+    "status": {"enum": ["blocked", "ready"]},
+    "input_bindings": {
+      "type": "object",
+      "required": ["request_path", "snapshot_path", "snapshot_digest", "deployment_model_path", "deployment_model_digest", "target_profile_path", "target_profile_digest", "source_revision", "target_fingerprint"],
+      "properties": {
+        "request_path": {"type": "string", "minLength": 1},
+        "snapshot_path": {"type": "string", "minLength": 1},
+        "snapshot_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "deployment_model_path": {"type": "string", "minLength": 1},
+        "deployment_model_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "target_profile_path": {"type": "string", "pattern": "^deployment/target-profile\\.json$"},
+        "target_profile_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "source_revision": {"type": "string", "minLength": 1},
+        "target_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "scope_definition": {
+      "type": "object",
+      "required": ["source_root", "deployment_root", "read_roots", "write_roots", "forbidden_roots"],
+      "properties": {
+        "source_root": {"type": "string", "minLength": 1},
+        "deployment_root": {"type": "string", "minLength": 1},
+        "read_roots": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "write_roots": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "forbidden_roots": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "batches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "risk", "requires_confirmation", "depends_on", "operation_ids", "gate_ids"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^B[0-9]{2}$"},
+          "title": {"type": "string", "minLength": 1},
+          "risk": {"enum": ["low", "medium", "high", "critical"]},
+          "requires_confirmation": {"const": true},
+          "depends_on": {"type": "array", "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "uniqueItems": true},
+          "operation_ids": {"type": "array", "items": {"type": "string", "pattern": "^OP[0-9]{3}$"}, "minItems": 1, "uniqueItems": true},
+          "gate_ids": {"type": "array", "items": {"type": "string", "pattern": "^G[0-9]{2}$"}, "uniqueItems": true}
+        },
+        "additionalProperties": false
+      }
+    },
+    "external_mutations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "provider", "target", "current_state", "desired_state", "privilege", "blast_radius", "preview", "rollback", "batch_id"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^EM[0-9]{3}$"},
+          "provider": {"type": "string"},
+          "target": {"type": "string"},
+          "current_state": {"type": "string"},
+          "desired_state": {"type": "string"},
+          "privilege": {"type": "string"},
+          "blast_radius": {"type": "string"},
+          "preview": {"type": "string"},
+          "rollback": {"type": "string"},
+          "batch_id": {"type": "string", "pattern": "^B[0-9]{2}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "global_environment_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "target_scope", "value_source_ref", "impact", "rollback", "batch_id"],
+        "properties": {
+          "key": {"type": "string"},
+          "target_scope": {"type": "string"},
+          "value_source_ref": {"type": "string"},
+          "impact": {"type": "string"},
+          "rollback": {"type": "string"},
+          "batch_id": {"type": "string", "pattern": "^B[0-9]{2}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "batch_id", "kind", "target", "working_directory", "preconditions", "write_set", "external_mutation_id", "preview", "apply", "postconditions", "rollback", "risk", "required_privilege", "evidence_path"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^OP[0-9]{3}$"},
+          "batch_id": {"type": "string", "pattern": "^B[0-9]{2}$"},
+          "kind": {"enum": ["filesystem", "docker-compose", "systemd", "kubernetes", "helm", "terraform", "ansible", "database", "custom-command"]},
+          "target": {"type": "string"},
+          "working_directory": {"type": "string"},
+          "preconditions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "write_set": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "external_mutation_id": {"type": ["string", "null"], "pattern": "^EM[0-9]{3}$"},
+          "preview": {"type": "object", "required": ["supported", "command", "limitations"], "properties": {"supported": {"type": "boolean"}, "command": {"type": ["string", "null"]}, "limitations": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false},
+          "apply": {"type": "object", "required": ["shell", "command"], "properties": {"shell": {"type": "string"}, "command": {"type": "string"}}, "additionalProperties": false},
+          "postconditions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "rollback": {"type": "object", "required": ["mode", "trigger", "command"], "properties": {"mode": {"enum": ["automatic", "manual", "not-available"]}, "trigger": {"type": "string"}, "command": {"type": ["string", "null"]}}, "additionalProperties": false},
+          "risk": {"enum": ["low", "medium", "high", "critical"]},
+          "required_privilege": {"type": "string"},
+          "evidence_path": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifact_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "source_ref", "immutable_digest", "staging_ref", "activation_target", "previous_ref", "required"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^AR[0-9]{3}$"},
+          "kind": {"enum": ["file", "archive", "container-image", "static-bundle", "other"]},
+          "source_ref": {"type": "string", "minLength": 1},
+          "immutable_digest": {"type": "string", "pattern": "^(?:sha256:)?[a-f0-9]{64}$"},
+          "staging_ref": {"type": ["string", "null"]},
+          "activation_target": {"type": "string", "minLength": 1},
+          "previous_ref": {"type": ["string", "null"]},
+          "required": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "depends_on", "after_batches", "verification_ids", "required"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G[0-9]{2}$"},
+          "title": {"type": "string", "minLength": 1},
+          "depends_on": {"type": "array", "items": {"type": "string", "pattern": "^G[0-9]{2}$"}, "uniqueItems": true},
+          "after_batches": {"type": "array", "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "minItems": 1, "uniqueItems": true},
+          "verification_ids": {"type": "array", "items": {"type": "string", "pattern": "^VR[0-9]{3}$"}, "minItems": 1, "uniqueItems": true},
+          "required": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "data_protection": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "resource", "operation_ids", "strategy", "backup", "waiver"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^DP[0-9]{3}$"},
+          "resource": {"type": "string", "minLength": 1},
+          "operation_ids": {"type": "array", "items": {"type": "string", "pattern": "^OP[0-9]{3}$"}, "uniqueItems": true},
+          "strategy": {"enum": ["verified-backup", "waiver", "not-required"]},
+          "backup": {
+            "anyOf": [
+              {"type": "null"},
+              {"type": "object", "required": ["evidence_path", "digest", "readability_verified", "restore_ref", "restore_verified"], "properties": {"evidence_path": {"type": "string", "minLength": 1}, "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "readability_verified": {"const": true}, "restore_ref": {"type": "string", "minLength": 1}, "restore_verified": {"type": "boolean"}}, "additionalProperties": false}
+            ]
+          },
+          "waiver": {
+            "anyOf": [
+              {"type": "null"},
+              {"type": "object", "required": ["decision_ref", "exact_scope", "object_identity_verified", "conflicts_absent", "recovery_mode"], "properties": {"decision_ref": {"type": "string", "minLength": 1}, "exact_scope": {"type": "string", "minLength": 1}, "object_identity_verified": {"const": true}, "conflicts_absent": {"const": true}, "recovery_mode": {"const": "forward-only"}}, "additionalProperties": false}
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "retention_policy": {
+      "type": "object",
+      "required": ["retain_failed_candidates", "retain_previous_release", "cleanup_requires_separate_approval"],
+      "properties": {
+        "retain_failed_candidates": {"const": true},
+        "retain_previous_release": {"const": true},
+        "cleanup_requires_separate_approval": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "target", "required", "expected", "stability", "convergence_group"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^VR[0-9]{3}$"},
+          "kind": {"enum": ["http", "tcp", "command", "service", "artifact", "data", "custom"]},
+          "target": {"type": "string", "minLength": 1},
+          "required": {"type": "boolean"},
+          "expected": {"type": "object", "required": ["description", "http_statuses", "business_codes", "authenticated"], "properties": {"description": {"type": "string", "minLength": 1}, "http_statuses": {"type": "array", "items": {"type": "integer", "minimum": 100, "maximum": 599}, "uniqueItems": true}, "business_codes": {"type": "array", "items": {"type": ["integer", "string"]}, "uniqueItems": true}, "authenticated": {"type": ["boolean", "null"]}}, "additionalProperties": false},
+          "stability": {"anyOf": [{"type": "null"}, {"type": "object", "required": ["interval_seconds", "timeout_seconds", "required_consecutive_successes"], "properties": {"interval_seconds": {"type": "number", "exclusiveMinimum": 0}, "timeout_seconds": {"type": "number", "exclusiveMinimum": 0}, "required_consecutive_successes": {"type": "integer", "minimum": 1}}, "additionalProperties": false}]},
+          "convergence_group": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "rollback_strategy": {"type": "string", "minLength": 1},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "allOf": [
+    {"if": {"properties": {"scope": {"const": "global"}}}, "then": {"properties": {"project_id": {"const": null}}}},
+    {"if": {"properties": {"scope": {"const": "project"}}}, "then": {"properties": {"project_id": {"type": "string"}}}}
+  ],
+  "additionalProperties": false
+}

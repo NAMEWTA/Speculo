@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "artifact": "ops-verification-state",
+  "scope": "project",
+  "project_id": "{project_id}",
+  "change": "{change}",
+  "attempt_id": "{attempt_id}",
+  "captured_at": "{captured_at}",
+  "target_profile_path": "deployment/target-profile.json",
+  "target_profile_digest": "{target_profile_digest}",
+  "identity_results": [],
+  "gates": [],
+  "artifacts": [],
+  "services": [],
+  "probes": [],
+  "convergence": [],
+  "data_protection": [],
+  "recovery": {
+    "strategy": "not-applicable",
+    "previous_release_ref": null,
+    "rollback_operation_refs": [],
+    "material_refs": [],
+    "compatibility_verified": false,
+    "data_restore_authorized": null,
+    "evidence": []
+  },
+  "retained_artifacts": [],
+  "risks": [],
+  "verdict": "blocked"
+}

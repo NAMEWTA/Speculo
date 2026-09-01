@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "artifact": "ops-target-profile",
+  "scope": "project",
+  "project_id": "{project_id}",
+  "change": "{change}",
+  "created_at": "{created_at}",
+  "operation_mode": "takeover",
+  "environment_class": "shared-nonprod",
+  "deployment_root": "{absolute_deployment_root}",
+  "existing_state": "present",
+  "identity_confirmed": false,
+  "identity_confirmation_evidence": null,
+  "identity_assertions": [],
+  "ownership": {
+    "owned_targets": [],
+    "protected_targets": [],
+    "unknown_targets": []
+  },
+  "differences": [],
+  "secret_requirements": [],
+  "readiness": "blocked",
+  "blockers": ["target identity has not been confirmed"]
+}

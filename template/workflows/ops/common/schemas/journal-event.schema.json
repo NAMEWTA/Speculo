@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:journal-event:v1",
+  "title": "Ops Attempt Journal Event",
+  "type": "object",
+  "required": ["schema_version", "artifact", "sequence", "at", "event", "batch_id", "gate_id", "operation_id", "result", "summary", "output_digest", "evidence"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "ops-journal-event"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "at": {"type": "string", "format": "date-time"},
+    "event": {"enum": ["attempt-start", "gate-result", "operation-intent", "operation-result", "postcondition-result", "attempt-end"]},
+    "batch_id": {"type": ["string", "null"], "pattern": "^B[0-9]{2}$"},
+    "gate_id": {"type": ["string", "null"], "pattern": "^G[0-9]{2}$"},
+    "operation_id": {"type": ["string", "null"], "pattern": "^OP[0-9]{3}$"},
+    "result": {"enum": ["pending", "passed", "failed", "blocked", "skipped"]},
+    "summary": {"type": "string", "minLength": 1},
+    "output_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

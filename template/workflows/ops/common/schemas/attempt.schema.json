@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:attempt:v2",
+  "title": "Ops Execution Attempt",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "change", "attempt_id", "kind", "triggered_by_attempt", "plan_path", "plan_digest", "approval_path", "target_profile_path", "target_profile_digest", "started_at", "ended_at", "result", "executed_batches", "failed_operation", "mutation_performed", "journal_path", "diagnosis_path", "verification_path", "verification_state_path", "verification_state_digest", "handoff_path", "retained_artifacts", "blockers"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "artifact": {"const": "ops-execution-attempt"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "attempt_id": {"type": "string", "pattern": "^ATTEMPT-[0-9]{3}$"},
+    "kind": {"enum": ["deploy", "remediation", "rollback", "verification-only"]},
+    "triggered_by_attempt": {"type": ["string", "null"], "pattern": "^ATTEMPT-[0-9]{3}$"},
+    "plan_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^plan/plan-[0-9]{3}\\.json$"}]},
+    "plan_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "approval_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^plan/approval-[0-9]{3}\\.json$"}]},
+    "target_profile_path": {"type": ["string", "null"], "pattern": "^deployment/target-profile\\.json$"},
+    "target_profile_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "ended_at": {"type": ["string", "null"], "format": "date-time"},
+    "result": {"enum": ["running", "succeeded", "failed", "blocked", "rolled_back", "abandoned"]},
+    "executed_batches": {"type": "array", "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "uniqueItems": true},
+    "failed_operation": {"type": ["string", "null"], "pattern": "^OP[0-9]{3}$"},
+    "mutation_performed": {"type": "boolean"},
+    "journal_path": {"type": "string", "pattern": "^execution/attempts/ATTEMPT-[0-9]{3}/journal\\.jsonl$"},
+    "diagnosis_path": {"type": ["string", "null"], "pattern": "^execution/attempts/ATTEMPT-[0-9]{3}/diagnosis\\.md$"},
+    "verification_path": {"type": ["string", "null"], "pattern": "^execution/attempts/ATTEMPT-[0-9]{3}/verification\\.md$"},
+    "verification_state_path": {"type": ["string", "null"], "pattern": "^execution/attempts/ATTEMPT-[0-9]{3}/verification-state\\.json$"},
+    "verification_state_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "handoff_path": {"type": ["string", "null"], "pattern": "^execution/attempts/ATTEMPT-[0-9]{3}/HANDOFF\\.md$"},
+    "retained_artifacts": {"type": "array", "items": {"type": "object", "required": ["id", "kind", "locator", "reason"], "properties": {"id": {"type": "string", "minLength": 1}, "kind": {"type": "string", "minLength": 1}, "locator": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}}, "additionalProperties": false}},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "allOf": [
+    {"if": {"properties": {"scope": {"const": "global"}}}, "then": {"properties": {"project_id": {"const": null}}}},
+    {"if": {"properties": {"scope": {"const": "project"}}}, "then": {"properties": {"project_id": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"not": {"const": "verification-only"}}}}, "then": {"properties": {"plan_path": {"type": "string"}, "plan_digest": {"type": "string"}, "approval_path": {"type": "string"}, "target_profile_path": {"type": "string"}, "target_profile_digest": {"type": "string"}}}}
+  ],
+  "additionalProperties": false
+}

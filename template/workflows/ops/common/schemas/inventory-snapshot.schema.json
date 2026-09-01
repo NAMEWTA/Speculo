@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:inventory-snapshot:v2",
+  "title": "Ops Inventory Snapshot",
+  "type": "object",
+  "required": ["schema_version", "artifact", "scope", "project_id", "snapshot_id", "change", "captured_at", "scope_definition", "target_fingerprint", "collectors", "gaps", "redactions"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "artifact": {"const": "ops-inventory-snapshot"},
+    "scope": {"enum": ["global", "project"]},
+    "project_id": {"type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "snapshot_id": {"type": "string", "pattern": "^[0-9]{8}T[0-9]{6}Z(?:-[0-9]{2})?$"},
+    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "scope_definition": {
+      "type": "object",
+      "required": ["levels", "targets", "approved_deep_roots"],
+      "properties": {
+        "levels": {"type": "array", "items": {"enum": ["L0", "L1", "L2"]}, "uniqueItems": true, "minItems": 1},
+        "targets": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "approved_deep_roots": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "target_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "collectors": {"type": "array", "items": {"type": "object", "required": ["id", "category", "tool", "target", "status", "facts", "evidence", "error"], "properties": {"id": {"type": "string"}, "category": {"enum": ["host", "filesystem", "runtime", "service", "network", "container", "cluster", "project-location"]}, "tool": {"type": "string"}, "target": {"type": "string"}, "status": {"enum": ["observed", "partial", "unavailable", "denied", "failed"]}, "facts": {"type": "object", "additionalProperties": true}, "evidence": {"type": "array", "items": {"type": "string"}}, "error": {"type": ["string", "null"]}}, "additionalProperties": false}, "minItems": 1},
+    "gaps": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "redactions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

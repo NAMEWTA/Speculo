@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.10] - 2026-09-01
+
+### Added
+- **Project-scoped Ops workflow**: adds four focused stages for intake/assessment, plan/approval, iterative execution/stabilization, and retrospective/archive, with project-local changes, archives, context, ADRs, SOPs, and global knowledge separation.
+- **Ops execution learning loop**: preserves immutable failed/remediation/rollback attempts, requires a complete retrospective, and promotes only verified project or global knowledge through a digest-bound transactional manifest.
+- **Ops safety contracts**: separates deployment-root file writes from external control-plane mutations, requires explicit global-environment review, and invalidates approvals on source, target, permission, or plan drift.
+- **Ops target and release contracts**: adds non-secret target profiles, complete control-plane identity assertions, takeover-first mode selection, immutable candidate and hard-Gate planning, production backup enforcement, strict local-only waivers, typed attempt journals, structured verification state, and redacted handoff projections.
+- **Ops evidence compatibility**: keeps plan v2 and attempt v1 artifacts read-only; active legacy changes require a current target profile and a verification-only attempt v2 before close, archive, or knowledge promotion.
+
+### Tests
+- Added Ops project isolation, duplicate cross-project change names, plan revision lineage, target/profile drift, Gate ordering, data-protection policy, typed journal and verification-state checks, legacy read-only recovery, attempt recovery, project/global knowledge promotion, transactional archive, runtime preservation, and refresh blocking coverage.
+
 ## [0.8.9] - 2026-09-01
 
 ### Added

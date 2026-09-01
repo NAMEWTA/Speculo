@@ -16,6 +16,15 @@ keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 
 
 报告必须记录：`mode`（dry-run 或 executed）、选中的 workflow、归档计划、合并计划、清理候选、用户确认状态和最终结果。
 
+## Ops 路由
+
+目标 workflow 为 Ops 时，不调用通用 archive skill；该 skill 的机械路径合同只支持 workflow 根级 `changes/` 与 `archive/`，不能处理 Ops 的 project scope。
+
+- `archive-single`：读取 `<Path>{roots.workflows}/ops/README.md</Path>` 和 `<Path>{roots.workflows}/ops/A-archive-and-learn/A-archive-and-learn.md</Path>`，把用户选择的完整 `{scope, project_id, change}` 交给 A 执行复盘、promotion dry-run、批量确认和 scope-aware 事务关闭。Command 报告只记录选择、A 返回的 manifest/approval/archive locator 和验证结果，不成为知识 writer。
+- `archive-batch`：只读列出全部 completed Ops tuples 和各自复盘/提升状态，生成 command 报告后停止。知识合并与归档必须逐 change 进入 A 并分别批准，不能用一次跨项目确认替代多个精确 promotion manifest。
+
+以下通用模式只适用于仍采用 workflow 根级 changes/archive 合同的其他 workflows。
+
 ## 模式
 
 ### archive-single
