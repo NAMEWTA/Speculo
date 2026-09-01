@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.9] - 2026-09-01
+
 ### Added
 - **SpecDev `L-learn-change` Work**: adds a post-implementation question and explanation stage that appends beginner-friendly Markdown and ASCII diagrams under the owning SpecDev change, independently from the Learning workflow.
+
+### Changed
+- **SpecDev learning ownership**: keeps learning artifacts under each SpecDev change, preserves completed development state during follow-up questions, and registers the new Work in routing, artifact ownership, generated indexes, and canonical contracts.
+
+### Tests
+- Added staged validation for missing indexes, valid indexed diagrams, unindexed files, Markdown-only output, continuous numbering, and SpecDev/Learning namespace separation.
 
 ## [0.8.8] - 2026-09-01
 
