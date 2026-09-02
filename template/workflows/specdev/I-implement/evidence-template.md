@@ -91,6 +91,19 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 
 集成失败时明确父 HEAD 是否推进、失败命令、旧 SHA 和恢复条件。
 
+### Failure History And Lead Recovery
+
+| 轮次 | 阶段 | Checkpoint/candidate | 失败事实 | 下一轮变化 |
+|---|---|---|---|---|
+| ... | implementation / review / direct-parent / parent-candidate | `<sha-or-locator>` | blocker、命令与摘要 | 首次失败待定 / Lead 决定 |
+
+- **共同失败模式：** not-applicable / ...
+- **最可能原因：** not-applicable / ...
+- **下一轮具体改变：** not-applicable / ...
+- **下一 owner/路由：** not-applicable / same owner / new owner / Lead / upstream owner
+
+首次失败不要求额外分类；同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限时，Lead 必须填写以上四项。重置 attempts 后仍保留此前轮次，不覆盖失败历史。
+
 ## 8. 偏差与决策
 
 - **偏差：** 无 / `<deviation-id>`

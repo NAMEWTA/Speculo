@@ -29,6 +29,10 @@ implementation 返回至少包含：Ticket ID、workspace locator、最终 commi
 
 ## 6. Lead 验收
 
-Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结果；不接受 subagent 自报的 Evidence 或 E2E pass。required implementation 候选进入 dev-worktree candidate-merge；current implementation 由 Lead 在同一 parent branch/current workspace 做 direct-parent 验证。read-only 结果由 Lead 复核后写入对应权威工件。失败返回同一 workspace/worktree 修正或标记 blocked。
+Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结果；不接受 subagent 自报的 Evidence 或 E2E pass。required implementation 候选进入 dev-worktree candidate-merge；current implementation 由 Lead 在同一 parent branch/current workspace 做 direct-parent 验证。read-only 结果由 Lead 复核后写入对应权威工件。首次失败可返回同一 workspace/worktree 修正或标记 blocked。
 
-**完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单和返回可从 Evidence 恢复。
+同一 Ticket 在 implementation/review 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 的 `integration_attempt_limit` 时，停止把相同请求直接退回原 implementation owner。Lead 保留 workspace、commit/candidate 与失败事实，在现有 Ticket Evidence 中回答四项：共同失败模式、最可能原因、下一轮具体改变、下一 owner/路由。Lead 可改写指导、调整 Ticket 内实现路径、更换 implementation owner 或自行实现；若发现 Ticket、Goal、父 Plan、Spec/ADR 已失效，则返回对应 owner。
+
+只有 Lead 的复盘决定已写入 Evidence，才可将当前 Ticket 的 `attempts` 重置为 `0` 并发出新 Dispatch Packet；新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么。没有实质变化时不得重新派发同一请求。上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态。
+
+**完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单、返回与重复失败后的 Lead 决定可从 Evidence 恢复。

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.11] - 2026-09-02
+
+### Changed
+- **SpecDev Ticket recovery loop**: returns repeated implementation, review, direct-parent, and candidate failures to the effective Lead with preserved checkpoints and a minimal Evidence-backed recovery decision before redispatch.
+- **Integration attempt semantics**: treats the existing attempt limit as a Lead review trigger rather than a permanent Ticket terminal state, while allowing parent orchestration to continue unaffected ready frontier work.
+
+### Tests
+- Added regression coverage for candidate creation limits, Lead recovery evidence, materially changed redispatch packets, and continued parent orchestration.
+
 ## [0.8.10] - 2026-09-01
 
 ### Added

@@ -1015,6 +1015,25 @@ describe("SpecDev local-first contracts", () => {
     assert.match(finalize, /父分支保持 `parent_before_sha`/);
   });
 
+  it("returns repeated Ticket failures to the Lead before redispatch", async () => {
+    const [implement, evidence, lead, completion, finalize, executionLoop] = await Promise.all([
+      readFile(join(packageRoot, "template/workflows/specdev/I-implement/I-implement.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/lead-orchestration.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/completion-control.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/references/finalize.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/O-orchestrate-implementation/execution-loop.md"), "utf8"),
+    ]);
+
+    assert.match(finalize, /已达到上限，不创建或重建 candidate、不增加 attempts/);
+    assert.match(implement, /implementation、review、direct-parent 还是 parent-candidate[\s\S]*返回父 O Lead/);
+    assert.match(evidence, /Failure History And Lead Recovery[\s\S]*共同失败模式[\s\S]*最可能原因[\s\S]*下一轮具体改变[\s\S]*下一 owner\/路由/);
+    assert.match(lead, /上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态/);
+    assert.match(lead, /新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么/);
+    assert.match(completion, /单个 Ticket 进入 Lead 复盘不自动终止整个父循环/);
+    assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 ready frontier/);
+  });
+
   it("validates Triage before downstream Ticket artifacts exist", async () => {
     const root = await fixture();
     try {

@@ -141,15 +141,17 @@ E2E 是否需要由 Ticket/Goal Plan 的实际跨边界风险决定，不限于 
 
 `current` Ticket 模式跳过 source worktree、candidate merge 和 candidate checkout。Lead 在当前 workspace 运行 Ticket 要求的适用集成/回归与 E2E，记录运行环境、命令、退出码和摘要；E2E 不得派给其他 agent。失败时不声明完成，保留 Ticket commit、父 HEAD 和恢复条件。全部通过后重读父 HEAD/tree 并记录 `result_sha`。Direct Spec 模式同样跳过 source worktree、candidate merge 和父分支推进。
 
+无论失败发生在 implementation、review、direct-parent 还是 parent-candidate，同一 Ticket 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 上限时，都停止自动退回原 implementation owner。Lead 保留当前 workspace/worktree、implementation/source commit、旧 candidate 和失败命令，在 Ticket Evidence 记录失败历史，并将 Ticket/worktree 标为 `blocked`。当前 change 属于父实现时返回父 O Lead；否则返回 Goal Plan Lead，或无 Goal Plan 时的当前 I Lead。Lead 按 lead-orchestration 完成最小复盘并形成有实质变化的新 Dispatch Packet 后，才可重置 attempts 和重新派发；契约已失效则返回真正 owner。
+
 ### 8. Evidence、状态与完成
 
-Lead 使用 `<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</Path>` 写入 Ticket Evidence；Direct Spec 按该模板的 Direct Spec 适配说明写 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`。Ticket Evidence 按策略记录 implementation/source、适用 candidate/result SHA、派单/返回、两层验证、双轴审查、E2E disposition、路径审计、偏差和残余风险；Direct Spec Evidence 使用实施前基线与 current workspace 最终 checkpoint，不伪造 Ticket/worktree/candidate 字段。
+Lead 使用 `<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</Path>` 写入 Ticket Evidence；Direct Spec 按该模板的 Direct Spec 适配说明写 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`。Ticket Evidence 按策略记录 implementation/source、适用 candidate/result SHA、派单/返回、两层验证、双轴审查、E2E disposition、路径审计、失败历史与适用 Lead 复盘、偏差和残余风险；Direct Spec Evidence 使用实施前基线与 current workspace 最终 checkpoint，不伪造 Ticket/worktree/candidate 字段。
 
 Ticket 正常状态：`ready → in_progress → review → done`。`required` 的 `done` 要求 change worktree 已完成集成（`integrated` 或 `removed`）、父 HEAD=result SHA 且包含 source commit；`current` 的 `done` 要求 current workspace clean、direct-parent 验证通过且父 HEAD=result SHA。阻塞使用 `blocked`，契约偏差使用 `deviated`，无需改动使用 `cancelled`。Direct Spec 由当前 I-implement owner 按 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` 关闭 change。
 
 按存在和当前模式同步 Ticket、Tickets Map、Goal Plan、`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 和全局状态；Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 时返回 T-triage，否则进入 Archive。
 
-当前 change 属于未完成父实现 change 时，单个组合 Ticket 的子状态与 Evidence 验证完成后必须自动返回 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/O-orchestrate-implementation.md</Path>`，由父 Lead 重读全部成员并继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
+当前 change 属于未完成父实现 change 时，单个组合 Ticket 完成、阻塞或触发 Lead 复盘，且子状态与 Evidence 已写入后，必须自动返回 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/O-orchestrate-implementation.md</Path>`，由父 Lead 重读全部成员并决定重新派发、返回上游或继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
 
 运行：
 
@@ -162,13 +164,14 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 
 ### 9. 返回
 
-Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、未验证项和下一路由。Direct Spec 返回 change 状态、`<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`、current workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
+Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、适用 Lead 复盘决定、未验证项和下一路由。Direct Spec 返回 change 状态、`<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`、current workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
 
 ## 完成标准
 
 - Ticket 模式按策略完成 current workspace/direct-parent 或 worktree/implementation commit/candidate gate；Direct Spec 的轻量合同、current workspace checkpoint、双轴审查和最终验证完整；
 - current Ticket 的适用 E2E 由 Lead 在 current workspace 运行；required Ticket 的适用 E2E 由 Lead 在 parent-candidate 运行；Direct Spec 适用 E2E 由 Lead 在 current workspace 运行；
 - Lead 独立核对并写全部 SpecDev 工件；
+- 重复失败或 integration attempt 上限只触发 Lead 复盘；没有 Evidence 中的原因、改变和 owner 决定，不得重置 attempts 或重复派发；
 - current Ticket 父分支只推进到通过的 direct-parent 验证 commit；required Ticket 父分支只推进到通过的 candidate；两者 Ticket Done 都必须与实际 Git 一致；Direct Spec 的完成状态与 current workspace 最终 checkpoint 一致；
 - 实际路径、验证、偏差和状态可由 Evidence 恢复；
 - validator 无 error。

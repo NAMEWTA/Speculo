@@ -30,8 +30,11 @@ Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candida
 - direct-parent/candidate 冲突或检查失败：父分支不动，integration 记 `failed`，Ticket 回到 `in_progress`/`blocked`；
 - 父 HEAD 漂移：integration 记 `stale`，从最新父分支重建并重跑；
 - E2E required 失败：父分支不动，保留失败命令、适用 checkpoint 和恢复条件；
+- 同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限：停止自动重复，保留 workspace、checkpoint/candidate 和全部失败事实，将受影响 Ticket 标为 `blocked` 并返回有效 Lead；Lead 按 lead-orchestration 在 Evidence 写复盘决定后，才可重置该 Ticket 的 `attempts` 并以有实质变化的新 Packet 重新派发；
 - 命中当次 Dispatch Packet/候选协议的停止条件、继续修正已无合理收益或需要新产品决定：停止受影响 Wave，按 deviation control 返回契约 owner；
 - Lead 会话变化：读取 Goal Plan、Ticket、change worktree 状态与最新 Evidence，从最后不可变 checkpoint 恢复。
+
+父 O-orchestrate-implementation 的 Lead 可继续其他不受影响的 ready frontier；单个 Ticket 进入 Lead 复盘不自动终止整个父循环。
 
 ## 5. Change 完成 owner
 

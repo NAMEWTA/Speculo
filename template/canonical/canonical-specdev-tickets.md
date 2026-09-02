@@ -1141,7 +1141,9 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 4. 确认 source-worktree 必跑非 E2E 检查已执行，且没有把 E2E 自报为通过；
 5. 重读父分支 checkout clean、HEAD 与 remote/本地约定，记录 `parent_before_sha`。
 
-失败时保持 `review`/`blocked`，不开始候选合并。
+建立新 candidate 前先比较 Ticket `attempts` 与有效 Plan 的 `integration_attempt_limit`。若前一轮尚未通过且当前 attempts 已达到上限，不创建或重建 candidate、不增加 attempts；保留 source workspace、旧 candidate 与失败记录，将 Ticket/worktree 标为 `blocked`，向有效 Lead 返回 `integration-attempt-limit`。
+
+其他预检失败时保持 `review`/`blocked`，不开始候选合并。
 
 ## 2. 建立 parent-candidate checkout
 
@@ -1162,7 +1164,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
 - 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。机械修正次数不得超过 Goal Plan 快照的 `integration_attempt_limit`；不得放宽断言、删除检查或发明行为。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到 Goal Plan 快照的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
 ## 4. 推进父分支
 
@@ -1177,6 +1179,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 ## 5. 失败、清理与恢复
 
 - candidate 检查失败：父分支不动，Ticket 回 `in_progress` 或 `blocked`，来源 worktree 保留；
+- 达到 integration attempt 上限：保留全部 source/candidate checkpoint 与失败记录，等待 Lead 在 Ticket Evidence 写明共同失败模式、最可能原因、下一轮改变和下一 owner/路由；只有形成有实质变化的新 Dispatch Packet 后，Lead 才可将当前 Ticket `attempts` 重置为 `0` 并重新进入 finalize；
 - 父 HEAD 漂移：旧 candidate 记 `stale`，完整重建并重跑；
 - 成功后可按 candidate integration 授权回收 transient integration worktree/branch；来源 branch/worktree 不自动清理。获得独立 cleanup 授权并清理后，只将生命周期状态改为 `removed`，完整保留已经通过的集成与 E2E 证据；
 - push、PR、remote merge、deploy、migration 和生产动作仍需各自授权。

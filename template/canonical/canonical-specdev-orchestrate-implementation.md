@@ -221,12 +221,13 @@ current 策略每个 Wave 只能含一个节点。required 策略可以放入多
 
 ## 自动继续边界
 
-子 Ticket 正常完成、candidate stale 后可机械重建、已批准的局部实现修正和下一 frontier 选择不再次询问用户。以下情况停止：
+子 Ticket 正常完成、candidate stale 后可机械重建、已批准且产生新证据的局部实现修正和下一 frontier 选择不再次询问用户。同一 Ticket 反复返回相同 blocker、没有新证据或达到 integration attempt 上限时，停止该 Ticket 的自动重复并回到父 Lead 决策点；父 Lead 重读其全部 Evidence，记录共同失败模式、最可能原因、下一轮改变和下一 owner/路由，再决定改写指导、换 owner、自行实现或返回上游契约 owner。只有形成有实质变化的新 Dispatch Packet 后，才可重置该 Ticket attempts 并重新派发。
+
+这个回转不自动终止整个父循环；父 Lead 可以继续其他不受影响的 ready frontier。以下情况才停止并等待用户或上游新决定：
 
 - 高影响合同、范围、架构、数据、安全、迁移或验收需要新决定；
 - implementation commit、integration 或不可逆动作缺少授权；
 - dependency/serialization/path owner 无法由权威事实裁决；
-- 连续集成尝试达到父 Plan 上限；
 - 无合法 frontier 但仍有非终态 Ticket。
 
 停止时父 Plan 保存最后 accepted 节点、active/stale dispatch、Git checkpoint、blocker、owner、下一合法动作和恢复重读清单。
@@ -563,15 +564,17 @@ E2E 是否需要由 Ticket/Goal Plan 的实际跨边界风险决定，不限于 
 
 `current` Ticket 模式跳过 source worktree、candidate merge 和 candidate checkout。Lead 在当前 workspace 运行 Ticket 要求的适用集成/回归与 E2E，记录运行环境、命令、退出码和摘要；E2E 不得派给其他 agent。失败时不声明完成，保留 Ticket commit、父 HEAD 和恢复条件。全部通过后重读父 HEAD/tree 并记录 `result_sha`。Direct Spec 模式同样跳过 source worktree、candidate merge 和父分支推进。
 
+无论失败发生在 implementation、review、direct-parent 还是 parent-candidate，同一 Ticket 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 上限时，都停止自动退回原 implementation owner。Lead 保留当前 workspace/worktree、implementation/source commit、旧 candidate 和失败命令，在 Ticket Evidence 记录失败历史，并将 Ticket/worktree 标为 `blocked`。当前 change 属于父实现时返回父 O Lead；否则返回 Goal Plan Lead，或无 Goal Plan 时的当前 I Lead。Lead 按 lead-orchestration 完成最小复盘并形成有实质变化的新 Dispatch Packet 后，才可重置 attempts 和重新派发；契约已失效则返回真正 owner。
+
 ### 8. Evidence、状态与完成
 
-Lead 使用 下方 `<evidence-template>` 标签 写入 Ticket Evidence；Direct Spec 按该模板的 Direct Spec 适配说明写 `specdev/changes/{change}/evidence/direct-spec.md`。Ticket Evidence 按策略记录 implementation/source、适用 candidate/result SHA、派单/返回、两层验证、双轴审查、E2E disposition、路径审计、偏差和残余风险；Direct Spec Evidence 使用实施前基线与 current workspace 最终 checkpoint，不伪造 Ticket/worktree/candidate 字段。
+Lead 使用 下方 `<evidence-template>` 标签 写入 Ticket Evidence；Direct Spec 按该模板的 Direct Spec 适配说明写 `specdev/changes/{change}/evidence/direct-spec.md`。Ticket Evidence 按策略记录 implementation/source、适用 candidate/result SHA、派单/返回、两层验证、双轴审查、E2E disposition、路径审计、失败历史与适用 Lead 复盘、偏差和残余风险；Direct Spec Evidence 使用实施前基线与 current workspace 最终 checkpoint，不伪造 Ticket/worktree/candidate 字段。
 
 Ticket 正常状态：`ready → in_progress → review → done`。`required` 的 `done` 要求 change worktree 已完成集成（`integrated` 或 `removed`）、父 HEAD=result SHA 且包含 source commit；`current` 的 `done` 要求 current workspace clean、direct-parent 验证通过且父 HEAD=result SHA。阻塞使用 `blocked`，契约偏差使用 `deviated`，无需改动使用 `cancelled`。Direct Spec 由当前 I-implement owner 按 下方 `<change-completion>` 标签 关闭 change。
 
 按存在和当前模式同步 Ticket、Tickets Map、Goal Plan、`specdev/changes/{change}/.status.json` 和全局状态；Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 时返回 T-triage，否则进入 Archive。
 
-当前 change 属于未完成父实现 change 时，单个组合 Ticket 的子状态与 Evidence 验证完成后必须自动返回 “跨 change 实现编排阶段”，由父 Lead 重读全部成员并继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
+当前 change 属于未完成父实现 change 时，单个组合 Ticket 完成、阻塞或触发 Lead 复盘，且子状态与 Evidence 已写入后，必须自动返回 “跨 change 实现编排阶段”，由父 Lead 重读全部成员并决定重新派发、返回上游或继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
 
 运行：
 
@@ -584,13 +587,14 @@ node Speculo Node 校验器 \
 
 ### 9. 返回
 
-Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、未验证项和下一路由。Direct Spec 返回 change 状态、`specdev/changes/{change}/evidence/direct-spec.md`、current workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
+Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、适用 Lead 复盘决定、未验证项和下一路由。Direct Spec 返回 change 状态、`specdev/changes/{change}/evidence/direct-spec.md`、current workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
 
 ## 完成标准
 
 - Ticket 模式按策略完成 current workspace/direct-parent 或 worktree/implementation commit/candidate gate；Direct Spec 的轻量合同、current workspace checkpoint、双轴审查和最终验证完整；
 - current Ticket 的适用 E2E 由 Lead 在 current workspace 运行；required Ticket 的适用 E2E 由 Lead 在 parent-candidate 运行；Direct Spec 适用 E2E 由 Lead 在 current workspace 运行；
 - Lead 独立核对并写全部 SpecDev 工件；
+- 重复失败或 integration attempt 上限只触发 Lead 复盘；没有 Evidence 中的原因、改变和 owner 决定，不得重置 attempts 或重复派发；
 - current Ticket 父分支只推进到通过的 direct-parent 验证 commit；required Ticket 父分支只推进到通过的 candidate；两者 Ticket Done 都必须与实际 Git 一致；Direct Spec 的完成状态与 current workspace 最终 checkpoint 一致；
 - 实际路径、验证、偏差和状态可由 Evidence 恢复；
 - validator 无 error。
@@ -877,6 +881,19 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 | Parent result/re-read | `<sha>`；HEAD/tree/ancestor 核对 |
 
 集成失败时明确父 HEAD 是否推进、失败命令、旧 SHA 和恢复条件。
+
+### Failure History And Lead Recovery
+
+| 轮次 | 阶段 | Checkpoint/candidate | 失败事实 | 下一轮变化 |
+|---|---|---|---|---|
+| ... | implementation / review / direct-parent / parent-candidate | `<sha-or-locator>` | blocker、命令与摘要 | 首次失败待定 / Lead 决定 |
+
+- **共同失败模式：** not-applicable / ...
+- **最可能原因：** not-applicable / ...
+- **下一轮具体改变：** not-applicable / ...
+- **下一 owner/路由：** not-applicable / same owner / new owner / Lead / upstream owner
+
+首次失败不要求额外分类；同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限时，Lead 必须填写以上四项。重置 attempts 后仍保留此前轮次，不覆盖失败历史。
 
 ## 8. 偏差与决策
 
@@ -1703,7 +1720,9 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 4. 确认 source-worktree 必跑非 E2E 检查已执行，且没有把 E2E 自报为通过；
 5. 重读父分支 checkout clean、HEAD 与 remote/本地约定，记录 `parent_before_sha`。
 
-失败时保持 `review`/`blocked`，不开始候选合并。
+建立新 candidate 前先比较 Ticket `attempts` 与有效 Plan 的 `integration_attempt_limit`。若前一轮尚未通过且当前 attempts 已达到上限，不创建或重建 candidate、不增加 attempts；保留 source workspace、旧 candidate 与失败记录，将 Ticket/worktree 标为 `blocked`，向有效 Lead 返回 `integration-attempt-limit`。
+
+其他预检失败时保持 `review`/`blocked`，不开始候选合并。
 
 ## 2. 建立 parent-candidate checkout
 
@@ -1724,7 +1743,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
 - 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。机械修正次数不得超过 Goal Plan 快照的 `integration_attempt_limit`；不得放宽断言、删除检查或发明行为。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到 Goal Plan 快照的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
 ## 4. 推进父分支
 
@@ -1739,6 +1758,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 ## 5. 失败、清理与恢复
 
 - candidate 检查失败：父分支不动，Ticket 回 `in_progress` 或 `blocked`，来源 worktree 保留；
+- 达到 integration attempt 上限：保留全部 source/candidate checkpoint 与失败记录，等待 Lead 在 Ticket Evidence 写明共同失败模式、最可能原因、下一轮改变和下一 owner/路由；只有形成有实质变化的新 Dispatch Packet 后，Lead 才可将当前 Ticket `attempts` 重置为 `0` 并重新进入 finalize；
 - 父 HEAD 漂移：旧 candidate 记 `stale`，完整重建并重跑；
 - 成功后可按 candidate integration 授权回收 transient integration worktree/branch；来源 branch/worktree 不自动清理。获得独立 cleanup 授权并清理后，只将生命周期状态改为 `removed`，完整保留已经通过的集成与 E2E 证据；
 - push、PR、remote merge、deploy、migration 和生产动作仍需各自授权。

@@ -331,9 +331,13 @@ implementation 返回至少包含：Ticket ID、workspace locator、最终 commi
 
 ## 6. Lead 验收
 
-Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结果；不接受 subagent 自报的 Evidence 或 E2E pass。required implementation 候选进入 dev-worktree candidate-merge；current implementation 由 Lead 在同一 parent branch/current workspace 做 direct-parent 验证。read-only 结果由 Lead 复核后写入对应权威工件。失败返回同一 workspace/worktree 修正或标记 blocked。
+Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结果；不接受 subagent 自报的 Evidence 或 E2E pass。required implementation 候选进入 dev-worktree candidate-merge；current implementation 由 Lead 在同一 parent branch/current workspace 做 direct-parent 验证。read-only 结果由 Lead 复核后写入对应权威工件。首次失败可返回同一 workspace/worktree 修正或标记 blocked。
 
-**完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单和返回可从 Evidence 恢复。
+同一 Ticket 在 implementation/review 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 的 `integration_attempt_limit` 时，停止把相同请求直接退回原 implementation owner。Lead 保留 workspace、commit/candidate 与失败事实，在现有 Ticket Evidence 中回答四项：共同失败模式、最可能原因、下一轮具体改变、下一 owner/路由。Lead 可改写指导、调整 Ticket 内实现路径、更换 implementation owner 或自行实现；若发现 Ticket、Goal、父 Plan、Spec/ADR 已失效，则返回对应 owner。
+
+只有 Lead 的复盘决定已写入 Evidence，才可将当前 Ticket 的 `attempts` 重置为 `0` 并发出新 Dispatch Packet；新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么。没有实质变化时不得重新派发同一请求。上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态。
+
+**完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单、返回与重复失败后的 Lead 决定可从 Evidence 恢复。
 
 </lead-orchestration>
 
@@ -371,8 +375,11 @@ Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candida
 - direct-parent/candidate 冲突或检查失败：父分支不动，integration 记 `failed`，Ticket 回到 `in_progress`/`blocked`；
 - 父 HEAD 漂移：integration 记 `stale`，从最新父分支重建并重跑；
 - E2E required 失败：父分支不动，保留失败命令、适用 checkpoint 和恢复条件；
+- 同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限：停止自动重复，保留 workspace、checkpoint/candidate 和全部失败事实，将受影响 Ticket 标为 `blocked` 并返回有效 Lead；Lead 按 lead-orchestration 在 Evidence 写复盘决定后，才可重置该 Ticket 的 `attempts` 并以有实质变化的新 Packet 重新派发；
 - 命中当次 Dispatch Packet/候选协议的停止条件、继续修正已无合理收益或需要新产品决定：停止受影响 Wave，按 deviation control 返回契约 owner；
 - Lead 会话变化：读取 Goal Plan、Ticket、change worktree 状态与最新 Evidence，从最后不可变 checkpoint 恢复。
+
+父 O-orchestrate-implementation 的 Lead 可继续其他不受影响的 ready frontier；单个 Ticket 进入 Lead 复盘不自动终止整个父循环。
 
 ## 5. Change 完成 owner
 
@@ -1028,7 +1035,9 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 4. 确认 source-worktree 必跑非 E2E 检查已执行，且没有把 E2E 自报为通过；
 5. 重读父分支 checkout clean、HEAD 与 remote/本地约定，记录 `parent_before_sha`。
 
-失败时保持 `review`/`blocked`，不开始候选合并。
+建立新 candidate 前先比较 Ticket `attempts` 与有效 Plan 的 `integration_attempt_limit`。若前一轮尚未通过且当前 attempts 已达到上限，不创建或重建 candidate、不增加 attempts；保留 source workspace、旧 candidate 与失败记录，将 Ticket/worktree 标为 `blocked`，向有效 Lead 返回 `integration-attempt-limit`。
+
+其他预检失败时保持 `review`/`blocked`，不开始候选合并。
 
 ## 2. 建立 parent-candidate checkout
 
@@ -1049,7 +1058,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
 - 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。机械修正次数不得超过 Goal Plan 快照的 `integration_attempt_limit`；不得放宽断言、删除检查或发明行为。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到 Goal Plan 快照的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
 ## 4. 推进父分支
 
@@ -1064,6 +1073,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 ## 5. 失败、清理与恢复
 
 - candidate 检查失败：父分支不动，Ticket 回 `in_progress` 或 `blocked`，来源 worktree 保留；
+- 达到 integration attempt 上限：保留全部 source/candidate checkpoint 与失败记录，等待 Lead 在 Ticket Evidence 写明共同失败模式、最可能原因、下一轮改变和下一 owner/路由；只有形成有实质变化的新 Dispatch Packet 后，Lead 才可将当前 Ticket `attempts` 重置为 `0` 并重新进入 finalize；
 - 父 HEAD 漂移：旧 candidate 记 `stale`，完整重建并重跑；
 - 成功后可按 candidate integration 授权回收 transient integration worktree/branch；来源 branch/worktree 不自动清理。获得独立 cleanup 授权并清理后，只将生命周期状态改为 `removed`，完整保留已经通过的集成与 E2E 证据；
 - push、PR、remote merge、deploy、migration 和生产动作仍需各自授权。
