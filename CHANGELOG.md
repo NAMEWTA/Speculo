@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.8.12] - 2026-09-02
+## [0.8.13] - 2026-09-02
 
 ### Added
 - **`git-history-squash` Skill**: adds user-invoked, digest-confirmed first-parent history convergence with merge-safe commit construction, transactional backup refs, exact remote leases, resumable reports, and child-before-parent submodule publication.
@@ -15,8 +15,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Engineering Standards skill-set generation**: compiles project evidence, templates, tests, and user decisions into a minimal owned Skill Set with one routing Skill, optional domain Skills, source maps, deterministic validation, and refresh-safe ownership boundaries.
 - **SpecDev project Skill routing**: records shared implementation context and a validated per-Ticket project Skill matrix in Tickets Map, then enforces the required read order before implementation or subagent delivery.
 
+### Fixed
+- Made Git history remote and submodule fixtures independent of machine-level default branch and author identity configuration.
+
 ### Tests
 - Added temporary Git repository coverage for inclusive/exclusive and root ranges, merge starts, dirty and invalid inputs, active workflow evidence, persisted-state tampering, interrupted recovery, confirmation digests, remote lease drift, and aggregate gitlink ordering; expanded Engineering Standards ownership/source-map self-tests and SpecDev project Skill routing validation.
+
+## [0.8.12] - 2026-09-02
+
+### Release Status
+- Tagged but not published: the release workflow stopped in its test step before npm publication or GitHub Release creation because two Git fixtures depended on machine-level configuration.
 
 ## [0.8.11] - 2026-09-02
 

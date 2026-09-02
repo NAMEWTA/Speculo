@@ -262,6 +262,7 @@ describe("git-history-squash skill", () => {
     const collaborator = await mkdtemp(join(tmpdir(), "git-history-squash-collaborator-"));
     try {
       command(remote, "git", "init", "--bare");
+      command(remote, "git", "symbolic-ref", "HEAD", "refs/heads/main");
       command(fixture.root, "git", "remote", "add", "origin", remote);
       command(fixture.root, "git", "push", "-u", "origin", "main");
       const entry = requestEntry({
@@ -300,6 +301,7 @@ describe("git-history-squash skill", () => {
     try {
       await mkdir(childRemote);
       command(childRemote, "git", "init", "--bare");
+      command(childRemote, "git", "symbolic-ref", "HEAD", "refs/heads/main");
       await mkdir(childSeed);
       command(childSeed, "git", "init", "-b", "main");
       command(childSeed, "git", "config", "user.name", "Skill Test");
@@ -312,6 +314,7 @@ describe("git-history-squash skill", () => {
 
       await mkdir(parentRemote);
       command(parentRemote, "git", "init", "--bare");
+      command(parentRemote, "git", "symbolic-ref", "HEAD", "refs/heads/main");
       await mkdir(parent);
       command(parent, "git", "init", "-b", "main");
       command(parent, "git", "config", "user.name", "Skill Test");
@@ -319,6 +322,8 @@ describe("git-history-squash skill", () => {
       await writeFile(join(parent, ".git", "info", "exclude"), "/request.json\n/speculo/.speculo/\n", "utf8");
       const parentBase = await commitFile(parent, "parent.txt", "base\n", "parent base");
       command(parent, "git", "-c", "protocol.file.allow=always", "submodule", "add", "-b", "main", childRemote, "child");
+      command(join(parent, "child"), "git", "config", "user.name", "Skill Test");
+      command(join(parent, "child"), "git", "config", "user.email", "skill-test@example.invalid");
       command(parent, "git", "commit", "-am", "add child");
       const parentStart = command(parent, "git", "rev-parse", "HEAD");
       const parentEnd = await commitFile(parent, "parent.txt", "end\n", "parent end");
