@@ -1,65 +1,42 @@
-# 验证合同
+# Skill Set 验证合同
 
 ## 静态验证
 
 运行：
 
 ```bash
-node <skill-root>/scripts/validate-generated-skill.mjs \
-  --root <project-root> \
-  --strict
+node <skill-root>/scripts/validate-generated-skill.mjs --root <project-root> --strict
 ```
 
-必须确认：
+验证器必须确认：
 
-- canonical 路径和 `SKILL.md` 存在；
-- frontmatter 合法且 `name: engineering-standards`；
-- 所有相对 Markdown 引用可解析；
+- `engineering-standards` 根路由和六个项目 references 存在；
+- `generated-skill-set.json` schema、唯一 router、name/path/role 与实际目录一致；
+- 清单中每个 Skill 的 frontmatter 合法，根入口能路由到所有领域 Skill；
+- Markdown 链接只能落在项目根内，目标存在且不经 symlink 越界；
+- 来源地图至少引用一个 Skill 外的真实项目文件；
 - 没有未替换模板变量；
-- project profile、module map、decisions/exceptions 存在；
-- 每条 MUST/SHOULD 规则有 scope、source 和 verification；
-- 未使用语言/框架目录没有生成；
-- compatibility wrapper 仅一句且单向；
-- 没有 wrapper 循环；
-- canonical 内容只有一份。
+- MUST/SHOULD 规则包含 scope、source、rule 和 verification；
+- 生成的语言/框架规则有 Project Inventory 信号；
+- compatibility wrapper 只有一句且不形成循环；
+- 同名 canonical 正文没有重复副本。
+
+验证器只检查清单声明的 Builder 产物，不把清单外 Skill 当作待删除对象。
 
 ## 语义验证
 
-人工检查：
+人工复核模块地图、Skill 拆分、命令来源、模板责任范围、消费者/测试、current/target/migration、用户决策和例外。尤其确认：
 
-- 模块地图与仓库事实一致；
-- 每个命令来自 manifest/CI/用户决策；
-- React/Vue、Java/Spring、Go、Rust 规则只应用于正确 scope；
-- current/target/migration 没有混写；
-- 用户决定和仍有效例外被保留；
-- 没有将 Builder 默认伪装为仓库事实；
-- 不存在通用规则中的语言专属目录硬编码。
+- 没有把 Builder 默认写成项目事实；
+- 没有用 legacy 多数模式覆盖用户指定模板或成熟实现；
+- 没有复制项目模板/源码造成第二事实源；
+- 每个领域 Skill 都能独立触发并减少上下文；
+- 未覆盖范围被明确省略或标为待确认，而非伪造规则。
 
-## 项目门禁
+## 项目门禁与幂等性
 
-只运行已授权且项目真实存在的命令。记录：
+只运行项目真实存在且已授权的命令，记录 working directory、退出码、结果和未验证影响。失败时保留原始失败，不改配置或删测试掩盖问题。
 
-```text
-command
-working directory
-exit code
-result
-unverified impact
-```
+使用相同项目事实与决策再次生成，应无无意义 diff。时间戳和扫描计数不得进入生成内容。
 
-失败时保留原始失败，不通过改配置、删测试或扩大排除获取通过。
-
-## 幂等性
-
-对 generated Skill 重新执行同一输入时应产生零无意义 diff。若时间戳会变化，应从生成内容中删除时间戳或使用稳定的源版本字段。
-
-## 报告
-
-结果分为：
-
-- passed；
-- failed；
-- not-run；
-- not-applicable。
-
-“未运行”不能报告为通过。
+结果使用 `passed`、`failed`、`not-run`、`not-applicable`；未运行不能报告为通过。

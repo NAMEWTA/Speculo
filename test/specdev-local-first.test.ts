@@ -563,6 +563,66 @@ describe("SpecDev local-first contracts", () => {
     assert.match(evidence, /source-worktree/);
   });
 
+  it("requires every Ticket to be covered by valid project Skill routing", async () => {
+    const root = await fixture();
+    const repo = await mkdtemp(join(tmpdir(), "specdev-project-skills-"));
+    const mapPath = join(root, "tickets-map.md");
+    try {
+      assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: repo }).status, 0);
+      await writeReadyChild(root, changeName, "src/example.ts");
+
+      let result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      const skillRelative = ".agents/skills/engineering-standards/SKILL.md";
+      await mkdir(join(repo, dirname(skillRelative)), { recursive: true });
+      await writeFile(join(repo, skillRelative), [
+        "---",
+        "name: engineering-standards",
+        "description: project standards",
+        "---",
+        "# Project standards",
+        "",
+      ].join("\n"));
+
+      const noSkillRow = "| ALL | 无（已扫描项目 Skill 入口，未发现适用项） | `<Path>.agents/skills/**/SKILL.md</Path>` 与项目 Agent 指令声明的 Skill 根 | Map 后、Ticket 前 | 明确当前 change 没有额外项目 Skill 读取要求 |";
+      const skillRow = `| ALL | \`<Path>${skillRelative}</Path>\` | all project code | Map 后、Ticket 前 | apply project engineering standards |`;
+      const originalMap = await readFile(mapPath, "utf8");
+      const validMap = originalMap.replace(noSkillRow, skillRow);
+      assert.notEqual(validMap, originalMap);
+      await writeFile(mapPath, validMap);
+
+      result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+
+      await writeFile(mapPath, validMap.replace(skillRelative, ".agents/skills/missing/SKILL.md"));
+      result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /project Skill does not exist under --repo/);
+
+      await writeFile(mapPath, validMap.replace(skillRelative, "/tmp/project/SKILL.md"));
+      result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /machine-specific absolute paths are forbidden/);
+
+      await writeFile(mapPath, validMap.replace("| ALL | `<Path>", "| T-02 | `<Path>"));
+      result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /references missing Ticket T-02/);
+      assert.match(result.stdout + result.stderr, /does not cover T-01/);
+
+      const legacyMap = validMap.replace(/### 总体实施背景[\s\S]*?(?=## 2\. 执行清单)/, "");
+      await writeFile(mapPath, legacyMap);
+      result = runValidator(root, "tickets", repo);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /missing '### 总体实施背景'/);
+      assert.match(result.stdout + result.stderr, /missing '### 项目 Skill 读取矩阵'/);
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+      await rm(repo, { recursive: true, force: true });
+    }
+  });
+
   it("validates a resumable parent implementation and its composite Ticket DAG", async () => {
     const root = await fixture();
     const changesRoot = dirname(root);

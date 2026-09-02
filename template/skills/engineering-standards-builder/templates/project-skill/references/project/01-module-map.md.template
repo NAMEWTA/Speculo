@@ -18,6 +18,8 @@ quality gates
 evidence/confidence
 ```
 
+不要因根目录 manifest 或单个扩展名把语言/框架规则扩散到其他模块。
+
 ## 依赖方向
 
 {{DEPENDENCY_DIRECTIONS}}
@@ -25,3 +27,5 @@ evidence/confidence
 ## 路由
 
 {{MODULE_RULE_ROUTES}}
+
+领域 Skill 的独立触发和 owner 统一记录在 [Skill 地图](03-skill-map.md)。

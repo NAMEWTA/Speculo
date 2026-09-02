@@ -49,13 +49,14 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 9 Skills
+### 10 Skills
 
 | Skill | Purpose |
 |---|---|
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `github-npm-ops` | GitHub issue/PR triage and npm operations |
+| `git-history-squash` | Controlled first-parent history convergence with recoverable local ref transactions and exact remote leases |
 | `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
 | `speculo-retro` | Retrospective analysis |

@@ -59,6 +59,8 @@ describe("Speculo init refresh", () => {
       const managed = await readJson(join(root, ".speculo", "managed.json"));
       assert.equal(managed.schema_version, 1);
       assert.ok(managed.files.some((entry: any) => entry.path === "commands/status.md" && entry.owner === "core/commands"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/SKILL.md" && entry.owner === "core/skills"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/scripts/git-history-squash.mjs" && entry.owner === "core/skills"));
       assert.ok(managed.files.some((entry: any) => entry.path === "workflows/specdev/runtime-contract.json" && entry.kind === "contract"));
       assert.deepEqual(
         await readJson(join(root, ".speculo", "baselines", "config.json")),

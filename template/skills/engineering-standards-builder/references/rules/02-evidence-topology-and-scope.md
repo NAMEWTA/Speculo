@@ -1,47 +1,28 @@
-# 证据、项目拓扑与规则作用域
+# 证据、项目拓扑与作用域
 
-## 模块模型
-
-每个模块至少记录：
+## 最小模块记录
 
 ```text
 id
 path
-languages
-frameworks
-runtimes
-buildSystems
-packageManagers
-sourceRoots
-testRoots
-publicEntrypoints
-generatedPaths
-qualityGates
-evidence
-confidence
+languages/frameworks/runtimes
+build and test systems
+source/test roots
+public entrypoints
+generated/frozen paths
+quality gates
+evidence/confidence
 ```
 
-模块可以是 Workspace package、Maven/Gradle 子项目、Go module、Cargo crate，也可以是经源码和构建边界证明的独立应用。
+模块可以是 Workspace package、Maven/Gradle 子项目、Go module、Cargo crate，也可以是由源码、配置和依赖边界共同证明的独立应用。多个 manifest 不自动等于 Monorepo。
 
-## 拓扑分类
+## Scope
 
-- `single-project`
-- `workspace`
-- `monorepo`
-- `multi-module`
-- `polyglot-monorepo`
-- `multi-root`
-
-不要因为有多个 manifest 就自动称为 Monorepo；必须判断它们是否由共同根、Workspace、CI、发布或依赖关系管理。
-
-## Scope 语法
-
-生成规则时使用最窄充分 scope：
+使用最窄充分范围：
 
 ```text
 repository
 module:apps/web
-module:services/orders
 language:typescript
 framework:vue
 runtime:node
@@ -49,39 +30,31 @@ path:packages/sdk/**
 public-api:packages/sdk
 ```
 
-同一条规则需要多个 scope 时显式列出，不使用“前端”“后端”这类无法映射路径的模糊标签，除非项目已经定义这些边界。
+“前端”“后端”只有在项目已有对应路径定义时才可使用。
 
-## 证据记录
+## 项目来源记录
 
-推荐格式：
+项目源码或模板证据至少记录：
 
 ```text
-Evidence:
-- path: apps/web/package.json
-  signal: dependencies.vue
-  confidence: high
-- path: apps/web/src/App.vue
-  signal: Vue SFC
-  confidence: high
+Path: docs/fm/controller.java.ftl
+Role: canonical scaffold template
+Applies when: generating a controller
+Produces: <target path/pattern>
+Integration: <manual registration/import/configuration>
+Verification: <existing validator/test/build command>
+Consumers/tests: <paths>
+Confidence: high
 ```
 
-命令证据记录命令与来源，例如“`.github/workflows/ci.yml` 中执行 `pnpm test`”，不能只写“项目有测试”。
+生成 Skill 只引用真实项目路径，不复制源码或模板正文。若没有正式模板，引用同一 owner/scope 下的成熟实现和测试；没有足够证据则省略规则或标记待确认。
 
 ## 冲突类型
 
-至少识别：
+重点识别 manifest 与源码不一致、CI 与本地脚本不一致、模板与成熟代码不一致、公开 API 被深导入绕过、generated 与手写代码混合、多框架边界不清，以及目标规则无法通过当前门禁。
 
-- manifest 与源码不一致；
-- 同一 scope 内多种无规律命名或目录策略；
-- 本地脚本与 CI 门禁不一致；
-- 声明的 Java/Node/Go/Rust 版本不一致；
-- React 与 Vue、Maven 与 Gradle等多框架/多构建系统共存但边界不清；
-- 公开 API 实际被跨模块深导入绕过；
-- 生成代码与手写代码混合；
-- 新目标规则无法通过当前门禁。
+冲突不得靠“选择多数”消失。高影响冲突进入决策；存量问题进入 Ratchet、迁移或局部例外。
 
-冲突不得通过“选择多数”静默消失。高影响冲突进入决策，低影响冲突进入 Ratchet 或局部例外。
+## 完成条件
 
-## 作用域完成条件
-
-每个被选规则包和每条项目规则都能映射到明确路径或模块；没有框架规则泄漏到无关模块；不存在用仓库根 manifest 覆盖所有子项目的推断。
+每条规范和每个 Skill 边界均可映射到明确 scope 与路径；框架规则不泄漏到其他模块；模板的责任范围与后续手工集成已说明。

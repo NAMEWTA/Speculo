@@ -10,7 +10,7 @@
 Decision ID:
 Scope:
 Decision:
-Source: user-decision | repository-fact | official-guidance | builder-baseline
+Source: user-decision | repository-fact | project-template | official-guidance | builder-baseline
 Rationale:
 Migration:
 Verification:

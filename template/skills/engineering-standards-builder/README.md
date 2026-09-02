@@ -1,26 +1,12 @@
-# Engineering Standards Builder（稳定 ID：engineering-standards-builder）
+# Engineering Standards Builder
 
-这是 `template/skills/engineering-standards-builder` 的可直接替换版本。目录名和 frontmatter `name` 保持不变，以避免破坏 Speculo 当前的 Skill 清单与调用方；能力已经升级为跨语言项目工程规范生成器。
+稳定 Skill ID：`engineering-standards-builder`。
 
-## 能力范围
+这是一个由用户手动启动的项目规范生成器。它先审计当前项目的代码、目录、配置、测试、CI 与模板，再把证据编译为持久化在 `.agents/skills/` 的最小项目 Skill Set。
 
-- 运行前先扫描整个仓库并建立可追溯的 Project Inventory。
-- 支持单项目、Workspace、Monorepo 和多语言 Monorepo。
-- 内置 TypeScript/JavaScript、React、Vue、Java、Spring Boot、Go、Rust 规则包。
-- 通用规则位于 `references/rules/`；语言规则物理隔离。
-- 只生成当前项目实际适用的规则，不复制无关技术栈内容。
-- 通过 `scripts/` 提供只读发现、manifest 校验、Builder 校验和生成结果校验。
-- `examples/` 是自测试 fixture，不是装饰样例。
+核心产物是 `.agents/skills/engineering-standards/` 根路由和按需生成的领域 Skill。Builder 通过 `generated-skill-set.json` 记录所有权；刷新只管理清单内路径，不接管用户维护的其他 Skill。
 
-## 安装
-
-删除仓库中的旧目录：
-
-```text
-template/skills/engineering-standards-builder
-```
-
-将本目录完整复制到相同位置。不要只复制 `SKILL.md`，因为 references、scripts、templates 和 examples 都是运行合同的一部分。
+内置 TypeScript/JavaScript、React、Vue、Java、Spring Boot、Go 与 Rust references 只提供发现与审计 fallback。项目代码、模板、测试、配置、CI 及用户决定始终优先。
 
 ## 自校验
 
@@ -32,12 +18,4 @@ node scripts/validate-builder.mjs --root .
 node scripts/self-test.mjs --root .
 ```
 
-## 生成目标
-
-新 canonical 项目规范为：
-
-```text
-.agents/skills/engineering-standards/
-```
-
-旧的 `typescript-standards` 与 `typescript--standards` 仅作为需要时生成的单向兼容入口。这样既保留旧项目可用性，又避免继续把跨语言规范命名为 TypeScript 规范。
+`examples/` 是扫描器与生成结果验证器的 fixtures，不是复制到项目中的示例工程。

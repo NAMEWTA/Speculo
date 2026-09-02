@@ -104,9 +104,13 @@ templates/compatibility/agents-typescript--standards.md
 templates/compatibility/agents-typescript-standards.md
 templates/compatibility/claude-engineering-standards.md
 templates/compatibility/claude-typescript-standards.md
+templates/domain-skill/SKILL.md.template
+templates/project-skill/generated-skill-set.json.template
 templates/project-skill/references/project/00-project-profile.md.template
 templates/project-skill/references/project/01-module-map.md.template
 templates/project-skill/references/project/02-decisions-and-exceptions.md.template
+templates/project-skill/references/project/03-skill-map.md.template
+templates/project-skill/references/project/04-source-and-template-map.md.template
 templates/project-skill/references/project/review-checklist.md.template
 templates/project-skill/SKILL.md.template
 templates/README.md

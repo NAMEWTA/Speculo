@@ -50,6 +50,8 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 - 按 task kind 定义的返回文件、字段、引用与未验证声明要求；
 - Lead 本地验收将重新执行的检查。
 
+implementation 的派单合同还必须列出 Tickets Map、当前 Ticket 和适用于 `ALL`/当前 Ticket 的项目 Skill locator，并规定 Map -> Skill -> Ticket 的读取顺序。
+
 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 至少包含：
 
 ```json
@@ -80,12 +82,12 @@ temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/
 
 ### 可选内容
 
-- `context/`：相关 Spec/Ticket/ADR/CONTEXT 摘要、项目 Agent 指令、接口合同、研究问题、已授权网页列表和无秘密的环境说明；
+- `context/`：implementation 必须包含生成后的 Tickets Map、当前 Ticket，以及保持项目根相对 locator 的适用项目 Skill 入口和任务所需静态依赖闭包；其他任务按需包含相关 Spec/Ticket/ADR/CONTEXT 摘要、项目 Agent 指令、接口合同、研究问题、已授权网页列表和无秘密的环境说明；
 - `source/`：保持 repository-relative 路径的最小完整源码、直接依赖、schema、测试、构建配置和必要样例；
 - `context/workspace.diff`：仅在用户明确授权发送受保护未提交改动时包含，并在 manifest 记录基线和差异范围；
 - `context/expected-output/`：返回模板或 schema。
 
-纯公开网页 research 可以不含 `source/`，但仍需 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 和必要 `context/`。implementation/review 若缺少足以独立判断的源码或合同，不得靠 provider 猜测，应返回 blocked 或改用原生通道。
+纯公开网页 research 可以不含 `source/`，但仍需 `<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/subagent-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 和必要 `context/`。implementation 若缺少 Tickets Map、当前 Ticket、任一适用项目 Skill 依赖或足以独立判断的源码，review 若缺少固定合同，都不得靠 provider 猜测，应返回 blocked 或改用原生通道。
 
 ## 3. 范围与排除
 

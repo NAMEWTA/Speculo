@@ -28,6 +28,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - Bug 诊断：`specdev/changes/{change}/diagnosis.md`
 - 永久架构决策：`specdev/adr/`
 - 永久领域上下文：`specdev/context/`
+- 项目 Agent 指令及其声明的项目 Skill 根；
 - 项目当前代码、测试、配置、schema 和 CI 事实。
 
 若尚无 `specdev/changes/{change}/spec.md`，只有在用户提供的计划或对话已经等价覆盖目标、范围、关键决定和可判定验收时才可继续；否则建议先运行 “编写 Spec 阶段”。
@@ -57,6 +58,14 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 遇到不熟悉的模块、外部依赖或第三方库时，使用 下方 `<research>` 标签，再继续拆分。
 
+#### 项目 Skill 路由
+
+1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `.agents/skills/**/SKILL.md`，存在其他项目级 Skill 根时一并枚举；
+2. 先读取候选 Skill 的 frontmatter 与入口路由；存在 `.agents/skills/engineering-standards/SKILL.md` 时完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
+3. 根据整个 change 和每个 Ticket 的路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
+4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
+5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
+
 #### Prefactor
 
 遵循“让变更变容易，然后做容易的变更”：
@@ -66,7 +75,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - prefactor 必须独立有价值且可验证；
 - 不为了“更干净”而创建与目标无关的重构 Ticket。
 
-**完成标准**：实现地形、稳定接缝、共享路径与必要 prefactor 已识别。
+**完成标准**：实现地形、稳定接缝、共享路径、必要 prefactor 与逐 Ticket 项目 Skill 路由已识别。
 
 ### 3. 草拟曳光弹式垂直切片
 
@@ -132,7 +141,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
 7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
-使用 下方 `<tickets-map-template>` 标签 草拟总体 Map。
+使用 下方 `<tickets-map-template>` 标签 草拟总体 Map；写入所有 Ticket 共享的总体实施背景与项目 Skill 读取矩阵。矩阵中的每个 Ticket 必须由 `ALL` 或自己的 Ticket ID 覆盖。
 
 ### 7. Definition of Ready
 
@@ -145,6 +154,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
 - Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
+- Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
 - 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
 - 单个新上下文无法完成；
 - Standard/Deep 缺少有序执行路线；
@@ -161,7 +171,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 风险；
 - Ready 状态；
 - 关键未决问题；
-- 预计并行组和共享路径 owner。
+- 预计并行组和共享路径 owner；
+- `ALL` 与逐 Ticket 的项目 Skill 最低必读集合。
 
 核对：
 
@@ -200,6 +211,7 @@ specdev/changes/{change}/ticket/NN-<ticket-name>.md
 ```bash
 node Speculo Node 校验器 \
   --stage tickets \
+  --repo <project-root> \
   specdev/changes/{change}
 ```
 
@@ -213,6 +225,7 @@ node Speculo Node 校验器 \
 - Ready Ticket 无高影响未知项；
 - 并行 Ticket 无未解决的可写冲突；
 - 每个 Ticket 可独立验证且适配单一上下文；
+- Tickets Map 已记录总体实施背景；每个 Ticket 被项目 Skill 读取矩阵覆盖，Skill 路径存在且为项目根相对路径；
 - Prefactor 与 expand-contract 使用条件正确；
 - 用户已批准拆分或明确授权自主发布；
 - 校验器无 error。
@@ -304,6 +317,9 @@ node Speculo Node 校验器 \
 ## 通用门禁
 
 - [ ] frontmatter 字段完整，Ticket ID、文件名和 `specdev/changes/{change}/tickets-map.md` 一致。
+- [ ] Tickets Map 包含总体实施背景与项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 Ticket ID 覆盖。
+- [ ] 矩阵中的项目 Skill 均使用真实存在的项目根相对 `.../SKILL.md`，并声明 Trigger / Scope、读取时机和用途；没有适用项时记录实际扫描范围而不生成虚假路径。
+- [ ] Ticket 明确要求 Lead 与 implementation subagent 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
 - [ ] 可观察产出单一、明确且可验证。
 - [ ] 来源和验收合同映射存在。
 - [ ] IN、REUSE、OUT 无冲突。
@@ -380,6 +396,8 @@ shared_path_owners: []
 - **总体 Map：** `specdev/changes/{change}/tickets-map.md`
 - **上游 Spec：** `specdev/changes/{change}/spec.md`
 - **完成 Evidence：** `specdev/changes/{change}/evidence/T-01.md`
+
+实现本 Ticket 时，Lead 与 implementation subagent 必须按顺序完整读取总体 Map、其中适用于 `ALL`/`T-01` 的项目 Skill，再读取本 Ticket 与其他上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
 
 ## 1. 战略与来源
 
@@ -478,6 +496,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 ## 10. 验收标准
 
 - [ ] `AC-001`：<可判定结果>。
+- [ ] 实现开始前已完整读取 Tickets Map 及其中适用于 `ALL`/`T-01` 的项目 Skill；新发现的匹配 Skill 已由 Lead 同步回 Map。
 - [ ] 验证矩阵全部执行并记录到 `specdev/changes/{change}/evidence/T-01.md`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
 - [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
@@ -511,6 +530,20 @@ status: draft
 ## 1. 目标与拆分策略
 
 引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
+
+### 总体实施背景
+
+记录所有 Ticket 共同依赖、但不属于单个 Ticket 的模块边界、公共契约、关键不变量、集成顺序和不可重复决定。实现者用本节理解全局目标；单 Ticket 的完整实现契约仍由对应 Ticket 拥有。
+
+### 项目 Skill 读取矩阵
+
+每个 Ticket 的 Lead 或 implementation subagent 都必须先完整读取本 Map，再读取下表中适用于 `ALL` 或当前 Ticket ID 的项目 Skill，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先读取该 Skill，并由 Lead 更新本 Map、重新校验后继续。
+
+项目 Skill 使用项目根相对 Path，例如 `.agents/skills/{skill-name}/SKILL.md`；不得写机器绝对路径。若没有适用项目 Skill，保留一行 `无（已扫描项目 Skill 入口，未发现适用项）`，并在 Trigger / Scope 中记录实际扫描范围。
+
+| Applies To | Project Skill | Trigger / Scope | Read Timing | Purpose |
+|---|---|---|---|---|
+| ALL | 无（已扫描项目 Skill 入口，未发现适用项） | `.agents/skills/**/SKILL.md` 与项目 Agent 指令声明的 Skill 根 | Map 后、Ticket 前 | 明确当前 change 没有额外项目 Skill 读取要求 |
 
 ## 2. 执行清单
 
@@ -563,6 +596,7 @@ T-tickets 可以标注候选 Wave、E2E disposition 和行为里程碑。需要�
 
 - Ticket 状态变化后同步执行清单；
 - Ticket ID、路径、依赖或 frontmatter 不一致时，以 Ticket 文件为权威并修复本 Map；
+- 项目 Skill 新增、移动、删除、触发范围变化或实现中发现新的适用 Skill 时，先同步读取矩阵并重新校验；
 - Goal Plan 存在时，Wave、Gate 和 owner 以 `specdev/changes/{change}/goal-plan.md` 为编排权威；
 - 依赖、合同覆盖或路径所有权变化后运行 Speculo Node 校验器；
 - 内部工件使用本文约定的逻辑路径，不用 Markdown 链接充当状态引用。
@@ -650,7 +684,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
-| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
+| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 总体实施背景、项目 Skill 最低读取路由、依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Implementation Map | `specdev/changes/{change}/implementation-map.md` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `specdev/changes/{change}/implementation-plan.md` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |

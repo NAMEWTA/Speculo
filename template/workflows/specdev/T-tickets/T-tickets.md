@@ -26,6 +26,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - Bug 诊断：`<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
 - 永久架构决策：`<Path>{roots.state}/specdev/adr/</Path>`
 - 永久领域上下文：`<Path>{roots.state}/specdev/context/</Path>`
+- 项目 Agent 指令及其声明的项目 Skill 根；
 - 项目当前代码、测试、配置、schema 和 CI 事实。
 
 若尚无 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`，只有在用户提供的计划或对话已经等价覆盖目标、范围、关键决定和可判定验收时才可继续；否则建议先运行 `<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>`。
@@ -55,6 +56,14 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 遇到不熟悉的模块、外部依赖或第三方库时，使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，再继续拆分。
 
+#### 项目 Skill 路由
+
+1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `<Path>.agents/skills/**/SKILL.md</Path>`，存在其他项目级 Skill 根时一并枚举；
+2. 先读取候选 Skill 的 frontmatter 与入口路由；存在 `<Path>.agents/skills/engineering-standards/SKILL.md</Path>` 时完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
+3. 根据整个 change 和每个 Ticket 的路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
+4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
+5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
+
 #### Prefactor
 
 遵循“让变更变容易，然后做容易的变更”：
@@ -64,7 +73,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - prefactor 必须独立有价值且可验证；
 - 不为了“更干净”而创建与目标无关的重构 Ticket。
 
-**完成标准**：实现地形、稳定接缝、共享路径与必要 prefactor 已识别。
+**完成标准**：实现地形、稳定接缝、共享路径、必要 prefactor 与逐 Ticket 项目 Skill 路由已识别。
 
 ### 3. 草拟曳光弹式垂直切片
 
@@ -130,7 +139,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
 7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
-使用 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>` 草拟总体 Map。
+使用 `<Path>{roots.workflows}/specdev/T-tickets/tickets-map-template.md</Path>` 草拟总体 Map；写入所有 Ticket 共享的总体实施背景与项目 Skill 读取矩阵。矩阵中的每个 Ticket 必须由 `ALL` 或自己的 Ticket ID 覆盖。
 
 ### 7. Definition of Ready
 
@@ -143,6 +152,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
 - Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
+- Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
 - 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
 - 单个新上下文无法完成；
 - Standard/Deep 缺少有序执行路线；
@@ -159,7 +169,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 - 风险；
 - Ready 状态；
 - 关键未决问题；
-- 预计并行组和共享路径 owner。
+- 预计并行组和共享路径 owner；
+- `ALL` 与逐 Ticket 的项目 Skill 最低必读集合。
 
 核对：
 
@@ -198,6 +209,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
   --stage tickets \
+  --repo <project-root> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
@@ -211,6 +223,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - Ready Ticket 无高影响未知项；
 - 并行 Ticket 无未解决的可写冲突；
 - 每个 Ticket 可独立验证且适配单一上下文；
+- Tickets Map 已记录总体实施背景；每个 Ticket 被项目 Skill 读取矩阵覆盖，Skill 路径存在且为项目根相对路径；
 - Prefactor 与 expand-contract 使用条件正确；
 - 用户已批准拆分或明确授权自主发布；
 - 校验器无 error。

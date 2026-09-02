@@ -1,79 +1,46 @@
 # 项目发现合同
 
-## 原则
+## 确定性基线
 
-规范生成必须先建立 Project Inventory。扫描以只读、确定性、可追溯为目标：
-
-- 不执行安装、构建、测试、代码生成或项目脚本；
-- 不依赖目录名字猜测技术栈；
-- manifest、配置、CI、源码与文档相互交叉验证；
-- 每个判断保留证据路径和置信度；
-- 扫描器结果是基线，必须再抽样源码和边界。
-
-## 确定性扫描
-
-运行：
+先运行只读扫描：
 
 ```bash
-node <skill-root>/scripts/discover-project.mjs \
-  --root <project-root> \
-  --pretty \
-  --output <approved-path>/project-inventory.json
+node <skill-root>/scripts/discover-project.mjs --root <project-root> --pretty
 ```
 
-`--output` 只接受扫描根目录内路径；省略时只向 stdout 输出 JSON。
+默认捕获 stdout，不把 inventory 写进项目。只有用户明确需要保留诊断证据时才使用 `--output`，且输出路径必须在项目根内。
 
-扫描器识别：
+扫描器识别 Workspace/Monorepo、多模块、语言、框架、build/test 系统、CI、现有规范以及生成/Vendor/构建目录。它不执行安装、构建、测试、生成器、项目脚本或网络请求。
 
-- Git/Workspace/Monorepo 拓扑；
-- JavaScript/TypeScript manifests、Workspace、锁文件、tsconfig、框架与工具；
-- Maven/Gradle、Java 源集与 Spring Boot；
-- `go.mod`、`go.work`、Go package/command；
-- Cargo package/workspace、toolchain、Rust crate；
-- CI、Agent 手册、贡献文档、架构文档和已有规范；
-- 源码/测试扩展名统计及代表性根目录；
-- 生成、Vendor、构建和缓存目录。
+## 项目语义审计
 
-## 人工语义抽样
+扫描之后仍要检查每个可编辑模块的：
 
-至少检查每个可编辑模块的：
+1. manifest、build、formatter、lint、编译和测试配置；
+2. CI 真正执行的命令及 working directory；
+3. 公共入口、依赖方向和跨模块消费者；
+4. 成熟实现、相应测试、失败路径与资源清理；
+5. 用户指定需要学习的代码和目录；
+6. FM、scaffold、generator asset、catalog、context contract 与其 validator；
+7. README、ADR、AGENTS、CLAUDE、CONTRIBUTING 和现有 Skills；
+8. legacy、generated、vendor、fixture、冻结和不可编辑区域。
 
-1. manifest/build 文件；
-2. 编译、Lint、格式化和测试配置；
-3. CI 中真正执行的命令；
-4. 公开入口和模块边界；
-5. 两到三个代表性业务目录；
-6. 普通实现、测试、配置和入口文件；
-7. 大型或高频修改文件；
-8. 生成代码标记和不可编辑目录；
-9. README、ADR、AGENTS、CLAUDE、CONTRIBUTING 中的有效合同。
+代表性样本按架构角色和调用链选择，不按文件名排序取前几个。只出现依赖或扩展名是“信号”，不能单独升级为全模块规则。
 
-只统计扩展名不等于理解架构。框架依赖存在但没有源码使用时，要记录为“依赖信号”，不能直接判定为全模块规则。
+## Agent Team 证据合同
+
+有独立证据域且运行环境支持时，由 leader 派只读 scouts 并行审计。每个 scout 返回：Scope、Observed capability、Canonical source paths、Mature implementations、Template paths、Consumers and tests、Applicable conditions、Legacy/counterexamples、Conflicts/unknowns、Recommended skill boundary。
+
+scout 不修改项目，不直接生成最终 Skill。leader 复读高影响文件、解决跨域冲突并负责唯一写入。团队不可用时按同一合同顺序执行。
 
 ## 置信度
 
-- **high**：manifest、编译配置、框架入口、CI 命令或源码导入明确声明；
-- **medium**：大量稳定源码模式与目录结构相互支持；
+- **high**：配置、入口、CI、测试或真实消费者直接支持；
+- **medium**：多个稳定源码模式与目录结构相互支持；
 - **low**：仅由目录名、少量文件或间接依赖推断。
 
-低置信度、高影响判断必须人工确认或进入访谈。
+低置信度且高影响的判断必须询问或登记为 `pending-decision`。
 
-## 排除目录
+## 完成条件
 
-默认排除依赖、构建、缓存、Vendor 与生成输出，例如：
-
-```text
-.git node_modules dist build target out coverage
-.next .nuxt .output .turbo .gradle vendor
-bin obj .cache .venv __pycache__
-```
-
-项目明确把某个同名目录作为源码时，必须由证据覆盖默认排除，并缩小扫描范围。
-
-## 发现完成条件
-
-- 每个模块都有路径、语言、框架、运行时、构建和测试事实；
-- 每个判断可追溯；
-- 作用域互不混淆；
-- 冲突、未知项和扫描限制已记录；
-- 尚未向用户询问可以直接从仓库回答的问题。
+每个模块和模板职责均可追溯；项目规范来源、反例、冲突、未知项和扫描限制明确；没有向用户询问仓库可直接回答的问题。

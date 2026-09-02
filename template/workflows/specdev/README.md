@@ -24,7 +24,7 @@ Spec             外部行为、范围、验收合同与关键约束
         ↓
 Ticket           单一垂直切片的决策完备微计划
         ↓
-Tickets Map      DAG、合同覆盖、Ready 与并行投影
+Tickets Map      总体背景、项目 Skill 路由、DAG、合同覆盖、Ready 与并行投影
         ↓
 Goal Plan        仅在需要时编排跨 Ticket Gate、Wave、owner 与恢复
         ↓

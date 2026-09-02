@@ -26,6 +26,8 @@ shared_path_owners: []
 - **上游 Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - **完成 Evidence：** `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>`
 
+实现本 Ticket 时，Lead 与 implementation subagent 必须按顺序完整读取总体 Map、其中适用于 `ALL`/`T-01` 的项目 Skill，再读取本 Ticket 与其他上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
+
 ## 1. 战略与来源
 
 - **目标：** 做什么、为什么、基于什么现有能力。
@@ -123,6 +125,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 ## 10. 验收标准
 
 - [ ] `AC-001`：<可判定结果>。
+- [ ] 实现开始前已完整读取 Tickets Map 及其中适用于 `ALL`/`T-01` 的项目 Skill；新发现的匹配 Skill 已由 Lead 同步回 Map。
 - [ ] 验证矩阵全部执行并记录到 `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
 - [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。

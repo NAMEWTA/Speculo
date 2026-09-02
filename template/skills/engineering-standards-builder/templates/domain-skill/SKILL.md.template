@@ -1,0 +1,32 @@
+---
+name: {{SKILL_NAME}}
+description: {{DESCRIPTION}}
+---
+
+# {{TITLE}}
+
+处理以下触发场景时使用本 Skill：
+
+{{TRIGGERS}}
+
+先读取项目根路由 `../engineering-standards/SKILL.md` 中的全局边界与决策。本 Skill 只负责 {{DOMAIN_RESPONSIBILITY}}，不重新定义跨域规范。
+
+## 适用范围
+
+{{SCOPE_AND_EXCLUSIONS}}
+
+## 实现流程
+
+{{WORKFLOW}}
+
+## 项目事实源
+
+{{SOURCE_AND_TEMPLATE_ROUTES}}
+
+读取真实源码、模板、消费者和测试；不要把它们复制进本 Skill。每个来源都要说明适用条件、输出位置、手工集成和验证。
+
+## 完成检查
+
+{{VERIFICATION}}
+
+无法由项目证据确认的事项标记 `pending-decision`，不要用 Builder 默认补齐。

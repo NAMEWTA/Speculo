@@ -1,228 +1,153 @@
 ---
 name: engineering-standards-builder
-description: 生成工程规范：先探索仓库技术架构，再通过最少必要问答，为 TypeScript/JavaScript、React、Vue、Java/Spring Boot、Go、Rust 及多语言 Monorepo 生成项目专属的代码、目录、测试、工具链与交付规范 Skill。
+description: 探索当前项目并生成或刷新项目专属工程 Skill Set，持久化到项目 .agents/skills/。
+disable-model-invocation: true
 ---
 
 # Engineering Standards Builder
 
-`engineering-standards-builder` 是为现有调用方保留的稳定 Skill ID；它生成的规范已经是跨语言的 **Engineering Standards**，不再以 TypeScript 或 React 为中心。
+本 Skill 只在用户明确调用时运行。它不会在新项目中自动启动，也不把 Builder 自带的通用建议直接复制成项目规范。
 
-本 Skill 是一个“规范编译器”：
-
-```text
-仓库事实
-  + 用户明确决策
-  + 适用的通用规则
-  + 适用的语言/框架/运行时规则
-  - 不适用规则
-  - 已记录例外
-  = 当前项目专属工程规范 Skill
-```
-
-详细知识按分支渐进读取。不得在开始时一次加载全部 `references/`。
-
-## 最终产物
-
-默认 canonical 输出：
+目标是先理解当前项目真实的代码、目录、配置、测试、CI 与模板，再生成一组可长期复用的项目专属 Skill：一个稳定的工程规范路由入口，以及零个或多个有独立触发价值的领域 Skill。
 
 ```text
-.agents/skills/engineering-standards/
-├── SKILL.md
-└── references/
-    ├── project/
-    │   ├── 00-project-profile.md
-    │   ├── 01-module-map.md
-    │   └── 02-decisions-and-exceptions.md
-    ├── rules/
-    ├── typescript/     # 仅项目实际使用时
-    ├── java/           # 仅项目实际使用时
-    ├── go/             # 仅项目实际使用时
-    └── rust/           # 仅项目实际使用时
+项目事实 + 用户指定的重点范围 + 已确认目标
+  -> 证据审计与冲突收敛
+  -> 最小充分 Skill Set
+  -> .agents/skills/
 ```
 
-兼容入口只能单向指向 canonical，不能复制规范正文或形成循环：
+## 产物与所有权
+
+始终生成根路由：
 
 ```text
-.agents/skills/typescript-standards/SKILL.md
-.agents/skills/typescript--standards/SKILL.md
-.claude/skills/engineering-standards/SKILL.md
-.claude/skills/typescript-standards/SKILL.md
+.agents/skills/
+├── engineering-standards/
+│   ├── SKILL.md
+│   ├── generated-skill-set.json
+│   └── references/project/
+│       ├── 00-project-profile.md
+│       ├── 01-module-map.md
+│       ├── 02-decisions-and-exceptions.md
+│       ├── 03-skill-map.md
+│       ├── 04-source-and-template-map.md
+│       └── review-checklist.md
+└── <optional-domain-skill>/
+    ├── SKILL.md
+    └── references/...
 ```
 
-仅在对应 Agent 目录已存在、用户要求兼容，或仓库已有旧路径时创建兼容入口。
+`engineering-standards` 是规范权威与路由器；领域 Skill 负责可独立触发的实现导航，不重复定义冲突规则。`generated-skill-set.json` 只登记 Builder 拥有的 `.agents/skills/*` 路径。刷新时不得改动或删除清单之外的 Skill。
 
-## 执行过程
+## 最小原则
 
-### 1. 锁定根目录、模式与写入边界
+- 不按语言、目录或 Agent 数量机械拆 Skill。
+- 能由根路由和少量 references 清楚表达时，不新增领域 Skill。
+- 没有项目证据的规则不生成；Builder references 只提供审计维度与 fallback。
+- 不复制项目源码、FM 模板或脚手架正文；引用其真实路径并说明适用条件、集成步骤和验证方式。
+- 不新增配置文件、参数、时间戳、hash 或模型元数据来制造形式化负担。
+- 扫描深度、文件数和字节限制只是脚本内部资源保护，不是用户需要决策的项目规范。
 
-确定：
+## 执行流程
 
-- 真实仓库或 Workspace 根目录；
-- 覆盖整个仓库、指定模块还是指定路径；
-- `create`、`refresh`、`merge` 或 `dry-run` 模式；
-- 生成代码、第三方镜像、Vendor、构建输出与冻结区域；
-- 已存在的工程规范、`AGENTS.md`、`CLAUDE.md`、`CONTRIBUTING.md` 和架构文档。
+### 1. 确定项目根与学习范围
 
-发生冲突时读取 [`references/rules/00-governance-and-precedence.md`](references/rules/00-governance-and-precedence.md)。路径与作用域判定读取 [`references/rules/02-evidence-topology-and-scope.md`](references/rules/02-evidence-topology-and-scope.md)。
+从用户当前工作目录、Git/Workspace 边界和用户指定的代码或目录确定真实项目根。记录需要重点学习的模块、代码、目录、模板或脚手架；未指定时覆盖所有可编辑模块。
 
-未经明确授权，阶段 1～4 只读。不得执行项目安装、构建、测试、生成器或网络脚本来“探测”技术栈。
+读取现有 `AGENTS.md`、`CLAUDE.md`、贡献文档、架构文档和 `.agents/skills/`，但将它们视为待验证证据。识别 generated、vendor、build、cache、fixture 与冻结目录。发现已有 `generated-skill-set.json` 时进入 refresh；只有 legacy `engineering-standards` 时，在计划中声明接管该根 Skill，其他现有 Skill 一律视为非 Builder 所有。
 
-**完成标准**：根目录解析为真实路径；扫描范围、排除范围、运行模式、已有规范位置与允许写入位置均已记录。
+冲突优先级见 [治理与证据优先级](references/rules/00-governance-and-precedence.md)，路径和 scope 见 [证据、拓扑与作用域](references/rules/02-evidence-topology-and-scope.md)。本阶段只读。
 
-### 2. 先搜索探索整个项目
+**完成标准**：项目根、重点范围、排除范围、现有规范和 Builder 写入边界明确。
 
-先运行确定性扫描器，再进行人工语义抽样：
+### 2. 建立确定性事实基线
+
+运行扫描器并捕获 stdout；默认不在项目中持久化 inventory：
 
 ```bash
-node <skill-root>/scripts/discover-project.mjs \
-  --root <project-root> \
-  --pretty \
-  --output .engineering/project-inventory.json
+node <skill-root>/scripts/discover-project.mjs --root <project-root> --pretty
 ```
 
-扫描合同与补充检查见 [`references/rules/01-project-discovery.md`](references/rules/01-project-discovery.md)。扫描器是事实基线，不替代源码、CI 和架构文档抽样。`--output` 只接受根目录内路径；需要外部临时文件时省略该参数并由调用方捕获 stdout。
+扫描合同见 [项目发现合同](references/rules/01-project-discovery.md)。扫描器只提供拓扑基线，不能替代源码审计。继续读取真实 manifest/build 配置、CI 命令、公共入口、代表性实现、测试、消费者与项目模板。
 
-必须建立：
+**完成标准**：每个可编辑模块有路径、技术栈、入口、质量门禁和证据；扫描限制、冲突与未知项已记录。
 
-- 仓库拓扑：单项目、Workspace、Monorepo、多模块或多语言 Monorepo；
-- 每个模块的路径、语言、框架、运行时、构建系统、测试系统和交付物；
-- 源码根、测试根、公开入口、生成目录和边界；
-- 已生效的格式化、静态检查、类型检查、测试、构建与 CI 命令；
-- 每项判断的证据路径、置信度、冲突和未知项；
-- 代表性源码样本，而不是只读取 manifest。
+### 3. 用 Agent Team 分域取证
 
-**完成标准**：每个可编辑模块都有唯一 scope；每项技术判断可追溯到证据；生成/Vendor/构建目录已排除；冲突和未知项均已列出；此时尚未向用户询问仓库中已经能确定的事实。
+当运行环境支持 Agent Team 且存在两个以上可独立审计的证据域时，默认由 leader 并行派发只读 scout。证据域按项目真实边界划分，例如架构与公共 API、后端、前端、公共复用、测试与 CI、FM/脚手架；不得套用固定角色表。
 
-### 3. 按作用域装配规则包
-
-始终读取通用规则；随后只读取与模块事实匹配的语言、框架、运行时和应用类型参考。
-
-装配顺序：
+leader 是唯一写入者。每个 scout 必须返回同一份精简证据合同：
 
 ```text
-references/rules/*
-  → references/<language>/*
-    → references/<language>/frameworks/*
-      → references/<language>/runtimes/*
-        → references/<language>/app-types/*
-          → 当前项目决策与例外
+Scope
+Observed capability
+Canonical source paths
+Mature implementations
+Template paths
+Consumers and tests
+Applicable conditions
+Legacy/counterexamples
+Conflicts/unknowns
+Recommended skill boundary
 ```
 
-完整索引：
+leader 必须复读高影响路径，检查跨域冲突，并把同一事实的重复报告合并。Agent Team 不可用或任务不可合理拆分时，leader 按相同合同顺序审计；结果标准不变。
 
-- [通用规则](references/rules/README.md)
-- [TypeScript / JavaScript](references/typescript/README.md)
-- [Java](references/java/README.md)
-- [Go](references/go/README.md)
-- [Rust](references/rust/README.md)
+**完成标准**：重要规范均有真实路径、消费者或测试支撑；反例、旧实现和未知项没有被“多数模式”掩盖。
 
-分支路由：
+### 4. 收敛规范与 Skill 边界
 
-| 识别事实 | 读取 |
-|---|---|
-| 所有项目 | `references/rules/04`～`13` 中与任务相关的文件 |
-| TypeScript/JavaScript | `references/typescript/00`～`04` |
-| React | `references/typescript/frameworks/react.md` |
-| Vue | `references/typescript/frameworks/vue.md` |
-| 浏览器、Node、Electron | 对应 `references/typescript/runtimes/*` |
-| CLI 或发布库 | 对应 `references/typescript/app-types/*` |
-| Java | `references/java/00`～`04` |
-| Spring Boot | `references/java/frameworks/spring-boot.md` |
-| Go | `references/go/00`～`04` |
-| Rust | `references/rust/00`～`04` |
-| 未内置语言 | `references/rules/16-language-adapter-contract.md` 的 fallback |
+先识别项目已经声明的 canonical 模板或代码样板，例如 `docs/fm/**`、scaffold、generator assets。模板与成熟代码冲突时，判断它是目标模板、过期模板还是仅负责骨架，并记录 current、target 与 migration；不得静默任选一方。
 
-一个模块出现 `.vue` 文件不能让整个仓库继承 Vue 规则；根目录存在 `package.json` 也不能让 Java、Go 或 Rust 模块继承 Node 规则。
+只有同时满足以下条件才创建领域 Skill：
 
-**完成标准**：每个待采用规则包都有匹配证据和明确 scope；所有不适用包均已排除；通用层没有语言专属实现被误用。
+1. 有可独立描述的触发场景；
+2. 会在多次开发中复用；
+3. 有充分的项目源码、模板、测试或配置证据；
+4. 与根路由或其他领域 Skill 边界清晰；
+5. 独立后能明显减少无关上下文。
 
-### 4. 只解决无法由事实确定的高影响决策
+否则内容留在 `engineering-standards`。领域 Skill 名称来自项目语义，不使用固定列表或固定数量。高影响未知项按 [决策收敛合同](references/rules/03-interview-and-decisions.md) 询问；用户已授权直接生成时，将无法安全推断的事项记为 `pending-decision`。
 
-读取 [`references/rules/03-interview-and-decisions.md`](references/rules/03-interview-and-decisions.md)。
+只读取与项目事实匹配的 [通用规则索引](references/rules/README.md)、[TypeScript/JavaScript](references/typescript/README.md)、[Java](references/java/README.md)、[Go](references/go/README.md) 或 [Rust](references/rust/README.md) references。内置语言包和 [未内置语言 fallback](references/rules/16-language-adapter-contract.md) 是检查清单，不是高于项目代码的规范来源。
 
-仅询问会改变生成结果的问题，例如：
+**完成标准**：每个生成 Skill 都有独立价值和证据边界；没有为了覆盖目录或技术栈而过度拆分。
 
-- 新代码立即强制还是存量 Ratchet；
-- 模块边界、公开 API 和允许的依赖方向；
-- 仓库中真实存在冲突的目录、命名、测试或工具链选择；
-- React/Vue、Spring Boot、Go 或 Rust 的版本迁移与兼容边界；
-- 临时例外的所有者、到期条件和删除条件。
+### 5. 计划、生成与刷新
 
-每个问题：
+先展示精简计划：模块与证据摘要、Skill Map、每个 Skill 的来源路径、保留/更新/新增/删除项、冲突决策和验证命令。用户已在当前请求中授权实施时，展示后直接执行。
 
-1. 先给出仓库证据；
-2. 给出推荐默认值及理由；
-3. 提供 2～4 个可执行选项；
-4. 记录用户选择、适用 scope 和来源；
-5. 不重复询问已回答或已由仓库确认的事项。
+按 [Skill Set 生成合同](references/rules/14-generation-contract.md) 和 [模板索引](templates/README.md) 生成。所有项目引用使用项目根相对路径，并说明：何时读取、它负责什么、输出位置、需要哪些手工集成、运行什么验证。
 
-用户已明确要求直接生成时，使用可解释默认值并把不确定项记录为“待确认”，不再额外阻塞写入。
+先准备完整候选内容并校验，再替换 Builder 拥有的文件。刷新规则：
 
-**完成标准**：所有会改变目录、公共 API、强制级别、迁移策略或 CI 门禁的未知项均已决策或显式登记为待确认；没有固定数量的形式化问题。
+- 只更新或删除旧 `generated-skill-set.json` 登记的路径；
+- 名称与未登记 Skill 冲突时停止覆盖并重新命名或询问；
+- 保留仍有效的用户决策、例外和项目特有知识；
+- 删除或重命名必须在计划中显式列出；
+- 候选验证失败时保留旧 Skill Set；发布后验证失败时恢复旧内容；
+- 相同项目事实与决策重复运行应无无意义 diff。
 
-### 5. 生成前形成可审查计划
+**完成标准**：根路由、领域 Skill、项目引用与所有权清单一致，清单外 Skill 未发生变化。
 
-展示：
+### 6. 验证与报告
 
-- 项目模块地图与技术栈；
-- 将采用和排除的规则包；
-- 仓库事实、用户决策、默认建议和兼容例外；
-- 当前状态、目标状态及迁移阶段；
-- 将创建、合并、保留、移动或删除的文件；
-- 将运行的验证命令。
-
-用户在同一请求中已经授权实施时，展示摘要后直接写入，不重复要求确认。
-
-**完成标准**：每个即将写入的文件都有来源和用途；没有未声明覆盖；兼容入口方向唯一。
-
-### 6. 生成或合并项目专属 Skill
-
-读取：
-
-- [`references/rules/14-generation-contract.md`](references/rules/14-generation-contract.md)
-- [生成模板索引](templates/README.md)
-- 对应的语言/框架 references
-
-生成原则：
-
-- canonical 只有 `.agents/skills/engineering-standards/` 一份；
-- `SKILL.md` 只保留每次执行必须读取的流程、作用域和路由；
-- 详细规则按 `project/`、`rules/`、语言与框架分层；
-- 只生成当前项目实际使用的语言、框架与运行时目录；
-- 每条重要规则包含 `Scope`、`Level`、`Source`、`Verification`；
-- 项目真实命令来自仓库事实或用户确认，不能凭空创造；
-- `refresh`/`merge` 保留用户决策、公共 API、项目特有规则和未到期例外；
-- 存量代码采用 Ratchet，不借生成规范发动无关的大规模重写。
-
-**完成标准**：生成树可由项目事实和决策完整解释；没有不适用章节；canonical 内容仅存在一份；所有旧入口单向路由。
-
-### 7. 验证并报告
-
-先运行生成 Skill 验证器：
+运行：
 
 ```bash
-node <skill-root>/scripts/validate-generated-skill.mjs \
-  --root <project-root> \
-  --strict
+node <skill-root>/scripts/validate-generated-skill.mjs --root <project-root> --strict
 ```
 
-验证合同见 [`references/rules/15-validation-contract.md`](references/rules/15-validation-contract.md)。
+再按 [验证合同](references/rules/15-validation-contract.md) 执行项目已存在且本次允许的质量门禁。不得通过删除测试、放宽编译配置或扩大例外获取通过。
 
-随后只运行仓库已经定义且本次允许执行的质量门禁。不得为获得通过而删除测试、关闭核心规则、放宽类型/编译配置或扩大例外。
+最终报告生成/更新/保留/删除的 Skill，关键证据与模板路径，运行命令及退出码，未验证项、待确认决策和临时例外。
 
-最终报告：
-
-- 创建、更新、保留和删除的文件；
-- 实际采用与排除的规则包；
-- 运行的命令、退出码和关键结果；
-- 未执行或无法验证的项目门禁及原因；
-- 待确认决策、临时例外与后续删除条件。
-
-**完成标准**：静态引用、frontmatter、scope、兼容路由和选择性生成全部通过；项目门禁通过，或阻塞证据包含命令、退出码、路径和影响。
+**完成标准**：所有权、frontmatter、Skill 路由、项目内引用、选择性适配和规则字段通过；项目门禁通过或留下可复现阻塞证据。
 
 ## Builder 自校验
 
-维护本 Skill 本身时，fixture 合同见 [examples/README.md](examples/README.md)，并运行：
+维护本 Skill 时读取 [fixture 合同](examples/README.md)，并运行：
 
 ```bash
 node scripts/sync-manifest.mjs --root . --check
@@ -230,4 +155,4 @@ node scripts/validate-builder.mjs --root .
 node scripts/self-test.mjs --root .
 ```
 
-脚本均无第三方依赖、接受显式根目录、拒绝路径越界，并提供 `--help`。
+这些脚本无第三方依赖、接受显式根目录、拒绝路径越界，并提供 `--help`。

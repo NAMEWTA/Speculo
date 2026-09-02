@@ -1,0 +1,22 @@
+# 源码与模板地图
+
+这里导航到项目中的唯一事实源，不复制源码、FM 模板或脚手架正文。每个记录必须含至少一个可解析的项目内 Markdown 链接。
+
+{{SOURCE_AND_TEMPLATE_RECORDS}}
+
+推荐格式：
+
+```text
+## <Capability>
+- Read when:
+- Canonical source/template: project-relative Markdown link
+- Role:
+- Applies when:
+- Produces:
+- Manual integration:
+- Consumers/tests:
+- Verification:
+- Legacy/counterexamples:
+```
+
+模板只负责骨架时必须明确列出生成后仍需完成的业务逻辑、注册、import、配置和测试。

@@ -1,105 +1,89 @@
-# 项目规范生成合同
+# 项目 Skill Set 生成合同
 
-## Canonical 路径
+## 最小结构
 
-唯一正式规范：
+必须生成 `.agents/skills/engineering-standards/`，它是项目工程规范的权威入口和路由器。只有存在独立触发价值时才生成同级领域 Skill。
 
 ```text
-.agents/skills/engineering-standards/
+.agents/skills/
+  engineering-standards/
+    SKILL.md
+    generated-skill-set.json
+    references/project/
+      00-project-profile.md
+      01-module-map.md
+      02-decisions-and-exceptions.md
+      03-skill-map.md
+      04-source-and-template-map.md
+      review-checklist.md
+  <optional-domain-skill>/
+    SKILL.md
+    references/...
 ```
 
-推荐树：
+根入口使用 `templates/project-skill/SKILL.md.template`；领域入口使用 `templates/domain-skill/SKILL.md.template`。详细内容只创建有证据且被入口路由的文件。
 
-```text
-SKILL.md
-references/
-  project/
-    00-project-profile.md
-    01-module-map.md
-    02-decisions-and-exceptions.md
-  rules/
-    architecture-and-boundaries.md
-    files-and-naming.md
-    api-errors-resources.md
-    testing.md
-    security-and-data.md
-    quality-gates.md
-    review-and-delivery.md
-  typescript/...
-  java/...
-  go/...
-  rust/...
+## Skill 拆分门
+
+领域 Skill 必须同时具备：独立触发场景、重复使用价值、项目证据、清晰责任边界和上下文缩减收益。语言、目录、Agent 数量或“看起来完整”都不是拆分理由。
+
+根 Skill 维护跨域规范、项目画像、模块地图、决策/例外、Skill Map 和来源地图。领域 Skill 维护特定开发工作流、关键源码/模板导航、集成点和验证方式；不得重新定义根 Skill 的冲突规则。
+
+## 项目源码与模板引用
+
+每个重要来源使用项目根相对路径，并说明：
+
+- 何时读取；
+- 它负责的能力或生成范围；
+- 输出目标；
+- 生成后需要的注册、import、配置或补充实现；
+- 对应消费者、测试或 validator；
+- 发现 legacy 或不适用场景时如何处理。
+
+项目 FM、scaffold 和源码保持唯一事实源。Skill 不复制 `.ftl`、源码文件或大段代码；只做精准导航和行为约束。
+
+## 所有权清单
+
+根目录中的 `generated-skill-set.json` 使用 `templates/project-skill/generated-skill-set.json.template`，最小 schema：
+
+```json
+{
+  "schema_version": 1,
+  "generator": "engineering-standards-builder",
+  "skills": [
+    {
+      "name": "engineering-standards",
+      "path": ".agents/skills/engineering-standards",
+      "role": "router"
+    }
+  ]
+}
 ```
 
-只创建有内容并被入口路由的目录。未使用语言目录不得存在。
+允许的 role 只有 `router` 和 `domain`。必须恰有一个 router；path 必须等于 `.agents/skills/<name>`。不要加入时间戳、hash、模型、扫描计数或可从文件树重新推导的字段。
 
-## 主入口
+## 安全刷新
 
-使用 `templates/project-skill/SKILL.md.template`。主入口必须：
+- create：目标名称与已有未登记 Skill 冲突时不得覆盖；
+- refresh：只管理旧清单列出的 Skill，保留其他 `.agents/skills/*`；
+- legacy 根 Skill 无清单时，只可在计划中声明接管 `engineering-standards` 本身，不能顺带接管同级 Skills；
+- 删除和重命名必须在计划中列出；
+- 先形成完整候选并验证，再替换已登记内容；失败时保持或恢复旧 Skill Set；
+- 保留仍有效的用户决策、例外、公共 API 和项目特有知识；
+- 相同输入重复刷新不得产生无意义 diff。
 
-- frontmatter `name: engineering-standards`；
-- 描述适用项目与触发分支；
-- 先读取 project profile 和 module map；
-- 根据当前变更 scope 路由到最小 references；
-- 要求实现前检查边界、实现后运行真实门禁；
-- 不复制详细语言规范。
+兼容入口只在用户要求或旧路径已存在时使用 `templates/compatibility/`，并保持一句单向路由；它们不进入项目规范正文。
 
-## 项目 References
+## 规则格式
 
-使用模板：
-
-- `00-project-profile.md.template`
-- `01-module-map.md.template`
-- `02-decisions-and-exceptions.md.template`
-- `review-checklist.md.template`
-
-生成规则统一格式：
+所有 MUST/SHOULD 至少包含：
 
 ```text
-### <Rule ID> <Title>
 Scope:
-Level: MUST | SHOULD | MAY
+Level: MUST | SHOULD
 Source:
-Applies when:
 Rule:
-Rationale:
 Verification:
-Exception:
 ```
 
-不是每个轻量建议都要展开九个字段，但所有 MUST/SHOULD 必须至少有 Scope、Level、Source、Rule、Verification。
-
-## 选择性生成
-
-- 通用规则按项目风险裁剪，但安全、错误、资源、测试和门禁不能被无理由删除；
-- TypeScript 项目才生成 `typescript/`；
-- React/Vue 分别按模块生成，混合仓库分别限定 scope；
-- Java/Spring Boot、Go、Rust 同理；
-- 未支持语言生成通用规则与明确 fallback，不伪造专属语法规范。
-
-## 命令
-
-生成规范只记录：
-
-- manifest/build/CI 中已存在的命令；
-- 用户明确确认要新增的命令；
-- 对尚未实现的目标命令标记 `planned`，不能当作当前可执行门禁。
-
-## 兼容入口
-
-兼容文件只有一句单向路由，使用 `templates/compatibility/`。创建条件：
-
-- 仓库已有旧路径；
-- 用户要求；
-- `.claude` 或其他 Agent 目录实际存在并需要入口。
-
-不得让 `.agents/skills/engineering-standards` 指回兼容路径。
-
-## 写入安全
-
-- create：目标已存在时停止或转 merge；
-- merge/refresh：先读取、备份或通过版本控制保护，再原子替换；
-- dry-run：只输出计划和内容摘要，不写文件；
-- 不覆盖目标根外路径；
-- 不修改生成代码或 Vendor；
-- 不删除未在计划中声明的用户文件。
+项目命令只能来自现有配置/CI 或用户明确决定。尚未实现的命令标记 `planned`，不能报告为当前门禁。

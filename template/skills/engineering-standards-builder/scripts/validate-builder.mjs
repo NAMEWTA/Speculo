@@ -35,7 +35,8 @@ async function collect(rootReal) {
   const directories = [];
   async function visit(directory) {
     const relDir = toPosix(path.relative(rootReal, directory)) || '.';
-    const entries = await readdir(directory, { withFileTypes: true });
+    const entries = (await readdir(directory, { withFileTypes: true }))
+      .filter((entry) => entry.name !== '.DS_Store');
     entries.sort((a, b) => a.name.localeCompare(b.name, 'en'));
     directories.push({ abs: directory, rel: relDir, entries });
     for (const entry of entries) {
@@ -89,7 +90,7 @@ function normalizeLinkTarget(sourceAbs, link) {
 }
 
 async function computeManifest(rootReal, files) {
-  return `${files.map((file) => file.rel).filter((rel) => rel !== 'manifest.txt' && !rel.endsWith('/.DS_Store')).sort((a, b) => a.localeCompare(b, 'en')).join('\n')}\n`;
+  return `${files.map((file) => file.rel).filter((rel) => rel !== 'manifest.txt' && path.posix.basename(rel) !== '.DS_Store').sort((a, b) => a.localeCompare(b, 'en')).join('\n')}\n`;
 }
 
 function failLines(errors, warnings) {
@@ -138,9 +139,11 @@ async function main() {
         if (frontmatter.values.name !== 'engineering-standards-builder') errors.push('stable Skill ID must remain engineering-standards-builder for drop-in replacement');
         if (!frontmatter.values.description) errors.push('frontmatter description is missing');
         if (/[<>]/.test(frontmatter.values.description ?? '')) errors.push('frontmatter description must not contain angle brackets');
+        if (frontmatter.values['disable-model-invocation'] !== 'true') errors.push('Builder must remain explicitly user-invoked with disable-model-invocation: true');
       }
-      const completionCount = (skillText.match(/\*\*完成标准\*\*/g) ?? []).length;
-      if (completionCount < 7) errors.push(`SKILL.md must define completion criteria for all seven stages; found ${completionCount}`);
+      for (const requiredConcept of ['Agent Team', 'generated-skill-set.json', '最小原则', 'Skill 边界']) {
+        if (!skillText.includes(requiredConcept)) errors.push(`SKILL.md is missing core contract: ${requiredConcept}`);
+      }
     }
 
     const localMarkdownFiles = files.filter((file) => /\.md(?:\.template)?$/.test(file.name) || file.name === 'SKILL.md.template');
@@ -217,6 +220,15 @@ async function main() {
       for (const file of templateFiles) {
         if (!indexText.includes(file.name)) errors.push(`template is not indexed in templates/README.md: ${file.rel}`);
       }
+    }
+    for (const requiredTemplate of [
+      'templates/project-skill/SKILL.md.template',
+      'templates/project-skill/generated-skill-set.json.template',
+      'templates/project-skill/references/project/03-skill-map.md.template',
+      'templates/project-skill/references/project/04-source-and-template-map.md.template',
+      'templates/domain-skill/SKILL.md.template',
+    ]) {
+      if (!fileByRel.has(requiredTemplate)) errors.push(`required Skill Set template missing: ${requiredTemplate}`);
     }
 
     const fixtureExpectations = files.filter((file) => file.name === 'expected.json' && file.rel.startsWith('examples/'));

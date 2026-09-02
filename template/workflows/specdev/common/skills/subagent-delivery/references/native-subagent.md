@@ -8,6 +8,7 @@ Lead 为每个 Agent 发送一个完整且不可变的 Dispatch Packet。impleme
 
 Packet 对 implementation 明确：
 
+- Tickets Map、当前 Ticket ID、适用于 `ALL`/当前 Ticket 的项目 Skill 路径，以及 Map -> Skill -> Ticket 的固定读取顺序；
 - Ticket、Goal Plan、依赖 Evidence 与 `base_sha`；
 - branch、portable `workspace_ref`、writable/read-only/shared paths 与唯一 owner；
 - 当前策略下允许的 workspace changes 与 implementation commit；
@@ -16,7 +17,7 @@ Packet 对 implementation 明确：
 - 越界、合同冲突、基线漂移、共享路径争用和无法提交时立即停止；
 - 固定返回字段、未验证声明规则与恢复条件。
 
-原生 subagent 从干净上下文开始时，Packet 必须包含完成任务所需的全部相关决定和定位信息；不得依赖 Lead 对话中未显式传入的隐含上下文。
+原生 implementation subagent 从干净上下文开始时，必须先完整读取 Packet 指向的 Tickets Map 和适用项目 Skill，再读取当前 Ticket。Packet 必须包含完成任务所需的全部相关决定和定位信息；不得依赖 Lead 对话中未显式传入的隐含上下文。项目 Agent 指令触发矩阵外的新 Skill 时，subagent 停止写入并返回 Lead 更新 Map。
 
 ## 返回
 

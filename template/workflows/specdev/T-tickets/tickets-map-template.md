@@ -17,6 +17,20 @@ status: draft
 
 引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
 
+### 总体实施背景
+
+记录所有 Ticket 共同依赖、但不属于单个 Ticket 的模块边界、公共契约、关键不变量、集成顺序和不可重复决定。实现者用本节理解全局目标；单 Ticket 的完整实现契约仍由对应 Ticket 拥有。
+
+### 项目 Skill 读取矩阵
+
+每个 Ticket 的 Lead 或 implementation subagent 都必须先完整读取本 Map，再读取下表中适用于 `ALL` 或当前 Ticket ID 的项目 Skill，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先读取该 Skill，并由 Lead 更新本 Map、重新校验后继续。
+
+项目 Skill 使用项目根相对 Path，例如 `<Path>.agents/skills/{skill-name}/SKILL.md</Path>`；不得写机器绝对路径。若没有适用项目 Skill，保留一行 `无（已扫描项目 Skill 入口，未发现适用项）`，并在 Trigger / Scope 中记录实际扫描范围。
+
+| Applies To | Project Skill | Trigger / Scope | Read Timing | Purpose |
+|---|---|---|---|---|
+| ALL | 无（已扫描项目 Skill 入口，未发现适用项） | `<Path>.agents/skills/**/SKILL.md</Path>` 与项目 Agent 指令声明的 Skill 根 | Map 后、Ticket 前 | 明确当前 change 没有额外项目 Skill 读取要求 |
+
 ## 2. 执行清单
 
 | ID | Ticket | 可观察产出 | Blocked By | Depth | Risk | Ready | Owner | Contract IDs | Wave/Gate | Status |
@@ -68,6 +82,7 @@ T-tickets 可以标注候选 Wave、E2E disposition 和行为里程碑。需要�
 
 - Ticket 状态变化后同步执行清单；
 - Ticket ID、路径、依赖或 frontmatter 不一致时，以 Ticket 文件为权威并修复本 Map；
+- 项目 Skill 新增、移动、删除、触发范围变化或实现中发现新的适用 Skill 时，先同步读取矩阵并重新校验；
 - Goal Plan 存在时，Wave、Gate 和 owner 以 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 为编排权威；
 - 依赖、合同覆盖或路径所有权变化后运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`；
 - 内部工件不得使用相对 Markdown 链接。

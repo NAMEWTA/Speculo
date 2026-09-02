@@ -3,6 +3,9 @@
 ## Ticket 硬检查
 
 - [ ] Ticket frontmatter 可解析，`ready: true`，`status: ready`。
+- [ ] Tickets Map 已完整读取，包含总体实施背景和项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 ID 覆盖。
+- [ ] 当前 Ticket 映射的项目 Skill 路径均为真实存在的项目根相对入口文件，Lead 已完整读取；implementation subagent Packet 包含 Map 与同一最低必读集合。
+- [ ] 项目 Agent 指令或当前实现范围没有触发矩阵外的未读项目 Skill；发现新匹配项时由 Lead 更新 Map、重新运行 tickets 校验后再恢复项目写入。
 - [ ] 所有 `blocked_by` Ticket 为 done 且 Evidence 存在。
 - [ ] Spec、ADR、Ticket 与 Goal Plan 无冲突；旧 Goal Plan schema 必须重跑 P-goal-plan。
 - [ ] Goal Plan（若存在）为 `lead-directed`，workspace/integration 策略为 `current/direct-parent` 或 `required/candidate-merge`，Lead 可恢复，implementation/integration 上限不超过 config 与平台能力。
@@ -30,6 +33,7 @@
 - **stale-navigation**：导航过时但契约仍有效；更新导航继续。
 - **local-implementation**：局部实现调整不改变契约；记录后继续。
 - **ticket-invalid**：范围、接口、依赖、验证或路径合同失效；停止并修 Ticket。
+- **map-context-stale**：总体实施背景、项目 Skill 矩阵、Ticket 覆盖或 Skill 路径失效；停止项目写入并返回 T-tickets 更新 Map。
 - **spec-invalid / adr-conflict**：返回对应上游 owner。
 - **checkpoint-drift**：current/来源/父分支/派单 checkpoint 漂移；由 Lead 重建执行记录或 required 模式的 worktree/candidate。
 - **workspace-contract-invalid**：缺少父分支、owner、locator、implementation/source/适用 result 字段或授权；停止并修状态/计划。

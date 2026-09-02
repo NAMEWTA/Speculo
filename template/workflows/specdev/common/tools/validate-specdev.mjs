@@ -324,6 +324,12 @@ function stripPathTag(value) {
   return match ? match[1].trim() : null;
 }
 
+function stripInlineCode(value) {
+  const trimmed = String(value).trim();
+  const match = /^`([^`]+)`$/.exec(trimmed);
+  return match ? match[1].trim() : trimmed;
+}
+
 function normalizeProjectPath(value) {
   const inner = stripPathTag(value) ?? String(value);
   return inner
@@ -1466,7 +1472,120 @@ function validateSpec(path, errors, warnings) {
   return { path, meta, body };
 }
 
-function validateMap(path, errors) {
+function validateProjectSkillMatrix(body, label, errors, repoRoot = null) {
+  const section = sectionBody(body, "### 项目 Skill 读取矩阵");
+  if (!section) return [];
+
+  const lines = section.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const headerIndex = lines.findIndex((line) =>
+    line.startsWith("|") &&
+    line.includes("Applies To") &&
+    line.includes("Project Skill") &&
+    line.includes("Trigger / Scope") &&
+    line.includes("Read Timing") &&
+    line.includes("Purpose"),
+  );
+  if (headerIndex < 0) {
+    errors.push(`${label}: project Skill matrix is missing the required five-column header`);
+    return [];
+  }
+
+  const entries = [];
+  const seenSkillPaths = new Set();
+  for (const line of lines.slice(headerIndex + 1)) {
+    if (!line.startsWith("|")) continue;
+    if (/^\|(?:\s*:?-{3,}:?\s*\|)+$/.test(line)) continue;
+    const cells = line.replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+    if (cells.length !== 5) {
+      errors.push(`${label}: project Skill matrix row must contain five columns: ${line}`);
+      continue;
+    }
+
+    const appliesTo = stripInlineCode(cells[0]).split(/[\s,]+/).filter(Boolean);
+    if (!appliesTo.length || appliesTo.some((value) => value !== "ALL" && !/^T-\d{2,}$/.test(value))) {
+      errors.push(`${label}: invalid project Skill Applies To value '${cells[0]}'`);
+      continue;
+    }
+    if (new Set(appliesTo).size !== appliesTo.length) {
+      errors.push(`${label}: duplicate project Skill Applies To value '${cells[0]}'`);
+    }
+    for (const [column, value] of [
+      ["Trigger / Scope", cells[2]],
+      ["Read Timing", cells[3]],
+      ["Purpose", cells[4]],
+    ]) {
+      if (!value || value === "...") errors.push(`${label}: project Skill ${column} must be explicit`);
+    }
+
+    const skillValue = stripInlineCode(cells[1]);
+    if (skillValue.startsWith("无")) {
+      if (!`${skillValue} ${cells[2]}`.includes("已扫描")) {
+        errors.push(`${label}: no-project-Skill row must record the scanned scope`);
+      }
+      entries.push({ appliesTo: new Set(appliesTo), path: null });
+      continue;
+    }
+
+    const skillPath = stripPathTag(skillValue);
+    if (!skillPath) {
+      errors.push(`${label}: project Skill must be a Path-tagged SKILL.md or an explicit no-Skill row`);
+      continue;
+    }
+    const pathIssue = validatePathValue(skillPath);
+    if (pathIssue) errors.push(`${label}: invalid project Skill Path ${skillPath}: ${pathIssue}`);
+    if (skillPath.includes("{roots.")) {
+      errors.push(`${label}: project Skill Path must be project-relative, not a Speculo root Path: ${skillPath}`);
+    }
+    if (!skillPath.endsWith("/SKILL.md")) {
+      errors.push(`${label}: project Skill Path must end with /SKILL.md: ${skillPath}`);
+    }
+    if (PLACEHOLDER_RE.test(skillPath)) {
+      errors.push(`${label}: project Skill Path contains an unresolved placeholder: ${skillPath}`);
+    }
+    if (seenSkillPaths.has(skillPath)) {
+      errors.push(`${label}: duplicate project Skill Path ${skillPath}; combine its Applies To values`);
+    }
+    seenSkillPaths.add(skillPath);
+
+    if (repoRoot && !pathIssue && !skillPath.includes("{roots.") && !PLACEHOLDER_RE.test(skillPath)) {
+      const resolvedRepo = resolve(repoRoot);
+      const resolvedSkill = resolve(resolvedRepo, normalizeProjectPath(skillPath));
+      const relativeSkill = relative(resolvedRepo, resolvedSkill);
+      if (relativeSkill === "" || relativeSkill.split(sep)[0] === "..") {
+        errors.push(`${label}: project Skill Path escapes the project root: ${skillPath}`);
+      } else if (!isFile(resolvedSkill)) {
+        errors.push(`${label}: project Skill does not exist under --repo: ${skillPath}`);
+      }
+    }
+    entries.push({ appliesTo: new Set(appliesTo), path: skillPath });
+  }
+
+  if (!entries.length) errors.push(`${label}: project Skill matrix contains no data rows`);
+  const allNoSkill = entries.some((entry) => entry.path === null && entry.appliesTo.has("ALL"));
+  if (allNoSkill && entries.some((entry) => entry.path !== null)) {
+    errors.push(`${label}: an ALL no-project-Skill row conflicts with listed project Skills`);
+  }
+  return entries;
+}
+
+function validateProjectSkillCoverage(matrix, ticketIds, label, errors) {
+  if (!matrix.length) return;
+  const knownTicketIds = new Set(ticketIds);
+  for (const entry of matrix) {
+    for (const appliesTo of entry.appliesTo) {
+      if (appliesTo !== "ALL" && !knownTicketIds.has(appliesTo)) {
+        errors.push(`${label}: project Skill matrix references missing Ticket ${appliesTo}`);
+      }
+    }
+  }
+  for (const ticketId of knownTicketIds) {
+    if (!matrix.some((entry) => entry.appliesTo.has("ALL") || entry.appliesTo.has(ticketId))) {
+      errors.push(`${label}: project Skill matrix does not cover ${ticketId}`);
+    }
+  }
+}
+
+function validateMap(path, errors, repoRoot = null) {
   if (!isFile(path)) {
     errors.push("missing Tickets Map");
     return null;
@@ -1476,6 +1595,8 @@ function validateMap(path, errors) {
     errors.push(`${basename(path)}: artifact/schema_version must be tickets-map/${DOMAIN_SCHEMA_VERSION}`);
   }
   for (const heading of [
+    "### 总体实施背景",
+    "### 项目 Skill 读取矩阵",
     "## 2. 执行清单",
     "## 3. 依赖 DAG",
     "## 4. 合同覆盖矩阵",
@@ -1483,7 +1604,8 @@ function validateMap(path, errors) {
   ]) {
     if (!body.includes(heading)) errors.push(`${basename(path)}: missing '${heading}'`);
   }
-  return { path, meta, body };
+  const projectSkillMatrix = validateProjectSkillMatrix(body, basename(path), errors, repoRoot);
+  return { path, meta, body, projectSkillMatrix };
 }
 
 function validateGoalPlan(path, errors) {
@@ -2478,6 +2600,15 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       }
     }
 
+    if (childMap) {
+      validateProjectSkillCoverage(
+        childMap.projectSkillMatrix,
+        childTickets.keys(),
+        basename(childMap.path),
+        memberErrors,
+      );
+    }
+
     for (const [ticketId, artifact] of childTickets) {
       for (const dependency of (artifact.meta.blocked_by ?? []).map(String)) {
         if (!childTickets.has(dependency)) memberErrors.push(`${ticketId}: blocked_by references missing ${dependency}`);
@@ -2739,7 +2870,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   const ticketMode = isDirectory(join(change, "ticket"));
   const mapRequired = new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode);
   const mapPath = join(change, "tickets-map.md");
-  const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors) : null;
+  const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors, repoRoot) : null;
   const goalPlanPath = join(change, "goal-plan.md");
   const goalPlan = isFile(goalPlanPath) || stage === "goal-plan"
     ? validateGoalPlan(goalPlanPath, errors)
@@ -2798,6 +2929,15 @@ function validateChange(change, stage = null, repoRoot = null) {
         }
       }
     }
+  }
+
+  if (ticketsMap) {
+    validateProjectSkillCoverage(
+      ticketsMap.projectSkillMatrix,
+      tickets.keys(),
+      basename(ticketsMap.path),
+      errors,
+    );
   }
 
   if (stage === "implement" && ticketMode && changeStatus) {

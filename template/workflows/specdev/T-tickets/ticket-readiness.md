@@ -5,6 +5,9 @@
 ## 通用门禁
 
 - [ ] frontmatter 字段完整，Ticket ID、文件名和 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 一致。
+- [ ] Tickets Map 包含总体实施背景与项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 Ticket ID 覆盖。
+- [ ] 矩阵中的项目 Skill 均使用真实存在的项目根相对 `<Path>.../SKILL.md</Path>`，并声明 Trigger / Scope、读取时机和用途；没有适用项时记录实际扫描范围而不生成虚假路径。
+- [ ] Ticket 明确要求 Lead 与 implementation subagent 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
 - [ ] 可观察产出单一、明确且可验证。
 - [ ] 来源和验收合同映射存在。
 - [ ] IN、REUSE、OUT 无冲突。

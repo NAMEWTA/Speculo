@@ -19,7 +19,7 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 
 ### Ticket 模式（默认）
 
-读取 Ready Ticket、Tickets Map、可选子 Goal Plan 和可选父 Implementation Plan。存在父 Plan 时使用其 Lead、workspace/integration 策略和全局门，即使子 Goal Plan 不存在也可以执行；两者都存在时必须策略一致。没有父 Plan 时沿用子 Goal Plan；两者都不存在时，当前主会话作为该 Ticket 的 Lead，并按 Direct Spec 规则执行，不推断 worktree 策略。`required` 模式每个 Ticket 建立独立 worktree；`current` 模式所有受同一计划约束的 Ticket 严格串行，使用当前分支和当前 workspace。
+先读取 Tickets Map 的总体实施背景与项目 Skill 读取矩阵，再读取适用于 `ALL` 或当前 Ticket 的项目 Skill，随后读取 Ready Ticket、可选子 Goal Plan 和可选父 Implementation Plan。存在父 Plan 时使用其 Lead、workspace/integration 策略和全局门，即使子 Goal Plan 不存在也可以执行；两者都存在时必须策略一致。没有父 Plan 时沿用子 Goal Plan；两者都不存在时，当前主会话作为该 Ticket 的 Lead，并按 Direct Spec 规则执行，不推断 worktree 策略。`required` 模式每个 Ticket 建立独立 worktree；`current` 模式所有受同一计划约束的 Ticket 严格串行，使用当前分支和当前 workspace。
 
 ### Direct Spec 模式
 
@@ -32,7 +32,14 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 - 当前 Spec：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - 项目配置：`<Path>{roots.state}/specdev/config.json</Path>`
 
-Ticket 模式还必须读取当前 Ticket `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`；存在 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 时必须读取。若当前 change 被父 Implementation Map 声明，还必须读取该父 change 的 Map/Plan。Direct Spec 模式必须读取用户对轻量执行合同和直接实现的明确批准。
+Ticket 模式必须按以下顺序读取：
+
+1. `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 的总体实施背景和完整项目 Skill 读取矩阵；
+2. 矩阵中适用于 `ALL` 或当前 Ticket ID 的全部项目 Skill；
+3. 当前 Ticket `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`；
+4. 存在的 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`，以及父 Implementation Map 声明当前 change 时的父 Map/Plan。
+
+矩阵是发布时确认的最低必读集合，不是 allowlist。项目 Agent 指令或实际实现范围触发新的项目 Skill 时，先读取该 Skill、停止项目写入，由 Lead 更新 Tickets Map 并重新运行 tickets 校验后恢复。Direct Spec 模式必须读取用户对轻量执行合同和直接实现的明确批准。
 
 按存在情况读取：
 
@@ -55,7 +62,7 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 
 Ticket 模式：
 
-1. 验证 Ready、依赖 Evidence、Spec/ADR/Goal Plan、一致性、路径 owner 和验证接缝；
+1. 验证 Ready、依赖 Evidence、Spec/ADR/Goal Plan、一致性、路径 owner 和验证接缝；确认 Tickets Map 的总体实施背景、项目 Skill 矩阵、当前 Ticket 覆盖与实际文件均有效，并完成规定读取顺序；
 2. 确认子 Goal Plan schema v6（若存在）与父 Implementation Plan schema v1（若存在）、唯一 Lead、workspace 策略、动态 implementation/integration 上限与授权；
 3. `required` 模式以 `purpose=ticket, operation=create|restore` 调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；`current` 模式读取当前 branch、HEAD、dirty 状态并确认没有其他 Ticket implementation writer；
 4. Lead 把 Ticket 设为 `in_progress`；`required` 模式将 change worktree 记录设为 `active`，`current` 模式建立 current workspace 执行记录；
@@ -72,7 +79,7 @@ Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风
 - implementation subagent 同时取适用子 Goal Plan、父 Implementation Plan、config 和平台能力的共同上限；current 模式保持单 writer 串行安全不变量；Lead 不计入；
 - 父实现编排存在时，派单与返回都使用 `<member-change>::<ticket-id>`，并占用父 Plan 的 task/serialization/integration slot；
 - review/research/test-observation agent 不设置 SpecDev 数字上限，但保持只读；
-- implementation Packet 按策略绑定唯一 Ticket workspace 或 current workspace、checkpoint、路径、非 E2E 检查与 commit 返回；
+- implementation Packet 按策略绑定唯一 Ticket workspace 或 current workspace、checkpoint、Tickets Map、当前 Ticket 的项目 Skill 最低必读集合、路径、非 E2E 检查与 commit 返回；
 - subagent 不写 SpecDev 工件、Evidence、父分支或 E2E 结果；
 - Lead 自行实现时仍遵循相同 worktree、commit 与返回事实合同。
 
@@ -171,6 +178,7 @@ Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace loc
 - Ticket 模式按策略完成 current workspace/direct-parent 或 worktree/implementation commit/candidate gate；Direct Spec 的轻量合同、current workspace checkpoint、双轴审查和最终验证完整；
 - current Ticket 的适用 E2E 由 Lead 在 current workspace 运行；required Ticket 的适用 E2E 由 Lead 在 parent-candidate 运行；Direct Spec 适用 E2E 由 Lead 在 current workspace 运行；
 - Lead 独立核对并写全部 SpecDev 工件；
+- Lead 与任何 implementation subagent 都已先读 Tickets Map、再读当前 Ticket 适用的项目 Skill；实现中发现的新匹配 Skill 已同步回 Map 并通过校验；
 - 重复失败或 integration attempt 上限只触发 Lead 复盘；没有 Evidence 中的原因、改变和 owner 决定，不得重置 attempts 或重复派发；
 - current Ticket 父分支只推进到通过的 direct-parent 验证 commit；required Ticket 父分支只推进到通过的 candidate；两者 Ticket Done 都必须与实际 Git 一致；Direct Spec 的完成状态与 current workspace 最终 checkpoint 一致；
 - 实际路径、验证、偏差和状态可由 Evidence 恢复；

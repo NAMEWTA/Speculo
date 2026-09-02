@@ -1,0 +1,19 @@
+# Skill 地图
+
+`engineering-standards` 是规范权威。只有当前任务命中下表中的独立触发条件时，才读取对应领域 Skill。
+
+{{SKILL_MAP}}
+
+每个领域 Skill 记录：
+
+```text
+Name
+Role
+Triggers
+Scope
+Canonical evidence
+Exclusions
+Relationship to engineering-standards
+```
+
+清单外的项目 Skill 不归 Engineering Standards Builder 所有，不得因 refresh 被修改或删除。

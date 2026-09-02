@@ -11,11 +11,13 @@
 
 {{EVIDENCE_SUMMARY}}
 
+证据使用项目根相对路径。扫描结果只作基线，重要结论必须由源码、配置、CI、测试、消费者或已声明模板复核。
+
 ## 工具链与质量门禁
 
 {{QUALITY_GATES}}
 
-每个命令必须包含 scope、working directory、来源和当前状态（active/planned）。
+每个命令必须包含 scope、working directory、来源和当前状态（active/planned）。`planned` 不能作为已通过门禁。
 
 ## 排除与冻结区域
 

@@ -83,27 +83,43 @@ function assertFixture(inventory, expected, fixtureName) {
 
 async function writeGeneratedFixture(projectRoot) {
   await mkdir(path.join(projectRoot, 'src'), { recursive: true });
+  await mkdir(path.join(projectRoot, 'docs', 'fm'), { recursive: true });
   await writeFile(path.join(projectRoot, 'package.json'), `${JSON.stringify({
     name: 'generated-validation-fixture', private: true,
     dependencies: { vue: '^3.5.0' }, devDependencies: { typescript: '^5.9.0', vite: '^7.0.0' },
   }, null, 2)}\n`);
   await writeFile(path.join(projectRoot, 'tsconfig.json'), '{"compilerOptions":{"strict":true},"include":["src"]}\n');
   await writeFile(path.join(projectRoot, 'src', 'App.vue'), '<script setup lang="ts">const value = 1</script>\n<template><main>{{ value }}</main></template>\n');
+  await writeFile(path.join(projectRoot, 'docs', 'fm', 'component.vue.ftl'), '<template><main>${title}</main></template>\n');
 
   const canonical = path.join(projectRoot, '.agents', 'skills', 'engineering-standards');
+  const domain = path.join(projectRoot, '.agents', 'skills', 'generated-vue-development');
   await mkdir(path.join(canonical, 'references', 'project'), { recursive: true });
   await mkdir(path.join(canonical, 'references', 'rules'), { recursive: true });
   await mkdir(path.join(canonical, 'references', 'typescript', 'frameworks'), { recursive: true });
-  await writeFile(path.join(canonical, 'SKILL.md'), `---\nname: engineering-standards\ndescription: Generated fixture standards.\n---\n\n# Engineering Standards\n\nRead [profile](references/project/00-project-profile.md), [modules](references/project/01-module-map.md), [decisions](references/project/02-decisions-and-exceptions.md), [review](references/project/review-checklist.md), [rules](references/rules/core.md), [TypeScript](references/typescript/language.md), and [Vue](references/typescript/frameworks/vue.md).\n`);
+  await mkdir(path.join(domain, 'references'), { recursive: true });
+  await writeFile(path.join(canonical, 'generated-skill-set.json'), `${JSON.stringify({
+    schema_version: 1,
+    generator: 'engineering-standards-builder',
+    skills: [
+      { name: 'engineering-standards', path: '.agents/skills/engineering-standards', role: 'router' },
+      { name: 'generated-vue-development', path: '.agents/skills/generated-vue-development', role: 'domain' },
+    ],
+  }, null, 2)}\n`);
+  await writeFile(path.join(canonical, 'SKILL.md'), `---\nname: engineering-standards\ndescription: Generated fixture standards.\n---\n\n# Engineering Standards\n\nRead [profile](references/project/00-project-profile.md), [modules](references/project/01-module-map.md), [decisions](references/project/02-decisions-and-exceptions.md), [skills](references/project/03-skill-map.md), [sources](references/project/04-source-and-template-map.md), [review](references/project/review-checklist.md), [rules](references/rules/core.md), [TypeScript](references/typescript/language.md), and [Vue](references/typescript/frameworks/vue.md). Route Vue work to [generated-vue-development](../generated-vue-development/SKILL.md).\n`);
   await writeFile(path.join(canonical, 'references', 'project', '00-project-profile.md'), '# Project Profile\n\nVue fixture.\n');
   await writeFile(path.join(canonical, 'references', 'project', '01-module-map.md'), '# Module Map\n\n- module:. uses TypeScript and Vue.\n');
   await writeFile(path.join(canonical, 'references', 'project', '02-decisions-and-exceptions.md'), '# Decisions and Exceptions\n\nNo exceptions.\n');
+  await writeFile(path.join(canonical, 'references', 'project', '03-skill-map.md'), '# Skill Map\n\n- generated-vue-development: Vue implementation.\n');
+  await writeFile(path.join(canonical, 'references', 'project', '04-source-and-template-map.md'), '# Source and Template Map\n\n- [Vue implementation](../../../../../src/App.vue)\n- [Component template](../../../../../docs/fm/component.vue.ftl)\n');
   await writeFile(path.join(canonical, 'references', 'project', 'review-checklist.md'), '# Review Checklist\n\n- Verify scope.\n');
   const rule = `# Core Rules\n\n### CORE-001 Validated boundary\nScope: repository\nLevel: MUST\nSource: repository-fact\nApplies when: external input enters the application.\nRule: Validate external input before domain use.\nRationale: Preserve trusted internal models.\nVerification: Review boundary tests.\nException: Recorded project exception only.\n`;
   await writeFile(path.join(canonical, 'references', 'rules', 'core.md'), rule);
   await writeFile(path.join(canonical, 'references', 'typescript', 'language.md'), rule.replace('CORE-001', 'TS-001'));
   await writeFile(path.join(canonical, 'references', 'typescript', 'frameworks', 'vue.md'), rule.replace('CORE-001', 'VUE-001'));
-  return canonical;
+  await writeFile(path.join(domain, 'SKILL.md'), '---\nname: generated-vue-development\ndescription: Implement Vue features in the generated fixture.\n---\n\n# Vue Development\n\nRead `../engineering-standards/SKILL.md`, then inspect [the mature component](../../../src/App.vue) and [the project template](../../../docs/fm/component.vue.ftl).\n');
+  await writeFile(path.join(domain, 'references', 'workflow.md'), '# Workflow\n\nUse the project template and verify the component.\n');
+  return { canonical, domain };
 }
 
 async function main() {
@@ -174,9 +190,39 @@ async function main() {
 
     const generatedTemp = await mkdtemp(path.join(os.tmpdir(), 'standards-builder-generated-'));
     tempRoots.push(generatedTemp);
-    const canonical = await writeGeneratedFixture(generatedTemp);
+    const { canonical } = await writeGeneratedFixture(generatedTemp);
     const valid = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
-    assert(valid.status === 0, `valid generated Skill was rejected: ${(valid.stderr || valid.stdout).trim()}`);
+    assert(valid.status === 0, `valid generated Skill Set was rejected: ${(valid.stderr || valid.stdout).trim()}`);
+
+    const unowned = path.join(generatedTemp, '.agents', 'skills', 'user-maintained-skill');
+    await mkdir(unowned, { recursive: true });
+    await writeFile(path.join(unowned, 'SKILL.md'), '---\nname: user-maintained-skill\ndescription: User-owned fixture skill.\n---\n\n# User Skill\n');
+    const withUnowned = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
+    assert(withUnowned.status === 0, 'validator must ignore a Skill outside the Builder ownership manifest');
+
+    const sourceMap = path.join(canonical, 'references', 'project', '04-source-and-template-map.md');
+    const sourceMapText = await readFile(sourceMap, 'utf8');
+    await writeFile(sourceMap, `${sourceMapText}\n- [Missing project source](../../../../../src/missing.ts)\n`);
+    const brokenSource = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
+    assert(brokenSource.status !== 0, 'validator must reject a missing project source link');
+    await writeFile(sourceMap, sourceMapText);
+
+    const ownershipPath = path.join(canonical, 'generated-skill-set.json');
+    const ownershipText = await readFile(ownershipPath, 'utf8');
+    const badOwnership = JSON.parse(ownershipText);
+    badOwnership.skills[1].path = '.agents/skills/../outside';
+    await writeFile(ownershipPath, `${JSON.stringify(badOwnership, null, 2)}\n`);
+    const escapingOwnership = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
+    assert(escapingOwnership.status !== 0, 'validator must reject an invalid owned Skill path');
+    await writeFile(ownershipPath, ownershipText);
+
+    const routerPath = path.join(canonical, 'SKILL.md');
+    const routerText = await readFile(routerPath, 'utf8');
+    await writeFile(routerPath, routerText.replace('[generated-vue-development](../generated-vue-development/SKILL.md)', '`generated-vue-development`'));
+    const missingRoute = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
+    assert(missingRoute.status !== 0, 'validator must reject a domain Skill that is not linked by the router');
+    await writeFile(routerPath, routerText);
+
     await writeFile(path.join(canonical, 'references', 'typescript', 'frameworks', 'react.md'), '# React\n');
     const wrongFramework = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
     assert(wrongFramework.status !== 0, 'strict validator must reject an unselected React rule in a Vue-only project');
@@ -186,7 +232,7 @@ async function main() {
     await writeFile(path.join(wrapper, 'SKILL.md'), '---\nname: typescript-standards\ndescription: alias\n---\n\nRoute to engineering-standards.\nSecond body line.\n');
     const badWrapper = runNode(generatedValidator, ['--root', generatedTemp, '--strict']);
     assert(badWrapper.status !== 0, 'validator must reject a multi-line compatibility wrapper');
-    process.stdout.write('self-test: generated Skill validator OK\n');
+    process.stdout.write('self-test: generated Skill Set validator OK\n');
 
     const manifest = runNode(manifestScript, ['--root', args.root, '--check']);
     assert(manifest.status === 0, `manifest check failed: ${(manifest.stderr || manifest.stdout).trim()}`);
