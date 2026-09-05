@@ -9,6 +9,7 @@ import { initSpeculo } from "../src/index.js";
 import { RefreshBlockedError } from "../src/refresh.js";
 import { pathExists } from "../src/utils.js";
 import { discoverWorkflowCatalog, selectAllFromCatalog } from "../src/workflows.js";
+import { doctorSpeculo } from "../src/doctor.js";
 
 const packageRoot = process.cwd();
 const isWindows = process.platform === "win32";
@@ -30,7 +31,7 @@ async function hash(path: string): Promise<string> {
   return createHash("sha256").update(await readFile(path)).digest("hex");
 }
 
-async function packageFixture(version = "0.7.7"): Promise<string> {
+async function packageFixture(version = "1.0.0"): Promise<string> {
   const root = await tempProject("speculo-package-");
   await cp(join(packageRoot, "template"), join(root, "template"), { recursive: true });
   await writeJson(join(root, "package.json"), { version });
@@ -55,9 +56,9 @@ describe("Speculo init refresh", () => {
       const root = join(target, "speculo");
       assert.equal(result.mode, "init");
       assert.equal(result.refresh.status, "initialized");
-      assert.equal((await readJson(join(root, ".speculo", "install.json"))).schema_version, 2);
+      assert.equal((await readJson(join(root, ".speculo", "install.json"))).schema_version, 3);
       const managed = await readJson(join(root, ".speculo", "managed.json"));
-      assert.equal(managed.schema_version, 1);
+      assert.equal(managed.schema_version, 2);
       assert.ok(managed.files.some((entry: any) => entry.path === "commands/status.md" && entry.owner === "core/commands"));
       assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/SKILL.md" && entry.owner === "core/skills"));
       assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/scripts/git-history-squash.mjs" && entry.owner === "core/skills"));
@@ -147,40 +148,20 @@ describe("Speculo init refresh", () => {
     }
   });
 
-  it("bootstraps v0.7 without baselines and explicitly migrates SpecDev config", async () => {
+  it("blocks 0.x installations without reading or migrating state", async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const root = join(target, "speculo");
-      await rm(join(root, ".speculo", "baselines"), { recursive: true, force: true });
       await writeJson(join(root, ".speculo", "install.json"), { schema_version: 1, package_version: "0.7.0", workflows: ["specdev"] });
-      await writeJson(join(root, ".speculo", "specdev", "config.json"), {
-        schema_version: 4,
-        interaction_language: "en-US",
-        artifact_language: "zh-CN",
-        git: { auto_commit: true, default_branch: "develop", worktree_for_parallel: true },
-        execution: { max_parallel: 7, deep_ticket_human_approval: false, shared_path_owner: "lead" },
-        verification: { test: "pnpm test" },
-        planning: { default_depth: "deep" },
-      });
-
-      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const config = await readJson(join(root, ".speculo", "specdev", "config.json"));
-      assert.equal(config.schema_version, 5);
-      assert.equal(config.interaction_language, "en-US");
-      assert.equal(config.git.default_branch, "develop");
-      assert.equal(config.git.auto_commit, undefined);
-      assert.equal(config.execution.max_implementation_agents, 7);
-      assert.equal(config.execution.max_parallel, undefined);
-      assert.equal(result.refresh.sourceVersion, "0.7.0");
-      assert.equal(result.refresh.backupPath, "speculo/.speculo/back");
-      assert.equal((await readJson(join(root, ".speculo", "install.json"))).schema_version, 2);
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
+      assert.equal((await readJson(join(root, ".speculo", "install.json"))).package_version, "0.7.0");
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("migrates registered structured state and backs up only changed originals", async () => {
+  it("blocks legacy structured state before replacement", async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
@@ -210,19 +191,14 @@ describe("Speculo init refresh", () => {
       });
       await writeFile(join(state, "changes", change, "goal-plan.md"), "---\nschema_version: 5\nimplementation_agent_limit: 3\n---\n\n# Plan\n", "utf8");
 
-      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      assert.equal((await readJson(join(state, "status.json"))).schema_version, 5);
-      assert.equal((await readJson(join(state, "changes", change, ".status.json"))).schema_version, 6);
-      assert.match(await readFile(join(state, "changes", change, "goal-plan.md"), "utf8"), /integration_attempt_limit: 3/);
-      assert.equal(result.refresh.structuredUpgrades, 3);
-      const manifest = await readJson(join(root, ".speculo", "back", "manifest.json"));
-      assert.equal(manifest.files.length, 3);
+      await writeJson(join(root, ".speculo", "install.json"), { schema_version: 2, package_version: "0.8.13", workflows: ["specdev"] });
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("normalizes legacy fields out of an existing SpecDev global status v5 index", async () => {
+  it("blocks legacy SpecDev status instead of normalizing it", async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
@@ -256,19 +232,8 @@ describe("Speculo init refresh", () => {
         worktrees: [],
       });
 
-      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      assert.deepEqual(await readJson(join(state, "status.json")), {
-        schema_version: 5,
-        workflow: "specdev",
-        active: [{ change }],
-        archived: [],
-      });
-      const changeStatus = await readJson(join(state, "changes", change, ".status.json"));
-      assert.equal(changeStatus.schema_version, 6);
-      assert.equal(changeStatus.current_work, "specdev/wayfinder");
-      assert.deepEqual(changeStatus.works_run, ["specdev/triage"]);
-      assert.deepEqual(changeStatus.claimed_investigations, [{ id: "INV-01", owner: "session-a" }]);
-      assert.equal(result.refresh.structuredUpgrades, 2);
+      await writeJson(join(root, ".speculo", "install.json"), { schema_version: 2, package_version: "0.8.13", workflows: ["specdev"] });
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -415,45 +380,62 @@ describe("Speculo init refresh", () => {
       await writeFile(knowledge, content);
       const change = "2026-08-30-preserve-learning";
       const changeStatus = {
-        schema_version: 1,
+        schema_version: 2,
         artifact: "learning-change-status",
-        change,
+        change_id: change,
+        kind: "learning",
         domain: "speculo",
         domain_type: "project",
-        topic: "Preserve Learning",
-        change_status: "active",
+        topic_id: "preserve-learning",
+        parent_change: null,
+        root_change: change,
+        locator: `changes/${change}`,
+        lifecycle: "active",
         phase: "teaching",
-        current_work: "learning/eli5",
+        current_work: "learning/lesson",
         works_run: ["learning/assess-and-plan"],
         created_at: "2026-08-30T00:00:00.000Z",
         updated_at: "2026-08-30T00:00:00.000Z",
-        completed_at: null,
+        closed_at: null,
         archived_at: null,
+        closure_reason: null,
         archive_path: null,
+        homework: { status: "none", latest_id: null, submitted_at: null },
         mastery: {
+          overall: "unverified",
           immediate: "not_attempted",
-          retention: "not_attempted",
-          score: null,
-          critical_objectives_passed: false,
-          transfer_passed: false,
+          retention: "not_scheduled",
+          critical_objectives: "not_attempted",
+          transfer: "not_attempted",
           blocking_misconceptions: [],
           evidence: [],
           next_review_at: null,
         },
+        children: [],
         blockers: [],
       };
       await writeJson(join(root, ".speculo", "learning", "changes", change, ".status.json"), changeStatus);
       await writeJson(join(root, ".speculo", "learning", "status.json"), {
-        schema_version: 1,
+        schema_version: 2,
         workflow: "learning",
         active: [{
-          change,
+          change_id: change,
+          kind: "learning",
           domain: changeStatus.domain,
-          topic: changeStatus.topic,
+          topic_id: changeStatus.topic_id,
+          locator: `changes/${change}`,
+          parent_change: null,
+          root_change: change,
           current_work: changeStatus.current_work,
           works_run: changeStatus.works_run,
+          updated_at: changeStatus.updated_at,
         }],
         archived: [],
+      });
+      await writeJson(join(root, ".speculo", "learning", "locations.json"), {
+        schema_version: 2,
+        workflow: "learning",
+        entries: [{ change_id: change, locator: `changes/${change}`, parent_change: null, root_change: change, content_hash: null, previous: [] }],
       });
 
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
@@ -490,7 +472,7 @@ describe("Speculo init refresh", () => {
 
       await assert.rejects(
         initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } }),
-        (error) => expectBlocked(error, "structured-state-conflict"),
+        (error) => expectBlocked(error, "learning-reset-required"),
       );
       assert.equal(await readFile(sentinel, "utf8"), "active stays\n");
       assert.deepEqual(await residue(target), []);
@@ -506,15 +488,27 @@ describe("CLI surface", () => {
     assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["learning", "ops", "person", "specdev"]);
   });
 
-  it("exposes only init and version", () => {
+  it("exposes init, version, and read-only doctor", () => {
     const cli = join(packageRoot, "dist", "src", "cli.js");
     const help = spawnSync(process.execPath, [cli, "--help"], { encoding: "utf8" });
     assert.equal(help.status, 0);
     assert.match(help.stdout, /speculo \[init\] \[target\]/);
     assert.match(help.stdout, /speculo version/);
+    assert.match(help.stdout, /speculo doctor/);
     assert.doesNotMatch(help.stdout, /migrate-runtime-state|mirror-skills|update\s+/);
     const removed = spawnSync(process.execPath, [cli, "update"], { encoding: "utf8" });
     assert.equal(removed.status, 1);
     assert.match(removed.stderr, /has been removed/);
+  });
+
+  it("reports a healthy initialized 1.0 runtime", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const result = await doctorSpeculo(target);
+      assert.equal(result.healthy, true, JSON.stringify(result.checks));
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
   });
 });

@@ -2,22 +2,23 @@
 
 ## Project Identity
 
-- Package: `@namewta/speculo` v0.8.0
+- Package: `@namewta/speculo` v1.0.0
 - Repository: `github.com/NAMEWTA/Speculo`
 - Type: npm CLI tool (TypeScript, ESM)
-- Runtime: Node.js 22.22.3, pnpm@11.1.3
+- Runtime: Node.js >=22.22.3 <25, pnpm@11.1.3
 - License: MIT
 - Binary: `speculo` → `dist/src/cli.js`
 
 ## Directory Map
 
 ```
-src/                 CLI source (cli.ts, index.ts, migrations.ts, version.ts, workflows.ts, utils.ts)
+src/                 CLI source (cli.ts, index.ts, kernel.ts, doctor.ts, refresh.ts, structured.ts, version.ts, workflows.ts, utils.ts)
 template/             Shipped asset bundle
-  .speculo/           workspace.json + README.md (runtime state contract)
+  .speculo/           workspace.json + kernel.json + README.md (runtime state contract)
   commands/           7 command definitions
   skills/             9 skill directories
   workflows/          workflow packages with INDEX.md + work entries
+  workflows/*/manifest.json  provider-neutral stage graph and context budgets
   canonical/          Single-file pure-Markdown distribution format for AI platforms
 test/                 CLI test suite
 scripts/              Build, validation, verification tooling
@@ -38,9 +39,9 @@ scripts/              Build, validation, verification tooling
 
 ## Architecture
 
-- **cli.ts** — Thin command router exposing only init (also the bare command) and version.
+- **cli.ts** — Thin command router exposing init (also the bare command), version, and read-only doctor.
 - **index.ts** — `initSpeculo()` locks the target, builds and validates a staged installation, detects concurrent drift, then atomically replaces `<target>/speculo/` with rollback.
-- **refresh.ts / config.ts / structured.ts / manifest.ts** — Apply ownership contracts, preserve opaque runtime bytes, reconcile baseline/local/incoming configuration, migrate registered structured state, and write install/managed manifests.
+- **refresh.ts / config.ts / structured.ts / manifest.ts** — Apply ownership contracts, preserve opaque runtime bytes, reconcile baseline/local/incoming configuration, validate registered structured state, and write install/managed manifests.
 - **workflows.ts** — Discover, scan, prompt workflow selection. Parses `INDEX.md`. Non-TTY auto-selects all.
 - **utils.ts** — Single `pathExists()` helper.
 
@@ -49,11 +50,12 @@ scripts/              Build, validation, verification tooling
 ```
 speculo [init] [target]                 Initialize/refresh core + selected workflows
 speculo version                          Show local version and check npm for updates
+speculo doctor [target]                  Read-only installation and recovery-point diagnostics
 ```
 
 - Bare `speculo` is an alias for `speculo init`; `init` accepts at most one target path and shows the workflow picker in a TTY. Non-TTY installs all template workflows.
-- Every refresh replaces managed commands, skills, workspace/install metadata, and selected workflow static assets. Opaque runtime data is copied byte-for-byte; registered configuration and structured state use deterministic reconciliation/migration.
-- `.speculo/install.json` schema v2 points to `.speculo/managed.json`; `.speculo/baselines/` stores incoming config defaults. Only config/structured originals changed by deletion or migration are retained under `.speculo/back/`.
+- Every refresh replaces managed commands, skills, workspace/install metadata, and selected workflow static assets. Opaque runtime data is copied byte-for-byte; registered configuration and structured state must already satisfy the 1.0 contracts.
+- `.speculo/install.json` schema v3 points to `.speculo/managed.json` schema v2; `.speculo/baselines/` stores incoming config defaults. Targeted backups retain only configuration or structured files changed during an explicitly supported 1.0 refresh.
 - Invalid structured data, state symlinks, schema conflicts, an active lock, or concurrent drift block before replacement and exit `2`; no new pending marker is created.
 - Current supported workflows not selected in the refresh remain untouched. Unknown/removed static commands, skills, and workflow packages are removed; runtime evidence remains active when preserved, while conflicts stop before replacement.
 
@@ -62,7 +64,7 @@ speculo version                          Show local version and check npm for up
 - **template/.speculo/workspace.json** — 6 root aliases: config, speculo, state, commands, skills, workflows
 - **template/commands/** — archive-and-consolidate, docs-sync, git-repository-audit, handoff, retro, status
 - **template/skills/** — archive-and-consolidate, docs-sync, github-npm-ops, optimize-codex-config, source-code-zip, speculo-retro, upstream-fork-sync, engineering-standards-builder, writing-great-skills
-- **template/workflows/** — learning（7 works），specdev（15 works），ops（4 works: A-archive-and-learn, E-execute-and-stabilize, I-intake-and-assess, P-plan-and-approve），person（2 works）
+- **template/workflows/** — learning（7 works: I-init-setup, A-assess-and-plan, L-lesson, H-homework, R-review, C-consolidate, A-archive），specdev（15 works），ops（4 works），person（2 works）
 - **template/canonical/** — pure-Markdown 单文件分发格式（README.md + canonical-specdev-* 等）；由 `scripts/generate-specdev-canonical.mjs` 从源依赖闭包重建
 
 ## Workflow Package Contract
@@ -101,7 +103,7 @@ Five skills in `.agents/skills/` for maintaining Speculo itself:
 
 - **Do not** put `docs-sync.json` in workflow `_state/` template — it's a lazy command sidecar.
 - **Do not** delete initialized workflow configuration, permanent knowledge, sidecars, or command state during a compatible refresh.
-- **Do not** mutate registered structured state or config from `init` without an explicit migrator and baseline reconciliation.
+- **Do not** mutate registered structured state or config from `init`; 1.0 validates existing state and blocks incompatible schemas.
 - **Do not** modify `.speculo/back/` from workflows or Agent commands; it is CLI-owned targeted rollback evidence.
 - **Do not** replace an existing installation until staging the complete next installation succeeds.
 - **Do not** retain legacy workflow directories (such as `workflows/dev` or `workflows/doc`) in a refreshed installation.

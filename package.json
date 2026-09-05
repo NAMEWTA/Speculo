@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "0.8.13",
+  "version": "1.0.0",
   "description": "Workflow-packaged AI collaboration assets with state-safe refresh tooling.",
   "type": "module",
   "bin": {
@@ -16,6 +16,7 @@
     "validate-assets": "node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
+    "eval:scenarios": "node scripts/evaluate-scenarios.mjs",
     "prepack": "pnpm build",
     "prepublishOnly": "pnpm test && pnpm validate-assets"
   },
@@ -49,7 +50,7 @@
   },
   "packageManager": "pnpm@11.1.3",
   "engines": {
-    "node": "22.22.3"
+    "node": ">=22.22.3 <25"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

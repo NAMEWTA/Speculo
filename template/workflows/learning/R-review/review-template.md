@@ -1,12 +1,19 @@
-# Review Plan
+# 延迟复习：<Lesson 或 topic>
 
-| Knowledge ID | 上次验证 | 本次到期 | 模式 | 覆盖目标 | 新迁移情境 |
-| --- | --- | --- | --- | --- | --- |
+| 字段 | 值 |
+| --- | --- |
+| Review ID | RV-<id> |
+| 引用 Change/Lesson | `<stable id>` |
+| 上次证据 | `<timestamp and path>` |
+| 本次发生时间 | `<timestamp>` |
+| 最短间隔是否满足 | `<yes/no>` |
 
-## 时间门结论
+## 新回忆与迁移题
 
-## 测验工件
+## 学习者原始回答
 
-## 复习后状态
+## 评审与证据
+
+## retention 结论
 
 ## 下一复习日期

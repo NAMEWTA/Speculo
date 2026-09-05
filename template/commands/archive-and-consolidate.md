@@ -3,58 +3,31 @@ id: archive-and-consolidate
 type: command
 name: Archive and Consolidate
 description: >
-  归档已完成 change，从归档中提取知识合并到 workflow 声明的知识 store（如 adr/、context/），
-  并清理过时/重复知识。默认 dry-run，需用户确认后执行。
-keywords: [archive, consolidate, knowledge, cleanup, adr, 归档, 知识合并, 清理, 收尾]
+  统一入口：Learning 先做用户确认的主题整合或冷归档，其他 workflow 继续使用各自的归档合同。
+keywords: [archive, consolidate, learning, topic, cold-archive, 归档, 综合]
 ---
 
 # Archive and Consolidate 命令
 
 ## 报告
 
-统一写入：`<Path>{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md</Path>`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
+统一写入：`<Path>{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md</Path>`。报告记录 workflow、source/root IDs、dry-run 清单、用户确认、relocation manifest、synthesis revision 或 archive locator 和验证结果。
 
-报告必须记录：`mode`（dry-run 或 executed）、选中的 workflow、归档计划、合并计划、清理候选、用户确认状态和最终结果。
+## Learning 路由
 
-## Ops 路由
+目标 workflow 为 Learning 时，读取 `<Path>{roots.workflows}/learning/README.md</Path>`，由用户明确选择一个 Work：
 
-目标 workflow 为 Ops 时，不调用通用 archive skill；该 skill 的机械路径合同只支持 workflow 根级 `changes/` 与 `archive/`，不能处理 Ops 的 project scope。
+- `C-consolidate`：生成 source manifest 和 dry-run；确认后调用 `<Path>{roots.workflows}/learning/common/tools/relocate-learning.mjs</Path>` 物理移动 active/closed Change 到父 Change 的 `children/`，再生成带 provenance 的 synthesis。未确认时不得移动或更新 context。
+- `A-archive`：只处理用户 close/confirm 的 root Change 树，以最新源更新时间决定 `archive/YYYY-MM/`，不要求 Homework、R 或 mastery，也不写 context。
 
-- `archive-single`：读取 `<Path>{roots.workflows}/ops/README.md</Path>` 和 `<Path>{roots.workflows}/ops/A-archive-and-learn/A-archive-and-learn.md</Path>`，把用户选择的完整 `{scope, project_id, change}` 交给 A 执行复盘、promotion dry-run、批量确认和 scope-aware 事务关闭。Command 报告只记录选择、A 返回的 manifest/approval/archive locator 和验证结果，不成为知识 writer。
-- `archive-batch`：只读列出全部 completed Ops tuples 和各自复盘/提升状态，生成 command 报告后停止。知识合并与归档必须逐 change 进入 A 并分别批准，不能用一次跨项目确认替代多个精确 promotion manifest。
+不得把 Learning 交给共享的根级机械归档 skill；该 skill 不能理解递归 locator、parent lock 或单文件 Homework 证据。已冷归档树保持只读，需先由用户显式恢复才能作为 C 的可移动 source。
 
-以下通用模式只适用于仍采用 workflow 根级 changes/archive 合同的其他 workflows。
+## 其他 workflow
 
-## 模式
-
-### archive-single
-
-归档并合并单个已完成 change 的知识。
-
-1. 读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`，执行路径解析（Step 0），解析 `<Path>{roots.config}</Path>`（不存在时静默降级）。
-2. 选择一个 `change_status: completed` 的 change。
-3. 目标为 SpecDev 时先读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` 与当前 change 的 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`：完成门必须通过，`external_action` 必须为 `closed | waived | not-applicable`；pending/failed 返回 Triage，不生成可执行归档计划。
-4. 执行 Step 1-5：扫描 stores、扫描 change、生成归档计划、生成合并计划、生成清理候选。
-5. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
-6. 确认后以 mode=`confirmed` 执行 Step 7-8：归档移动、合并写入、清理、重读验证。
-7. 执行结果作为补遗追加到原报告。
-
-### archive-batch
-
-批量归档并合并所有已完成 change 的知识。
-
-1. 读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`，执行路径解析。
-2. 扫描目标 workflow 下所有 `change_status: completed` 的 change。不接受 active 或 broken 状态。
-3. SpecDev 候选逐个通过 change completion 与 external reconcile 门；任一 pending/failed 阻塞整批。
-4. 执行 Step 1-5：扫描 stores、逐 change 扫描、批量预检、合并计划、清理候选。
-5. 批量原子性：任一预检失败阻塞整批。
-6. 默认 dry-run：将完整计划写入报告文件，展示摘要并等待用户显式确认。
-7. 确认后逐项执行：归档移动 → 合并写入 → 清理 → 重读验证。失败时报告已完成/未完成清单。
+非 Learning 目标继续读取自身 README 和归档 Work，Command 报告只记录选择和 owning Work 返回的 manifest，不成为知识 writer。
 
 ## 完成标准
 
-- 报告文件位于 command 专属目录，scope 可从文件名判断。
-- 所有状态、目录和索引变更均已重读验证。
-- 未确认或 mode=`dry-run` 时无任何文件修改。
-- 合并写入的每条知识有来源 change 标注。
-- 每个清理候选有分类和理由。
+- dry-run、确认、移动、回滚和最终验证均有报告；
+- 原始 Markdown 内容不被覆盖，跨路径引用通过 stable ID/locations 解析；
+- 未确认或失败事务不留下部分移动或 context 写入。

@@ -1,41 +1,69 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:learning:change-status:v1",
-  "title": "Learning Change Status",
+  "$id": "urn:speculo:learning:change-status:v2",
+  "title": "Learning Change Status v2",
   "type": "object",
-  "required": ["schema_version", "artifact", "change", "domain", "domain_type", "topic", "change_status", "phase", "current_work", "works_run", "created_at", "updated_at", "completed_at", "archived_at", "archive_path", "mastery", "blockers"],
+  "required": ["schema_version", "artifact", "change_id", "kind", "domain", "domain_type", "topic_id", "parent_change", "root_change", "locator", "lifecycle", "phase", "current_work", "works_run", "created_at", "updated_at", "closed_at", "archived_at", "closure_reason", "archive_path", "homework", "mastery", "children", "blockers"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "artifact": {"const": "learning-change-status"},
-    "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "change_id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "kind": {"enum": ["learning", "consolidation"]},
     "domain": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "domain_type": {"enum": ["project", "product", "subject", "language", "skill"]},
-    "topic": {"type": "string", "minLength": 1},
-    "change_status": {"enum": ["active", "blocked", "awaiting_retention", "completed", "archived"]},
-    "phase": {"enum": ["intake", "assessment", "teaching", "practice", "immediate_quiz", "retention", "ready_to_archive", "archived"]},
+    "topic_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "parent_change": {"type": ["string", "null"]},
+    "root_change": {"type": "string"},
+    "locator": {"type": "string", "pattern": "^(?:changes/.+|archive/[0-9]{4}-[0-9]{2}/.+)$"},
+    "lifecycle": {"enum": ["active", "blocked", "closed", "archived"]},
+    "phase": {"enum": ["planning", "teaching", "homework", "review", "consolidating", "closed", "archived"]},
     "current_work": {"type": ["string", "null"], "pattern": "^learning/"},
     "works_run": {"type": "array", "items": {"type": "string", "pattern": "^learning/"}, "uniqueItems": true},
     "created_at": {"type": "string", "format": "date-time"},
     "updated_at": {"type": "string", "format": "date-time"},
-    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "closed_at": {"type": ["string", "null"], "format": "date-time"},
     "archived_at": {"type": ["string", "null"], "format": "date-time"},
-    "archive_path": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^<Path>\\{roots\\.state\\}/learning/archive/[0-9]{4}-[0-9]{2}/[^<]+</Path>$"}]},
+    "closure_reason": {"type": ["string", "null"]},
+    "archive_path": {"type": ["string", "null"]},
+    "homework": {
+      "type": "object",
+      "required": ["status", "latest_id", "submitted_at"],
+      "properties": {
+        "status": {"enum": ["none", "pending", "reviewed", "needs_revision"]},
+        "latest_id": {"type": ["string", "null"]},
+        "submitted_at": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
     "mastery": {
       "type": "object",
-      "required": ["immediate", "retention", "score", "critical_objectives_passed", "transfer_passed", "blocking_misconceptions", "evidence", "next_review_at"],
+      "required": ["overall", "immediate", "retention", "critical_objectives", "transfer", "blocking_misconceptions", "evidence", "next_review_at"],
       "properties": {
-        "immediate": {"enum": ["not_attempted", "failed", "passed", "needs_review"]},
-        "retention": {"enum": ["not_attempted", "failed", "passed", "needs_review"]},
-        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
-        "critical_objectives_passed": {"type": "boolean"},
-        "transfer_passed": {"type": "boolean"},
+        "overall": {"enum": ["unverified", "immediate", "retention_verified"]},
+        "immediate": {"enum": ["not_attempted", "passed", "needs_review"]},
+        "retention": {"enum": ["not_scheduled", "due", "passed", "needs_review"]},
+        "critical_objectives": {"enum": ["not_attempted", "passed", "needs_review"]},
+        "transfer": {"enum": ["not_attempted", "passed", "needs_review"]},
         "blocking_misconceptions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "evidence": {"type": "array", "items": {"type": "string", "pattern": "^<Path>\\{roots\\.state\\}/learning/(?:changes/[^<]+|archive/[0-9]{4}-[0-9]{2}/[^<]+)/quiz/[^<]+\\.md</Path>$"}, "uniqueItems": true},
+        "evidence": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "next_review_at": {"type": ["string", "null"], "format": "date-time"}
       },
       "additionalProperties": false
     },
-    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+    "children": {"type": "array", "items": {"$ref": "#/$defs/child"}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "child": {
+      "type": "object",
+      "required": ["change_id", "locator", "content_hash", "effective_at", "lifecycle"],
+      "properties": {
+        "change_id": {"type": "string"},
+        "locator": {"type": "string"},
+        "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "effective_at": {"type": "string", "format": "date-time"},
+        "lifecycle": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

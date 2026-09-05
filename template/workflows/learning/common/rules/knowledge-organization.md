@@ -1,9 +1,7 @@
-# 图书式知识组织
+# 主题知识组织与溯源
 
-Learning 只使用 Markdown 目录和精确链接：`context/INDEX.md` 指向领域 `INDEX.md`，领域索引指向具体知识文件。允许 `rg` 修复索引，但不建设向量、Embedding、chunk、相似度或 rerank 层。
+被动入口是 `context/INDEX.md` -> `domains/<domain>/topics/<topic-id>/INDEX.md` -> 精确主题文件。主题视图是 C 生成的派生物，不是原始课程或作业的替代品。
 
-领域目录使用稳定 kebab id；领域类型为 project、product、subject、language 或 skill。每个领域包含 `INDEX.md`、`overview.md`，并按真实需要创建 `concepts/`、`methods/`、`adr/`，不为空架构预建无用途目录。
+每个 claim 记录稳定 `claim_id`、陈述、`evidence_status`（`draft|supported|contested|unresolved`）、source Change ID、Lesson/Homework/Review anchor、外部 source ID、验证时间和冲突/空白。所有链接用 `{roots.*}` aliases；物理 relocation 后由 `locations.json` 按 Change ID 解析当前路径。
 
-知识文件必须包含元数据表：Knowledge ID、状态、前置知识、相关知识、掌握证据、最近验证、下次复习；正文包含当前理解、心智模型、示例与应用、常见误区、来源与证据。状态只允许 `mastered | review_due | needs_refresh | superseded`。
-
-同主题存在时合并当前真相；新事实推翻旧结论时改写当前文件并记录 `supersedes` 归档证据；仅相关时互链，不复制正文。更新顺序为知识叶子、领域 INDEX、context/INDEX、REVIEW。索引只保存导航摘要，不保存课程全文或会话历史。
+只有 R 的真实 retention evidence 才能把 claim/status 标为 `retention_verified` 或 `mastered`。C 可以综合未掌握材料，但必须保留 evidence status，不能从综合文本推断掌握。

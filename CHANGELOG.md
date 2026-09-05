@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-05
+
+### Added
+- **Speculo Runtime Kernel**: adds provider-neutral lifecycle, risk classes, capability profiles, workflow manifests, checkpoints, and trace-event contracts shared by every workflow.
+- **Read-only diagnostics and scenario gate**: adds `speculo doctor` and a 24-fixture structural evaluation command for resumability and recovery scenarios.
+
+### Changed
+- **Breaking 1.0 namespace**: refreshes require install manifest schema v3 and package major version 1; 0.x installations are blocked without migration or export.
+- **Transactional refresh**: stages and rolls back `speculo/`, `.gitignore`, `AGENTS.md`, and `CLAUDE.md` together.
+- **Workflow contracts**: SpecDev, Learning, Ops, and Person now publish machine-readable stage manifests validated by the asset pipeline.
+- **Runtime policy**: existing structured state and configuration use strict 1.0 schemas; incompatible versions fail closed instead of being rewritten.
+- **Node support**: requires `>=22.22.3 <25`.
+
+### Tests
+- Added kernel transition/capability tests, strict legacy-installation coverage, doctor health checks, workflow manifest validation, and cross-domain scenario fixtures.
+
 ## [0.8.13] - 2026-09-02
 
 ### Added

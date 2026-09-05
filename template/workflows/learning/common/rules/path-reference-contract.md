@@ -1,7 +1,5 @@
-# Learning 路径引用合同
+# Learning v2 路径与引用
 
-静态 Learning 文件使用完整 `<Path>{roots.workflows}/learning/<relative-path></Path>`；运行时状态使用完整 `<Path>{roots.state}/learning/<relative-path></Path>`。不得使用机器绝对路径、反斜杠、`..`、裸文件名或把 workflow `_state` 当作运行时目录。
+稳定标识是 `change_id`、`lesson_id`、`homework_id`、`review_id` 和 `topic_id`；`locator` 只是当前位置：`changes/<id>`、`changes/<parent>/children/<id>` 或 `archive/YYYY-MM/<root>`。跨工件引用同时写 stable ID 和 `<Path>{roots.state}/learning/</Path>` 下的当前 locator。
 
-`{change}` 是启动协议选择的 change 名；`{domain}` 来自 `learning-plan.md` 和 change 状态；`YYYY-MM` 从 change 日期前缀派生。项目证据使用项目根相对路径，外部来源使用真实 URL。
-
-动态知识路径必须先由 promotion plan 明确，确认后才允许创建或改写。完整路径只确定对象，不授予副作用权限。
+`locations.json` 保存历史 locator、relocation 时间/原因和源目录哈希。新工件不得把旧路径当作永久链接；validator 必须跟随位置登记解析。源 Markdown 的相对链接在移动后由 owner 修正为 alias/ID 引用，已经提交的 Homework、Review 和 archive 内容不改写。

@@ -1,7 +1,12 @@
-# 评估与评分政策
+# 作业与评审政策
 
-学习计划在教学前锁定 objective id、关键性和验收证据。最终题目不得简单复述课程示例；评分 rubric 必须在作答前固定，但答案或评分结论只在学习者提交原始 response 后读取或形成。
+H 将教学和评估分开。生成作业时只提供问题和必要的作答边界，不泄露答案；用户必须在同一文件加入 `Submission: ready` 才会进入评审。
 
-每次测验覆盖主动回忆、因果/结构解释、新情境迁移和常见误区辨析。题目、原始 response、result 分文件保存；重试使用新变式和递增 attempt 编号，不覆盖旧证据。
+默认五题分别覆盖回忆/定义、机制/为什么、变式应用、全新情境迁移和误区辨析。每题评审必须写：
 
-Result 对每个 objective 列出：得分、引用的 response、正确处、差距、证据来源和置信度。主观或来源冲突项使用 `needs_review`。失败 result 必须形成最小补救范围，路由回 E 或 P，不扩大整个课程。
+- `verdict`: `correct | partial | incorrect | uncertain`；
+- 回答覆盖了什么、缺了什么和引用的 Lesson/source anchor；
+- 中文详细讲解和 `Explain (English)`；
+- 误区、修正路径和下一步。
+
+H 不要求固定百分比，也不把 immediate 评审自动称为 mastered。题目/回答/评审在单文件内按段落追加；重答创建新 attempt。评分无法裁决时使用 `uncertain` 并保留 blocker。

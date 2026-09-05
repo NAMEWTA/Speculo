@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:kernel:trace-event:v1",
+  "type": "object",
+  "required": ["schema_version", "sequence", "at", "kind", "payload"],
+  "properties": {"schema_version": {"const": 1}, "sequence": {"type": "integer", "minimum": 1}, "at": {"type": "string", "format": "date-time"}, "kind": {"enum": ["capability", "context", "tool", "transition", "approval", "evidence"]}, "payload": {"type": "object"}},
+  "additionalProperties": false
+}

@@ -54,7 +54,8 @@ for (const entry of readdirSync(workflowsRoot, { withFileTypes: true })) {
     failures.push(`${label}: invalid identity or opaque default`);
   }
   for (const path of contract.structured_state ?? []) {
-    if (safeRelative(String(path).replaceAll("*", "segment"), label) && !path.startsWith(`.speculo/${entry.name}/`)) {
+    const probe = String(path).replaceAll("**", "segment/segment").replaceAll("*", "segment");
+    if (safeRelative(probe, label) && !path.startsWith(`.speculo/${entry.name}/`)) {
       failures.push(`${label}: structured state crosses ownership boundary: ${path}`);
     }
   }

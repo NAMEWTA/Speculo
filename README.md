@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> Workflow-packaged AI collaboration assets with state-safe refresh tooling.
+> Provider-neutral, resumable AI collaboration workflows with state-safe refresh tooling.
 
 Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
 
@@ -23,16 +23,17 @@ After initialization, the target project's `speculo/` directory contains all cor
 npm install -g @namewta/speculo
 ```
 
-Requires: Node.js ≥ 22.22.3
+Requires: Node.js ≥ 22.22.3 and < 25
 
 ## Commands
 
 | Command | Description |
 |---|---|
-| `speculo` / `speculo init [target]` | Initialize or refresh Speculo. Managed commands, skills, metadata, and selected workflow packages are replaced from the current template. Opaque runtime data is preserved byte-for-byte, structured state uses explicit migrators, and persistent configuration is reconciled against stored baselines. Conflicts stop before replacement with exit code `2`; only destructively changed config or structured files receive a targeted backup. |
+| `speculo` / `speculo init [target]` | Initialize or refresh a Speculo 1.0 runtime. 0.x installations are intentionally incompatible and must be removed or renamed first. |
 | `speculo version` | Print the installed version and check npm for the latest release. |
+| `speculo doctor [target]` | Read-only validation of the kernel, manifest and runtime installation. |
 
-Legacy CLI commands `migrate`, `mirror-skills`, and `update`, plus their flags, remain removed. The CLI exposes only `init` and `version`; refresh behavior is automatic and transactional.
+Legacy CLI commands and 0.x migration paths are removed. The CLI exposes `init`, `version`, and read-only `doctor`.
 
 ## Installed Runtime Assets
 
@@ -68,7 +69,7 @@ After initialization, the target project gains the following AI agent-callable a
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
-| **learning** | 7 | Evidence-gated learning for projects, products, subjects, languages, and skills, using plain-language visual teaching, active practice, immediate and delayed quizzes, and book-style Markdown knowledge indexes |
+| **learning** | 7 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, single-file homework review, optional retention review, and provenance-preserving topic synthesis |
 | **specdev** | 13 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 

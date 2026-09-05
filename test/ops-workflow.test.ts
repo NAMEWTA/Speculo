@@ -623,7 +623,7 @@ describe("Ops workflow", () => {
     for (const work of EXPECTED_WORK_NAMES) assert.match(readme, new RegExp(`\\*\\*${work}\\*\\*`));
     assert.doesNotMatch(readme, /C-change-control|R-rollback-deployment|V-verify-and-stabilize/);
     assert.match(statusCommand, /projects\/\{project_id\}\/changes\/\{change\}/);
-    assert.match(archiveCommand, /A-archive-and-learn/);
+    assert.match(archiveCommand, /A-archive/);
   });
 
   it("keeps global inventory changes in the root scope and completes through a verification-only attempt", async () => {

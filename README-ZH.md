@@ -1,6 +1,6 @@
 # @namewta/speculo
 
-> 将 AI 协作资产打包为可安装工作流——支持状态安全刷新的初始化工具。
+> 面向模型中立、可恢复 AI 协作工作流的安装与运行时。
 
 Speculo 将 AI 编码工作流打包为可安装资产——commands、skills、workflow packages——通过统一的 CLI 安装到任意项目中。
 
@@ -23,16 +23,17 @@ speculo init [target]
 npm install -g @namewta/speculo
 ```
 
-要求：Node.js ≥ 22.22.3
+要求：Node.js ≥ 22.22.3 且 < 25
 
 ## 命令
 
 | 命令 | 说明 |
 |---|---|
-| `speculo` / `speculo init [target]` | 初始化或刷新 Speculo。受管理的 commands、skills、metadata 与本次选中的 workflow 包直接使用当前模板替换；opaque runtime 按字节保留，结构化状态使用显式 migrator，持久配置依据 baseline 三方合并。冲突会在替换前以退出码 `2` 停止；只有发生删除或结构迁移的字段/文件才写 targeted backup。 |
+| `speculo` / `speculo init [target]` | 初始化或刷新 Speculo 1.0。0.x 安装不兼容，必须先由用户移除或改名旧目录。 |
 | `speculo version` | 显示本地版本并检查 npm 最新版本。 |
+| `speculo doctor [target]` | 只读检查 kernel、manifest 和运行时安装。 |
 
-旧 CLI 命令 `migrate`、`mirror-skills`、`update` 及相关 flags 仍保持移除；CLI 只公开 `init` 与 `version`，刷新行为由 `init` 自动、事务化完成。
+旧 CLI 命令与 0.x 迁移路径全部移除；CLI 公开 `init`、`version` 和只读 `doctor`。
 
 ## 安装的运行时资产
 
@@ -67,7 +68,7 @@ npm install -g @namewta/speculo
 
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
-| **learning** | 7 | 面向项目、产品、学科、语言和技能的证据门控学习：通俗图解、主动练习、即时与延迟测验，以及图书式 Markdown 知识索引 |
+| **learning** | 7 | 面向项目、产品、学科、语言和技能的完整 30–40 分钟通俗课程、单文件作业评审、可选延迟复习，以及保留原料和引用的主题综合 |
 | **specdev** | 13 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "unknown",
+    "provider": "unknown",
+    "modalities": ["text"],
+    "context_window": 0,
+    "max_output": 0,
+    "reasoning_levels": []
+  },
+  "tools": {"classes": ["read-only"], "parallel": false, "programmatic": false},
+  "execution": {"sandbox": false, "network": false, "filesystem_roots": [], "data_retention": "session"},
+  "memory": {"compaction": false, "persistent": true, "cache": false}
+}

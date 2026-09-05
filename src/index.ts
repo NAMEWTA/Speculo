@@ -222,7 +222,26 @@ async function buildStagedInstall(
   }
 }
 
-async function replaceInstall(stagedRoot: string, root: string): Promise<void> {
+type ExternalSnapshot = { path: string; existed: boolean; content?: Buffer };
+
+async function snapshotExternalFiles(target: string): Promise<ExternalSnapshot[]> {
+  const snapshots: ExternalSnapshot[] = [];
+  for (const name of [".gitignore", "AGENTS.md", "CLAUDE.md"]) {
+    const path = join(target, name);
+    if (await pathExists(path)) snapshots.push({ path, existed: true, content: await readFile(path) });
+    else snapshots.push({ path, existed: false });
+  }
+  return snapshots;
+}
+
+async function restoreExternalFiles(snapshots: ExternalSnapshot[]): Promise<void> {
+  for (const snapshot of snapshots) {
+    if (snapshot.existed) await writeFile(snapshot.path, snapshot.content ?? Buffer.alloc(0));
+    else await rm(snapshot.path, { force: true });
+  }
+}
+
+async function replaceInstall(stagedRoot: string, root: string, finalize?: () => Promise<void>): Promise<void> {
   const expectedFingerprint = await fingerprintTree(stagedRoot);
   if (!(await pathExists(root))) {
     await rename(stagedRoot, root);
@@ -230,6 +249,7 @@ async function replaceInstall(stagedRoot: string, root: string): Promise<void> {
       await rename(root, stagedRoot);
       throw new Error("post-install validation failed");
     }
+    try { await finalize?.(); } catch (error) { await rm(root, { recursive: true, force: true }); throw error; }
     return;
   }
   const backupRoot = stagedRoot + "-backup";
@@ -237,6 +257,7 @@ async function replaceInstall(stagedRoot: string, root: string): Promise<void> {
   try {
     await rename(stagedRoot, root);
     if (await fingerprintTree(root) !== expectedFingerprint) throw new Error("post-install validation failed");
+    await finalize?.();
   } catch (error) {
     try {
       if (await pathExists(root)) await rename(root, stagedRoot);
@@ -280,13 +301,20 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
         message: "the active installation changed while refresh staging was in progress",
       }]);
     }
-    await replaceInstall(stagedRoot, root);
-    stagedRoot = undefined;
+    const externalSnapshot = await snapshotExternalFiles(target);
     const assets = [".speculo", "config.json", "commands", "skills"];
     assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
-    const gitignoreResult = await ensureRuntimeIgnores(target, root);
-    assets.push(gitignoreResult);
-    assets.push(...await writeAgentFiles(target, packageRoot, selection));
+    await replaceInstall(stagedRoot, root, async () => {
+      try {
+        const gitignoreResult = await ensureRuntimeIgnores(target, root);
+        assets.push(gitignoreResult);
+        assets.push(...await writeAgentFiles(target, packageRoot, selection));
+      } catch (error) {
+        await restoreExternalFiles(externalSnapshot);
+        throw error;
+      }
+    });
+    stagedRoot = undefined;
     if (!refresh) throw new Error("Speculo refresh result was not produced");
     return { target, mode: existed ? "refresh" : "init", assets, refresh };
   } finally {

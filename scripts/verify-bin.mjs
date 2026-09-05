@@ -22,7 +22,7 @@ if (!firstLine.startsWith("#!/usr/bin/env node")) {
 
 try {
   const out = execFileSync(process.execPath, [bin, "--help"], { encoding: "utf8" });
-  if (!/speculo \[init\] \[target\]/.test(out) || !/speculo version/.test(out)) {
+  if (!/speculo \[init\] \[target\]/.test(out) || !/speculo version/.test(out) || !/speculo doctor/.test(out)) {
     console.error("verify-bin: `speculo --help` did not print the expected usage banner.");
     process.exit(1);
   }
@@ -35,4 +35,4 @@ try {
   process.exit(1);
 }
 
-console.log("verify-bin: OK - dist/src/cli.js exposes only init and version through --help.");
+console.log("verify-bin: OK - dist/src/cli.js exposes init, version, and doctor through --help.");

@@ -65,6 +65,48 @@ function readJson(path, label) {
   }
 }
 
+const workflowRisks = new Set([
+  "read-only",
+  "local-reversible",
+  "local-destructive",
+  "external-mutation",
+  "production-critical",
+]);
+
+function validateWorkflowManifest(workflowId, workflowDir) {
+  const manifestPath = join(workflowDir, "manifest.json");
+  const relative = manifestPath.slice(packageRoot.length + 1);
+  const manifest = readJson(manifestPath, relative);
+  if (!manifest) return;
+  if (manifest.schema_version !== 1 || manifest.id !== workflowId || typeof manifest.version !== "string" || !Array.isArray(manifest.stages) || manifest.stages.length === 0) {
+    fail(`${relative}: workflow manifest must use schema v1 with matching id, version, and stages`);
+    return;
+  }
+  const stageIds = new Set();
+  for (const stage of manifest.stages) {
+    if (!stage || typeof stage !== "object" || typeof stage.id !== "string" || stage.id.length === 0) {
+      fail(`${relative}: each stage requires a non-empty id`);
+      continue;
+    }
+    if (stageIds.has(stage.id)) fail(`${relative}: duplicate stage id ${stage.id}`);
+    stageIds.add(stage.id);
+    if (!Array.isArray(stage.after) || stage.after.some((id) => typeof id !== "string")) {
+      fail(`${relative}: stage ${stage.id} has invalid after dependencies`);
+    }
+    if (!Array.isArray(stage.inputs) || !Array.isArray(stage.outputs) || stage.inputs.some((value) => typeof value !== "string") || stage.outputs.some((value) => typeof value !== "string")) {
+      fail(`${relative}: stage ${stage.id} inputs/outputs must be string arrays`);
+    }
+    if (!workflowRisks.has(stage.risk)) fail(`${relative}: stage ${stage.id} has unsupported risk ${String(stage.risk)}`);
+    if (!Number.isInteger(stage.context_budget) || stage.context_budget < 1) fail(`${relative}: stage ${stage.id} context_budget must be a positive integer`);
+  }
+  for (const stage of manifest.stages) {
+    if (!stage || typeof stage.id !== "string" || !Array.isArray(stage.after)) continue;
+    for (const dependency of stage.after) {
+      if (!stageIds.has(dependency)) fail(`${relative}: stage ${stage.id} depends on missing stage ${dependency}`);
+    }
+  }
+}
+
 function parseFrontmatter(content, file) {
   const normalized = content.replace(/\r\n?/g, "\n");
   const match = normalized.match(/^---\s*\n([\s\S]*?)\n---/);
@@ -517,6 +559,7 @@ function validateCommandAndSkillPaths() {
 
 function validateWorkflow(workflowId, workspace) {
   const workflowDir = join(workflowsRoot, workflowId);
+  validateWorkflowManifest(workflowId, workflowDir);
   const entryPath = join(workflowDir, workflowEntryName);
   const relativeEntry = entryPath.slice(packageRoot.length + 1);
   if (!existsSync(entryPath)) {

@@ -3,7 +3,7 @@ import { cp, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/prom
 import { dirname, join, relative } from "node:path";
 import { assertJsonObject, reconcileConfig, type ConfigMergeStats, type JsonObject } from "./config.js";
 import { collectFiles, toPosix, type ManagedFileRecord } from "./manifest.js";
-import { migrateSpecdevConfig, migrateStructuredRuntime, validateSpecdevConfig, type StructuredChange } from "./structured.js";
+import { readSpecdevConfig, validateStructuredRuntime, validateSpecdevConfig, type StructuredChange } from "./structured.js";
 import { pathExists } from "./utils.js";
 
 export type RefreshBlocker = {
@@ -109,21 +109,27 @@ async function packageVersion(packageRoot: string): Promise<string> {
 
 async function sourceVersion(previousRoot: string): Promise<string> {
   const path = join(previousRoot, ".speculo", "install.json");
-  if (!(await pathExists(path))) return "0.7.0-unversioned";
-  const install = await readJson(path, ".speculo/install.json");
-  if (![1, 2].includes(Number(install.schema_version)) || typeof install.package_version !== "string") {
+  if (!(await pathExists(path))) {
     throw new RefreshBlockedError([{
-      code: "unsupported-install-manifest",
+      code: "legacy-installation",
       path: ".speculo/install.json",
-      message: "refresh supports install manifest schema v1 or v2",
+      message: "Speculo 1.0 requires a schema v3 install manifest; remove or rename the existing speculo/ directory before initializing",
+    }]);
+  }
+  const install = await readJson(path, ".speculo/install.json");
+  if (Number(install.schema_version) !== 3 || typeof install.package_version !== "string") {
+    throw new RefreshBlockedError([{
+      code: "legacy-installation",
+      path: ".speculo/install.json",
+      message: "Speculo 1.0 does not read or migrate 0.x installations; remove or rename the old speculo/ directory before initializing",
     }]);
   }
   const match = /^(\d+)\.(\d+)\.(\d+)/.exec(install.package_version);
-  if (!match || (Number(match[1]) === 0 && Number(match[2]) < 7)) {
+  if (!match || Number(match[1]) !== 1) {
     throw new RefreshBlockedError([{
-      code: "unsupported-source-version",
+      code: "legacy-installation",
       path: ".speculo/install.json",
-      message: "automatic refresh supports Speculo v0.7 and newer installations",
+      message: "refresh requires a Speculo 1.x installation; 0.x state is intentionally incompatible",
     }]);
   }
   return install.package_version;
@@ -230,8 +236,26 @@ function matchesContractPath(runtimePath: string, contractPath: string): boolean
   const expected = contractPath.startsWith(".speculo/") ? contractPath.slice(".speculo/".length) : contractPath;
   const actualSegments = runtimePath.split("/");
   const expectedSegments = expected.split("/");
-  return actualSegments.length === expectedSegments.length &&
-    expectedSegments.every((segment, index) => segment === "*" || segment === actualSegments[index]);
+  const memo = new Map<string, boolean>();
+  function match(actualIndex: number, expectedIndex: number): boolean {
+    const key = `${actualIndex}:${expectedIndex}`;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    if (expectedIndex === expectedSegments.length) return actualIndex === actualSegments.length;
+    const segment = expectedSegments[expectedIndex];
+    let result: boolean;
+    if (segment === "**") {
+      result = match(actualIndex, expectedIndex + 1) ||
+        (actualIndex < actualSegments.length && match(actualIndex + 1, expectedIndex));
+    } else {
+      result = actualIndex < actualSegments.length &&
+        (segment === "*" || segment === actualSegments[actualIndex]) &&
+        match(actualIndex + 1, expectedIndex + 1);
+    }
+    memo.set(key, result);
+    return result;
+  }
+  return match(0, 0);
 }
 
 function isStructured(path: string, contracts: WorkflowRuntimeContract[]): boolean {
@@ -347,19 +371,19 @@ async function reconcileWorkflowConfig(
   const localRaw = await readJson(localPath, contract.config.path);
   const baselinePath = join(previousRoot, contract.config.baseline);
   const baselineRaw = await pathExists(baselinePath) ? await readJson(baselinePath, contract.config.baseline) : undefined;
-  let localMigration;
-  let baselineMigration;
+  let localConfig;
+  let baselineConfig;
   try {
-    localMigration = migrateSpecdevConfig(localRaw, incoming);
-    baselineMigration = baselineRaw ? migrateSpecdevConfig(baselineRaw, incoming) : undefined;
+    localConfig = readSpecdevConfig(localRaw);
+    baselineConfig = baselineRaw ? readSpecdevConfig(baselineRaw) : undefined;
   } catch (error) {
-    throw new RefreshBlockedError([{ code: "config-migration", path: contract.config.path, message: String(error) }]);
+    throw new RefreshBlockedError([{ code: "config-schema", path: contract.config.path, message: String(error) }]);
   }
   let merged;
   try {
     merged = reconcileConfig({
-      baseline: baselineMigration?.value,
-      local: localMigration.value,
+      baseline: baselineConfig?.value,
+      local: localConfig.value,
       incoming,
       allowsUnknown: (parent) => contract.config?.additional_properties[parent.join(".")] ?? false,
     });
@@ -368,8 +392,8 @@ async function reconcileWorkflowConfig(
     throw new RefreshBlockedError([{ code: "config-conflict", path: contract.config.path, message: String(error) }]);
   }
   addStats(stats, merged.stats);
-  if (localMigration.migrated || merged.removedPaths.length > 0) {
-    const reasons = [localMigration.migrated ? "schema migration" : "", merged.removedPaths.length > 0 ? "removed fields: " + merged.removedPaths.join(", ") : ""].filter(Boolean);
+  if (localConfig.migrated || merged.removedPaths.length > 0) {
+    const reasons = [localConfig.migrated ? "schema reconciliation" : "", merged.removedPaths.length > 0 ? "removed fields: " + merged.removedPaths.join(", ") : ""].filter(Boolean);
     backups.push({ sourcePath: contract.config.path, before, reason: reasons.join("; ") });
   }
   const stagedPath = join(stagedRoot, contract.config.path);
@@ -465,12 +489,12 @@ async function writeMetadata(
   managed.sort((left, right) => left.path.localeCompare(right.path));
   const stateRoot = join(stagedRoot, ".speculo");
   await writeFile(join(stateRoot, "managed.json"), JSON.stringify({
-    schema_version: 1,
+    schema_version: 2,
     package_version: targetVersion,
     files: managed,
   }, null, 2) + "\n", "utf8");
   await writeFile(join(stateRoot, "install.json"), JSON.stringify({
-    schema_version: 2,
+    schema_version: 3,
     package_version: targetVersion,
     workflows: [...installedWorkflowIds].sort(),
     managed_manifest: ".speculo/managed.json",
@@ -519,9 +543,14 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     }
     let structured: StructuredChange[];
     try {
-      structured = await migrateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
+      structured = await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
     } catch (error) {
-      throw new RefreshBlockedError([{ code: "structured-state-conflict", path: ".speculo", message: String(error) }]);
+      const message = String(error);
+      throw new RefreshBlockedError([{
+        code: message.includes("learning-reset-required") ? "learning-reset-required" : "structured-state-conflict",
+        path: message.includes("Learning") ? ".speculo/learning" : ".speculo",
+        message,
+      }]);
     }
     backups.push(...structuredBackups(structured, options.stagedRoot));
     verifyOpaqueFiles(opaqueBefore, await opaqueFiles(stagedState, reserved, workflowContracts));

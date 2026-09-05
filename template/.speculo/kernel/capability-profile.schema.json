@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:kernel:capability-profile:v1",
+  "type": "object",
+  "required": ["schema_version", "model", "tools", "execution", "memory"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "model": {"type": "object", "required": ["id", "modalities", "context_window", "max_output", "reasoning_levels"]},
+    "tools": {"type": "object", "required": ["classes", "parallel", "programmatic"]},
+    "execution": {"type": "object", "required": ["sandbox", "network", "filesystem_roots", "data_retention"]},
+    "memory": {"type": "object", "required": ["compaction", "persistent", "cache"]}
+  },
+  "additionalProperties": false
+}

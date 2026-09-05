@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:kernel:checkpoint:v1",
+  "type": "object",
+  "required": ["schema_version", "change_id", "stage", "locked_decisions", "open_questions", "next_action", "evidence", "state_digest", "created_at"],
+  "properties": {"schema_version": {"const": 1}, "change_id": {"type": "string"}, "stage": {"type": "string"}, "locked_decisions": {"type": "array", "items": {"type": "string"}}, "open_questions": {"type": "array", "items": {"type": "string"}}, "next_action": {"type": "string"}, "evidence": {"type": "array", "items": {"type": "string"}}, "state_digest": {"type": "string"}, "created_at": {"type": "string", "format": "date-time"}}
+}
