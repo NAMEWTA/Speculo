@@ -72,10 +72,11 @@ describe("Speculo init refresh", () => {
       assert.equal(await pathExists(join(root, ".speculo", "migration.json")), false);
       assert.equal(await pathExists(join(root, "workflows", "specdev", "README.md")), true);
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
-      assert.match(agents, /refresh contract/);
-      assert.match(agents, /speculo\/workflows\/specdev\/INDEX\.md/);
-      assert.doesNotMatch(agents, /speculo\/workflows\/specdev\/README\.md/);
-      assert.doesNotMatch(agents, /migrate-runtime-state/);
+      assert.match(agents, /SPECULO-PERSISTENT-KNOWLEDGE:START/);
+      assert.match(agents, /<Path>\{roots\.state\}\/specdev\/adr\/<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/specdev\/context\/<\/Path>/);
+      assert.doesNotMatch(agents, /workflows\/specdev|INDEX\.md|<SPECULO>/);
+      assert.equal(await readFile(join(target, "CLAUDE.md"), "utf8"), "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n");
       assert.deepEqual(await residue(target), []);
     } finally {
       await rm(target, { recursive: true, force: true });
@@ -499,6 +500,66 @@ describe("CLI surface", () => {
     const removed = spawnSync(process.execPath, [cli, "update"], { encoding: "utf8" });
     assert.equal(removed.status, 1);
     assert.match(removed.stderr, /has been removed/);
+  });
+
+  it("preserves existing handbooks while managing persistent knowledge references", async () => {
+    const target = await tempProject();
+    try {
+      const agents = "# Project rules\n\nKeep this handbook unchanged.\n";
+      const claude = "# Local Claude rules\n";
+      await writeFile(join(target, "AGENTS.md"), agents, "utf8");
+      await writeFile(join(target, "CLAUDE.md"), claude, "utf8");
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const updatedAgents = await readFile(join(target, "AGENTS.md"), "utf8");
+      assert.ok(updatedAgents.startsWith(agents.trimEnd()));
+      assert.match(updatedAgents, /SPECULO-PERSISTENT-KNOWLEDGE:START/);
+      assert.match(updatedAgents, /<Path>\{roots\.state\}\/specdev\/adr\/<\/Path>/);
+      assert.equal(await readFile(join(target, "CLAUDE.md"), "utf8"), claude);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("writes only manifest-declared permanent knowledge for selected workflows", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning", "ops", "person"] } });
+      const agents = await readFile(join(target, "AGENTS.md"), "utf8");
+      assert.match(agents, /<Path>\{roots\.state\}\/learning\/context\/INDEX\.md<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/learning\/context\/REVIEW\.md<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/ops\/context\/<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/ops\/projects\/\{project_id\}\/runbooks\/<\/Path>/);
+      assert.doesNotMatch(agents, /workflows\/|<SPECULO>|specdev\/|person/);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("does not create a knowledge block for person-only selection", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["person"] } });
+      const agents = await readFile(join(target, "AGENTS.md"), "utf8");
+      assert.equal(agents, "# AGENTS.md\n");
+      assert.doesNotMatch(agents, /SPECULO-PERSISTENT-KNOWLEDGE|<SPECULO>/);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
+  });
+
+  it("removes deselected references and legacy forced blocks", async () => {
+    const target = await tempProject();
+    try {
+      await writeFile(join(target, "AGENTS.md"), "# Project rules\n\n<SPECULO>\nlegacy forced workflow\n</SPECULO>\n", "utf8");
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev", "learning"] } });
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const agents = await readFile(join(target, "AGENTS.md"), "utf8");
+      assert.match(agents, /# Project rules/);
+      assert.doesNotMatch(agents, /legacy forced workflow|<SPECULO>|learning\/context/);
+      assert.match(agents, /specdev\/adr/);
+    } finally {
+      await rm(target, { recursive: true, force: true });
+    }
   });
 
   it("reports a healthy initialized 1.0 runtime", async () => {

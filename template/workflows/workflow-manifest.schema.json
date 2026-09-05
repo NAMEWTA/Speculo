@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:speculo:workflow-manifest:v1",
   "type": "object",
-  "required": ["schema_version", "id", "version", "stages"],
+  "required": ["schema_version", "id", "version", "persistent_knowledge", "stages"],
   "properties": {
     "schema_version": {"const": 1},
     "id": {"type": "string"},
     "version": {"type": "string"},
+    "persistent_knowledge": {"type": "array", "items": {"type": "string", "pattern": "^<Path>\\{roots\\.state\\}/[^<]+</Path>$"}},
     "stages": {"type": "array", "items": {"type": "object", "required": ["id", "after", "inputs", "outputs", "risk", "context_budget"]}}
   },
   "additionalProperties": false

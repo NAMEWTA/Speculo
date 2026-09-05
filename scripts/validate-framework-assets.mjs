@@ -73,14 +73,50 @@ const workflowRisks = new Set([
   "production-critical",
 ]);
 
+const workflowPersistentKnowledge = {
+  specdev: new Set([
+    "<Path>{roots.state}/specdev/adr/</Path>",
+    "<Path>{roots.state}/specdev/context/</Path>",
+  ]),
+  learning: new Set([
+    "<Path>{roots.state}/learning/context/INDEX.md</Path>",
+    "<Path>{roots.state}/learning/context/REVIEW.md</Path>",
+  ]),
+  ops: new Set([
+    "<Path>{roots.state}/ops/context/</Path>",
+    "<Path>{roots.state}/ops/adr/</Path>",
+    "<Path>{roots.state}/ops/runbooks/</Path>",
+    "<Path>{roots.state}/ops/projects/{project_id}/context/</Path>",
+    "<Path>{roots.state}/ops/projects/{project_id}/adr/</Path>",
+    "<Path>{roots.state}/ops/projects/{project_id}/runbooks/</Path>",
+  ]),
+  person: new Set(),
+};
+
 function validateWorkflowManifest(workflowId, workflowDir) {
   const manifestPath = join(workflowDir, "manifest.json");
   const relative = manifestPath.slice(packageRoot.length + 1);
   const manifest = readJson(manifestPath, relative);
   if (!manifest) return;
-  if (manifest.schema_version !== 1 || manifest.id !== workflowId || typeof manifest.version !== "string" || !Array.isArray(manifest.stages) || manifest.stages.length === 0) {
+  if (manifest.schema_version !== 1 || manifest.id !== workflowId || typeof manifest.version !== "string" || !Array.isArray(manifest.persistent_knowledge) || !Array.isArray(manifest.stages) || manifest.stages.length === 0) {
     fail(`${relative}: workflow manifest must use schema v1 with matching id, version, and stages`);
     return;
+  }
+  const declaredKnowledge = new Set();
+  for (const path of manifest.persistent_knowledge) {
+    if (typeof path !== "string" || !/^<Path>\{roots\.state\}\/[^<]+<\/Path>$/.test(path)) {
+      fail(`${relative}: persistent_knowledge entries must use safe <Path>{roots.state}/... </Path> references`);
+      continue;
+    }
+    if (path.includes("workflows/") || path.includes("_state/") || path.includes("/changes/") || path.includes("/archive/")) {
+      fail(`${relative}: persistent_knowledge cannot reference workflow or active state paths: ${path}`);
+    }
+    if (declaredKnowledge.has(path)) fail(`${relative}: duplicate persistent_knowledge path ${path}`);
+    declaredKnowledge.add(path);
+  }
+  const expectedKnowledge = workflowPersistentKnowledge[workflowId] || new Set();
+  if (declaredKnowledge.size !== expectedKnowledge.size || [...expectedKnowledge].some((path) => !declaredKnowledge.has(path))) {
+    fail(`${relative}: persistent_knowledge does not match the registered ${workflowId} knowledge roots`);
   }
   const stageIds = new Set();
   for (const stage of manifest.stages) {

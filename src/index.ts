@@ -30,9 +30,12 @@ const CORE_ASSETS = [".speculo", "commands", "skills", "config.json"] as const;
 const INSTALL_SUBDIR = "speculo";
 const WORKFLOW_ENTRY = "INDEX.md";
 const STATE_TEMPLATE_DIR = "_state";
-const SPECULO_TAG_RE = /<SPECULO>[\s\S]*?<\/SPECULO>/;
 const SPECDEV_WORKTREE_IGNORE = "specdev-worktree/";
 const SPECULO_BACKUP_IGNORE = "speculo/.speculo/back/";
+const KNOWLEDGE_START = "<!-- SPECULO-PERSISTENT-KNOWLEDGE:START -->";
+const KNOWLEDGE_END = "<!-- SPECULO-PERSISTENT-KNOWLEDGE:END -->";
+const LEGACY_SPECULO_BLOCK = /<SPECULO>[\s\S]*?<\/SPECULO>/g;
+const KNOWLEDGE_BLOCK = /<!-- SPECULO-PERSISTENT-KNOWLEDGE:START -->[\s\S]*?<!-- SPECULO-PERSISTENT-KNOWLEDGE:END -->/g;
 
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
@@ -86,62 +89,74 @@ async function ensureRuntimeIgnores(target: string, root: string): Promise<strin
   return ".gitignore (updated runtime ignores)";
 }
 
-function generateSpeculoContent(selection: WorkflowSelection): string {
-  const lines = [
-    "## Speculo 运行时配置",
-    "",
-    "### 初始化状态检查",
-    "",
-    "运行时必须读取以下文件以确认 Speculo 初始化状态：",
-    "",
-    "- ./speculo/.speculo/workspace.json — 工作区根别名配置",
-    "- ./speculo/config.json — 项目配置文件",
-    "",
-    "若上述文件不存在或内容为空，说明项目尚未完成 Speculo 初始化。",
-    "此时必须提示用户：请先运行 speculo init 完成初始化配置。",
-    "",
-    "`speculo init` 会直接替换受管理静态资产，并依据 refresh contract 保留用户 runtime state、合并持久配置。",
-    "结构化状态不兼容时初始化会在替换前停止，当前安装保持不变。",
-    "",
-  ];
-  if (selection.workflowIds.length > 0) {
-    lines.push("### 工作流入口（强制读取）", "", "初始化时已选择以下工作流，运行时必须强制读取对应入口文件：", "");
-    for (const workflowId of [...selection.workflowIds].sort()) {
-      lines.push("- ./speculo/workflows/" + workflowId + "/INDEX.md");
+type KnowledgeReference = { workflow: string; path: string };
+
+async function readPersistentKnowledge(packageRoot: string, workflowIds: string[]): Promise<KnowledgeReference[]> {
+  const references: KnowledgeReference[] = [];
+  for (const workflowId of workflowIds) {
+    const manifestPath = join(assetRoot(packageRoot), "workflows", workflowId, "manifest.json");
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    } catch (error) {
+      throw new Error("Invalid workflow manifest: " + manifestPath + " (" + String(error) + ")");
     }
-    lines.push("");
+    if (manifest === null || typeof manifest !== "object" || Array.isArray(manifest)) {
+      throw new Error("Invalid workflow manifest object: " + manifestPath);
+    }
+    const knowledge = (manifest as { persistent_knowledge?: unknown }).persistent_knowledge;
+    if (knowledge === undefined) continue;
+    if (!Array.isArray(knowledge) || knowledge.some((path) => typeof path !== "string")) {
+      throw new Error("workflow manifest persistent_knowledge must be a string array: " + workflowId);
+    }
+    for (const path of knowledge as string[]) {
+      if (!/^<Path>\{roots\.state\}\/[^<]+<\/Path>$/.test(path) || path.includes("workflows/") || path.includes("_state/") || path.includes("/changes/") || path.includes("/archive/")) {
+        throw new Error("Unsafe workflow manifest persistent_knowledge path: " + workflowId + " -> " + path);
+      }
+      references.push({ workflow: workflowId, path });
+    }
   }
-  return "<SPECULO>\n" + lines.join("\n") + "</SPECULO>";
+  return references;
 }
 
-async function writeAgentFiles(target: string, packageRoot: string, selection: WorkflowSelection): Promise<string[]> {
+function renderKnowledgeBlock(references: KnowledgeReference[]): string {
+  if (references.length === 0) return "";
+  const lines = [
+    KNOWLEDGE_START,
+    "## Speculo 永久知识",
+    "",
+    "以下路径只在当前任务相关时按需读取，不会自动激活 workflow 或 Work：",
+    "",
+  ];
+  for (const reference of references) lines.push("- " + reference.workflow + "：" + reference.path);
+  lines.push(KNOWLEDGE_END);
+  return lines.join("\n");
+}
+
+function updateAgentsContent(content: string, references: KnowledgeReference[]): string {
+  const next = content.replace(LEGACY_SPECULO_BLOCK, "").replace(KNOWLEDGE_BLOCK, "");
+  const block = renderKnowledgeBlock(references);
+  if (!block) return next;
+  if (!next) return block + "\n";
+  const separator = next.endsWith("\n\n") ? "" : next.endsWith("\n") ? "\n" : "\n\n";
+  return next + separator + block + "\n";
+}
+
+async function writeAgentFiles(target: string, references: KnowledgeReference[]): Promise<string[]> {
   const written: string[] = [];
-  const speculoBlock = generateSpeculoContent(selection);
+  const agentsPath = join(target, "AGENTS.md");
+  const hadAgents = await pathExists(agentsPath);
+  const beforeAgents = hadAgents ? await readFile(agentsPath, "utf8") : "";
+  const afterAgents = updateAgentsContent(hadAgents ? beforeAgents : "# AGENTS.md\n", references);
+  if (!hadAgents || afterAgents !== beforeAgents) {
+    await writeFile(agentsPath, afterAgents, "utf8");
+    written.push(hadAgents ? "AGENTS.md (updated persistent knowledge)" : "AGENTS.md (created persistent knowledge)");
+  }
+
   const claudePath = join(target, "CLAUDE.md");
   if (!(await pathExists(claudePath))) {
-    const claudeTemplate = join(assetRoot(packageRoot), "CLAUDE.md");
-    if (await pathExists(claudeTemplate)) {
-      await cp(claudeTemplate, claudePath);
-    } else {
-      await writeFile(claudePath, "# CLAUDE.md\n\n必须查看 [@AGENTS.md](./AGENTS.md) 文档，按照 Speculo 规范进行开发。\n", "utf8");
-    }
-    written.push("CLAUDE.md");
-  }
-  const agentsPath = join(target, "AGENTS.md");
-  if (await pathExists(agentsPath)) {
-    let content = await readFile(agentsPath, "utf8");
-    const hasBlock = SPECULO_TAG_RE.test(content);
-    content = hasBlock ? content.replace(SPECULO_TAG_RE, speculoBlock) : content.trimEnd() + "\n\n" + speculoBlock + "\n";
-    await writeFile(agentsPath, content, "utf8");
-    written.push(hasBlock ? "AGENTS.md (updated <SPECULO>)" : "AGENTS.md (appended <SPECULO>)");
-  } else {
-    const agentsTemplate = join(assetRoot(packageRoot), "AGENTS.md");
-    let content = await (await pathExists(agentsTemplate)
-      ? readFile(agentsTemplate, "utf8")
-      : Promise.resolve("# AGENTS.md\n\n<SPECULO>\n</SPECULO>\n"));
-    content = content.replace(SPECULO_TAG_RE, speculoBlock);
-    await writeFile(agentsPath, content, "utf8");
-    written.push("AGENTS.md");
+    await writeFile(claudePath, "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n", "utf8");
+    written.push("CLAUDE.md (created redirect)");
   }
   return written;
 }
@@ -301,14 +316,14 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
         message: "the active installation changed while refresh staging was in progress",
       }]);
     }
-    const externalSnapshot = await snapshotExternalFiles(target);
     const assets = [".speculo", "config.json", "commands", "skills"];
     assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
+    const references = await readPersistentKnowledge(packageRoot, selection.workflowIds);
+    const externalSnapshot = await snapshotExternalFiles(target);
     await replaceInstall(stagedRoot, root, async () => {
       try {
-        const gitignoreResult = await ensureRuntimeIgnores(target, root);
-        assets.push(gitignoreResult);
-        assets.push(...await writeAgentFiles(target, packageRoot, selection));
+        assets.push(await ensureRuntimeIgnores(target, root));
+        assets.push(...await writeAgentFiles(target, references));
       } catch (error) {
         await restoreExternalFiles(externalSnapshot);
         throw error;

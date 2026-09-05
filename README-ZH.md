@@ -35,6 +35,8 @@ npm install -g @namewta/speculo
 
 旧 CLI 命令与 0.x 迁移路径全部移除；CLI 公开 `init`、`version` 和只读 `doctor`。
 
+初始化只会根据已选择的 workflow 更新项目 `AGENTS.md` 中受控的永久知识引用块。该块只引用已经提升的知识路径，并明确保持懒激活：不会自动激活 workflow、创建 Change 或执行 Work。缺失的 `CLAUDE.md` 会创建为指向 `AGENTS.md` 的固定重定向；已有手册内容会保留。
+
 ## 安装的运行时资产
 
 初始化后，目标项目获得以下可通过 AI agent 调用的资产：

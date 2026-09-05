@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-05
+
+### Changed
+- **Persistent knowledge references**: selected workflows now manage only manifest-declared permanent knowledge paths in the controlled `AGENTS.md` block; workflow activation and Work execution remain lazy.
+- **Agent handbook preservation**: legacy `<SPECULO>` blocks are removed, existing user content is preserved, and missing `CLAUDE.md` is created as a fixed redirect to `AGENTS.md`.
+- **Manifest validation**: workflow manifests now declare and validate safe persistent knowledge roots.
+
 ## [1.0.0] - 2026-09-05
 
 ### Added

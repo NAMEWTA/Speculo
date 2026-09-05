@@ -35,6 +35,8 @@ Requires: Node.js ≥ 22.22.3 and < 25
 
 Legacy CLI commands and 0.x migration paths are removed. The CLI exposes `init`, `version`, and read-only `doctor`.
 
+Initialization updates only a controlled persistent-knowledge block in project `AGENTS.md` for the selected workflows. The block contains references to promoted knowledge paths and explicitly remains lazy: it does not activate a workflow, create a Change, or execute a Work. A missing `CLAUDE.md` is created as a fixed redirect to `AGENTS.md`; existing handbook content is preserved.
+
 ## Installed Runtime Assets
 
 After initialization, the target project gains the following AI agent-callable assets:
