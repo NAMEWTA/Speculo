@@ -123,7 +123,7 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
   const cycle = findGraphCycle(graph);if (cycle) errors.push(`dependency cycle: ${cycle.join(' -> ')}`);
 
   // Reuse existing stage gates. Local diagnostics block their owner, structural ones block dispatch.
-  const validation = validateChange(root,parent ? 'orchestrate-implementation' : 'tickets',repoRoot);
+  const validation = validateChange(root,parent ? 'goal-plan' : 'tickets',repoRoot);
   warnings.push(...validation.warnings);
   for (const error of validation.errors) {
     let assigned = false;

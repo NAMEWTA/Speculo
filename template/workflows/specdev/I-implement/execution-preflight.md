@@ -41,4 +41,4 @@
 - **delivery-unverified**：候选、provider 声明或附件不能独立核对；保持 unverified。
 - **e2e-owner-invalid**：required 模式 E2E 被安排在 source worktree，或任一模式不是 Lead owner；停止并修 Ticket/Goal Plan。
 - **direct-parent-invalid**：current 模式的 Ticket commit、父 HEAD、验证或 Evidence 不一致；保留最后可信 commit 并阻塞当前 Ticket。
-- **parent-plan-stale**：父 Implementation Map revision、成员 Ticket、serialization、workspace 策略、全局实现配额或 repository/ref 已变化；停止当前派单并返回 O-orchestrate-implementation 重算。
+- **parent-plan-stale**：父 Implementation Map revision、成员 Ticket、serialization、workspace 策略、全局实现配额或 repository/ref 已变化；停止当前派单并返回 P-goal-plan 重算。

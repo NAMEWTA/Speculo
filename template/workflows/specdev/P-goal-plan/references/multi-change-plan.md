@@ -12,7 +12,7 @@
 
 ## 激活输入
 
-创建模式必须获得至少两个用户明确指定的 change。恢复模式由用户指定父 change，或从 active change 中唯一存在父实现产物且 current_work 为 specdev/orchestrate-implementation 或 specdev/goal-plan 者确定。
+创建模式必须获得至少两个用户明确指定的 change。恢复模式由用户指定父 change，或从 active change 中唯一存在父实现产物且 current_work 为 specdev/goal-plan 或 specdev/goal-plan 者确定。
 
 创建父 change 前必须读取并验证：
 
@@ -34,7 +34,7 @@
 
 对每个成员穷尽检查 Ready Spec、Tickets Map、Ticket frontmatter、合同覆盖、内部 DAG、路径所有权、验证矩阵和高影响未知项。部分 Ticket 可以已经 done/cancelled；其余待实现 Ticket 必须 `ready: true` 且处于可执行状态。全部 Ticket 已终态的成员只作为 satisfied baseline，不占执行 frontier。
 
-只有所有成员通过输入门后，才从 change status 模板创建普通父 change，在全局 `active` 添加仅含 `change` 的索引，把父 `current_work` 设置为本次入口的 specdev/goal-plan 或兼容 specdev/orchestrate-implementation，再写父 Map/Plan。任何预检失败都不得留下半创建父 change。
+只有所有成员通过输入门后，才从 change status 模板创建普通父 change，在全局 `active` 添加仅含 `change` 的索引，把父 `current_work` 设置为本次入口的 specdev/goal-plan 或兼容 specdev/goal-plan，再写父 Map/Plan。任何预检失败都不得留下半创建父 change。
 
 **完成标准**：父创建是 all-or-nothing；输入成员不少于两个；没有用父 Work 修补任何上游工件。
 
@@ -49,7 +49,7 @@
 5. 比较所有待实现 Ticket 的 writable/shared paths、公共合同、repository/ref 和迁移资源；
 6. 检测循环、缺失节点、重复边、无 owner overlap 和子图漂移。
 
-使用 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-map-template.md</Path>` 写父 Map。Map 是子 Ticket 图的可重算投影；子 Ticket 变化时先重读权威，再递增 Map revision。
+使用 `<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>` 写父 Map。Map 是子 Ticket 图的可重算投影；子 Ticket 变化时先重读权威，再递增 Map revision。
 
 **完成标准**：父 Map 的 members/tasks/internal edges 与全部子工件精确一致；跨 change 边有来源；DAG 无环；每个并行冲突已依赖化、串行化或阻塞。
 
@@ -62,7 +62,7 @@
 
 从 config 读取 implementation agent 与 integration attempt 上限，父 Plan 可以降低但不能提高。Lead 不计入实现 agent 数；review/research/test-observation agents 只读且不受该数字限制。同一 repository/ref 的 integration 永远串行。
 
-使用 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-plan-template.md</Path>` 写父 Plan。已有子 Goal Plan 只提供子 change 内的额外 Gate/约束；其 workspace 策略与父 Plan 冲突时阻塞，不能覆盖父级全局选择。
+使用 `<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>` 写父 Plan。已有子 Goal Plan 只提供子 change 内的额外 Gate/约束；其 workspace 策略与父 Plan 冲突时阻塞，不能覆盖父级全局选择。
 
 Implementation Plan 固定使用 `orchestration: lead-directed`，并显式持久化 `implementation_agent_limit`、`integration_attempt_limit`、workspace/integration 策略和唯一 Lead；恢复时不得从会话记忆重建这些值。
 
@@ -92,15 +92,15 @@ I-implement 是实际实现 owner；父 Work 不复制 TDD、代码审查、Evid
 
 一个成员的全部计划内 Ticket done/cancelled 且其 Goal/Evidence/Git 门通过时，父 Lead 按 change completion 关闭该子 change；不等待其他成员才关闭，也不自动归档。
 
-全部成员 completed 后，Lead 运行跨 change aggregate test/typecheck/lint/build 与适用 E2E，核对跨 change 合同、依赖顺序、共享路径、迁移/恢复和最终 Git checkpoint，并使用 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-evidence-template.md</Path>` 写整体验证。
+全部成员 completed 后，Lead 运行跨 change aggregate test/typecheck/lint/build 与适用 E2E，核对跨 change 合同、依赖顺序、共享路径、迁移/恢复和最终 Git checkpoint，并使用 `<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>` 写整体验证。
 
-只有父 Map/Plan completed、全部成员 completed、无 blocker/deviation/active dispatch/candidate/lock 且整体验证通过时，才清空父 `current_work`、去重加入 `specdev/orchestrate-implementation` 到 `works_run` 并关闭父 change。归档、push、PR、remote merge、deploy 和生产迁移保持独立授权。
+只有父 Map/Plan completed、全部成员 completed、无 blocker/deviation/active dispatch/candidate/lock 且整体验证通过时，才清空父 `current_work`、去重加入 `specdev/goal-plan` 到 `works_run` 并关闭父 change。归档、push、PR、remote merge、deploy 和生产迁移保持独立授权。
 
 运行：
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage orchestrate-implementation \
+  --stage goal-plan \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
@@ -120,7 +120,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - Super-DAG：`<Path>{roots.workflows}/specdev/P-goal-plan/references/multi-super-dag.md</Path>`
 - 执行循环：`<Path>{roots.workflows}/specdev/P-goal-plan/references/multi-execution-loop.md</Path>`
 - 冲突与漂移：`<Path>{roots.workflows}/specdev/P-goal-plan/references/multi-conflict-and-drift.md</Path>`
-- Map 模板：`<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-map-template.md</Path>`
-- Plan 模板：`<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-plan-template.md</Path>`
-- Evidence 模板：`<Path>{roots.workflows}/specdev/O-orchestrate-implementation/implementation-evidence-template.md</Path>`
+- Map 模板：`<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>`
+- Plan 模板：`<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>`
+- Evidence 模板：`<Path>{roots.workflows}/specdev/P-goal-plan/goal-plan-template.md</Path>`
 - 共享规则：`<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`

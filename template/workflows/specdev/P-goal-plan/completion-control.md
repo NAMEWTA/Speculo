@@ -34,7 +34,7 @@ Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candida
 - 命中当次 Dispatch Packet/候选协议的停止条件、继续修正已无合理收益或需要新产品决定：停止受影响 Wave，按 deviation control 返回契约 owner；
 - Lead 会话变化：读取 Goal Plan、Ticket、change worktree 状态与最新 Evidence，从最后不可变 checkpoint 恢复。
 
-父 O-orchestrate-implementation 的 Lead 可继续其他不受影响的 ready frontier；单个 Ticket 进入 Lead 复盘不自动终止整个父循环。
+父 P-goal-plan 的 Lead 可继续其他不受影响的 ready frontier；单个 Ticket 进入 Lead 复盘不自动终止整个父循环。
 
 ## 5. Change 完成 owner
 

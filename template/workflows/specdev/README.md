@@ -10,7 +10,7 @@
 
 大需求 → W 的 Initiative 候选图 → 每个 change 自己的 G/Grill → S/Spec → T 的计划型 Ticket 与 tickets-map → P 的 Goal → I/实现与 Evidence → Goal 集成验收 → 按需学习/远程 reconcile/归档。
 
-已明确的小请求直接进入适用阶段；无需为了路由而创建 Triage。跨 change 实现由 P 统一管理，旧 O 是兼容转发，不再维护第二套编排规则。
+已明确的小请求直接进入适用阶段；无需为了路由而创建 Triage。跨 change 实现由 P 统一管理。
 
 Ticket frontmatter 拥有本票状态、依赖、写集与 Skill 调用绑定；普通 map 是背景/路由/图投影；Goal Plan 拥有 Gate、workspace 和恢复决策。多 change 父 tickets-map 只指向原 Implementation Map/Plan，不复制状态。一个未完成 child 仍只能归属于一个未完成父 Goal。
 
@@ -61,7 +61,6 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 - **I-implement** — 实现与验收：执行已授权的 Ready Ticket 或获批 Direct Spec，产生可回读实现和验收证据；不从模糊需求直接写代码。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 - **L-learn-change** — Change 学习：在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。
-- **O-orchestrate-implementation** — 跨 change Goal（兼容入口）：兼容已有 O 调用和父实现 change 恢复，转发到统一 Goal；新规划使用 P-goal-plan，不在此另建执行流程。
 - **P-goal-plan** — Goal 规划与执行：为一个或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
 - **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
 - **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
@@ -84,4 +83,4 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
 
-支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、orchestrate-implementation、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。完成转换必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
+支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。完成转换必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。

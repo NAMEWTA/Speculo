@@ -292,56 +292,6 @@ const canonicalDocuments = [
     ],
   },
   {
-    output: "template/canonical/canonical-specdev-orchestrate-implementation.md",
-    entry: `${workflowRoot}/O-orchestrate-implementation/O-orchestrate-implementation.md`,
-    references: [
-      reference("O-orchestrate-implementation/input-readiness.md"),
-      reference("O-orchestrate-implementation/super-dag.md"),
-      reference("O-orchestrate-implementation/execution-loop.md"),
-      reference("O-orchestrate-implementation/conflict-and-drift.md"),
-      reference("O-orchestrate-implementation/implementation-map-template.md", {
-        preserveArtifactHeader: true,
-      }),
-      reference("O-orchestrate-implementation/implementation-plan-template.md", {
-        preserveArtifactHeader: true,
-      }),
-      reference("O-orchestrate-implementation/implementation-evidence-template.md"),
-      reference("I-implement/I-implement.md"),
-      reference("I-implement/execution-preflight.md"),
-      reference("I-implement/design-it-twice.md"),
-      reference("I-implement/tdd-rules.md"),
-      reference("I-implement/tdd-test-design.md"),
-      reference("I-implement/tdd-mocking.md"),
-      reference("I-implement/evidence-template.md", {
-        preserveArtifactHeader: true,
-      }),
-      sharedSources.parentImplementationOrchestration,
-      sharedSources.artifactContract,
-      sharedSources.pathOwnership,
-      sharedSources.evidenceAndVerification,
-      sharedSources.deviationControl,
-      sharedSources.changeCompletion,
-      sharedSources.codebaseDesign,
-      sharedSources.codeCommenting,
-      sharedSources.codeReviewSkill,
-      sharedSources.codeReviewSourceDiscovery,
-      sharedSources.codeReviewFowlerSmells,
-      sharedSources.codeReviewContracts,
-      sharedSources.researchSkill,
-      sharedSources.devWorktreeSkill,
-      sharedSources.devWorktreeCreate,
-      sharedSources.devWorktreeFinalize,
-      sharedSources.mergeConflictProtocol,
-      sharedSources.subagentDeliverySkill,
-      sharedSources.subagentDeliveryNative,
-      sharedSources.subagentDeliveryExternalWeb,
-      sharedSources.subagentDeliverySourcePackage,
-      ...persistenceReferences,
-      sharedSources.implementationMapSchema,
-      sharedSources.implementationPlanSchema,
-    ],
-  },
-  {
     output: "template/canonical/canonical-specdev-wayfinder.md",
     entry: `${workflowRoot}/W-wayfinder/W-wayfinder.md`,
     references: [
@@ -362,14 +312,7 @@ const canonicalDocuments = [
   },
 ];
 
-// Canonical files are intentionally self-contained snapshots. Follow named source
-// references (including newly extracted nested procedures), not just top-level files.
-const implementationSnapshot = canonicalDocuments.find(doc => doc.entry.endsWith("/O-orchestrate-implementation.md"));
-const goalSnapshot = canonicalDocuments.find(doc => doc.entry.endsWith("/P-goal-plan.md"));
-for (const item of implementationSnapshot.references) {
-  if (!goalSnapshot.references.some(existing => existing.source === item.source)) goalSnapshot.references.push(item);
-}
-implementationSnapshot.references.push(reference("P-goal-plan/P-goal-plan.md"));
+// Canonical files are intentionally self-contained snapshots.
 for (const doc of canonicalDocuments) {
   doc.references.push(reference("common/rules/activation-and-memory.md"));
 }
@@ -381,7 +324,6 @@ const capabilityNames = new Map([
   ["G-grill-with-docs/G-grill-with-docs.md", "设计访谈能力"],
   ["I-implement/I-implement.md", "实现阶段"],
   ["I-init-setup/I-init-setup.md", "初始化设置阶段"],
-  ["O-orchestrate-implementation/O-orchestrate-implementation.md", "跨 change 实现编排阶段"],
   ["P-goal-plan/P-goal-plan.md", "目标规划阶段"],
   ["P-prototype/P-prototype.md", "原型阶段"],
   [

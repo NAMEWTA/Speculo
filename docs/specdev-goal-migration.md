@@ -2,7 +2,7 @@
 
 ## 新入口
 
-P-goal-plan 统一 plan/run/resume/replan/verify；G 仍是单 change Grill，P-prototype 仍是 UI 设计。O 保留兼容路径和 specdev/orchestrate-implementation 恢复键，引用 P 的共享多 change 引擎。Triage 只在来源冻结、风险摄入或远程 reconcile 时选用，普通本地需求不再强制经过 intake。W 增加 Initiative 候选 change 图，child 各自进入 Grill/Spec/Tickets，再选择一个或多个 Ready child 给 P。
+P-goal-plan 统一 plan/run/resume/replan/verify；G 仍是单 change Grill，P-prototype 仍是 UI 设计。O 已删除，统一使用 P-goal-plan。Triage 只在来源冻结、风险摄入或远程 reconcile 时选用，普通本地需求不再强制经过 intake。W 增加 Initiative 候选 change 图，child 各自进入 Grill/Spec/Tickets，再选择一个或多个 Ready child 给 P。
 
 ## 不变的边界
 

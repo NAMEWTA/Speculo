@@ -49,7 +49,7 @@
 - 校验器说明：`<Path>{roots.workflows}/specdev/common/tools/README.md</Path>`
 - 外部技术研究 Skill：`<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`
 - Ticket worktree Skill：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；仅 required Ticket 使用 source → parent-candidate → parent 状态机，current Ticket 使用 current workspace/direct-parent
-- 动态 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；P-goal-plan 可建立子 change Lead 合同，I-implement 在执行期派单与验收，父实现编排存在时受 O-orchestrate-implementation 的全局门约束
+- 动态 Agent 交付合同 Skill：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`；P-goal-plan 可建立子 change Lead 合同，I-implement 在执行期派单与验收，Goal 编排的全局门约束
 - 双轴代码审查 Skill：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
 
 ## 加载原则

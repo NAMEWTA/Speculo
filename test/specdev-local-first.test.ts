@@ -651,14 +651,14 @@ describe("SpecDev local-first contracts", () => {
     const changesRoot = dirname(root);
     const members = ["2026-08-05-api", "2026-08-06-profile"];
     try {
-      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeNamedStatus(root, changeName, "active", "specdev/goal-plan");
       await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**");
       await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**");
       await writeImplementationArtifacts(root, members, {
         dependencies: [`${members[1]}::T-01 <- ${members[0]}::T-01`],
       });
 
-      let result = runValidator(root, "orchestrate-implementation");
+      let result = runValidator(root, "goal-plan");
       assert.equal(result.status, 0, result.stdout + result.stderr);
 
       await writeImplementationArtifacts(root, members, {
@@ -667,7 +667,7 @@ describe("SpecDev local-first contracts", () => {
           `${members[0]}::T-01 <- ${members[1]}::T-01`,
         ],
       });
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /implementation super-DAG cycle/);
     } finally {
@@ -680,18 +680,18 @@ describe("SpecDev local-first contracts", () => {
     const changesRoot = dirname(root);
     const members = ["2026-08-05-api", "2026-08-06-profile"];
     try {
-      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeNamedStatus(root, changeName, "active", "specdev/goal-plan");
       await writeReadyChild(join(changesRoot, members[0]), members[0], "src/shared.ts");
       await writeReadyChild(join(changesRoot, members[1]), members[1], "src/shared.ts");
       await writeImplementationArtifacts(root, members);
-      let result = runValidator(root, "orchestrate-implementation");
+      let result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /composite tasks .* have writable overlap without dependency or serialization/);
 
       await writeImplementationArtifacts(root, members, {
         serializations: [`${members[0]}::T-01 <> ${members[1]}::T-01`],
       });
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
       await rm(changesRoot, { recursive: true, force: true });
@@ -703,10 +703,10 @@ describe("SpecDev local-first contracts", () => {
     const changesRoot = dirname(root);
     const members = ["2026-08-05-api", "2026-08-06-profile"];
     try {
-      await writeNamedStatus(root, changeName, "active", "specdev/orchestrate-implementation");
+      await writeNamedStatus(root, changeName, "active", "specdev/goal-plan");
       await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**");
       await writeImplementationArtifacts(root, members);
-      let result = runValidator(root, "orchestrate-implementation");
+      let result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /member change does not exist/);
 
@@ -715,21 +715,21 @@ describe("SpecDev local-first contracts", () => {
         join(changesRoot, members[1], "spec.md"),
         (await readFile(join(changesRoot, members[1], "spec.md"), "utf8")).replace("status: ready", "status: draft"),
       );
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /Spec must have status=ready/);
 
       await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**");
       await writeImplementationArtifacts(root, members, { sourceMapRevision: 2 });
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /source_map_revision must equal Implementation Map revision/);
 
       await writeImplementationArtifacts(root, members);
       const competingParent = join(changesRoot, "2026-08-08-competing-parent");
-      await writeNamedStatus(competingParent, basename(competingParent), "active", "specdev/orchestrate-implementation");
+      await writeNamedStatus(competingParent, basename(competingParent), "active", "specdev/goal-plan");
       await writeImplementationArtifacts(competingParent, members);
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /already belong to unfinished parent implementation/);
     } finally {
@@ -746,7 +746,7 @@ describe("SpecDev local-first contracts", () => {
       await writeReadyChild(join(changesRoot, members[0]), members[0], "src/api/**", { changeStatus: "completed", ticketStatus: "done" });
       await writeReadyChild(join(changesRoot, members[1]), members[1], "src/profile/**", { changeStatus: "active", ticketStatus: "done" });
       await writeImplementationArtifacts(root, members, { status: "completed" });
-      let result = runValidator(root, "orchestrate-implementation");
+      let result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /members remain incomplete/);
       assert.match(result.stdout + result.stderr, /requires evidence\/implementation-orchestration\.md/);
@@ -770,7 +770,7 @@ describe("SpecDev local-first contracts", () => {
         "## 7. Residual Risk and Boundary",
         "none",
       ].join("\n"));
-      result = runValidator(root, "orchestrate-implementation");
+      result = runValidator(root, "goal-plan");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
       await rm(changesRoot, { recursive: true, force: true });
@@ -1548,7 +1548,7 @@ fs.writeFileSync(path, JSON.stringify(state));
   it("honors semantic resources and current workspace serialization", async () => {
     const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
     try {
-      await writeNamedStatus(root,changeName,"active","specdev/orchestrate-implementation");
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
       for (const [i,member] of members.entries()) {
         const child=join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
         const file=join(child,"ticket","01-implementation.md");
@@ -1602,16 +1602,6 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[]);
       assert.match(JSON.stringify(result.blocked),/dependency not successfully satisfied/); assert.equal(result.eligible_for_final_verification,false);
     } finally { await rm(dirname(root),{recursive:true,force:true}); }
-  });
-
-  it("preserves the O compatibility entry and mode-specific source links", async () => {
-    const base=join(packageRoot,"template/workflows/specdev");
-    const compat=await readFile(join(base,"O-orchestrate-implementation/O-orchestrate-implementation.md"),"utf8");
-    assert.match(compat,/P-goal-plan\/P-goal-plan\.md/);
-    assert.match(compat,/specdev\/orchestrate-implementation/);
-    for (const old of ["execution-loop","input-readiness","super-dag","conflict-and-drift"]) {
-      assert.match(await readFile(join(base,`O-orchestrate-implementation/${old}.md`),"utf8"),new RegExp(`P-goal-plan/references/multi-${old}\\.md`));
-    }
   });
 
   it("keeps a running parent active when one Ticket becomes blocked", async () => {

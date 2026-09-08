@@ -47,7 +47,6 @@ const EXPECTED_WORKS = new Set([
   "I-implement",
   "I-init-setup",
   "L-learn-change",
-  "O-orchestrate-implementation",
   "P-goal-plan",
   "P-prototype",
   "R-review-architecture",
@@ -116,7 +115,6 @@ const VALID_STAGES = new Set([
   "review",
   "prototype",
   "wayfinder",
-  "orchestrate-implementation",
   "complete",
 ]);
 const REQUIRED_TICKET_KEYS = new Set([
@@ -868,13 +866,6 @@ function capabilityChecks(root) {
       ],
     ],
     [
-      "orchestrate-implementation",
-      [
-        join(root, "O-orchestrate-implementation", "O-orchestrate-implementation.md"),
-        ["Ready Spec", "Ready Tickets", "Implementation Map", "Implementation Plan", "lead-directed", "implementation_agent_limit", "serialization", "I-implement"],
-      ],
-    ],
-    [
       "implement",
       [
         join(root, "I-implement", "I-implement.md"),
@@ -968,10 +959,6 @@ function capabilityChecks(root) {
     "common/rules/parent-implementation-orchestration.md",
     "common/schemas/implementation-map.schema.json",
     "common/schemas/implementation-plan.schema.json",
-    "O-orchestrate-implementation/input-readiness.md",
-    "O-orchestrate-implementation/implementation-map-template.md",
-    "O-orchestrate-implementation/implementation-plan-template.md",
-    "O-orchestrate-implementation/implementation-evidence-template.md",
   ]) {
     if (!isFile(join(root, required))) errors.push(`missing architecture/wayfinding contract ${required}`);
   }
@@ -2411,12 +2398,12 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
 }
 
 function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null) {
-  const required = stage === "orchestrate-implementation";
+  const required = stage === "goal-plan";
   const mapPath = join(change, "implementation-map.md");
   const planPath = join(change, "implementation-plan.md");
   if (!required && !isFile(mapPath) && !isFile(planPath)) return null;
-  if (!isFile(mapPath)) errors.push("orchestrate-implementation stage requires implementation-map.md");
-  if (!isFile(planPath)) errors.push("orchestrate-implementation stage requires implementation-plan.md");
+  if (!isFile(mapPath)) errors.push("goal-plan stage requires implementation-map.md");
+  if (!isFile(planPath)) errors.push("goal-plan stage requires implementation-plan.md");
   if (!isFile(mapPath) || !isFile(planPath)) return null;
 
   const parentName = basename(change);
@@ -2794,8 +2781,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
   }
 
-  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/orchestrate-implementation", "specdev/goal-plan"]).has(parentStatus.current_work)) {
-    errors.push("parent active/blocked status must keep current_work=specdev/orchestrate-implementation or specdev/goal-plan");
+  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/goal-plan"]).has(parentStatus.current_work)) {
+    errors.push("parent active/blocked status must keep current_work=specdev/goal-plan");
   }
   if (parentStatus?.change_status === "completed") {
     const incomplete = members.filter((member) => memberStatuses.get(member)?.change_status !== "completed");

@@ -149,7 +149,7 @@ Ticket 正常状态：`ready → in_progress → review → done`。`required` �
 
 按存在和当前模式同步 Ticket、Tickets Map、Goal Plan、`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 和全局状态；Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 时返回 T-triage，否则进入 Archive。
 
-当前 change 属于未完成父实现 change 时，单个组合 Ticket 完成、阻塞或触发 Lead 复盘，且子状态与 Evidence 已写入后，必须自动返回 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/O-orchestrate-implementation.md</Path>`，由父 Lead 重读全部成员并决定重新派发、返回上游或继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
+当前 change 属于未完成父实现 change 时，单个组合 Ticket 完成、阻塞或触发 Lead 复盘，且子状态与 Evidence 已写入后，必须自动返回 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>`，由父 Lead 重读全部成员并决定重新派发、返回上游或继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
 
 运行：
 

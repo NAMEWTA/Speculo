@@ -13,7 +13,7 @@
 | 外部行为已清楚 | S-spec | T-tickets |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
 | 单个或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
-| 旧 O 调用或恢复键 | O-orchestrate-implementation（兼容） | 统一 P 多 change 模式 |
+| 旧 O 调用或恢复键 | P-goal-plan | 统一 P 多 change 模式 |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
 | 开发完成后需要理解当前 change 或追问实现 | L-learn-change | 返回用户 / 继续提问 / Triage / A |
 | 架构健康扫描 | R-review-architecture | G / T |

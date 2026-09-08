@@ -1,6 +1,6 @@
 # Parent Implementation Orchestration
 
-本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、兼容 O-orchestrate-implementation、I-implement 与 A-archive-and-consolidate 读取。
+本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、兼容 P-goal-plan、I-implement 与 A-archive-and-consolidate 读取。
 
 ## 输入边界
 

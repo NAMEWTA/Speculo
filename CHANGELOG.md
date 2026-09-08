@@ -93,7 +93,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.8] - 2026-09-01
 
 ### Added
-- **Parent implementation orchestration**: adds `O-orchestrate-implementation`, a Ready Spec/Tickets-only Work that compiles multiple changes into a persistent composite Ticket super-DAG and continuously drives `I-implement` from one recoverable Lead session.
+- **Parent implementation orchestration**: adds unified `P-goal-plan` multi-change orchestration that compiles multiple changes into a persistent composite Ticket super-DAG and continuously drives `I-implement` from one recoverable Lead session.
 - **Cross-change execution contracts**: adds versioned Implementation Map and Implementation Plan schemas, dependency and serialization ownership, global workspace/agent limits, repository integration queues, aggregate Evidence, and an isolated canonical distribution with the full implementation dependency closure.
 
 ### Changed

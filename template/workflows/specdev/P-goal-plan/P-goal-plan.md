@@ -47,4 +47,4 @@ keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <map-path> --repo <project-root>
 ```
 
-再按单 change 的 `--stage goal-plan` 或父 change 的 `--stage orchestrate-implementation` 运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。
+再按单 change 的 `--stage goal-plan` 或父 change 的 `--stage goal-plan` 运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。
