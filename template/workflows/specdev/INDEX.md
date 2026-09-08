@@ -11,6 +11,8 @@ keywords: [specdev, local-first, 规格驱动开发, decision-complete, prototyp
 
 本索引用于发现 SpecDev，并让未激活 SpecDev 的会话按需取得项目已经沉淀的长期知识。
 
+激活后读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。
+
 ## 永久知识
 
 读取本索引时，只把与当前请求相关且已经存在的内容作为只读背景；不存在的路径静默跳过：

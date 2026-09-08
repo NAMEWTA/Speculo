@@ -480,6 +480,14 @@ function workflowPathToCanonical(value, tagsBySource) {
     return "本文的网页平台运行约定";
   }
 
+  if (relative === "README.md") {
+    return "SpecDev 的激活合同";
+  }
+
+  if (relative === "common/rules/activation-and-memory.md") {
+    return "SpecDev 的按需读取与记忆写入协议";
+  }
+
   if (relative.endsWith("/")) {
     return `SpecDev 的 ${path.basename(relative.slice(0, -1))} 能力集合`;
   }

@@ -110,6 +110,7 @@ E 为每次 deploy、remediation、rollback 或 verification-only 分配新 ATTE
 ## Common 与验证
 
 - 工件、scope、证据、target profile/发布 Gate、批准、执行循环和知识关闭规则：`<Path>{roots.workflows}/ops/common/rules/</Path>`
+- 激活与记忆读取规则：`<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`
 - 状态与领域 schema：`<Path>{roots.workflows}/ops/common/schemas/</Path>`
 - 确定性验证器：`<Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path>`
 - 摘要绑定的关闭工具：`<Path>{roots.workflows}/ops/common/tools/close-change.mjs</Path>`
@@ -118,3 +119,5 @@ E 为每次 deploy、remediation、rollback 或 verification-only 分配新 ATTE
 node <Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path> --workflow-root <Path>{roots.workflows}/ops</Path>
 node <Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path> --state-root <Path>{roots.state}/ops</Path>
 ```
+
+激活后读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。

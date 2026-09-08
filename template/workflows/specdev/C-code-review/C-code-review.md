@@ -13,6 +13,13 @@ keywords: [code-review, review, diff, fixed-point, PR, 标准, 规范]
 
 C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`；I 的最终审查由 I 写入 Evidence，不写本目录。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入
 
 - 用户提供的 commit、branch、tag、merge-base 或 PR locator；缺失时只询问固定点。

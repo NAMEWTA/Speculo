@@ -2,6 +2,8 @@
 
 本合同只在用户明确激活 Learning 或其中一个 Work 后读取。Learning 将学习拆成课程设计、完整授课、单文件作业、可选保持复习和用户触发的主题整合；Work 之间不自动串联。
 
+激活后读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、Lesson/OBJ、topic 和 evidence 关键词定位最小相关工件；不默认整读 context、archive 或其他 Change。
+
 ## Work 条目
 
 <!-- AUTO-INDEX-START -->
@@ -118,7 +120,7 @@ Workflow 自身只读模板；Change 内容只写当前 Change 或其 `children/
 
 Learning v1 不自动迁移。`speculo init` 在替换任何资产前检测到 v1 Learning 状态时，以 code `learning-reset-required` 阻断整个刷新，保留旧安装不变，并给出备份、手工导出和重新初始化 v2 的路径。不会自动删除、移动或覆盖用户旧数据。
 
-详细 schema、工件所有权、引用和副作用规则位于 `<Path>{roots.workflows}/learning/common/</Path>`；验证命令为：
+详细 schema、工件所有权、引用和副作用规则位于 `<Path>{roots.workflows}/learning/common/</Path>`；激活与记忆读取规则位于 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`；验证命令为：
 
 ```bash
 node <Path>{roots.workflows}/learning/common/tools/validate-learning.mjs</Path> --workflow-root <Path>{roots.workflows}/learning</Path>

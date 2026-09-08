@@ -11,6 +11,13 @@ keywords: [初始化, learner-profile, context, learning-v2]
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/README.md</Path>`。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 流程
 
 1. 读取 `<Path>{roots.state}/learning/status.json</Path>`。不存在时从 `_state/status.json` 原子创建；存在 v1 或未知 schema 时停止并返回 `learning-reset-required`，不修复旧文件。

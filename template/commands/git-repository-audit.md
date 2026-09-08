@@ -2,7 +2,7 @@
 id: git-repository-audit
 type: command
 name: Git Repository Audit
-description: 只读盘点项目根目录下一个或多个 Git 仓库，生成可复核的代码迭代、团队协作与个人贡献报告
+description: Produce a read-only reproducible audit for explicitly selected local Git repositories.
 keywords: [git-audit, git-inventory, repository, commit, merge, contribution, 仓库盘点, 代码审计, 团队评估]
 ---
 

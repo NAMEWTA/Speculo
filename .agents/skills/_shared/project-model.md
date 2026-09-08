@@ -42,12 +42,12 @@ template/
 能力描述应与运行时的读取顺序一致：
 
 1. 读取 `{roots.state}/workspace.json`，解析公共 roots。
-2. 从 `{roots.workflows}/<workflow>/INDEX.md` 发现 workflow，并按需读取其声明的永久知识；这一步不激活 workflow 状态机。
+2. 从 `{roots.workflows}/<workflow>/INDEX.md` 发现 workflow；需要永久知识时先按 `_shared/memory-retrieval.md` 定位相关条目，再读取少量原文。这一步不激活 workflow 状态机。
 3. 用户明确激活 workflow 或 work 后，读取 workflow 根 `README.md`（若 INDEX 声明），从其中的 Work 条目选择目标并读取其入口。
 4. 通过 `<Path>` 指针只加载当前 work 及当前分支需要的文件。
 5. 按激活合同读取 `{roots.state}/<workflow>/status.json`。
 6. 读取活跃 change 的 `.status.json` 和当前 work 产物。
-7. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取。
+7. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取；只有归档、冲突裁决或恢复合同要求时才扩展为完整证据读取。
 8. command 报告从 `{roots.state}/commands/<command>/` 读取；只有声明了持久游标的 command 才读取自己的 `state.json`。
 9. 独立 skill 的运行记录从 `{roots.state}/skills/<skill>/` 读取；只有该 skill 声明了持久游标时才读取根级 `state.json`。
 10. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。

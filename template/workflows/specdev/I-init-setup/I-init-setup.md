@@ -13,6 +13,13 @@ keywords: [初始化, 配置, status, tracking, 验证命令]
 
 首次使用 SpecDev、状态根不存在或治理契约发生变化后运行。此 work 只初始化 SpecDev 的状态与配置，不修改项目业务代码。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 规范输入
 
 - 工作流运行合同：`<Path>{roots.workflows}/specdev/README.md</Path>`

@@ -11,6 +11,15 @@ keywords: [毛泽东, 毛选, 矛盾分析, 战略, 组织, 咨询]
 
 本入口把"分析问题—制定战略—组织行动"组织为渐进披露的咨询流程。产物写入当前 `person/changes/<change>/`。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/person/INDEX.md</Path>` 与当前 Work 的状态入口；Person 使用整文件 INDEX，不加载不存在的 README。
+2. 再读取 `<Path>{roots.workflows}/person/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+引用检索固定为：先读取当前 phase 的 framework index，再读取 `references/research/15-quote-bank.md` 定位篇目编号，最后只回读匹配的 `books/src/NNN-*.md`；不扫描整套书籍，无匹配证据时停止引用或结论。
+
+
 ## 流程
 
 ### 1. 激活与问诊

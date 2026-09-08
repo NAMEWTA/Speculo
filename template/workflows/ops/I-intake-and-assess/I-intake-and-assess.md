@@ -13,6 +13,13 @@ keywords: [摄入, change, 项目识别, 系统盘点, 部署分析, target prof
 
 I 是初始化、scope/project/change 选择、部署模型和 target profile 的唯一 owner。它回答“当前工作属于哪里、目标现在是什么、项目需要怎样部署、现场身份与授权边界是什么、是否已经可以规划”，不构建、安装、启动服务或修改目标。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/ops/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 流程
 
 ### 1. 初始化与确定 Scope

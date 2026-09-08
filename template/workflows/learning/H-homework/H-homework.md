@@ -11,9 +11,16 @@ keywords: [homework, assignment, questions, grading, explain]
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/README.md</Path>`。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 流程
 
-1. 用户指定一个或多个 Lesson/OBJ 和题数（默认 5）。读取课程正文、目标、来源和背景；不得把题目答案提前写入作业。
+1. 用户指定一个或多个 Lesson/OBJ 和题数（默认 5）。按 Lesson/OBJ 索引只读取对应课程正文、目标、来源和背景；不得把题目答案提前写入作业。
 2. 创建 `homework/HW-<NNN>-<slug>-attempt-01.md`，写元数据、Q1…、空白 A1… 和 `Submission: pending`，更新 `homework/INDEX.md`。
 3. 用户填写 A1…并在文件中加入精确行 `Submission: ready` 后再次激活 H。H 校验回答原文和提交标记，冻结问题/答案内容。
 4. 只在同一文件末尾追加 `## Review`：每题给出 `correct|partial|incorrect|uncertain`、证据覆盖、中文详细讲解、`Explain (English)`、误区和下一步，并记录引用的 Lesson/source anchor。

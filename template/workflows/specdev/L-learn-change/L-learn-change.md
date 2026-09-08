@@ -11,6 +11,13 @@ keywords: [learn-change, change 学习, 开发后提问, 零基础, 大一新生
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 读者与职责
 
 读者是刚入大学、没有专业背景（零专业背景）的新生。读者能理解日常因果和简单流程，但不应被假定知道代码、网络、数学或行业背景。

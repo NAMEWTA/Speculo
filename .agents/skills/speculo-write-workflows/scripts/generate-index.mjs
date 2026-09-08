@@ -135,7 +135,7 @@ function renderMarkerIndex(original, targetPath, works) {
 
 function renderWholeFileIndex(workflowName, works) {
   const block = renderWorkList(works);
-  return `---\nid: ${workflowName}/index\ntype: workflow-index\nworkflow: ${workflowName}\nauto_generated: true\n---\n\n# ${workflowName} — Work Index\n\n> 本文件由 \`generate-index.mjs\` 自动生成，**禁止手动编辑**。\n\n${block}${block ? '\n' : ''}`;
+  return `---\nid: ${workflowName}/index\ntype: workflow-index\nworkflow: ${workflowName}\nauto_generated: true\n---\n\n# ${workflowName} — Work Index\n\n> 本文件由 \`generate-index.mjs\` 自动生成，**禁止手动编辑**。\n\n激活后读取 <Path>{roots.workflows}/${workflowName}/common/rules/activation-and-memory.md</Path>：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。\n\n${block}${block ? '\n' : ''}`;
 }
 
 function chooseMode(frontmatter, indexPath) {

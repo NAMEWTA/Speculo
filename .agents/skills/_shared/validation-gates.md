@@ -38,6 +38,7 @@
 - 后续步骤不会掩盖当前步骤；
 - reference 只在触发分支加载；
 - script 的失败退出非零并报告具体路径。
+- 涉及记忆时先定位相关索引 entry，再回读少量原文；写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。
 
 涉及用户提供的参考内容时，列出相对原文的实质修改及其 Speculo 集成理由；没有集成冲突的内容直接复用，方法、步骤顺序、问题、判断和完成标准未被非预期改变。无法说明必要性的改写恢复原文后再通过本 Gate。
 

@@ -11,6 +11,8 @@ keywords: [learning, 学习, 教学, 作业, 复习, 综合, 知识, eli5]
 
 本索引只用于被动发现 Learning 和已发布的主题知识；被动读取不得初始化状态、创建 Change 或修改复习状态。需要执行 Work 时必须读取 `<Path>{roots.workflows}/learning/README.md</Path>`。
 
+激活后读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。
+
 ## 永久知识（主题视图）
 
 - 总目录：`<Path>{roots.state}/learning/context/INDEX.md</Path>`

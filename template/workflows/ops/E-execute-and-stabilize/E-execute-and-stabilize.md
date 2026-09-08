@@ -13,6 +13,13 @@ keywords: [执行, attempt, 调试, 诊断, 回滚, 验证, 稳定性]
 
 E 是正常部署、批准回滚、attempt 诊断、验证和 completed 转换的唯一 owner。它不补写计划或批准，也不把命令退出零当作部署完成。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/ops/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 模式
 
 - `deploy`：执行当前批准计划；
@@ -24,7 +31,7 @@ E 是正常部署、批准回滚、attempt 诊断、验证和 completed 转换�
 
 ### 1. 恢复与预检
 
-读取所有既有 attempts、当前 status、request、inventory、deployment model、target profile、plan/approval、`<Path>{roots.workflows}/ops/common/rules/execution-loop.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/target-profile-and-release-gates.md</Path>`。除 verification-only 外必须通过 `--stage pre-execute`，重建 plan/profile 摘要、source、target、路径包含、整体控制面身份、权限、容量、端口、Gate、数据保护、preview 和 rollback material。
+执行与恢复阶段有意完整读取所有既有 attempts、当前 status、request、inventory、deployment model、target profile、plan/approval、`<Path>{roots.workflows}/ops/common/rules/execution-loop.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/target-profile-and-release-gates.md</Path>`。除 verification-only 外必须通过 `--stage pre-execute`，重建 plan/profile 摘要、source、target、路径包含、整体控制面身份、权限、容量、端口、Gate、数据保护、preview 和 rollback material；这是执行安全与恢复证据例外。
 
 在第一条 mutation 前重采集 identity assertions 并按 exact/ordered-list/set/digest 比较。任何 profile/identity/构件漂移、新 mutation、新权限或计划外写入都会零 mutation 停止，令 approval invalidated 并返回 I/P。发现同一 target/deployment root 正被另一 change 执行时阻塞。
 

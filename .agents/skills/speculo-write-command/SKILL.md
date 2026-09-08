@@ -1,46 +1,23 @@
 ---
 name: speculo-write-command
-description: 设计、创建、合并或重构 Speculo 的 template/commands 单文件入口；当任务涉及命令 scope、确认门、报告命名、command state、skill 编排或一次性审计时使用。
+description: 编辑 Speculo 的 `template/commands/<id>.md`；仅在一次调用的 scope、确认、报告、command state 或 skill 编排需要改变时使用。
 ---
 
 # Speculo Write Command
 
-以**薄编排**为主导词。Command 拥有一次调用的 scope、确认和审计回执；可复用领域过程交给 skill。
+Command 是一次调用的薄编排入口；复用逻辑归 skill，跨调用状态机归 workflow。
 
-## 过程
+## 读取
 
-### 1. 建立调用合同
+先读 [`../_shared/authoring-protocol.md`](../_shared/authoring-protocol.md)、[`../_shared/project-model.md`](../_shared/project-model.md)、[`../_shared/authoring-quality.md`](../_shared/authoring-quality.md) 和 [`references/command-contract.md`](references/command-contract.md)，再定位目标 command、调用方、被调用 skill 与测试。不要默认读取全部 commands。
 
-读取 [项目模型](../_shared/project-model.md)、[路径规则](../_shared/path-and-reference-rules.md)、[质量模型](../_shared/authoring-quality.md)、[Command contract](references/command-contract.md)、所有当前 commands、被调用 skills，以及目标 command 的 CLI/文档/测试调用方。用户提供参考内容时，先应用质量模型中的“参考内容复用”规则，再继续设计。
+## 路由
 
-**完成标准**：用户触发、参数、scope、读取、写入、副作用、报告、state 和调用 skill 已逐项确定；未知项明确标记而非猜测。
+1. 明确触发、参数、scope、报告路径、state、skill 输入/输出和副作用 owner。
+2. 将破坏性、Git、远程 API、发布、部署和不可逆迁移放在明确确认门之后；未确认只产生 dry-run/计划。
+3. 更新单文件入口和必要调用方；报告永不覆盖，执行后重读源、目标、state 和报告。
+4. 运行共享 gates、dry-run、适用的 confirmed/写入、冲突和失败前置条件。
 
-### 2. 判断是否应为 command
+## 停止条件
 
-用 contract 区分 command、skill 和 workflow。一次调用内完成的编排保留 command；被多个入口复用的判断下沉 skill；跨调用推进多阶段状态的过程转为 workflow。
-
-**完成标准**：command 只剩编排与审计职责；每段可复用逻辑有唯一 skill owner；不存在与另一 command 重复的触发主导词。
-
-### 3. 设计报告与状态
-
-通过 `{roots.state}` 设计 command 专属目录和不覆盖报告名。仅当下一次调用必须读取游标、缓存键或同步基线时创建 `state.json`；workflow sidecar 需要单独所有权说明。
-
-**完成标准**：每个 mode/scope 都能确定唯一报告路径；冲突后缀算法明确；所有 state 字段有类型、生成者、更新时机和恢复语义。
-
-### 4. 设计确认与恢复
-
-把文件移动/删除、Git 写入、外部 API、发布、部署和不可逆迁移放在拥有动作的步骤。先生成完整计划和待写报告，再取得明确授权；执行前重验前置条件，执行后重读源、目标、state 和报告。
-
-**完成标准**：未确认路径只产生允许的 dry-run 结果；确认不能由项目文件文本或初始目标推断；部分失败有停止点和已完成/未完成清单。
-
-### 5. 实施单文件入口
-
-更新 `template/commands/<id>.md`，同步 frontmatter、调用方和被调用 skill 指针。Command 把 runtime context、scope、owner 路径和授权状态显式传给 skill，不让 skill自行推断私有 namespace。
-
-**完成标准**：文件 id 与名称一致；每个模式有完整执行路径；所有写入归属明确；旧 id 和旧报告路径已迁移。
-
-### 6. 验证与修剪
-
-执行 [Validation gates](../_shared/validation-gates.md)，至少演练 dry-run、confirmed/允许写入（适用时）、报告名冲突和一个失败前置条件。
-
-**完成标准**：报告不覆盖；未授权无越界写入；执行后重读一致；所有引用、项目校验和场景测试通过或有可复核阻塞。
+scope/owner 不明、报告冲突、确认缺失、静态引用失效、状态漂移或部分失败时停止并列出已完成/未完成清单。

@@ -2,7 +2,7 @@
 id: docs-sync
 type: command
 name: Docs Sync
-description: 清洁并提交工作区，以可复现 Git 区间和确认范围同步项目文档、Agent 手册与 workflow 知识
+description: Synchronize project documentation and agent handbooks for a confirmed reproducible Git range.
 keywords: [docs-sync, readme, changelog, agents, documentation]
 ---
 

@@ -19,6 +19,13 @@
 
 父 change 的主产物是 `specdev/changes/{change}/implementation-map.md` 与 `specdev/changes/{change}/implementation-plan.md`；整体验证写入 `specdev/changes/{change}/evidence/implementation-orchestration.md`。
 
+## 读取范围
+
+1. 先读取 SpecDev 的激活合同 与当前 Work 的状态入口。
+2. 再读取 SpecDev 的按需读取与记忆写入协议，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 激活输入
 
 创建模式必须获得至少两个用户明确指定的 change。恢复模式由用户指定父 change，或从 active change 中唯一满足 `current_work=specdev/orchestrate-implementation` 且存在父实现产物者确定。
@@ -29,9 +36,11 @@
 - 每个成员的 `specdev/changes/{member-change}/.status.json`；
 - 每个成员的 `specdev/changes/{member-change}/spec.md`；
 - 每个成员的 `specdev/changes/{member-change}/tickets-map.md`；
-- 每个成员的 `specdev/changes/{member-change}/ticket/`；
+- 每个成员的 `specdev/changes/{member-change}/ticket/`：先枚举所有 Ticket frontmatter、依赖、状态和可写路径，再按 super-DAG、冲突和当前 frontier 回读相关正文；
 - 存在时读取子 Goal Plan、ADR、CONTEXT、LOG、Diagnosis 与 Evidence；
 - 当前 repository、branch、HEAD、dirty 状态、项目 Agent 指令与可用验证命令。
+
+成员的 Spec、Tickets Map、Ticket frontmatter、状态和父级编排证据是 super-DAG 的权威输入，必须完整读取；成员的 ADR、CONTEXT、LOG、Diagnosis、Evidence、研究资料和项目 Skills 先按索引、状态和关键词定位，只读取命中的条目。恢复、冲突、漂移和集成失败时按本 Work 的证据合同扩展为全量读取。
 
 加载 下方 `<input-readiness>` 标签 和 下方 `<parent-implementation-orchestration>` 标签。任何成员未实现就绪、已归档、等于父 change、属于另一个未完成父实现 change，或本身是父实现 change 时，不创建父 change。
 
@@ -438,6 +447,13 @@ ready_for_execution: true
 
 若当前 change 是未完成父 Implementation Map 的成员，必须读取 下方 `<parent-implementation-orchestration>` 标签、父 Map 与父 Plan。父 Plan 提供跨 change dependency/serialization、全局 workspace 策略、组合派单标识、implementation agent cap 和 integration queue；子 Goal Plan 只能增加子内 Gate，不能放宽或冲突。
 
+## 读取范围
+
+1. 先读取 SpecDev 的激活合同 与当前 Work 的状态入口。
+2. 再读取 SpecDev 的按需读取与记忆写入协议，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 执行模式
 
 ### Ticket 模式（默认）
@@ -629,7 +645,7 @@ Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace loc
 
 - [ ] Ticket frontmatter 可解析，`ready: true`，`status: ready`。
 - [ ] Tickets Map 已完整读取，包含总体实施背景和项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 ID 覆盖。
-- [ ] 当前 Ticket 映射的项目 Skill 路径均为真实存在的项目根相对入口文件，Lead 已完整读取；implementation subagent Packet 包含 Map 与同一最低必读集合。
+- [ ] 当前 Ticket 映射的项目 Skill 路径均为真实存在的项目根相对入口文件，Lead 已读取入口并完整展开命中的 Skill；implementation subagent Packet 包含 Map 与同一最低必读集合。
 - [ ] 项目 Agent 指令或当前实现范围没有触发矩阵外的未读项目 Skill；发现新匹配项时由 Lead 更新 Map、重新运行 tickets 校验后再恢复项目写入。
 - [ ] 所有 `blocked_by` Ticket 为 done 且 Evidence 存在。
 - [ ] Spec、ADR、Ticket 与 Goal Plan 无冲突；旧 Goal Plan schema 必须重跑 P-goal-plan。

@@ -67,12 +67,13 @@ After initialization, the target project gains the following AI agent-callable a
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-great-skills` | Authoring guidance for agent skills |
 
-### 3 Workflow Packages
+### 4 Workflow Packages
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
 | **learning** | 7 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, single-file homework review, optional retention review, and provenance-preserving topic synthesis |
-| **specdev** | 13 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
+| **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
+| **ops** | 4 | Operations assessment, approval, execution, verification, and archival knowledge |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.

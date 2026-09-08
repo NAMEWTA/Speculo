@@ -2,7 +2,7 @@
 id: handoff
 type: command
 name: handoff
-description: 将当前对话压缩为一份交接文档，供另一个 agent 接手继续工作。
+description: Persist a compact handoff when the user asks another agent or session to continue the current work.
 keywords: [handoff, 交接, 移交, 上下文压缩]
 argument-hint: "下一个会话将用于什么？"
 disable-model-invocation: true

@@ -17,6 +17,13 @@ keywords: [实现编排, 父 change, super-DAG, Ticket, Lead, agent team, worktr
 
 父 change 的主产物是 `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>`；整体验证写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>`。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 激活输入
 
 创建模式必须获得至少两个用户明确指定的 change。恢复模式由用户指定父 change，或从 active change 中唯一满足 `current_work=specdev/orchestrate-implementation` 且存在父实现产物者确定。
@@ -27,9 +34,11 @@ keywords: [实现编排, 父 change, super-DAG, Ticket, Lead, agent team, worktr
 - 每个成员的 `<Path>{roots.state}/specdev/changes/{member-change}/.status.json</Path>`；
 - 每个成员的 `<Path>{roots.state}/specdev/changes/{member-change}/spec.md</Path>`；
 - 每个成员的 `<Path>{roots.state}/specdev/changes/{member-change}/tickets-map.md</Path>`；
-- 每个成员的 `<Path>{roots.state}/specdev/changes/{member-change}/ticket/</Path>`；
+- 每个成员的 `<Path>{roots.state}/specdev/changes/{member-change}/ticket/</Path>`：先枚举所有 Ticket frontmatter、依赖、状态和可写路径，再按 super-DAG、冲突和当前 frontier 回读相关正文；
 - 存在时读取子 Goal Plan、ADR、CONTEXT、LOG、Diagnosis 与 Evidence；
 - 当前 repository、branch、HEAD、dirty 状态、项目 Agent 指令与可用验证命令。
+
+成员的 Spec、Tickets Map、Ticket frontmatter、状态和父级编排证据是 super-DAG 的权威输入，必须完整读取；成员的 ADR、CONTEXT、LOG、Diagnosis、Evidence、研究资料和项目 Skills 先按索引、状态和关键词定位，只读取命中的条目。恢复、冲突、漂移和集成失败时按本 Work 的证据合同扩展为全量读取。
 
 加载 `<Path>{roots.workflows}/specdev/O-orchestrate-implementation/input-readiness.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`。任何成员未实现就绪、已归档、等于父 change、属于另一个未完成父实现 change，或本身是父实现 change 时，不创建父 change。
 

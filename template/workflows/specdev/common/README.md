@@ -11,6 +11,7 @@
 
 ## 规则权威
 
+- 激活与记忆读取、事务门：`<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；它定义 locate-before-read 和写入前 owner/gateway 检查，其他规则只声明领域专属约束。
 - 工件职责与冲突裁决：`<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`
 - 规划原则：`<Path>{roots.workflows}/specdev/common/rules/planning-principles.md</Path>`
 - 规划深度与就绪：`<Path>{roots.workflows}/specdev/common/rules/readiness-and-depth.md</Path>`

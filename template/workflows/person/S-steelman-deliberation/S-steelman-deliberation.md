@@ -18,6 +18,13 @@ keywords: [双向钢人, steelman, 决策, 反谄媚, 关键变量, 明确判断
 3. 找出双方真正的分歧，以及最可能改变结论的关键变量；
 4. 只问用户一个最关键的问题；等用户回答后，再给出明确判断、理由和下一步行动。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/person/INDEX.md</Path>` 与当前 Work 的状态入口；Person 使用整文件 INDEX，不加载不存在的 README。
+2. 再读取 `<Path>{roots.workflows}/person/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入、权威与边界
 
 ### 必需输入

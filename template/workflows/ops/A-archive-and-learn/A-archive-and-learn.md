@@ -13,6 +13,13 @@ keywords: [复盘, 错误教训, SOP, 知识合并, 项目归档]
 
 A 是 RETROSPECTIVE、知识提升和 scope-aware 归档的唯一 owner。它保留完整失败历史，但只把有证据、仍有效且对后续工作有用的结论合并为现役知识。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/ops/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 流程
 
 ### 1. 验证完成证据

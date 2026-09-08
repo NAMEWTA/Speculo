@@ -13,6 +13,13 @@ keywords: [归档, consolidation, ADR, context, research, knowledge, 代码库�
 
 A 是 SpecDev 的归档 wrapper：它拥有模式选择、SpecDev 完成门和代码访谈；机械扫描、dry-run、知识毕业、合并、清理、移动与重读由 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>` 单一维护。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 模式
 
 - **archive**：处理用户指定或唯一的 completed change。

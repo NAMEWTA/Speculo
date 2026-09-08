@@ -15,6 +15,13 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入
 
 优先读取：
@@ -35,7 +42,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 ### 1. 输入预检
 
-1. 读取所有存在的上游工件；
+1. 先读取上游工件索引，按当前 Ticket 的依赖、缺口和冲突关键词定位，再回读相关工件；
 2. 检查 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` 的 `ready_for_tickets`；
 3. 按 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>` 处理 Spec、ADR、用户决定与代码事实的冲突；
 4. 将未知项分类为可发现事实、高影响用户决定和低影响实现细节；
@@ -59,8 +66,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 #### 项目 Skill 路由
 
 1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `<Path>.agents/skills/**/SKILL.md</Path>`，存在其他项目级 Skill 根时一并枚举；
-2. 先读取候选 Skill 的 frontmatter 与入口路由；存在 `<Path>.agents/skills/engineering-standards/SKILL.md</Path>` 时完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
-3. 根据整个 change 和每个 Ticket 的路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
+2. 先读取候选 Skill 的 frontmatter 与入口路由；只有命中当前 change 的 scope、路径、技术域或验证条件时才完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
+3. 根据 change 索引、每个 Ticket 的 frontmatter、路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
 4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
 5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
 

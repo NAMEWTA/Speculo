@@ -2,8 +2,7 @@
 id: archive-and-consolidate
 type: command
 name: Archive and Consolidate
-description: >
-  统一入口：Learning 先做用户确认的主题整合或冷归档，其他 workflow 继续使用各自的归档合同。
+description: Archive or consolidate a user-selected completed change and its knowledge under the owning workflow contract.
 keywords: [archive, consolidate, learning, topic, cold-archive, 归档, 综合]
 ---
 

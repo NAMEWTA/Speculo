@@ -13,6 +13,13 @@ keywords: [prototype, UI 原型, 风格检测, 设计系统, HTML, CSS, 交互, 
 
 本 Work 的主导词是**设计定向**：先从项目事实识别现状，再让用户看到基于功能而非流行色推荐的候选，最后把选择固化为既可阅读又可运行的 UI 设计包。P 不修改生产 UI；后续 S、Tickets 和 I 以设计包为视觉与交互权威。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入与所有权
 
 - 必需输入：目标项目或新产品设想、核心用户任务，以及当前 SpecDev change。

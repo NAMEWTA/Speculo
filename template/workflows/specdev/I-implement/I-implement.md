@@ -15,6 +15,13 @@ keywords: [实现, TDD, Lead, subagent, worktree, current workspace, direct-pare
 
 若当前 change 是未完成父 Implementation Map 的成员，必须读取 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`、父 Map 与父 Plan。父 Plan 提供跨 change dependency/serialization、全局 workspace 策略、组合派单标识、implementation agent cap 和 integration queue；子 Goal Plan 只能增加子内 Gate，不能放宽或冲突。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 执行模式
 
 ### Ticket 模式（默认）

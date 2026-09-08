@@ -17,6 +17,13 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
 
+## 读取范围
+
+1. 先读取 SpecDev 的激活合同 与当前 Work 的状态入口。
+2. 再读取 SpecDev 的按需读取与记忆写入协议，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入
 
 优先读取：
@@ -37,7 +44,7 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 ### 1. 输入预检
 
-1. 读取所有存在的上游工件；
+1. 先读取上游工件索引，按当前 Ticket 的依赖、缺口和冲突关键词定位，再回读相关工件；
 2. 检查 `specdev/changes/{change}/spec.md` 的 `ready_for_tickets`；
 3. 按 下方 `<artifact-contract>` 标签 处理 Spec、ADR、用户决定与代码事实的冲突；
 4. 将未知项分类为可发现事实、高影响用户决定和低影响实现细节；
@@ -61,8 +68,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 #### 项目 Skill 路由
 
 1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `.agents/skills/**/SKILL.md`，存在其他项目级 Skill 根时一并枚举；
-2. 先读取候选 Skill 的 frontmatter 与入口路由；存在 `.agents/skills/engineering-standards/SKILL.md` 时完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
-3. 根据整个 change 和每个 Ticket 的路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
+2. 先读取候选 Skill 的 frontmatter 与入口路由；只有命中当前 change 的 scope、路径、技术域或验证条件时才完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
+3. 根据 change 索引、每个 Ticket 的 frontmatter、路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
 4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
 5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
 
@@ -397,7 +404,7 @@ shared_path_owners: []
 - **上游 Spec：** `specdev/changes/{change}/spec.md`
 - **完成 Evidence：** `specdev/changes/{change}/evidence/T-01.md`
 
-实现本 Ticket 时，Lead 与 implementation subagent 必须按顺序完整读取总体 Map、其中适用于 `ALL`/`T-01` 的项目 Skill，再读取本 Ticket 与其他上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
+实现本 Ticket 时，Lead 与 implementation subagent 必须按顺序完整读取总体 Map，读取项目 Skill 的 frontmatter 与入口并只展开适用于 `ALL`/`T-01` 的匹配项，再读取本 Ticket 与相关上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
 
 ## 1. 战略与来源
 
@@ -496,7 +503,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 ## 10. 验收标准
 
 - [ ] `AC-001`：<可判定结果>。
-- [ ] 实现开始前已完整读取 Tickets Map 及其中适用于 `ALL`/`T-01` 的项目 Skill；新发现的匹配 Skill 已由 Lead 同步回 Map。
+- [ ] 实现开始前已完整读取 Tickets Map，已读取项目 Skill 入口并完整展开其中适用于 `ALL`/`T-01` 的匹配项；新发现的匹配 Skill 已由 Lead 同步回 Map。
 - [ ] 验证矩阵全部执行并记录到 `specdev/changes/{change}/evidence/T-01.md`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
 - [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
@@ -537,7 +544,7 @@ status: draft
 
 ### 项目 Skill 读取矩阵
 
-每个 Ticket 的 Lead 或 implementation subagent 都必须先完整读取本 Map，再读取下表中适用于 `ALL` 或当前 Ticket ID 的项目 Skill，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先读取该 Skill，并由 Lead 更新本 Map、重新校验后继续。
+每个 Ticket 的 Lead 或 implementation subagent 都必须先完整读取本 Map，再读取候选项目 Skill 的 frontmatter 与入口；只有适用于 `ALL` 或当前 Ticket ID、且 scope/路径/技术域/验证条件命中的 Skill 才完整读取，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先定位并读取其入口，由 Lead 更新本 Map、重新校验后继续。
 
 项目 Skill 使用项目根相对 Path，例如 `.agents/skills/{skill-name}/SKILL.md`；不得写机器绝对路径。若没有适用项目 Skill，保留一行 `无（已扫描项目 Skill 入口，未发现适用项）`，并在 Trigger / Scope 中记录实际扫描范围。
 

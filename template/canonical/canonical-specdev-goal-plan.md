@@ -19,6 +19,13 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 产物写入 `specdev/changes/{change}/goal-plan.md`。
 
+## 读取范围
+
+1. 先读取 SpecDev 的激活合同 与当前 Work 的状态入口。
+2. 再读取 SpecDev 的按需读取与记忆写入协议，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 何时运行
 
 满足任一条件时运行：
@@ -38,7 +45,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 - `specdev/changes/{change}/spec.md`
 - `specdev/changes/{change}/tickets-map.md`
-- `specdev/changes/{change}/ticket/`
+- `specdev/changes/{change}/ticket/`：先枚举 Ticket 入口的 frontmatter、依赖和状态，按 DAG、路径和风险定位需要完整读取的 Ticket。
 - `specdev/config.json`
 
 按存在情况读取：
@@ -50,6 +57,8 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 - 永久架构决策：`specdev/adr/`
 - 永久领域上下文：`specdev/context/`
 - 用户提供的合同、标准、参考实现、环境限制、发布窗口和批准策略。
+
+非当前分支的 ADR、CONTEXT、LOG、Diagnosis、Evidence、研究资料和永久目录先通过索引、状态和关键词定位；只有被当前 Gate、依赖、冲突或恢复条件命中的条目才回读原文。Tickets Map、当前计划和决定 DAG 的 Ticket frontmatter 是权威编排输入，仍需完整读取。
 
 永久目录可以为空，静默继续。缺少 Spec 或 Tickets Map 时返回 “编写 Spec 阶段” 或 “拆分 Tickets 阶段”；当前 ADR/CONTEXT 缺失且规划依赖对应决定时返回 “设计访谈能力”，不在 Goal Plan 中补造上游权威。
 

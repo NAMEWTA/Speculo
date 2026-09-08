@@ -245,6 +245,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - Schemas：`<Path>{roots.workflows}/specdev/common/schemas/</Path>`
 - Tools：`<Path>{roots.workflows}/specdev/common/tools/</Path>`
 - Skills：`<Path>{roots.workflows}/specdev/common/skills/</Path>`
+- 激活与记忆读取规则：`<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`
 
 ## 自动校验
 
@@ -261,3 +262,5 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
+
+激活后读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。

@@ -12,7 +12,7 @@
 
 ## 共同事实源
 
-所有技能先读取 `_shared/project-model.md` 和 `_shared/authoring-quality.md`，再读取与当前资产类型对应的 reference。共享规则只在 `_shared/` 中维护，具体技能不复制它们。
+所有技能先读取 `_shared/project-model.md` 和 `_shared/authoring-quality.md`，再读取与当前资产类型对应的 reference。需要长期知识时读取 `_shared/memory-retrieval.md`；维护作者技能时读取 `_shared/authoring-protocol.md`。共享规则只在 `_shared/` 中维护，具体技能不复制它们。
 
 用户提供参考内容时，所有作者技能先应用 `_shared/authoring-quality.md` 中的“参考内容复用”规则：默认尽可能直接复制，只做 Speculo 正确运行所必需的最小适配。
 

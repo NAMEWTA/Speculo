@@ -2,7 +2,7 @@
 id: status
 type: command
 name: Status
-description: 汇总已安装 workflow、active changes、异常状态与下一步
+description: Summarize installed workflows, active changes, anomalies, and next routes without activating a workflow.
 keywords: [status, 状态, active, blocked]
 ---
 

@@ -15,6 +15,13 @@ keywords: [spec, PRD, 用户故事, 验收合同, 接缝, 范围, readiness]
 
 Spec 决定“为什么、为谁、系统应表现为何”。它可以锁定影响公共接口、数据、兼容、安全或验收的实现约束，但不写逐文件施工计划。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入
 
 按存在情况读取：

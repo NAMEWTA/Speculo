@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-09-08
+
+### Added
+- **Workflow disclosure validation**: adds `scripts/validate-workflow-disclosure.mjs` to the asset pipeline and checks workflow entry points for activation, read-scope, and memory pointers.
+
+### Changed
+- **Maintainer guidance refresh**: rewrites the Speculo handbook, shared skill references, and workflow docs around explicit entry procedures and updated project facts.
+- **Workflow asset refresh**: updates the SpecDev, Learning, Ops, and Person packages, plus their canonical outputs, to match the new disclosure model and Ops package split.
+
 ## [1.0.1] - 2026-09-05
 
 ### Changed

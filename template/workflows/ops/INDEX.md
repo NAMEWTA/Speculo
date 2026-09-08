@@ -11,6 +11,8 @@ keywords: [ops, 运维, 部署, 项目归档, 实施计划, 复盘, SOP]
 
 本索引用于发现 Ops，并让未激活状态机的会话按需读取已经验证的全局或项目运维知识。瞬时系统状态、失败现场和执行日志只存在于归档 change，不作为永久真相。
 
+激活后读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`：先定位相关 entry，再回读少量原文与 provenance；正式写入前检查 owner/gateway、pending transaction、lock 和 recovery evidence。
+
 ## 永久知识
 
 只读取当前请求需要且实际存在的索引或知识文件；路径不存在时静默跳过。被动读取不得初始化 Ops、读取 active change、执行系统探测或修改状态：

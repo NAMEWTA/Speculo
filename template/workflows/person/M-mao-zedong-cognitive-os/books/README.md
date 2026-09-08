@@ -12,6 +12,6 @@
 
 ## 引用纪律
 
-1. 引金句先读 `references/research/15-quote-bank.md`，再按编号打开 `src/NNN-*.md`。
+1. 引金句先读 `references/research/15-quote-bank.md`，再按编号打开单个 `src/NNN-*.md`；不得默认扫描或整读 `books/src/`。
 2. 逐字原文加引号并标注篇目；概括转述标注「转述/大意」。
 3. 建国后争议文本只取方法论句，并附边界提示。

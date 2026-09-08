@@ -20,6 +20,13 @@ keywords: [architecture, review, module, interface, depth, seam, adapter, levera
 
 本 work 只审查、呈现和访谈，不直接修改产品代码。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入与产物
 
 按存在情况读取：

@@ -13,6 +13,13 @@ keywords: [bug, 诊断, 红灯, tight-loop, 根因, 复现, 假设]
 
 D 的主导词是**红灯**：没有一条已执行且能在此 bug 上变红的紧凑命令，就没有可进入的假设阶段。D 默认只读项目代码，可以创建 change 诊断工件和经授权的临时可撤销探针；生产修复由 Implement 拥有。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入与所有权
 
 按存在情况读取：

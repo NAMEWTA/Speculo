@@ -13,6 +13,13 @@ keywords: [triage, 摄入, import, issue, reconcile, close, 风险, 路由]
 
 Triage 是 SpecDev 唯一的远程摄入与关闭边界。开发期间，`<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`、Spec、Ticket、Map、Goal Plan、Evidence 和状态文件是唯一权威；远程系统只保存原始请求以及经确认后的完成通知。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 模式
 
 - **intake**：冻结输入、创建或恢复 change、分类并返回下一 Work。

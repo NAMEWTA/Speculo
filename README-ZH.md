@@ -52,13 +52,14 @@ npm install -g @namewta/speculo
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 9 个 Skills
+### 10 个 Skills
 
 | Skill | 用途 |
 |---|---|
 | `archive-and-consolidate` | 归档过期内容、合并分散知识、清理过时资产 |
 | `docs-sync` | 文档审计，以及 AGENTS.md / CLAUDE.md 手册的增量维护或完整重建 |
 | `github-npm-ops` | GitHub issue/PR 分类与 npm 操作 |
+| `git-history-squash` | 受控压缩 Git 历史并保留可恢复引用 |
 | `optimize-codex-config` | 体检并优化本机 Codex 配置、第三方 Responses 接口、权限和 compaction 故障 |
 | `source-code-zip` | 生成无外部依赖、仅含源码的隔离交付 ZIP |
 | `speculo-retro` | 回顾分析 |
@@ -66,12 +67,13 @@ npm install -g @namewta/speculo
 | `engineering-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-great-skills` | Agent Skill 编写参考 |
 
-### 3 个 Workflow Packages
+### 4 个 Workflow Packages
 
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
 | **learning** | 7 | 面向项目、产品、学科、语言和技能的完整 30–40 分钟通俗课程、单文件作业评审、可选延迟复习，以及保留原料和引用的主题综合 |
-| **specdev** | 13 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
+| **specdev** | 15 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
+| **ops** | 4 | 运维评估、批准、执行、验证、复盘与知识沉淀 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 
 每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。

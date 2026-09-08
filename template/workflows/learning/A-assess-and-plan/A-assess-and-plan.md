@@ -11,6 +11,13 @@ keywords: [评估, baseline, course-design, objectives, background]
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/README.md</Path>`。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 流程
 
 1. 确认 I 已完成，收集学习目标、期望效果、受众、范围、时间、表达基线和深度。缺少会改变课程设计的选择时，一次只问一个问题。

@@ -13,9 +13,16 @@ keywords: [实施计划, Plan Mode, 批量批准, 重新规划, deployment root]
 
 P 有 `plan` 和 `record-approval` 两种模式。它拥有所有 plan/approval 版本，但不执行计划。首次部署与 attempt 失败后的 remediation/rollback 使用同一合同。
 
+## 读取范围
+
+1. 先读取 `<Path>{roots.workflows}/ops/README.md</Path>` 与当前 Work 的状态入口。
+2. 再读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
+3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+
+
 ## 输入
 
-读取 scope/project/change status、request、选定 inventory、Ready deployment model/dossier、`deployment/target-profile.json` v1、项目永久 context/ADR/runbook、change LOG/CONTEXT/ADR，以及 `<Path>{roots.workflows}/ops/common/rules/plan-and-approval.md</Path>`、`<Path>{roots.workflows}/ops/common/rules/target-profile-and-release-gates.md</Path>`、path/scope 和 redaction 规则。重新规划还必须读取触发它的 ATTEMPT 及 diagnosis；输入摘要无法重建时返回 I 或 E。
+先读取 scope/project/change status、request、选定 inventory、Ready deployment model/dossier、`deployment/target-profile.json` v1，以及两个 plan/target-profile 规则入口。项目永久 context/ADR/runbook、change LOG/CONTEXT/ADR 和历史 attempts 先通过索引、状态和关键词定位；只回读与当前 target、计划、风险或重规划原因匹配的条目。重新规划必须完整读取触发它的 ATTEMPT 及 diagnosis；输入摘要无法重建时返回 I 或 E。
 
 ## Plan 模式
 

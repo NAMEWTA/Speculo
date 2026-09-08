@@ -2,7 +2,7 @@
 id: retro
 type: command
 name: Speculo Retro
-description: 复盘 Speculo commands/workflows 使用痛点，深度分析后经确认用 gh 提交改进 issue
+description: Analyze confirmed Speculo usage friction and propose or create GitHub issues through the npm/GitHub operation skill.
 keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 ---
 
