@@ -27,3 +27,7 @@ status: active
 ## 超出范围
 
 <!-- 被裁定在目的地之外的工作；已关闭，永不升级。 -->
+
+## Change 边界入口
+
+存在多个候选 change 时，W 创建并按需读取 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`；地图不复制其中的候选或子状态。每个目标 change 的 Grill/Spec/Ticket 独立拥有，交接规则见 `<Path>{roots.workflows}/specdev/W-wayfinder/references/initiative-discovery.md</Path>`。

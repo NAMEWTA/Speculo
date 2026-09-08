@@ -13,7 +13,7 @@
     "pretest": "pnpm build",
     "generate-canonical": "node scripts/generate-specdev-canonical.mjs",
     "validate-source-parity": "node scripts/check-specdev-source-parity.mjs",
-    "validate-assets": "node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs",
+    "validate-assets": "node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
     "eval:scenarios": "node scripts/evaluate-scenarios.mjs",

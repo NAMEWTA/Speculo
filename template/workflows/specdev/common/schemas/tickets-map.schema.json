@@ -3,12 +3,80 @@
   "$id": "urn:speculo:specdev:tickets-map:v3",
   "title": "SpecDev Tickets Map Frontmatter",
   "type": "object",
-  "required": ["schema_version", "artifact", "change", "status"],
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "status"
+  ],
   "properties": {
-    "schema_version": {"const": 3},
-    "artifact": {"const": "tickets-map"},
-    "change": {"type": "string", "minLength": 1},
-    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]}
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "tickets-map"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "completed",
+        "blocked"
+      ]
+    },
+    "plan_contract_version": {
+      "const": 1
+    },
+    "plan_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requested_deliverables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "count"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "deliverable_policy": {
+      "type": "string",
+      "minLength": 1
+    }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "plan_contract_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "plan_revision",
+          "requested_deliverables",
+          "deliverable_policy"
+        ]
+      }
+    }
+  ]
 }

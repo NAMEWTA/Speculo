@@ -3,7 +3,7 @@ id: specdev/triage
 type: workflow-entry
 workflow: specdev
 name: 请求分诊
-description: 把远程 Issue、URL、文件或对话冻结为本地来源工件，完成风险分诊与路由，并在本地 change 完成后受控回写和关闭支持的远程 Issue。
+description: 需要冻结外部来源、审计摄入或对 completed change 回写来源 Issue 时使用；已清晰的本地需求不必经本入口路由。
 keywords: [triage, 摄入, import, issue, reconcile, close, 风险, 路由]
 ---
 
@@ -19,6 +19,8 @@ Triage 是 SpecDev 唯一的远程摄入与关闭边界。开发期间，`<Path>
 2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
 3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
 
+
+普通本地请求直接进入适用 Work，不为了完成路由额外创建来源工件。用户明确要求来源审计时仍执行完整 intake；缺陷根因诊断仍交 D，不删除风险分诊与远程回写能力。
 
 ## 模式
 

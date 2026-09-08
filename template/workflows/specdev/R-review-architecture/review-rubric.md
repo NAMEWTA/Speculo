@@ -1,6 +1,6 @@
 # 架构审查准则
 
-本准则只在 `R-review-architecture` 激活时生效。它把热核级维护性标准转成候选筛选和排序规则。
+本准则只在 `<Path>{roots.workflows}/specdev/R-review-architecture/R-review-architecture.md</Path>` 激活时生效。它把热核级维护性标准转成候选筛选和排序规则。
 
 使用 `<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>` 的术语：module、interface、depth、seam、adapter、leverage、locality。描述架构时不要滑向更弱的替代词。
 

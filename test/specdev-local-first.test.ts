@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -37,6 +39,12 @@ async function fixture(): Promise<string> {
   const root = join(parent, changeName);
   await mkdir(root);
   await writeConfig(root);
+  return root;
+}
+
+async function controllerFixture(): Promise<string> {
+  const root = await fixture();
+  assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: dirname(root) }).status, 0);
   return root;
 }
 
@@ -218,6 +226,8 @@ async function writeReadyChild(
   let spec = (await readFile(specTemplate, "utf8")).replace(/\r\n?/g, "\n");
   spec = spec
     .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", "status: ready")
     .replace("ready_for_tickets: false", "ready_for_tickets: true")
     .replace("\n存在高影响未决问题时，`ready_for_tickets` 必须为 `false`。", "");
@@ -226,12 +236,16 @@ async function writeReadyChild(
   let map = (await readFile(ticketsMapTemplate, "utf8")).replace(/\r\n?/g, "\n");
   map = map
     .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", ticketStatus === "ready" ? "status: ready" : "status: completed");
   await writeFile(join(root, "tickets-map.md"), map);
 
   let ticket = (await readFile(ticketTemplate, "utf8")).replace(/\r\n?/g, "\n");
   ticket = ticket
     .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", `status: ${ticketStatus}`)
     .replace("ready: false", `ready: ${ticketStatus === "cancelled" ? "false" : "true"}`)
     .replace('expected_changes: ["<Path>src/example.ts</Path>"]', `expected_changes: ["<Path>${writablePath}</Path>"]`)
@@ -255,6 +269,8 @@ async function writeDesignPackage(
   let content = (await readFile(prototypeTemplate, "utf8")).replace(/\r\n?/g, "\n");
   content = content
     .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: detecting", `status: ${status}`)
     .replace("updated_at: <ISO-8601>", "updated_at: 2026-08-07T00:00:00Z")
     .replace("# UI Design System UI-001: <产品或功能名称>", "# UI Design System UI-001: Workspace");
@@ -362,6 +378,8 @@ async function writeGoalPlan(
   content = content.replace(/\r\n?/g, "\n");
   content = content
     .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", "status: ready")
     .replaceAll("<owner-or-session-locator>", "lead-session")
     .replace("implementation_agent_limit: 3", `implementation_agent_limit: ${implementationAgentLimit}`)
@@ -496,8 +514,10 @@ describe("SpecDev local-first contracts", () => {
     assert.equal((activation.match(/AUTO-INDEX-START/g) ?? []).length, 1);
     assert.equal((activation.match(/AUTO-INDEX-END/g) ?? []).length, 1);
     assert.match(activation, /A-archive-and-consolidate[\s\S]*W-wayfinder/);
-    assert.match(activation, /全局 schema v5/);
-    assert.match(activation, /schema_version.*固定为 `5`/);
+    assert.match(activation, /common\/rules\/workflow-state-and-lifecycle\.md/);
+    const stateContract = await readFile(join(workflowRoot,"common/rules/workflow-state-and-lifecycle.md"),"utf8");
+    assert.match(stateContract, /全局 schema v5/);
+    assert.match(stateContract, /schema_version.*固定为 `5`/);
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
@@ -591,6 +611,9 @@ describe("SpecDev local-first contracts", () => {
       const validMap = originalMap.replace(noSkillRow, skillRow);
       assert.notEqual(validMap, originalMap);
       await writeFile(mapPath, validMap);
+      const invocation = { id: "engineering-standards", path: `<Path>${skillRelative}</Path>`, sha256: createHash("sha256").update(await readFile(join(repo, skillRelative))).digest("hex"), phase: "implement", operation: "apply project standards", inputs: ["Ticket implementation contract"], outputs: ["standards checks and evidence"], required: true, on_failure: "block-ticket" };
+      const ticketPath = join(root, "ticket", "01-implementation.md");
+      await writeFile(ticketPath, (await readFile(ticketPath,"utf8")).replace("skill_bindings: []", `skill_bindings: ${JSON.stringify([invocation])}`));
 
       result = runValidator(root, "tickets", repo);
       assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -756,7 +779,7 @@ describe("SpecDev local-first contracts", () => {
 
   it("keeps Direct Spec executable and separates planning from dispatch inputs", async () => {
     const implement = await readFile(
-      join(packageRoot, "template/workflows/specdev/I-implement/I-implement.md"),
+      join(packageRoot, "template/workflows/specdev/I-implement/references/implementation-procedure.md"),
       "utf8",
     );
     const delivery = await readFile(
@@ -951,6 +974,8 @@ describe("SpecDev local-first contracts", () => {
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
         .replace("status: draft", "status: ready")
         .replace("ready_for_tickets: false", "ready_for_tickets: true")
         .replace("存在高影响未决问题时，`ready_for_tickets` 必须为 `false`。", "");
@@ -961,6 +986,8 @@ describe("SpecDev local-first contracts", () => {
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
         .replace("status: draft", "status: ready");
       await writeFile(join(root, "tickets-map.md"), map);
 
@@ -970,6 +997,8 @@ describe("SpecDev local-first contracts", () => {
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
+    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
+    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
         .replace("status: draft", "status: ready")
         .replace("ready: false", "ready: true")
         .replace("存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。", "");
@@ -1077,12 +1106,12 @@ describe("SpecDev local-first contracts", () => {
 
   it("returns repeated Ticket failures to the Lead before redispatch", async () => {
     const [implement, evidence, lead, completion, finalize, executionLoop] = await Promise.all([
-      readFile(join(packageRoot, "template/workflows/specdev/I-implement/I-implement.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/I-implement/references/implementation-procedure.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/lead-orchestration.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/completion-control.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/references/finalize.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/O-orchestrate-implementation/execution-loop.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/references/multi-execution-loop.md"), "utf8"),
     ]);
 
     assert.match(finalize, /已达到上限，不创建或重建 candidate、不增加 attempts/);
@@ -1471,4 +1500,181 @@ fs.writeFileSync(path, JSON.stringify(state));
       await rm(dirname(root), { recursive: true, force: true });
     }
   });
+  it("analyzes a single Goal without mutating files or claiming authorization", async () => {
+    const root = await controllerFixture();
+    try {
+      await writeReadyChild(root, changeName, "src/one.ts"); await writeGoalPlan(root);
+      const ticketPath = join(root,"ticket","01-implementation.md");
+      await writeFile(ticketPath,(await readFile(ticketPath,"utf8")).replace("owner: unassigned","owner: lead-session"));
+      const files = [ticketPath,join(root,"tickets-map.md"),join(root,"goal-plan.md"),join(root,".status.json")];
+      const before = await Promise.all(files.map(file => readFile(file,"utf8")));
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const result = analyzeMap({mapPath:join(root,"tickets-map.md"),repoRoot:dirname(root)});
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.validation_errors,[]);
+      assert.deepEqual(result.frontier,["T-01"]);
+      assert.equal(result.authorization_checked,false); assert.equal(result.transaction_gateway_checked,false);
+      assert.equal(result.eligible_for_final_verification,false);
+      assert.deepEqual(await Promise.all(files.map(file => readFile(file,"utf8"))),before);
+      const planFile = join(root,"goal-plan.md");
+      await writeFile(planFile,(await readFile(planFile,"utf8")).replace("status: ready","status: draft").replace("ready_for_execution: true","ready_for_execution: false"));
+      const blocked = analyzeMap({mapPath:join(root,"tickets-map.md"),repoRoot:dirname(root)});
+      assert.deepEqual(blocked.frontier,[]); assert.match(JSON.stringify(blocked),/not ready for execution/);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("keeps independent multi-change work dispatchable when one Ticket fails its Skill gate", async () => {
+    const root = await controllerFixture(); const members = ["2026-09-08-api","2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
+      for (const [i,member] of members.entries()) {
+        const child = join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
+        const file=join(child,"ticket","01-implementation.md");
+        await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned",`owner: member-${i}`));
+      }
+      await writeImplementationArtifacts(root,members,{workspacePolicy:"required"});
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input = {mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)};
+      const before=analyzeMap(input);
+      assert.deepEqual(before.errors,[]); assert.deepEqual(before.frontier,members.map(member => `${member}::T-01`));
+      const file=join(dirname(root),members[0],"ticket","01-implementation.md");
+      await writeFile(file,(await readFile(file,"utf8")).replace("skill_scan: fixture inspected project roots; no applicable Skills","skill_scan: unreviewed"));
+      const result=analyzeMap(input);
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.ok(result.blocked.some((node:any) => node.id === `${members[0]}::T-01`));
+      assert.ok(result.validation_errors.length);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("honors semantic resources and current workspace serialization", async () => {
+    const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/orchestrate-implementation");
+      for (const [i,member] of members.entries()) {
+        const child=join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
+        const file=join(child,"ticket","01-implementation.md");
+        await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned",`owner: member-${i}`).replace("resource_claims: []",'resource_claims: ["api:public-users"]'));
+      }
+      await writeImplementationArtifacts(root,members,{workspacePolicy:"required"});
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input={mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)};
+      let result=analyzeMap(input);
+      assert.deepEqual(result.errors,[]); assert.equal(result.frontier.length,1); assert.match(JSON.stringify(result.deferred),/semantic resource/);
+      await writeImplementationArtifacts(root,members,{workspacePolicy:"current"});
+      result=analyzeMap(input); assert.equal(result.implementation_limit,1); assert.equal(result.frontier.length,1);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("invalidates only the changed contract and its downstream closure", async () => {
+    const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui","2026-09-08-docs"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
+      for (const [i,member] of members.entries()) {
+        const child=join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
+        const file=join(child,"ticket","01-implementation.md");
+        await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned",`owner: member-${i}`));
+      }
+      await writeImplementationArtifacts(root,members,{workspacePolicy:"required",dependencies:[`${members[1]}::T-01 <- ${members[0]}::T-01`]});
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input={mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)};
+      const previous=analyzeMap(input); assert.deepEqual(previous.errors,[]);
+      let result=analyzeMap({...input,previous}); assert.deepEqual(result.invalidated,[]);
+      const file=join(dirname(root),members[0],"ticket","01-implementation.md");
+      await writeFile(file,(await readFile(file,"utf8")).replace("owner: member-0","owner: replacement-owner"));
+      result=analyzeMap({...input,previous}); assert.deepEqual(result.invalidated,[]);
+      await writeFile(file,(await readFile(file,"utf8"))+"\nContract changed: new API requirement.\n");
+      result=analyzeMap({...input,previous});
+      assert.deepEqual(result.invalidated,[`${members[0]}::T-01`,`${members[1]}::T-01`]);
+      assert.deepEqual(result.frontier,[`${members[2]}::T-01`]);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("does not treat cancelled prerequisites as successful delivery", async () => {
+    const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
+      await writeReadyChild(join(dirname(root),members[0]),members[0],"src/api/**",{ticketStatus:"cancelled"});
+      await writeReadyChild(join(dirname(root),members[1]),members[1],"src/ui/**");
+      const file=join(dirname(root),members[1],"ticket","01-implementation.md");
+      await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned","owner: implementer"));
+      await writeImplementationArtifacts(root,members,{dependencies:[`${members[1]}::T-01 <- ${members[0]}::T-01`]});
+      const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)});
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[]);
+      assert.match(JSON.stringify(result.blocked),/dependency not successfully satisfied/); assert.equal(result.eligible_for_final_verification,false);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("preserves the O compatibility entry and mode-specific source links", async () => {
+    const base=join(packageRoot,"template/workflows/specdev");
+    const compat=await readFile(join(base,"O-orchestrate-implementation/O-orchestrate-implementation.md"),"utf8");
+    assert.match(compat,/P-goal-plan\/P-goal-plan\.md/);
+    assert.match(compat,/specdev\/orchestrate-implementation/);
+    for (const old of ["execution-loop","input-readiness","super-dag","conflict-and-drift"]) {
+      assert.match(await readFile(join(base,`O-orchestrate-implementation/${old}.md`),"utf8"),new RegExp(`P-goal-plan/references/multi-${old}\\.md`));
+    }
+  });
+
+  it("keeps a running parent active when one Ticket becomes blocked", async () => {
+    const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
+      for (const [i,member] of members.entries()) {
+        const child=join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
+        const file=join(child,"ticket","01-implementation.md");
+        let text=(await readFile(file,"utf8")).replace("owner: unassigned",`owner: member-${i}`);
+        if (i===0) text=text.replace("status: ready","status: blocked").replace("ready: true","ready: false");
+        await writeFile(file,text);
+      }
+      await writeImplementationArtifacts(root,members,{status:"in_progress",workspacePolicy:"required"});
+      const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)});
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.validation_errors,[]);
+      assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.match(JSON.stringify(result.blocked),/not Ready: blocked/);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("never takes over a competing parent and only pauses its overlapping members", async () => {
+    const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
+      for (const [i,member] of members.entries()) {
+        const child=join(dirname(root),member); await writeReadyChild(child,member,`src/member-${i}/**`);
+        const file=join(child,"ticket","01-implementation.md");
+        await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned",`owner: member-${i}`));
+      }
+      await writeImplementationArtifacts(root,members,{status:"in_progress",workspacePolicy:"required"});
+      const competitor=join(dirname(root),"2026-09-08-other-goal");
+      await writeNamedStatus(competitor,"2026-09-08-other-goal","active","specdev/goal-plan");
+      await writeImplementationArtifacts(competitor,[members[0],"2026-09-08-unrelated"],{status:"in_progress"});
+      const competingFiles=[join(competitor,"implementation-map.md"),join(competitor,"implementation-plan.md"),join(competitor,".status.json")];
+      const before=await Promise.all(competingFiles.map(file=>readFile(file,"utf8")));
+      const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)});
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.match(JSON.stringify(result.blocked),/unfinished parent implementation/);
+      assert.deepEqual(await Promise.all(competingFiles.map(file=>readFile(file,"utf8"))),before);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
+  it("detects shared Goal gate drift but ignores progress-only projection updates", async () => {
+    const root=await controllerFixture();
+    try {
+      await writeReadyChild(root,changeName,"src/one.ts"); await writeGoalPlan(root);
+      const file=join(root,"ticket","01-implementation.md");
+      await writeFile(file,(await readFile(file,"utf8")).replace("owner: unassigned","owner: lead-session"));
+      const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input={mapPath:join(root,"tickets-map.md"),repoRoot:dirname(root)};
+      const previous=analyzeMap(input); assert.deepEqual(previous.errors,[]);
+      const plan=join(root,"goal-plan.md");
+      let text=await readFile(plan,"utf8");
+      text=text.replace("### Current Status","### Current Status\n\nRead-only checkpoint: no actions executed.");
+      await writeFile(plan,text);
+      assert.deepEqual(analyzeMap({...input,previous}).invalidated,[]);
+      await writeFile(plan,text.replace("### Overall Definition of Done","### Overall Definition of Done\n\nNew approved shared acceptance gate."));
+      const result=analyzeMap({...input,previous});
+      assert.deepEqual(result.invalidated,["T-01"]);assert.deepEqual(result.frontier,[]);
+    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+  });
+
 });

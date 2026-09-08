@@ -2,135 +2,41 @@
 id: specdev/wayfinder
 type: workflow-entry
 workflow: specdev
-name: 寻路
-description: 为超出单次会话且路径尚不可见的工作建立本地共享地图，逐个解决 research、prototype、grilling 或 task Ticket，直到目的地路线决策完备。
-keywords: [wayfinder, 寻路, shared-map, research, prototype, grilling, task, 战争迷雾, 前沿]
+name: 探索大需求与 Change 边界
+description: 大需求的 change 边界或实施路线尚不可见时建立探索地图，并分别澄清各 change；已有清晰 Spec 时不触发。
+keywords: [initiative, 战争迷雾, change划分, exploration]
 ---
 
-# 寻路
+# 探索大需求与 Change 边界
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
+> 激活后读取 `<Path>{roots.workflows}/specdev/README.md</Path>`。
 
-一个模糊的想法出现了——太大而无法放入单个 Agent 会话，且从当前状态到**目的地**的路径尚不可见。寻路就是找到那条路，而非冲向目标。此 work 在 change state 中绘制一张**共享地图**，然后逐个处理其 Tickets，直到路径变得清晰。
-
-目的地可能是一份待移交和迭代的 Spec、一个在规划开始前需锁定的决策，或一项经说明允许在地图中完成的变更。命名目的地是第一步，它塑造每个 Ticket。
+W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill → Spec → Tickets → 一个或多个 change 的 Goal。探索载体继续使用普通 change 目录，不增加另一套全局状态根；它不等于最终产品 change。
 
 ## 读取范围
 
-1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
-2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
-3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；读取共享地图、当前问题与依赖索引，只回读命中原文。低分辨率地图不缓存所有开放票正文。
 
+## 分支
 
-## 核心纪律
+| 当前需要 | 按需读取 |
+|---|---|
+| 初次绘制问题空间，或划分多个 change | `<Path>{roots.workflows}/specdev/W-wayfinder/references/initiative-discovery.md</Path>` |
+| 领取并解决一个调查问题，或恢复既有地图 | `<Path>{roots.workflows}/specdev/W-wayfinder/references/map-traversal.md</Path>` 和 `<Path>{roots.workflows}/specdev/W-wayfinder/local-tracker-contract.md</Path>` |
+| 生成地图、问题与答案 | `<Path>{roots.workflows}/specdev/W-wayfinder/wayfinder-map-template.md</Path>`、`<Path>{roots.workflows}/specdev/W-wayfinder/investigation-ticket-template.md</Path>`、`<Path>{roots.workflows}/specdev/W-wayfinder/solution-comment-template.md</Path>` |
+| 选定清晰 change 交给 Goal | `<Path>{roots.workflows}/specdev/W-wayfinder/references/initiative-discovery.md</Path>` 的交接门禁 |
 
-### 规划，而非执行
+## 必留纪律
 
-Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图完成时路径就清晰了——在某人动手之前没有任何剩余决定。想要直接动手通常说明已经到达地图边缘，是时候移交。只有地图“说明”明确覆盖此行为时，task 才能把解除阻塞的执行带入地图。
+- 目的地约束所有调查；能精确陈述的问题成为调查票，尚不能陈述的留在战争迷雾，目标外内容不自动升级。
+- 默认每个会话最多解决一个调查 Ticket；绘图会话不关闭调查票。这个限制约束 W，不限制 P 的长期 Goal 调度；不静默减少用户明确要求的交付数量。
+- 四类保持 `wayfinder:research`、`wayfinder:prototype`、`wayfinder:grilling`、`wayfinder:task`。HITL 必须真人参与，Agent 不代答；Task 仅解除调查阻塞，不偷做目的地实现。
+- `claimed_investigations` 仍由探索载体的 change 状态唯一拥有。先领取后执行；他人已领取的问题跳过，不接管；只暂停有归属冲突的部分。
+- 每个 materialized change 拥有自己的 design-tree、LOG、CONTEXT、ADR、Spec 与 tickets-map。共享探索答案通过 solution comment 引用，不复制成多个可写事实源。
+- 缺失关键决定或必需证据时保持该 change 未就绪；其他独立清晰 change 可以交接，不要求整个大需求一次揭完迷雾。
 
-### 用名称引用
+## 校验与交接
 
-每张地图和每个 Ticket 都有一个名称。人类阅读的叙述和“已做出的决策”始终用名称引用；ID 和路径包裹在名称链接里，不以裸 `INV-01` 墙代替名称。
+存在多个候选 change 时，由 W 写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`；使用 `<Path>{roots.workflows}/specdev/W-wayfinder/references/initiative-template.json</Path>` 和 `<Path>{roots.workflows}/specdev/common/schemas/initiative.schema.json</Path>`。目标 change 只在用户接受边界后创建，不能挪用已属于其他任务的状态。
 
-### 每会话一个 Ticket
-
-无论绘制还是遍历，**每个会话绝不解决超过一个 Ticket**。绘制地图的会话不解决任何 Ticket；并行 research 的每个独立 Agent 也只负责一个 Ticket。
-
-## 产物与适配
-
-- 地图：`<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
-- 子 Tickets：`<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
-- solution comments：`<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
-- assignment registry：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `claimed_investigations`
-
-每次绘制或遍历前加载 `<Path>{roots.workflows}/specdev/W-wayfinder/local-tracker-contract.md</Path>`。Ticket 和地图模板：
-
-- `<Path>{roots.workflows}/specdev/W-wayfinder/investigation-ticket-template.md</Path>`
-- `<Path>{roots.workflows}/specdev/W-wayfinder/wayfinder-map-template.md</Path>`
-- `<Path>{roots.workflows}/specdev/W-wayfinder/solution-comment-template.md</Path>`
-
-## Ticket 类型
-
-每个 Ticket 要么是 **HITL**，与一个代表自己发言的人类一起工作；要么是 **AFK**，由 Agent 独立驱动。HITL Ticket 只能通过实时交流解决，Agent 绝不代替人类一方发言。
-
-- **Research（AFK）**：阅读文档、第三方 API 或知识库等资源，揭示某个决策等待的事实。调用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。当需要当前工作目录之外的知识时使用。
-- **Prototype（HITL）**：调用 `<Path>{roots.workflows}/specdev/P-prototype/P-prototype.md</Path>` 检测项目 UI、比较功能风格候选并逐步确认设计方向，把 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>` 与 comparison locator 链接为 solution comment 资产；`{design-id}` 使用 P 返回的 `UI-NNN`，P 不实现目的地。
-- **Grilling（HITL）**：对话。调用 `<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>` 的 grilling 与 domain-modeling 能力，但本会话只关闭当前 Wayfinder Ticket。
-- **Task（HITL 或 AFK）**：在决策做出前必须完成的手动工作。它通过为决策解除阻塞赢得位置，不以交付目的地为目标。Agent 能独立驱动时使用 AFK，否则给人类精确清单。
-
-Ticket label 只能是 `wayfinder:research | wayfinder:prototype | wayfinder:grilling | wayfinder:task`。
-
-## 战争迷雾与范围
-
-地图刻意不完整：不要绘制还看不到的内容。活跃 Tickets 之外是**战争迷雾**——能感觉即将到来、但依赖尚未解决问题而无法精确陈述的决策和调查。
-
-**迷雾还是 Ticket？** 判断标准是现在能否精确陈述问题，而非现在能否回答：
-
-- 问题已经清晰时做成 Ticket，即使仍被阻塞；
-- 还无法精确表述时留在“尚未明确”，不预先切成 Ticket 大小碎片。
-
-目的地固定范围。目标之外的工作进入**超出范围**，不是战争迷雾。范围之外永不升级；只有重新命名目的地并创建新 change 时才重新考虑。越界 Ticket 关闭为 `out-of-scope`，链接进“超出范围”，不进入“已做出的决策”。
-
-## 调用模式
-
-### 绘制地图
-
-用户带着模糊想法调用：
-
-1. **命名目的地。** 运行一轮 G 的 grilling/domain-modeling，确定正在寻路的 Spec、决策或变更。
-2. **绘制前沿。** 再次质询，这次广度优先，在整个空间展开而非深入一条线索。如果没有浮现任何迷雾，停下并询问用户如何继续，不创建地图。
-3. **创建地图。** 使用模板填写目的地和说明；“已做出的决策”为空，迷雾写入“尚未明确”。
-4. **创建现在可明确的 Tickets。** 先创建全部 Ticket，再第二遍连接 `blocked_by`，因为 ID 必须先存在。
-5. **派出 research Agent。** 每个 research Ticket 使用独立上下文和 claim，各自只解决一个 Ticket；需要 Git 分支时先取得对应授权。
-6. 停止。绘制地图是一个会话的工作，它不亲手解决任何 Ticket。
-
-**完成标准**：目的地、地图、当前可表述 Tickets、阻塞边和战争迷雾已持久化；绘图会话没有关闭 Ticket。
-
-### 遍历地图
-
-用户带来地图，可选指定 Ticket：
-
-1. 加载地图的低分辨率视图，不加载每个 Ticket 正文。
-2. 用户指定 Ticket 时使用它；否则按本地 tracker contract 查询并选择第一个 frontier Ticket。
-3. 在任何工作前领取 Ticket。已领取时跳过并选择其他 frontier。
-4. 按需缩放：只读取当前 Ticket、相关或已关闭 Ticket 的详情，以及“说明”指定的能力。
-5. 解决当前唯一 Ticket，使用下一个未占用编号写 solution comment，原子关闭 Ticket 并释放 claim。
-6. 在地图“已做出的决策”追加名称链接和一句概括；越界则写入“超出范围”。
-7. 创建新浮现的 Tickets，第二遍连接阻塞；从“尚未明确”删除每个已升级补丁；更新或关闭被答案判定无效的 Tickets。
-
-写回前重读地图、Ticket 与 claims，预期其他会话并发编辑。
-
-**完成标准**：本会话只关闭一个 Ticket；Ticket、solution comment、claim、地图和新 frontier 一致。
-
-## 收敛与路由
-
-当前沿为空且“尚未明确”不再包含阻塞目的地的内容时，路径清晰：
-
-路由前使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage wayfinder`；Ticket、claim、comment 或地图不一致时保持 blocked。
-
-- 需要产品或架构取舍：`<Path>{roots.workflows}/specdev/G-grill-with-docs/G-grill-with-docs.md</Path>`；
-- 外部行为已清楚：`<Path>{roots.workflows}/specdev/S-spec/S-spec.md</Path>`；
-- Spec Ready、只需拆分：`<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`；
-- Bug 根因路线收敛：`<Path>{roots.workflows}/specdev/D-diagnose-bugs/D-diagnose-bugs.md</Path>`；
-- 仍有高影响未知项：保持 active/blocked 并返回下一 frontier Ticket 名称。
-
-## 完成标准
-
-- 目的地塑造每个 Ticket 并固定范围；
-- 地图是低分辨率索引，不列开放 Tickets，不复制答案详情；
-- 四类 Ticket 与 HITL/AFK 语义正确；
-- frontier 由 open、unblocked、unclaimed 事实查询；
-- 名称用于人类叙述，裸 ID 只作内部标识；
-- 战争迷雾、Ticket 与超出范围按可精确表述性和范围区分；
-- 每会话最多解决一个 Ticket，HITL 用户没有被 Agent 代答；
-- 每个关闭 Ticket 有 solution comment，资产通过链接引用；
-- claim、阻塞、地图与 Ticket 状态一致；
-- 路径清晰时返回下一 work，不把产品实现藏进寻路。
-
-## 子文件引用
-
-- 本地 Tracker：`<Path>{roots.workflows}/specdev/W-wayfinder/local-tracker-contract.md</Path>`
-- Ticket 模板：`<Path>{roots.workflows}/specdev/W-wayfinder/investigation-ticket-template.md</Path>`
-- Solution comment：`<Path>{roots.workflows}/specdev/W-wayfinder/solution-comment-template.md</Path>`
-- 地图模板：`<Path>{roots.workflows}/specdev/W-wayfinder/wayfinder-map-template.md</Path>`
-- Ticket schema：`<Path>{roots.workflows}/specdev/common/schemas/wayfinder-ticket.schema.json</Path>`
+运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage wayfinder` 校验地图、claim、评论和 initiative；选定成员必须分别满足 Grill 共识、Ready Spec 和 Ready Tickets，再转交 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>`。W 不把“地图完成”宣称为产品已经交付。

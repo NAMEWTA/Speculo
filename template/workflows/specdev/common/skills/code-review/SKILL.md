@@ -23,8 +23,9 @@ description: 从不可变固定点对本地 diff 执行隔离的标准轴与规�
 1. 重验 fixed point/head 可解析、三点 diff 非空，失败时不启动 reviewer。
 2. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/source-discovery.md</Path>`，穷尽规范和标准来源。
 3. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
-4. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path>`，用互不共享发现的上下文分别运行两个轴。
-5. 原顺序返回 `standards` 和 `specification` 两份结果。规范来源不存在时只跳过规范轴并解释，标准轴继续。
+4. 用户要求全面审查或触及安全、数据迁移、公共契约、并发和恢复时，先加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`，覆盖全部适用风险，不限制 finding 数量。
+5. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path>`，用互不共享发现的上下文分别运行两个轴。
+6. 原顺序返回 `standards` 和 `specification` 两份结果。规范来源不存在时只跳过规范轴并解释，标准轴继续。
 
 ## 输出
 

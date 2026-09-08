@@ -16,6 +16,8 @@ This file is the routing entry. Read [`references/entry-procedure.md`](reference
 - Output and write owner remain those declared by the entry procedure and the owning command/workflow.
 - Do not infer missing scope, credentials, target, or authorization.
 
+For an authorized review or rewrite of a skill/document, read [`references/document-contract.md`](references/document-contract.md) before editing. Its fidelity checks apply to any document; this does not change this skill’s explicit-only activation policy.
+
 ## Stop
 
 Stop before side effects when the required input, owner, reference, confirmation, schema, or recovery evidence is missing; report the exact blocker and preserve any dry-run evidence.

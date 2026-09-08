@@ -100,3 +100,7 @@ Speculo 融合各家之长——从失败中学会"文档即入口"，从 Matt �
 ## 许可证
 
 MIT — 详见 [LICENSE](./LICENSE)
+
+## SpecDev Goal 迁移
+
+统一 P Goal、O 兼容入口、Initiative 多 change 探索和计划型 Ticket 的行为变化见[迁移指南](docs/specdev-goal-migration.md)。不自动改写正在进行的 runtime 状态。

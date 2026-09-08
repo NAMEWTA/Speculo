@@ -119,3 +119,15 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 - **Parent result：** `<sha>`
 - **Source workspace：** `<workspace_ref>`
 - **Evidence：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`
+
+## Skill Execution Records
+
+按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 从真实执行轨迹填写以下 JSON 数组；每个 required 调用必须唯一匹配 Ticket 的 id、phase、operation 和 sha256，并有 passed 状态及可回读证据。没有绑定时保留空数组。仅阅读入口不能写 passed；失败/未执行保持 blocker，不伪造工具结果。
+
+```json
+[]
+```
+
+## 用户交付与源回读
+
+记录用户要求的实际数量、交付位置、源/链接/必要元数据回读、行为差异、备份和未完成项。Goal 有显式数量时在 `<Path>{roots.state}/specdev/changes/{change}/evidence/goal-delivery.md</Path>` 写 Delivery Records，与 map 合同逐项核对。字符统计包含移动后的参考文件，不等同于 Token 或套餐用量。

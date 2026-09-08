@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:goal-tickets-map:v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "implementation_map",
+    "implementation_plan"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "goal-tickets-map"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implementation_map": {
+      "type": "string",
+      "pattern": "^<Path>\\{roots.state\\}/specdev/changes/[^/]+/implementation-map\\.md</Path>$"
+    },
+    "implementation_plan": {
+      "type": "string",
+      "pattern": "^<Path>\\{roots.state\\}/specdev/changes/[^/]+/implementation-plan\\.md</Path>$"
+    }
+  },
+  "additionalProperties": false
+}

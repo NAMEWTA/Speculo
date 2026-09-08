@@ -1,4 +1,4 @@
-# 拆分 Tickets
+# 编写计划型 Tickets
 
 ## 网页平台运行约定
 
@@ -11,242 +11,34 @@
 - 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
 - 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
 - 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
+- 本地只读 Goal 控制器和 Plan 合同校验库不随网页快照提供，不能把其名称当作可执行命令。网页执行者按内联 map-control/调用合同逐项计算依赖与门禁；缺少真实项目 Skill 源或执行能力时阻塞对应任务，不声称自动验证通过。
 - 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。
 
-Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
+> 激活后读取 SpecDev 的激活合同。
 
-本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
+每张票都是供新上下文执行的 Plan：说明背景、来源、目标、非目标、真实项目 SKILL 调用、修改顺序、验证和失败停止点。Tickets Map 是统一启动与恢复入口，不是静态清单；它不复制 Ticket 的状态权威。
 
 ## 读取范围
 
-1. 先读取 SpecDev 的激活合同 与当前 Work 的状态入口。
-2. 再读取 SpecDev 的按需读取与记忆写入协议，按当前分支、状态和关键词定位最小相关工件。
-3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+先读 下方 `<activation-and-memory>` 标签；按相关条目定位上游 Spec/ADR/CONTEXT、代码与项目 Agent 指令，再回读当前拆分所需原文。只枚举 Skill 的元数据与触发路由，不默认展开全部技能。
 
+## 主流程
 
-## 输入
-
-优先读取：
-
-- 当前 Spec：`specdev/changes/{change}/spec.md`
-- 当前架构决策：`specdev/changes/{change}/ADR.md`
-- 当前领域上下文：`specdev/changes/{change}/CONTEXT.md`
-- 当前设计日志：`specdev/changes/{change}/LOG.md`
-- Bug 诊断：`specdev/changes/{change}/diagnosis.md`
-- 永久架构决策：`specdev/adr/`
-- 永久领域上下文：`specdev/context/`
-- 项目 Agent 指令及其声明的项目 Skill 根；
-- 项目当前代码、测试、配置、schema 和 CI 事实。
-
-若尚无 `specdev/changes/{change}/spec.md`，只有在用户提供的计划或对话已经等价覆盖目标、范围、关键决定和可判定验收时才可继续；否则建议先运行 “编写 Spec 阶段”。
-
-## 流程
-
-### 1. 输入预检
-
-1. 先读取上游工件索引，按当前 Ticket 的依赖、缺口和冲突关键词定位，再回读相关工件；
-2. 检查 `specdev/changes/{change}/spec.md` 的 `ready_for_tickets`；
-3. 按 下方 `<artifact-contract>` 标签 处理 Spec、ADR、用户决定与代码事实的冲突；
-4. 将未知项分类为可发现事实、高影响用户决定和低影响实现细节；
-5. 高影响未决问题没有关闭时停止，不通过更详细的 Ticket 文字伪装决策完备。
-
-**完成标准**：拆分依据、权威顺序、合同范围与未决问题已明确。
-
-### 2. 探索代码库与实现地形
-
-如果尚未探索，进行只读探索：
-
-- 找到行为入口、稳定接口、测试接缝、数据流和错误路径；
-- 查找相邻或类似实现，优先复用项目现有模式；
-- 识别可能修改的模块、公共路径、共享文件、迁移索引和全局注册点；
-- 查找现有测试命令、夹具、类型检查、构建和 CI 门禁；
-- 对照 `specdev/changes/{change}/CONTEXT.md` 使用项目领域词汇；
-- 对照 `specdev/changes/{change}/ADR.md` 与 `specdev/adr/` 避免重新争论已接受决策。
-
-遇到不熟悉的模块、外部依赖或第三方库时，使用 下方 `<research>` 标签，再继续拆分。
-
-#### 项目 Skill 路由
-
-1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `.agents/skills/**/SKILL.md`，存在其他项目级 Skill 根时一并枚举；
-2. 先读取候选 Skill 的 frontmatter 与入口路由；只有命中当前 change 的 scope、路径、技术域或验证条件时才完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
-3. 根据 change 索引、每个 Ticket 的 frontmatter、路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
-4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
-5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
-
-#### Prefactor
-
-遵循“让变更变容易，然后做容易的变更”：
-
-- 如果当前接口、依赖或接缝会使后续实现明显不安全或重复，提出前置 prefactor Ticket；
-- prefactor 必须说明它解除的具体阻碍；
-- prefactor 必须独立有价值且可验证；
-- 不为了“更干净”而创建与目标无关的重构 Ticket。
-
-**完成标准**：实现地形、稳定接缝、共享路径、必要 prefactor 与逐 Ticket 项目 Skill 路由已识别。
-
-### 3. 草拟曳光弹式垂直切片
-
-加载 下方 `<decomposition-rules>` 标签。每个切片应横向穿过交付该行为所需的最小层次组合，而不是把数据库、后端、前端和测试拆成互相无价值的水平 Ticket。
-
-每个 Ticket 必须：
-
-- 交付一个可观察行为，或一个能独立解除后续阻塞的安全准备能力；
-- 完成后可以独立演示、测试或验证；
-- 适合一个全新 Agent 上下文在不中断的情况下完成；
-- 与其他 Ticket 有实质行为差异；
-- 只依赖真正阻止它开始的前置产物；
-- 自带至少一种完成证据。
-
-#### 宽重构例外
-
-字段重命名、共享符号类型变化、协议升级等宽机械变更无法安全塞入单个垂直切片时，按以下顺序：
-
-1. **Expand**：在旧形式旁增加新形式，保持旧调用方可工作；
-2. **Migrate batches**：按包、目录、消费者或风险分批迁移，每批独立成 Ticket；
-3. **Contract**：确认旧调用点为零后删除旧形式；
-4. 若迁移批次无法各自保持绿色，使用隔离集成分支和最终集成验证 Gate，但仍保留明确的批次与责任边界。
-
-**完成标准**：每个 Ticket 的可观察产出、真实阻塞边和验证方式已草拟。
-
-### 4. 判定规划深度与风险
-
-按 下方 `<readiness-and-depth>` 标签 为每个 Ticket 标注：
-
-- `lite`：局部、可逆、沿用既有模式、无公共契约或迁移影响；
-- `standard`：大多数多文件或跨层垂直切片；
-- `deep`：公共 API/schema、数据迁移、安全/隐私/资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调或高事故半径。
-
-规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
-
-### 5. 写成决策完备 Ticket
-
-使用 下方 `<ticket-template>` 标签 填写：
-
-- 战略目标、可观察产出与来源追踪；
-- 当前代码事实和需求差距；
-- 已锁定决策、低影响假设和未决问题；
-- IN / REUSE / OUT；
-- 用户或调用者视角的端到端行为；
-- Standard/Deep 的接口、输入输出、不变量、数据流、失败与兼容契约；
-- 有序执行路线和安全落点；
-- expected、writable、read-only、shared 路径；
-- 正常、失败和回归验证矩阵；
-- 每个 Ticket 按 Goal Plan 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
-- 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
-- Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
-- 可判定验收标准。
-
-路径所有权必须遵守 下方 `<path-ownership>` 标签，证据设计必须遵守 下方 `<evidence-and-verification>` 标签。
-
-### 6. 构建依赖 DAG、合同覆盖与并发检查
-
-1. 使用 Ticket ID 建立 `blocked_by`；
-2. 检测循环和不存在的引用；
-3. 识别根 Ticket、汇合点、扇出与收缩点；
-4. 为每个 Spec 验收合同映射至少一个 Ticket；
-5. 检查并行候选的 `writable_paths` 是否相交；
-6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
-7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
-
-使用 下方 `<tickets-map-template>` 标签 草拟总体 Map；写入所有 Ticket 共享的总体实施背景与项目 Skill 读取矩阵。矩阵中的每个 Ticket 必须由 `ALL` 或自己的 Ticket ID 覆盖。
-
-### 7. Definition of Ready
-
-加载 下方 `<ticket-readiness>` 标签 逐个检查。
-
-存在以下任一情况时 `ready: false`：
-
-- 会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
-- 依赖缺失或 DAG 有环；
-- 可写路径不明确或并行所有权冲突；
-- 验证方法不能执行且没有批准的替代证据；
-- Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
-- Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
-- 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
-- 单个新上下文无法完成；
-- Standard/Deep 缺少有序执行路线；
-- Deep 缺少迁移、兼容、监控、回滚或批准点。
-
-### 8. 与用户核对
-
-以完整编号列表展示所有 Ticket，至少包含：
-
-- 标题；
-- 可观察交付；
-- 被阻塞于；
-- Planning Depth 与触发原因；
-- 风险；
-- Ready 状态；
-- 关键未决问题；
-- 预计并行组和共享路径 owner；
-- `ALL` 与逐 Ticket 的项目 Skill 最低必读集合。
-
-核对：
-
-- 粒度是否适合单一上下文；
-- 是否出现水平切片；
-- 阻塞边是否真实；
-- 是否应合并、进一步拆分或增加 prefactor；
-- 合同是否全部覆盖；
-- 路径所有权和验证是否可信。
-
-每次修改后重新展示完整列表，直到用户批准。用户明确要求一次性自主规划且不存在高影响未知项时，可使用推荐默认值并把假设写入 Ticket，不为形式重复询问。
-
-### 9. 发布
-
-创建：
-
-- Ticket 目录：`specdev/changes/{change}/ticket/`
-- Tickets Map：`specdev/changes/{change}/tickets-map.md`
-- Evidence 目录：`specdev/changes/{change}/evidence/`
-
-按拓扑顺序写入 Ticket：
-
-```text
-specdev/changes/{change}/ticket/NN-<ticket-name>.md
-```
-
-`NN` 使用两位或更多位零填充数字；Ticket frontmatter ID 使用 `T-NN`。Ticket 的 `blocked_by` 使用 Ticket ID，而不是相对文件路径。
-
-使用 下方 `<ticket-template>` 标签 和 下方 `<tickets-map-template>` 标签 生成工件，并对照：
-
-- 下方 `<ticket-schema>` 标签
-- 下方 `<tickets-map-schema>` 标签
-
-运行：
+1. **输入与范围**：确认目标、非目标、用户指定数量、验收合同和未知项。高影响未决问题回到 G；无 Ready Spec 时，只有用户材料已等价覆盖全部合同才可规划。
+2. **地形与绑定**：定位真实可维护源、调用方、测试接缝和 Skill 根。按 下方 `<ref-common-rules-skill-invocation>` 标签 为每票解析实际 Skill ID、入口摘要、调用阶段、输入、产出与失败动作；没有适用项目 Skill 时记录扫描证据，不造名称。
+3. **垂直切片**：需要具体拆分时读取 下方 `<ref-t-tickets-references-planning-procedure>` 标签 与 下方 `<decomposition-rules>` 标签。保留 Prefactor、Expand → Migrate → Contract 和真实 DAG，不按技术层制造空价值任务。
+4. **写 Plan**：使用 下方 `<ticket-template>` 标签。Lite 仅减少不适用说明，不删用户数量、权限、验收或停止条件。所有新增票使用 `plan_contract_version: 1`，旧票按迁移协议补齐后再执行。
+5. **写总控**：使用 下方 `<tickets-map-template>` 标签，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；状态仍从票投影。依赖、路径与语义共享资源都需检查。
+6. **Definition of Ready**：读取 下方 `<ticket-readiness>` 标签，并调用 下方 `<ref-common-skills-plan-quality-review-skill>` 标签。缺失引用、必需 Skill、可运行验收或权限边界，当前票不可 ready。
+7. **与用户核对**：展示全部票、可观察产物、依赖、深度、风险、Skill 和未决问题。保留用户要求的交付数量；已授权自主规划且无关键未知时不重复请求形式确认。
+8. **验证、回读和交付**：按下述命令检查，再回读真实 Ticket/Map，报告修改、验证结果和未完成项。规划完成不自动进入实现。
 
 ```bash
-node Speculo Node 校验器 \
-  --stage tickets \
-  --repo <project-root> \
-  specdev/changes/{change}
+node Speculo Node 校验器 --stage tickets --repo <project-root> specdev/changes/{change}
+node 本地只读 Goal 控制器（不含于网页快照） --map specdev/changes/{change}/tickets-map.md --repo <project-root>
 ```
 
-更新 `specdev/status.json` 与 `specdev/changes/{change}/.status.json`。
-
-## 完成标准
-
-- Ticket 目录和 Map 已写入本文约定的位置；
-- Spec 合同全部 covered 或有明确批准的 deferred；
-- DAG 无环、阻塞引用存在；
-- Ready Ticket 无高影响未知项；
-- 并行 Ticket 无未解决的可写冲突；
-- 每个 Ticket 可独立验证且适配单一上下文；
-- Tickets Map 已记录总体实施背景；每个 Ticket 被项目 Skill 读取矩阵覆盖，Skill 路径存在且为项目根相对路径；
-- Prefactor 与 expand-contract 使用条件正确；
-- 用户已批准拆分或明确授权自主发布；
-- 校验器无 error。
-
-## 子文件引用
-
-- 拆分规则：下方 `<decomposition-rules>` 标签
-- Ticket 就绪规则：下方 `<ticket-readiness>` 标签
-- Ticket 模板：下方 `<ticket-template>` 标签
-- Tickets Map 模板：下方 `<tickets-map-template>` 标签
-
-## 下一步
-
-满足任一情况时建议运行 “目标规划阶段”：Ticket 数量达到或超过 10、存在多个 implementation owner 的并行写入协调、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。只读 review/research 并行本身不触发 Goal Plan；少量线性 Ready Ticket 可直接进入 “实现阶段”。
+需要正式 Goal、多 change、迁移或跨票 Gate 时交给 “目标规划阶段”；少量线性票可从 map 按已授权范围调用 “实现阶段”。不得以“精简”为理由静默更换默认工具或少交付。
 
 ---
 
@@ -378,6 +170,10 @@ status: ready
 
 ```yaml
 schema_version: 3
+plan_contract_version: 1
+skill_scan: unreviewed
+skill_bindings: []
+resource_claims: []
 artifact: ticket
 change: <YYYY-MM-DD-topic>
 id: T-01
@@ -511,6 +307,18 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 - [ ] 未发生未批准的范围、契约或发布偏差。
 - [ ] Ticket、Tickets Map 和 Evidence 状态一致。
 
+## 11. SKILL 调用计划
+
+依据 下方 `<ref-common-rules-skill-invocation>` 标签 填写 frontmatter 绑定；正文解释每项调用为什么属于本票、具体何时调用、输入定位、输出如何用于下一步。不是仅给出技能名称或阅读列表。没有适用项目 Skill 时写明真实扫描证据；不要保留 unreviewed。
+
+## 12. 停止、检查点与交付
+
+- **用户交付要求与数量：** 与 Map 的 requested_deliverables 对齐；不为压缩而减少。
+- **必需 Skill/引用/测试不可用：** 阻塞本票，报告缺口，不静默替换默认工具。
+- **归属与资源冲突：** 暂停本票和受影响下游，不接管他人状态；独立票由 map 继续。
+- **检查点：** 记录源版本、绑定摘要、已完成步骤、Evidence 和未闭合动作；恢复前回读。
+- **完成出口：** 全部适用验收及实际 Skill 证据通过，再将结果交回 Goal；未完成项明确列出。
+
 </ticket-template>
 
 <tickets-map-template>
@@ -521,6 +329,10 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 
 ```yaml
 schema_version: 3
+plan_contract_version: 1
+plan_revision: 1
+requested_deliverables: []
+deliverable_policy: unreviewed
 artifact: tickets-map
 change: <YYYY-MM-DD-topic>
 status: draft
@@ -608,6 +420,16 @@ T-tickets 可以标注候选 Wave、E2E disposition 和行为里程碑。需要�
 - 依赖、合同覆盖或路径所有权变化后运行 Speculo Node 校验器；
 - 内部工件使用本文约定的逻辑路径，不用 Markdown 链接充当状态引用。
 
+## 9. 总控与恢复
+
+从本 Map 进入 “目标规划阶段” 的 plan/run/resume/replan/verify。先运行 本地只读 Goal 控制器（不含于网页快照） 的 `--map` 只读检查，再按 下方 `<ref-p-goal-plan-references-map-control>` 标签 调用 I 和真实 Skill、验收、更新状态直到完成或明确阻塞；此工具本身不执行代码。
+
+- frontmatter 中 requested_deliverables 用 JSON 对象数组记录用户明确要求的名称与正整数 count；没有额外数量要求时用空数组，并在 deliverable_policy 记录依据，不能保留 unreviewed。
+- requested_deliverables 属于用户交付合同；done 之前按实际产物核对，不从 Ticket 数量推断交付数量。
+- 变更范围或验收后递增 plan_revision 并重算受影响闭包；原完成证据保留，失效证据不得复用。
+- 共享语义资源在 Ticket resource_claims 声明（例如 API、表、迁移序列、正式记忆写集）；不把“不同文件”视为互不冲突。
+- 未闭合事务先查原网关，其他任务冲突只暂停相关部分；全部票 done 后仍需整体 Gate、数量和集成验收。
+
 </tickets-map-template>
 
 <planning-principles>
@@ -691,7 +513,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
-| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 总体实施背景、项目 Skill 最低读取路由、依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
+| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Implementation Map | `specdev/changes/{change}/implementation-map.md` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `specdev/changes/{change}/implementation-plan.md` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
@@ -754,6 +576,14 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 7. 重新执行结构校验；纯网页环境按本文的内联规则人工核对。
 
 不得仅在下游工件中覆盖上游权威。
+
+## 5. Initiative 与计划调用扩展
+
+W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边界、未知、依赖和目标指针；每个物化 child 的 Grill、Spec、Ticket 和状态仍独立。候选图不是实施 DAG，也不是共享可写设计树。
+
+新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有经过核实的 Skill 调用绑定、语义资源和执行计划；Map 路由是其投影。规则为 下方 `<ref-common-rules-skill-invocation>` 标签。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
+
+父 `specdev/changes/{change}/tickets-map.md` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 
 </artifact-contract>
 
@@ -965,7 +795,7 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 
 # Parent Implementation Orchestration
 
-本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供 O-orchestrate-implementation、I-implement 与 A-archive-and-consolidate 读取。
+本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、兼容 O-orchestrate-implementation、I-implement 与 A-archive-and-consolidate 读取。
 
 ## 输入边界
 
@@ -985,11 +815,15 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 
 ## I-implement 调用
 
-父 Plan 可以替代缺失的子 Goal Plan 提供 workspace/integration 策略和全局执行边界。子 Goal Plan 存在时继续拥有子 change 内 Gate，但不得与父策略冲突。I-implement 完成或阻塞一个组合 Ticket 后返回父 O Work，不要求用户重新激活 change。
+父 Plan 可以替代缺失的子 Goal Plan 提供 workspace/integration 策略和全局执行边界。子 Goal Plan 存在时继续拥有子 change 内 Gate，但不得与父策略冲突。I-implement 完成或阻塞一个组合 Ticket 后返回父 P Goal（旧 O 入口保留恢复键），不要求用户重新激活 change。
 
 ## 归档与完成
 
 未完成父实现 change 的成员不得归档。成员满足普通 change completion 时可以先 completed，但不自动归档。父 change 只有全部成员 completed、Map/Plan completed、aggregate Evidence 完整且无 active dispatch/candidate/lock 后才能 completed；完成或归档均不自动级联。
+
+## 局部阻塞不升级为全局停机
+
+父创建前仍全部成员预检且 all-or-nothing。父开始运行后，单票 blocked/deviated、他人资源冲突或必需 Skill 失效只阻塞该票及其依赖闭包，父 Map/Plan 可保持 in_progress 与有效的全局执行门，继续独立已授权 frontier。只有共享的全局门禁失败、计划整体失效或没有合法 frontier 时，才将父运行暂停；不得为继续运行接管其他任务。
 
 </parent-implementation-orchestration>
 
@@ -1751,6 +1585,157 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
         "pattern": "^(?!/)(?![A-Za-z]:).+\\s*=>\\s*[^=].+$"
       },
       "uniqueItems": true
+    },
+    "plan_contract_version": {
+      "const": 1
+    },
+    "skill_scan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skill_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "sha256",
+          "phase",
+          "operation",
+          "inputs",
+          "outputs",
+          "required",
+          "on_failure"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^[^<]+/SKILL\\.md$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "phase": {
+            "enum": [
+              "plan",
+              "implement",
+              "verify"
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "on_failure": {
+            "enum": [
+              "block-ticket",
+              "report-and-continue"
+            ]
+          },
+          "condition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "sha256",
+                "when"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^(?!/)(?![A-Za-z]:).+$"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "when": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              },
+              "required": [
+                "required"
+              ]
+            },
+            "then": {
+              "properties": {
+                "on_failure": {
+                  "const": "block-ticket"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": false
+                }
+              },
+              "required": [
+                "required"
+              ]
+            },
+            "then": {
+              "required": [
+                "condition"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resource_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
     }
   },
   "$defs": {
@@ -1763,7 +1748,23 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
       "uniqueItems": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "plan_contract_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "skill_scan",
+          "skill_bindings",
+          "resource_claims"
+        ]
+      }
+    }
+  ]
 }
 ```
 
@@ -1777,15 +1778,443 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
   "$id": "urn:speculo:specdev:tickets-map:v3",
   "title": "SpecDev Tickets Map Frontmatter",
   "type": "object",
-  "required": ["schema_version", "artifact", "change", "status"],
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "status"
+  ],
   "properties": {
-    "schema_version": {"const": 3},
-    "artifact": {"const": "tickets-map"},
-    "change": {"type": "string", "minLength": 1},
-    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]}
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "tickets-map"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "completed",
+        "blocked"
+      ]
+    },
+    "plan_contract_version": {
+      "const": 1
+    },
+    "plan_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requested_deliverables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "count"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "deliverable_policy": {
+      "type": "string",
+      "minLength": 1
+    }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "plan_contract_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "plan_revision",
+          "requested_deliverables",
+          "deliverable_policy"
+        ]
+      }
+    }
+  ]
 }
 ```
 
 </tickets-map-schema>
+
+<activation-and-memory>
+
+# Activation and memory retrieval protocol
+
+本规则只在用户明确激活当前 workflow 或某个 Work 后读取。INDEX 只用于被动发现，不初始化状态、不读取 active change、不写入知识。
+
+## Locate before read
+
+1. 先解析当前 workflow 的 roots、状态索引和稳定 ID；不存在时静默跳过，不能凭旧路径猜测。
+2. 根据当前请求、Work 分支、关键词、稳定 ID、状态和 provenance，先搜索相关索引行或目录项，再定位最小相关 entry；不把索引全文默认装入上下文。
+3. 只回读命中的 entry 和直接 provenance；需要恢复、冲突裁决、归档、迁移或执行安全证明时，才读取该阶段声明的完整证据集合。
+4. 没有匹配证据时返回缺失证据并停止依赖该结论的分支，不补造事实。
+
+## Memory writes
+
+正式知识、永久 context、synthesis 或 archive 写入前，先解析唯一 owner 与 gateway，检查 pending transaction、lock、未完成 promotion 和 recovery evidence。gateway 不明或事务未闭合时，只阻塞记忆写入，继续独立且已授权的审计、定位、验证和其他工作。
+
+每次写入必须记录 source IDs、证据定位、验证时间或 digest；写入后定位受影响索引项并重新读取目标 entry，确认 owner、locator、内容和状态投影一致。原始证据不可被派生视图覆盖。
+
+## Read budget
+
+当前 Work 的权威状态、schema、Map/Plan、当前输入和直接所有权合同可以完整读取；非当前分支的知识树、历史 change、研究库、项目 Skill 和示例只按索引与关键词读取。执行、冲突、恢复和归档 Work 需要完整证据时，以该 Work 的显式合同为准。
+
+## 事务与归属隔离
+
+启动正式写入前检查原网关未闭合事务与写集。属于本任务的事务按原恢复协议处理；属于其他任务的事务不得接管、解锁、清空或覆盖。只暂停资源重叠的写入与依赖分支，继续独立、已授权工作；事务年龄不构成接管授权。写后按变更 ID 定位受影响的索引项并回读目标原文，不为核验默认整读整库。
+
+</activation-and-memory>
+
+<ref-common-rules-skill-invocation>
+
+# 可验证的 Skill 调用契约
+
+本规则用于 T 规划、P 调度和 I 执行。Map 维护最低读取路由；每票 `skill_bindings` 才定义本票调用，二者不得互相代替。
+
+## 定位与绑定
+
+1. 从项目 Agent 指令解析真实 Skill 根，先枚举元数据和触发条件，再读取命中入口及当前阶段要求的参考；不整读所有 Skills。
+2. 保留逻辑路径、解析真实源，检查不存在的路径、越界软链接、缓存和入口 `name`。默认不使用插件缓存或 node_modules 充当项目可维护源；用户维护的项目内软链接保持原状。仓库外技能需要先取得明确源域授权并由项目网关处理，控制器不会自行扩大根目录。
+3. 每个绑定必须包含真实 `id`（SKILL 的 name）、项目根相对路径 `path`、入口字节 `sha256`、`phase`（plan/implement/verify）、`operation`、非空 `inputs`、`outputs`、`required` 与 `on_failure`。引用较长参考时在 references 字段 中记录明确 Path、sha256 与 `when`；相关参考在调用前按条件回读。
+4. 必需绑定失败固定为 `block-ticket`；可选绑定只有说明 `condition` 与不适用原因才允许 `report-and-continue`。可选标记不能覆盖用户要求或技能自身硬门禁。
+5. 在模板 frontmatter 中，数组对象用单行 JSON；不使用自定义 YAML 对象语法。缺失 Skill、摘要漂移、占位符或入口 ID 不符，票不得进入 ready。没有适用项目 Skill 时 `skill_bindings: []`，`skill_scan` 必须写真实扫描范围与不适用理由，Map 同步无适用项。
+
+## 示例形状（生成真实票时全部替换）
+
+```json
+{"id":"project-test","path":".agents/skills/project-test/SKILL.md","sha256":"<真实64位摘要>","phase":"verify","operation":"run-regression","inputs":["当前Ticket与定向diff"],"outputs":["含命令、退出码和验收映射的Evidence"],"required":true,"on_failure":"block-ticket","references":[]}
+```
+
+此示例不是项目已存在的 Skill，不得复制为可执行绑定。SpecDev 自带技能在 Work 中按明确 Path 调用，不能伪装为项目 Skill。
+
+## 执行证据
+
+到相应阶段后，实际调用宿主能力或执行该 Skill 明确的步骤。记录技能 ID、phase、operation、所用摘要、输入定位、执行轨迹、输出与结果。仅展示 `@skill`、复制入口、声明“已读”都不是完成证据。
+
+新版票 done 前，在本票 `specdev/changes/{change}/evidence/T-NN.md` 增加 `## Skill Execution Records`，紧接一个 JSON 数组代码块。每项有 `id`、`phase`、`operation`、`sha256`、`status`（passed/failed/skipped）、非空 `evidence` 字符串数组。required 项必须 passed；验证器只能检查记录结构与摘要一致，Lead 仍需回读真实工具/过程证据，不能把结构通过称为宿主调用已经被认证。
+
+摘要变更先由 Lead 检查影响、更新绑定和 map 后重验；不自动接受最新文件，不回写已完成旧证据。
+
+</ref-common-rules-skill-invocation>
+
+<ref-t-tickets-references-planning-procedure>
+
+# 拆分 Tickets
+
+
+Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
+
+本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
+
+
+## 输入
+
+优先读取：
+
+- 当前 Spec：`specdev/changes/{change}/spec.md`
+- 当前架构决策：`specdev/changes/{change}/ADR.md`
+- 当前领域上下文：`specdev/changes/{change}/CONTEXT.md`
+- 当前设计日志：`specdev/changes/{change}/LOG.md`
+- Bug 诊断：`specdev/changes/{change}/diagnosis.md`
+- 永久架构决策：`specdev/adr/`
+- 永久领域上下文：`specdev/context/`
+- 项目 Agent 指令及其声明的项目 Skill 根；
+- 项目当前代码、测试、配置、schema 和 CI 事实。
+
+若尚无 `specdev/changes/{change}/spec.md`，只有在用户提供的计划或对话已经等价覆盖目标、范围、关键决定和可判定验收时才可继续；否则建议先运行 “编写 Spec 阶段”。
+
+## 流程
+
+### 1. 输入预检
+
+1. 先读取上游工件索引，按当前 Ticket 的依赖、缺口和冲突关键词定位，再回读相关工件；
+2. 检查 `specdev/changes/{change}/spec.md` 的 `ready_for_tickets`；
+3. 按 下方 `<artifact-contract>` 标签 处理 Spec、ADR、用户决定与代码事实的冲突；
+4. 将未知项分类为可发现事实、高影响用户决定和低影响实现细节；
+5. 高影响未决问题没有关闭时停止，不通过更详细的 Ticket 文字伪装决策完备。
+
+**完成标准**：拆分依据、权威顺序、合同范围与未决问题已明确。
+
+### 2. 探索代码库与实现地形
+
+如果尚未探索，进行只读探索：
+
+- 找到行为入口、稳定接口、测试接缝、数据流和错误路径；
+- 查找相邻或类似实现，优先复用项目现有模式；
+- 识别可能修改的模块、公共路径、共享文件、迁移索引和全局注册点；
+- 查找现有测试命令、夹具、类型检查、构建和 CI 门禁；
+- 对照 `specdev/changes/{change}/CONTEXT.md` 使用项目领域词汇；
+- 对照 `specdev/changes/{change}/ADR.md` 与 `specdev/adr/` 避免重新争论已接受决策。
+
+遇到不熟悉的模块、外部依赖或第三方库时，使用 下方 `<research>` 标签，再继续拆分。
+
+#### 项目 Skill 路由
+
+1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `.agents/skills/**/SKILL.md`，存在其他项目级 Skill 根时一并枚举；
+2. 先读取候选 Skill 的 frontmatter 与入口路由；只有命中当前 change 的 scope、路径、技术域或验证条件时才完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
+3. 根据 change 索引、每个 Ticket 的 frontmatter、路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
+4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
+5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
+
+#### Prefactor
+
+遵循“让变更变容易，然后做容易的变更”：
+
+- 如果当前接口、依赖或接缝会使后续实现明显不安全或重复，提出前置 prefactor Ticket；
+- prefactor 必须说明它解除的具体阻碍；
+- prefactor 必须独立有价值且可验证；
+- 不为了“更干净”而创建与目标无关的重构 Ticket。
+
+**完成标准**：实现地形、稳定接缝、共享路径、必要 prefactor 与逐 Ticket 项目 Skill 路由已识别。
+
+### 3. 草拟曳光弹式垂直切片
+
+加载 下方 `<decomposition-rules>` 标签。每个切片应横向穿过交付该行为所需的最小层次组合，而不是把数据库、后端、前端和测试拆成互相无价值的水平 Ticket。
+
+每个 Ticket 必须：
+
+- 交付一个可观察行为，或一个能独立解除后续阻塞的安全准备能力；
+- 完成后可以独立演示、测试或验证；
+- 适合一个全新 Agent 上下文在不中断的情况下完成；
+- 与其他 Ticket 有实质行为差异；
+- 只依赖真正阻止它开始的前置产物；
+- 自带至少一种完成证据。
+
+#### 宽重构例外
+
+字段重命名、共享符号类型变化、协议升级等宽机械变更无法安全塞入单个垂直切片时，按以下顺序：
+
+1. **Expand**：在旧形式旁增加新形式，保持旧调用方可工作；
+2. **Migrate batches**：按包、目录、消费者或风险分批迁移，每批独立成 Ticket；
+3. **Contract**：确认旧调用点为零后删除旧形式；
+4. 若迁移批次无法各自保持绿色，使用隔离集成分支和最终集成验证 Gate，但仍保留明确的批次与责任边界。
+
+**完成标准**：每个 Ticket 的可观察产出、真实阻塞边和验证方式已草拟。
+
+### 4. 判定规划深度与风险
+
+按 下方 `<readiness-and-depth>` 标签 为每个 Ticket 标注：
+
+- `lite`：局部、可逆、沿用既有模式、无公共契约或迁移影响；
+- `standard`：大多数多文件或跨层垂直切片；
+- `deep`：公共 API/schema、数据迁移、安全/隐私/资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调或高事故半径。
+
+规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
+
+### 5. 写成决策完备 Ticket
+
+必须按 下方 `<ref-common-rules-skill-invocation>` 标签 填写本票真实调用绑定；Map 中的读取路由不能代替调用。
+
+使用 下方 `<ticket-template>` 标签 填写：
+
+- 战略目标、可观察产出与来源追踪；
+- 当前代码事实和需求差距；
+- 已锁定决策、低影响假设和未决问题；
+- IN / REUSE / OUT；
+- 用户或调用者视角的端到端行为；
+- Standard/Deep 的接口、输入输出、不变量、数据流、失败与兼容契约；
+- 有序执行路线和安全落点；
+- expected、writable、read-only、shared 路径；
+- 正常、失败和回归验证矩阵；
+- 每个 Ticket 按 Goal Plan 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
+- 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
+- Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
+- 可判定验收标准。
+
+路径所有权必须遵守 下方 `<path-ownership>` 标签，证据设计必须遵守 下方 `<evidence-and-verification>` 标签。
+
+### 6. 构建依赖 DAG、合同覆盖与并发检查
+
+1. 使用 Ticket ID 建立 `blocked_by`；
+2. 检测循环和不存在的引用；
+3. 识别根 Ticket、汇合点、扇出与收缩点；
+4. 为每个 Spec 验收合同映射至少一个 Ticket；
+5. 检查并行候选的 `writable_paths` 是否相交；
+6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
+7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
+
+使用 下方 `<tickets-map-template>` 标签 草拟总体 Map；写入所有 Ticket 共享的总体实施背景与项目 Skill 读取矩阵。矩阵中的每个 Ticket 必须由 `ALL` 或自己的 Ticket ID 覆盖。
+
+### 7. Definition of Ready
+
+加载 下方 `<ticket-readiness>` 标签 逐个检查。
+
+存在以下任一情况时 `ready: false`：
+
+- 会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
+- 依赖缺失或 DAG 有环；
+- 可写路径不明确或并行所有权冲突；
+- 验证方法不能执行且没有批准的替代证据；
+- Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
+- Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
+- 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
+- 单个新上下文无法完成；
+- Standard/Deep 缺少有序执行路线；
+- Deep 缺少迁移、兼容、监控、回滚或批准点。
+
+### 8. 与用户核对
+
+以完整编号列表展示所有 Ticket，至少包含：
+
+- 标题；
+- 可观察交付；
+- 被阻塞于；
+- Planning Depth 与触发原因；
+- 风险；
+- Ready 状态；
+- 关键未决问题；
+- 预计并行组和共享路径 owner；
+- `ALL` 与逐 Ticket 的项目 Skill 最低必读集合。
+
+核对：
+
+- 粒度是否适合单一上下文；
+- 是否出现水平切片；
+- 阻塞边是否真实；
+- 是否应合并、进一步拆分或增加 prefactor；
+- 合同是否全部覆盖；
+- 路径所有权和验证是否可信。
+
+每次修改后重新展示完整列表，直到用户批准。用户明确要求一次性自主规划且不存在高影响未知项时，可使用推荐默认值并把假设写入 Ticket，不为形式重复询问。
+
+### 9. 发布
+
+创建：
+
+- Ticket 目录：`specdev/changes/{change}/ticket/`
+- Tickets Map：`specdev/changes/{change}/tickets-map.md`
+- Evidence 目录：`specdev/changes/{change}/evidence/`
+
+按拓扑顺序写入 Ticket：
+
+```text
+specdev/changes/{change}/ticket/NN-<ticket-name>.md
+```
+
+`NN` 使用两位或更多位零填充数字；Ticket frontmatter ID 使用 `T-NN`。Ticket 的 `blocked_by` 使用 Ticket ID，而不是相对文件路径。
+
+使用 下方 `<ticket-template>` 标签 和 下方 `<tickets-map-template>` 标签 生成工件，并对照：
+
+- 下方 `<ticket-schema>` 标签
+- 下方 `<tickets-map-schema>` 标签
+
+运行：
+
+```bash
+node Speculo Node 校验器 \
+  --stage tickets \
+  --repo <project-root> \
+  specdev/changes/{change}
+```
+
+更新 `specdev/status.json` 与 `specdev/changes/{change}/.status.json`。
+
+## 完成标准
+
+- Ticket 目录和 Map 已写入本文约定的位置；
+- Spec 合同全部 covered 或有明确批准的 deferred；
+- DAG 无环、阻塞引用存在；
+- Ready Ticket 无高影响未知项；
+- 并行 Ticket 无未解决的可写冲突；
+- 每个 Ticket 可独立验证且适配单一上下文；
+- Tickets Map 已记录总体实施背景；每个 Ticket 被项目 Skill 读取矩阵覆盖，Skill 路径存在且为项目根相对路径；
+- Prefactor 与 expand-contract 使用条件正确；
+- 用户已批准拆分或明确授权自主发布；
+- 校验器无 error。
+
+## 子文件引用
+
+- 拆分规则：下方 `<decomposition-rules>` 标签
+- Ticket 就绪规则：下方 `<ticket-readiness>` 标签
+- Ticket 模板：下方 `<ticket-template>` 标签
+- Tickets Map 模板：下方 `<tickets-map-template>` 标签
+
+## 下一步
+
+满足任一情况时建议运行 “目标规划阶段”：Ticket 数量达到或超过 10、存在多个 implementation owner 的并行写入协调、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。只读 review/research 并行本身不触发 Goal Plan；少量线性 Ready Ticket 可直接进入 “实现阶段”。
+
+</ref-t-tickets-references-planning-procedure>
+
+<ref-common-skills-plan-quality-review-skill>
+
+# Plan Quality Review
+
+读取 下方 `<ref-common-skills-plan-quality-review-references-checklist>` 标签，输入当前范围的 Spec、Ticket、map、授权引用和真实技能元数据。只读检查，结果交回 T/P 写入其原有 LOG/Evidence，不创建独立状态根。
+
+按背景与边界、调用可执行性、依赖/资源、验收与数量、权限与恢复逐项给出 pass/block/not-applicable 及证据。任一硬门禁缺失则阻塞受影响票；用户要求完整计划时不得用 Lite、少量样例或压缩输出代替全部交付。
+
+</ref-common-skills-plan-quality-review-skill>
+
+<ref-p-goal-plan-references-map-control>
+
+# 从 tickets-map 控制整个 Goal
+
+## 只读控制器
+
+使用 本地只读 Goal 控制器（不含于网页快照），输入单 change tickets-map、父入口 tickets-map 或旧 Implementation Map。`--repo` 指项目根；可用 `--previous` 提供上轮 JSON 输出，比较输入漂移。输出仅建议 frontier、blocked、in-flight、完成票与受影响闭包，不写状态、不调用 Skill、不授予权限，也不代替既有阶段校验器。
+
+```bash
+node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --repo <project-root>
+```
+
+Lead 将输出保存到调用方自己的既有 Evidence 位置；不创建独立调度数据库。JSON 中 `input_digest`、`goal_contract_digest` 和逐票 `contract_digests` 是读集快照，不是授权凭据。
+
+## 每轮循环
+
+1. 重读当前 map、Ticket frontmatter、Gate 与 owner；机器检查依赖、Skill、语义资源和路径，Lead 核验真实授权及当前 Git 事实。
+2. 只有依赖成功满足、ready、owner 可判定且无冲突的票才能进入 dispatch。cancelled 不是成功交付：下游必须重规划依赖，不能自动视为 satisfied。
+3. current 策略串行；required 仅在 config/宿主允许且写集、语义资源、integration queue 无冲突时并行。不同文件可能共享 API、数据表、锁文件或公共契约，因此不能只比较文件名。
+4. 按票的调用阶段读取并实际执行必需 Skill；按项目协议调用的“技能”可以是宿主技能调用，也可以是完整执行该 SKILL 的程序步骤，但必须记录对应步骤/工具轨迹与输出，不得仅记录阅读完成。
+5. I 返回后核对实现、Skill 执行记录、验证矩阵、实际交付数量和集成证据。失败保留 blocker；不能用减少测试或替换工具来“修好”状态。
+6. 同步 Ticket 权威状态，再生成 map 投影与检查点。已完成票不重跑副作用；持久化失败不推进 done。
+7. 有他人资源/事务冲突只暂停该票与其依赖闭包，继续独立、已授权票。无法可靠分辨共享资源时，暂停相关资源而非抢占。
+8. frontier 空且仍有未完成票时返回精确缺口；全部票完成后执行 Goal 集成验收，按原完成合同关闭。
+
+## 正式记忆
+
+开始任何正式写入前，先检查原网关的 pending transaction、lock、recovery evidence 与 owner。Goal 只请求拥有 namespace 的原工作流执行，不直接写永久记忆，也不创建“更轻量”的旁路网关。
+
+单票 blocked/deviated 不强制将父 Plan 的全局执行门关闭。只有全局合同失败或合法 frontier 为空时暂停父循环。检查点摘要覆盖 Spec、票合同、实际 Skill/参考版本、依赖、相关 serialization 与共享 Goal 门禁；普通 owner/status 和进度投影不是合同变更。摘要是漂移检测，不替代授权和实证验收。
+
+</ref-p-goal-plan-references-map-control>
+
+<ref-common-skills-plan-quality-review-references-checklist>
+
+# 计划发布检查
+
+| 检查轴 | 通过证据 | 阻塞条件 |
+|---|---|---|
+| 背景与边界 | 用户问题、源基线、IN/REUSE/OUT、可观察行为 | 需实现者重新猜目标或高影响决定 |
+| Skill 调用 | 实际入口 ID/摘要、阶段、输入输出、失败动作；无适用项有扫描依据 | 假路径、缓存伪装源、仅 @名称 或“阅读完成” |
+| 执行计划 | 接缝、有序步骤、公共契约、异常、迁移/兼容与回滚 | 只有任务标题或横向技术层清单 |
+| 控制图 | 全部票、真实依赖、路径与语义资源、owner、失败闭包 | 环、未解析依赖、并发写冲突、取消被当成功 |
+| 验收与数量 | 每项 AC 和用户数量都有可复核证据目标 | 以字符预算削减验收、数量或风险处理 |
+| 权限 | 真实授权引用、明确计划与实现分界、独立审批点 | 自授权、默认提交/发布/远程写入 |
+| 恢复 | 基线/版本、检查点、原事务网关、源回读、停止条件 | 抢占他人事务、重复副作用、只看 done |
+
+先利用代码、配置、测试和历史回答可发现事实；确有高影响取舍才回用户。不要为显得严格而制造与当前风险无关的关卡。用户要求全面审查时覆盖所有适用轴和所有票，不限制 finding 数量。
+
+</ref-common-skills-plan-quality-review-references-checklist>

@@ -114,6 +114,157 @@
         "pattern": "^<Path>[^<]+</Path>\\s*=>\\s*[^=].+$"
       },
       "uniqueItems": true
+    },
+    "plan_contract_version": {
+      "const": 1
+    },
+    "skill_scan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skill_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "sha256",
+          "phase",
+          "operation",
+          "inputs",
+          "outputs",
+          "required",
+          "on_failure"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^<Path>[^<]+/SKILL\\.md</Path>$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "phase": {
+            "enum": [
+              "plan",
+              "implement",
+              "verify"
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "on_failure": {
+            "enum": [
+              "block-ticket",
+              "report-and-continue"
+            ]
+          },
+          "condition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "sha256",
+                "when"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^<Path>[^<]+</Path>$"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "when": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              },
+              "required": [
+                "required"
+              ]
+            },
+            "then": {
+              "properties": {
+                "on_failure": {
+                  "const": "block-ticket"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": false
+                }
+              },
+              "required": [
+                "required"
+              ]
+            },
+            "then": {
+              "required": [
+                "condition"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resource_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
     }
   },
   "$defs": {
@@ -126,5 +277,21 @@
       "uniqueItems": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "plan_contract_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "skill_scan",
+          "skill_bindings",
+          "resource_claims"
+        ]
+      }
+    }
+  ]
 }

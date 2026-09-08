@@ -1,5 +1,9 @@
 ---
 schema_version: 3
+plan_contract_version: 1
+skill_scan: unreviewed
+skill_bindings: []
+resource_claims: []
 artifact: ticket
 change: <YYYY-MM-DD-topic>
 id: T-01
@@ -132,3 +136,15 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 - [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
 - [ ] 未发生未批准的范围、契约或发布偏差。
 - [ ] Ticket、Tickets Map 和 Evidence 状态一致。
+
+## 11. SKILL 调用计划
+
+依据 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 填写 frontmatter 绑定；正文解释每项调用为什么属于本票、具体何时调用、输入定位、输出如何用于下一步。不是仅给出技能名称或阅读列表。没有适用项目 Skill 时写明真实扫描证据；不要保留 unreviewed。
+
+## 12. 停止、检查点与交付
+
+- **用户交付要求与数量：** 与 Map 的 requested_deliverables 对齐；不为压缩而减少。
+- **必需 Skill/引用/测试不可用：** 阻塞本票，报告缺口，不静默替换默认工具。
+- **归属与资源冲突：** 暂停本票和受影响下游，不接管他人状态；独立票由 map 继续。
+- **检查点：** 记录源版本、绑定摘要、已完成步骤、Evidence 和未闭合动作；恢复前回读。
+- **完成出口：** 全部适用验收及实际 Skill 证据通过，再将结果交回 Goal；未完成项明确列出。

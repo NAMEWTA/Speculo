@@ -20,6 +20,11 @@ import { execFileSync } from "node:child_process";
 import { dirname, basename, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  validateTicketPlan, validatePlanMap, validateInvocationCoverage,
+  validateGoalMap, validateInitiative, resolveProjectSource,
+} from "./plan-contract.mjs";
+
 const DOMAIN_SCHEMA_VERSION = 3;
 const CONFIG_SCHEMA_VERSION = 5;
 const GOAL_PLAN_SCHEMA_VERSION = 6;
@@ -178,6 +183,8 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "wayfinder-map.md",
   "design-tree.json",
   "implementation-orchestration.md",
+  "initiative.json",
+  "goal-delivery.md",
 ]);
 const FORBIDDEN_OBSOLETE_BASENAMES = new Set([
   "source-issue.md",
@@ -239,7 +246,11 @@ function parseScalar(raw) {
     return value.slice(1, -1);
   }
   if (value.startsWith("[") && value.endsWith("]")) {
+    // JSON object arrays are used by the additive Skill invocation contract.
+    // Keep the existing plain YAML scalar-list form for old artifacts.
+    try { return JSON.parse(value); } catch { /* legacy scalar list below */ }
     const inner = value.slice(1, -1).trim();
+    if (inner.startsWith("{")) throw new Error("invalid JSON object array in frontmatter");
     if (!inner) return [];
     return inner.split(",").map((item) => parseScalar(item));
   }
@@ -295,6 +306,9 @@ function parseFrontmatter(path) {
     const colon = line.indexOf(":");
     if (colon < 0) continue;
     const key = line.slice(0, colon).trim();
+    if (["__proto__", "constructor", "prototype"].includes(key) || Object.hasOwn(meta, key)) {
+      throw new Error(`${path}: duplicate or unsafe frontmatter key ${key}`);
+    }
     const raw = line.slice(colon + 1).trim();
     if (!raw) {
       meta[key] = [];
@@ -1551,6 +1565,9 @@ function validateProjectSkillMatrix(body, label, errors, repoRoot = null) {
         errors.push(`${label}: project Skill Path escapes the project root: ${skillPath}`);
       } else if (!isFile(resolvedSkill)) {
         errors.push(`${label}: project Skill does not exist under --repo: ${skillPath}`);
+      } else {
+        try { resolveProjectSource(resolvedRepo, `<Path>${skillPath}</Path>`); }
+        catch (error) { errors.push(`${label}: ${error.message}`); }
       }
     }
     entries.push({ appliesTo: new Set(appliesTo), path: skillPath });
@@ -1587,6 +1604,11 @@ function validateMap(path, errors, repoRoot = null) {
     return null;
   }
   const { meta, body } = parseFrontmatter(path);
+  if (meta.artifact === "goal-tickets-map") {
+    errors.push(...validateGoalMap({ path, meta, body }, dirname(path)).map(error => `${basename(path)}: ${error}`));
+    return { path, meta, body, projectSkillMatrix: [], goalMap: true };
+  }
+  errors.push(...validatePlanMap({ path, meta, body }, dirname(path)).map(error => `${basename(path)}: ${error}`));
   if (meta.artifact !== "tickets-map" || meta.schema_version !== DOMAIN_SCHEMA_VERSION) {
     errors.push(`${basename(path)}: artifact/schema_version must be tickets-map/${DOMAIN_SCHEMA_VERSION}`);
   }
@@ -2388,7 +2410,7 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
   }
 }
 
-function validateParentImplementation(change, parentStatus, stage, errors, warnings) {
+function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null) {
   const required = stage === "orchestrate-implementation";
   const mapPath = join(change, "implementation-map.md");
   const planPath = join(change, "implementation-plan.md");
@@ -2548,7 +2570,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     }
 
     const childMapPath = join(memberRoot, "tickets-map.md");
-    const childMap = isFile(childMapPath) ? validateMap(childMapPath, memberErrors) : null;
+    const childMap = isFile(childMapPath) ? validateMap(childMapPath, memberErrors, repoRoot) : null;
     if (!childMap) memberErrors.push("Ready Tickets Map is required before parent creation");
     else {
       if (childMap.meta.change !== member) memberErrors.push("tickets-map.md: change must equal member directory name");
@@ -2565,6 +2587,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     const childTickets = new Map();
     for (const name of ticketFiles) {
       const artifact = validateTicket(join(ticketRoot, name), memberErrors);
+      if (artifact) memberErrors.push(...validateTicketPlan(artifact, { repoRoot }).map(error => `${name}: ${error}`));
       if (!artifact) continue;
       const ticketId = String(artifact.meta.id);
       if (artifact.meta.change !== member) memberErrors.push(`${name}: change must equal member directory name`);
@@ -2588,8 +2611,10 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
           memberErrors.push(`${ticketId}: parent creation requires status=ready and ready=true`);
         } else if (new Set(["ready", "in_progress", "review"]).has(artifact.meta.status) && artifact.meta.ready !== true) {
           memberErrors.push(`${ticketId}: executable Ticket must keep ready=true`);
-        } else if (new Set(["blocked", "deviated"]).has(artifact.meta.status) && map.meta.status !== "blocked" && plan.meta.status !== "blocked") {
-          memberErrors.push(`${ticketId}: blocked/deviated Ticket requires blocked parent artifacts`);
+        } else if (new Set(["blocked", "deviated"]).has(artifact.meta.status)) {
+          // A local blocker does not revoke unrelated nodes' execution gate.
+          // The controller excludes this node and its dependency closure; only a
+          // global blocker or an empty legal frontier pauses the whole parent.
         } else if (artifact.meta.status === "draft") {
           memberErrors.push(`${ticketId}: draft Ticket cannot belong to a parent implementation`);
         }
@@ -2597,6 +2622,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     }
 
     if (childMap) {
+      memberErrors.push(...validateInvocationCoverage(childTickets, childMap.projectSkillMatrix));
       validateProjectSkillCoverage(
         childMap.projectSkillMatrix,
         childTickets.keys(),
@@ -2768,8 +2794,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
   }
 
-  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && parentStatus.current_work !== "specdev/orchestrate-implementation") {
-    errors.push("parent active/blocked status must keep current_work=specdev/orchestrate-implementation");
+  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/orchestrate-implementation", "specdev/goal-plan"]).has(parentStatus.current_work)) {
+    errors.push("parent active/blocked status must keep current_work=specdev/orchestrate-implementation or specdev/goal-plan");
   }
   if (parentStatus?.change_status === "completed") {
     const incomplete = members.filter((member) => memberStatuses.get(member)?.change_status !== "completed");
@@ -2837,7 +2863,8 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
 
   const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
-  validateParentImplementation(change, changeStatus, stage, errors, warnings);
+  validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot);
+  errors.push(...validateInitiative(change));
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
   }
@@ -2905,6 +2932,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   for (const path of ticketFiles) {
     const artifact = validateTicket(path, errors);
     if (!artifact) continue;
+    errors.push(...validateTicketPlan(artifact, { repoRoot, requirePlan: stage === "implement" }).map(error => `${basename(path)}: ${error}`));
     const ticketId = String(artifact.meta.id);
     if (artifact.meta.change !== basename(change)) {
       errors.push(`${basename(path)}: change must equal directory name ${basename(change)}`);
@@ -2927,7 +2955,8 @@ function validateChange(change, stage = null, repoRoot = null) {
     }
   }
 
-  if (ticketsMap) {
+  if (ticketsMap && !ticketsMap.goalMap) {
+    errors.push(...validateInvocationCoverage(tickets, ticketsMap.projectSkillMatrix));
     validateProjectSkillCoverage(
       ticketsMap.projectSkillMatrix,
       tickets.keys(),
@@ -3206,4 +3235,9 @@ function main(argv) {
   return usage();
 }
 
-process.exitCode = main(process.argv.slice(2));
+export { parseFrontmatter, validateChange, validateTicket, validateMap, pathsOverlap, findCycle };
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try { process.exitCode = main(process.argv.slice(2)); }
+  catch (error) { console.error(`ERROR: ${error.message}`); process.exitCode = 1; }
+}

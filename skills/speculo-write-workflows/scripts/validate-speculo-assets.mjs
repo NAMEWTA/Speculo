@@ -220,6 +220,9 @@ async function main() {
 
     const commandsDir = path.join(templateRoot, 'commands');
     for (const file of (await walk(commandsDir)).filter((p) => p.endsWith('.md'))) {
+      // references/ contains on-demand prose, not discoverable commands. Its
+      // links, Path tags and root contracts are still checked above.
+      if (path.relative(commandsDir, file).split(path.sep)[0] === 'references') continue;
       const text = await fs.readFile(file, 'utf8');
       const fm = frontmatter(text);
       if (!fm || fm.error) { issue(errors, file, 'command requires valid frontmatter', 1); continue; }

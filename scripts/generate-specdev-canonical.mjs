@@ -362,6 +362,18 @@ const canonicalDocuments = [
   },
 ];
 
+// Canonical files are intentionally self-contained snapshots. Follow named source
+// references (including newly extracted nested procedures), not just top-level files.
+const implementationSnapshot = canonicalDocuments.find(doc => doc.entry.endsWith("/O-orchestrate-implementation.md"));
+const goalSnapshot = canonicalDocuments.find(doc => doc.entry.endsWith("/P-goal-plan.md"));
+for (const item of implementationSnapshot.references) {
+  if (!goalSnapshot.references.some(existing => existing.source === item.source)) goalSnapshot.references.push(item);
+}
+implementationSnapshot.references.push(reference("P-goal-plan/P-goal-plan.md"));
+for (const doc of canonicalDocuments) {
+  doc.references.push(reference("common/rules/activation-and-memory.md"));
+}
+
 const capabilityNames = new Map([
   ["A-archive-and-consolidate/A-archive-and-consolidate.md", "归档与沉淀阶段"],
   ["C-code-review/C-code-review.md", "独立代码审查阶段"],
@@ -399,6 +411,7 @@ const webRuntimeConvention = `## 网页平台运行约定
 - 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
 - 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
 - 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
+- 本地只读 Goal 控制器和 Plan 合同校验库不随网页快照提供，不能把其名称当作可执行命令。网页执行者按内联 map-control/调用合同逐项计算依赖与门禁；缺少真实项目 Skill 源或执行能力时阻塞对应任务，不声称自动验证通过。
 - 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。`;
 
 function reference(relativeSource, options = {}) {
@@ -471,6 +484,9 @@ function workflowPathToCanonical(value, tagsBySource) {
   if (relative === "common/tools/validate-specdev.mjs") {
     return "Speculo Node 校验器";
   }
+
+  if (relative === "common/tools/ticket-control.mjs") return "本地只读 Goal 控制器（不含于网页快照）";
+  if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
 
   if (relative === "common/tools/README.md") {
     return "Speculo Node 校验器说明";
@@ -676,6 +692,32 @@ function assertCanonical(content, documentDefinition) {
   }
 }
 
+async function expandNamedReferences(documentDefinition) {
+  const bySource = new Map(documentDefinition.references.map(item => [item.source,item]));
+  const visited = new Set();
+  const queue = [documentDefinition.entry, ...bySource.keys()];
+  while (queue.length) {
+    const source = queue.shift();
+    if (visited.has(source)) continue;
+    visited.add(source);
+    const content = await readFile(path.join(repositoryRoot, source), "utf8");
+    for (const match of content.matchAll(/<Path>\{roots\.workflows\}\/specdev\/([^<>]+)<\/Path>/g)) {
+      const relative = match[1];
+      const target = `${workflowRoot}/${relative}`;
+      if (target === documentDefinition.entry || relative === "README.md" || relative === "common/tools/README.md" || relative === "common/rules/path-reference-contract.md") continue;
+      if (!/\.(md|json)$/.test(relative) || relative.includes("{")) continue;
+      // A routed next Work is a different capability; explicitly included Work entries remain inlined.
+      if (capabilityNames.has(relative) && !bySource.has(target)) continue;
+      if (!bySource.has(target)) {
+        const tag = `ref-${relative.replace(/\.(md|json)$/, "").replace(/[^a-zA-Z0-9]+/g,"-").toLowerCase()}`;
+        const item = reference(relative,{tag,format:relative.endsWith(".json") ? "json" : undefined,preserveArtifactHeader: /template\.md$/.test(relative)});
+        bySource.set(target,item);queue.push(target);
+      }
+    }
+  }
+  documentDefinition.references = [...bySource.values()];
+}
+
 async function assertLocalReferenceCoverage(documentDefinition) {
   const entryDirectory = path.dirname(documentDefinition.entry);
   const entryFileName = path.basename(documentDefinition.entry);
@@ -717,6 +759,7 @@ async function assertLocalReferenceCoverage(documentDefinition) {
 }
 
 async function generateCanonical(documentDefinition) {
+  await expandNamedReferences(documentDefinition);
   await assertLocalReferenceCoverage(documentDefinition);
   const tagsBySource = new Map(
     documentDefinition.references.map(({ source, tag }) => [source, tag]),

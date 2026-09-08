@@ -100,3 +100,7 @@ Speculo synthesizes lessons from all: from failure we learned "documents are the
 ## License
 
 MIT — see [LICENSE](./LICENSE)
+
+## SpecDev Goal migration
+
+The unified P Goal entry, O compatibility route, Initiative exploration and Plan Ticket contracts are documented in [the migration guide](docs/specdev-goal-migration.md). Existing runtime state is not silently rewritten.
