@@ -175,7 +175,6 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "diagnosis.md",
   "source.md",
   "architecture-review.md",
-  "architecture-review.html",
   "wayfinder-map.md",
   "design-tree.json",
   "implementation-orchestration.md",
@@ -900,7 +899,14 @@ function capabilityChecks(root) {
       "architecture-review",
       [
         join(root, "R-review-architecture", "R-review-architecture.md"),
-        ["shallow", "interface", "locality", "Tailwind CDN", "Mermaid CDN", "最佳推荐"],
+        ["结构性坏味道", "code-judo", "删除测试", "高置信候选", "最佳推荐"],
+      ],
+    ],
+    [
+      "architecture-review-rubric",
+      [
+        join(root, "R-review-architecture", "review-rubric.md"),
+        ["删除测试", "文件大小", "高置信候选", "spaghetti growth"],
       ],
     ],
     [
@@ -938,15 +944,6 @@ function capabilityChecks(root) {
       errors.push(`capability '${ability}' lost markers: ${JSON.stringify(missing)}`);
     }
   }
-  if (!isFile(join(root, "R-review-architecture", "architecture-review-report-template.html"))) {
-    errors.push("architecture review lost its visual HTML report template");
-  } else {
-    const html = readText(join(root, "R-review-architecture", "architecture-review-report-template.html"));
-    for (const marker of ["cdn.tailwindcss.com", "mermaid", "Before", "After", "top-recommendation"]) {
-      if (!html.includes(marker)) errors.push(`architecture HTML template lost marker ${marker}`);
-    }
-  }
-
   for (const required of [
     "common/rules/codebase-design.md",
     "common/schemas/design-tree.schema.json",
@@ -954,7 +951,6 @@ function capabilityChecks(root) {
     "G-grill-with-docs/design-tree-template.json",
     "W-wayfinder/local-tracker-contract.md",
     "W-wayfinder/solution-comment-template.md",
-    "R-review-architecture/architecture-report-contract.md",
     "common/rules/parent-implementation-orchestration.md",
     "common/schemas/implementation-map.schema.json",
     "common/schemas/implementation-plan.schema.json",

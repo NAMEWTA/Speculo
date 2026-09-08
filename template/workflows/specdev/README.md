@@ -108,7 +108,6 @@ Archive          归档历史并将经验证知识提升为当前长期知识
 - `<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/architecture-review.html</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`
@@ -230,7 +229,7 @@ Change 从 active/blocked 转为 completed 时加载 `<Path>{roots.workflows}/sp
 - **O-orchestrate-implementation** — 编排实现：将两个或以上已完成 Ready Spec 与 Ready Tickets 的 change 编译为跨 change implementation super-DAG，并由单一 Lead 在一个会话中持续调度实现、验证和集成。
 - **P-goal-plan** — 目标规划：在跨 Ticket 协调复杂度需要时，以固定 Lead、动态派单、DAG/Gate 和候选合并门禁生成决策完备且可恢复的执行计划。
 - **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
-- **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库的深化机会，以持久化可视化 HTML 呈现候选，并对用户选择的一个方案运行设计树访谈。
+- **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 拆分 Tickets：将 Spec、计划或已确认对话拆成曳光弹式垂直切片；每个 Ticket 决策完备、可独立验证、适配单一上下文，并建立阻塞 DAG、路径所有权和执行就绪门禁。
 - **T-triage** — 请求分诊：把远程 Issue、URL、文件或对话冻结为本地来源工件，完成风险分诊与路由，并在本地 change 完成后受控回写和关闭支持的远程 Issue。
