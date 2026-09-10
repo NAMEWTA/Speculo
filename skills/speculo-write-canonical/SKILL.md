@@ -15,7 +15,7 @@ Canonical 是从源能力编译的独立分发物，不是第二份业务事实�
 
 1. 建立源入口、静态依赖、产物 owner、状态/恢复键和平台可写/不可写模式清单。
 2. 去除源路径、frontmatter、内部 alias、manifest 和 provenance；将运行时产物映射到 canonical 自己的持久化命名空间。
-3. 使用 `.agents/skills/speculo-write-canonical/scripts/build-canonical.mjs` 构建、审计和 self-check；项目 canonical 使用 `pnpm generate-canonical`。
+3. 使用 `skills/speculo-write-canonical/scripts/build-canonical.mjs` 构建、审计和 self-check；项目 canonical 使用 `pnpm generate-canonical`。
 4. 解压到空目录复核完整文件包，再运行整目录审计；源变化后只从源重建。
 
 ## 停止条件

@@ -172,14 +172,14 @@
       "source": "temp/skills/productivity/writing-for-agents/SKILL.md",
       "source_sha256": "5a0c83a7efc7ac1fbd8199a0c7d592798ebc43c4367a2fc726a33b2d843d6e86",
       "classification": "excluded",
-      "targets": [".agents/skills/_shared/authoring-quality.md"],
+      "targets": ["skills/_shared/authoring-quality.md"],
       "rationale": "Authoring guidance belongs to the maintainer layer and is not a SpecDev runtime capability"
     },
     {
       "source": "temp/skills/productivity/writing-great-skills/SKILL.md",
       "source_sha256": "e285f12827365f96a082a41f100db294b64a6aa1efcec3830040559eb302e6d9",
       "classification": "superseded",
-      "targets": ["template/skills/writing-great-skills/SKILL.md", ".agents/skills/_shared/authoring-quality.md"],
+      "targets": ["template/skills/writing-great-skills/SKILL.md", "skills/_shared/authoring-quality.md"],
       "rationale": "The shipped authoring reference and maintainer quality model already provide the stronger single source"
     }
   ]

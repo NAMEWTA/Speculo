@@ -71,7 +71,7 @@
 ## 推荐命令
 
 ```bash
-node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
+node skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
 ```
 
 项目若提供更强的 `pnpm validate-assets`、测试或 canonical 生成命令，应一并运行。仓库命令缺失时，以本技能包校验器作为最低门，不虚构成功。

@@ -521,7 +521,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
-    assert.equal(workDirs.length, 15);
+    assert.equal(workDirs.length, 14);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

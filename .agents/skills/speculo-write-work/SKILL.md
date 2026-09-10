@@ -8,4 +8,4 @@ description: 设计、创建或重构 Speculo workflow 中的单个 Letter-name 
 > **正本单一事实源**：本文件是指针，判定与执行逻辑都不在此处。
 
 **立即读取正本 `SKILL.md` 并照其执行**：
-[`../../../.agents/skills/speculo-write-work/SKILL.md`](../../../.agents/skills/speculo-write-work/SKILL.md)
+[`../../../skills/speculo-write-work/SKILL.md`](../../../skills/speculo-write-work/SKILL.md)

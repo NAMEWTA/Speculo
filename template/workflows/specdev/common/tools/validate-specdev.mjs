@@ -2872,13 +2872,14 @@ function validateChange(change, stage = null, repoRoot = null) {
   validatePrototypes(change, stage === "prototype", errors);
   validateChangeLearning(change, stage === "learn-change", errors);
 
-  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isFile(join(change, "implementation-map.md"));
+  const isParentImplementation = isFile(join(change, "implementation-map.md"));
+  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation;
   const specPath = join(change, "spec.md");
   const spec = isFile(specPath) || specRequired
     ? validateSpec(specPath, errors, warnings)
     : null;
   const ticketMode = isDirectory(join(change, "ticket"));
-  const mapRequired = new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode);
+  const mapRequired = !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
   const mapPath = join(change, "tickets-map.md");
   const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors, repoRoot) : null;
   const goalPlanPath = join(change, "goal-plan.md");
@@ -2902,7 +2903,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
 
   const ticketDir = join(change, "ticket");
-  const ticketsRequired = new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode);
+  const ticketsRequired = !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
   const ticketFiles = isDirectory(ticketDir)
     ? readdirSync(ticketDir)
         .filter((name) => name.endsWith(".md"))

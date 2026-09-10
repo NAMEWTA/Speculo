@@ -175,7 +175,7 @@ describe("progressive command references", () => {
     return root;
   }
   function check(root: string) {
-    const result = spawnSync(process.execPath, [join(process.cwd(), ".agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs"), root, "--json"], { encoding: "utf8" });
+    const result = spawnSync(process.execPath, [join(process.cwd(), "skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs"), root, "--json"], { encoding: "utf8" });
     assert.equal(result.error, undefined);
     return { status: result.status, report: JSON.parse(result.stdout) };
   }

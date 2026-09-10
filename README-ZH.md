@@ -72,7 +72,7 @@ npm install -g @namewta/speculo
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
 | **learning** | 7 | 面向项目、产品、学科、语言和技能的完整 30–40 分钟通俗课程、单文件作业评审、可选延迟复习，以及保留原料和引用的主题综合 |
-| **specdev** | 15 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
+| **specdev** | 14 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、学习、目标编排、原型、架构审查、Spec、Ticket、分诊与寻路 |
 | **ops** | 4 | 运维评估、批准、执行、验证、复盘与知识沉淀 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 
@@ -82,7 +82,7 @@ npm install -g @namewta/speculo
 
 - [AGENTS.md](./AGENTS.md) — AI 代理手册（权威）
 - [CHANGELOG.md](./CHANGELOG.md) — 发布历史
-- [.agents/skills/](./.agents/skills/) — Speculo 维护者内部编写工具（编写契约自包含于 `_shared/` 与各 skill 的 `references/`）
+- [skills/](./skills/) — Speculo 维护者内部编写工具（编写契约自包含于 `_shared/` 与各 skill 的 `references/`）
 - [README.md](./README.md) — English version
 
 ## 致敬与开源传承

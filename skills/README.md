@@ -30,19 +30,19 @@
 ## 一次性校验
 
 ```bash
-node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
+node skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
 ```
 
 更新 workflow 的 AUTO-INDEX：
 
 ```bash
-node .agents/skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/<workflow>
+node skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/<workflow>
 ```
 
 生成 canonical：
 
 ```bash
-node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs \
+node skills/speculo-write-canonical/scripts/build-canonical.mjs \
   --repo . \
   --entry template/<asset-entry>.md \
   --output template/canonical/<canonical-name>.md

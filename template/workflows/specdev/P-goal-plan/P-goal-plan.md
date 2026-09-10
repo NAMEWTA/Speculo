@@ -9,7 +9,7 @@ keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 
 # Goal 规划与执行
 
-> 激活后读取 `<Path>{roots.workflows}/specdev/README.md</Path>`。P 是统一 Goal 入口；G 仍是 Grill，O 是跨 change 兼容入口。
+> 激活后读取 `<Path>{roots.workflows}/specdev/README.md</Path>`。P 是统一 Goal 入口；G 仍是 Grill，跨 change 由本入口统一编排。
 
 ## 读取范围
 

@@ -72,7 +72,7 @@ After initialization, the target project gains the following AI agent-callable a
 | Workflow | Work Entries | Description |
 |---|---:|---|
 | **learning** | 7 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, single-file homework review, optional retention review, and provenance-preserving topic synthesis |
-| **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
+| **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
 | **ops** | 4 | Operations assessment, approval, execution, verification, and archival knowledge |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
@@ -82,7 +82,7 @@ Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entr
 
 - [AGENTS.md](./AGENTS.md) — AI agent handbook (authoritative)
 - [CHANGELOG.md](./CHANGELOG.md) — Release history
-- [.agents/skills/](./.agents/skills/) — Internal authoring tools for Speculo maintainers (self-contained authoring contracts under `_shared/` and per-skill `references/`)
+- [skills/](./skills/) — Internal authoring tools for Speculo maintainers (self-contained authoring contracts under `_shared/` and per-skill `references/`)
 - [README-ZH.md](./README-ZH.md) — 中文镜像
 
 ## Acknowledgments — Honoring Open Source Heritage

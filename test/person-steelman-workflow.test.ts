@@ -7,7 +7,7 @@ import test from 'node:test';
 
 const root = process.cwd();
 const workRoot = path.join(root, 'template/workflows/person/S-steelman-deliberation');
-const generator = path.join(root, '.agents/skills/speculo-write-workflows/scripts/generate-index.mjs');
+const generator = path.join(root, 'skills/speculo-write-workflows/scripts/generate-index.mjs');
 const validator = path.join(workRoot, 'tools/validate-steelman-change.mjs');
 
 function runNode(script: string, args: string[], cwd = root) {
