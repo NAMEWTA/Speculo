@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-09-10
+
+### Added
+- **SpecDev plan contracts**: adds Ticket/Map `plan_contract_version: 1`, Skill invocation bindings, quantified deliverable checks, and read-only `ticket-control` / `plan-contract` tools.
+- **SpecDev Initiative maps**: Wayfinder now records candidate change graphs with independently owned child changes.
+
+### Changed
+- **Unified Goal orchestration**: `P-goal-plan` now owns plan/run/resume/replan/verify for one or more Ready changes; ordinary local requests no longer require Triage.
+- **Architecture review**: records high-confidence findings in Markdown using a review rubric instead of the HTML report template.
+- **Maintainer authoring skills**: the source of truth moves to `skills/`; `.agents/skills/` keeps compatibility pointers.
+
+### Removed
+- **SpecDev `O-orchestrate-implementation`**: the standalone parent-orchestration Work is deleted. Cross-change implementation uses `P-goal-plan` with Implementation Map/Plan and an optional `goal-tickets-map` pointer.
+
+### Fixed
+- **Parent Goal validation**: parent implementations no longer require their own Tickets Map or Ticket directory; child changes remain the Ticket authority.
+
+### Tests
+- Added `specdev-plan-contract` coverage for invocation bindings, deliverable counts, legacy upgrades, and initiative identity; updated parent Goal and maintainer-script path fixtures.
+
 ## [1.0.2] - 2026-09-08
 
 ### Added
