@@ -41,12 +41,13 @@ npm install -g @namewta/speculo
 
 初始化后，目标项目获得以下可通过 AI agent 调用的资产：
 
-### 6 个 Commands
+### 7 个 Commands
 
 | Command | 用途 |
 |---|---|
 | `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档与 Agent 手册 |
 | `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
+| `git-history-squash` | 受控压缩 Git 历史：确认后收敛 first-parent 区间，保留可恢复引用和精确远端 lease |
 | `git-repository-audit` | 对一个或多个本地 Git 仓库执行只读、可复现的审计 |
 | `handoff` | 持久化精简且可恢复的上下文，供另一 Agent 接手 |
 | `retro` | 回顾分析，可创建 `gh issue` |

@@ -37,7 +37,14 @@
    - 识别操作型路径：`status.json`、`changes/`、`archive/`。
    - 识别知识型 store：`adr/`、`context/` 及任何标注为"永久"的目录（其内容在 change 完成后提升至此）。
    - 每个路径解析为完整的项目相对路径。
-5. 派生固定路径：`changes_root = state_root/changes`、`archive_root = state_root/archive`；`commands_root` 从公共 `<Path>{roots.state}/commands</Path>` 解析，不放进 workflow 私有 state root。
+5. 派生固定路径：
+   - `changes_root = state_root/changes`
+   - `archive_root = state_root/archive`
+   - `commands_root` 必须解析为 `<Path>{roots.state}/commands</Path>`
+   - `{roots.commands}` 是命令定义根，记为 `commands_def_root`，不是报告根
+   - 「不放进 workflow 私有 state root」只禁止写入 `<Path>{roots.state}/{workflow}/</Path>`（含 `specdev` / `learning` / `ops` / `person`）。它不禁止写入 `{roots.state}` 本身，更不得把报告退回 `{roots.commands}`
+   - POSIX 规范化后，若 `commands_root` 等于 `{roots.commands}`，或任何报告路径落在 `{roots.commands}/archive-and-consolidate/` → **blocked，不写文件**
+   - 写入 `path_context` 前再次核对 `commands_root` 等于 `<Path>{roots.state}/commands</Path>`
 6. 读取 `<Path>{roots.config}</Path>`（若存在）；不存在时静默降级为默认值（`language: "en"`、`confirm_before_external_write: true`）。
 7. 对每个已解析路径执行真实路径包含检查；符号链接逃逸或不存在的静态引用阻塞。
 8. 读取 `status.json`；扫描 changes 时校验 change 名称格式 `^\d{4}-\d{2}-\d{2}-[a-z0-9]+(-[a-z0-9]+)*$`，无日期前缀的历史 change 标注遗留但不阻塞。
@@ -110,7 +117,7 @@
 3. 显式标注所有破坏性动作（移动、删除、改写）。
 4. 报告摘要：待归档 change 数、待合并知识项数、待清理候选数、需确认项数。
 5. 呈现给用户并显式声明：**"未修改任何文件。此为 dry-run 计划，请确认后执行。"**
-6. dry-run 到此完成；调用方负责将报告写入 `commands_root/archive-and-consolidate/<YYYY-MM-DD>-<scope>-<topic>[-NN].md`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。
+6. dry-run 到此完成；调用方负责将报告写入 `<Path>{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md</Path>`（`<scope>` 为目标 workflow 名，`<topic>` 为 change 名或 `batch`）。禁止写入 `{roots.commands}/archive-and-consolidate/`。
 
 ### Step 7：执行已确认动作
 
@@ -140,7 +147,7 @@
   mode: "dry-run" | "executed",
   scope: "archive-single" | "archive-batch",
   knowledge_policy: "generic" | "mechanical-only",
-  path_context: { project_root, workflow_root, state_root, changes_root, archive_root, commands_root },
+  path_context: { project_root, workflow_root, state_root, changes_root, archive_root, commands_root }, // commands_root === {roots.state}/commands, never {roots.commands}
   knowledge_stores: [{ name, path, exists }],
   archive_plan: [{ source, target, status: "ready" | "blocked" | "moved" | "failed", notes }],
   consolidation_plan: [{ source_change, target_store, action: "create" | "merge" | "append", content_summary, graduation_criterion, status }],
@@ -157,6 +164,7 @@
 - `generic` 的每次合并写入已解决或标记冲突，目标 store 在 state 根内；每个清理动作完成路径包含验证且无跨 workflow 修改。
 - 未确认或 mode=`dry-run` 时无文件系统修改。
 - 执行后重读验证通过或不一致已记录。
+- `path_context.commands_root` 等于 `<Path>{roots.state}/commands</Path>`，不等于 `{roots.commands}`。
 - 本 skill 未自行选择报告路径或自行持久化。
 
 ## 渐进披露

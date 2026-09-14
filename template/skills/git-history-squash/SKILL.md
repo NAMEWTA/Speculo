@@ -13,6 +13,8 @@ This file is the routing entry. Read [`references/entry-procedure.md`](reference
 ## Scope
 
 - Trigger: Plan and execute a confirmed first-parent Git history squash with recoverable refs and exact remote leases; never auto-trigger.
+- Owning command: `<Path>{roots.commands}/git-history-squash.md</Path>` owns confirmation and the command audit report.
+- This skill owns `<Path>{roots.state}/skills/git-history-squash/</Path>` transactional state.
 - Output and write owner remain those declared by the entry procedure and the owning command/workflow.
 - Do not infer missing scope, credentials, target, or authorization.
 

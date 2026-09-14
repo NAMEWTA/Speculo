@@ -572,6 +572,25 @@ function validatePathTags(file, content) {
   }
 }
 
+function validateCommandReportRoots() {
+  const commandsDir = join(templateRoot, "commands");
+  for (const entry of readdirSync(commandsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const filePath = join(commandsDir, entry.name);
+    const file = filePath.slice(packageRoot.length + 1);
+    const content = readFileSync(filePath, "utf8");
+    const frontmatter = parseFrontmatter(content, file);
+    if (frontmatter.type !== "command" || !frontmatter.id) {
+      fail(`${file}: command frontmatter must declare type: command and id`);
+      continue;
+    }
+    const expected = `{roots.state}/commands/${frontmatter.id}/`;
+    if (!content.includes(expected)) {
+      fail(`${file}: command must declare report root ${expected}`);
+    }
+  }
+}
+
 function validateCommandAndSkillPaths() {
   const roots = [join(templateRoot, "commands"), join(templateRoot, "skills")];
   const legacyPatterns = [
@@ -773,6 +792,7 @@ if (workspace) {
 validateAgentSkills();
 validateDocsSyncTemplates();
 validateCommandAndSkillPaths();
+validateCommandReportRoots();
 
 if (errors.length > 0) {
   console.error(`Framework asset validation failed: ${errors.length}`);

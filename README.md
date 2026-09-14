@@ -41,12 +41,13 @@ Initialization updates only a controlled persistent-knowledge block in project `
 
 After initialization, the target project gains the following AI agent-callable assets:
 
-### 6 Commands
+### 7 Commands
 
 | Command | Purpose |
 |---|---|
 | `docs-sync` | Clean workspace, sync project documentation and Agent handbooks from reproducible Git ranges |
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
+| `git-history-squash` | Confirmed first-parent history convergence with recoverable refs and exact remote leases |
 | `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
 | `handoff` | Persist a compact, resumable context handoff for another agent |
 | `retro` | Retrospective analysis with `gh issue` creation |

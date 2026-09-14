@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **`git-history-squash` command**: adds a user-invoked confirmation and audit-report entry over the existing first-parent squash skill. Command reports live under `{roots.state}/commands/git-history-squash/`; transactional state remains `{roots.state}/skills/git-history-squash/`.
+
+### Fixed
+- **`archive-and-consolidate` report root**: command reports must resolve to `{roots.state}/commands/archive-and-consolidate/`. `{roots.commands}` is definition-only. A `commands_root` that equals `{roots.commands}` now blocks without writing files.
+
+### Tests
+- Added command report-root coverage for every `template/commands/*.md` entry, plus archive-and-consolidate and git-history-squash confirmation/path contracts.
+
 ## [1.0.3] - 2026-09-10
 
 ### Added

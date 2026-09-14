@@ -8,7 +8,7 @@
 
 1. 从当前目录向上寻找并读取 `<Path>{roots.state}/workspace.json</Path>`，验证 `path_base: project-root` 和全部 roots，再读取 `<Path>{roots.config}</Path>`；无法唯一确定项目根时停止。
 2. 读取项目 `AGENTS.md` 及目标仓库作用域内规则。
-3. 将本 Skill 的持久化根解析为 `<Path>{roots.state}/skills/git-history-squash/</Path>`。根 `state.json` 只保存当前可恢复运行的 locator；每次运行使用 `<Path>{roots.state}/skills/git-history-squash/{date}-{topic}[-NN]/</Path>`，已有目录永不覆盖。
+3. 将本 Skill 的持久化根解析为 `<Path>{roots.state}/skills/git-history-squash/</Path>`。根 `state.json` 只保存当前可恢复运行的 locator；每次运行使用 `<Path>{roots.state}/skills/git-history-squash/{date}-{topic}[-NN]/</Path>`，已有目录永不覆盖。由 `<Path>{roots.commands}/git-history-squash.md</Path>` 调用时，command 负责确认门和 `<Path>{roots.state}/commands/git-history-squash/</Path>` 审计报告；本 Skill 仍只写上述 skill namespace。
 4. 从 [request template](../assets/request-template.json) 生成临时 request JSON。用户必须逐仓库明确 repository、完整 local branch ref、start、end、`inclusive | exclusive`、commit message、签名选择和远端发布选择；不得猜测缺失值。
 5. 读取 [Rewrite contract](rewrite-contract.md)，用它验证区间语义、预检项、确认门和 Git 写入边界。涉及父仓库与 submodule 时同时读取 [Submodule contract](submodule-contract.md)。
 

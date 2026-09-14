@@ -18,4 +18,4 @@ This file is the routing entry. Read [`references/entry-procedure.md`](reference
 
 ## Stop
 
-Stop before side effects when the required input, owner, reference, confirmation, schema, or recovery evidence is missing; report the exact blocker and preserve any dry-run evidence.
+Stop before side effects when the required input, owner, reference, confirmation, schema, or recovery evidence is missing, or when `commands_root` is not `{roots.state}/commands`; report the exact blocker and preserve any dry-run evidence.
