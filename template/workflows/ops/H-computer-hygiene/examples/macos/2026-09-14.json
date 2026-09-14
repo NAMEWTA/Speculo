@@ -1,0 +1,970 @@
+{
+  "completed_at": "2026-09-14T08:44:02.775169+00:00",
+  "configurations": [
+    {
+      "declarations": [
+        {
+          "line": 1,
+          "value": "not recorded; no evaluation",
+          "variable": "JAVA_HOME"
+        }
+      ],
+      "path": "~/.profile",
+      "status": "inspected"
+    },
+    {
+      "declarations": [
+        {
+          "line": 1,
+          "value": "not recorded; no evaluation",
+          "variable": "JAVA_HOME"
+        }
+      ],
+      "path": "~/.zshrc",
+      "status": "inspected"
+    },
+    {
+      "localRepository": "~/.m2/repository",
+      "path": "~/.m2/settings.xml",
+      "sensitive_sections_recorded": false,
+      "status": "inspected"
+    },
+    {
+      "note": "Potential configuration/credentials; content not exported. Effective values require trusted native queries.",
+      "path": "~/.cargo/config.toml",
+      "status": "metadata-only"
+    }
+  ],
+  "date": "2026-09-14",
+  "environment": {
+    "commands": {
+      "asdf": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "brew": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "cargo": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "rust",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "corepack": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "node",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "fnm": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "go": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "go",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "gradle": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "gradle",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "java": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "java",
+        "matches": [
+          "~/bin-primary/java",
+          "~/bin-old/java"
+        ],
+        "selected_candidate": "~/bin-primary/java",
+        "version": null
+      },
+      "javac": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "java",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "jenv": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "mise": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "mvn": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "maven",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "mvnw": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "maven",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "node": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "node",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "npm": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "node",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "npx": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "node",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "nvm": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "pip": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "pipx": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "pnpm": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "pnpm",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "pyenv": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "python": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "python3": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "rustc": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "rust",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "rustup": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "rust",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "scoop": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "uv": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "uvx": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "python-uv",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "volta": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      },
+      "winget": {
+        "certainty": "PATH file lookup only; aliases/functions/shim resolution not evaluated",
+        "executed": false,
+        "family": "version-managers",
+        "matches": [],
+        "selected_candidate": null,
+        "version": null
+      }
+    },
+    "path": [
+      {
+        "expanded": "~/bin-primary",
+        "index": 1,
+        "linklike": false,
+        "status": "exists",
+        "value": "~/bin-primary"
+      },
+      {
+        "expanded": "~/bin-old",
+        "index": 2,
+        "linklike": false,
+        "status": "exists",
+        "value": "~/bin-old"
+      },
+      {
+        "duplicate_of": 1,
+        "expanded": "~/bin-primary",
+        "index": 3,
+        "linklike": false,
+        "status": "exists",
+        "value": "~/bin-primary"
+      },
+      {
+        "expanded": "~/missing-bin",
+        "index": 4,
+        "linklike": false,
+        "status": "missing",
+        "value": "~/missing-bin"
+      }
+    ],
+    "variables": {
+      "CARGO_HOME": "~/.cargo",
+      "GOCACHE": "~/Library/Caches/go-build",
+      "JAVA_HOME": "~/old-jdk"
+    }
+  },
+  "findings": [
+    {
+      "category": "PATH",
+      "evidence": {
+        "duplicate_of": 1,
+        "expanded": "~/bin-primary",
+        "index": 3,
+        "linklike": false,
+        "status": "exists",
+        "value": "~/bin-primary"
+      },
+      "id": "F0001",
+      "recommendation": "保留必要优先级，备份后只修改产生重复的配置来源。",
+      "risk": "R1",
+      "title": "PATH 字面重复项"
+    },
+    {
+      "category": "PATH",
+      "evidence": {
+        "expanded": "~/missing-bin",
+        "index": 4,
+        "linklike": false,
+        "status": "missing",
+        "value": "~/missing-bin"
+      },
+      "id": "F0002",
+      "recommendation": "排除未挂载磁盘、会话级 shims 与延迟创建路径后再移除。",
+      "risk": "R1",
+      "title": "PATH 目录当前不存在"
+    },
+    {
+      "category": "tool-resolution",
+      "evidence": [
+        "~/bin-primary/java",
+        "~/bin-old/java"
+      ],
+      "id": "F0003",
+      "recommendation": "在可信终端核实实际版本和主用管理器；多个路径不等于冗余安装。",
+      "risk": "R2",
+      "title": "java 有多个 PATH 命中"
+    },
+    {
+      "category": "configuration",
+      "evidence": [
+        {
+          "line": 1,
+          "path": "~/.profile"
+        },
+        {
+          "line": 1,
+          "path": "~/.zshrc"
+        }
+      ],
+      "id": "F0004",
+      "recommendation": "只是静态出现记录，未证明重复赋值或加载顺序；人工核实生效 shell 后整合。",
+      "risk": "R2",
+      "title": "JAVA_HOME 出现在多个 profile 位置"
+    },
+    {
+      "category": "project-location",
+      "evidence": "~/Downloads/source-clone",
+      "id": "F0005",
+      "recommendation": "先保全仓库状态与唯一数据，再规划项目根；位置不规范不等于允许删除。",
+      "risk": "R2",
+      "title": "项目位于易被清理的位置"
+    },
+    {
+      "category": "project",
+      "evidence": {
+        "locks": [
+          "package-lock.json",
+          "pnpm-lock.yaml"
+        ],
+        "path": "~/Projects/example-web"
+      },
+      "id": "F0006",
+      "recommendation": "确认实际管理器、迁移期和 CI 约束；不自动删除任一锁文件。",
+      "risk": "R2",
+      "title": "同一项目有多个 Node 包管理锁文件"
+    }
+  ],
+  "host": {
+    "disk_free_bytes": 128849018880,
+    "disk_total_bytes": 549755813888,
+    "elevated": false,
+    "execution_context_signals": {
+      "fixture_only": true
+    },
+    "fingerprint": "FIXTURE_NOT_FOR_APPROVAL",
+    "home": "~",
+    "machine": "SIMULATED_ARCHITECTURE",
+    "release": "SIMULATED_OS_METADATA",
+    "system": "Darwin"
+  },
+  "loose_files": [
+    {
+      "action": "manual ownership/backup/content review; not a deletion candidate",
+      "logical_bytes": 17,
+      "modified_at": "2026-09-14T08:44:02.771470+00:00",
+      "path": "~/Downloads/old-installer.zip",
+      "risk": "R2"
+    }
+  ],
+  "manual_checks": [
+    {
+      "area": "maven",
+      "instruction": "核实 settings.xml、-Dmaven.repo.local、IDE 与项目参数；本地仓库可能含未发布的 install 产物，先备份，不整体删除。",
+      "reference": "20-toolchains.md#java-maven-gradle",
+      "risk": "R2"
+    },
+    {
+      "area": "node-pnpm",
+      "instruction": "可信终端中核实 Node 管理器、npm cache/prefix 与 pnpm store path；按本地帮助选择原生命令，清理 store 前检查离线需求及正在运行的安装。",
+      "reference": "20-toolchains.md#node-npm-pnpm",
+      "risk": "R2"
+    },
+    {
+      "area": "go-rust-uv",
+      "instruction": "核实 go env、rustup toolchain list、uv 路径命令；保留 Cargo 配置/凭据/安装工具，不把 Cargo Home、.venv 或 SDK 当缓存。",
+      "reference": "20-toolchains.md",
+      "risk": "R2"
+    },
+    {
+      "area": "repositories",
+      "instruction": "对已授权且可信的仓库检查提交、推送、分支、worktree、submodule 和 LFS；未完成前不得删除仓库、.git、vendor、锁文件或虚拟环境。",
+      "reference": "22-repositories.md",
+      "risk": "P"
+    },
+    {
+      "area": "software",
+      "instruction": "先按精确应用身份使用官方卸载器，再单独确认用户数据与残留；共享运行库、驱动、服务、插件不能按名称推断可删。",
+      "reference": "30-software-removal.md",
+      "risk": "R3"
+    },
+    {
+      "area": "system",
+      "instruction": "仅通过对应系统参考文档使用原生存储管理功能；不直接删除系统组件、快照、容器卷、WSL 磁盘或云同步文件。",
+      "reference": "10-windows.md / 11-macos.md / 12-linux.md",
+      "risk": "R3"
+    }
+  ],
+  "projects": [
+    {
+      "artifacts": [],
+      "declared_node_manager": null,
+      "git": "gitfile/worktree-or-submodule",
+      "git_state": "unknown; Git commands not executed",
+      "markers": [],
+      "path": "~/Downloads/source-clone",
+      "version_pin_files": []
+    },
+    {
+      "artifacts": [
+        "~/Projects/example-web/node_modules"
+      ],
+      "declared_node_manager": "pnpm@9.0.0",
+      "git": "directory",
+      "git_state": "unknown; Git commands not executed",
+      "markers": [
+        ".nvmrc",
+        "package-lock.json",
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "path": "~/Projects/example-web",
+      "version_pin_files": [
+        ".nvmrc"
+      ]
+    }
+  ],
+  "record_kind": "SYNTHETIC_FIXTURE_NOT_YOUR_COMPUTER",
+  "safety": {
+    "configuration_changes": 0,
+    "default_read_only": true,
+    "deleted_files": 0,
+    "network_requests": 0,
+    "quarantine_frees_space": false,
+    "report_is_sensitive": true,
+    "subprocesses": 0,
+    "web_sources_verified": false
+  },
+  "scan_id": "892972ae7036",
+  "schema_version": 1,
+  "scope": {
+    "coverage": [
+      {
+        "area": "environment",
+        "detail": "Process PATH and curated path variables inspected; no shell evaluation, tool execution or effective-version proof.",
+        "status": "partial"
+      },
+      {
+        "area": "configuration",
+        "detail": "Known profile anchors and allowlisted Maven/npm path fields; no credentials, includes, project overrides, or effective execution.",
+        "status": "partial"
+      },
+      {
+        "area": "storage",
+        "detail": "Known defaults and declared locations; per-tree/global budgets; no full-disk crawl; custom tool defaults may be missed.",
+        "status": "partial"
+      },
+      {
+        "area": "projects",
+        "detail": "Authorized roots only; depth <= 3; repository content/state/remote ownership not verified.",
+        "status": "partial"
+      },
+      {
+        "area": "applications/startup",
+        "detail": "Synthetic application metadata only; no real registry, Applications, launchd or service reads.",
+        "status": "SIMULATED-NOT-NATIVE"
+      },
+      {
+        "area": "loose-files/duplicates",
+        "detail": "Downloads direct-child installers/archives/large-file metadata only. No content hashes, full-disk duplicate proof, Documents/Desktop traversal or personal-data deletion.",
+        "status": "partial"
+      }
+    ],
+    "entries_visited": 38,
+    "global_budget_exhausted": false,
+    "limitations": [
+      "No complete disk or effective-tool-version claim.",
+      "Stat calls on an unrecognized remote filesystem may block; budgets are cooperative, not OS I/O deadlines.",
+      "No universal detection of bind mounts, macOS firmlinks, APFS clones or same-device remote mappings.",
+      "Metadata mtime is not last-use evidence; content-identical duplicates not proven.",
+      "Current user's report does not cover other users, WSL guest systems or all external volumes.",
+      "Disk capacity, architecture and application identity are illustrative fixture values, not real measurements."
+    ],
+    "options": {
+      "exclude_roots": [],
+      "large_file_mib": 512,
+      "max_entries_per_tree": 20000,
+      "max_entries_total": 200000,
+      "min_age_days": 14,
+      "project_depth": 3,
+      "project_roots": [
+        "~/Projects",
+        "~/Downloads"
+      ],
+      "schema_version": 1,
+      "seconds_per_tree": 10,
+      "seconds_total": 90.0,
+      "target_root": null
+    }
+  },
+  "software": {
+    "applications": [
+      {
+        "action": "fixture candidate; not real software and never uninstalled",
+        "bundle_id": "invalid.example.editor",
+        "name": "Example Editor",
+        "path": "~/Applications/Example Editor.app",
+        "system_component": false,
+        "version": "1.0-fixture"
+      }
+    ],
+    "errors": [
+      "Real OS inventory intentionally disabled for this example."
+    ],
+    "persistent_environment": [],
+    "startup": []
+  },
+  "started_at": "2026-09-14T08:44:02.771586+00:00",
+  "storage": [
+    {
+      "kind": "maven-local-repository",
+      "note": "May contain unpublished artifacts installed locally; never blanket-delete.",
+      "path": "~/.m2/repository",
+      "risk": "P",
+      "sources": [
+        "settings.xml declaration, not effective configuration proof",
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 20480,
+        "complete": true,
+        "digest": "d762eeeeaeded747a4f1c585f670f070b0b054c6879c788258d63102105c5aeb",
+        "directories": 4,
+        "entries": 5,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 18432,
+        "newest_mtime_ns": 1789375442770309224,
+        "root_identity": [
+          28,
+          1573093,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "gradle-home",
+      "note": "Contains configuration, caches, wrapper distributions and possibly credentials.",
+      "path": "~/.gradle",
+      "risk": "P",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "cargo-home",
+      "note": "Contains config, credentials, installed binaries, registry and Git stores.",
+      "path": "~/.cargo",
+      "risk": "P",
+      "sources": [
+        "known default hypothesis; not proof of active use",
+        "process environment: CARGO_HOME"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 8192,
+        "complete": true,
+        "digest": "cdb18d357d67e5c113076529f722d7e7eebe31eb8a4021bb4925b7a65fd82f44",
+        "directories": 1,
+        "entries": 3,
+        "errors": [],
+        "files": 2,
+        "large_files": [],
+        "logical_bytes": 59,
+        "newest_mtime_ns": 1789375442770435685,
+        "root_identity": [
+          28,
+          1573099,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "rustup-home",
+      "note": "Installed toolchains; remove by exact toolchain through rustup after checking pins.",
+      "path": "~/.rustup",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "go-workspace",
+      "note": "Can contain source code and installed tools, not a disposable cache.",
+      "path": "~/go",
+      "risk": "P",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "uv-cache",
+      "note": "Use native uv cache commands after version verification; no automated moves.",
+      "path": "~/Library/Caches/uv",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "pnpm-store",
+      "note": "Version-dependent default hypothesis; use pnpm store path to establish actual location.",
+      "path": "~/Library/pnpm/store",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "npm-home",
+      "note": "May contain logs and other state; only _cacache can qualify for quarantine.",
+      "path": "~/.npm",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 53248,
+        "complete": true,
+        "digest": "d86eae0bbfa952d5b276abe65f8b5e7340b29088b16c089e0799e41a0813348b",
+        "directories": 4,
+        "entries": 5,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 53248,
+        "newest_mtime_ns": 1789375442770435685,
+        "root_identity": [
+          28,
+          1573102,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "nvm",
+      "note": "Version manager; includes per-version global packages.",
+      "path": "~/.nvm",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "volta",
+      "note": "Version manager data; do not move without documented migration.",
+      "path": "~/.volta",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "fnm",
+      "note": "Default hypothesis, verify with configuration.",
+      "path": "~/.local/share/fnm",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "mise",
+      "note": "Support and path semantics must be checked against installed version.",
+      "path": "~/.local/share/mise",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "asdf",
+      "note": "May contain plugins, shims and installed runtimes.",
+      "path": "~/.asdf",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "sdkman",
+      "note": "Not assumed to support native Windows; WSL is a separate environment.",
+      "path": "~/.sdkman",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "pyenv",
+      "note": "Interpreters and virtualenvs may have absolute prefix references.",
+      "path": "~/.pyenv",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "jdk-user",
+      "note": "Often IDE-managed; verify IDE ownership and project JDK pins.",
+      "path": "~/.jdks",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "bun",
+      "note": "Runtime and package state; not a pure cache.",
+      "path": "~/.bun",
+      "risk": "R2",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "docker-user-state",
+      "note": "Configuration may include authentication and contexts; no content export or automated deletion.",
+      "path": "~/.docker",
+      "risk": "P",
+      "sources": [
+        "known default hypothesis; not proof of active use"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "npm-content-cache",
+      "note": "Recreation may need network; metadata age does not prove disuse.",
+      "path": "~/.npm/_cacache",
+      "quarantine_action": "Q-2801dd414f",
+      "risk": "R1",
+      "sources": [
+        "conservative default cache location"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 53248,
+        "complete": true,
+        "digest": "8bb44a47119f63d8db0c7bc8cf45ccf1932f51711c178f37d09cc2e3703fdab6",
+        "directories": 3,
+        "entries": 4,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 53248,
+        "newest_mtime_ns": 1785487442770555973,
+        "root_identity": [
+          28,
+          1573103,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "pip-cache",
+      "note": "Recreation may need network; metadata age does not prove disuse.",
+      "path": "~/Library/Caches/pip",
+      "quarantine_action": "Q-e99e7d1bcf",
+      "risk": "R1",
+      "sources": [
+        "conservative default cache location"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 53248,
+        "complete": true,
+        "digest": "689a792217606ea63582a480f1af153a7c7a26a86dc05e1cc9ee60c8f4594977",
+        "directories": 3,
+        "entries": 4,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 53248,
+        "newest_mtime_ns": 1785487442770805358,
+        "root_identity": [
+          28,
+          1573109,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "go-build-cache",
+      "note": "Recreation may need network; metadata age does not prove disuse.",
+      "path": "~/Library/Caches/go-build",
+      "quarantine_action": "Q-eb0b417b6e",
+      "risk": "R1",
+      "sources": [
+        "conservative default cache location",
+        "process environment: GOCACHE"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 53248,
+        "complete": true,
+        "digest": "50c5488246bd66aa885e5f7c93c8cfe1026a09caf435f6f5621fbfe5862124fa",
+        "directories": 2,
+        "entries": 3,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 53248,
+        "newest_mtime_ns": 1785487442771062612,
+        "root_identity": [
+          28,
+          1573113,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    },
+    {
+      "kind": "jdk-install",
+      "note": "",
+      "path": "~/old-jdk",
+      "risk": "R2",
+      "sources": [
+        "process environment: JAVA_HOME"
+      ],
+      "status": "absent"
+    },
+    {
+      "kind": "project-artifact-node_modules",
+      "note": "Name is only a hint; may contain source, local-only data, editable installs or tracked outputs. Manual review only.",
+      "path": "~/Projects/example-web/node_modules",
+      "risk": "R2",
+      "sources": [
+        "authorized project inventory"
+      ],
+      "status": "measured",
+      "tree": {
+        "allocated_bytes": 4096,
+        "complete": true,
+        "digest": "f213bd5b24f930cf4abbbfdb77fd8ba2bc590451f6ce521c29c05a830058b9fe",
+        "directories": 1,
+        "entries": 2,
+        "errors": [],
+        "files": 1,
+        "large_files": [],
+        "logical_bytes": 38,
+        "newest_mtime_ns": 1789375442771369221,
+        "root_identity": [
+          28,
+          1573123,
+          16877
+        ],
+        "skipped_hardlinks": 0,
+        "skipped_links": 0,
+        "skipped_special": 0
+      }
+    }
+  ],
+  "summary": {
+    "automated_permanent_deletion_candidates": 0,
+    "automated_quarantine_candidates": 3,
+    "findings": 6,
+    "immediately_reclaimable_bytes_proven": null,
+    "note": "Observed size is not reclaimable space. File IDs deduplicate measured hardlinks/overlaps; clones/compression/sparse/network identity remain uncertain.",
+    "observed_unique_logical_bytes": 178273
+  },
+  "tool_version": "1.0.0-candidate"
+}

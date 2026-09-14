@@ -4,6 +4,8 @@
 
 A 必须枚举全部 ATTEMPT-NNN，并在 RETROSPECTIVE 中覆盖时间线、target identity/Gate 漂移、错误 signature、根因 confidence、排除假设、计划偏差、尝试动作、数据保护、保留/恢复资产、最终有效或恢复序列、验证、残余风险和教训。缺 attempt、诊断、verification state 或无密钥 HANDOFF 时阻塞，不用摘要补造。
 
+例外：`works_run` 含 `ops/computer-hygiene` 且不含 `ops/plan-and-approve` / `ops/execute-and-stabilize` 的 hygiene-only change，改为枚举 `hygiene/runs` 日期报告；不要求 attempt。RETROSPECTIVE 仍覆盖时间线、错误、根因、残余风险和教训，Attempt Timeline 用卫生运行记录代替 ATTEMPT-NNN。
+
 旧 plan v2/attempt v1 原样保留为 legacy evidence，不迁移或补字段。若最终证据只有 attempt v1，A 返回 E 创建 verification-only attempt v2；其 target profile binding、typed journal、verification-state v1 和 HANDOFF 通过后，才能 pre-close/pre-archive。旧摘要本身不得提升为现役 SOP。
 
 ## 知识分类

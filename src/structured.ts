@@ -246,7 +246,7 @@ async function validateLearningState(stagedRoot: string): Promise<void> {
 }
 
 const OPS_WORK_IDS = new Set([
-  "ops/archive-and-learn", "ops/execute-and-stabilize",
+  "ops/archive-and-learn", "ops/computer-hygiene", "ops/execute-and-stabilize",
   "ops/intake-and-assess", "ops/plan-and-approve",
 ]);
 const OPS_PROJECT_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

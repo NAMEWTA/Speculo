@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project_roots": [],
+  "exclude_roots": [],
+  "target_root": null,
+  "max_entries_per_tree": 20000,
+  "max_entries_total": 200000,
+  "seconds_per_tree": 3.0,
+  "seconds_total": 90.0,
+  "project_depth": 3,
+  "min_age_days": 14,
+  "large_file_mib": 512
+}

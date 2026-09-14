@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "tools": {
+    "java": [
+      "java",
+      "javac"
+    ],
+    "maven": [
+      "mvn",
+      "mvnw"
+    ],
+    "gradle": [
+      "gradle"
+    ],
+    "node": [
+      "node",
+      "npm",
+      "npx",
+      "corepack"
+    ],
+    "pnpm": [
+      "pnpm"
+    ],
+    "go": [
+      "go"
+    ],
+    "rust": [
+      "rustc",
+      "cargo",
+      "rustup"
+    ],
+    "python-uv": [
+      "python",
+      "python3",
+      "uv",
+      "uvx",
+      "pip",
+      "pipx"
+    ],
+    "version-managers": [
+      "mise",
+      "asdf",
+      "fnm",
+      "volta",
+      "nvm",
+      "pyenv",
+      "jenv",
+      "scoop",
+      "brew",
+      "winget"
+    ]
+  },
+  "path_variables": [
+    "JAVA_HOME",
+    "JDK_HOME",
+    "MAVEN_HOME",
+    "M2_HOME",
+    "MAVEN_USER_HOME",
+    "GRADLE_USER_HOME",
+    "NODE_PATH",
+    "NVM_DIR",
+    "NVM_HOME",
+    "NVM_SYMLINK",
+    "VOLTA_HOME",
+    "FNM_DIR",
+    "FNM_MULTISHELL_PATH",
+    "PNPM_HOME",
+    "NPM_CONFIG_CACHE",
+    "npm_config_cache",
+    "NPM_CONFIG_PREFIX",
+    "npm_config_prefix",
+    "GOPATH",
+    "GOBIN",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOROOT",
+    "GOENV",
+    "RUSTUP_HOME",
+    "CARGO_HOME",
+    "SCCACHE_DIR",
+    "UV_CACHE_DIR",
+    "UV_PYTHON_INSTALL_DIR",
+    "UV_TOOL_DIR",
+    "UV_TOOL_BIN_DIR",
+    "XDG_DATA_HOME",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_STATE_HOME",
+    "MISE_DATA_DIR",
+    "MISE_CACHE_DIR",
+    "MISE_CONFIG_DIR",
+    "ASDF_DATA_DIR",
+    "PYENV_ROOT",
+    "SDKMAN_DIR",
+    "BUN_INSTALL",
+    "VIRTUAL_ENV",
+    "CONDA_PREFIX",
+    "PIP_CACHE_DIR",
+    "PIPX_HOME"
+  ],
+  "project_markers": [
+    "package.json",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "yarn.lock",
+    "bun.lock",
+    "bun.lockb",
+    "Cargo.toml",
+    "Cargo.lock",
+    "go.mod",
+    "go.sum",
+    "pom.xml",
+    "mvnw",
+    "build.gradle",
+    "build.gradle.kts",
+    "gradlew",
+    "pyproject.toml",
+    "uv.lock",
+    "Pipfile",
+    "Pipfile.lock",
+    "poetry.lock",
+    "requirements.txt",
+    "CMakeLists.txt",
+    ".tool-versions",
+    "mise.toml",
+    ".mise.toml",
+    ".nvmrc",
+    ".node-version",
+    ".java-version",
+    ".python-version",
+    "rust-toolchain",
+    "rust-toolchain.toml",
+    ".sdkmanrc"
+  ],
+  "project_artifacts": [
+    "node_modules",
+    "target",
+    "build",
+    "dist",
+    ".next",
+    ".nuxt",
+    ".venv",
+    "venv",
+    ".gradle",
+    ".turbo",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pycache__"
+  ],
+  "protected_names": [
+    ".ssh",
+    ".gnupg",
+    ".aws",
+    ".azure",
+    ".kube",
+    ".pki",
+    ".password-store",
+    "OneDrive",
+    "Dropbox",
+    "iCloud Drive",
+    "CloudStorage",
+    "Mobile Documents"
+  ],
+  "quarantine_kinds": [
+    "npm-content-cache",
+    "pip-cache",
+    "go-build-cache"
+  ],
+  "reference_map": {
+    "Windows": "references/10-windows.md",
+    "Darwin": "references/11-macos.md",
+    "Linux": "references/12-linux.md",
+    "toolchains": "references/20-toolchains.md",
+    "migration": "references/21-path-migration.md",
+    "repositories": "references/22-repositories.md",
+    "software": "references/30-software-removal.md"
+  },
+  "version_pin_files": [
+    ".tool-versions",
+    "mise.toml",
+    ".mise.toml",
+    ".nvmrc",
+    ".node-version",
+    ".java-version",
+    ".python-version",
+    "rust-toolchain",
+    "rust-toolchain.toml",
+    ".sdkmanrc"
+  ]
+}

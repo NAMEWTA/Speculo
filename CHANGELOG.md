@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Ops `H-computer-hygiene`**: adds a host-hygiene Work for default-read-only Windows/macOS/Linux environment audits, optional confirmed cache quarantine, and reports under `{roots.state}/ops/changes/{change}/hygiene/`. Hygiene-only global changes can complete without a deployment attempt.
+
 ## [1.0.4] - 2026-09-14
 
 ### Added

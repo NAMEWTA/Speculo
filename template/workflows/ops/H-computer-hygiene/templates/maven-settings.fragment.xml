@@ -1,0 +1,6 @@
+<!-- EXAMPLE ONLY: merge localRepository into the existing settings.xml.
+     Do not replace the whole file: servers/profiles/mirrors may be essential.
+     Replace DEVROOT with a verified absolute path; back up local-only artifacts. -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <localRepository>DEVROOT/data/maven/repository</localRepository>
+</settings>

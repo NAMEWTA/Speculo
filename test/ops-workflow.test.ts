@@ -19,7 +19,7 @@ const sourceRevision = "abc123";
 const targetFingerprint = "b".repeat(64);
 const artifactDigest = "c".repeat(64);
 const backupDigest = "d".repeat(64);
-const EXPECTED_WORK_NAMES = ["A-archive-and-learn", "E-execute-and-stabilize", "I-intake-and-assess", "P-plan-and-approve"];
+const EXPECTED_WORK_NAMES = ["A-archive-and-learn", "E-execute-and-stabilize", "H-computer-hygiene", "I-intake-and-assess", "P-plan-and-approve"];
 
 type ScopeEntry = { scope: "global" | "project"; project_id: string | null; change: string };
 
@@ -612,7 +612,7 @@ None.
 }
 
 describe("Ops workflow", () => {
-  it("indexes exactly four works and passes package self-check", () => {
+  it("indexes exactly five works and passes package self-check", () => {
     const result = spawnSync(process.execPath, [validator, "--self-check"], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     const index = readFileSync(join(workflowRoot, "INDEX.md"), "utf8");
@@ -624,6 +624,36 @@ describe("Ops workflow", () => {
     assert.doesNotMatch(readme, /C-change-control|R-rollback-deployment|V-verify-and-stabilize/);
     assert.match(statusCommand, /projects\/\{project_id\}\/changes\/\{change\}/);
     assert.match(archiveCommand, /A-archive/);
+    assert.match(readme, /H-computer-hygiene/);
+  });
+
+  it("completes a hygiene-only global change without an attempt and rejects missing reports", async () => {
+    const stateRoot = await mkdtemp(join(tmpdir(), "speculo-ops-hygiene-"));
+    const entry: ScopeEntry = { scope: "global", project_id: null, change: "2026-09-14-computer-hygiene" };
+    const root = changeRoot(stateRoot, entry);
+    try {
+      await writeJson(join(stateRoot, "status.json"), { schema_version: 2, workflow: "ops", active: [entry], archived: [] });
+      await mkdir(root, { recursive: true });
+      await writeFile(join(root, "request.md"), "# Host hygiene\n", "utf8");
+      await writeJson(join(root, ".status.json"), changeStatus(entry, {
+        change_status: "completed",
+        phase: "ready_to_archive",
+        works_run: ["ops/computer-hygiene"],
+        completed_at: "2026-09-14T01:00:00.000Z",
+        outcome: "succeeded",
+      }));
+      const missing = spawnSync(process.execPath, [validator, "--state-root", stateRoot], { encoding: "utf8" });
+      assert.equal(missing.status, 1);
+      assert.match(missing.stdout + missing.stderr, /hygiene-only terminal change requires a dated hygiene report/);
+
+      const runDir = join(root, "hygiene", "runs", "2026-09-14", "010000-test");
+      await mkdir(runDir, { recursive: true });
+      await writeFile(join(runDir, "2026-09-14.md"), "# Hygiene report\n", "utf8");
+      const ok = spawnSync(process.execPath, [validator, "--state-root", stateRoot], { encoding: "utf8" });
+      assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+    } finally {
+      await rm(stateRoot, { recursive: true, force: true });
+    }
   });
 
   it("keeps global inventory changes in the root scope and completes through a verification-only attempt", async () => {

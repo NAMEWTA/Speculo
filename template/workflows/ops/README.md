@@ -8,6 +8,7 @@
 
 - **A-archive-and-learn** — 复盘、沉淀并归档：从 completed change 的全部 attempts 生成完整复盘，经用户确认后合并项目 SOP 与全局知识，并事务化归档到所属 scope。
 - **E-execute-and-stabilize** — 执行、诊断并稳定部署：以不可覆盖 attempt 执行批准计划或只读验证，在失败时诊断并路由重新规划或回滚，最终用稳定性证据完成 change。
+- **H-computer-hygiene** — 电脑环境治理：对执行主机做默认只读卫生盘点，按确认分级隔离缓存或规划卸载/迁移，并把报告写入当前 Ops change。
 - **I-intake-and-assess** — 摄入并评估运维目标：初始化 Ops，识别全局或项目 scope，创建或恢复 change，并用系统盘点、项目分析和目标身份形成可规划部署档案。
 - **P-plan-and-approve** — 规划并批量批准部署：将 Ready 评估或失败 attempt 编译为绑定项目、目标和源码的版本化计划，并记录用户对完整批次的一次性批准。
 
@@ -20,9 +21,11 @@
        |                       ^               |
        |                       +---重新规划----+
        +---全局盘点----------> [E 只读验证] ----+
+
+[H 电脑环境治理] --------------------------------------> [A 复盘/提升/归档]
 ```
 
-四个 Work 对应四个可验证阶段门：评估 Ready、计划 Approved、结果 Completed、知识与归档 Verified。权威优先级为实际目标与项目事实、带时间戳观测、deployment model 与 target profile v1、plan v3 与批准、attempt v2 的 typed journal/verification state、无密钥 HANDOFF、RETROSPECTIVE、永久知识、状态索引和 Markdown 投影。
+I/P/E/A 对应部署闭环的四个阶段门：评估 Ready、计划 Approved、结果 Completed、知识与归档 Verified。H-computer-hygiene 是并行的主机卫生 Work，默认只读盘点，不进入 plan/attempt。权威优先级为实际目标与项目事实、带时间戳观测、deployment model 与 target profile v1、plan v3 与批准、attempt v2 的 typed journal/verification state、卫生运行报告、无密钥 HANDOFF、RETROSPECTIVE、永久知识、状态索引和 Markdown 投影。
 
 ## 运行时根
 
@@ -50,6 +53,7 @@
 | inventory、deployment model/dossier 与 `deployment/target-profile.json` v1 | I 在评估阶段生成；快照不可覆盖，profile 固定非敏感期望、现场身份与授权边界 |
 | `plan/plan-NNN.*` v3 与 `approval-NNN.json` | P 版本化创建；plan 绑定 profile 摘要、Gate、候选、数据保护和恢复，既有版本不可改写 |
 | `execution/attempts/ATTEMPT-NNN/` | E 创建 attempt v2、typed `journal.jsonl`、`verification-state.json`、Markdown 投影及无密钥 `HANDOFF.md` |
+| `hygiene/runs/` 与 `hygiene/approvals/` | H 写入主机卫生报告与 Q 审批；隔离区留在本机 `~/.speculo-hygiene/` |
 | `RETROSPECTIVE.md` 与 `promotion/` | A 在完成后生成复盘、提升计划、批准和事务证据 |
 | 全局/项目永久知识 | A 仅在精确 promotion manifest 获批后合并 |
 
@@ -65,7 +69,7 @@ Change 内结构化 locator 使用 change-relative POSIX 路径，归档移动�
 4. 已归档 change 只读。继续历史工作时，在同一 scope 下创建 follow-up，并在 request 记录完整 `derived_from` locator。
 5. Work 开始时只设置 change `current_work`。同一 change 只有一个 writer；同一 target/deployment root 上另有 executing change 时阻塞并发 mutation。
 6. Work 成功后去重更新 `works_run` 并清空 current_work；阻塞时保留 current Work 和 blocker；取消时清空但不加入 works_run。
-7. E 是 completed 转换的唯一 owner；A 只处理 completed change，不补造执行或验证证据。
+7. 部署 change 的 completed 转换仍由 E 唯一拥有。未进入 P/E 的 hygiene-only global change 可由 H 在存在日期卫生报告且 `latest_attempt_id` 为 null 时设为 completed；A 只处理 completed change，不补造执行或验证证据。
 
 ## 状态字段
 
@@ -76,7 +80,7 @@ Change status schema v2：
 - `scope`、`project_id`、`change`：必须与实际目录和全局索引一致。
 - `change_status`：`active | blocked | completed | archived`。
 - `phase`：`intake | assessment | planning | awaiting_approval | approved | executing | diagnosing | stabilizing | ready_to_archive | archived`。
-- `current_work`、`works_run`：只允许四个 Ops Work ids。
+- `current_work`、`works_run`：只允许 `ops/intake-and-assess`、`ops/plan-and-approve`、`ops/execute-and-stabilize`、`ops/archive-and-learn`、`ops/computer-hygiene`。
 - `source_revision`、`target_fingerprint`：当前计划绑定的源码和目标固定点。
 - `plan_path/digest`、`approval_path/status`、`approved_batches`：当前计划批准投影；旧版本保留在 change。
 - `latest_attempt_id`：最近 attempt；inventory-only 尚未验证时可为 null。
@@ -106,6 +110,8 @@ E 为每次 deploy、remediation、rollback 或 verification-only 分配新 ATTE
 | 计划批准有效，或 inventory-only 需要验证 | E-execute-and-stabilize |
 | attempt 发现新 mutation/scope/privilege | P-plan-and-approve |
 | 执行成功、回滚稳定或明确放弃并完成验证 | A-archive-and-learn |
+| 主机卫生盘点、缓存隔离或卸载残留 | H-computer-hygiene |
+| hygiene-only 盘点完成，无需部署闭环 | A-archive-and-learn |
 
 ## Common 与验证
 

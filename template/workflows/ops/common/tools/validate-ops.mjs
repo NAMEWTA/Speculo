@@ -23,8 +23,8 @@ const CHANGE_STATUS = new Set(["active", "blocked", "completed", "archived"]);
 const PHASE = new Set(["intake", "assessment", "planning", "awaiting_approval", "approved", "executing", "diagnosing", "stabilizing", "ready_to_archive", "archived"]);
 const APPROVAL_STATUS = new Set(["not_requested", "pending", "approved", "invalidated"]);
 const OUTCOME = new Set(["pending", "succeeded", "rolled_back", "abandoned"]);
-const EXPECTED_WORKS = new Set(["A-archive-and-learn", "E-execute-and-stabilize", "I-intake-and-assess", "P-plan-and-approve"]);
-const EXPECTED_WORK_IDS = new Set(["ops/archive-and-learn", "ops/execute-and-stabilize", "ops/intake-and-assess", "ops/plan-and-approve"]);
+const EXPECTED_WORKS = new Set(["A-archive-and-learn", "E-execute-and-stabilize", "H-computer-hygiene", "I-intake-and-assess", "P-plan-and-approve"]);
+const EXPECTED_WORK_IDS = new Set(["ops/archive-and-learn", "ops/computer-hygiene", "ops/execute-and-stabilize", "ops/intake-and-assess", "ops/plan-and-approve"]);
 const RETROSPECTIVE_HEADINGS = [
   "## Attempt Timeline", "## Errors and Failure Signatures", "## Confirmed Root Causes",
   "## Rejected Hypotheses and Why", "## Final Effective Deployment or Recovery Sequence",
@@ -910,8 +910,31 @@ function validatePromotion(stateRoot, changeRoot, entry, complete, errors) {
   }
 }
 
-function validateCompletion(entry, status, attemptsMeta, errors) {
+function isHygieneOnly(status) {
+  const run = Array.isArray(status.works_run) ? status.works_run : [];
+  return run.includes("ops/computer-hygiene") && !run.includes("ops/plan-and-approve") && !run.includes("ops/execute-and-stabilize");
+}
+
+function hasHygieneReport(changeRoot) {
+  const runs = join(changeRoot, "hygiene", "runs");
+  if (!isDirectory(runs)) return false;
+  for (const day of readdirSync(runs, { withFileTypes: true })) {
+    if (!day.isDirectory() || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day.name)) continue;
+    const dayRoot = join(runs, day.name);
+    for (const run of readdirSync(dayRoot, { withFileTypes: true })) {
+      if (run.isDirectory() && isFile(join(dayRoot, run.name, `${day.name}.md`))) return true;
+    }
+  }
+  return false;
+}
+
+function validateCompletion(changeRoot, entry, status, attemptsMeta, errors) {
   if (!["completed", "archived"].includes(status.change_status)) return;
+  if (isHygieneOnly(status)) {
+    if (status.latest_attempt_id !== null) errors.push(`${entryKey(entry)}: hygiene-only change must not bind an attempt`);
+    if (!hasHygieneReport(changeRoot)) errors.push(`${entryKey(entry)}: hygiene-only terminal change requires a dated hygiene report`);
+    return;
+  }
   if (!status.latest_attempt_id) { errors.push(`${entryKey(entry)}: terminal change requires an attempt`); return; }
   const attempt = attemptsMeta?.latestAttempt;
   if (!attempt || !["succeeded", "rolled_back", "abandoned"].includes(attempt.result) || (status.outcome === "succeeded" && attempt.result !== "succeeded") || (status.outcome === "rolled_back" && attempt.result !== "rolled_back") || (status.outcome === "abandoned" && attempt.result !== "abandoned")) errors.push(`${entryKey(entry)}: outcome disagrees with latest terminal attempt`);
@@ -954,8 +977,8 @@ function validateStateRoot(stateRoot, options, errors) {
     validatePlanAndApproval(root, entry, value, domain.profileMeta, options.stage === "pre-execute" && selected(options, entry), errors);
     const strictLatest = selected(options, entry) && ["pre-close", "pre-archive"].includes(options.stage);
     const attempts = validateAttempts(root, entry, value, domain.profileMeta, strictLatest, errors);
-    validateCompletion(entry, value, attempts, errors);
-    if (options.stage === "pre-execute" && selected(options, entry) && (value.phase !== "approved" || value.approval_status !== "approved")) errors.push(`${entryKey(entry)}: pre-execute gate failed`);
+    validateCompletion(root, entry, value, attempts, errors);
+    if (options.stage === "pre-execute" && selected(options, entry) && !isHygieneOnly(value) && (value.phase !== "approved" || value.approval_status !== "approved")) errors.push(`${entryKey(entry)}: pre-execute gate failed`);
     if (options.stage === "pre-close" && selected(options, entry) && (value.change_status !== "completed" || value.phase !== "ready_to_archive")) errors.push(`${entryKey(entry)}: pre-close gate failed`);
     if (options.stage === "pre-archive" && selected(options, entry)) { if (value.change_status !== "completed" || value.phase !== "ready_to_archive") errors.push(`${entryKey(entry)}: pre-archive completion gate failed`); validatePromotion(stateRoot, root, entry, false, errors); }
     if (options.stage === "complete" && selected(options, entry)) errors.push(`${entryKey(entry)}: complete stage cannot leave change active`);
@@ -968,7 +991,7 @@ function validateStateRoot(stateRoot, options, errors) {
     const domain = validateDomainArtifacts(root, entry, value, errors);
     validatePlanAndApproval(root, entry, value, domain.profileMeta, false, errors);
     const attempts = validateAttempts(root, entry, value, domain.profileMeta, false, errors);
-    validateCompletion(entry, value, attempts, errors);
+    validateCompletion(root, entry, value, attempts, errors);
     if (isDirectory(activeRoot(stateRoot, entry))) errors.push(`${entryKey(entry)}: archived change still exists active`);
     if (options.stage === "complete" && selected(options, entry)) validatePromotion(stateRoot, root, entry, true, errors);
   }

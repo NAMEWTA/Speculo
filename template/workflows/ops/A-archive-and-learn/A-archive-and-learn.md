@@ -26,6 +26,8 @@ A 是 RETROSPECTIVE、知识提升和 scope-aware 归档的唯一 owner。它保
 
 选择用户指定或唯一 completed change，读取 request、inventory、deployment/target profile、全部 plan/approval、全部 attempts、typed journals、verification states、HANDOFF、LOG、CONTEXT 和 ADR，并加载 `<Path>{roots.workflows}/ops/common/rules/closure-and-learning.md</Path>`。状态不是 completed、outcome pending、最终验证缺失、存在 blocker 或目标未知时停止。
 
+hygiene-only completed change（`works_run` 含 `ops/computer-hygiene` 且不含 plan/execute）改为读取 `<Path>{roots.state}/ops/changes/{change}/hygiene/runs/</Path>` 日期报告，不要求 attempt、verification-state 或 HANDOFF。
+
 旧 plan v2 与 attempt v1 只读保留，不在 A 中迁移、补字段或重释为新合同证据。若 completed 候选只有旧 attempt，没有最终 verification-only attempt v2 及其 verification state/HANDOFF，则停止归档并返回 E 补验；在此之前不得通过 pre-close/pre-archive，也不得把旧摘要提升为现役知识。
 
 ### 2. 生成完整复盘

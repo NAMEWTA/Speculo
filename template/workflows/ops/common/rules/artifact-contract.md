@@ -13,7 +13,8 @@
 | `plan/plan-NNN.*` v3、approval | P | 绑定 profile/输入摘要的 Gate、候选、数据保护、恢复计划与批量批准 |
 | `attempt.json` v2、`journal.jsonl` | E | 每轮执行元数据和 append-only journal-event v1 事实 |
 | `verification-state.json` v1、verification/HANDOFF | E | identity/Gate/构件/服务/probe/数据保护/恢复实测及无密钥投影 |
-| `RETROSPECTIVE.md`、`promotion/` | A | 全 attempts 复盘和精确知识/归档事务 |
+| `hygiene/runs/`、`hygiene/approvals/` | H | 主机卫生盘点报告、Q 审批；隔离区不在 Ops state |
+| `RETROSPECTIVE.md`、`promotion/` | A | 全 attempts 或 hygiene-only 运行复盘和精确知识/归档事务 |
 | 全局/项目 context、ADR、runbook | A | 当前、经验证且带 provenance 的运维知识 |
 
 状态 JSON 只投影工件事实。冲突按实际目标、带时间戳观测、target profile、plan/approval、typed journal 与 verification state、RETROSPECTIVE、永久知识、状态索引和 Markdown 投影顺序裁决。HANDOFF 便于交接，不覆盖结构化实测。
