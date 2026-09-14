@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-09-14
+
 ### Added
 - **`git-history-squash` command**: adds a user-invoked confirmation and audit-report entry over the existing first-parent squash skill. Command reports live under `{roots.state}/commands/git-history-squash/`; transactional state remains `{roots.state}/skills/git-history-squash/`.
+
+### Changed
+- **`@inquirer/prompts`**: 8.5.2 → 8.7.2, including prompt settlement cleanup and confirm whitespace trimming.
 
 ### Fixed
 - **`archive-and-consolidate` report root**: command reports must resolve to `{roots.state}/commands/archive-and-consolidate/`. `{roots.commands}` is definition-only. A `commands_root` that equals `{roots.commands}` now blocks without writing files.
