@@ -137,7 +137,17 @@
       "publisher": "SDKMAN!",
       "title": "Usage",
       "url": "https://sdkman.io/usage",
-      "verification_task": "JDK candidate 管理、默认/当前选择与平台支持",
+      "verification_task": "sdk install/list/use/default/current/home/env、.sdkmanrc、java/maven candidate 与 Linux/macOS/WSL 支持",
+      "accessed_at": null,
+      "publication_date": null,
+      "verified": false
+    },
+    {
+      "id": "SDK-2",
+      "publisher": "SDKMAN!",
+      "title": "Installation",
+      "url": "https://sdkman.io/install",
+      "verification_task": "SDKMAN_DIR、sdkman-init.sh、自定义安装根；原生 Windows 不是默认路径",
       "accessed_at": null,
       "publication_date": null,
       "verified": false

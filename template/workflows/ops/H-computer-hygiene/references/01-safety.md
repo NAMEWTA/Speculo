@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 可重建缓存候选 | npm `_cacache`、pip 缓存、Go build cache | 先证明路径/结构，再评估离线需求；少数情况可隔离 |
 | 依赖仓库 | Maven local repository、pnpm store、Go mod cache、Cargo registry/git | 不能承诺全部可删；唯一产物、定制内容、离线构建需核实 |
-| 工具/SDK 安装根 | JDK、Node 管理器、rustup、uv Python | 由管理器卸载版本；检查项目 pin、IDE、全局工具与架构 |
+| 工具/SDK 安装根 | JDK、SDKMAN `~/.sdkman/candidates`、Node 管理器、rustup、uv Python | 由管理器卸载精确版本；检查项目 pin、IDE、全局工具与架构；禁止把 SDKMAN 根当缓存清空 |
 | 配置及状态 | `.m2/settings.xml`、Cargo Home、`.npmrc`、Docker contexts | 凭据与行为设置可能混在一起；禁止整体清空 |
 | 项目产物 | `.venv`、`node_modules`、`target`、`build`、`dist` | 目录名只是线索；可能含 editable 项目、本地源码或唯一文件 |
 | 个人与系统数据 | 文档、浏览器资料、密钥、数据库、驱动、共享运行库 | 保护；额外授权也必须有具体身份、影响与备份方案 |

@@ -30,7 +30,7 @@ H 是主机卫生盘点、Q 类缓存隔离/恢复和卫生报告的唯一 owner
 
 解析 roots 并读取 status。本 Work 默认 `scope=global`。用户指定已有 hygiene change 时验证 tuple 后恢复；否则创建 `YYYY-MM-DD-computer-hygiene[-NN]`：从 `<Path>{roots.workflows}/ops/I-intake-and-assess/global-change-status-template.json</Path>` 写 `.status.json`，从 `<Path>{roots.workflows}/ops/I-intake-and-assess/request-template.md</Path>` 初始化 request、LOG、CONTEXT 和 ADR，再把 `{scope: global, project_id: null, change}` 加入全局 active。项目部署 change 不得被本 Work 改写成卫生盘点。
 
-开始时设置 `current_work=ops/computer-hygiene`。Windows 只加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/10-windows.md</Path>`；macOS 只加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/11-macos.md</Path>`；Linux 仅加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/12-linux.md</Path>` 作为保守补充分支。
+开始时设置 `current_work=ops/computer-hygiene`。Windows 只加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/10-windows.md</Path>`；macOS 只加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/11-macos.md</Path>`；Linux 仅加载 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/12-linux.md</Path>` 作为保守补充分支。Linux 与 macOS 上 JDK/Maven 的主解析入口优先按 `<Path>{roots.workflows}/ops/H-computer-hygiene/references/20-toolchains.md</Path>` 的 SDKMAN! 规则处理；Windows 原生不把 SDKMAN 当默认管理器，WSL 内按 Linux 处理。
 
 ### 2. 运行只读盘点
 

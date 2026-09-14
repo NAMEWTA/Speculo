@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Ops host hygiene JDK/Maven**: Linux, macOS, and WSL now treat SDKMAN! as the preferred manager for user-space JDK and Maven; native Windows is unchanged.
+
 ## [1.0.5] - 2026-09-14
 
 ### Added

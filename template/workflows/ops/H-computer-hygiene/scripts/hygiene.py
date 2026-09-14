@@ -44,7 +44,7 @@ OPTIONS = {
     "min_age_days": 14, "large_file_mib": 512,
 }
 MANUAL_CHECKS = [
-    {"area": "maven", "risk": "R2", "instruction": "核实 settings.xml、-Dmaven.repo.local、IDE 与项目参数；本地仓库可能含未发布的 install 产物，先备份，不整体删除。", "reference": "20-toolchains.md#java-maven-gradle"},
+    {"area": "maven", "risk": "R2", "instruction": "Linux/macOS 优先用 SDKMAN 管理 JDK 与 Maven（sdk current/home）；核实 settings.xml、-Dmaven.repo.local、IDE 与项目参数；本地仓库可能含未发布的 install 产物，先备份，不整体删除。", "reference": "20-toolchains.md#java-maven-gradle"},
     {"area": "node-pnpm", "risk": "R2", "instruction": "可信终端中核实 Node 管理器、npm cache/prefix 与 pnpm store path；按本地帮助选择原生命令，清理 store 前检查离线需求及正在运行的安装。", "reference": "20-toolchains.md#node-npm-pnpm"},
     {"area": "go-rust-uv", "risk": "R2", "instruction": "核实 go env、rustup toolchain list、uv 路径命令；保留 Cargo 配置/凭据/安装工具，不把 Cargo Home、.venv 或 SDK 当缓存。", "reference": "20-toolchains.md"},
     {"area": "repositories", "risk": "P", "instruction": "对已授权且可信的仓库检查提交、推送、分支、worktree、submodule 和 LFS；未完成前不得删除仓库、.git、vendor、锁文件或虚拟环境。", "reference": "22-repositories.md"},
@@ -562,7 +562,7 @@ class Auditor:
             ("fnm", (local / "fnm") if self.system == "Windows" else h / ".local/share/fnm", "R2", "Default hypothesis, verify with configuration."),
             ("mise", (local / "mise") if self.system == "Windows" else h / ".local/share/mise", "R2", "Support and path semantics must be checked against installed version."),
             ("asdf", h / ".asdf", "R2", "May contain plugins, shims and installed runtimes."),
-            ("sdkman", h / ".sdkman", "R2", "Not assumed to support native Windows; WSL is a separate environment."),
+            ("sdkman", h / ".sdkman", "R2", "Linux/macOS/WSL JDK and Maven candidate root, not a cache; native Windows is not the default manager."),
             ("pyenv", h / ".pyenv", "R2", "Interpreters and virtualenvs may have absolute prefix references."),
             ("jdk-user", h / ".jdks", "R2", "Often IDE-managed; verify IDE ownership and project JDK pins."),
             ("bun", h / ".bun", "R2", "Runtime and package state; not a pure cache."),
@@ -941,7 +941,8 @@ def target_root(home: Path, system: str, env: dict[str, str], option: str | None
 def render_environment(report: dict[str, Any], root: Path) -> str:
     home = Path(report["host"]["home"])
     rows = [
-        ["JDK / JAVA_HOME", "由已确认的主用版本管理器解析", "不把 JAVA_HOME 写死到待淘汰版本；IDE、CI、项目分别验证"],
+        ["JDK / JAVA_HOME", "Linux/macOS 由 SDKMAN current/default 解析；Windows 用已确认的原生管理器", "不把 JAVA_HOME 写死到待淘汰版本；不与 jenv/brew java/mise java 叠 current；IDE、CI、项目分别验证"],
+        ["Maven 发行版", "Linux/macOS 用 SDKMAN maven candidate；仓库仍独立", "sdk 管 mvn 二进制；~/.m2/repository 或 localRepository 另册保全"],
         ["Maven localRepository", str(root / "data/maven/repository"), "保留 settings.xml 官方锚点；备份未发布的 install 产物；不假设 MAVEN_USER_HOME 对所有版本生效"],
         ["GRADLE_USER_HOME", str(root / "data/gradle"), "整体包含配置/缓存/凭据；先停止 daemon，备份再验证"],
         ["Node 版本管理器", "保留一个经确认的主用管理器", "nvm/fnm/volta/asdf/mise 不叠加争抢入口；原生 Windows 支持单独核实"],
@@ -953,7 +954,8 @@ def render_environment(report: dict[str, Any], root: Path) -> str:
         ["UV_CACHE_DIR", str(root / "cache/uv"), "先以当前 uv 帮助确认变量支持与现有配置"],
         ["UV_PYTHON_INSTALL_DIR / UV_TOOL_DIR", str(root / "data/uv/python") + " / " + str(root / "data/uv/tools"), "解释器、工具环境与缓存分开；虚拟环境不保证可重定位"],
         ["UV_TOOL_BIN_DIR", str(root / "bin/uv"), "确认 shell PATH 与已安装工具入口；避免和 pipx/系统 Python 重名"],
-        ["mise/asdf/SDKMAN 等", str(root / "data") + " 下各自专属根", "仅建议；按已安装管理器的真实 OS/版本文档迁移；不默认安装新管理器"],
+        ["SDKMAN（Linux/macOS）", "保留 ~/.sdkman 或已设置的 SDKMAN_DIR", "用 sdk install/default 管理 java/maven；不剪切 candidates；安装 SDKMAN 须单独授权"],
+        ["mise/asdf 等", str(root / "data") + " 下各自专属根", "仅建议；不要与 SDKMAN 同时争 Java；按已安装管理器的真实 OS/版本文档迁移"],
     ]
     evidence = report["environment"]["variables"]
     text = f"# {report['date']} 环境归一化方案\n\n"

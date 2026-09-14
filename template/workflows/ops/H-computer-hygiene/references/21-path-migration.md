@@ -25,7 +25,7 @@ DevRoot/
 
 ## 第二步：决定主管理器与单一配置来源
 
-优先保留现有工作正常、来源清楚的主管理器。mise/asdf 只是候选统一层，不在未核验平台/插件支持时替换所有工具；rustup 和 uv 可以分别管理它们擅长的内容。不要为了“看起来统一”额外叠加管理器。
+优先保留现有工作正常、来源清楚的主管理器。Linux/macOS（含 WSL 发行版）上 JDK 与 Maven 优先保留或迁入 SDKMAN!，用 `sdk install`/`sdk default` 重建 candidate，不要剪切 `~/.sdkman/candidates` 或发行版 JDK 树后改 PATH。mise/asdf 只是其他语言的候选统一层，不在未核验平台/插件支持时替换所有工具，也不与 SDKMAN 同时争夺 Java。rustup 和 uv 可以分别管理它们擅长的内容。不要为了“看起来统一”额外叠加管理器。[SDK-1](00-sources.md#sdk-1)
 
 确定 PATH 的维护入口，避免系统变量、用户变量、shell profile、管理器初始化、IDE 和 `go env -w` 多处互相覆盖。保留项目级版本 pin、wrapper、lockfile。官方 shims 可以存在；不要用新的手工符号链接/目录联接掩盖未解决的旧配置。
 
@@ -35,7 +35,8 @@ DevRoot/
 | --- | --- | --- |
 | 纯缓存 | 让工具在新配置路径重建，验证后再确认旧缓存清理 | 把移动缓存当成永久空间回收 |
 | Maven local repository | 先保全本地 install 产物；合并配置后验证 | 删除整个 `.m2`、覆盖 settings 中认证/镜像 |
-| 管理器安装的 JDK/Node/Go | 采用受支持的重新安装/迁移方法，保留版本 pin | 直接剪切含绝对路径的安装树后修改 PATH |
+| 管理器安装的 JDK/Maven（Linux/macOS） | SDKMAN `install`/`default`/`uninstall`；项目 `.sdkmanrc` | 剪切 `~/.sdkman`、同时启用 jenv/brew java/mise java |
+| 管理器安装的 Node/Go 及其他 JDK（Windows） | 采用受支持的重新安装/迁移方法，保留版本 pin | 直接剪切含绝对路径的安装树后修改 PATH |
 | Cargo/Rustup Home | 保全工具、配置、凭据、override；按官方支持迁移 | 只搬 registry 却丢失 bin/credentials，或清空全部 Home |
 | Python/uv 工具/项目 venv | 从已保全依赖重建，检查 editable/本地包 | 假设 venv 任意位置均可直接搬动 |
 | 全局 Node/Go/Cargo 工具 | 精确列明工具身份、版本、来源，按新入口重装/修复 | 把 bin 当缓存、盲拷 shell shim 或原生扩展 |
@@ -51,7 +52,7 @@ Windows 分别处理用户和机器环境、REG_SZ/REG_EXPAND_SZ 及原始顺序
 
 ## 第五步：验收矩阵
 
-JDK/Maven：解析正确，IDE 和 wrapper 使用预期 JDK，代表项目可构建，本地未发布依赖仍可用。Node/pnpm：版本/prefix/store 正确，既有全局工具和代表项目正常，锁文件没有未经批准变化。Go：SDK、模块/构建缓存、GOBIN、toolchain 指令与代表测试一致。Rust：rustup default/override/targets、cargo 安装工具和项目可用。uv/Python：解释器、项目 venv、tool 入口、editable 依赖及锁文件正常。
+JDK/Maven：Linux/macOS 上 `sdk current`/`sdk home` 与新终端 `java -version`/`mvn -version` 一致，IDE 和 wrapper 使用预期 JDK，代表项目可构建，本地未发布依赖仍可用。Windows 按已确认的原生管理器验收。Node/pnpm：版本/prefix/store 正确，既有全局工具和代表项目正常，锁文件没有未经批准变化。Go：SDK、模块/构建缓存、GOBIN、toolchain 指令与代表测试一致。Rust：rustup default/override/targets、cargo 安装工具和项目可用。uv/Python：解释器、项目 venv、tool 入口、editable 依赖及锁文件正常。
 
 网络下载、包脚本执行、构建 hook 和测试副作用需要在验证前说明。验证只涵盖被测范围；没有逐项目检查时不能声称全机兼容。新终端、重启后的 IDE 和相关后台任务分别验收。
 

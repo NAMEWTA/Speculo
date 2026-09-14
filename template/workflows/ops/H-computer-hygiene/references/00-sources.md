@@ -23,7 +23,8 @@
 | <a id="vol-1"></a>VOL-1 | Volta | [Understanding Volta](https://docs.volta.sh/guide/understanding) | toolchain/shim/项目 pin 与全局工具隔离 | 未在线访问 / 未核验 |
 | <a id="mis-1"></a>MIS-1 | mise | [Directories](https://mise.jdx.dev/directories.html) | 数据、配置、缓存目录变量；必须核对当前版本和 Windows 支持边界 | 未在线访问 / 未核验 |
 | <a id="asd-1"></a>ASD-1 | asdf | [Configuration](https://asdf-vm.com/manage/configuration.html) | 数据目录、shims、配置和版本切换；实现版本差异 | 未在线访问 / 未核验 |
-| <a id="sdk-1"></a>SDK-1 | SDKMAN! | [Usage](https://sdkman.io/usage) | JDK candidate 管理、默认/当前选择与平台支持 | 未在线访问 / 未核验 |
+| <a id="sdk-1"></a>SDK-1 | SDKMAN! | [Usage](https://sdkman.io/usage) | `sdk install/list/use/default/current/home/env`、`.sdkmanrc`、java/maven candidate 与 Linux/macOS/WSL 支持 | 未在线访问 / 未核验 |
+| <a id="sdk-2"></a>SDK-2 | SDKMAN! | [Installation](https://sdkman.io/install) | `SDKMAN_DIR`、`sdkman-init.sh`、自定义安装根；原生 Windows 不是默认路径 | 未在线访问 / 未核验 |
 | <a id="go-1"></a>GO-1 | Go project | [Command go](https://go.dev/cmd/go/) | go env、go clean、GOCACHE、GOMODCACHE、GOPATH、GOENV | 未在线访问 / 未核验 |
 | <a id="go-2"></a>GO-2 | Go project | [Go Toolchains](https://go.dev/doc/toolchain) | 项目 toolchain、GOTOOLCHAIN 与查询/构建触发下载的可能性 | 未在线访问 / 未核验 |
 | <a id="rus-1"></a>RUS-1 | Rust project | [Cargo Home](https://doc.rust-lang.org/cargo/guide/cargo-home.html) | Cargo Home 的 bin、config、credentials、registry、git，不当成单一缓存 | 未在线访问 / 未核验 |

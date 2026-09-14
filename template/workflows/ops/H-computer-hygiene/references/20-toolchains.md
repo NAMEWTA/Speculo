@@ -6,7 +6,7 @@
 
 运行时/版本管理器管理 JDK、Node、Go SDK、Rust toolchain、Python 等；依赖管理器处理项目的第三方包；缓存保存可重建内容；配置与状态决定解析、凭据和用户安装工具。一个目录可能包含多个层级，不能因为安装工具名称里有“包管理”就将其根目录划为缓存。
 
-推荐每个生态只有一个明确的主解析入口，但不强制所有语言使用同一个管理器。已有 mise/asdf 可以作为统一层候选，前提是平台、插件、受管工具和项目 pin 已被核实；JDK/Node/Go 的统一层可以和官方 rustup、uv 共存。不能让两个管理器同时争夺同一组 shims、默认版本或持久化变量。[MIS-1](00-sources.md#mis-1)、[ASD-1](00-sources.md#asd-1)、[RUS-2](00-sources.md#rus-2)、[UV-2](00-sources.md#uv-2)
+推荐每个生态只有一个明确的主解析入口，但不强制所有语言使用同一个管理器。**Linux 与 macOS 上，JDK 与 Maven 优先用 SDKMAN!**（`java` / `maven` candidate），不要同时让 jenv、Homebrew `java`/`maven`、mise/asdf 的 Java 插件和 SDKMAN 争夺 `JAVA_HOME`、`current` 链接或 PATH。mise/asdf 仍可作为 Node 等其他生态的统一层候选，前提是平台、插件、受管工具和项目 pin 已被核实；官方 rustup、uv 继续管各自生态。不能让两个管理器同时争夺同一组 shims、默认版本或持久化变量。[SDK-1](00-sources.md#sdk-1)、[SDK-2](00-sources.md#sdk-2)、[MIS-1](00-sources.md#mis-1)、[ASD-1](00-sources.md#asd-1)、[RUS-2](00-sources.md#rus-2)、[UV-2](00-sources.md#uv-2)
 
 ## 本机证据等级
 
@@ -24,13 +24,48 @@ CLI 参数、项目配置、用户配置、系统配置、当前进程环境、w
 
 需要盘点 JDK 版本、架构、安装来源、JAVA_HOME、java/javac PATH 顺序、IDE JDK、Maven/Gradle wrapper、项目编译/运行约束及 toolchain 配置。多个 JDK 不一定冗余，尤其是长期支持版本、Android/IDE、不同架构或构建兼容性要求。
 
+### Linux / macOS：SDKMAN! 作为 JDK 与 Maven 主管理器
+
+在 Linux、macOS 和 WSL 发行版内，用户态 JDK 与 Maven **优先用 SDKMAN!** 安装、切换和固定默认版本，而不是手改 `JAVA_HOME`、剪切 JDK 目录或叠加第二套 Java 管理器。原生 Windows 不把 SDKMAN 当默认路径；Git Bash/Cygwin 若出现，单独记录，不按本规则自动迁移。[SDK-1](00-sources.md#sdk-1)、[SDK-2](00-sources.md#sdk-2)
+
+默认线索：`SDKMAN_DIR`（未设置时 `~/.sdkman`）、`~/.sdkman/bin/sdkman-init.sh`、`~/.sdkman/candidates/java/`、`~/.sdkman/candidates/maven/`、各 candidate 的 `current` 链接、项目 `.sdkmanrc`。这些是 **SDK 安装根**，不是可清空缓存。`tmp/`、`archives/` 若存在，属于可重建下载残留，须按本机 `sdk help`/`sdk flush` 核验后再单独列为 C 类，禁止 `rm -rf ~/.sdkman`。
+
+未安装且用户确认需要归一化时，安装 SDKMAN 本身是 **M 类、需联网** 的独立授权，不得把 hygiene 盘点视为已同意 `curl | bash`。安装后只在用户 shell 中 `source "$HOME/.sdkman/bin/sdkman-init.sh"`（或本机文档给出的等价入口），并确认它只出现在一个已核验的 profile 末尾。
+
+用户同意启动可信 `sdk` 后，最小核验（以本机帮助为准，标识符以 `sdk list` 实际输出为准）：
+
+```sh
+sdk version
+sdk current java
+sdk current maven
+sdk home java
+sdk home maven
+```
+
+安装或切换须逐项确认 identifier、发行版（Temurin/Zulu 等）、架构和项目约束，例如：
+
+```sh
+sdk list java
+sdk install java <identifier>
+sdk default java <identifier>
+sdk list maven
+sdk install maven <identifier>
+sdk default maven <identifier>
+```
+
+`sdk use` 只影响当前 shell；默认版本用 `sdk default`。项目可用 `.sdkmanrc`（`sdk env init` / `sdk env`）固定 `java=` 与 `maven=`；这与 Maven Wrapper、Gradle toolchain、IDE 项目 JDK 是不同入口，冲突时停止并列出优先级，不静默覆盖。卸载精确 candidate 用本机支持的 `sdk uninstall`，并核验 IDE、CI、wrapper 不再引用该路径。
+
+Maven **本地仓库**（`~/.m2/repository` 或 settings `localRepository`）仍独立于 SDKMAN candidate；SDKMAN 管的是 `mvn` 发行版，不代替仓库治理。Gradle 可用 SDKMAN `gradle` candidate，但 Gradle User Home 仍按下一节保护，不整树当缓存。
+
+### Maven 仓库与 Gradle Home
+
 Maven 本地仓库通常可由 settings 的 `localRepository` 或调用参数覆盖。`~/.m2/repository` 只是默认线索；IDE、`-Dmaven.repo.local`、项目 `.mvn`、wrapper、全局/用户 settings 都可能改变结果。`mvn install` 形成的本地未发布产物可能没有远程可重建来源，**Maven 本地仓库不列入整体自动清理**。[MAV-1](00-sources.md#mav-1)、[MAV-2](00-sources.md#mav-2)
 
 建议映射：`DevRoot/data/maven/repository`；保留 settings 的受支持配置锚点，合并一个 `localRepository` 字段，而不是用示例 XML 覆盖完整 settings。保护 servers、mirrors、profiles、代理与认证。不要假设 `MAVEN_USER_HOME` 或相同变量对所有 Maven 主版本都存在或覆盖相同范围。
 
 Gradle User Home 包含配置、wrapper 分发、daemon 状态与缓存等。先确认 GRADLE_USER_HOME、项目 `.gradle`、daemon 和 IDE 关系；使用本机支持的停止/清理方式。不要整树清空 `.gradle` 以达到“归一化”。[GRD-1](00-sources.md#grd-1)
 
-已确认可信后可考虑 `java -version`、`javac -version`、`mvn -version`；项目 wrapper 不作为默认版本探测入口。查询 Maven 有效配置可能解析插件、触网或暴露认证信息，不默认运行 `help:effective-settings` 并保存完整输出。JAVA_HOME 应由选中的 JDK/管理器稳定解析，不同时让多个 profile 反复改写。
+已确认可信后可考虑 `java -version`、`javac -version`、`mvn -version`；项目 wrapper 不作为默认版本探测入口。查询 Maven 有效配置可能解析插件、触网或暴露认证信息，不默认运行 `help:effective-settings` 并保存完整输出。Linux/macOS 上 JAVA_HOME 应由 SDKMAN 的 `current`/`default` 解析；不要在多个 profile 里反复 `export JAVA_HOME`。Windows 仍由已确认的原生管理器或安装器解析。
 
 ## Node / npm / pnpm
 

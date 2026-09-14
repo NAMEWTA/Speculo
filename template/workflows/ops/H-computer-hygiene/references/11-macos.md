@@ -33,7 +33,7 @@
 
 `/opt/homebrew` 和 `/usr/local` 的存在可作为 Homebrew/架构排查线索，但不能据此自动删除其中一个。Rosetta、Intel 插件、旧项目或特定 SDK 可能仍依赖另一套工具。需要真实二进制架构、PATH、项目配置和进程证据后才提出退出计划。
 
-建议用户态 DevRoot 为 `~/Developer/.tooling`。统一的是自己管理的数据位置，不迁移 Homebrew Cellar/Caskroom、系统 JavaFramework 或安装器管理的目录。macOS `~/Library/Caches` 是常见缓存位置，改到统一 DevRoot 是可配置组织选择，不声称性能或系统兼容性更好。[BRW-1](00-sources.md#brw-1)
+建议用户态 DevRoot 为 `~/Developer/.tooling`。统一的是自己管理的数据位置，不迁移 Homebrew Cellar/Caskroom、系统 JavaFramework 或安装器管理的目录。用户态 JDK 与 Maven 优先用 SDKMAN!（`~/.sdkman`），不要与 Homebrew `java`/`maven` cask、jenv 同时设 `current`。系统 `/Library/Java/JavaVirtualMachines` 仍按安装器管理，不搬进 SDKMAN。macOS `~/Library/Caches` 是常见缓存位置，改到统一 DevRoot 是可配置组织选择，不声称性能或系统兼容性更好。[SDK-1](00-sources.md#sdk-1)、[BRW-1](00-sources.md#brw-1)
 
 zsh 的 `.zshenv`、`.zprofile`、`.zshrc` 与 GUI 应用环境的加载方式不同。只维护经确认的单一配置入口，验证登录 shell、交互 shell、IDE 和 launchd；不要把交互命令、大量 PATH 追加或管理器初始化盲目写入所有文件。
 
