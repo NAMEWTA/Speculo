@@ -1,0 +1,44 @@
+{
+  "hosts": [
+    {
+      "host_id": "node-a",
+      "display_name": "REPLACE: reviewed target",
+      "platform": "linux",
+      "transport": "ssh",
+      "root": "/srv/ops",
+      "identity": "0000000000000000000000000000000000000000000000000000000000000000",
+      "connection": {
+        "hostname": "REPLACE.invalid",
+        "username": "ops",
+        "port": 22,
+        "known_hosts": "/REPLACE/known_hosts",
+        "python": "python3",
+        "sudo": true
+      }
+    }
+  ],
+  "projects": [
+    {
+      "project_id": "app-a",
+      "display_name": "APP A",
+      "kind": "app",
+      "service_type": null,
+      "source": {
+        "type": "git",
+        "location": "https://example.invalid/team/app-a.git",
+        "revision": "REPLACE_WITH_ACTUAL_FULL_COMMIT"
+      }
+    },
+    {
+      "project_id": "mysql-main",
+      "display_name": "Public MySQL",
+      "kind": "shared-service",
+      "service_type": "mysql",
+      "source": {
+        "type": "image",
+        "location": "mysql@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "revision": "REPLACE_WITH_VERIFIED_DIGEST"
+      }
+    }
+  ]
+}

@@ -528,8 +528,9 @@ describe("CLI surface", () => {
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
       assert.match(agents, /<Path>\{roots\.state\}\/learning\/context\/INDEX\.md<\/Path>/);
       assert.match(agents, /<Path>\{roots\.state\}\/learning\/context\/REVIEW\.md<\/Path>/);
-      assert.match(agents, /<Path>\{roots\.state\}\/ops\/context\/<\/Path>/);
-      assert.match(agents, /<Path>\{roots\.state\}\/ops\/projects\/\{project_id\}\/runbooks\/<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/ops\/knowledge\/<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/ops\/projects\/\{project_id\}\/knowledge\/<\/Path>/);
+      assert.match(agents, /<Path>\{roots\.state\}\/ops\/hosts\/\{host_id\}\/knowledge\/<\/Path>/);
       assert.doesNotMatch(agents, /workflows\/|<SPECULO>|specdev\/|person/);
     } finally {
       await rm(target, { recursive: true, force: true });

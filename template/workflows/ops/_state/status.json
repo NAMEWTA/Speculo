@@ -1,6 +1,18 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "workflow": "ops",
-  "active": [],
-  "archived": []
+  "revision": 0,
+  "controller": null,
+  "hosts": {},
+  "projects": {},
+  "deployments": {},
+  "allocations": {},
+  "bindings": {},
+  "releases": {},
+  "policies": {
+    "server_readme_credentials": false,
+    "server_operations": true,
+    "strict_docker_root": true
+  },
+  "updated_at": null
 }

@@ -3,7 +3,7 @@ export type RiskClass = "read-only" | "local-reversible" | "local-destructive" |
 export type ToolEffect = RiskClass;
 export type DispatchTransport = "native" | "mounted-workspace" | "mcp" | "sandbox" | "archive";
 
-export type DispatchEnvelope = {
+export type LegacyDispatchEnvelope = {
   schema_version: 1;
   change_id: string;
   workflow: string;
@@ -40,7 +40,7 @@ export type WorkflowManifest = {
   stages: Array<{ id: string; after: string[]; inputs: string[]; outputs: string[]; risk: RiskClass; context_budget: number }>;
 };
 
-export type ContextCheckpoint = {
+export type LegacyContextCheckpoint = {
   schema_version: 1;
   change_id: string;
   stage: string;
@@ -83,4 +83,24 @@ export function riskRequiresApproval(risk: RiskClass): boolean {
 
 export function assertToolEffect(effect: ToolEffect, risk: RiskClass): void {
   if (effect !== risk) throw new Error(`tool-effect-risk-mismatch:${effect}->${risk}`);
+}
+
+/** Resource contracts are additive; non-OPS workflows retain v1 change semantics. */
+export type ResourceSubject = { kind: "controller" | "host" | "deployment" | "release"; id: string };
+export type ResourceDispatchEnvelope = Omit<LegacyDispatchEnvelope, "schema_version" | "change_id"> & {
+  schema_version: 2; workflow: "ops"; subject: ResourceSubject; run_id: string; plan_digest: string;
+};
+export type DispatchEnvelope = LegacyDispatchEnvelope | ResourceDispatchEnvelope;
+export type ResourceContextCheckpoint = Omit<LegacyContextCheckpoint, "schema_version" | "change_id"> & {
+  schema_version: 2; workflow: "ops"; subject: ResourceSubject; run_id: string;
+};
+export type ContextCheckpoint = LegacyContextCheckpoint | ResourceContextCheckpoint;
+export function assertOpsResourceApproval(envelope: ResourceDispatchEnvelope, approvedDigest: string): void {
+  if (envelope.schema_version !== 2 || envelope.workflow !== "ops" ||
+      !["controller", "host", "deployment", "release"].includes(envelope.subject.kind) ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(envelope.subject.id) ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(envelope.run_id) ||
+      !/^[a-f0-9]{64}$/.test(envelope.plan_digest) || envelope.plan_digest !== approvedDigest) {
+    throw new Error("ops-resource-plan-approval-mismatch");
+  }
 }

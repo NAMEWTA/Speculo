@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:host:v1",
+  "type": "object",
+  "properties": {
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "enum": [
+        "linux",
+        "windows",
+        "darwin"
+      ]
+    },
+    "transport": {
+      "enum": [
+        "local",
+        "ssh"
+      ]
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "connection": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "known_hosts": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sudo": {
+          "type": "boolean"
+        },
+        "shell": {
+          "enum": [
+            "posix",
+            "powershell"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "host_id",
+    "display_name",
+    "platform",
+    "transport",
+    "root",
+    "identity",
+    "connection"
+  ],
+  "additionalProperties": false
+}

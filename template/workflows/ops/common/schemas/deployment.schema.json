@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:deployment:v1",
+  "type": "object",
+  "properties": {
+    "deployment_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "environment": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "instance": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "layout": {
+      "enum": [
+        "flat",
+        "instances"
+      ]
+    },
+    "method": {
+      "enum": [
+        "compose",
+        "native"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observed_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "running",
+        "configured",
+        "docs_pending",
+        "completed",
+        "failed",
+        "unknown",
+        "retired"
+      ]
+    },
+    "installed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "run_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compose_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "storage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "purpose": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component",
+          "purpose",
+          "path"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "commands": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "stop": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "verify": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "required": [
+        "start",
+        "stop",
+        "verify"
+      ],
+      "additionalProperties": false
+    },
+    "credential_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+      },
+      "uniqueItems": true
+    },
+    "backup": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recovery": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "local",
+            "git",
+            "image",
+            "manual"
+          ]
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "type",
+        "location",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "service": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "deployment_id",
+    "project_id",
+    "host_id",
+    "environment",
+    "instance",
+    "layout",
+    "method",
+    "version",
+    "observed_version",
+    "root",
+    "status",
+    "installed_at",
+    "updated_at",
+    "run_id",
+    "compose_name",
+    "storage",
+    "commands",
+    "credential_refs",
+    "backup",
+    "recovery",
+    "notes",
+    "source",
+    "service"
+  ],
+  "additionalProperties": false
+}

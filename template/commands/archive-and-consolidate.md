@@ -56,9 +56,13 @@ POSIX 规范化后：
 
 不得把 Learning 交给共享的根级机械归档 skill；该 skill 不能理解递归 locator、parent lock 或单文件 Homework 证据。已冷归档树保持只读，需先由用户显式恢复才能作为 C 的可移动 source。
 
+## OPS 资源运行记录
+
+OPS 2.2 没有 change 归档 Work。读取 OPS 自身 README，按 host_id/project_id/deployment_id/run_id 查看已完成运行。不得调用旧 A-archive-and-learn 或将主机、APP、持久化数据移动到 change archive。冷备份运行证据必须由用户单独明确选择、保留引用与文件哈希，不能删除资源账本或双边明文记录。Command 不直接修改 OPS 状态。
+
 ## 其他 workflow
 
-非 Learning 目标继续读取自身 README 和归档 Work，并在 Work 要求时读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`。Command 报告只记录选择和 owning Work/skill 返回的 manifest，不成为知识 writer。
+非 Learning 且非 OPS 目标继续读取自身 README 和归档 Work，并在 Work 要求时读取 `<Path>{roots.skills}/archive-and-consolidate/SKILL.md</Path>`。Command 报告只记录选择和 owning Work/skill 返回的 manifest，不成为知识 writer。
 
 ## 完成标准
 

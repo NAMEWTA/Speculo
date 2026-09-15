@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cp, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { assertJsonObject, reconcileConfig, type ConfigMergeStats, type JsonObject } from "./config.js";
 import { collectFiles, toPosix, type ManagedFileRecord } from "./manifest.js";
@@ -265,6 +265,15 @@ function isStructured(path: string, contracts: WorkflowRuntimeContract[]): boole
   );
 }
 
+async function preserveOpsPrivateModes(source: string, target: string): Promise<void> {
+  const metadata = await lstat(source);
+  if (metadata.isSymbolicLink()) throw new Error("OPS runtime symlinks require explicit migration before refresh");
+  if (process.platform !== "win32") await chmod(target, metadata.mode & 0o777);
+  if (metadata.isDirectory()) {
+    for (const entry of await readdir(source)) await preserveOpsPrivateModes(join(source, entry), join(target, entry));
+  }
+}
+
 async function copyPreviousRuntime(
   previousRoot: string,
   stagedRoot: string,
@@ -273,12 +282,16 @@ async function copyPreviousRuntime(
   const previousState = join(previousRoot, ".speculo");
   if (!(await pathExists(previousState))) return;
   const stagedState = join(stagedRoot, ".speculo");
+  if (process.platform === "win32" && await pathExists(join(previousState, "ops", "private", "credentials.json"))) {
+    throw new Error("OPS plaintext ledger requires ACL-preserving static-only installer on Windows; runtime refresh is blocked");
+  }
   for (const entry of await readdir(previousState, { withFileTypes: true })) {
     if (reserved.has(entry.name)) continue;
     await cp(join(previousState, entry.name), join(stagedState, entry.name), {
       recursive: entry.isDirectory(),
       force: true,
     });
+    if (entry.name === "ops") await preserveOpsPrivateModes(join(previousState, entry.name), join(stagedState, entry.name));
   }
   const baselines = join(previousState, "baselines");
   if (await pathExists(baselines)) {
@@ -416,7 +429,8 @@ async function writeTargetedBackup(stagedRoot: string, items: BackupItem[], sour
     const backupPath = backupDestination(item.sourcePath);
     const path = join(root, backupPath);
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, item.before);
+    await writeFile(path, item.before, { mode: 0o600 });
+    if (process.platform !== "win32") await chmod(path, 0o600);
     files.push({
       source_path: item.sourcePath,
       backup_path: backupPath,

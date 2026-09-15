@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "worker": "D",
+  "operation": "maintain",
+  "reason": "TEMPLATE: allocate one verified provider database, do not redeploy or upgrade provider.",
+  "rollback_note": "Retain logical data and account on failure. Recovery is explicit, not a shared-instance restore.",
+  "allocations": [
+    {
+      "allocation_id": "app-a-db",
+      "provider_deployment_id": "mysql-prod",
+      "owner_project_id": "app-a",
+      "environment": "prod",
+      "data_group": "app-a-prod",
+      "resource_kind": "database",
+      "resource_name": "app_a_prod",
+      "credential_ref": "app-a-db@1",
+      "shared_owners": [],
+      "status": "planned",
+      "recovery_scope": "logical",
+      "notes": "Verify logical backup and restore before production."
+    }
+  ],
+  "provision": [
+    {
+      "allocation_id": "app-a-db",
+      "adapter": "mysql",
+      "admin_credential_ref": "mysql-admin@1",
+      "app_username": "app_a_user",
+      "privileges": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    }
+  ]
+}

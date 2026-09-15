@@ -1,6 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { checkbox } from "@inquirer/prompts";
 
 export type WorkflowPackage = {
   id: string;
@@ -113,6 +112,7 @@ export async function promptWorkflowSelection(
       checked: options?.preSelectedWorkflowIds?.has(workflow.id) ?? false,
     }));
 
+  const { checkbox } = await import("@inquirer/prompts");
   const workflowIds = await checkbox({
     message: "Select workflow packages to install (space to toggle, enter to confirm):",
     choices,

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:binding:v1",
+  "type": "object",
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "consumer_deployment_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "mode": {
+      "enum": [
+        "dedicated",
+        "shared",
+        "external"
+      ]
+    },
+    "provider_deployment_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "allocation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "endpoint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "credential_ref": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "active",
+        "retired"
+      ]
+    },
+    "component": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "network": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "binding_id",
+    "consumer_deployment_id",
+    "mode",
+    "provider_deployment_id",
+    "allocation_id",
+    "endpoint",
+    "credential_ref",
+    "status",
+    "component",
+    "network"
+  ],
+  "additionalProperties": false
+}

@@ -2,7 +2,10 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { createRequire } from "node:module";
+// Legacy XML adapters are loaded only when XML validation is requested.
+// Markdown/resource-only validation does not need an unused parser dependency.
+const require = createRequire(import.meta.url);
 
 const packageRoot = resolve(
   process.argv[2] ?? resolve(dirname(fileURLToPath(import.meta.url)), "..")
@@ -40,11 +43,6 @@ const expectedAgentSkills = [
   "speculo-write-canonical",
   "speculo-write-work",
 ];
-const parser = new XMLParser({
-  ignoreAttributes: false,
-  attributeNamePrefix: "@_",
-  trimValues: true,
-});
 const errors = [];
 
 function fail(message) {
@@ -82,14 +80,7 @@ const workflowPersistentKnowledge = {
     "<Path>{roots.state}/learning/context/INDEX.md</Path>",
     "<Path>{roots.state}/learning/context/REVIEW.md</Path>",
   ]),
-  ops: new Set([
-    "<Path>{roots.state}/ops/context/</Path>",
-    "<Path>{roots.state}/ops/adr/</Path>",
-    "<Path>{roots.state}/ops/runbooks/</Path>",
-    "<Path>{roots.state}/ops/projects/{project_id}/context/</Path>",
-    "<Path>{roots.state}/ops/projects/{project_id}/adr/</Path>",
-    "<Path>{roots.state}/ops/projects/{project_id}/runbooks/</Path>",
-  ]),
+  ops: new Set(["<Path>{roots.state}/ops/knowledge/</Path>", "<Path>{roots.state}/ops/hosts/{host_id}/knowledge/</Path>", "<Path>{roots.state}/ops/projects/{project_id}/knowledge/</Path>"]),
   person: new Set(),
 };
 
@@ -208,6 +199,8 @@ function walkInstructionFiles(root) {
 }
 
 function parseXmlBlock(block, file, index) {
+  const { XMLParser, XMLValidator } = require("fast-xml-parser");
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", trimValues: true });
   const valid = XMLValidator.validate(block);
   if (valid !== true) {
     fail(`${file}: XML block ${index + 1}: ${valid.err.msg}`);
@@ -682,7 +675,12 @@ function validateWorkflow(workflowId, workspace) {
   }
 
   const stateTemplate = join(workflowDir, "_state");
-  for (const required of ["status.json", "changes", "archive"]) {
+  const requiredState = workflowId === "ops" ? ["status.json"] : ["status.json", "changes", "archive"];
+  if (workflowId === "ops") {
+    const seed = readJson(join(stateTemplate, "status.json"), "OPS resource seed");
+    if (seed?.schema_version !== 3 || seed?.workflow !== "ops" || !seed?.hosts || !seed?.deployments) fail("OPS seed must be the v3 resource contract");
+  }
+  for (const required of requiredState) {
     if (!existsSync(join(stateTemplate, required))) {
       fail(`${relativeEntry}: _state is missing ${required}`);
     }

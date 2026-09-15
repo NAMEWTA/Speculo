@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { assertJsonObject, type JsonObject } from "./config.js";
 import { pathExists } from "./utils.js";
+import { validateOpsResources } from "./ops-resources.js";
 
 export type StructuredChange = {
   path: string;
@@ -412,6 +413,12 @@ async function validateOpsState(stagedRoot: string): Promise<void> {
   const statusPath = join(stateRoot, "status.json");
   if (!(await pathExists(statusPath))) return;
   const status = await readObject(statusPath, ".speculo/ops/status.json");
+  if (status.schema_version === 3) {
+    const schema = await readObject(join(stagedRoot, "workflows", "ops", "common", "schemas", "status.schema.json"), "Ops v3 schema");
+    validateOpsResources(status, schema);
+    return;
+  }
+  // Preserve legacy v2 evidence without translating old approvals into resource runs.
   assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "Ops status");
   if (status.schema_version !== 2 || status.workflow !== "ops" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
     throw new Error("Ops status must use schema v2 with active and archived arrays");

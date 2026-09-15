@@ -17,15 +17,15 @@
 1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。
 2. 从 `../workflows/<workflow>/INDEX.md` 发现 workflow并按需读取其中声明的永久知识；这一步不读取 Work 条目或运行状态。
 3. 用户明确激活 workflow 或 work 后，读取 INDEX 指向的 workflow 根 `README.md`，从其中的 Work 条目选择目标并读取具体入口文件。
-4. 按激活合同读取 `<Path>{roots.state}/{workflow}/status.json</Path>`，再读取 `<Path>{roots.state}/{workflow}/changes/{change}/.status.json</Path>` 和当前 work 产物。
-5. 历史 change 只从 `<Path>{roots.state}/{workflow}/archive/{YYYY-MM}/{change}/</Path>` 读取。
+4. 按激活合同读取 `<Path>{roots.state}/{workflow}/status.json</Path>`。SpecDev/Learning 再读取当前 change `.status.json` 与 work 产物。Ops schema v3 读取 hosts/projects/deployments/allocations/bindings/releases 及对应运行记录，不创建 `changes/`。
+5. 历史 change（SpecDev/Learning）只从 `<Path>{roots.state}/{workflow}/archive/{YYYY-MM}/{change}/</Path>` 读取。Ops 运行证据在 `hosts/{host_id}/runs/{run_id}` 或 `releases/{run_id}`。
 6. Command 报告位于 `<Path>{roots.state}/commands/{command}/*.md</Path>`，command state 位于 `<Path>{roots.state}/commands/{command}/state.json</Path>`。
 7. 独立 Skill 的运行记录位于 `<Path>{roots.state}/skills/{skill}/</Path>`，根级 `state.json` 仅在该 Skill 声明持久 checkpoint 时读取。
 8. 首次 docs-sync 确认后读取 `<Path>{roots.state}/{workflow}/docs-sync.json</Path>`；它分列该 workflow 的项目文档和私有 state 更新范围。
 
 ## 写入边界
 
-- 每个 workflow 只写 `<Path>{roots.state}/{workflow}/</Path>` 下自己的 `status.json/changes/archive` 和已声明 namespace。
+- 每个 workflow 只写 `<Path>{roots.state}/{workflow}/</Path>` 下自己的 `status.json` 和已声明 namespace。SpecDev/Learning 可写 `changes/archive`；Ops v3 写 hosts/projects/deployments 资源账本，不写 change archive。
 - `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar，不进入 `_state`，也不授予越过 workflow 确认规则的权限。
 - `.config` 不是标准目录；只有 workflow 声明时才可使用。
 - Command 只写 `<Path>{roots.state}/commands/{command}/</Path>`，报告命名为 `<YYYY-MM-DD>-<scope>-<topic>[-NN].md`，禁止覆盖。

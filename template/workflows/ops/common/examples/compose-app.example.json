@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "worker": "D",
+  "operation": "deploy",
+  "reason": "TEMPLATE ONLY: resolve actual image digest, paths, ports, data UID/GID, dependency and backup before approval. Zero digest is NOT a real image.",
+  "rollback_note": "Restore only a tested compatible code/config version; no automatic data rollback.",
+  "deployments": [
+    {
+      "deployment_id": "app-a-prod",
+      "project_id": "app-a",
+      "host_id": "node-a",
+      "environment": "prod",
+      "instance": "main",
+      "layout": "flat",
+      "method": "compose",
+      "version": "REPLACE-ACTUAL-VERSION",
+      "env": {
+        "app.env": {
+          "DATABASE_PASSWORD": "{{credential:app-a-db@1:password}}"
+        }
+      },
+      "compose": {
+        "services": {
+          "app": {
+            "image": "example.invalid/app-a@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "volumes": [
+              {
+                "type": "bind",
+                "source": "data/app/storage",
+                "target": "/app/data"
+              }
+            ],
+            "ports": [
+              "127.0.0.1:18080:8080"
+            ],
+            "env_file": [
+              "app.env"
+            ]
+          }
+        }
+      },
+      "credential_refs": [
+        "app-a-db@1"
+      ],
+      "health": [
+        {
+          "type": "http",
+          "url": "http://127.0.0.1:18080/health",
+          "timeout": 60
+        }
+      ],
+      "backup": "REPLACE with verified application and dependency backup method.",
+      "recovery": "REPLACE with version-specific restore procedure and scope."
+    }
+  ]
+}

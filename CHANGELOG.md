@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **OPS 2.2**: replaces the five change-lifecycle works with `I-initialize`, `H-host-manage`, and `D-project-deploy`. APP and shared services share one host/project persistence layout; dual-side documentation is a completion gate.
+
 ### Changed
-- **Ops host hygiene JDK/Maven**: Linux, macOS, and WSL now treat SDKMAN! as the preferred manager for user-space JDK and Maven; native Windows is unchanged.
+- Status and archive-and-consolidate commands, plus CLI structured validation, read Ops schema v3 resource tables. Leftover non-empty v2 state remains read-only evidence and is not translated into new approvals.
 
 ## [1.0.5] - 2026-09-14
 

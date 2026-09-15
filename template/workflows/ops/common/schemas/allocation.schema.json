@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:allocation:v1",
+  "type": "object",
+  "properties": {
+    "allocation_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "provider_deployment_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "owner_project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "environment": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "data_group": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "resource_kind": {
+      "enum": [
+        "database",
+        "bucket",
+        "redis-acl",
+        "generic"
+      ]
+    },
+    "resource_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "credential_ref": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+    },
+    "shared_owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      },
+      "uniqueItems": true
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "active",
+        "retained",
+        "retired"
+      ]
+    },
+    "recovery_scope": {
+      "enum": [
+        "logical",
+        "provider-wide",
+        "application-export",
+        "unverified"
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "allocation_id",
+    "provider_deployment_id",
+    "owner_project_id",
+    "environment",
+    "data_group",
+    "resource_kind",
+    "resource_name",
+    "credential_ref",
+    "shared_owners",
+    "status",
+    "recovery_scope",
+    "notes"
+  ],
+  "additionalProperties": false
+}

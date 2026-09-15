@@ -1,0 +1,12 @@
+{
+  "binding_id": "app-a-mysql",
+  "consumer_deployment_id": "app-a-prod",
+  "mode": "shared",
+  "provider_deployment_id": "mysql-prod",
+  "allocation_id": "app-a-db",
+  "endpoint": "REPLACE-VERIFIED-MYSQL-ENDPOINT:3306",
+  "credential_ref": "app-a-db@1",
+  "status": "active",
+  "component": "mysql",
+  "network": "REPLACE: approved shared network or specific routed host address"
+}

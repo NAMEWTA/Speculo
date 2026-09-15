@@ -1,0 +1,1032 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:spec:v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "worker": {
+      "enum": [
+        "I",
+        "H",
+        "D"
+      ]
+    },
+    "operation": {
+      "enum": [
+        "prepare",
+        "deploy",
+        "upgrade",
+        "rollback",
+        "uninstall",
+        "maintain",
+        "migrate"
+      ]
+    },
+    "resource_updates": {
+      "type": "object",
+      "properties": {
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "maxLength": 80
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "platform": {
+                "enum": [
+                  "linux",
+                  "windows",
+                  "darwin"
+                ]
+              },
+              "transport": {
+                "enum": [
+                  "local",
+                  "ssh"
+                ]
+              },
+              "root": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identity": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "connection": {
+                "type": "object",
+                "properties": {
+                  "hostname": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "known_hosts": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "identity_file": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "python": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sudo": {
+                    "type": "boolean"
+                  },
+                  "shell": {
+                    "enum": [
+                      "posix",
+                      "powershell"
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "host_id",
+              "display_name",
+              "platform",
+              "transport",
+              "root",
+              "identity",
+              "connection"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "project_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "maxLength": 80
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "app",
+                  "shared-service"
+                ]
+              },
+              "service_type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "local",
+                      "git",
+                      "image",
+                      "manual"
+                    ]
+                  },
+                  "location": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "location",
+                  "revision"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "project_id",
+              "display_name",
+              "kind",
+              "service_type",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      }
+    },
+    "deployments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "host_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "environment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "instance": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "layout": {
+            "enum": [
+              "flat",
+              "instances"
+            ]
+          },
+          "method": {
+            "enum": [
+              "compose",
+              "native"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "content": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 256,
+                  "maximum": 493
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "storage": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "component": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                  "maxLength": 80
+                },
+                "purpose": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                  "maxLength": 80
+                },
+                "area": {
+                  "enum": [
+                    "data",
+                    "config",
+                    "logs",
+                    "backups"
+                  ]
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "gid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 448,
+                  "maximum": 511
+                }
+              },
+              "required": [
+                "component",
+                "purpose"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "compose": {
+            "type": "object",
+            "properties": {
+              "services": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              },
+              "networks": {
+                "type": "object"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "services"
+            ],
+            "additionalProperties": false
+          },
+          "native": {
+            "type": "object",
+            "properties": {
+              "supervisor": {
+                "enum": [
+                  "systemd",
+                  "windows-task",
+                  "oneshot"
+                ]
+              },
+              "env_files": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "argv": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "environment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "account": {
+                "type": "string",
+                "minLength": 1
+              },
+              "run_level": {
+                "enum": [
+                  "Limited",
+                  "Highest"
+                ]
+              },
+              "timeout": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3600
+              }
+            },
+            "required": [
+              "supervisor",
+              "argv"
+            ],
+            "additionalProperties": false
+          },
+          "health": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": [
+                    "tcp",
+                    "http",
+                    "command",
+                    "file"
+                  ]
+                },
+                "hostname": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "port": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "integer"
+                },
+                "contains": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "argv": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "stdout_pattern": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "env": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "timeout": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 600
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "credential_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+            },
+            "uniqueItems": true
+          },
+          "backup": {
+            "type": "string",
+            "minLength": 1
+          },
+          "recovery": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "adopt_existing": {
+            "type": "boolean"
+          },
+          "service": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "deployment_id",
+          "project_id",
+          "host_id",
+          "environment",
+          "instance",
+          "layout",
+          "method",
+          "version",
+          "health",
+          "backup",
+          "recovery"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "host_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "kind": {
+            "enum": [
+              "write-control",
+              "write-file",
+              "install-toolchain",
+              "command",
+              "quarantine",
+              "purge-quarantine",
+              "defaults",
+              "mkdir"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cwd": {
+            "type": "string",
+            "minLength": 1
+          },
+          "writes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7200
+          },
+          "risk": {
+            "enum": [
+              "local-reversible",
+              "local-destructive",
+              "external-mutation",
+              "production-critical"
+            ]
+          },
+          "expected_defaults": {
+            "type": "object"
+          },
+          "verification": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": [
+                    "tcp",
+                    "http",
+                    "command",
+                    "file"
+                  ]
+                },
+                "hostname": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "port": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "integer"
+                },
+                "contains": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "argv": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "stdout_pattern": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "env": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "timeout": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 600
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "mode": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 511
+          }
+        },
+        "required": [
+          "host_id",
+          "kind",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "allocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "allocation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "provider_deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "owner_project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "environment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "data_group": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "resource_kind": {
+            "enum": [
+              "database",
+              "bucket",
+              "redis-acl",
+              "generic"
+            ]
+          },
+          "resource_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "credential_ref": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+          },
+          "shared_owners": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "active",
+              "retained",
+              "retired"
+            ]
+          },
+          "recovery_scope": {
+            "enum": [
+              "logical",
+              "provider-wide",
+              "application-export",
+              "unverified"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "allocation_id",
+          "provider_deployment_id",
+          "owner_project_id",
+          "environment",
+          "data_group",
+          "resource_kind",
+          "resource_name",
+          "credential_ref",
+          "shared_owners",
+          "status",
+          "recovery_scope",
+          "notes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "binding_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "consumer_deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "mode": {
+            "enum": [
+              "dedicated",
+              "shared",
+              "external"
+            ]
+          },
+          "provider_deployment_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "allocation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "minLength": 1
+          },
+          "credential_ref": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "active",
+              "retired"
+            ]
+          },
+          "component": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "network": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "binding_id",
+          "consumer_deployment_id",
+          "mode",
+          "provider_deployment_id",
+          "allocation_id",
+          "endpoint",
+          "credential_ref",
+          "status",
+          "component",
+          "network"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "provision": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "allocation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "adapter": {
+            "enum": [
+              "mysql",
+              "minio",
+              "redis",
+              "existing"
+            ]
+          },
+          "admin_credential_ref": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*@[1-9][0-9]*$"
+          },
+          "app_username": {
+            "type": "string",
+            "minLength": 1
+          },
+          "privileges": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "prefix": {
+            "type": "string",
+            "minLength": 1
+          },
+          "existing_verification": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "enum": [
+                  "tcp",
+                  "http",
+                  "command",
+                  "file"
+                ]
+              },
+              "hostname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "integer"
+              },
+              "contains": {
+                "type": "string",
+                "minLength": 1
+              },
+              "argv": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "minLength": 1
+              },
+              "stdout_pattern": {
+                "type": "string",
+                "minLength": 1
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "timeout": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 600
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "allow_secret_argv": {
+            "type": "boolean"
+          },
+          "client_path": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "allocation_id",
+          "adapter"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "retire_deployments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      }
+    },
+    "retire_bindings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      }
+    },
+    "allow_adopt_roots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      }
+    },
+    "acknowledged_consumers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "maxLength": 80
+      }
+    },
+    "rollback_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expires_hours": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 168
+    },
+    "risk": {
+      "enum": [
+        "local-reversible",
+        "local-destructive",
+        "external-mutation",
+        "production-critical"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "worker",
+    "operation",
+    "reason",
+    "rollback_note"
+  ],
+  "additionalProperties": false
+}

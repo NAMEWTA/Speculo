@@ -52,8 +52,9 @@ for (const workflow of workflows) {
 }
 
 const targetedForbidden = [
-  ['template/workflows/ops/I-intake-and-assess/I-intake-and-assess.md', /读取所有既有|读取全部/],
-  ['template/workflows/ops/P-plan-and-approve/P-plan-and-approve.md', /读取所有既有|读取全部/],
+  ['template/workflows/ops/D-project-deploy/D-project-deploy.md', /读取所有既有|读取全部/],
+  ['template/workflows/ops/I-initialize/I-initialize.md', /读取所有既有|读取全部/],
+  ['template/workflows/ops/H-host-manage/H-host-manage.md', /读取所有既有|读取全部/],
   ['template/workflows/learning/L-lesson/L-lesson.md', /读取整个 context|读取全部 context/],
   ['template/workflows/learning/H-homework/H-homework.md', /读取整个 context|读取全部 context/],
   ['template/workflows/learning/R-review/R-review.md', /读取整个 context|读取全部 context/],

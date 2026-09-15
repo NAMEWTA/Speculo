@@ -1,1 +1,60 @@
-{"schema_version":1,"id":"ops","version":"1.0.0","persistent_knowledge":["<Path>{roots.state}/ops/context/</Path>","<Path>{roots.state}/ops/adr/</Path>","<Path>{roots.state}/ops/runbooks/</Path>","<Path>{roots.state}/ops/projects/{project_id}/context/</Path>","<Path>{roots.state}/ops/projects/{project_id}/adr/</Path>","<Path>{roots.state}/ops/projects/{project_id}/runbooks/</Path>"],"stages":[{"id":"intake","after":[],"inputs":["request","target"],"outputs":["dossier"],"risk":"read-only","context_budget":16000},{"id":"plan","after":["intake"],"inputs":["dossier"],"outputs":["plan","approval"],"risk":"external-mutation","context_budget":22000},{"id":"execute","after":["plan"],"inputs":["plan","approval"],"outputs":["attempt"],"risk":"production-critical","context_budget":20000},{"id":"verify","after":["execute"],"inputs":["attempt"],"outputs":["verification"],"risk":"read-only","context_budget":16000},{"id":"learn","after":["verify"],"inputs":["verification"],"outputs":["retrospective"],"risk":"local-reversible","context_budget":12000},{"id":"hygiene","after":[],"inputs":["request","host"],"outputs":["hygiene-report"],"risk":"local-reversible","context_budget":16000}]}
+{
+  "schema_version": 1,
+  "id": "ops",
+  "version": "2.2.0",
+  "persistent_knowledge": [
+    "<Path>{roots.state}/ops/knowledge/</Path>",
+    "<Path>{roots.state}/ops/hosts/{host_id}/knowledge/</Path>",
+    "<Path>{roots.state}/ops/projects/{project_id}/knowledge/</Path>"
+  ],
+  "stages": [
+    {
+      "id": "initialize",
+      "after": [],
+      "inputs": [
+        "request",
+        "controller"
+      ],
+      "outputs": [
+        "controller-inventory",
+        "resource-state"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 16000
+    },
+    {
+      "id": "host-manage",
+      "after": [],
+      "inputs": [
+        "host",
+        "spec",
+        "approval"
+      ],
+      "outputs": [
+        "host-run",
+        "verification",
+        "dual-documents"
+      ],
+      "risk": "production-critical",
+      "context_budget": 22000
+    },
+    {
+      "id": "project-deploy",
+      "after": [],
+      "inputs": [
+        "project",
+        "hosts",
+        "bindings",
+        "spec",
+        "approval"
+      ],
+      "outputs": [
+        "release",
+        "deployment-records",
+        "dual-documents"
+      ],
+      "risk": "production-critical",
+      "context_budget": 28000
+    }
+  ]
+}
