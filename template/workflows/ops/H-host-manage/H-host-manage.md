@@ -27,4 +27,8 @@ Docker 缺失使用经审核且版本固定的 Linux Engine 安装配方，完�
 
 主机维护影响现存 APP/公共服务消费者时必须明确 acknowledged_consumers。完整计划列出下载、系统控制文件、服务重启、默认恢复和验证；执行通过后刷新主机双边记录。
 
+`write-control` 精确绝对路径例外：内置 `/etc/docker/daemon.json` 与 `/etc/systemd/system/ops-*.service`；经审批还可声明 nginx conf.d、wireguard 配置、以及非 `ops-` 前缀的 systemd 单元。声明路径必须带理由、回滚说明和事后验证，不是任意 `/etc` 写权限。`sshd`/`docker`/`containerd` 等核心单元拒绝。业务数据路径没有该例外。
+
+主机级入口（WireGuard、Nginx、探测页）写入 `resource_updates.hosts[].host_services`，生成器输出 `knowledge/host-services.json` 并进入服务一览表。跨主机公网入口写入 spec `public_ingress`，生成 `knowledge/public-ingress.json` 与「公网访问内网」章节。这些不是假的 APP 部署。`write-file` 不得覆盖生成器负责的 `README.md` / `DEPLOYMENTS.md` / `knowledge/host-services.json` / `knowledge/public-ingress.json` / `knowledge/INDEX.md`。
+
 命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.mjs，不能绕过计划审批直接拼接命令调用主机。

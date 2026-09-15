@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **OPS compose-up JSON**: `command()` keeps raw stdout/stderr for Docker inspect parsing and only redacts `log_*` fields, so short numeric passwords no longer corrupt JSON (#51).
+- **OPS SSH on Node 24**: SSH and agent `spawnSync` pass stdin as a `Buffer` while `encoding` remains `"buffer"`, avoiding `ERR_UNKNOWN_ENCODING` (#52).
+- **OPS concurrent apply**: plans bind `registry_slice_digest` for touched hosts/projects/deployments; disjoint approved H plans can apply sequentially. `commitObservations` merges only the plan slice so a later apply cannot revert another host (#53).
+- **OPS host README overlap**: `write-file` cannot target generator-owned host docs (`README.md`, `DEPLOYMENTS.md`, knowledge ledgers); delivery no longer stalls at `docs_pending` after a colliding host action (#54).
+
+### Changed
+- **OPS Compose persistence**: default remains read-only root and mapped VOLUME/tmpfs; `read_only: false` requires `writable_root_justification`. `config/` and `*.conf`/`*.acl` default to `0644`. compose-up fails closed unless containers are running and, when present, `Health=healthy` (#55).
+- **OPS host/fleet handbooks**: Markdown (no HTML `<code>`), a service overview table, a 说明 section, and optional plaintext credentials only on the controller ledger (#56).
+- **OPS write-control**: declared nginx, wireguard, and non-`ops-` systemd unit paths are allowed with reason, rollback, and verification; core units stay forbidden (#57).
+- **OPS host-level ingress**: `host_services` and `public_ingress` are first-class catalog fields delivered as `knowledge/host-services.json` and `knowledge/public-ingress.json`, including a 公网访问内网 chapter (#58).
+
 ## [1.0.7] - 2026-09-15
 
 ### Changed

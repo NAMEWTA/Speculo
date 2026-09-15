@@ -65,7 +65,7 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops mirror-prob
 
 环境配方不抓 latest；管理器缺失先明确准备安装器。来源测速不修改配置，证书/哈希失败候选不使用，真实配置更换通过 H 的精确 write-file/write-control/命令计划。不能将 Python/npm/Docker/Maven 镜像混为一套规则。
 
-H.host_actions 支持 mkdir、write-file（host.root 内相对路径）、write-control（有限系统控制文件）、install-toolchain（明确写集/原默认/验证）、command（明确写集/验证）、defaults、quarantine、purge-quarantine。系统软件包安装使用明确批准的可信安装脚本，不自动猜当前发行版安装命令；Docker 示例见 service-profiles/docker-engine.md。
+H.host_actions 支持 mkdir、write-file（host.root 内相对路径；不得写生成器负责的 README/DEPLOYMENTS/knowledge 账本）、write-control（精确系统控制文件：内置 docker daemon.json 与 ops-*.service，以及经理由/回滚/验证声明的 nginx、wireguard、非 ops- 前缀单元）、install-toolchain（明确写集/原默认/验证）、command（明确写集/验证）、defaults、quarantine、purge-quarantine。系统软件包安装使用明确批准的可信安装脚本，不自动猜当前发行版安装命令；Docker 示例见 service-profiles/docker-engine.md。主机级入口用 resource_updates.hosts[].host_services 与 spec.public_ingress 入账，不要为 Nginx/WireGuard 伪造 APP 部署。
 
 隔离仅移动登记 cache/log，返回 released_bytes=0。确需释放空间，再为 `_host/quarantine/旧run/精确item` 生成 purge-quarantine 计划。没有回执、内容变化、超出有限清单或试图删除业务数据时阻塞。
 

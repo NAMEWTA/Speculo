@@ -12,6 +12,7 @@ import { allocationOperation } from "./services.mjs";
 import { credentialRefs, planReport, remotePaths } from "./docs.mjs";
 import { taskFiles } from "./native_windows.mjs";
 import { engineDigest } from "./execution.mjs";
+import { assertSafeControlPath, defaultFileMode, reservedHostDocumentPaths } from "./control_files.mjs";
 
 export const plannerHooks = { call: transportCall };
 
@@ -90,7 +91,7 @@ export function composeModel(spec, host, root, name, envs, ctx) {
   const mounts = [];
   const allowed = new Set(["image", "build", "command", "entrypoint", "environment", "env_file", "volumes", "ports", "healthcheck", "depends_on",
     "restart", "user", "read_only", "tmpfs", "labels", "networks", "cap_drop", "security_opt", "deploy", "init", "working_dir",
-    "mem_limit", "cpus", "stop_grace_period", "logging", "profiles"]);
+    "mem_limit", "cpus", "stop_grace_period", "logging", "profiles", "writable_root_justification"]);
   for (const [service, s] of Object.entries(model.services)) {
     identifier(service, "compose service");
     const unknown = Object.keys(s).filter((k) => !allowed.has(k));
@@ -108,8 +109,15 @@ export function composeModel(spec, host, root, name, envs, ctx) {
     }
     if (credentialsIn(s.environment || {}).size) throw new OpsError("credentials must be injected through env/ files, not inline Compose environment");
     if (s.restart === undefined) s.restart = "unless-stopped";
-    if (s.read_only === false) throw new OpsError("writable container rootfs hides undeclared persistence; declare bind/tmpfs paths instead");
-    s.read_only = true;
+    const justification = s.writable_root_justification;
+    delete s.writable_root_justification;
+    if (s.read_only === false) {
+      if (typeof justification !== "string" || justification.trim().length < 12) {
+        throw new OpsError("writable container rootfs hides undeclared persistence; declare bind/tmpfs paths instead");
+      }
+    } else {
+      s.read_only = true;
+    }
     if (s.tmpfs === undefined) s.tmpfs = ["/tmp", "/run"];
     const labels = s.labels && typeof s.labels === "object" && !Array.isArray(s.labels) ? s.labels : null;
     if (s.labels !== undefined && !labels) throw new OpsError("Compose labels must be a map");
@@ -155,6 +163,73 @@ export function composeModel(spec, host, root, name, envs, ctx) {
   return [dollars(model), mounts];
 }
 
+export function catalogSlice(status, scope) {
+  if (!scope || typeof scope !== "object") throw new OpsError("plan missing registry_scope; compile a new plan");
+  const pick = (group) => Object.fromEntries((scope[group] || []).map((id) => [id, status[group]?.[id] ?? null]));
+  const slice = {
+    hosts: pick("hosts"),
+    projects: pick("projects"),
+    deployments: pick("deployments"),
+    allocations: pick("allocations"),
+    bindings: pick("bindings"),
+  };
+  if (scope.policies) slice.policies = status.policies;
+  if (scope.public_ingress) slice.public_ingress = status.public_ingress ?? null;
+  return slice;
+}
+
+export function sliceDigest(status, scope) {
+  return digest(catalogSlice(status, scope));
+}
+
+export function computeRegistryScope(current, after, selected, ops, uniqueDocs) {
+  const hosts = new Set(Object.keys(selected || {}));
+  const deployments = new Set(uniqueDocs || []);
+  const allocations = new Set();
+  const bindings = new Set();
+  const projects = new Set();
+  for (const op of ops || []) {
+    if (op.host_id) hosts.add(op.host_id);
+    if (op.deployment_id) deployments.add(op.deployment_id);
+    if (op.allocation_id) allocations.add(op.allocation_id);
+  }
+  const catalog = after || current;
+  for (const did of [...deployments]) {
+    const d = catalog.deployments?.[did] || current.deployments?.[did];
+    if (d) { hosts.add(d.host_id); projects.add(d.project_id); }
+  }
+  for (const [bid, b] of Object.entries(catalog.bindings || {})) {
+    if (deployments.has(b.consumer_deployment_id) || deployments.has(b.provider_deployment_id)) {
+      bindings.add(bid);
+      if (b.allocation_id) allocations.add(b.allocation_id);
+      if (b.provider_deployment_id) deployments.add(b.provider_deployment_id);
+      const provider = catalog.deployments?.[b.provider_deployment_id];
+      if (provider) { hosts.add(provider.host_id); projects.add(provider.project_id); }
+      const consumer = catalog.deployments?.[b.consumer_deployment_id];
+      if (consumer) { hosts.add(consumer.host_id); projects.add(consumer.project_id); }
+    }
+  }
+  for (const [aid, a] of Object.entries(catalog.allocations || {})) {
+    if (allocations.has(aid) || deployments.has(a.provider_deployment_id)) {
+      allocations.add(aid);
+      if (a.provider_deployment_id) deployments.add(a.provider_deployment_id);
+    }
+  }
+  for (const did of deployments) {
+    const d = catalog.deployments?.[did] || current.deployments?.[did];
+    if (d) { hosts.add(d.host_id); projects.add(d.project_id); }
+  }
+  return {
+    hosts: [...hosts].sort(),
+    projects: [...projects].sort(),
+    deployments: [...deployments].sort(),
+    allocations: [...allocations].sort(),
+    bindings: [...bindings].sort(),
+    policies: digest(current.policies) !== digest(after.policies),
+    public_ingress: digest(current.public_ingress ?? null) !== digest(after.public_ingress ?? null),
+  };
+}
+
 export function compilePlan(state, specPath) {
   const spec = readJson(specPath);
   validate(spec, "spec");
@@ -173,6 +248,7 @@ export function compilePlan(state, specPath) {
         after[group][item[idkey]] = structuredClone(item);
       }
     }
+    if (spec.public_ingress !== undefined) after.public_ingress = structuredClone(spec.public_ingress);
     const rid = identifier(spec.run_id || newId("run"));
     if (rid in current.releases) throw new OpsError("run ID already exists");
     for (const [group, key] of [["allocations", "allocation_id"], ["bindings", "binding_id"]]) {
@@ -200,8 +276,8 @@ export function compilePlan(state, specPath) {
       ops.push(op);
       return op;
     };
-    const fileOp = (hostId, did, path, { content = undefined, binary = undefined, mode = 0o600 } = {}) => {
-      const data = { path, mode };
+    const fileOp = (hostId, did, path, { content = undefined, binary = undefined, mode = undefined } = {}) => {
+      const data = { path, mode: mode ?? defaultFileMode(path) };
       if (content !== undefined) data.content = content;
       else data.content_b64 = Buffer.from(binary).toString("base64");
       return add(hostId, did, "write", data);
@@ -270,23 +346,32 @@ export function compilePlan(state, specPath) {
       if (kind === "write-control" || kind === "write-file") {
         if (kind === "write-file") {
           const path = targetJoin(host, relative(item.path));
-          if ("content" in item) fileOp(hid, null, path, { content: item.content, mode: item.mode ?? 0o600 });
+          if (reservedHostDocumentPaths(host, targetJoin).includes(path)) {
+            throw new OpsError("generated host documentation cannot be supplied as a host write-file: " + path);
+          }
+          if ("content" in item) fileOp(hid, null, path, { content: item.content, mode: item.mode });
           else if ("source" in item) {
             const src = resolve(item.source);
             noSymlinks(src, { allowMissing: false });
             if (statSync(src).size > 16 * 1024 * 1024) throw new OpsError("host file exceeds 16 MiB");
             const data = readFileSync(src);
             sourceDigests[src] = digest(data);
-            fileOp(hid, null, path, { binary: data, mode: item.mode ?? 0o600 });
+            fileOp(hid, null, path, { binary: data, mode: item.mode });
           } else throw new OpsError("host write-file requires content/source");
           continue;
         }
         const path = item.path;
-        if (path !== "/etc/docker/daemon.json" && !/^\/etc\/systemd\/system\/ops-[a-z0-9-]+\.service$/.test(path)) {
-          throw new OpsError("unrecognized external control file; persistent data cannot be an exception");
+        const cls = assertSafeControlPath(path, { reason: item.reason, rollback: item.rollback || spec.rollback_note });
+        if (cls === "declared") {
+          if (!item.verification || !item.verification.length) {
+            throw new OpsError("declared control files require explicit post-verification");
+          }
         }
         (external[hid] ??= []).push(path);
-        fileOp(hid, null, path, { content: item.content });
+        fileOp(hid, null, path, { content: item.content, mode: item.mode ?? 0o644 });
+        if (item.verification) {
+          for (const h of item.verification) healthOp(hid, null, h, { root: hostroot, host_root: hostroot });
+        }
       } else if (kind === "mkdir") add(hid, null, "mkdir", { path: targetJoin(host, relative(item.path)), mode: item.mode ?? 0o750 });
       else if (kind === "quarantine" || kind === "purge-quarantine") {
         const path = item.path;
@@ -400,7 +485,7 @@ export function compilePlan(state, specPath) {
         }
         const dest = projectPath(host, root, rel);
         if (("content" in f) === ("source" in f)) throw new OpsError("file requires exactly one of content/source");
-        if ("content" in f) fileOp(hid, did, dest, { content: f.content, mode: f.mode ?? 0o600 });
+        if ("content" in f) fileOp(hid, did, dest, { content: f.content, mode: f.mode });
         else {
           let src = f.source;
           if (!isAbsolute(src)) src = join(dirname(specPath), src);
@@ -408,7 +493,7 @@ export function compilePlan(state, specPath) {
           if (!statSync(src).isFile() || statSync(src).size > 16 * 1024 * 1024) throw new OpsError("source must be a regular file <=16 MiB");
           const content = readFileSync(src);
           sourceDigests[resolve(src)] = digest(content);
-          fileOp(hid, did, dest, { binary: content, mode: f.mode ?? 0o600 });
+          fileOp(hid, did, dest, { binary: content, mode: f.mode });
         }
       }
       const envs = d.env || {};
@@ -581,7 +666,14 @@ export function compilePlan(state, specPath) {
       for (const did of uniqueDocs) {
         if (after.deployments[did].host_id === hid) for (const p of remotePaths(after, after.deployments[did])) paths.add(p);
       }
-      for (const p of [targetJoin(host, "knowledge/INDEX.md"), targetJoin(host, "README.md"), targetJoin(host, "DEPLOYMENTS.md"), targetJoin(host, "docs/standards/DEPLOYMENT-STANDARD.md")]) paths.add(p);
+      for (const p of [
+        targetJoin(host, "knowledge/INDEX.md"),
+        targetJoin(host, "knowledge/host-services.json"),
+        targetJoin(host, "knowledge/public-ingress.json"),
+        targetJoin(host, "README.md"),
+        targetJoin(host, "DEPLOYMENTS.md"),
+        targetJoin(host, "docs/standards/DEPLOYMENT-STANDARD.md"),
+      ]) paths.add(p);
       for (const did of Object.keys(specs)) {
         const dep = after.deployments[did];
         if (dep.host_id === hid) paths.add(dep.root);
@@ -663,9 +755,11 @@ export function compilePlan(state, specPath) {
     }
     const created = now();
     const expires = new Date(Date.now() + (spec.expires_hours ?? 24) * 3600 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+    const registry_scope = computeRegistryScope(current, after, selected, ops, uniqueDocs);
     const plan = {
       schema_version: 1, artifact: "ops-resource-plan", run_id: rid, worker: spec.worker, operation: spec.operation, reason: spec.reason,
-      created_at: created, expires_at: expires, controller_id: current.controller.controller_id, registry_digest: digest(current), registry_revision: current.revision,
+      created_at: created, expires_at: expires, controller_id: current.controller.controller_id,
+      registry_digest: digest(current), registry_slice_digest: sliceDigest(current, registry_scope), registry_scope, registry_revision: current.revision,
       hosts: selected, transport_digests: Object.fromEntries(Object.entries(selected).map(([hid, h]) => [hid, hostTransportDigest(h)])),
       inventories, operations: ops, registry_after: after, credential_versions: cv, document_targets: uniqueDocs, document_preconditions: docPreconditions,
       allow_adopt_roots: spec.allow_adopt_roots || [], external_files: external, affected_consumers: [...affected].sort(), rollback_note: spec.rollback_note,

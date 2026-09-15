@@ -16,14 +16,20 @@ README 记录实际版本、来源、主机、时间、路径、依赖、启停�
 旧环境默认值恢复和健康验证失败不得清理原环境。缓存隔离不等于释放空间；禁止把 data/env/backups 或数据库持久日志当成垃圾。
 
 计划 → 明确批准 → 执行 → 实际验证 → 双边文档回执完成。远程断线意味着结果未知，不能重跑迁移或重新生成密码。
+
+主机级入口（WireGuard、Nginx、探测单元）登记在 knowledge/host-services.json，不是假的 APP 部署。跨主机公网入口规范登记在 knowledge/public-ingress.json。主机/全域总册 = 服务一览表（含主机级入口）+ 特定服务规范；缺一不算完整主机手册。
 `;
 
-function htmlEscape(s) {
-  return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+export function code(value) {
+  const text = String(value ?? "");
+  if (!text.includes("`")) return "`" + text + "`";
+  const longest = Math.max(0, ...[...text.matchAll(/`+/g)].map((m) => m[0].length));
+  const ticks = "`".repeat(longest + 1);
+  return ticks + " " + text + " " + ticks;
 }
 
-export function code(value) {
-  return "<code>" + htmlEscape(value).replaceAll("\n", "<br>") + "</code>";
+function cell(value) {
+  return String(value ?? "").replaceAll("|", "\\|").replaceAll("\r", "").replaceAll("\n", " ");
 }
 
 export function block(value, language = "json") {
@@ -45,6 +51,20 @@ export function credentialRefs(status, dep) {
     if (a.provider_deployment_id === dep.deployment_id && a.status !== "retired") refs.add(a.credential_ref);
   }
   return [...refs].sort();
+}
+
+function firstCredential(refs, ledger) {
+  for (const ref of refs) {
+    const [cid, v] = ref.split("@");
+    const item = ledger?.entries?.[cid]?.[v];
+    if (!item?.values) continue;
+    return {
+      ref,
+      username: item.values.username || item.values.user || item.values.access_key || "",
+      password: item.values.password || item.values.secret || item.values.secret_key || item.values.token || "",
+    };
+  }
+  return null;
 }
 
 export function credentialsText(refs, ledger) {
@@ -84,6 +104,130 @@ export function dependencies(status, dep) {
     }
   }
   return lines.join("\n");
+}
+
+function deploymentAccess(status, dep) {
+  const bindings = Object.values(status.bindings).filter((b) => b.consumer_deployment_id === dep.deployment_id && b.status === "active");
+  if (bindings.length) return bindings.map((b) => b.endpoint).filter(Boolean).join("；") || "—";
+  const providers = Object.values(status.bindings).filter((b) => b.provider_deployment_id === dep.deployment_id && b.status === "active");
+  if (providers.length) return providers.map((b) => b.endpoint).filter(Boolean).join("；") || dep.root;
+  return dep.root;
+}
+
+function persistenceCell(dep) {
+  if (!dep.storage?.length) return "无登记业务持久化";
+  return dep.storage.map((p) => `${p.component}/${p.purpose}: ${p.path}`).join("；");
+}
+
+function hostServiceAccess(svc) {
+  return svc.public_url || (svc.listen && svc.listen.length ? svc.listen.join("；") : "") || svc.tunnel_address || (svc.listen_port ? String(svc.listen_port) : "") || svc.config_path || svc.unit || "—";
+}
+
+function hostServicePersistence(svc) {
+  return [svc.config_path, svc.unit, svc.tunnel_address].filter(Boolean).join("；") || "主机级控制文件";
+}
+
+export function overviewRows(status, hid, { ledger = null, includeCredentials = false } = {}) {
+  const rows = [];
+  const host = status.hosts[hid];
+  for (const svc of host.host_services || []) {
+    rows.push({
+      host_id: hid,
+      service: svc.id + " / " + svc.kind,
+      access: hostServiceAccess(svc),
+      username: includeCredentials ? (svc.kind === "wireguard" ? "密钥认证" : "无登录口令") : "见控制端总册",
+      password: includeCredentials ? "无登录口令" : "不在服务端公开",
+      version: svc.unit || svc.kind,
+      updated: "主机级服务",
+      persistence: hostServicePersistence(svc),
+    });
+  }
+  const deps = Object.values(status.deployments).filter((d) => d.host_id === hid).sort((a, b) => a.deployment_id < b.deployment_id ? -1 : 1);
+  for (const d of deps) {
+    const cred = includeCredentials ? firstCredential(credentialRefs(status, d), ledger) : null;
+    rows.push({
+      host_id: hid,
+      service: d.project_id + " / " + d.deployment_id,
+      access: deploymentAccess(status, d),
+      username: includeCredentials ? (cred?.username || "密钥认证/无登录口令") : "见 OPERATIONS",
+      password: includeCredentials ? (cred?.password || "无登录口令") : "不在服务端公开",
+      version: d.observed_version || d.version || "未验证",
+      updated: d.updated_at || "未验证",
+      persistence: persistenceCell(d),
+    });
+  }
+  return rows;
+}
+
+function renderOverviewTable(rows, { includeCredentials = false } = {}) {
+  const header = includeCredentials
+    ? "| 主机 | 服务 | 访问地址 | 账号 | 密码 | 版本 | 最近部署 | 持久化目录 |\n|---|---|---|---|---|---|---|---|"
+    : "| 主机 | 服务 | 访问地址 | 账号 | 版本 | 最近部署 | 持久化目录 |\n|---|---|---|---|---|---|---|";
+  const lines = [header];
+  for (const r of rows) {
+    if (includeCredentials) {
+      lines.push(`| ${cell(r.host_id)} | ${cell(r.service)} | ${cell(r.access)} | ${cell(r.username)} | ${cell(r.password)} | ${cell(r.version)} | ${cell(r.updated)} | ${cell(r.persistence)} |`);
+    } else {
+      lines.push(`| ${cell(r.host_id)} | ${cell(r.service)} | ${cell(r.access)} | ${cell(r.username)} | ${cell(r.version)} | ${cell(r.updated)} | ${cell(r.persistence)} |`);
+    }
+  }
+  if (!rows.length) {
+    lines.push(includeCredentials
+      ? "| — | 未登记 APP、公共服务或主机级入口 | — | — | — | — | — | — |"
+      : "| — | 未登记 APP、公共服务或主机级入口 | — | — | — | — | — |");
+  }
+  return lines.join("\n") + "\n";
+}
+
+export function ingressSection(status) {
+  const ing = status.public_ingress;
+  if (!ing) return "";
+  const out = [
+    "## 公网访问内网\n",
+    "入口（用户 → 公网 Nginx → 隧道 → 内网服务）与出口（内网客户端 TUN）不是同一条连接。" + (ing.not_the_same_as ? " " + ing.not_the_same_as : "") + "\n",
+    "| 公网 | 四层 | 路径 | 后端 |\n|---|---|---|---|",
+  ];
+  for (const m of ing.mappings || []) {
+    out.push(`| ${cell(m.public)} | ${cell(m.layer4 || "—")} | ${cell((m.via || []).join(" → ") || "—")} | ${cell(m.backend)} |`);
+  }
+  if (!(ing.mappings || []).length) out.push("| — | — | 未登记映射 | — |");
+  out.push("\n### 新开公网 HTTP 服务\n");
+  const steps = ing.open_http_checklist?.length
+    ? ing.open_http_checklist
+    : [
+      "在入口主机登记/更新 Nginx 站点与 listen 端口，写入 host_services。",
+      "确认 WireGuard 对端与 AllowedIPs，内网后端只绑隧道地址。",
+      "更新 knowledge/public-ingress.json 映射行后重新编制文档计划。",
+      "不要把数据库、SSH、Redis 管理口直接暴露到公网。",
+    ];
+  for (const s of steps) out.push("- " + s);
+  if (ing.forbidden_ports?.length) {
+    out.push("\n### 禁止暴露的端口\n");
+    out.push(ing.forbidden_ports.map((p) => "- " + p).join("\n"));
+  }
+  return out.join("\n") + "\n";
+}
+
+function hostNotes(status, hid) {
+  const host = status.hosts[hid];
+  const out = [`### 主机 ${hid} / ${host.display_name}\n`, `持久化根：${code(host.root)}。通用规范见 docs/standards/DEPLOYMENT-STANDARD.md。\n`];
+  for (const svc of host.host_services || []) {
+    out.push(`#### ${svc.id}（${svc.kind}）\n`);
+    if (svc.notes) out.push(svc.notes + "\n");
+    if (svc.unit) out.push("- 单元：" + code(svc.unit) + "\n");
+    if (svc.config_path) out.push("- 配置：" + code(svc.config_path) + "\n");
+    if (svc.tunnel_address) out.push("- 隧道地址：" + code(svc.tunnel_address) + "\n");
+    if (svc.listen_port) out.push("- ListenPort：" + String(svc.listen_port) + "\n");
+    if (svc.public_url) out.push("- 公网 URL：" + code(svc.public_url) + "\n");
+  }
+  const deps = Object.values(status.deployments).filter((d) => d.host_id === hid).sort((a, b) => a.deployment_id < b.deployment_id ? -1 : 1);
+  for (const d of deps) {
+    out.push(`#### ${d.project_id} / ${d.deployment_id}\n`);
+    out.push(`目录 ${code(d.root)}；启停与备份细节见项目 README。备份：${d.backup} 恢复：${d.recovery}\n`);
+    if (d.notes?.length) out.push(d.notes.join("\n\n") + "\n");
+  }
+  if (!(host.host_services || []).length && !deps.length) out.push("本机尚未登记 APP、公共服务或主机级入口。\n");
+  return out.join("\n");
 }
 
 export function deploymentReadme(status, dep, runId, generatedAt, { ledger = null, includeCredentials = false, controller = false } = {}) {
@@ -136,19 +280,47 @@ export function deploymentReadme(status, dep, runId, generatedAt, { ledger = nul
 
 export function hostReadme(status, hid, runId, at, { ledger = null, full = false, controller = false } = {}) {
   const host = status.hosts[hid];
+  const includeCredentials = Boolean(full && controller && ledger);
+  const rows = overviewRows(status, hid, { ledger, includeCredentials });
   const out = [
     `# 主机 ${host.display_name} / ${hid}\n`,
     `主机持久化根：${code(host.root)}；更新：${at}；运行：${runId}。\n`,
-    "APP 与公共服务同级。通用规范见 docs/standards/DEPLOYMENT-STANDARD.md。DEPLOYMENTS.md 为本机部署手册。\n",
-    "| APP / 服务 | 实例 | 版本（最近验证） | 目录 | 最近验证时间 |\n|---|---|---|---|---|",
+    "APP 与公共服务同级。主机级入口（WireGuard/Nginx/探测）登记为 host_services，不是假的 APP 目录。通用规范见 docs/standards/DEPLOYMENT-STANDARD.md。\n",
+    "## 服务一览\n",
+    renderOverviewTable(rows, { includeCredentials }),
   ];
-  const deps = Object.values(status.deployments).filter((d) => d.host_id === hid).sort((a, b) => a.deployment_id < b.deployment_id ? -1 : 1);
-  for (const d of deps) out.push(`| ${d.project_id} | ${d.deployment_id} | ${code(d.observed_version || "未验证")} | ${code(d.root)} | ${d.updated_at || "未验证"} |`);
-  out.push("\n公共服务数据归提供者；其他主机使用的服务通过依赖绑定记录，不在本机创建假的空服务目录。\n");
-  if (full) {
-    for (const d of deps) out.push(deploymentReadme(status, d, runId, at, { ledger, includeCredentials: controller || status.policies.server_operations }));
-  }
+  if (status.public_ingress) out.push("\n" + ingressSection(status));
+  out.push("\n## 说明\n", hostNotes(status, hid));
+  out.push("\n公共服务数据归提供者；其他主机使用的服务通过依赖绑定记录。未写入 host_services / 部署账本的入口不会在下次文档交付中出现。\n");
   return out.join("\n") + "\n";
+}
+
+export function fleetDocument(status, hostIds, runId, at, { ledger = null, includeCredentials = false } = {}) {
+  const ids = [...hostIds].sort();
+  const rows = ids.flatMap((hid) => overviewRows(status, hid, { ledger, includeCredentials }));
+  const out = [
+    "# 全域部署总册（明文）\n",
+    `最近文档代次：${runId}；生成时间：${at}。本地账本和配置副本不等于远端业务数据备份。\n`,
+    "## 服务一览\n",
+    renderOverviewTable(rows, { includeCredentials }),
+  ];
+  if (status.public_ingress) out.push("\n" + ingressSection(status));
+  out.push("\n## 说明\n");
+  for (const hid of ids) out.push(hostNotes(status, hid));
+  return out.join("\n") + "\n";
+}
+
+export function hostServicesDocument(host) {
+  return JSON.stringify({
+    schema_version: 1,
+    host_id: host.host_id,
+    services: host.host_services || [],
+  }, null, 2) + "\n";
+}
+
+export function publicIngressDocument(status) {
+  if (!status.public_ingress) return null;
+  return JSON.stringify(status.public_ingress, null, 2) + "\n";
 }
 
 export function remotePaths(status, dep) {
@@ -187,6 +359,14 @@ export function planReport(plan) {
   );
   return out.join("\n");
 }
+
+const KNOWLEDGE_INDEX = `# 共享知识索引
+
+通用规范见 ../docs/standards/DEPLOYMENT-STANDARD.md。
+主机级服务账本：host-services.json。
+跨主机公网入口：public-ingress.json。
+只收录经用户确认、带来源和最后验证时间的知识，不存密码。
+`;
 
 export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
   const at = now();
@@ -228,21 +408,25 @@ export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
     addRemote(hid, targetJoin(h, "README.md"), hostReadme(status, hid, rid, at));
     addRemote(hid, targetJoin(h, "DEPLOYMENTS.md"), hostReadme(status, hid, rid, at, { ledger, full: true }));
     addRemote(hid, targetJoin(h, "docs/standards/DEPLOYMENT-STANDARD.md"), STANDARD);
+    addRemote(hid, targetJoin(h, "knowledge/host-services.json"), hostServicesDocument(h));
+    const ingressJson = publicIngressDocument(status);
+    if (ingressJson) addRemote(hid, targetJoin(h, "knowledge/public-ingress.json"), ingressJson);
     const knowledgePath = targetJoin(h, "knowledge/INDEX.md");
     if ((plan.document_preconditions[hid]?.[knowledgePath] ?? { kind: "file" }).kind === "absent") {
-      addRemote(hid, knowledgePath, "# 共享知识索引\n\n通用规范见 ../docs/standards/DEPLOYMENT-STANDARD.md。只收录经用户确认、带来源和最后验证时间的知识，不存密码。\n");
+      addRemote(hid, knowledgePath, KNOWLEDGE_INDEX);
     }
     local[`hosts/${hid}/README.md`] = hostReadme(status, hid, rid, at);
     local[`hosts/${hid}/DEPLOYMENTS.md`] = hostReadme(status, hid, rid, at, { ledger, full: true, controller: true });
+    local[`hosts/${hid}/knowledge/host-services.json`] = hostServicesDocument(h);
+    if (ingressJson) local[`hosts/${hid}/knowledge/public-ingress.json`] = ingressJson;
   }
-  const globalText = ["# 全域部署总册（明文）\n", `最近文档代次：${rid}；生成时间：${at}。\n`, "本地账本和配置副本不等于远端业务数据备份。\n"];
-  for (const hid of Object.keys(status.hosts).sort()) globalText.push(hostReadme(status, hid, rid, at, { ledger, full: true, controller: true }));
-  local["FLEET-DEPLOYMENTS.md"] = globalText.join("\n");
-  local["README.md"] = "# OPS 控制端\n\n主机记录位于 hosts/<host_id>/；项目关联位于 status.json；项目部署记录位于 hosts/<host_id>/deployments/<deployment_id>/；完整明文总册位于 FLEET-DEPLOYMENTS.md；凭据账本位于 private/credentials.json；执行证据按 host runs / release 保存。\n\n不得清理此运行态目录来替换静态 workflow。双边文档完成由每次运行 docs-receipt.json 证明。\n";
+  local["FLEET-DEPLOYMENTS.md"] = fleetDocument(status, Object.keys(status.hosts), rid, at, { ledger, includeCredentials: true });
+  local["README.md"] = "# OPS 控制端\n\n主机记录位于 hosts/<host_id>/；项目关联位于 status.json；项目部署记录位于 hosts/<host_id>/deployments/<deployment_id>/；完整明文总册位于 FLEET-DEPLOYMENTS.md；凭据账本位于 private/credentials.json；执行证据按 host runs / release 保存。主机级入口见 hosts/<id>/knowledge/host-services.json，跨主机公网入口见 knowledge/public-ingress.json。\n\n不得清理此运行态目录来替换静态 workflow。双边文档完成由每次运行 docs-receipt.json 证明。\n";
   local["docs/standards/DEPLOYMENT-STANDARD.md"] = STANDARD;
   if (!existsSync(join(state, "knowledge", "INDEX.md"))) {
-    local["knowledge/INDEX.md"] = "# 共享知识索引\n\n只收录经用户批准、带来源与最后验证日期的通用知识。运行时环境和密码不自动提升为共享知识。\n";
+    local["knowledge/INDEX.md"] = "# 共享知识索引\n\n只收录经用户批准、带来源与最后验证日期的通用知识。运行时环境和密码不自动提升为共享知识。跨主机入口规范见各主机 knowledge/public-ingress.json。\n";
   }
+  if (status.public_ingress) local["knowledge/public-ingress.json"] = publicIngressDocument(status);
   return {
     schema_version: 1, run_id: rid, plan_digest: digest(plan), generated_at: at,
     remote: [...remote.values()],

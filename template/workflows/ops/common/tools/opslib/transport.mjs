@@ -83,7 +83,7 @@ export function call(host, request, { timeout = 1800 } = {}) {
   let p;
   try {
     p = transportHooks.spawnSync(argv[0], argv.slice(1), {
-      input: content,
+      input: Buffer.from(content, "utf8"),
       encoding: "buffer",
       timeout: timeout * 1000,
       maxBuffer: 64 * 1024 * 1024,

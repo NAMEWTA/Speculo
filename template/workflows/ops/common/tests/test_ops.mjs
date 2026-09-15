@@ -13,6 +13,7 @@ import * as agent from "../tools/opslib/agent.mjs";
 import * as transport from "../tools/opslib/transport.mjs";
 import * as docs from "../tools/opslib/docs.mjs";
 import * as services from "../tools/opslib/services.mjs";
+import * as controlFiles from "../tools/opslib/control_files.mjs";
 import { initialize, analyze, cliHooks } from "../tools/opslib/cli.mjs";
 import { taskFiles } from "../tools/opslib/native_windows.mjs";
 
@@ -440,9 +441,16 @@ test("planner contracts", async (t) => {
     const [info] = fx.plan();
     assert.throws(() => execution.approval(fx.state, info.run_id, "0".repeat(64), "test", "explicit statement"), OpsError);
   });
-  await each("state drift blocks approval", (fx) => {
+  await each("unrelated host registration does not block approval", (fx) => {
     const [info] = fx.plan();
-    model.register(fx.state, {});
+    model.register(fx.state, { hosts: [{ ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }] });
+    fx.approve(info);
+  });
+  await each("touched host catalog drift blocks approval", (fx) => {
+    const [info] = fx.plan();
+    const s = model.load(fx.state);
+    s.hosts["node-a"] = { ...s.hosts["node-a"], display_name: "Renamed" };
+    model.save(fx.state, s);
     assert.throws(() => fx.approve(info), OpsError);
   });
   await each("approval is immutable", (fx) => {
@@ -488,6 +496,81 @@ test("planner contracts", async (t) => {
   });
   await each("compose rejects writable root", (fx) => {
     assert.throws(() => planner.composeModel({ compose: { services: { app: { image: "example@sha256:" + "a".repeat(64), read_only: false } } } }, fx.host, join(fx.target, "app-a"), "ops-app-a", {}, {}), OpsError);
+  });
+  await each("compose allows justified writable root", (fx) => {
+    const [value] = planner.composeModel({
+      compose: {
+        services: {
+          app: {
+            image: "example@sha256:" + "a".repeat(64),
+            read_only: false,
+            writable_root_justification: "elasticsearch keystore tmp must be created at process start",
+          },
+        },
+      },
+    }, fx.host, join(fx.target, "app-a"), "ops-app-a", {}, {});
+    assert.equal(value.services.app.read_only, false);
+    assert.equal("writable_root_justification" in value.services.app, false);
+  });
+  await each("config files default to 0644", (fx) => {
+    const s = fx.spec();
+    s.deployments[0].files.push({ path: "config/redis.conf", content: "port 6379\n" });
+    const [, plan] = fx.plan(s);
+    const conf = plan.operations.find((o) => o.kind === "write" && String(o.path).replaceAll("\\", "/").endsWith("config/redis.conf"));
+    const env = plan.operations.find((o) => o.kind === "write" && String(o.path).replaceAll("\\", "/").includes("/env/"));
+    assert.equal(conf.mode, 0o644);
+    assert.equal(env.mode, 0o600);
+  });
+  await each("host write-file cannot overlay generated docs", (fx) => {
+    assert.throws(() => fx.plan({
+      schema_version: 1, worker: "H", operation: "prepare", reason: "test overlay",
+      rollback_note: "Retain generated host documentation.",
+      host_actions: [{ host_id: "node-a", kind: "write-file", reason: "Overwrite generated README", path: "README.md", content: "fake success" }],
+    }), OpsError);
+  });
+  await each("declared nginx control file is planned", (fx) => {
+    const [, plan] = fx.plan({
+      schema_version: 1, worker: "H", operation: "prepare", reason: "Persist reviewed nginx site",
+      rollback_note: "Restore previous nginx conf from backup copy.",
+      host_actions: [{
+        host_id: "node-a", kind: "write-control", reason: "Public ingress site for reviewed backend",
+        path: "/etc/nginx/conf.d/app.conf", content: "server { listen 57492; }\n",
+        rollback: "Restore /etc/nginx/conf.d/app.conf from the run backup.",
+        verification: [{ type: "command", argv: [process.execPath, "-e", "process.exit(0)"] }],
+      }],
+    });
+    assert.ok(plan.external_files["node-a"].includes("/etc/nginx/conf.d/app.conf"));
+    assert.equal(plan.operations.find((o) => o.path === "/etc/nginx/conf.d/app.conf").mode, 0o644);
+  });
+  await each("undeclared control path rejected", (fx) => {
+    assert.throws(() => fx.plan({
+      schema_version: 1, worker: "H", operation: "prepare", reason: "should fail",
+      rollback_note: "Do not write arbitrary system files.",
+      host_actions: [{ host_id: "node-a", kind: "write-control", reason: "not a control file", path: "/etc/passwd", content: "x\n" }],
+    }), OpsError);
+  });
+  await each("core systemd unit control rejected", (fx) => {
+    assert.throws(() => fx.plan({
+      schema_version: 1, worker: "H", operation: "prepare", reason: "should fail",
+      rollback_note: "Do not replace sshd unit files.",
+      host_actions: [{
+        host_id: "node-a", kind: "write-control", reason: "core unit forbidden",
+        path: "/etc/systemd/system/sshd.service", content: "[Unit]\n",
+        rollback: "Restore sshd.service from package.",
+        verification: [{ type: "command", argv: [process.execPath, "-e", "process.exit(0)"] }],
+      }],
+    }), OpsError);
+  });
+  await each("declared control file needs verification", (fx) => {
+    assert.throws(() => fx.plan({
+      schema_version: 1, worker: "H", operation: "prepare", reason: "should fail",
+      rollback_note: "Restore previous nginx conf from backup copy.",
+      host_actions: [{
+        host_id: "node-a", kind: "write-control", reason: "Public ingress site",
+        path: "/etc/nginx/nginx.conf", content: "http {}\n",
+        rollback: "Restore nginx.conf from backup.",
+      }],
+    }), OpsError);
   });
   await each("compose safe persistence model", (fx) => {
     const [value] = planner.composeModel({ compose: { services: { app: { image: "example@sha256:" + "a".repeat(64), volumes: [{ type: "bind", source: "data/app/storage", target: "/data" }] } } } }, fx.host, join(fx.target, "app-a"), "ops-app-a", { "app.env": {} }, {});
@@ -737,6 +820,8 @@ test("ssh contract", () => {
     assert.ok(captured.argv.includes("BatchMode=yes"));
     assert.ok(!joined.includes(PASSWORD));
     assert.ok(captured.argv.includes("UserKnownHostsFile=" + kh));
+    assert.ok(Buffer.isBuffer(captured.input));
+    assert.equal(captured.encoding, "buffer");
   } finally { transport.transportHooks.spawnSync = prev; rmSync(d, { recursive: true, force: true }); }
 });
 
@@ -750,3 +835,148 @@ test("knownhosts digest drift", () => {
   assert.notEqual(before, transport.hostTransportDigest(h));
   rmSync(d, { recursive: true, force: true });
 });
+
+test("command keeps raw docker json when secrets appear", () => {
+  const fx = agentFixture();
+  try {
+    const secret = "1234";
+    const json = JSON.stringify({ State: { Status: "running" }, Env: ["MYSQL_ROOT_PASSWORD=" + secret] });
+    const prev = agent.agentHooks.spawnSync;
+    agent.agentHooks.spawnSync = () => ({ status: 0, stdout: Buffer.from(json), stderr: Buffer.alloc(0) });
+    try {
+      const r = agent.command(["docker", "inspect", "x"], { cwd: fx.root, secrets: [secret] });
+      assert.equal(JSON.parse(r.stdout).Env[0], "MYSQL_ROOT_PASSWORD=" + secret);
+      assert.ok(!r.log_stdout.includes(secret));
+      assert.equal(agent.parseDockerJson(r.stdout, "inspect").State.Status, "running");
+    } finally { agent.agentHooks.spawnSync = prev; }
+  } finally { fx.cleanup(); }
+});
+
+test("command stdin is buffer with encoding buffer", () => {
+  const fx = agentFixture();
+  try {
+    const captured = {};
+    const prev = agent.agentHooks.spawnSync;
+    agent.agentHooks.spawnSync = (_cmd, _args, kw) => {
+      Object.assign(captured, kw);
+      return { status: 0, stdout: Buffer.from("ok"), stderr: Buffer.alloc(0) };
+    };
+    try {
+      agent.command(["echo"], { cwd: fx.root, stdin: "hello" });
+      assert.ok(Buffer.isBuffer(captured.input));
+      assert.equal(captured.input.toString("utf8"), "hello");
+      assert.equal(captured.encoding, "buffer");
+    } finally { agent.agentHooks.spawnSync = prev; }
+  } finally { fx.cleanup(); }
+});
+
+test("inspect container gate requires running healthy", () => {
+  agent.inspectContainerGate({ Name: "/ok", State: { Status: "running" } });
+  agent.inspectContainerGate({ Name: "/okh", State: { Status: "running", Health: { Status: "healthy" } } });
+  assert.throws(() => agent.inspectContainerGate({ Name: "/exited", State: { Status: "exited" } }), agent.Failure);
+  assert.throws(() => agent.inspectContainerGate({ Name: "/oom", State: { Status: "running", OOMKilled: true } }), agent.Failure);
+  assert.throws(() => agent.inspectContainerGate({ Name: "/restart", State: { Status: "running", Restarting: true } }), agent.Failure);
+  assert.throws(() => agent.inspectContainerGate({ Name: "/starting", State: { Status: "running", Health: { Status: "starting" } } }), agent.Failure);
+});
+
+test("control file helpers", () => {
+  assert.equal(controlFiles.isBuiltinControlPath("/etc/docker/daemon.json"), true);
+  assert.equal(controlFiles.isDeclaredControlPath("/etc/nginx/conf.d/app.conf"), true);
+  assert.equal(controlFiles.isDeclaredControlPath("/etc/wireguard/wg0.conf"), true);
+  assert.equal(controlFiles.defaultFileMode("config/redis.conf"), 0o644);
+  assert.equal(controlFiles.defaultFileMode("env/app.env"), 0o600);
+  assert.throws(() => controlFiles.assertSafeControlPath("/etc/shadow"), OpsError);
+  assert.throws(() => controlFiles.assertSafeControlPath("/etc/systemd/system/sshd.service", { reason: "reviewed unit", rollback: "restore package unit" }), OpsError);
+});
+
+test("disjoint host plans apply sequentially", () => runFx((fx) => {
+  model.register(fx.state, { hosts: [{ ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }] });
+  const specA = {
+    schema_version: 1, worker: "H", operation: "maintain", hosts: ["node-a"], reason: "Host A cache fixture",
+    rollback_note: "Keep isolated cache until a separate purge is approved.",
+    host_actions: [{ host_id: "node-a", kind: "write-file", reason: "Create only fixture cache A", path: "_host/cache/a/cache.txt", content: "A" }],
+  };
+  const specB = {
+    schema_version: 1, worker: "H", operation: "maintain", hosts: ["node-b"], reason: "Host B cache fixture",
+    rollback_note: "Keep isolated cache until a separate purge is approved.",
+    host_actions: [{ host_id: "node-b", kind: "write-file", reason: "Create only fixture cache B", path: "_host/cache/b/cache.txt", content: "B" }],
+  };
+  const [infoA] = fx.plan(specA);
+  const [infoB] = fx.plan(specB);
+  fx.approve(infoA);
+  fx.approve(infoB);
+  const rB = execution.apply(fx.state, infoB.run_id);
+  assert.equal(rB.status, "completed", JSON.stringify(rB));
+  const rA = execution.apply(fx.state, infoA.run_id);
+  assert.equal(rA.status, "completed", JSON.stringify(rA));
+  assert.equal(readFileSync(join(fx.target, "_host", "cache", "a", "cache.txt"), "utf8"), "A");
+  assert.equal(readFileSync(join(fx.tmp, "server-b", "_host", "cache", "b", "cache.txt"), "utf8"), "B");
+}));
+
+test("host and fleet handbooks are markdown service tables", () => runFx((fx) => {
+  const s = fx.graph();
+  s.hosts["node-a"].host_services = [{
+    id: "wg0", kind: "wireguard", unit: "wg-quick@wg0", listen_port: 51820,
+    tunnel_address: "10.77.0.2/24", config_path: "/etc/wireguard/wg0.conf",
+    notes: "入口隧道，不是 Clash 出口",
+  }, {
+    id: "nginx-public", kind: "nginx", unit: "nginx.service", listen_port: 57492,
+    public_url: "http://203.0.113.10:57492/", config_path: "/etc/nginx/conf.d/app.conf",
+  }];
+  s.public_ingress = {
+    schema_version: 1, title: "公网访问内网", path: "knowledge/public-ingress.json",
+    not_the_same_as: "Clash TUN 是出口",
+    mappings: [{ public: "http://203.0.113.10:57492/", layer4: "57492/tcp", via: ["nginx-public", "wg0"], backend: "10.77.0.2:8080" }],
+    open_http_checklist: ["在入口主机增加 Nginx listen", "更新 WG AllowedIPs"],
+    forbidden_ports: [22, 3306],
+  };
+  const fleet = docs.fleetDocument(s, ["node-a"], "run-test", now(), { ledger: model.ledgerLoad(fx.state), includeCredentials: true });
+  const server = docs.hostReadme(s, "node-a", "run-test", now(), { full: true });
+  for (const text of [fleet, server, docs.code("/srv/ops")]) {
+    assert.ok(!text.includes("<code>"));
+    assert.ok(!text.includes("<br>"));
+  }
+  assert.ok(fleet.includes("服务一览"));
+  assert.ok(fleet.includes("说明"));
+  assert.ok(fleet.includes("公网访问内网"));
+  assert.ok(fleet.includes("10.77.0.2:8080"));
+  assert.ok(fleet.includes("wg-quick@wg0"));
+  assert.ok(fleet.includes("新开公网 HTTP"));
+  assert.ok(fleet.includes(PASSWORD));
+  assert.ok(!server.includes(PASSWORD));
+  assert.ok(server.includes("服务一览"));
+  assert.ok(docs.hostServicesDocument(s.hosts["node-a"]).includes("wg0"));
+}));
+
+test("host services and public ingress are delivered", () => runFx((fx) => {
+  const host = { ...fx.host, host_services: [{
+    id: "wg0", kind: "wireguard", unit: "wg-quick@wg0", listen_port: 51820,
+    tunnel_address: "10.77.0.2/24", config_path: "/etc/wireguard/wg0.conf",
+  }] };
+  const spec = {
+    schema_version: 1, worker: "H", operation: "maintain", hosts: ["node-a"],
+    reason: "Record host ingress ledger",
+    rollback_note: "Keep previous host-services ledger until a new plan replaces it.",
+    resource_updates: { hosts: [host] },
+    public_ingress: {
+      schema_version: 1, title: "公网访问内网", path: "knowledge/public-ingress.json",
+      mappings: [{ public: "http://203.0.113.10:57492/", layer4: "57492/tcp", via: ["wg0"], backend: "10.77.0.2:8080" }],
+      open_http_checklist: ["更新 Nginx 与 WG", "刷新 public-ingress.json"],
+      forbidden_ports: [22],
+    },
+    host_actions: [{ host_id: "node-a", kind: "write-file", reason: "Create only fixture cache", path: "_host/cache/demo/cache.txt", content: "cache" }],
+  };
+  const [, , r] = fx.runSpec(spec);
+  assert.equal(r.status, "completed", JSON.stringify(r));
+  const catalog = model.load(fx.state);
+  assert.equal(catalog.hosts["node-a"].host_services[0].id, "wg0");
+  assert.equal(catalog.public_ingress.mappings[0].backend, "10.77.0.2:8080");
+  const remoteServices = readJson(join(fx.target, "knowledge", "host-services.json"));
+  assert.equal(remoteServices.services[0].unit, "wg-quick@wg0");
+  const remoteIngress = readJson(join(fx.target, "knowledge", "public-ingress.json"));
+  assert.ok(remoteIngress.mappings[0].public.includes("57492"));
+  const fleet = readFileSync(join(fx.state, "FLEET-DEPLOYMENTS.md"), "utf8");
+  assert.ok(fleet.includes("服务一览"));
+  assert.ok(fleet.includes("公网访问内网"));
+  assert.ok(!fleet.includes("<code>"));
+}));
