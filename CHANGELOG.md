@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-09-15
+
 ### Fixed
 - **OPS compose-up JSON**: `command()` keeps raw stdout/stderr for Docker inspect parsing and only redacts `log_*` fields, so short numeric passwords no longer corrupt JSON (#51).
 - **OPS SSH on Node 24**: SSH and agent `spawnSync` pass stdin as a `Buffer` while `encoding` remains `"buffer"`, avoiding `ERR_UNKNOWN_ENCODING` (#52).
@@ -17,6 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **OPS host/fleet handbooks**: Markdown (no HTML `<code>`), a service overview table, a 说明 section, and optional plaintext credentials only on the controller ledger (#56).
 - **OPS write-control**: declared nginx, wireguard, and non-`ops-` systemd unit paths are allowed with reason, rollback, and verification; core units stay forbidden (#57).
 - **OPS host-level ingress**: `host_services` and `public_ingress` are first-class catalog fields delivered as `knowledge/host-services.json` and `knowledge/public-ingress.json`, including a 公网访问内网 chapter (#58).
+
+### Tests
+- OPS contracts cover compose JSON secrets, Node 24 stdin Buffer, disjoint host apply, generated-doc write-file rejection, nginx/wireguard write-control, Markdown fleet tables, and host_services/public_ingress delivery.
 
 ## [1.0.7] - 2026-09-15
 
