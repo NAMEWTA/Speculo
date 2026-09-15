@@ -5,7 +5,7 @@ case "${1:---probe}" in
   --probe)
     printf 'OPS bootstrap inventory (read-only)\n'
     uname -srm
-    for tool in ssh git python3 python uv node npm java docker volta curl wget sha256sum shasum; do
+    for tool in ssh git node npm uv python3 python java docker volta curl wget sha256sum shasum; do
       if command -v "$tool" >/dev/null 2>&1; then printf '%s=%s\n' "$tool" "$(command -v "$tool")"; else printf '%s=missing\n' "$tool"; fi
     done
     printf 'No software installed. Review a version-pinned OS/package-manager installer before --apply.\n'
@@ -21,7 +21,7 @@ case "${1:---probe}" in
     [ "$actual" = "$3" ] || { echo 'Installer changed after review' >&2; exit 2; }
     printf 'Executing explicitly approved bootstrap sha256=%s\n' "$actual"
     /bin/sh "$2"
-    command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1 || { echo 'Python still missing; not completed' >&2; exit 2; }
+    command -v node >/dev/null 2>&1 || { echo 'Node still missing; not completed' >&2; exit 2; }
     ;;
   *) echo 'usage: bootstrap.sh --probe | --apply FILE SHA256 I-APPROVE-THIS-BOOTSTRAP' >&2; exit 2;;
 esac

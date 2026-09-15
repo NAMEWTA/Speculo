@@ -15,7 +15,7 @@
 ## 运行时根
 
 静态代码：`<Path>{roots.workflows}/ops/</Path>`。可整体替换，不存真实业务密码。
-部署机状态：`<Path>{roots.state}/ops/</Path>`。使用 ops.py 时始终显式传入绝对 `--state`，不得指向静态代码目录。
+部署机状态：`<Path>{roots.state}/ops/</Path>`。使用 ops.mjs 时始终显式传入绝对 `--state`，不得指向静态代码目录。
 目标服务器根：首次登记 host.root；Linux 建议 `/srv/ops`，Windows 建议 `C:\Ops`。只登记专用目录，禁止系统根、路径穿越和链接跳转。
 
 ## 持久化约定
@@ -92,4 +92,4 @@ init/register/credential-put 是用户显式请求的部署机本地记录操作
 恢复：`<Path>{roots.workflows}/ops/common/rules/recovery.md</Path>`。
 支持边界：`<Path>{roots.workflows}/ops/common/CAPABILITIES.md</Path>`。
 
-内置执行器：`<Path>{roots.workflows}/ops/common/tools/ops.py</Path>`。自检：`<Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path>`。
+内置执行器：`<Path>{roots.workflows}/ops/common/tools/ops.mjs</Path>`。自检：`<Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path>`。

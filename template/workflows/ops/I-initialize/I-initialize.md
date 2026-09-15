@@ -17,7 +17,7 @@ keywords: [ops, initialize, 主机, 持久化, 审批]
 
 ## 流程与完成标准
 
-先只读识别 shell、SSH、Git、Python、uv、Node、JDK 和权限；已有且满足要求的工具复用。无 Python 时 bootstrap 的 probe 不依赖 Python；用户提供带 SHA256 的可信安装器并确认后才执行引导。安装器完整命令/作用范围必须先展示。
+先只读识别 shell、SSH、Git、Node、uv、JDK 和权限；已有且满足要求的工具复用。控制端执行器是 Node；bootstrap 的 probe 只做检测。用户提供带 SHA256 的可信安装器并确认后才执行引导。安装器完整命令/作用范围必须先展示。
 
 使用 init 创建控制端身份与绝对 state 根，记录当前工具版本；不会顺便连接远端或清理当前机器。host root 默认规范、服务器 README 不含密码、服务器 OPERATIONS 启用、控制端明文总册、严格 Docker data-root 都是默认合同。
 
@@ -25,4 +25,4 @@ keywords: [ops, initialize, 主机, 持久化, 审批]
 
 完成条件：控制端状态有效、目录权限受限、工具盘点有证据，后续入口可以独立运行。部署端未准备好的能力明确列为缺口。
 
-命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.py，不能绕过计划审批直接拼接命令调用主机。
+命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.mjs，不能绕过计划审批直接拼接命令调用主机。

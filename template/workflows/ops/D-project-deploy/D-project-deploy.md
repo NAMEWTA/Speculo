@@ -31,4 +31,4 @@ uninstall 只停止自身、退役绑定和实例，保留所有数据、账号�
 
 完成条件：所有业务步骤与健康检查成功；服务端 README 具有最新版本、时间、配置、持久化、步骤和依赖；控制端对应目录保存完整明文与配置镜像；两边文档 SHA256 回执通过。docs_pending 不得报全部完成。
 
-命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.py，不能绕过计划审批直接拼接命令调用主机。
+命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.mjs，不能绕过计划审批直接拼接命令调用主机。

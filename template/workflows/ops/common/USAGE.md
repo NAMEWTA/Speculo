@@ -5,24 +5,24 @@
 ## 1. 初始化与盘点
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --version
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops init --controller-id control-a
-python3 /path/to/ops/common/tools/ops.py probe --output /safe/path/local-inventory.json
+node /path/to/ops/common/tools/ops.mjs --version
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops init --controller-id control-a
+node /path/to/ops/common/tools/ops.mjs probe --output /safe/path/local-inventory.json
 ```
 
-没有 Python 时运行 common/tools/bootstrap.sh probe 或 bootstrap.ps1 -Probe，只做检测。经过批准的本地安装器还需精确 SHA256 与确认字符串。完成后重新 init；不要求先安装 uv 才能初始化。
+没有 Node 时运行 common/tools/bootstrap.sh probe 或 bootstrap.ps1 -Probe，只做检测。经过批准的本地安装器还需精确 SHA256 与确认字符串。完成后重新 init。
 
-初次远端将 host.json 中 identity 写为 discover（仅 probe 支持），connection 包含 hostname、username、known_hosts、python，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。
+初次远端将 host.json 中 identity 写为 discover（仅 probe 支持），connection 包含 hostname、username、known_hosts、node，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py probe --connection-file /safe/path/host-discovery.json --output /safe/path/host-observed.json
+node /path/to/ops/common/tools/ops.mjs probe --connection-file /safe/path/host-discovery.json --output /safe/path/host-observed.json
 ```
 
 核对后将真实 identity 写回 register.json，再登记。正式 register 不接受 discover。
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops register --file /safe/path/register.json
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops credential-put --file /safe/path/credential.json
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops register --file /safe/path/register.json
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops credential-put --file /safe/path/credential.json
 ```
 
 credential-put 只持久化指定凭据，不会重置服务器账户。该导入文件也必须受限保存；不要用 shell 参数直接传密码。
@@ -30,8 +30,8 @@ credential-put 只持久化指定凭据，不会重置服务器账户。该导�
 ## 2. 真实项目分析和固定来源
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py analyze --source /path/to/project
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops source-fetch --project app-a --repository https://example.org/team/app-a.git --commit FULL_40_HEX_COMMIT --allow-network
+node /path/to/ops/common/tools/ops.mjs analyze --source /path/to/project
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops source-fetch --project app-a --repository https://example.org/team/app-a.git --commit FULL_40_HEX_COMMIT --allow-network
 ```
 
 analyze 只列相关清单与哈希，不执行仓库程序。Agent 必须读取实际 manifests，按持久化参数、运行方式、网络、数据库迁移和验证创建 spec，不能把探测结果自动等同于完整可运行部署。
@@ -41,10 +41,10 @@ source-fetch 不自动登记新来源版本，后续 spec.resource_updates.proje
 ## 3. 计划、确认、执行
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops plan --file /safe/path/deploy.json
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops plan --file /safe/path/deploy.json
 # 阅读输出 report 指向的完整 PLAN.md，核对目录、账号版本、影响和恢复。
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops approve --run RUN_ID --digest SHA256 --by administrator --statement '我确认此摘要所列的全部目标、配置、影响、明文文件和恢复限制'
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops apply --run RUN_ID
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops approve --run RUN_ID --digest SHA256 --by administrator --statement '我确认此摘要所列的全部目标、配置、影响、明文文件和恢复限制'
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops apply --run RUN_ID
 ```
 
 “继续”“按你说的做”不能在无人确认具体计划时被编造成 approval.json。一次确认只授权所示摘要；现场漂移、工具链代码升级、连接或凭据变化都要重新计划。
@@ -58,9 +58,9 @@ files 的 artifact/ 自动进入新 releases/run-id/artifact；compose/、config
 ## 4. 环境、Docker、镜像和清理
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops environment-spec --host node-a --file /safe/path/environment-request.json --output /safe/path/host-prepare.json
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops environment-spec --host node-a --file /safe/path/environment-request.json --output /safe/path/host-prepare.json
 # 然后对 host-prepare.json 执行 plan / approve / apply。
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops mirror-probe --host node-a --file /safe/path/mirror-candidates.json --allow-network
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops mirror-probe --host node-a --file /safe/path/mirror-candidates.json --allow-network
 ```
 
 环境配方不抓 latest；管理器缺失先明确准备安装器。来源测速不修改配置，证书/哈希失败候选不使用，真实配置更换通过 H 的精确 write-file/write-control/命令计划。不能将 Python/npm/Docker/Maven 镜像混为一套规则。
@@ -80,11 +80,11 @@ uninstall 输入 retire_deployments，只停止并保留数据；不会删除共
 ## 6. 验证和恢复
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops status
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops validate
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops inspect-run --run RUN_ID
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops resume --run RUN_ID
-python3 /path/to/ops/common/tools/ops.py --state /path/to/.speculo/ops docs-sync --run RUN_ID
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops status
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops validate
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops inspect-run --run RUN_ID
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops resume --run RUN_ID
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops docs-sync --run RUN_ID
 ```
 
 resume 不重放 failed/started-only；docs-sync 仅重试文档，不能修复真正失败的业务动作。真实文档终态失败需新维护计划；只因网络中断但目标已有成功回执的情况可继续校验交付。具体说明见 rules/recovery.md。
@@ -96,7 +96,7 @@ resume 不重放 failed/started-only；docs-sync 仅重试文档，不能修复�
 只清理旧静态 workflows/ops，绝不清理 .speculo/ops 或服务器部署根。非空 v2 保持原文，用新空 STATE 执行 import-legacy；不自动推断主机、密码或共享关系。
 
 ```sh
-python3 /path/to/ops/common/tools/ops.py --state /path/to/new-ops-state import-legacy --source /path/to/old-state --controller-id control-a
+node /path/to/ops/common/tools/ops.mjs --state /path/to/new-ops-state import-legacy --source /path/to/old-state --controller-id control-a
 ```
 
 已有服务器目录先探测、备份并确认接管/迁移；仅替换静态 workflow 不会自动迁移服务器数据。Speculo 旧 CLI 需要交付包的外围兼容补丁，不能只换 Markdown 还继续用硬编码旧五入口校验器。
@@ -104,9 +104,9 @@ python3 /path/to/ops/common/tools/ops.py --state /path/to/new-ops-state import-l
 ## 8. 本地演练和测试
 
 ```sh
-python3 /path/to/ops/common/tools/demo-local.py --output /absolute/empty/demo-root
-python3 -m unittest discover -s /path/to/ops/common/tests -v
+node /path/to/ops/common/tools/demo-local.mjs --output /absolute/empty/demo-root
+node --test /path/to/ops/common/tests/test_ops.mjs
 node /path/to/ops/common/tools/validate-ops.mjs --self-check
 ```
 
-演练只使用指定新空目录，创建演示 APP 与演示明文凭据，运行真实有限 Python 程序，完成双边文档；不连接其他主机、不安装软件。它不是生产系统验收。
+演练只使用指定新空目录，创建演示 APP 与演示明文凭据，运行真实有限 Node 程序，完成双边文档；不连接其他主机、不安装软件。它不是生产系统验收。

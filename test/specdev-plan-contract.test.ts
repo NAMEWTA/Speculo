@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, it } from "node:test";
 
+const isWindows = process.platform === "win32";
 const toolRoot = join(process.cwd(), "template/workflows/specdev/common/tools");
 const contract = await import(pathToFileURL(join(toolRoot, "plan-contract.mjs")).href);
 const validator = await import(pathToFileURL(join(toolRoot, "validate-specdev.mjs")).href);
@@ -54,7 +55,7 @@ describe("SpecDev Plan contracts", () => {
       }
     } finally { await rm(f.root, { recursive: true, force: true }); }
   });
-  it("allows a project-internal source symlink without replacing it", async () => {
+  it("allows a project-internal source symlink without replacing it", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const f = await fixture();
     try {
       await mkdir(join(f.root, "compat"));
@@ -65,7 +66,7 @@ describe("SpecDev Plan contracts", () => {
       assert.deepEqual(await readFile(join(f.root, f.skillPath)), before);
     } finally { await rm(f.root, { recursive: true, force: true }); }
   });
-  it("rejects outside symlink targets, cache sources and path traversal", async () => {
+  it("rejects outside symlink targets, cache sources and path traversal", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const f = await fixture();
     const outside = await mkdtemp(join(tmpdir(), "speculo-outside-"));
     try {

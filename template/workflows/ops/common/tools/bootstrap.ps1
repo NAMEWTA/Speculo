@@ -1,7 +1,7 @@
 param([switch]$Probe,[string]$Apply,[string]$Sha256,[string]$Approval)
 $ErrorActionPreference='Stop'
 if (-not $Apply) {
-  Write-Output 'OPS bootstrap inventory (read-only; no Python prerequisite)'
+  Write-Output 'OPS bootstrap inventory (read-only; no extra runtime prerequisite beyond this probe)'
   Get-CimInstance Win32_OperatingSystem | Select-Object Caption,Version,OSArchitecture,FreePhysicalMemory,TotalVisibleMemorySize
   'ssh','git','python','py','uv','node','npm','java','docker','volta' | ForEach-Object {
     $c=Get-Command $_ -ErrorAction SilentlyContinue
@@ -15,4 +15,4 @@ if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Reparse-poin
 if ((Get-FileHash -LiteralPath $Apply -Algorithm SHA256).Hash.ToLowerInvariant() -ne $Sha256.ToLowerInvariant()) { throw 'Installer changed since review' }
 & $f.FullName
 if (-not $?) { throw 'Bootstrap installer failed' }
-if (-not (Get-Command python -ErrorAction SilentlyContinue) -and -not (Get-Command py -ErrorAction SilentlyContinue)) { throw 'Python still unavailable; not completed' }
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Node still unavailable; not completed' }

@@ -60,7 +60,7 @@ export function validateOpsResources(value: JsonObject, schema: JsonObject): voi
     if (h.platform === "windows" && (h.root.startsWith("\\\\") || win32.parse(h.root).root === h.root)) throw new Error("Ops UNC/drive root rejected");
     if (h.platform === "windows" && (h.root.slice(2).includes(":") || ["c:\\windows", "c:\\program files", "c:\\users", "c:\\programdata"].includes(h.root.toLowerCase()))) throw new Error("Ops system/ADS host root rejected");
     if (h.transport === "local" && Object.keys(h.connection).length !== 0) throw new Error("Ops local connection must be empty");
-    if (h.transport === "ssh" && ["hostname", "username", "known_hosts", "python"].some(k => !h.connection[k])) throw new Error("Ops SSH connection incomplete");
+    if (h.transport === "ssh" && ["hostname", "username", "known_hosts", "node"].some(k => !h.connection[k])) throw new Error("Ops SSH connection incomplete");
     const key = h.identity + ":" + (h.platform === "windows" ? h.root.toLowerCase() : h.root);
     if (physical.has(key)) throw new Error("Ops duplicate physical host/root"); physical.add(key);
     for (const other of hostRoots) {

@@ -4,4 +4,4 @@
 
 register 和 credential 是本地登记请求；compose-app、shared-allocation 是 spec；binding 是放入 spec.bindings 的单个对象。凭据管理员/应用分离。实际共享分配要求 provider 已完成部署并登记 service.compose_service 与 administrator credential；不能只复制示例便声称分配成功。
 
-真实无网络演练使用 common/tools/demo-local.py --output 新空目录，会自动构造自包含示例与一次精确 demo 批准，严禁把该批准自动化用于生产。
+真实无网络演练使用 common/tools/demo-local.mjs --output 新空目录，会自动构造自包含示例与一次精确 demo 批准，严禁把该批准自动化用于生产。

@@ -4,9 +4,9 @@
 
 | 能力 | 本版实现 | 运行边界 |
 |---|---|---|
-| 控制端 | Python 3.10+ 标准库 CLI；状态、锁、明文、计划、执行 | 无第三方 Python 包；控制端可本地执行完整闭环 |
+| 控制端 | Node 标准库 CLI（ops.mjs）；状态、锁、明文、计划、执行 | 无第三方 npm 包；控制端可本地执行完整闭环 |
 | Linux local | 原生 oneshot；systemd 配置/权限/健康门；Docker Engine Compose | 本轮隔离 local oneshot 演练；systemd/Docker 需要真实有权限主机验收 |
-| SSH | OpenSSH 密钥或 agent；固定 known_hosts；目标身份；可 sudo -n | 目标 Python 3.10+；本轮没有远程主机/ssh 客户端实机验证；不实现交互式 SSH 密码登录 |
+| SSH | OpenSSH 密钥或 agent；固定 known_hosts；目标身份；可 sudo -n | 目标 Node；本轮没有远程主机/ssh 客户端实机验证；不实现交互式 SSH 密码登录 |
 | Windows 原生 | PowerShell 引导、路径/DACL、同账户登录态 Scheduled Task | 不是无人登录的 Windows Service；真正后台服务需专用 adapter；本轮非 Windows 实机 |
 | WSL | 单独登记为 Linux 执行目标 | 不把 Windows 主机路径/Docker Desktop VM 当作 WSL 根 |
 | macOS | 身份探测、POSIX 路径、oneshot | 无 launchd 适配；不是承诺全部平台常驻部署 |

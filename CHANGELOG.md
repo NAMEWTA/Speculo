@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **OPS runtime is Node ESM**: controller and target agents run as `ops.mjs` / `opslib/*.mjs` with Node builtins only. Remote SSH uses `connection.node` and `node --input-type=module`. Python OPS scripts are removed; APP toolchains may still install Python via uv.
+
+### Tests
+- SpecDev plan-contract symlink cases skip on Windows without Developer Mode, matching the other symlink tests.
+
 ## [1.0.6] - 2026-09-15
 
 ### Added

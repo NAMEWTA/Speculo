@@ -27,4 +27,4 @@ Docker 缺失使用经审核且版本固定的 Linux Engine 安装配方，完�
 
 主机维护影响现存 APP/公共服务消费者时必须明确 acknowledged_consumers。完整计划列出下载、系统控制文件、服务重启、默认恢复和验证；执行通过后刷新主机双边记录。
 
-命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.py，不能绕过计划审批直接拼接命令调用主机。
+命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`；所有执行通过 ops.mjs，不能绕过计划审批直接拼接命令调用主机。
