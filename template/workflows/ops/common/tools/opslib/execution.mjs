@@ -8,7 +8,7 @@ import {
   relative, resolveSecrets, secure, UnknownResult, withLock, writeJson,
 } from "./core.mjs";
 import { load, save, ledgerLoad, validate, validateStatus } from "./model.mjs";
-import { locatePlan, envFile } from "./planner.mjs";
+import { locatePlan, envFile, sliceDigest } from "./planner.mjs";
 import { call as transportCall, hostTransportDigest } from "./transport.mjs";
 import { deliveryBundle } from "./docs.mjs";
 
@@ -43,7 +43,7 @@ export function approval(state, run, expected, by, statement) {
   };
   validate(value, "approval");
   return withLock(join(state, ".locks", "catalog"), { operation: "approve", run_id: plan.run_id }, () => {
-    if (digest(load(state)) !== plan.registry_digest) throw new OpsError("catalog drift since plan; replan before approval");
+    if (sliceDigest(load(state), plan.registry_scope) !== plan.registry_slice_digest) throw new OpsError("touched catalog slice drifted since plan; replan before approval");
     writeJson(join(dirname(path), "approval.json"), value, { exclusive: true });
     return { run_id: plan.run_id, status: "approved", plan_digest: expected };
   });
@@ -124,15 +124,25 @@ export function commitObservations(state, current, plan, execution) {
   const result = structuredClone(current);
   const desired = plan.registry_after;
   const records = execution.steps;
-  result.policies = desired.policies;
-  result.hosts = structuredClone(desired.hosts);
-  result.projects = structuredClone(desired.projects);
-  for (const did of plan.document_targets) {
-    let proposed = structuredClone(desired.deployments[did]);
+  const scope = plan.registry_scope || {};
+  if (scope.policies) result.policies = structuredClone(desired.policies);
+  for (const hid of scope.hosts || []) {
+    if (desired.hosts?.[hid]) result.hosts[hid] = structuredClone(desired.hosts[hid]);
+    else delete result.hosts[hid];
+  }
+  for (const pid of scope.projects || []) {
+    if (desired.projects?.[pid]) result.projects[pid] = structuredClone(desired.projects[pid]);
+    else delete result.projects[pid];
+  }
+  if (scope.public_ingress) result.public_ingress = structuredClone(desired.public_ingress ?? null);
+  const deploymentIds = new Set([...(scope.deployments || []), ...plan.document_targets]);
+  for (const did of deploymentIds) {
+    let proposed = desired.deployments?.[did] ? structuredClone(desired.deployments[did]) : null;
     const old = current.deployments[did];
     const ops = plan.operations.filter((o) => o.deployment_id === did);
     const statuses = ops.map((o) => records[o.step_id]?.status ?? "not-started");
     const changing = ops.length > 0;
+    if (!proposed && !old) continue;
     if (changing && statuses.every((x) => x === "succeeded")) {
       proposed.status = proposed.status === "retired" ? "retired" : "docs_pending";
       proposed.observed_version = proposed.version;
@@ -146,7 +156,9 @@ export function commitObservations(state, current, plan, execution) {
     else { proposed.status = "planned"; proposed.observed_version = null; }
     result.deployments[did] = proposed;
   }
-  for (const [aid, a] of Object.entries(desired.allocations)) {
+  for (const aid of scope.allocations || []) {
+    const a = desired.allocations?.[aid];
+    if (!a) continue;
     if (aid in current.allocations && current.allocations[aid].status !== "planned") {
       result.allocations[aid] = structuredClone(current.allocations[aid]);
       continue;
@@ -156,11 +168,13 @@ export function commitObservations(state, current, plan, execution) {
     item.status = provisioning.length && provisioning.every((o) => records[o.step_id]?.status === "succeeded") ? "active" : "planned";
     result.allocations[aid] = item;
   }
-  for (const [bid, b] of Object.entries(desired.bindings)) {
+  for (const bid of scope.bindings || []) {
+    const b = desired.bindings?.[bid];
+    if (!b) continue;
     const item = structuredClone(b);
     const consumer = result.deployments[b.consumer_deployment_id];
     if (item.status === "active" && (!consumer || ["planned", "failed", "unknown"].includes(consumer.status))) item.status = "planned";
-    if (item.mode === "shared" && result.allocations[item.allocation_id].status !== "active" && item.status === "active") item.status = "planned";
+    if (item.mode === "shared" && result.allocations[item.allocation_id]?.status !== "active" && item.status === "active") item.status = "planned";
     result.bindings[bid] = item;
   }
   result.releases[plan.run_id] = {
@@ -171,6 +185,7 @@ export function commitObservations(state, current, plan, execution) {
   };
   save(state, result);
   execution.committed_registry_digest = digest(result);
+  execution.committed_slice_digest = sliceDigest(result, plan.registry_scope);
   return result;
 }
 
@@ -256,9 +271,10 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
     const ledger = ledgerLoad(state);
     const execution = existsSync(execPath)
       ? readJson(execPath)
-      : { schema_version: 1, run_id: plan.run_id, plan_path: path, status: "executing", started_at: now(), steps: {}, errors: [], committed_registry_digest: null };
-    const expected = execution.committed_registry_digest || plan.registry_digest;
-    if (digest(current) !== expected) throw new OpsError("controller registry changed since this approved run; compile a new plan");
+      : { schema_version: 1, run_id: plan.run_id, plan_path: path, status: "executing", started_at: now(), steps: {}, errors: [], committed_registry_digest: null, committed_slice_digest: null };
+    const expectedSlice = execution.committed_slice_digest || plan.registry_slice_digest;
+    if (!plan.registry_scope || !plan.registry_slice_digest) throw new OpsError("plan missing registry_scope; compile a new plan");
+    if (sliceDigest(current, plan.registry_scope) !== expectedSlice) throw new OpsError("controller registry changed since this approved run; compile a new plan");
     if (execution.status === "completed") return { run_id: plan.run_id, status: "completed", unchanged: true, report: join(folder, "RESULT.md") };
     verifyJournal(join(folder, "journal.jsonl"));
     for (const [hid, h] of Object.entries(plan.hosts)) {
@@ -319,6 +335,7 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
           current.releases[plan.run_id].updated_at = now();
           save(state, current);
           execution.committed_registry_digest = digest(current);
+          execution.committed_slice_digest = sliceDigest(current, plan.registry_scope);
         } catch (e) {
           if (!(e instanceof OpsError || e.code)) throw e;
           execution.status = "docs_pending";
@@ -364,6 +381,7 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
         current.releases[plan.run_id].status = execution.status;
         save(state, current);
         execution.committed_registry_digest = digest(current);
+        execution.committed_slice_digest = sliceDigest(current, plan.registry_scope);
       }
       writeJson(execPath, execution);
       journal(folder, { kind: "attempt-end", status: execution.status, errors: execution.errors.length });

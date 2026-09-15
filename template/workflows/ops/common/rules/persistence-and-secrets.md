@@ -16,7 +16,7 @@ private/credentials.json 是版本化明文账本；credential-put 不会修改�
 
 控制端项目 README、OPERATIONS 与全域总册保存真实值，特殊字符逐字保留。服务端 README 默认无密码但不能缺路径、版本、时间、启动停止、依赖和备份恢复；OPERATIONS 与 DEPLOYMENTS 默认是受限明文。未知旧密码不能编造；密钥认证没有密码，记录实际密钥认证而不是虚构一个口令。
 
-POSIX 账本/文档/配置副本 0600、控制端目录 0700。Windows 使用受限 ACL，不以 chmod 代替 DACL。明文不进入 Git、Web 目录、构建上下文、普通日志；env 是指定的本地配置文件例外，不能再进入镜像层。示例凭据全为演示，不可用于生产。
+POSIX 账本、env 与明文文档 0600、控制端目录 0700。`config/` 与 `*.conf`/`*.acl` 默认 0644，供非 root 容器用户读取只读挂载；Windows 使用受限 ACL，不以 chmod 代替 DACL。明文不进入 Git、Web 目录、构建上下文、普通日志；env 是指定的本地配置文件例外，不能再进入镜像层。示例凭据全为演示，不可用于生产。
 
 ## 双边完成门
 

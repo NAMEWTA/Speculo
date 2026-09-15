@@ -102,6 +102,64 @@
                 },
                 "required": [],
                 "additionalProperties": false
+              },
+              "host_services": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                      "maxLength": 80
+                    },
+                    "kind": {
+                      "enum": [
+                        "wireguard",
+                        "nginx",
+                        "systemd",
+                        "probe",
+                        "other"
+                      ]
+                    },
+                    "unit": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "listen_port": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    "listen": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tunnel_address": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "config_path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "public_url": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "notes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
@@ -674,6 +732,10 @@
             "type": "integer",
             "minimum": 256,
             "maximum": 511
+          },
+          "rollback": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -1019,6 +1081,80 @@
         "external-mutation",
         "production-critical"
       ]
+    },
+    "public_ingress": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "not_the_same_as": {
+          "type": "string"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "public": {
+                "type": "string",
+                "minLength": 1
+              },
+              "layer4": {
+                "type": "string"
+              },
+              "via": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "backend": {
+                "type": "string",
+                "minLength": 1
+              },
+              "backend_deployment": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "public",
+              "backend"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "open_http_checklist": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "title",
+        "path",
+        "mappings"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

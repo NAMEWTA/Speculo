@@ -28,6 +28,9 @@ host_root/
   DEPLOYMENTS.md
   docs/standards/DEPLOYMENT-STANDARD.md
   knowledge/
+    INDEX.md
+    host-services.json          # 主机级入口：WireGuard/Nginx/探测，不是 APP 部署
+    public-ingress.json         # 跨主机公网→内网映射；入口与出口不是同一条连接
   _host/                         # 主机证据、安装器、有限缓存和隔离
   _runtime/docker/               # 仅经准备/显式迁移的 Docker Engine
   app-a/
@@ -62,15 +65,15 @@ host_root/
 
 ## 状态字段
 
-schema_version=3；hosts、projects、deployments、allocations、bindings、releases、controller、policies、revision、updated_at。
+schema_version=3；hosts、projects、deployments、allocations、bindings、releases、controller、policies、public_ingress、revision、updated_at。Host.host_services 登记主机级入口。public_ingress 登记跨主机公网映射。
 
-部署状态区分 planned、running、configured、docs_pending、completed、failed、unknown、retired。version 是计划版本；observed_version 只有运行验证成功才更新。完成必须有 `both-sides-verified` 回执，不能只看容器启动或文档标题。
+部署状态区分 planned、running、configured、docs_pending、completed、failed、unknown、retired。version 是计划版本；observed_version 只有运行验证成功才更新。完成必须有 `both-sides-verified` 回执，不能只看容器启动或文档标题。主机/全域总册必须同时有服务一览表（含主机级入口）和入口规范；缺一不算完整。
 
 单主机 I/H 证据在 `hosts/id/runs/run-id/`；D/跨主机证据在 `releases/run-id/`，各主机保存索引。plan.json 与 approval.json 不可覆盖；journal.jsonl 具有摘要链。摘要链能发现内容修改，但不能单凭自身证明尾部没有被有权者完整截断；还应保留执行回执与备份。
 
 ## 路径分配
 
-部署根由 host/project/layout 唯一派生。所有声明的 APP data/config/env/log/backups 路径都必须在该根内；容器只用显式 bind，禁止命名卷、匿名卷、跨项目 bind 和可写根文件系统。项目 env 文件集中在 env/；Compose 使用 raw env_file，要求实际 Compose >=2.30。
+部署根由 host/project/layout 唯一派生。所有声明的 APP data/config/env/log/backups 路径都必须在该根内；容器只用显式 bind，禁止命名卷、匿名卷、跨项目 bind。默认只读容器根；仅当镜像仍必须写根文件系统时，才允许带 `writable_root_justification` 的 `read_only: false`。config/env 默认 0644 只读挂载，供非 root 镜像用户读取。项目 env 文件集中在 env/；Compose 使用 raw env_file，要求实际 Compose >=2.30。`compose --wait` 之后仍检查容器 running 与 Health=healthy；TCP/docker-proxy 监听不是生产健康证明。
 
 原生服务设置 HOME、XDG、缓存、临时目录和 OPS_* 到 APP 根内；Linux systemd 还设置 ProtectSystem/ReadWritePaths。通用自定义命令是用户审核的可执行代码，不是一个能阻止恶意程序所有系统调用的沙箱。来源代码必须可信，必须明确映射项目真实数据参数，并实际验证；发现无法约束的数据路径就阻塞，不能报完成。
 

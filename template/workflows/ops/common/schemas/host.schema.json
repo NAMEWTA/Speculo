@@ -73,6 +73,9 @@
       },
       "required": [],
       "additionalProperties": false
+    },
+    "host_services": {
+      "$ref": "#/$defs/host_services"
     }
   },
   "required": [
@@ -84,5 +87,65 @@
     "identity",
     "connection"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "host_services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "kind": {
+            "enum": [
+              "wireguard",
+              "nginx",
+              "systemd",
+              "probe",
+              "other"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "listen_port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "listen": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "tunnel_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "config_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "public_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
 }

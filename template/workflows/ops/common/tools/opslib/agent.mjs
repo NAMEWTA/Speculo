@@ -288,9 +288,6 @@ function under(path, root, allowRoot = false) {
 
 function checkedPath(path, req, allowRoot = false) {
   if ((req.external_files ?? []).includes(path)) {
-    if (path !== "/etc/docker/daemon.json" && !/^\/etc\/systemd\/system\/ops-[a-z0-9-]+\.service$/.test(path)) {
-      throw new Failure("unrecognized external control file");
-    }
     noLinks(path);
     return resolve(path);
   }
@@ -304,7 +301,14 @@ export function stripSecrets(text, values) {
   return text.replace(/(password|passwd|token|secret|access_key)(\s*[=:]\s*)[^\s,;]+/gi, "$1$2[REDACTED]");
 }
 
-function command(argv, { cwd, env = null, stdin = null, timeout = 300, secrets = null, success_codes = null } = {}) {
+export const agentHooks = { spawnSync };
+
+function stdinBuffer(stdin) {
+  if (stdin == null) return undefined;
+  return Buffer.isBuffer(stdin) ? stdin : Buffer.from(String(stdin), "utf8");
+}
+
+export function command(argv, { cwd, env = null, stdin = null, timeout = 300, secrets = null, success_codes = null } = {}) {
   if (!Array.isArray(argv) || !argv.length || !argv.every((x) => typeof x === "string" && !x.includes("\0"))) {
     throw new Failure("argv must be a nonempty string array");
   }
@@ -313,10 +317,11 @@ function command(argv, { cwd, env = null, stdin = null, timeout = 300, secrets =
   mkdir(runTmp, 0o700);
   const outPath = join(runTmp, "out.bin"), errPath = join(runTmp, "err.bin");
   try {
-    const p = spawnSync(argv[0], argv.slice(1), {
+    // Node 24: encoding "buffer" with a string input throws ERR_UNKNOWN_ENCODING.
+    const p = agentHooks.spawnSync(argv[0], argv.slice(1), {
       cwd,
       env: { ...process.env, ...(env || {}), TMPDIR: runTmp, TMP: runTmp, TEMP: runTmp },
-      input: stdin != null ? stdin : undefined,
+      input: stdinBuffer(stdin),
       timeout: timeout * 1000,
       maxBuffer: 32 * 1024 * 1024,
       encoding: "buffer",
@@ -326,20 +331,45 @@ function command(argv, { cwd, env = null, stdin = null, timeout = 300, secrets =
     if (p.error) throw new Failure(String(p.error.message || p.error));
     const rawOut = (p.stdout || Buffer.alloc(0)).subarray(0, 2 * 1024 * 1024);
     const rawErr = (p.stderr || Buffer.alloc(0)).subarray(0, 2 * 1024 * 1024);
+    const stdout = rawOut.toString("utf8");
+    const stderr = rawErr.toString("utf8");
     const result = {
       exit_code: p.status,
-      stdout: stripSecrets(rawOut.toString("utf8"), values),
-      stderr: stripSecrets(rawErr.toString("utf8"), values),
+      stdout,
+      stderr,
+      log_stdout: stripSecrets(stdout, values),
+      log_stderr: stripSecrets(stderr, values),
       output_sha256: sha(Buffer.concat([rawOut, rawErr])),
     };
     if (!(success_codes || [0]).includes(p.status)) {
-      throw new Failure("command failed with exit=" + p.status + "; output_sha256=" + result.output_sha256);
+      throw new Failure("command failed with exit=" + p.status + "; output_sha256=" + result.output_sha256 + "; " + result.log_stderr.slice(-1500));
     }
     return result;
   } finally {
     try { unlinkSync(outPath); } catch {}
     try { unlinkSync(errPath); } catch {}
     try { rmSync(runTmp, { recursive: true, force: true }); } catch {}
+  }
+}
+
+function parseDockerJson(text, label) {
+  try {
+    return JSON.parse(String(text).trim());
+  } catch (e) {
+    throw new Failure(label + " is not valid JSON: " + (e.message || e));
+  }
+}
+
+export { parseDockerJson };
+
+export function inspectContainerGate(item) {
+  const st = item.State || {};
+  const name = item.Name || item.Id || "unknown";
+  if (st.Status !== "running" || st.OOMKilled || st.Restarting) {
+    throw new Failure("container not running after compose-up: " + name + " status=" + (st.Status || "unknown"));
+  }
+  if (st.Health && st.Health.Status && st.Health.Status !== "healthy") {
+    throw new Failure("container health is " + st.Health.Status + " after compose --wait; TCP/proxy listen is not sufficient");
   }
 }
 
@@ -357,7 +387,7 @@ function composeUp(op, req) {
   const base = composeBase(op);
   const docker = dockerBase(op);
   const info = command(docker.concat(["info", "--format", "{{json .}}"]), { cwd: root, timeout: 30, secrets: req.secrets || [] });
-  const daemon = JSON.parse(info.stdout.trim());
+  const daemon = parseDockerJson(info.stdout, "docker info");
   if (daemon.ID !== op.expected_docker_id) throw new Failure("Docker daemon identity changed since approval");
   const actual = daemon.DockerRootDir;
   if (req.strict_docker_root !== false) {
@@ -375,7 +405,7 @@ function composeUp(op, req) {
   for (const [name, service] of Object.entries(model.services)) {
     const image = service.image || op.compose_name + "-" + name;
     const conf = command(docker.concat(["image", "inspect", image, "--format", "{{json .Config.Volumes}}"]), { cwd: root, timeout: 30, secrets: req.secrets || [] });
-    const declared = JSON.parse(conf.stdout.trim()) || {};
+    const declared = parseDockerJson(conf.stdout, "image volumes for " + image) || {};
     const mapped = new Set([...(service.volumes || []).map((v) => v.target), ...(service.tmpfs || [])]);
     const missing = Object.keys(declared).filter((k) => !mapped.has(k));
     if (missing.length) throw new Failure("image declares unmapped VOLUME(s), refusing anonymous persistence: " + JSON.stringify(missing.sort()));
@@ -384,7 +414,8 @@ function composeUp(op, req) {
   const ids = command(base.concat(["ps", "--all", "--quiet"]), { cwd: root, timeout: 30 }).stdout.split(/\s+/).filter(Boolean);
   if (!ids.length) throw new Failure("Compose returned no containers");
   for (const cid of ids) {
-    const item = JSON.parse(command(docker.concat(["inspect", cid]), { cwd: root, timeout: 30, secrets: req.secrets || [] }).stdout)[0];
+    const item = parseDockerJson(command(docker.concat(["inspect", cid]), { cwd: root, timeout: 30, secrets: req.secrets || [] }).stdout, "docker inspect")[0];
+    inspectContainerGate(item);
     for (const mount of item.Mounts || []) {
       if (mount.Type === "volume") throw new Failure("anonymous/named persistence detected after start; stop and reconcile");
       if (mount.Type === "bind") under(mount.Source, root);
@@ -403,7 +434,7 @@ function allocation(op, req) {
   checkId(aid);
   const marker = join(provider, "allocations", aid + ".json");
   if (op.compose_name) {
-    const info = JSON.parse(command(dockerBase(op).concat(["info", "--format", "{{json .}}"]), { cwd: provider, timeout: 30 }).stdout);
+    const info = parseDockerJson(command(dockerBase(op).concat(["info", "--format", "{{json .}}"]), { cwd: provider, timeout: 30 }).stdout, "provider docker info");
     if (info.ID !== op.expected_docker_id) throw new Failure("provider Docker daemon identity drift");
   }
   const ownership = {
