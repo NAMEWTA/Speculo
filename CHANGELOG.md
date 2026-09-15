@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-09-16
+
+### Fixed
+- **SpecDev nested-install state root**: `validate-specdev` binds change paths to `workspace.json` `roots.state`. A project-root `.speculo/specdev` tree fails closed when a self-consistent workspace contract exists; fixtures without `workspace.json` keep the previous ancestor lookup (#62).
+
+### Changed
+- SpecDev init, activation, README, and path-reference docs require opening `workspace.json` before creating state directories, and document that a project-root `.speculo/specdev` tree is illegal under nested install.
+
+### Tests
+- Added `specdev-nested-state-root` coverage for legal nested changes, illegal project-root shadow trees, archive paths, conflicting workspace contracts, and legacy fixtures without `workspace.json`.
+
 ## [1.0.8] - 2026-09-15
 
 ### Fixed

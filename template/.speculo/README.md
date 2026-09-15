@@ -14,7 +14,7 @@
 
 ## 读取顺序
 
-1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。
+1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。嵌套安装时，项目根 `.speculo/` 不是本目录；只有该文件声明的状态根是运行时状态的唯一持久化根，项目根 `.speculo/specdev` 非法。
 2. 从 `../workflows/<workflow>/INDEX.md` 发现 workflow并按需读取其中声明的永久知识；这一步不读取 Work 条目或运行状态。
 3. 用户明确激活 workflow 或 work 后，读取 INDEX 指向的 workflow 根 `README.md`，从其中的 Work 条目选择目标并读取具体入口文件。
 4. 按激活合同读取 `<Path>{roots.state}/{workflow}/status.json</Path>`。SpecDev/Learning 再读取当前 change `.status.json` 与 work 产物。Ops schema v3 读取 hosts/projects/deployments/allocations/bindings/releases 及对应运行记录，不创建 `changes/`。

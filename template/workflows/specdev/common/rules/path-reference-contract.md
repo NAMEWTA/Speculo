@@ -44,6 +44,8 @@
 
 目录引用必须以 `/` 结束；文件引用不得以 `/` 结束。
 
+嵌套安装反例：项目根 `.speculo/specdev` 不是状态根。change 必须位于 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 或 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>`。
+
 ## 3. 项目代码路径
 
 SpecDev 不假定运行时一定提供项目根变量。Ticket、Evidence、诊断与架构审查中的项目代码路径统一使用项目相对路径，并仍置于 Path 标签中：

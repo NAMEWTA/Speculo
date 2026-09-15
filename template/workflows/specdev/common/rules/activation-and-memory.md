@@ -4,7 +4,7 @@
 
 ## Locate before read
 
-1. 先解析当前 workflow 的 roots、状态索引和稳定 ID；不存在时静默跳过，不能凭旧路径猜测。
+1. 先打开 `<Path>{roots.state}/workspace.json</Path>`，从中解析当前 workflow 的 roots、状态索引和稳定 ID；roots 必须来自该文件，不得凭字面猜测。不存在时静默跳过，不能凭旧路径猜测。
 2. 根据当前请求、Work 分支、关键词、稳定 ID、状态和 provenance，先搜索相关索引行或目录项，再定位最小相关 entry；不把索引全文默认装入上下文。
 3. 只回读命中的 entry 和直接 provenance；需要恢复、冲突裁决、归档、迁移或执行安全证明时，才读取该阶段声明的完整证据集合。
 4. 没有匹配证据时返回缺失证据并停止依赖该结论的分支，不补造事实。
