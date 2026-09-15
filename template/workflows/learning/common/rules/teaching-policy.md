@@ -13,3 +13,5 @@
 ASCII、Markdown table、公式或可选外链图片可以组合使用；每个视觉必须有 caption、alt 和附近的完整文字等价物，外链失效不能阻塞理解。`sources.md` 和 Lesson source table 记录 URL、标题、定位、访问日期、claim 映射、可信度和不确定性；无法验证的内容明确标为 open/uncertain。
 
 Lesson 可以有非评分 pause/self-check，但不含 Q/A、答案、分数、verdict 或 mastered 字段。
+
+苏格拉底 / 反问批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内；`L-lesson` 不得写 Q/A。Q 的讲解遵循本政策的表达与来源规则，但不占用 30–40 分钟 Lesson 预算。
