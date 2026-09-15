@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-09-15
+
 ### Added
 - **OPS 2.2**: replaces the five change-lifecycle works with `I-initialize`, `H-host-manage`, and `D-project-deploy`. APP and shared services share one host/project persistence layout; dual-side documentation is a completion gate.
 
