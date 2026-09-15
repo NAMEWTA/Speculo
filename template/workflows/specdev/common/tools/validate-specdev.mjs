@@ -17,7 +17,7 @@ import {
   statSync,
 } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { dirname, basename, extname, join, relative, resolve, sep } from "node:path";
+import { dirname, basename, extname, join, relative, resolve, sep, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -262,7 +262,7 @@ function parseScalar(raw) {
   return value;
 }
 
-function findSpecdevConfig(change) {
+function findSpecdevConfigByAncestry(change) {
   let current = resolve(change);
   while (true) {
     const candidate = join(current, ".speculo", "specdev", "config.json");
@@ -277,6 +277,149 @@ function findSpecdevConfig(change) {
     if (parent === current) return null;
     current = parent;
   }
+}
+
+function uniqueResolved(paths) {
+  const seen = new Set();
+  const result = [];
+  for (const path of paths) {
+    const resolved = resolve(path);
+    if (seen.has(resolved)) continue;
+    seen.add(resolved);
+    result.push(resolved);
+  }
+  return result;
+}
+
+function ancestorsOf(start) {
+  const dirs = [];
+  let current = resolve(start);
+  while (true) {
+    dirs.push(current);
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return dirs;
+}
+
+function parseWorkspaceCandidate(filePath, projectRoot) {
+  if (!isFile(filePath)) return null;
+  let data;
+  try {
+    data = JSON.parse(readText(filePath));
+  } catch {
+    return null;
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  if (data.schema_version !== 1 || data.path_base !== "project-root") return null;
+  const state = data.roots?.state;
+  if (typeof state !== "string" || !state.trim()) return null;
+  const declared = toPosix(state).replace(/^\.?\//, "").replace(/\/$/, "");
+  if (
+    !declared ||
+    declared.split("/").includes("..") ||
+    isAbsolute(declared) ||
+    ABSOLUTE_MACHINE_PATH_RE.test(declared)
+  ) {
+    return null;
+  }
+  const expected = resolve(projectRoot, declared, "workspace.json");
+  if (expected !== resolve(filePath)) return null;
+  return {
+    filePath: resolve(filePath),
+    projectRoot: resolve(projectRoot),
+    stateDeclared: declared,
+    stateRoot: resolve(projectRoot, declared),
+    data,
+  };
+}
+
+function workspaceProbes(projectRoot) {
+  const root = resolve(projectRoot);
+  return [
+    { projectRoot: root, filePath: join(root, "speculo", ".speculo", "workspace.json") },
+    { projectRoot: root, filePath: join(root, ".speculo", "workspace.json") },
+  ];
+}
+
+function collectWorkspaceCandidates(repoRoot, change) {
+  const probes = [];
+  if (repoRoot) {
+    probes.push(...workspaceProbes(repoRoot));
+  } else {
+    for (const dir of uniqueResolved([...ancestorsOf(change), ...ancestorsOf(process.cwd())])) {
+      probes.push(...workspaceProbes(dir));
+    }
+  }
+  const found = new Map();
+  for (const probe of probes) {
+    const parsed = parseWorkspaceCandidate(probe.filePath, probe.projectRoot);
+    if (!parsed) continue;
+    if (!found.has(parsed.filePath)) found.set(parsed.filePath, parsed);
+  }
+  return [...found.values()];
+}
+
+function isLegalChangeLocation(changeAbs, stateRoot) {
+  const name = basename(changeAbs);
+  if (resolve(stateRoot, "specdev", "changes", name) === changeAbs) return true;
+  const monthDir = dirname(changeAbs);
+  const archiveRoot = dirname(monthDir);
+  return (
+    /^\d{4}-\d{2}$/.test(basename(monthDir)) &&
+    resolve(stateRoot, "specdev", "archive") === archiveRoot &&
+    basename(changeAbs) === name
+  );
+}
+
+function resolveWorkspaceContract(repoRoot, change) {
+  const changeAbs = resolve(change);
+  const candidates = collectWorkspaceCandidates(repoRoot, changeAbs);
+  if (!candidates.length) {
+    return { mode: "legacy", errors: [], config: null, specdevRoot: null, stateDeclared: null };
+  }
+  const uniqueRoots = uniqueResolved(candidates.map((candidate) => candidate.stateRoot));
+  if (uniqueRoots.length > 1) {
+    const declared = [...new Set(candidates.map((candidate) => candidate.stateDeclared))].sort();
+    return {
+      mode: "strict",
+      errors: [`conflicting workspace.json roots.state (${declared.join(" vs ")})`],
+      config: null,
+      specdevRoot: null,
+      stateDeclared: null,
+    };
+  }
+  const workspace = candidates[0];
+  const specdevRoot = join(workspace.stateRoot, "specdev");
+  const errors = [];
+  if (!isLegalChangeLocation(changeAbs, workspace.stateRoot)) {
+    errors.push(
+      `change is outside workspace roots.state (${workspace.stateDeclared}/specdev); project-root .speculo/specdev is illegal`,
+    );
+  }
+  let config = null;
+  const configPath = join(specdevRoot, "config.json");
+  if (isFile(configPath)) {
+    try {
+      config = JSON.parse(readText(configPath));
+    } catch {
+      config = null;
+    }
+  }
+  return {
+    mode: "strict",
+    errors,
+    config,
+    specdevRoot,
+    stateDeclared: workspace.stateDeclared,
+  };
+}
+
+function findSpecdevConfig(change, repoRoot = null) {
+  const contract = resolveWorkspaceContract(repoRoot, change);
+  if (contract.mode === "strict") return contract.config;
+  return findSpecdevConfigByAncestry(change);
 }
 
 function positiveConfigLimit(config, key, fallback) {
@@ -1701,9 +1844,9 @@ function validateGoalPlan(path, errors) {
   return { path, meta, body };
 }
 
-function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors) {
+function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot = null) {
   if (!goalPlan) return;
-  const config = findSpecdevConfig(change);
+  const config = findSpecdevConfig(change, repoRoot);
   if (!config) {
     errors.push(`${basename(path)}: SpecDev config.json is required to validate execution limits`);
     return;
@@ -2758,7 +2901,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (overlap.length) errors.push(`member changes already belong to unfinished parent implementation ${entry.name}: ${JSON.stringify(overlap)}`);
   }
 
-  const config = findSpecdevConfig(change);
+  const config = findSpecdevConfig(change, repoRoot);
   const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
   const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
   if (!config || config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
@@ -2848,6 +2991,9 @@ function validateChange(change, stage = null, repoRoot = null) {
   if (!isDirectory(change)) {
     return { errors: [`change directory does not exist: ${change}`], warnings };
   }
+
+  const workspace = resolveWorkspaceContract(repoRoot, change);
+  errors.push(...workspace.errors);
 
   const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
   validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot);
@@ -2972,7 +3118,7 @@ function validateChange(change, stage = null, repoRoot = null) {
     }
   }
   if (changeStatus && goalPlan) {
-    validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors);
+    validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors, repoRoot);
     const attemptLimit = Number.isInteger(goalPlan.meta.integration_attempt_limit) ? goalPlan.meta.integration_attempt_limit : null;
     if (attemptLimit !== null) {
       for (const worktree of changeStatus.worktrees ?? []) {

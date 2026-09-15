@@ -406,6 +406,7 @@ function replaceValidatorCommands(content) {
 function statePathToCanonical(value) {
   return value
     .replace(/^\{roots\.state\}\/specdev\//, "specdev/")
+    .replace(/^\{roots\.state\}\//, "")
     .replaceAll("{ticket-id}", "T-NN")
     .replaceAll("{ticket-file}", "NN-<ticket-name>");
 }
@@ -459,7 +460,7 @@ function replacePaths(content, tagsBySource) {
   return withoutCommands.replace(
     /(`?)<Path>(.*?)<\/Path>\1/g,
     (_match, codeDelimiter, value) => {
-      if (value.startsWith("{roots.state}/specdev/")) {
+      if (value.startsWith("{roots.state}/")) {
         const canonicalPath = statePathToCanonical(value);
         return codeDelimiter ? `\`${canonicalPath}\`` : canonicalPath;
       }

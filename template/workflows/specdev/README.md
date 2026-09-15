@@ -4,7 +4,7 @@
 
 ## 运行时根
 
-工作流：`<Path>{roots.workflows}/specdev/</Path>`；状态：`<Path>{roots.state}/specdev/</Path>`。具体路径遵守 `<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`，不使用内部相对链接、裸文件名或机器绝对路径。
+工作流：`<Path>{roots.workflows}/specdev/</Path>`；状态：`<Path>{roots.state}/specdev/</Path>`。roots 必须来自已打开的 `<Path>{roots.state}/workspace.json</Path>`，禁止把状态根默认展开成项目根 `.speculo`。嵌套安装下项目根 `.speculo/specdev` 非法。具体路径遵守 `<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`，不使用内部相对链接、裸文件名或机器绝对路径。
 
 ## 工件链与权威
 
@@ -24,7 +24,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 ## 启动协议
 
-1. 解析 roots，读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位相关 entry 后回读必要原文，不默认整读索引。
+1. 先打开 `<Path>{roots.state}/workspace.json</Path>` 解析 roots，再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位相关 entry 后回读必要原文，不默认整读索引。不得把状态根默认展开成项目根 `.speculo`；项目根 `.speculo/specdev` 非法。
 2. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时使用 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`。保留已知配置，不重复询问。
 3. 从 `<Path>{roots.state}/specdev/status.json</Path>` 定位用户指定或唯一 active change；多个候选需要真实消歧，无候选按原规则创建。
 4. 读取 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；恢复、创建或状态修改时加载上述状态细则。child 归属未完成父 Goal 时读取对应父 Map/Plan，不接管或覆盖其 owner。
