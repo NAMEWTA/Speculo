@@ -9,7 +9,7 @@ const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DOMAIN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const WORK_ID = /^learning\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const LOCATOR = /^(?:changes\/.+|archive\/[0-9]{4}-[0-9]{2}\/.+)$/;
-const EXPECTED_WORKS = new Set(["A-archive", "A-assess-and-plan", "C-consolidate", "H-homework", "I-init-setup", "L-lesson", "R-review"]);
+const EXPECTED_WORKS = new Set(["A-archive", "A-assess-and-plan", "C-consolidate", "G-goal", "H-homework", "I-init-setup", "L-lesson", "Q-question", "R-review"]);
 const OLD_WORKS = new Set(["A-archive-and-consolidate", "E-eli5", "P-practice", "Q-quiz"]);
 const PHASE = new Set(["planning", "teaching", "homework", "review", "consolidating", "closed", "archived"]);
 const LIFECYCLE = new Set(["active", "blocked", "closed", "archived"]);
@@ -96,7 +96,13 @@ function validateWorkflowRoot(root, errors) {
     ["L-lesson/lesson-template.md", ["lesson_id", "source_ids", "反例与边界", "文字等价物"]],
     ["H-homework/H-homework.md", ["Submission: ready", "Explain (English)"]],
     ["H-homework/homework-template.md", ["Q1", "A1", "Submission: pending"]],
+    ["Q-question/Q-question.md", ["Response: pending", "Inquiry Lesson", "inquiry/"]],
+    ["Q-question/inquiry-template.md", ["Response: pending", "Q1", "A1"]],
+    ["G-goal/G-goal.md", ["ready_for_execution", "goal/goal-plan.md", "covered-by-parent"]],
+    ["G-goal/goal-plan-template.md", ["ready_for_execution: false", "covered-by-parent", "goal/probes"]],
+    ["G-goal/references/external-goal-runner.md", ["audience=mine", "Q-quiz", "inquiry/"]],
     ["common/rules/teaching-policy.md", ["coverage_depth", "不以字符数"]],
+    ["common/rules/questioning-policy.md", ["audience=mine", "goal/probes"]],
   ];
   for (const [file, markers] of contracts) {
     const path = join(root, file);

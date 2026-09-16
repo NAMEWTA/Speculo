@@ -6,6 +6,7 @@
 | `lessons/` | L-lesson | 完整 Lesson 和 Lesson INDEX；不写作业答案或掌握结论 |
 | `homework/` | H-homework + learner | H 写问题/评审，learner 写 A；提交后只追加 Review，旧 attempt 不可改写 |
 | `inquiry/` | Q-question + learner | Q 写问题/Teaching/Inquiry Lesson，learner 写 A；`Response: ready` 后只追加讲解，旧 batch 不可改写；不写入 `lessons/` 或 `homework/` |
+| `goal/` | G-goal | goal-plan.md, chain.md, coverage-matrix.md, progress.md, probes/, verify.md, revisions/; plan session writes plan skeleton only, not probes; /goal may update matrix/progress and write probes/verify; must not write inquiry/, lessons/, homework/, review/, synthesis/, archive/, mastered |
 | `review/` | R-review | 延迟保持题、原始回答、证据和复习日期 |
 | `children/<id>/` | child Work | 子 Change 原有工件；父只负责根锁、路由、位置登记 |
 | `synthesis/`、topic context | C-consolidate | claim 级综合、冲突、空白、provenance 和版本；不得覆盖原料 |

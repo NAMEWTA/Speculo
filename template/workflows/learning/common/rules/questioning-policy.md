@@ -2,6 +2,8 @@
 
 反问批次只允许写在 `Q-question` 拥有的 `inquiry/` 内。`L-lesson` 仍然禁止 Q/A、答案、verdict、mastered。本政策改出题与讲解，不改 H 的 `Submission` 协议。
 
+`audience=mine` 的 probes 只写入 `G-goal` 拥有的 `goal/probes/`。审问对象是已写 Lesson 与源码，不是学习者；禁止 `inquiry/`、`Response:`、`Submission:`、verdict、mastered。tutor 批次仍只写 `inquiry/`。
+
 ## 配方
 
 用户可指定 `teaching_method`；缺省为 `socratic`。配方只改变 Q1–Q5 的写法，不改变文件协议。

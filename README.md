@@ -72,7 +72,7 @@ After initialization, the target project gains the following AI agent-callable a
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
-| **learning** | 8 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, Socratic inquiry lessons, single-file homework review, optional retention review, and provenance-preserving topic synthesis |
+| **learning** | 9 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, Socratic inquiry lessons, Goal-Plan compilation for later external /goal execution, single-file homework review, optional retention review, and provenance-preserving topic synthesis |
 | **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
 | **ops** | 3 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
