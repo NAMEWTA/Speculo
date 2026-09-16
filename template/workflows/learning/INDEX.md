@@ -3,8 +3,8 @@ id: learning
 type: workflow
 workflow: learning
 name: Learning Workflow
-description: 以完整、通俗、多表示的课程，苏格拉底问答课、单文件作业评审、可选延迟复习和带溯源的主题综合，持续建立个人 Markdown 知识库。
-keywords: [learning, 学习, 教学, 苏格拉底, 反问, 作业, 复习, 综合, 知识, eli5]
+description: 以完整、通俗、多表示的课程，苏格拉底问答课、目标模式 Goal-Plan 编译、单文件作业评审、可选延迟复习和带溯源的主题综合，持续建立个人 Markdown 知识库。
+keywords: [learning, 学习, 教学, 苏格拉底, 反问, goal, 目标模式, 作业, 复习, 综合, 知识, eli5]
 ---
 
 # Learning Index

@@ -1,6 +1,6 @@
 # Learning v2 Activation Contract
 
-本合同只在用户明确激活 Learning 或其中一个 Work 后读取。Learning 将学习拆成课程设计、完整授课、单文件作业、可选保持复习和用户触发的主题整合；Work 之间不自动串联。
+本合同只在用户明确激活 Learning 或其中一个 Work 后读取。Learning 将学习拆成课程设计、完整授课、苏格拉底问答课、目标模式计划编译、单文件作业、可选保持复习和用户触发的主题整合；Work 之间不自动串联。
 
 激活后读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、Lesson/OBJ、topic 和 evidence 关键词定位最小相关工件；不默认整读 context、archive 或其他 Change。
 
@@ -11,9 +11,11 @@
 - **A-archive** — 冷归档：用户明确关闭后移动整个 Change 树到日期目录；不做知识综合或掌握判断。
 - **A-assess-and-plan** — 评估背景并设计课程：以目标和证据为起点建立课程、背景、基线、来源和可变 Lesson 地图。
 - **C-consolidate** — 主题整合：将选定 Change 物理嵌入父 Change，生成带 claim 级 provenance 的可迭代主题综合。
+- **G-goal** — 目标学习（目标模式）：为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图，但不写 Lesson、不向学习者提问、不自动串联 H/R/C。
 - **H-homework** — 课程作业与评审：以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。
 - **I-init-setup** — 初始化学习系统：初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。
 - **L-lesson** — 完整课程讲解：一次输出 30–40 分钟、通俗但完整的 Lesson；不生成作业、不评分、不宣称掌握。
+- **Q-question** — 苏格拉底问答课：以一批约 5 题激活已知与未知，学习者作答后追加详细讲解、纠错与深化；一批生成一节 inquiry-lesson。无 Change 时可自行创建 lightweight inquiry Change。不自动串联 L/H/R。
 - **R-review** — 延迟保持与周期复习：用户主动指定后，用真实时间间隔验证回忆、机制和迁移，并更新 retention evidence。
 
 <!-- AUTO-INDEX-END -->
@@ -34,6 +36,10 @@ I-init-setup -> A-assess-and-plan -> (user chooses) L-lesson
                                            |\
                                            | H-homework -> (optional) R-review
                                            |\
+                                           +-> (user chooses) G-goal(plan compile only)
+                                           |      -> external /goal: L-lesson -> socratic-questioning(audience=mine)
+                                           |      -> writes goal/probes/ and goal/verify.md
+                                           |
                                            +-> user questions -> notes/ or a new lesson/change
 
 Any active or closed changes --(user chooses C)--> consolidation parent
@@ -59,6 +65,14 @@ changes/<change-id>/
   sources.md
   lessons/INDEX.md
   lessons/L-001-<slug>.md
+  inquiry/INDEX.md
+  inquiry/IQ-001-<slug>-batch-01.md
+  goal/goal-plan.md
+  goal/chain.md
+  goal/coverage-matrix.md
+  goal/progress.md
+  goal/probes/GP-001-wave-01.md
+  goal/verify.md
   homework/INDEX.md
   homework/HW-001-<slug>-attempt-01.md
   notes/
