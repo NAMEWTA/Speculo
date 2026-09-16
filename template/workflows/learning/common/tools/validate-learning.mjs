@@ -14,6 +14,13 @@ const OLD_WORKS = new Set(["A-archive-and-consolidate", "E-eli5", "P-practice", 
 const PHASE = new Set(["planning", "teaching", "homework", "review", "consolidating", "closed", "archived"]);
 const LIFECYCLE = new Set(["active", "blocked", "closed", "archived"]);
 const EVIDENCE = new Set(["not_attempted", "passed", "needs_review"]);
+const MINE_UNIT_CAP = 15;
+const MAX_LESSON_QUESTIONS = 10;
+const PROBE_BATCH = /^GP-(L-\d{3}(?:-[a-z0-9]+)*)-b0(\d+)\.md$/;
+const QUESTION_HEADING = /^##\s+Q(\d+)\b/gm;
+const OLD_INTERLEAVE = /同一时间只推进一个 chain 节点|L\s*→\s*mine\s*→\s*L|先 L 写课，再 mine 探针/;
+const LEARNER_PROBE = /(?:^|\n)\s*Response:|(?:^|\n)\s*Submission:|\binquiry\//;
+const SOCRATIC_SKILL_PATH = "{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md";
 
 function options(argv) {
   const result = { workflowRoot: null, stateRoot: null, stage: null, change: null, selfCheck: false };
@@ -98,17 +105,218 @@ function validateWorkflowRoot(root, errors) {
     ["H-homework/homework-template.md", ["Q1", "A1", "Submission: pending"]],
     ["Q-question/Q-question.md", ["Response: pending", "Inquiry Lesson", "inquiry/"]],
     ["Q-question/inquiry-template.md", ["Response: pending", "Q1", "A1"]],
-    ["G-goal/G-goal.md", ["ready_for_execution", "goal/goal-plan.md", "covered-by-parent"]],
-    ["G-goal/goal-plan-template.md", ["ready_for_execution: false", "covered-by-parent", "goal/probes"]],
-    ["G-goal/references/external-goal-runner.md", ["audience=mine", "Q-quiz", "inquiry/"]],
+    ["G-goal/G-goal.md", ["ready_for_execution", "goal/goal-plan.md", "covered-by-parent", "mine unit", "mine_unit_cap"]],
+    ["G-goal/goal-plan-template.md", ["ready_for_execution: false", "covered-by-parent", "goal/probes", "mine_unit: project", "mine_unit_cap: 15", "learning_agent_limit: 4", "split-lesson", "teach-then-mine"]],
+    ["G-goal/chain-template.md", ["Units", "mined", "split_proposed", "split"]],
+    ["G-goal/probe-template.md", ["b01", "b02", "question_budget_used", "split-proposal", "split-lesson"]],
+    ["G-goal/progress-template.md", ["mine_unit", "question_budget_used", "active_subagents"]],
+    ["G-goal/orchestration-protocol.md", ["lead-orchestration.md", "mine-unit.md", "audience=mine"]],
+    ["G-goal/planning-modes.md", ["mine unit", "T（写完全部课）"]],
+    ["G-goal/references/external-goal-runner.md", ["audience=mine", "Q-quiz", "inquiry/", "socratic-questioning/SKILL.md", "mine unit"]],
+    ["G-goal/references/lead-orchestration.md", ["learning_agent_limit", "写集", "只有 Lead 可写", SOCRATIC_SKILL_PATH]],
+    ["G-goal/references/mine-unit.md", ["mine_unit_cap", "不是配额", "15"]],
+    ["G-goal/references/split-rules.md", ["split-lesson", "question_budget", "C-consolidate", "relocate-learning.mjs"]],
+    ["G-goal/references/stop-rules.md", ["第 11 问", "交错 L/mine", "15 节"]],
+    ["G-goal/references/coverage-bar.md", ["mine_unit_cap=15", "不是必须凑满"]],
     ["common/rules/teaching-policy.md", ["coverage_depth", "不以字符数"]],
-    ["common/rules/questioning-policy.md", ["audience=mine", "goal/probes"]],
+    ["common/rules/questioning-policy.md", ["audience=mine", "goal/probes", "最多两批 10 问"]],
+    ["common/skills/socratic-questioning/SKILL.md", ["audience=mine", "b02", "split-proposal"]],
   ];
   for (const [file, markers] of contracts) {
     const path = join(root, file);
     if (!isFile(path)) { errors.push(`${file}: required contract is missing`); continue; }
     const text = readFileSync(path, "utf8");
     for (const marker of markers) if (!text.includes(marker)) errors.push(`${file}: missing '${marker}'`);
+  }
+  const goalPlan = readFileSync(join(root, "G-goal/goal-plan-template.md"), "utf8");
+  if (OLD_INTERLEAVE.test(goalPlan) && !goalPlan.includes("禁止 L → mine → L → mine")) {
+    errors.push("G-goal/goal-plan-template.md: old interleave iteration policy remains");
+  }
+  const orch = readFileSync(join(root, "G-goal/orchestration-protocol.md"), "utf8");
+  if (orch.includes("默认 current、严格串行") || (orch.includes("同一时间只推进一个 chain 节点") && !orch.includes("禁止"))) {
+    errors.push("G-goal/orchestration-protocol.md: old serial one-node recipe remains");
+  }
+}
+
+function markdownTables(text) {
+  const tables = [];
+  const lines = String(text).split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    if (/^\|.+\|$/.test(lines[i]) && i + 1 < lines.length && /^\|\s*[-:| ]+\|$/.test(lines[i + 1])) {
+      const header = lines[i].split("|").slice(1, -1).map((cell) => cell.trim());
+      i += 2;
+      const rows = [];
+      while (i < lines.length && /^\|.+\|$/.test(lines[i]) && !/^\|\s*[-:| ]+\|$/.test(lines[i])) {
+        rows.push(lines[i].split("|").slice(1, -1).map((cell) => cell.trim()));
+        i += 1;
+      }
+      tables.push({ header, rows });
+      continue;
+    }
+    i += 1;
+  }
+  return tables;
+}
+
+function tableColumn(table, names) {
+  const index = table.header.findIndex((cell) => names.some((name) => cell.toLowerCase() === name.toLowerCase()));
+  return index;
+}
+
+function lessonIdsIn(text) {
+  return [...String(text).matchAll(/\bL-\d{3}(?:-[a-z0-9]+)*\b/g)].map((match) => match[0]);
+}
+
+function filledSplitProposal(text) {
+  const section = /##\s+split-proposal\b([\s\S]*?)(?:\n##\s+|$)/i.exec(text);
+  if (!section) return false;
+  const body = section[1];
+  if (/^\s*none\s*$/im.test(body.trim())) return false;
+  const tables = markdownTables(body);
+  for (const table of tables) {
+    for (const row of table.rows) {
+      if (row.some((cell) => cell && cell !== "—" && cell !== "-" && cell !== "none")) return true;
+    }
+  }
+  return /L-\d{3}/.test(body);
+}
+
+function parseChainLessons(chainText) {
+  const lessons = new Map();
+  for (const table of markdownTables(chainText)) {
+    const idCol = tableColumn(table, ["ID", "id", "lesson_id"]);
+    const statusCol = tableColumn(table, ["状态", "status"]);
+    if (idCol < 0 || statusCol < 0) continue;
+    for (const row of table.rows) {
+      const id = lessonIdsIn(row[idCol] ?? "")[0];
+      if (id) lessons.set(id, { status: (row[statusCol] ?? "").trim(), row });
+    }
+  }
+  return lessons;
+}
+
+function parseChainUnits(chainText) {
+  const units = [];
+  for (const table of markdownTables(chainText)) {
+    const unitCol = tableColumn(table, ["unit_id", "unit"]);
+    const lessonsCol = tableColumn(table, ["Lessons", "lessons", "课列表"]);
+    if (unitCol < 0 || lessonsCol < 0) continue;
+    for (const row of table.rows) {
+      const unitId = (row[unitCol] ?? "").trim();
+      if (!unitId || unitId === "unit_id") continue;
+      units.push({ unitId, lessons: lessonIdsIn(row[lessonsCol] ?? "") });
+    }
+  }
+  return units;
+}
+
+function validateGoal(changeRoot, errors) {
+  const goalRoot = join(changeRoot, "goal");
+  if (!isDir(goalRoot)) return;
+  const rel = (path) => relative(changeRoot, path).split(sep).join("/");
+  const chainPath = join(goalRoot, "chain.md");
+  const planPath = join(goalRoot, "goal-plan.md");
+  const progressPath = join(goalRoot, "progress.md");
+  const matrixPath = join(goalRoot, "coverage-matrix.md");
+  const probesRoot = join(goalRoot, "probes");
+  const verifyPath = join(goalRoot, "verify.md");
+  const chainText = isFile(chainPath) ? readFileSync(chainPath, "utf8") : "";
+  const planText = isFile(planPath) ? readFileSync(planPath, "utf8") : "";
+  const progressText = isFile(progressPath) ? readFileSync(progressPath, "utf8") : "";
+  const matrixText = isFile(matrixPath) ? readFileSync(matrixPath, "utf8") : "";
+  const verifyText = isFile(verifyPath) ? readFileSync(verifyPath, "utf8") : "";
+
+  if (planText && OLD_INTERLEAVE.test(planText) && !planText.includes("禁止 L → mine → L → mine")) {
+    errors.push(`${rel(planPath)}: interleaved L/mine iteration policy is forbidden`);
+  }
+  if (progressText && OLD_INTERLEAVE.test(progressText)) {
+    errors.push(`${rel(progressPath)}: interleaved L/mine progress is forbidden`);
+  }
+
+  const units = parseChainUnits(chainText);
+  const seenLesson = new Set();
+  for (const unit of units) {
+    if (unit.lessons.length > MINE_UNIT_CAP) {
+      errors.push(`${rel(chainPath)}: mine unit ${unit.unitId} has ${unit.lessons.length} lessons; mine_unit_cap=${MINE_UNIT_CAP}`);
+    }
+    for (const id of unit.lessons) {
+      if (seenLesson.has(id)) errors.push(`${rel(chainPath)}: lesson ${id} belongs to more than one mine unit`);
+      seenLesson.add(id);
+    }
+  }
+
+  const lessons = parseChainLessons(chainText);
+  const probeFiles = isDir(probesRoot)
+    ? files(probesRoot).filter((path) => path.endsWith(".md") && !path.endsWith("INDEX.md"))
+    : [];
+  const byLesson = new Map();
+  for (const path of probeFiles) {
+    const name = path.split(sep).pop() ?? "";
+    const label = rel(path);
+    const text = readFileSync(path, "utf8");
+    const meta = frontmatter(text);
+    const match = PROBE_BATCH.exec(name);
+    if (!match) {
+      errors.push(`${label}: probe filename must be GP-<lesson>-b0N.md`);
+      continue;
+    }
+    const fileLesson = match[1];
+    const batch = Number(match[2]);
+    if (batch > 2) errors.push(`${label}: b03+ is forbidden; max two batches per lesson`);
+    if (meta.audience && meta.audience !== "mine") errors.push(`${label}: audience must be mine`);
+    if (meta.lesson_id && meta.lesson_id !== fileLesson && !String(meta.lesson_id).startsWith(fileLesson) && !fileLesson.startsWith(String(meta.lesson_id))) {
+      errors.push(`${label}: miner write-set isolation; lesson_id ${meta.lesson_id} does not match filename ${fileLesson}`);
+    }
+    if (LEARNER_PROBE.test(text)) errors.push(`${label}: mine probe must not contain Response:, Submission:, or inquiry/`);
+    const questions = [...text.matchAll(QUESTION_HEADING)].map((item) => Number(item[1]));
+    const record = byLesson.get(fileLesson) ?? { questions: [], batches: new Set(), files: [], texts: [], budgets: [], split: false, mineMore: false, splitDepth: 0 };
+    record.questions.push(...questions);
+    record.batches.add(batch);
+    record.files.push(label);
+    record.texts.push(text);
+    if (Number.isInteger(meta.question_budget_used)) record.budgets.push(meta.question_budget_used);
+    if (filledSplitProposal(text)) record.split = true;
+    if (/\bmine-more\b/.test(text)) record.mineMore = true;
+    if (Number.isInteger(meta.split_depth)) record.splitDepth = Math.max(record.splitDepth, meta.split_depth);
+    byLesson.set(fileLesson, record);
+  }
+
+  const minedLessons = new Set(byLesson.keys());
+  for (const unit of units) {
+    const statuses = unit.lessons.map((id) => lessons.get(id)?.status ?? "");
+    const unitHasProbe = unit.lessons.some((id) => minedLessons.has(id));
+    const unitStillWriting = unit.lessons.some((id) => {
+      const status = lessons.get(id)?.status ?? "";
+      return status === "planned" || status === "writing";
+    });
+    if (unitHasProbe && unitStillWriting) {
+      errors.push(`${rel(chainPath)}: mine unit ${unit.unitId} interleaved L/mine (probes exist while a lesson is still planned/writing)`);
+    }
+    void statuses;
+  }
+
+  const matrixUncovered = /\buncovered\b/.test(matrixText);
+  for (const [lessonId, record] of byLesson) {
+    const uniqueQs = new Set(record.questions);
+    if (uniqueQs.size > MAX_LESSON_QUESTIONS || record.questions.some((number) => number > MAX_LESSON_QUESTIONS)) {
+      errors.push(`${record.files[0]}: lesson ${lessonId} has more than ${MAX_LESSON_QUESTIONS} questions`);
+    }
+    const budget = record.budgets.length ? Math.max(...record.budgets) : uniqueQs.size;
+    const status = lessons.get(lessonId)?.status ?? "";
+    if (status === "revised" && uniqueQs.size > 0 && record.budgets.some((value) => value === 0)) {
+      errors.push(`${record.files[0]}: re-dispatch-L must not reset question_budget_used for ${lessonId}`);
+    }
+    if (uniqueQs.size >= MAX_LESSON_QUESTIONS && record.mineMore && !record.split) {
+      errors.push(`${record.files[0]}: 10 questions with remaining uncovered/mine-more requires split-proposal, not b03`);
+    }
+    if (uniqueQs.size >= MAX_LESSON_QUESTIONS && matrixUncovered && !record.split && record.mineMore) {
+      errors.push(`${record.files[0]}: 10 questions still uncovered requires split-proposal`);
+    }
+    if (record.splitDepth >= 2 && matrixUncovered && !/needs-replan/.test(`${progressText}\n${verifyText}\n${record.texts.join("\n")}`)) {
+      errors.push(`${record.files[0]}: split depth=2 still unclear must defer(needs-replan)`);
+    }
+    void budget;
   }
 }
 
@@ -229,6 +437,7 @@ function validateStateRoot(root, opts, errors) {
     const changeRoot = join(root, ...String(entry.locator).split("/"));
     validateLessons(changeRoot, errors);
     validateHomework(changeRoot, errors);
+    validateGoal(changeRoot, errors);
     if (opts.stage === "pre-archive" && (!opts.change || opts.change === entry.change_id) && value?.lifecycle !== "closed") errors.push(`${entry.change_id}: pre-archive requires lifecycle closed`);
     if (opts.stage === "complete" && (!opts.change || opts.change === entry.change_id) && !String(entry.locator).startsWith("archive/")) errors.push(`${entry.change_id}: complete stage requires archived locator`);
   }

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Learning G-goal teach-then-mine**: `/goal` now teaches a project-sized mine unit (hard cap 15 lessons, not a quota) then fans out one miner per lesson. Lead-directed write-set isolation; `split-lesson` after 10 questions; new references `lead-orchestration.md`, `mine-unit.md`, `split-rules.md`.
+
+### Changed
+- G-goal runtime is no longer interleave-one-lesson-then-mine. Iteration policy, stop-rules, chain Units table, probe `b01`/`b02` budget, and questioning policy cap mine at 10 questions per `lesson_id`. `wave_cap` is no longer a mining gate.
+- `validate-learning` enforces teach-then-mine, `mine_unit_cap=15`, max 10 questions, no `b03`, Lead-exclusive matrix markers, and rejects learner-protocol fields in mine probes.
+
 ## [1.0.11] - 2026-09-16
 
 ### Added

@@ -11,7 +11,7 @@
 - **A-archive** — 冷归档：用户明确关闭后移动整个 Change 树到日期目录；不做知识综合或掌握判断。
 - **A-assess-and-plan** — 评估背景并设计课程：以目标和证据为起点建立课程、背景、基线、来源和可变 Lesson 地图。
 - **C-consolidate** — 主题整合：将选定 Change 物理嵌入父 Change，生成带 claim 级 provenance 的可迭代主题综合。
-- **G-goal** — 目标学习（目标模式）：为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图，但不写 Lesson、不向学习者提问、不自动串联 H/R/C。
+- **G-goal** — 目标学习（目标模式）：为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；按项目切 ≤15 节的 mine unit，先写齐再按课派 miner。计划会话可跟随 A 写出课程地图，但不写 Lesson、不向学习者提问、不自动串联 H/R/C。
 - **H-homework** — 课程作业与评审：以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。
 - **I-init-setup** — 初始化学习系统：初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。
 - **L-lesson** — 完整课程讲解：一次输出 30–40 分钟、通俗但完整的 Lesson；不生成作业、不评分、不宣称掌握。
@@ -38,13 +38,13 @@ I-init-setup -> A-assess-and-plan -> (user chooses) L-lesson
                                            |\
                                            +-> Q-question (inquiry/)
                                            |\
-                                           +-> G-goal (goal/ Goal-Plan; later /goal may L then mine)
+                                           +-> G-goal (goal/ Goal-Plan; later /goal: mine-unit T then M then D)
 
 Any active or closed changes --(user chooses C)--> consolidation parent
 Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 ```
 
-`L` 完成后只报告已生成的 Lesson 和可选的下一步，不自动激活 `H`；`H` 评审后可结束本轮，不自动激活 `R`、`C` 或 `A`。`Q-question` 不自动激活 L/H/R，也不写入 `lessons/` 或 `homework/`。`G-goal` 激活只编译 Goal-Plan 并停止，不写 `lessons/` 或 `goal/probes/`；用户稍后用外部 `/goal` 才可派单 L 然后 socratic-questioning `audience=mine`。`C` 和 `A` 都需要用户明确确认，未确认的 dry-run 不得移动或写入 context。
+`L` 完成后只报告已生成的 Lesson 和可选的下一步，不自动激活 `H`；`H` 评审后可结束本轮，不自动激活 `R`、`C` 或 `A`。`Q-question` 不自动激活 L/H/R，也不写入 `lessons/` 或 `homework/`。`G-goal` 激活只编译 Goal-Plan 并停止，不写 `lessons/` 或 `goal/probes/`；用户稍后用外部 `/goal` 按项目切出不超过 15 节的 mine unit，先写齐该单元全部课，再按课派 miner（socratic-questioning `audience=mine`）。不自动串联 H/R/C/A。`C` 和 `A` 都需要用户明确确认，未确认的 dry-run 不得移动或写入 context。
 
 ## 启动协议
 
@@ -77,7 +77,7 @@ changes/<change-id>/
   .status.json
 ```
 
-`inquiry/` 由 `Q-question` 拥有；`goal/` 由 `G-goal` 拥有。计划会话只写 Goal-Plan 骨架（`goal-plan.md` / `chain.md` / `coverage-matrix.md` / `progress.md`），不写 `goal/probes/` 或 `lessons/` 正文。`/goal` 可更新矩阵与 progress 并写入 probes/verify；不得写入 `inquiry/`。
+`inquiry/` 由 `Q-question` 拥有；`goal/` 由 `G-goal` 拥有。计划会话只写 Goal-Plan 骨架（`goal-plan.md` / `chain.md` / `coverage-matrix.md` / `progress.md` 与 mine unit 切分），不写 `goal/probes/` 或 `lessons/` 正文。`/goal` Lead 可更新矩阵与 progress 并写入 probes/verify；L 子代理只写被分配的 Lesson；miner 只写自己的 `GP-*-b0N`；不得写入 `inquiry/`。
 
 综合父 Change 使用：
 
@@ -119,7 +119,7 @@ Workflow 自身只读模板；Change 内容只写当前 Change 或其 `children/
 
 `expression_level=eli5|plain` 只控制词汇、句法、脚手架和类比比例；`coverage_depth=overview|standard|deep` 控制覆盖强度。Lesson 可放非评分的 pause/self-check，但不得生成 Q/A、答案、分数、verdict 或 mastered 字段。外部图片只是可选增强，必须有 alt、caption、source、访问日期和文字等价物，课程不能依赖链接可用性。
 
-学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。
+学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。每课最多 10 问（两批 5 槽）；满 10 后只拆课，不续问。
 
 ## Homework 合同
 
