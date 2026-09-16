@@ -1,6 +1,6 @@
 # Reconcile Protocol
 
-仅在 Triage `mode=reconcile` 时加载。目标是把本地完成结果最小化投影到来源 Issue，并关闭它。
+仅在 Triage `mode=reconcile` 时加载。目标是把本地完成结果最小化投影到来源 Issue，并关闭它。票级发布走 publish，不走本协议。
 
 ## 1. 本地完成硬门
 
@@ -10,7 +10,7 @@
 
 ## 2. 准备关闭计划
 
-从本地 Evidence 生成简短评论：完成结果、关键验证、可公开的 commit/PR URL、残余风险或后续工作。不得发布 state Path、机器路径、秘密、内部日志或未核对声明。
+从本地 Evidence 生成简短评论：完成结果、关键验证、可公开的 commit/PR URL、残余风险或后续工作。遵守 `<Path>{roots.workflows}/specdev/T-triage/references/public-projection.md</Path>`。若同一 change 已 publish，评论可以链接票 Issue 编号；源 Issue 仍不是那些票 Issue。
 
 向用户展示准确 repo、Issue 编号、评论全文、close reason 和将执行的动作。只有本次明确确认后才继续；拒绝或暂不执行时零远程写入。用户明确放弃关闭可将状态置为 `waived`。
 
@@ -23,7 +23,7 @@
 - marker 不存在：评论成功后再 close；
 - 任一步失败：记录已完成步骤、错误和下一重试动作，状态为 `close-failed`。
 
-成功后重读远程状态，只有观察到 closed 才写 `external_action: closed`。
+成功后重读远程状态，只有观察到 closed 才写 `external_action: closed`。不改写 `publish_action`。
 
 ## 完成标准
 

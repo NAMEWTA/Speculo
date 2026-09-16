@@ -9,6 +9,7 @@ change: <YYYY-MM-DD-topic>
 id: T-01
 title: <标题>
 status: draft
+kind: bug
 planning_depth: standard
 planning_depth_reason: <触发该深度的事实>
 ready: false

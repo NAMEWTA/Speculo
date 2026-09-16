@@ -1,6 +1,6 @@
 # Intake Protocol
 
-仅在 Triage `mode=intake` 时加载。本协议把外部输入转换为不可静默覆盖的本地来源快照。
+仅在 Triage `mode=intake` 时加载。本协议把外部输入转换为不可静默覆盖的本地来源快照。v1 不回写源 Issue 标签。
 
 ## 1. 解析来源
 
@@ -16,6 +16,8 @@
 - locator 相同但 hash 不同：展示漂移，不覆盖原快照；只有用户确认后才创建新 change，并在新 source 中记录 `supersedes_source`；
 - 没有稳定 locator：按用户指定 change 或新 change 继续。
 
+同时只读扫描永久 ADR、archive 中已关闭的同类请求和当前 active change 标题。发现概念相似项时向用户展示路径与一句话理由，询问是否仍要继续。不自动 wontfix，不新建 `.out-of-scope/` 目录。
+
 ## 3. 冻结内容
 
 GitHub 来源保存 title、body、author、state、labels、created/updated 和截至捕获时可见的全部评论。普通 URL 保存可读正文和元数据；项目文件保存内容及项目相对 Path；粘贴或对话保存用户原文。
@@ -29,4 +31,6 @@ GitHub 来源保存 title、body、author、state、labels、created/updated 和
 - 来源类型、locator、捕获时间、hash 和关闭能力已确定；
 - 完整可持久化正文与评论已冻结；
 - 重复和漂移分支有唯一结果；
-- 失败没有生成伪造或不完整的 Ready source。
+- 相似归档/ADR 项已展示或明确无匹配；
+- 失败没有生成伪造或不完整的 Ready source；
+- 源 Issue 标签未被本协议修改。
