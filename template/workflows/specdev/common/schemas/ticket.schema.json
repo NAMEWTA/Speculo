@@ -54,6 +54,17 @@
         "cancelled"
       ]
     },
+    "kind": {
+      "enum": [
+        "bug",
+        "feature",
+        "refactor",
+        "investigation",
+        "operations",
+        "documentation",
+        "review"
+      ]
+    },
     "planning_depth": {
       "enum": [
         "lite",

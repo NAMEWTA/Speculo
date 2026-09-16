@@ -5,6 +5,7 @@
 |---|---|---|
 | 需要冻结外部来源或审计摄入 | T-triage intake | D / G / W / P / S / C / T |
 | 本地 change 完成且来源可关闭 | T-triage reconcile | A |
+| 本地 change 完成且要把 Ticket 记到 GitHub | T-triage publish | reconcile / A / 停止 |
 | 疑难 bug 或性能回归 | D-diagnose-bugs | S / T / I / R / W |
 | 模糊但可通过决策访谈收敛 | G-grill-with-docs | P / S / T / W |
 | 大需求包含多个未界定 change 或未知路径 | W-wayfinder | G / P / D / S / T |
@@ -21,4 +22,4 @@
 同 change 下一阶段需要当前一手推理且上下文健康时继续；切换 repo/person/harness 或旁路时使用 `<Path>{roots.commands}/handoff.md</Path>`；严格限定且可独立派单时使用 Dispatch Packet；其他长上下文以权威工件路径恢复。平台不支持 clear/compact 时不虚构操作。
 
 
-本地已清晰请求不强制绕行 Triage。G 是单 change Grill，P-prototype 是 UI 设计，不与统一 P-goal-plan 混淆。W 发现候选后逐个交 G/S/T；只有清晰且 Ready 的 child 才交 P。原缺陷诊断 D、风险分诊和远程 reconcile 职责不删除。
+本地已清晰请求不强制绕行 Triage。完成后要记账才选 publish；publish 与 reconcile 写不同远程对象，可先后执行。G 是单 change Grill，P-prototype 是 UI 设计，不与统一 P-goal-plan 混淆。W 发现候选后逐个交 G/S/T；只有清晰且 Ready 的 child 才交 P。原缺陷诊断 D、风险分诊、远程 reconcile 和完成后发布投影职责不删除。

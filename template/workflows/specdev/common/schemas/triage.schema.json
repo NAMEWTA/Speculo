@@ -8,13 +8,15 @@
     "schema_version": {"const": 1},
     "artifact": {"const": "triage"},
     "change": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
-    "mode": {"enum": ["intake", "reconcile"]},
+    "mode": {"enum": ["intake", "reconcile", "publish"]},
     "source": {"type": "string", "minLength": 1},
     "classification": {"enum": ["bug", "feature", "refactor", "investigation", "operations", "documentation", "review", "mixed"]},
     "risk": {"enum": ["low", "medium", "high", "critical"]},
     "route": {"type": "string", "pattern": "^specdev/[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "ready_for_implementation": {"type": "boolean"},
     "external_action": {"enum": ["not-applicable", "pending-close", "closed", "close-failed", "waived"]},
+    "publish_action": {"enum": ["not-requested", "pending", "published", "publish-failed", "waived"]},
+    "publish": {"type": ["string", "null"]},
     "updated_at": {"type": "string", "minLength": 1}
   },
   "additionalProperties": true

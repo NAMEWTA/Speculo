@@ -73,11 +73,13 @@ After initialization, the target project gains the following AI agent-callable a
 | Workflow | Work Entries | Description |
 |---|---:|---|
 | **learning** | 9 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, Socratic inquiry lessons, Goal-Plan compilation for later external /goal execution (teach a mine-unit of ≤15 lessons, then fan out miners), single-file homework review, optional retention review, and provenance-preserving topic synthesis |
-| **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, triage, and wayfinding |
+| **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, triage (intake / reconcile / publish), and wayfinding |
 | **ops** | 3 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
 Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
+
+SpecDev T-triage stays the only remote boundary. Use **intake** to freeze a source, **reconcile** to close that original source Issue after local completion, and **publish** to project each completed Ticket as a classified GitHub Issue (local-origin work included). GitHub is a projection and counter, not the development source of truth. Run both reconcile and publish when an intake Change should also count its tickets.
 
 ## Documentation
 

@@ -7,20 +7,21 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
 | 来源快照 | `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
-| 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求类别、影响、风险、缺失输入、下一 work 和远程 reconcile 状态 | 详细实现方案或开发进度 |
+| 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求类别、影响、风险、缺失输入、下一 work、源 Issue reconcile 状态和 publish_action | 详细实现方案、开发进度或票级发布账本 |
+| 发布账本 | `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` | 票级 GitHub 投影的编号、标签、marker、state 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
 | 诊断 | `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
 | 设计树 | `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>` | 决策节点、依赖、当前 frontier、轮次与共识状态 | 领域真相或架构决定正文 |
 | Change 领域上下文 | `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` | 本 change 已确认、供下游使用的领域术语和语义 | 永久领域知识或临时会议记录 |
 | Change 架构决策 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
-| Ticket | `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理 |
+| Ticket | `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理或远程 Issue 编号 |
 | Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
 | Goal Plan | `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Implementation Map | `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
 | Implementation Orchestration Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
-| Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策 |
+| Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
 | Change 学习图解 | `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>` | 面向零专业背景读者解释当前 change 的已验证工件、实现和测试事实；索引按序号持续追加 | 产品决定、架构决定、实现授权或 Learning workflow 知识 |
 | 代码审查 | `<Path>{roots.state}/specdev/changes/{change}/reviews/CR-###.md</Path>` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | UI 设计包 | `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>` | 项目 UI 证据、功能风格候选、逐层用户决定、设计 token、交互合同和可运行 HTML/CSS/JS 投影 | 生产 UI 实现或替用户确认高影响偏好 |
@@ -50,7 +51,7 @@ Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永
 
 当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
 
-`<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。
+`<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。GitHub 上由 publish 投影出的 Issue 不是开发权威；发布计数以 `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` 为准。
 
 代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 退回相应工件修订。
 

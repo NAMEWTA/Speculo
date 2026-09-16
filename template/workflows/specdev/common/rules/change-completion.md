@@ -29,6 +29,6 @@ Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</P
 
 ## 远程来源与归档
 
-远程动作不参与本地完成判定。Triage 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。归档后工件只读。
+远程动作不参与本地完成判定。Triage `external_action` 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。Triage `publish_action` 为 `pending`/`publish-failed` 时先恢复或结束 publish；`not-requested`、`published` 或 `waived` 才允许 Archive。`not-requested` 是默认，未点过 publish 的 change 不被新模式绑架。归档后工件只读。
 
 **完成标准**：完成声明可由本地工件、Git 与验证重建；只有一个 owner 命中；失败 candidate 不污染父分支。

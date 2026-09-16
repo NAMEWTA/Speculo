@@ -9,6 +9,8 @@ risk: medium
 route: specdev/wayfinder
 ready_for_implementation: false
 external_action: not-applicable
+publish_action: not-requested
+publish: null
 updated_at: <ISO-8601>
 ---
 
@@ -40,4 +42,13 @@ updated_at: <ISO-8601>
 - **授权记录：** 无
 - **尝试与结果：** 无
 
-外部动作只投影最终完成，不替代本地状态、Ticket、Map 或 Evidence。
+外部动作只投影来源 Issue 的最终完成，不替代本地状态、Ticket、Map 或 Evidence。
+
+## 发布投影
+
+- **publish_action：** not-requested / pending / published / publish-failed / waived
+- **账本：** 无 / `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>`
+- **origin：** local / intake
+- **计数：** 见账本；workspace 汇总用 publish-status
+
+发布投影只记账已完成 Ticket，不把 GitHub 提升为开发权威。`publish_action` 与 `external_action` 分立。

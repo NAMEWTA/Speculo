@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-09-16
+
+### Added
+- **SpecDev T-triage publish projection**: completed Changes can publish each planned Ticket as a classified GitHub Issue and close it with a sanitized Evidence comment. Local-origin work is counted. New ledger `publish.md`, classification map, public-projection rules, `publish.schema.json`, and `publish-status.mjs`.
+
+### Changed
+- T-triage now has three modes: intake, reconcile, and publish. `external_action` still owns the source Issue; `publish_action` owns the ticket projection. Archive blocks `pending` / `publish-failed` publish actions the same way it blocks unreconciliation.
+- Ticket frontmatter accepts optional `kind`. Intake may surface similar ADR/archive items but still does not write labels back to the source Issue.
+
+### Tests
+- Added `specdev-t-triage-publish` coverage for backward-compatible intake, local-origin ledgers, mixed-without-kind, forbidden `needs-triage` labels, archive gates, and published-issue counts including skipped cancelled tickets.
+
 ## [1.0.13] - 2026-09-16
 
 ### Added
