@@ -30,7 +30,7 @@ pnpm verify-bin
 - `template/workflows/<workflow>/<Letter>-<name>/`：一个可恢复步骤；只读取当前分支需要的规则、schema、模板和工具。
 - `skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
 
-当前模板包含 7 个 commands、10 个顶层 skills、4 个 workflows：Learning 8 works、SpecDev 14 works、Ops 3 works、Person 2 works。
+当前模板包含 7 个 commands、10 个顶层 skills、4 个 workflows：Learning 9 works、SpecDev 14 works、Ops 3 works、Person 2 works。
 
 ## 边界与停止条件
 
