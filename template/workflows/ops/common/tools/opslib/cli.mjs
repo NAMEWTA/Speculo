@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync, statSync, lstatSync, unlinkSync,
 import { dirname, isAbsolute, join, relative as pathRelative, resolve, sep } from "node:path";
 import { hostname } from "node:os";
 import {
-  atomicWrite, digest, emptyStatus, identifier, newId, now, noSymlinks, OpsError,
+  atomicWrite, digest, emptyStatus, identifier, newId, now, noSymlinks, OpsError, NodeMissing,
   privateDir, readJson, VERSION, withLock, writeJson,
 } from "./core.mjs";
 import { load, ledgerLoad, putCredential, register, save, validate, validateHost, validateStatus } from "./model.mjs";
@@ -13,6 +13,7 @@ import { approval, apply, verifyJournal, requestBase } from "./execution.mjs";
 import { STANDARD } from "./docs.mjs";
 import { environmentSpec } from "./host_recipes.mjs";
 import { fetchSource } from "./sources.mjs";
+import { bootstrapNode, enroll, discoverOrMissing } from "./bootstrap.mjs";
 
 export const cliHooks = { probeLocal: transportProbeLocal };
 export function probeLocal() { return cliHooks.probeLocal(); }
@@ -218,6 +219,15 @@ function parseArgs(argv) {
   else if (command === "status") { /* none */ }
   else if (command === "recover-controller-lock") grab("--ack");
   else if (command === "import-legacy") { grab("--source"); grab("--controller-id"); }
+  else if (command === "bootstrap-node") {
+    grab("--connection-file"); grab("--host-id"); grab("--account"); grab("--host-root");
+    grab("--volta-archive"); grab("--volta-sha256"); grab("--node-archive"); grab("--node-sha256");
+    grab("--node-version"); grab("--ack");
+    out.probe = flag("--probe");
+    out.apply = flag("--apply");
+    out.allow_network = flag("--allow-network");
+  }
+  else if (command === "enroll") grab("--file");
   else throw new Error("unknown command: " + command);
   if (argv.length) throw new Error("unrecognized arguments: " + argv.join(" "));
   return out;
@@ -234,7 +244,7 @@ export function main(argv = process.argv.slice(2)) {
     process.stdout.write(VERSION + "\n");
     return 0;
   }
-  if (!args.state && !["analyze", "probe", "validate"].includes(args.command)) {
+  if (!args.state && !["analyze", "probe", "validate", "bootstrap-node"].includes(args.command)) {
     process.stderr.write("--state is required; it is never guessed from cwd\n");
     return 2;
   }
@@ -254,10 +264,14 @@ export function main(argv = process.argv.slice(2)) {
       } else if (args.connection_file) {
         const h = readJson(args.connection_file);
         const discovery = h.identity === "discover";
+        if (h.transport === "ssh") discoverOrMissing(h);
         if (discovery) h.identity = "0".repeat(64);
         validateHost(h);
         result = call(h, { action: "probe", ...(discovery ? { identity: null } : {}) }, { timeout: 180 });
-        if (discovery) result.registration_note = "Read-only discovery over your pinned known_hosts. Review identity and store it explicitly; discover is never valid for register/apply.";
+        if (discovery) {
+          result.next = "ops.mjs --state STATE enroll --file register.json";
+          result.registration_note = "Read-only discovery over your pinned known_hosts. Next must persist via enroll (or register + probe --host); discover is never valid for register/apply.";
+        }
       } else result = probeLocal();
       if (args.output) writeJson(resolve(args.output), result);
     } else if (cmd === "register") result = register(state, readJson(args.file));
@@ -302,10 +316,18 @@ export function main(argv = process.argv.slice(2)) {
       };
     } else if (cmd === "recover-controller-lock") result = breakControllerLock(state, args.ack);
     else if (cmd === "import-legacy") result = importLegacy(state, resolve(args.source), args.controller_id);
+    else if (cmd === "bootstrap-node") result = bootstrapNode({ ...args, state });
+    else if (cmd === "enroll") result = enroll(state, readJson(args.file));
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-    return ["failed", "partial", "unknown", "docs_pending"].includes(result.status) ? 2 : 0;
+    return ["failed", "partial", "unknown", "docs_pending", "blocked"].includes(result.status) ? 2 : 0;
   } catch (e) {
-    process.stderr.write(JSON.stringify({ status: "blocked", error: e.message || String(e) }) + "\n");
+    const payload = { status: "blocked", error: e.message || String(e) };
+    if (e instanceof NodeMissing) {
+      payload.error = "node-missing";
+      payload.next = e.next;
+      payload.posix = e.posix;
+    }
+    process.stderr.write(JSON.stringify(payload) + "\n");
     return 2;
   }
 }

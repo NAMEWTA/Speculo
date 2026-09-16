@@ -1,7 +1,9 @@
 /** Pinned environment-management recipes. No latest-version guessing or implicit profile edits. */
 import { identifier, exact, newId, now, OpsError, targetJoin, within } from "./core.mjs";
 import { load } from "./model.mjs";
-import { call } from "./transport.mjs";
+import { call as transportCall } from "./transport.mjs";
+
+export const hostRecipesHooks = { call: transportCall };
 
 function shlexQuote(s) {
   if (s === "") return "''";
@@ -13,12 +15,18 @@ function reEscape(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function managedVoltaBin(host, account, inventory) {
+  const home = (inventory.defaults?.VOLTA_HOME || "").trim()
+    || targetJoin(host, "_host/toolchains/" + account + "/volta");
+  return host.platform === "windows" ? home + "\\bin\\volta" : home.replace(/\/+$/, "") + "/bin/volta";
+}
+
 export function environmentSpec(state, hid, request) {
   exact(request, new Set(["account", "python_versions", "uv_path", "node_version", "npm_version", "volta_path", "java_version", "original_java_candidate", "sdkman_init"]), new Set(["account"]), "environment request");
   identifier(request.account, "toolchain account");
   const status = load(state);
   const host = status.hosts[hid];
-  const inventory = call(host, { action: "probe", disk_roots: [host.root] }, { timeout: 180 });
+  const inventory = hostRecipesHooks.call(host, { action: "probe", disk_roots: [host.root] }, { timeout: 180 });
   const base = targetJoin(host, "_host/toolchains/" + request.account);
   const defaults = Object.fromEntries(Object.entries(inventory.tools).filter(([k, v]) => ["java", "python", "python3", "node", "npm"].includes(k) && v.status === "observed"));
   const actions = [];
@@ -55,8 +63,16 @@ export function environmentSpec(state, hid, request) {
   }
   if (request.node_version) {
     const v = pinned(request.node_version, "Node");
-    const volta = request.volta_path || inventory.tools.volta?.path;
-    if (!volta) throw new OpsError("Volta missing: install a reviewed pinned release before the managed environment recipe");
+    let volta = request.volta_path || inventory.tools.volta?.path;
+    if (!volta) {
+      const candidate = managedVoltaBin(host, request.account, inventory);
+      const snap = hostRecipesHooks.call(host, { action: "snapshot", paths: [candidate] }, { timeout: 60 });
+      const st = snap.paths?.[candidate];
+      if (!st || st.kind === "absent") {
+        throw new OpsError("Volta missing: install a reviewed pinned release before the managed environment recipe; for a Node-less Linux SSH target run ops.mjs bootstrap-node first");
+      }
+      volta = candidate;
+    }
     const home = base + (host.platform === "windows" ? "\\volta" : "/volta");
     mkdir("_host/toolchains/" + request.account + "/volta");
     let old = (inventory.tools.node?.version ?? "").trim();

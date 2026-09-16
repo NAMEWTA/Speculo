@@ -6,12 +6,12 @@
 |---|---|---|
 | 控制端 | Node 标准库 CLI（ops.mjs）；状态、锁、明文、计划、执行 | 无第三方 npm 包；控制端可本地执行完整闭环 |
 | Linux local | 原生 oneshot；systemd 配置/权限/健康门；Docker Engine Compose | 本轮隔离 local oneshot 演练；systemd/Docker 需要真实有权限主机验收 |
-| SSH | OpenSSH 密钥或 agent；固定 known_hosts；目标身份；可 sudo -n | 目标 Node；本轮没有远程主机/ssh 客户端实机验证；不实现交互式 SSH 密码登录 |
+| SSH | OpenSSH 密钥或 agent；固定 known_hosts；目标身份；可 sudo -n；Linux 目标无 Node 时可走固定 Volta 引导 | 目标无 Node 时 Linux SSH 可走固定 Volta/Node 引导（pin 见 common/toolchains/volta-linux.json）；Windows 仍要求已有 Node。本轮没有远程主机/ssh 客户端实机验证，由模拟 SSH/scp 覆盖；不实现交互式 SSH 密码登录 |
 | Windows 原生 | PowerShell 引导、路径/DACL、同账户登录态 Scheduled Task | 不是无人登录的 Windows Service；真正后台服务需专用 adapter；本轮非 Windows 实机 |
 | WSL | 单独登记为 Linux 执行目标 | 不把 Windows 主机路径/Docker Desktop VM 当作 WSL 根 |
 | macOS | 身份探测、POSIX 路径、oneshot | 无 launchd 适配；不是承诺全部平台常驻部署 |
 | Compose | JSON-as-YAML、显式 context/project、raw env_file、digest image、bind 与 VOLUME检查 | 要求 Compose >=2.30；strict Engine data-root；Docker Desktop 不自动迁移 |
-| uv/Volta/SDKMAN | 明确版本准备与原默认保留配方；命令/默认验证 | 管理器安装包必须可信固定；旧 profile 不自动改写；项目真实兼容性另验 |
+| uv/Volta/SDKMAN | 明确版本准备与原默认保留配方；命令/默认验证；Volta 本体 + 固定 Node 镜像可由 Linux SSH `bootstrap-node` 安装 | 管理器安装包必须可信固定；旧 profile 不自动改写；项目真实兼容性另验 |
 | 共享服务 | MySQL/Redis/MinIO 分配、existing 验证、owner/binding/依赖排序 | 无本轮数据库实机；未知产品须真实版本适配；没有万能数据库备份/恢复 |
 | 升级/回滚/迁移 | 新 spec、固定版本、显式主机操作、跨机排序、逐步回执 | 没有隐式停机零损失承诺；没有自动生成任意项目迁移脚本 |
 | 清理 | 只读诊断、cache/log 隔离、精确回执受控 purge | 不普遍删除 Windows/Linux 任意系统垃圾；不 drop_caches 或 prune volume |

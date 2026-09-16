@@ -1,5 +1,6 @@
 #!/bin/sh
 # First-stage controller/target bootstrap: POSIX shell only, no Python prerequisite.
+# Remote Linux SSH hosts that lack Node must use ops.mjs bootstrap-node, not this local script.
 set -eu
 case "${1:---probe}" in
   --probe)

@@ -24,7 +24,7 @@ keywords: [ops, 主机, SSH, 部署, Docker, 持久化, 公共服务, 运维]
 ## Work 激活
 
 I-initialize：控制端初始化。
-H-host-manage：本地或远程主机的环境、诊断、清理和维护。
+H-host-manage：本地或远程主机的环境、诊断、清理和维护。Linux SSH 目标无 Node 时先走 USAGE 中的 `bootstrap-node` 再 `enroll`，盘点必须写入 `hosts/`。
 D-project-deploy：业务 APP 与公共服务部署、复用、更新、停止及显式迁移。
 
 三个入口都使用 plan → approve → apply → verify → dual-documents；不得自动激活额外旧 Work。

@@ -10,9 +10,28 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops init --cont
 node /path/to/ops/common/tools/ops.mjs probe --output /safe/path/local-inventory.json
 ```
 
-没有 Node 时运行 common/tools/bootstrap.sh probe 或 bootstrap.ps1 -Probe，只做检测。经过批准的本地安装器还需精确 SHA256 与确认字符串。完成后重新 init。
+没有 Node 时运行 common/tools/bootstrap.sh probe 或 bootstrap.ps1 -Probe，只做检测。经过批准的本地安装器还需精确 SHA256 与确认字符串。完成后重新 init。SSH 目标缺 Node 不要对本机 bootstrap.sh 假装能装远端，改走下面的 `bootstrap-node`。
 
-初次远端将 host.json 中 identity 写为 discover（仅 probe 支持），connection 包含 hostname、username、known_hosts、node，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。
+初次远端将 host.json 中 identity 写为 discover（仅 probe 支持），connection 包含 hostname、username、known_hosts，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。目标还没有 Node 时不要填一个 PATH 上的 `node` 然后把盘点留在对话里：
+
+```sh
+node /path/to/ops/common/tools/ops.mjs bootstrap-node --connection-file /safe/path/host-discovery.json --probe
+# 若 tools.node=missing，准备已审核的 volta/node tar（SHA256 见 common/toolchains/volta-linux.json），再：
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops bootstrap-node --apply \
+  --connection-file /safe/path/host-discovery.json --host-id node-a --account ops --host-root /srv/ops \
+  --volta-archive /safe/volta-2.0.2-linux.tar.gz --volta-sha256 PINNED \
+  --node-archive /safe/node-v24.21.0-linux-x64.tar.gz --node-sha256 PINNED \
+  --ack I-APPROVE-THIS-BOOTSTRAP
+```
+
+引导把 `VOLTA_HOME` 放在 `{host.root}/_host/toolchains/{account}/volta`，`connection.node` 指向其中的 `bin/ops-node`（导出 VOLTA_HOME 后 exec 真实 Node），不改 `.bashrc`/`.profile`，不跑官方 `install.sh`。已有 Node 则 `skipped-existing-node`，原默认不动。随后必须落盘：
+
+```sh
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops enroll --file /safe/path/register.json
+```
+
+`enroll` 接受 `identity=discover` 与引导返回的绝对 `connection.node`，写入 `status.json` 与 `hosts/{host_id}/inventory/snapshot-*.json`。单独 `probe --connection-file` 仍只打印 JSON，下一步必须 enroll（或 register + `probe --host`）。
+
 
 ```sh
 node /path/to/ops/common/tools/ops.mjs probe --connection-file /safe/path/host-discovery.json --output /safe/path/host-observed.json
@@ -63,7 +82,7 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops environment
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops mirror-probe --host node-a --file /safe/path/mirror-candidates.json --allow-network
 ```
 
-环境配方不抓 latest；管理器缺失先明确准备安装器。来源测速不修改配置，证书/哈希失败候选不使用，真实配置更换通过 H 的精确 write-file/write-control/命令计划。不能将 Python/npm/Docker/Maven 镜像混为一套规则。
+环境配方不抓 latest；管理器缺失先明确准备安装器。Linux SSH 上 Volta 本体与固定 Node 镜像用 `bootstrap-node`，不要指望 environment-spec 自己装 Volta。来源测速不修改配置，证书/哈希失败候选不使用，真实配置更换通过 H 的精确 write-file/write-control/命令计划。不能将 Python/npm/Docker/Maven 镜像混为一套规则。
 
 H.host_actions 支持 mkdir、write-file（host.root 内相对路径；不得写生成器负责的 README/DEPLOYMENTS/knowledge 账本）、write-control（精确系统控制文件：内置 docker daemon.json 与 ops-*.service，以及经理由/回滚/验证声明的 nginx、wireguard、非 ops- 前缀单元）、install-toolchain（明确写集/原默认/验证）、command（明确写集/验证）、defaults、quarantine、purge-quarantine。系统软件包安装使用明确批准的可信安装脚本，不自动猜当前发行版安装命令；Docker 示例见 service-profiles/docker-engine.md。主机级入口用 resource_updates.hosts[].host_services 与 spec.public_ingress 入账，不要为 Nginx/WireGuard 伪造 APP 部署。
 
@@ -105,7 +124,7 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/new-ops-state import-leg
 
 ```sh
 node /path/to/ops/common/tools/demo-local.mjs --output /absolute/empty/demo-root
-node --test /path/to/ops/common/tests/test_ops.mjs
+node --test /path/to/ops/common/tests/test_ops.mjs /path/to/ops/common/tests/test_ops_bootstrap.mjs
 node /path/to/ops/common/tools/validate-ops.mjs --self-check
 ```
 

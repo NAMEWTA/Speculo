@@ -12,7 +12,7 @@
         "username": "ops",
         "port": 22,
         "known_hosts": "/REPLACE/known_hosts",
-        "node": "node",
+        "node": "/srv/ops/_host/toolchains/ops/volta/bin/ops-node",
         "sudo": true
       }
     }

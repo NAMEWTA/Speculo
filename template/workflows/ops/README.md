@@ -89,7 +89,7 @@ init/register/credential-put 是用户显式请求的部署机本地记录操作
 
 ## 阅读与操作入口
 
-详细命令和可运行演练：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`。
+详细命令和可运行演练：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>`。Linux SSH 缺 Node 的固定 Volta 引导见 USAGE §1。
 数据与账户：`<Path>{roots.workflows}/ops/common/rules/persistence-and-secrets.md</Path>`。
 共享服务：`<Path>{roots.workflows}/ops/common/rules/shared-services.md</Path>`。
 恢复：`<Path>{roots.workflows}/ops/common/rules/recovery.md</Path>`。

@@ -27,6 +27,7 @@ try {
     for (const name of readdirSync(join(root, "common/schemas")).filter((x) => x.endsWith(".json"))) {
       JSON.parse(readFileSync(join(root, "common/schemas", name), "utf8"));
     }
+    JSON.parse(readFileSync(join(root, "common/toolchains/volta-linux.json"), "utf8"));
     validateStatus(JSON.parse(readFileSync(join(root, "_state/status.json"), "utf8")));
     console.log("resource schema valid");
     console.log(JSON.stringify({

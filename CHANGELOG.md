@@ -6,7 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-09-16
+
+### Added
+- **OPS H node-less Linux SSH bootstrap**: `ops.mjs bootstrap-node` installs a pinned Volta 2.0.2 + Node 24.21.0 via controller SHA256 + scp + POSIX (no `curl|sh`, no profile edits, no `latest`). `ops.mjs enroll` then writes `status.json` and `hosts/{host_id}/inventory/snapshot-*.json` so identity/inventory cannot stay only in the Agent transcript (#66).
+
+### Changed
+- H-host-manage activation: missing Node blocks apply only; it cannot skip host registration. Discover probe returns structured `node-missing` with a `bootstrap-node` next step. `environment-spec` falls back to the managed `{host.root}/_host/toolchains/{account}/volta` path.
+- SSH transport exposes POSIX `/bin/sh -s` and `scp` using the same host-key contract as the Node agent. Pin metadata lives in `common/toolchains/volta-linux.json`.
+
+### Tests
+- Added `test_ops_bootstrap.mjs` coverage for node-missing discover, ack/SHA/`latest` rejection, skip-existing-node, profile-unchanged install, enroll persistence, and managed Volta fallback.
+
 ## [1.0.12] - 2026-09-16
+
 
 ### Added
 - **Learning G-goal teach-then-mine**: `/goal` now teaches a project-sized mine unit (hard cap 15 lessons, not a quota) then fans out one miner per lesson. Lead-directed write-set isolation; `split-lesson` after 10 questions; new references `lead-orchestration.md`, `mine-unit.md`, `split-rules.md`.

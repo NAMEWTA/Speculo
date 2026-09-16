@@ -31,6 +31,10 @@ describe("OPS 2.2 three-worker resource workflow",()=>{
  it("runs static/package self-check without target mutation",()=>{
   const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--self-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
  });
+ it("runs executor contract tests including node-less bootstrap",()=>{
+  const p=spawnSync(process.execPath,["--test",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs")],{encoding:"utf8",timeout:120000});
+  assert.equal(p.status,0,p.stdout+p.stderr);
+ });
  it("validates v3 resource seed with no change lifecycle",async()=>{
   const s=await seed();assert.equal(s.schema_version,3);assert.ok(!("active" in s));validateOpsResources(s,await schema());
  });

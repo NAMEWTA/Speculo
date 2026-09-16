@@ -19,12 +19,24 @@ export class OpsError extends Error {
   }
 }
 
+export class NodeMissing extends OpsError {
+  constructor(posix, next = "ops.mjs bootstrap-node --apply") {
+    super("node-missing");
+    this.name = "NodeMissing";
+    this.code = "node-missing";
+    this.next = next;
+    this.posix = posix;
+  }
+}
+
 export class UnknownResult extends OpsError {
   constructor(message) {
     super(message);
     this.name = "UnknownResult";
   }
 }
+
+
 
 export function now() {
   return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "manager": "volta",
+  "volta_version": "2.0.2",
+  "node_version": "24.21.0",
+  "profile_edit": false,
+  "use_official_install_sh": false,
+  "volta_home_rel": "_host/toolchains/{account}/volta",
+  "archives": {
+    "linux-x64": {
+      "volta": {
+        "filename": "volta-2.0.2-linux.tar.gz",
+        "url": "https://github.com/volta-cli/volta/releases/download/v2.0.2/volta-2.0.2-linux.tar.gz",
+        "sha256": "6cec054c911fb925b629a09455775af6e95dc0f5694a4c28b63979ab9ef18037"
+      },
+      "node": {
+        "filename": "node-v24.21.0-linux-x64.tar.gz",
+        "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.gz",
+        "sha256": "6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff"
+      }
+    },
+    "linux-arm64": {
+      "volta": {
+        "filename": "volta-2.0.2-linux-arm.tar.gz",
+        "url": "https://github.com/volta-cli/volta/releases/download/v2.0.2/volta-2.0.2-linux-arm.tar.gz",
+        "sha256": "1eb92f8b711753aa576352b2e580b2f3fdadeab8664929ca1da3d0de65448517"
+      },
+      "node": {
+        "filename": "node-v24.21.0-linux-arm64.tar.gz",
+        "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-arm64.tar.gz",
+        "sha256": "724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5"
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 /** Strict host-key SSH and subprocess local transport. No passwords in argv. */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonical, digest, noSymlinks, OpsError, redact, UnknownResult } from "./core.mjs";
 import { fingerprint } from "./agent.mjs";
@@ -30,6 +30,102 @@ export function hostTransportDigest(host) {
   return digest({ host, known_hosts_digest: kh });
 }
 
+export function validateSshEndpoint(c) {
+  if (!c || typeof c !== "object") throw new OpsError("ssh endpoint missing");
+  for (const k of ["hostname", "username", "known_hosts"]) {
+    if (!c[k]) throw new OpsError("ssh connection missing " + k);
+  }
+  if (!/^[A-Za-z0-9_.:-]+$/.test(c.hostname) || c.hostname.startsWith("-")) throw new OpsError("unsafe SSH hostname");
+  if (!/^[A-Za-z0-9_.-]+$/.test(c.username) || c.username.startsWith("-")) throw new OpsError("unsafe SSH username");
+  if (![undefined, "posix", "powershell"].includes(c.shell)) throw new OpsError("unsupported remote shell");
+}
+
+export function sshArgv(connection, { scp = false } = {}) {
+  validateSshEndpoint(connection);
+  const kh = resolve(connection.known_hosts);
+  noSymlinks(kh, { allowMissing: false });
+  const argv = [
+    scp ? "scp" : "ssh",
+    ...(scp ? [] : ["-T"]),
+    "-o", "BatchMode=yes",
+    "-o", "StrictHostKeyChecking=yes",
+    "-o", `UserKnownHostsFile=${kh}`,
+    "-o", "ConnectTimeout=15",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=3",
+    scp ? "-P" : "-p", String(connection.port ?? 22),
+  ];
+  if (connection.identity_file) argv.push("-i", connection.identity_file, "-o", "IdentitiesOnly=yes");
+  return argv;
+}
+
+function spawnTransport(argv, { input, timeout, encoding = "buffer" } = {}) {
+  return transportHooks.spawnSync(argv[0], argv.slice(1), {
+    input,
+    encoding,
+    timeout: timeout * 1000,
+    maxBuffer: 64 * 1024 * 1024,
+    windowsHide: true,
+  });
+}
+
+function buffers(p) {
+  const stdout = Buffer.isBuffer(p.stdout) ? p.stdout.toString("utf8") : (p.stdout || "");
+  const stderr = Buffer.isBuffer(p.stderr) ? p.stderr.toString("utf8") : (p.stderr || "");
+  return { stdout, stderr };
+}
+
+export function posixCall(endpoint, script, { timeout = 180, args = [], sudo = false } = {}) {
+  validateSshEndpoint(endpoint);
+  if ((endpoint.shell ?? "posix") === "powershell") {
+    throw new OpsError("POSIX bootstrap is Linux-only; PowerShell targets still require an existing Node");
+  }
+  const useSudo = sudo || endpoint.sudo;
+  let remote = ["/bin/sh", "-s", "--", ...args.map(String)];
+  if (useSudo) remote = ["sudo", "-n", "--", ...remote];
+  const argv = sshArgv(endpoint);
+  argv.push("--", endpoint.username + "@" + endpoint.hostname, shlexJoin(remote));
+  let p;
+  try {
+    p = spawnTransport(argv, { input: Buffer.from(String(script), "utf8"), timeout });
+  } catch (e) {
+    throw new OpsError("target posix unavailable: " + e);
+  }
+  if (p.error && (p.error.code === "ETIMEDOUT" || p.signal === "SIGTERM")) {
+    throw new OpsError("target posix unavailable: " + p.error);
+  }
+  const { stdout, stderr } = buffers(p);
+  if (p.status !== 0) {
+    throw new OpsError("target posix failed: " + redact(stderr, []).slice(-2000));
+  }
+  return { status: p.status, stdout, stderr };
+}
+
+export function posixSend(endpoint, localFile, remotePath, { timeout = 180 } = {}) {
+  validateSshEndpoint(endpoint);
+  if ((endpoint.shell ?? "posix") === "powershell") {
+    throw new OpsError("POSIX bootstrap is Linux-only; PowerShell targets still require an existing Node");
+  }
+  noSymlinks(localFile, { allowMissing: false });
+  if (typeof remotePath !== "string" || !isAbsolute(remotePath) || remotePath.split("/").includes("..") || /[\s\n\r]/.test(remotePath)) {
+    throw new OpsError("remote scp path must be absolute without spaces or ..");
+  }
+  const argv = sshArgv(endpoint, { scp: true });
+  argv.push("--", localFile, `${endpoint.username}@${endpoint.hostname}:${remotePath}`);
+  let p;
+  try {
+    p = spawnTransport(argv, { input: Buffer.alloc(0), timeout });
+  } catch (e) {
+    throw new OpsError("target scp unavailable: " + e);
+  }
+  if (p.error && (p.error.code === "ETIMEDOUT" || p.signal === "SIGTERM")) {
+    throw new OpsError("target scp unavailable: " + p.error);
+  }
+  const { stderr } = buffers(p);
+  if (p.status !== 0) throw new OpsError("target scp failed: " + redact(stderr, []).slice(-2000));
+  return { status: 0, remotePath };
+}
+
 function injectRequest(source, request) {
   const b64 = Buffer.from(canonical(request)).toString("base64");
   const assign = `globalThis.OPS_REQUEST = JSON.parse(Buffer.from(${JSON.stringify(b64)}, "base64").toString("utf8"));`;
@@ -49,13 +145,7 @@ export function call(host, request, { timeout = 1800 } = {}) {
     const argv = [process.execPath, "--input-type=module"];
     let p;
     try {
-      p = transportHooks.spawnSync(argv[0], argv.slice(1), {
-        input: content,
-        encoding: "utf8",
-        timeout: timeout * 1000,
-        maxBuffer: 64 * 1024 * 1024,
-        windowsHide: true,
-      });
+      p = spawnTransport(argv, { input: content, timeout, encoding: "utf8" });
     } catch (e) {
       if (["step", "lock", "unlock"].includes(request.action)) throw new UnknownResult("target transport interrupted; inspect receipts before retry");
       throw new OpsError("target read unavailable: " + e);
@@ -63,11 +153,7 @@ export function call(host, request, { timeout = 1800 } = {}) {
     return decode(p, request);
   }
   const c = host.connection;
-  const kh = resolve(c.known_hosts);
-  noSymlinks(kh, { allowMissing: false });
-  const argv = ["ssh", "-T", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes", "-o", `UserKnownHostsFile=${kh}`,
-    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3", "-p", String(c.port ?? 22)];
-  if (c.identity_file) argv.push("-i", c.identity_file, "-o", "IdentitiesOnly=yes");
+  const argv = sshArgv(c);
   let remote = [c.node, "--input-type=module"];
   if (c.sudo) remote = ["sudo", "-n", "--", ...remote];
   let remoteCommand;
@@ -82,13 +168,7 @@ export function call(host, request, { timeout = 1800 } = {}) {
   argv.push("--", c.username + "@" + c.hostname, remoteCommand);
   let p;
   try {
-    p = transportHooks.spawnSync(argv[0], argv.slice(1), {
-      input: Buffer.from(content, "utf8"),
-      encoding: "buffer",
-      timeout: timeout * 1000,
-      maxBuffer: 64 * 1024 * 1024,
-      windowsHide: true,
-    });
+    p = spawnTransport(argv, { input: Buffer.from(content, "utf8"), timeout });
   } catch (e) {
     if (["step", "lock", "unlock"].includes(request.action)) throw new UnknownResult("target transport interrupted; inspect receipts before retry");
     throw new OpsError("target read unavailable: " + e);
@@ -101,8 +181,7 @@ function decode(p, request) {
     if (["step", "lock", "unlock"].includes(request.action)) throw new UnknownResult("target transport interrupted; inspect receipts before retry");
     throw new OpsError("target read unavailable: " + p.error);
   }
-  const stdout = Buffer.isBuffer(p.stdout) ? p.stdout.toString("utf8") : (p.stdout || "");
-  const stderr = Buffer.isBuffer(p.stderr) ? p.stderr.toString("utf8") : (p.stderr || "");
+  const { stdout, stderr } = buffers(p);
   if (p.status !== 0) {
     const text = redact(stderr, request.secrets || []).slice(-2000);
     if (["step", "lock", "unlock"].includes(request.action)) throw new UnknownResult("target transport failed: " + text);

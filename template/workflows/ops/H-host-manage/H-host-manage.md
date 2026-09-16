@@ -19,6 +19,9 @@ keywords: [ops, host-manage, 主机, 持久化, 审批]
 
 指定 local 或 SSH 的稳定 host_id；读取最近盘点与有限问题证据。初次 SSH 用用户已验证的 known_hosts，identity=discover 只允许只读探测；把返回身份明确登记后才允许计划和执行。
 
+Linux SSH 目标若没有 Node：必须先 `ops.mjs bootstrap-node`（控制端校验已审核 tar 的 SHA256，scp 到目标，远端 POSIX 展开固定 Volta/Node），禁止把 POSIX 盘点只写在对话里。引导成功后必须 `ops.mjs enroll`（或 `register` 再 `probe --host`），`hosts/{host_id}/inventory/snapshot-*.json` 与 `status.json.hosts` 是完成标准的一部分。引导是 ops.mjs 第一阶段通道，需要明文 ack 与 SHA256，不走 plan/approve；已有 Node 的目标不重复安装、不改 `.bashrc`/`.profile`。缺 Node 只能阻塞 apply，不能阻塞登记。本轮仅 Linux SSH；Windows/macOS 仍要求目标已有 Node。
+
+
 区分系统版本、用户默认、项目 pin、服务环境。environment-spec 支持明确版本的 uv、Volta、SDKMAN 管理配方；管理器缺失先用经过审核的安装器。保留旧默认与旧目录，不能为统一外观先删除旧环境。工作流不擅自改写用户 shell profile；激活新管理器入口是另一个明确的准备动作。
 
 Docker 缺失使用经审核且版本固定的 Linux Engine 安装配方，完成服务、Compose、data-root、账号权限验证之后才进入 D。既有 data-root 不匹配时单独备份、停机、迁移、验证，不把 /var/lib/docker 直接 mv 当作安装步骤。镜像源按可信清单、样本哈希和目标网络测试，切换配置仍需批准。
