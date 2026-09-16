@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-09-16
+
+### Added
+- **Learning `G-goal`**: plan-compiler Work (`learning/goal`) that writes a complete Change-owned Goal-Plan and stops. The user later runs that plan with an external AI CLI `/goal`, which may dispatch L-lesson then socratic-questioning `audience=mine` into `goal/probes/`. Never auto-activates H/R/C/A-archive, never writes mastered, never uses the Q-question `inquiry/` Response protocol, and does not revive Q-quiz.
+- Learning metadata now lists 9 works: the original seven plus already-shipped `Q-question` and new `G-goal`. `validate-assets` runs `validate-learning --workflow-root`.
+
+### Changed
+- Learning AUTO-INDEX, Change layout, artifact ownership, questioning/teaching policy, and the socratic-questioning skill distinguish `audience=tutor` (`inquiry/`) from `audience=mine` (`goal/probes/`).
+
 ## [1.0.10] - 2026-09-16
 
 ### Fixed
