@@ -19,9 +19,14 @@ v1 只实现编程四轴。其他领域可同构为 units / properties / structu
 - Extended Abstract 不是完成条件
 - 不改变矩阵格子的 Lesson 或 probe 不要写
 
-## Wave
+## Wave（内容分组，不是挖掘门）
 
 - Wave 1：Context + Container + 主数据流
 - Wave 2：范围内 Code / 方法性状
-- 每波 ≤8 课或 1 个容器/模块，取小
+- Wave 只按覆盖轴分组，不决定何时挖，也不是并发授权
 - 默认最多 2 波
+- 3 课的波不必撑到 15；单波若超过 15，只把挖掘切开，不把覆盖波扩成配额
+
+## 挖掘扇出
+
+挖掘扇出上界是 `mine_unit_cap=15`，不是必须凑满。4 节的小项目按 4 节挖。切分规则读 `<Path>{roots.workflows}/learning/G-goal/references/mine-unit.md</Path>`。

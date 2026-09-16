@@ -14,4 +14,4 @@ ASCII、Markdown table、公式或可选外链图片可以组合使用；每个�
 
 Lesson 可以有非评分 pause/self-check，但不含 Q/A、答案、分数、verdict 或 mastered 字段。
 
-学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。`L-lesson` 仍不得写 Q/A。
+学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。每课最多 10 问。`L-lesson` 仍不得写 Q/A。

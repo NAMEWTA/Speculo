@@ -18,6 +18,10 @@
 
 每题标注 `objective_id`、`bloom_level`、`socratic_move`、`expected_evidence`、`difficulty`。数量默认 5，可由用户改，但必须 Q/A 成对连续。
 
+## mine 数量上限
+
+`audience=mine` 每课最多两批 10 问：`b01` = Q1–Q5，`b02` = Q6–Q10。第 11 问非法。第三批必须返回 `split-proposal` 而不是再出题。满 10 后禁止 `mine-more`。`re-dispatch-L` 不重置该课 `question_budget_used`。tutor 的 `inquiry/` 仍是一批约 5 题，Response 协议不变。
+
 ## 文件协议
 
 - 出题文件含空 A 与精确行 `Response: pending`。
@@ -26,6 +30,7 @@
 - 闭环后 `Response: closed`。重答新建 `IQ-…-batch-NN`，旧文件只读。
 - 禁止 `Submission:`、禁止 H 的 `verdict: correct|partial|incorrect` 字段名。教学判定用 `aligned|partial|off|uncertain`。
 - 禁止写入 `lessons/` 或 `homework/`。
+- `audience=mine` 禁止上述 learner 协议字段，也禁止 miner 写 `lessons/`。
 
 ## 讲解与 keep-alive
 

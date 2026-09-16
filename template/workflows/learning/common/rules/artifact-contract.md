@@ -3,13 +3,13 @@
 | 工件 | Owner | 规则 |
 | --- | --- | --- |
 | `course.md`、`background/`、`baseline.md`、`sources.md`、Change `INDEX.md` | A-assess-and-plan | 目标、宏观基础、原始基线、来源和课程地图；实质修改留 revision |
-| `lessons/` | L-lesson | 完整 Lesson 和 Lesson INDEX；不写作业答案或掌握结论 |
+| `lessons/` | L-lesson | 完整 Lesson 和 Lesson INDEX；不写作业答案或掌握结论。`/goal` 阶段 T 每课一个 L 子代理只写被分配的 `L-*.md`；`lessons/INDEX` 只有 Lead 可写 |
 | `homework/` | H-homework + learner | H 写问题/评审，learner 写 A；提交后只追加 Review，旧 attempt 不可改写 |
 | `inquiry/` | Q-question + learner | Q 写问题/Teaching/Inquiry Lesson，learner 写 A；`Response: ready` 后只追加讲解，旧 batch 不可改写；不写入 `lessons/` 或 `homework/` |
-| `goal/` | G-goal | goal-plan.md, chain.md, coverage-matrix.md, progress.md, probes/, verify.md, revisions/; plan session writes plan skeleton only, not probes; /goal may update matrix/progress and write probes/verify; must not write inquiry/, lessons/, homework/, review/, synthesis/, archive/, mastered |
+| `goal/` | G-goal | goal-plan.md, chain.md, coverage-matrix.md, progress.md, probes/, verify.md, revisions/; plan session writes plan skeleton and mine units only, not probes or deepening lessons; `/goal` Lead 独占 matrix/progress/verify/chain 追加；miner 只写自己的 `GP-*-b0N`；must not write inquiry/, lessons/, homework/, review/, synthesis/, archive/, mastered |
 | `review/` | R-review | 延迟保持题、原始回答、证据和复习日期 |
 | `children/<id>/` | child Work | 子 Change 原有工件；父只负责根锁、路由、位置登记 |
-| `synthesis/`、topic context | C-consolidate | claim 级综合、冲突、空白、provenance 和版本；不得覆盖原料 |
+| `synthesis/`、topic context | C-consolidate | claim 级综合、冲突、空白、provenance 和版本；不得覆盖原料。`split-lesson` 不得调用 C 或 relocate |
 | `archive/`、locations projection | A-archive | 用户关闭后的物理移动和只读登记；不判断掌握、不写 context |
 
 状态 JSON 只是 projection；真实内容、学习者原始回答、评审和 source manifest 是证据权威。
