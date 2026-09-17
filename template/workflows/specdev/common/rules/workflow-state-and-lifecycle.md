@@ -9,6 +9,7 @@
 - 全局状态：`<Path>{roots.state}/specdev/status.json</Path>`
 - 活跃 change：`<Path>{roots.state}/specdev/changes/</Path>`
 - 历史归档：`<Path>{roots.state}/specdev/archive/</Path>`
+- 捕获账本（可选，缺失合法）：`<Path>{roots.state}/specdev/capture.md</Path>`
 
 刷新时 CLI 依据 `<Path>{roots.workflows}/specdev/runtime-contract.json</Path>` 处理持久化数据：配置使用 baseline 三方合并，登记的状态 schema 使用显式 migrator，其他 runtime 文件按字节保留。只有字段删除或结构迁移时才在 `<Path>{roots.state}/back/</Path>` 写入 targeted backup；冲突在替换 active 安装前阻塞。`<Path>{roots.state}/back/</Path>`、`<Path>{roots.state}/install.json</Path>`、`<Path>{roots.state}/managed.json</Path>` 与 `<Path>{roots.state}/baselines/</Path>` 均不属于 SpecDev 写入 namespace。
 

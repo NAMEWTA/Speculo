@@ -110,7 +110,7 @@
       "source_sha256": "e3b993988aaeb65cee3bb6c5640f925f3f4438a9ef938ab000a4006e2c3d51bb",
       "classification": "adapted",
       "targets": ["template/workflows/specdev/T-triage/T-triage.md"],
-      "integration_deltas": ["Remote content is frozen locally; only Triage may reconcile a supported source Issue or publish completed Tickets as classified GitHub records"]
+      "integration_deltas": ["Remote content is frozen locally; only Triage may reconcile a supported source Issue, publish completed Tickets as classified GitHub records, or capture not-yet-Change notes as open inbox Issues"]
     },
     {
       "source": "temp/skills/engineering/wayfinder/SKILL.md",

@@ -11,6 +11,13 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 
 `--stage` 只要求该阶段已经拥有的工件；所有已经存在的工件仍会验证。`goal-plan` 还会读取父 change 的 sibling 成员，要求每个成员已有 Ready Spec/Tickets，校验组合 Ticket DAG、唯一父归属、serialization、跨 Ticket 写路径、全局 workspace/实现配额和完成门。省略 stage 时验证当前存在的工件，不会因未来 Work 尚未运行而报错。`--repo` 可选；提供后会把状态中的 SHA、祖先关系、当前分支和完成时 clean 状态与真实 Git 仓库交叉验证。
 
+校验 workspace 捕获账本（文件必须已存在；缺失时不要为了校验去创建）：
+
+```bash
+node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
+  --capture <Path>{roots.state}/specdev/capture.md</Path>
+```
+
 ## 校验 SpecDev 工作流包
 
 ```bash

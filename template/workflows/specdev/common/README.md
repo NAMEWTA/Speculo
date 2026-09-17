@@ -40,6 +40,7 @@
 - 来源快照：`<Path>{roots.workflows}/specdev/common/schemas/source.schema.json</Path>`
 - 分诊：`<Path>{roots.workflows}/specdev/common/schemas/triage.schema.json</Path>`
 - 发布账本：`<Path>{roots.workflows}/specdev/common/schemas/publish.schema.json</Path>`
+- 捕获账本：`<Path>{roots.workflows}/specdev/common/schemas/capture.schema.json</Path>`
 - 诊断：`<Path>{roots.workflows}/specdev/common/schemas/diagnosis.schema.json</Path>`
 - 代码审查：`<Path>{roots.workflows}/specdev/common/schemas/code-review.schema.json</Path>`
 - UI 设计包：`<Path>{roots.workflows}/specdev/P-prototype/design-package.schema.json</Path>`

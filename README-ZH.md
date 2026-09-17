@@ -73,13 +73,13 @@ npm install -g @namewta/speculo
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
 | **learning** | 9 | 面向项目、产品、学科、语言和技能的完整 30–40 分钟通俗课程、苏格拉底问答课、目标模式 Goal-Plan 编译（按项目切 ≤15 节的单元，先写齐再按课挖掘）、单文件作业评审、可选延迟复习，以及保留原料和引用的主题综合 |
-| **specdev** | 14 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、学习、目标编排、原型、架构审查、Spec、Ticket、分诊（intake / reconcile / publish）与寻路 |
+| **specdev** | 14 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、学习、目标编排、原型、架构审查、Spec、Ticket、分诊（intake / reconcile / publish / capture）与寻路 |
 | **ops** | 3 | 主机盘点与项目部署：控制端初始化、主机治理、APP/公共服务部署，并核验双边文档 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 
 每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
 
-SpecDev 的 T-triage 仍是唯一远程边界。**intake** 冻结来源；**reconcile** 在本地完成后关闭原来的源 Issue；**publish** 把每张已完成 Ticket 投影为带分类标签的 GitHub Issue（本地源也计入）。GitHub 是投影和计数器，不是开发权威。摄入源既要关源 Issue 又要记账票数时，两条模式都跑。
+SpecDev 的 T-triage 仍是唯一远程边界。**intake** 冻结来源；**reconcile** 在本地完成后关闭原来的源 Issue；**publish** 把每张已完成 Ticket 投影为带分类标签的 GitHub Issue（本地源也计入）；**capture** 把尚未成 Change 的记事项写成仍 open 的 GitHub Issue。GitHub 是投影、计数器和 inbox，不是开发权威。摄入源既要关源 Issue 又要记账票数时，两条模式都跑。capture 不创建 Change。
 
 ## 文档
 

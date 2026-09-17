@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-09-17
+
+### Added
+- **SpecDev T-triage capture inbox**: park not-yet-Change notes as still-open GitHub Issues with `specdev:captured` + `origin:local`. Workspace ledger `capture.md` (missing is legal). Default 1 record = 1 future Change. New `capture-protocol.md`, `capture-template.md`, `issue-record-template.md`, `capture.schema.json`, and `capture-status.mjs`.
+
+### Changed
+- T-triage now has four modes: intake, reconcile, publish, and capture. Capture neither creates nor selects a Change, does not set `current_work`, and does not close Issues. Intake marks a matching capture row `intaken`. GitHub stays projection / counter / inbox, not the development source of truth.
+
+### Tests
+- Added `specdev-t-triage-capture` coverage for missing ledger, open local-origin rows, forbidden labels, mixed kind, change-level copies, `mode=capture` on change triage, and inbox counts that stay separate from `published_issues`.
+
 ## [1.0.14] - 2026-09-16
 
 ### Added
