@@ -10,4 +10,4 @@ SpecDev 只使用本地 Markdown/JSON 工件跟踪开发。远程 Issue、URL �
 - 工件状态应在同一次操作中同步，避免入口状态、Ticket 状态与 Map 状态漂移。
 - 完成条件：全部必需 Ticket 为 `done` 或有批准的 `cancelled`，证据齐全，无未批准 deviation，change 级验证通过。
 - 归档后的 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>` 默认只读；后续纠正通过新 change 和 supersedes 链完成。
-- 可关闭的远程来源在本地完成后由 Triage reconcile；`closed`、显式 `waived` 或 `not-applicable` 后才归档。完成后若要把 Ticket 记到 GitHub，由 T-triage publish 写入 `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>`；`pending`/`publish-failed` 不可归档。发布计数以该账本为准，标签词表见 T-triage classification-map。远程 Issue 仍不是开发权威。
+- 可关闭的远程来源在本地完成后由 Triage reconcile；`closed`、显式 `waived` 或 `not-applicable` 后才归档。完成后若要把 Ticket 记到 GitHub，由 T-triage publish 写入 `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>`；`pending`/`publish-failed` 不可归档。尚未成 Change 的记事项由 T-triage capture 写入 `<Path>{roots.state}/specdev/capture.md</Path>`（缺失合法），Issue 保持 open，不创建 change。发布计数与 inbox 计数都以对应本地账本为准，标签词表见 T-triage classification-map。远程 Issue 仍不是开发权威。

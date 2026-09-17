@@ -8,7 +8,7 @@
 
 ## 工件链与权威
 
-大需求 → W 的 Initiative 候选图 → 每个 change 自己的 G/Grill → S/Spec → T 的计划型 Ticket 与 tickets-map → P 的 Goal → I/实现与 Evidence → Goal 集成验收 → 按需学习/远程 reconcile 或 publish/归档。
+大需求 → W 的 Initiative 候选图 → 每个 change 自己的 G/Grill → S/Spec → T 的计划型 Ticket 与 tickets-map → P 的 Goal → I/实现与 Evidence → Goal 集成验收 → 按需学习/远程 reconcile 或 publish/归档。尚未成 Change 的记事项可先 T-triage capture 到 GitHub inbox，再逐条 intake。
 
 已明确的小请求直接进入适用阶段；无需为了路由而创建 Triage。跨 change 实现由 P 统一管理。
 
@@ -47,7 +47,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 ## 场景路由
 
-不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，一个或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
+不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，一个或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账/尚未成 Change 的记事项才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
 
 ## Work 条目
 
@@ -66,7 +66,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 - **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 编写计划型 Tickets：将已澄清的 Spec 或等价获批计划拆为可验收的实施 Ticket，并绑定真实项目 Skill；不用于探索未知需求或执行代码。
-- **T-triage** — 请求分诊：需要冻结外部来源、审计摄入、对 completed change 回写来源 Issue，或把已完成 Ticket 投影为带分类标签的 GitHub Issue 时使用；已清晰的本地需求不必为了路由而经本入口。
+- **T-triage** — 请求分诊：需要冻结外部来源、审计摄入、对 completed change 回写来源 Issue、把已完成 Ticket 投影为带分类标签的 GitHub Issue，或把尚未成 Change 的记事项写成仍 open 的 GitHub Issue 时使用；已清晰的本地需求不必为了路由而经本入口。
 - **W-wayfinder** — 探索大需求与 Change 边界：大需求的 change 边界或实施路线尚不可见时建立探索地图，并分别澄清各 change；已有清晰 Spec 时不触发。
 
 <!-- AUTO-INDEX-END -->

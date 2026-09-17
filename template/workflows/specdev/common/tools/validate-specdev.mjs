@@ -103,6 +103,20 @@ const FORBIDDEN_PUBLISH_LABELS = new Set([
   "stale",
 ]);
 const COUNTED_PUBLISH_STATES = new Set(["closed", "created", "commented"]);
+const VALID_CAPTURE_ROW_STATE = new Set([
+  "planned",
+  "open",
+  "skipped:duplicate",
+  "intaken",
+  "waived",
+  "failed",
+]);
+const FORBIDDEN_CAPTURE_LABELS = new Set([
+  ...FORBIDDEN_PUBLISH_LABELS,
+  "specdev:published",
+  "specdev:change",
+]);
+const COUNTED_CAPTURE_REMOTE_STATES = new Set(["open", "intaken"]);
 const VALID_DEPTH = new Set(["lite", "standard", "deep"]);
 const VALID_RISK = new Set(["low", "medium", "high", "critical"]);
 const VALID_PLAN_MODES = new Set([
@@ -213,6 +227,7 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   ".status.json",
   "triage.md",
   "publish.md",
+  "capture.md",
   "diagnosis.md",
   "source.md",
   "architecture-review.md",
@@ -1011,7 +1026,7 @@ function capabilityChecks(root) {
       "triage",
       [
         join(root, "T-triage", "T-triage.md"),
-        ["source.md", "intake", "reconcile", "publish", "publish.md", "specdev:published", "唯一权威", "远程写入为零"],
+        ["source.md", "intake", "reconcile", "publish", "publish.md", "specdev:published", "capture", "capture.md", "specdev:captured", "唯一权威", "远程写入为零"],
       ],
     ],
     [
@@ -1140,6 +1155,11 @@ function capabilityChecks(root) {
     "common/rules/parent-implementation-orchestration.md",
     "common/schemas/implementation-map.schema.json",
     "common/schemas/implementation-plan.schema.json",
+    "common/schemas/capture.schema.json",
+    "T-triage/capture-protocol.md",
+    "T-triage/capture-template.md",
+    "T-triage/issue-record-template.md",
+    "T-triage/tools/capture-status.mjs",
   ]) {
     if (!isFile(join(root, required))) errors.push(`missing architecture/wayfinding contract ${required}`);
   }
@@ -1494,6 +1514,99 @@ function validatePublish(path, expectedChange, triage, errors) {
       const originLabel = meta.origin === "intake" ? "origin:intake" : "origin:local";
       if (!labels.includes(originLabel)) {
         errors.push(`publish.md: ${row.ticket}: missing ${originLabel}`);
+      }
+    }
+  }
+  return { path, meta, body, rows };
+}
+
+function parseCaptureLedger(body) {
+  const rows = [];
+  for (const line of body.split(/\r?\n/)) {
+    if (!/^\|/.test(line) || /^\|\s*-+/.test(line) || /^\|\s*id\s*\|/i.test(line)) continue;
+    const cells = line.split("|").map((cell) => cell.trim());
+    const inner = cells.slice(1, cells.length - 1);
+    if (inner.length < 9) continue;
+    rows.push({
+      id: inner[0],
+      kind: inner[1],
+      title: inner[2],
+      labels: inner[3],
+      number: inner[4],
+      url: inner[5],
+      marker: inner[6],
+      sha256: inner[7],
+      state: inner[8],
+    });
+  }
+  return rows;
+}
+
+function validateCapture(path, errors) {
+  if (!isFile(path)) {
+    errors.push("missing capture.md ledger");
+    return null;
+  }
+  const { meta, body } = parseFrontmatter(path);
+  const required = [
+    "schema_version",
+    "artifact",
+    "mode",
+    "repo",
+    "updated_at",
+  ];
+  const missing = required.filter((key) => !(key in meta));
+  if (missing.length) errors.push(`capture.md: missing keys ${JSON.stringify(missing)}`);
+  if (meta.schema_version !== 1 || meta.artifact !== "capture-index") {
+    errors.push("capture.md: artifact/schema_version must be capture-index/1");
+  }
+  if (meta.mode !== "capture") errors.push(`capture.md: invalid mode ${meta.mode}`);
+  if (typeof meta.repo !== "string" || !/.+\/.+/.test(meta.repo)) {
+    errors.push("capture.md: repo must be owner/repo");
+  }
+  for (const heading of ["## 捕获计划", "## 账本", "## 计数", "## 重试"]) {
+    if (!body.includes(heading)) errors.push(`capture.md: missing '${heading}'`);
+  }
+  const rows = parseCaptureLedger(body);
+  for (const row of rows) {
+    if (!CHANGE_NAME.test(row.id)) {
+      errors.push(`capture.md: invalid id ${row.id}`);
+    }
+    if (!VALID_CAPTURE_ROW_STATE.has(row.state)) {
+      errors.push(`capture.md: ${row.id}: invalid state ${row.state}`);
+    }
+    const labels = row.labels.split(",").map((item) => item.trim()).filter(Boolean);
+    for (const label of labels) {
+      if (FORBIDDEN_CAPTURE_LABELS.has(label)) {
+        errors.push(`capture.md: ${row.id}: forbidden label ${label}`);
+      }
+    }
+    const skipped = row.state.startsWith("skipped:") || row.state === "waived" || row.state === "planned" || row.state === "failed";
+    if (!skipped && !VALID_TICKET_KIND.has(row.kind)) {
+      errors.push(`capture.md: ${row.id}: invalid kind ${row.kind}`);
+    }
+    if (COUNTED_CAPTURE_REMOTE_STATES.has(row.state)) {
+      if (!VALID_TICKET_KIND.has(row.kind)) {
+        errors.push(`capture.md: ${row.id}: invalid kind ${row.kind}`);
+      }
+      if (!/^\d+$/.test(row.number)) {
+        errors.push(`capture.md: ${row.id}: ${row.state} row requires issue number`);
+      }
+      if (!String(row.url).startsWith("https://github.com/")) {
+        errors.push(`capture.md: ${row.id}: ${row.state} row requires GitHub url`);
+      }
+      const expectedMarker = `specdev:capture:${row.id}`;
+      if (row.marker !== expectedMarker) {
+        errors.push(`capture.md: ${row.id}: marker must be ${expectedMarker}`);
+      }
+      if (!labels.includes("specdev:captured")) {
+        errors.push(`capture.md: ${row.id}: missing specdev:captured`);
+      }
+      if (!labels.includes("origin:local")) {
+        errors.push(`capture.md: ${row.id}: missing origin:local`);
+      }
+      if (labels.includes("origin:intake")) {
+        errors.push(`capture.md: ${row.id}: capture origin must be local`);
       }
     }
   }
@@ -3157,6 +3270,9 @@ function validateChange(change, stage = null, repoRoot = null) {
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
   }
+  if (isFile(join(change, "capture.md"))) {
+    errors.push("capture.md is workspace-owned at specdev/capture.md; change-level copies are forbidden");
+  }
   const sourceRequired = stage === "triage";
   const sourcePath = join(change, "source.md");
   const source = isFile(sourcePath) || sourceRequired
@@ -3495,7 +3611,7 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check | --capture <capture.md>");
   return 2;
 }
 
@@ -3503,6 +3619,7 @@ function main(argv) {
   let selfCheckRequested = false;
   let stage = null;
   let repoRoot = null;
+  let capturePath = null;
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -3518,6 +3635,11 @@ function main(argv) {
       index += 1;
     } else if (arg.startsWith("--repo=")) {
       repoRoot = arg.slice("--repo=".length);
+    } else if (arg === "--capture") {
+      capturePath = argv[index + 1] ?? null;
+      index += 1;
+    } else if (arg.startsWith("--capture=")) {
+      capturePath = arg.slice("--capture=".length);
     } else if (arg.startsWith("--")) {
       return usage();
     } else {
@@ -3526,11 +3648,17 @@ function main(argv) {
   }
   if (stage !== null && !VALID_STAGES.has(stage)) return usage();
   if (selfCheckRequested) {
-    if (positional.length || stage !== null) return usage();
+    if (positional.length || stage !== null || capturePath) return usage();
     const scriptDirectory = dirname(fileURLToPath(import.meta.url));
     const root = resolve(scriptDirectory, "..", "..");
     const result = selfCheck(root);
     return printResults(result.errors, result.warnings);
+  }
+  if (capturePath) {
+    if (positional.length || stage !== null || repoRoot) return usage();
+    const errors = [];
+    validateCapture(resolve(capturePath), errors);
+    return printResults(errors, []);
   }
   if (positional.length === 1) {
     const result = validateChange(resolve(positional[0]), stage, repoRoot);
@@ -3539,7 +3667,7 @@ function main(argv) {
   return usage();
 }
 
-export { parseFrontmatter, validateChange, validateTicket, validateMap, pathsOverlap, findCycle };
+export { parseFrontmatter, validateChange, validateTicket, validateMap, pathsOverlap, findCycle, validateCapture };
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.exitCode = main(process.argv.slice(2)); }
