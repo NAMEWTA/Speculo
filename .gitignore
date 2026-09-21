@@ -13,3 +13,4 @@ coverage/
 .idea/
 .venv/
 __pycache__/
+.gradle/

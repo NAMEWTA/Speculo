@@ -32,6 +32,8 @@
 
 单 change 的 `specdev/changes/{change}/tickets-map.md` 是用户总控入口；Ticket frontmatter 仍是单票状态、依赖、路径的权威，Goal Plan 拥有跨票 Gate、Wave 和授权引用。少量线性票不强制增加厚重计划。
 
+单 change 的 Map 结构就绪、Goal 全局执行门与逐票 DoR 分开判断。等待上游真实产物的未来票可保持 draft，并记录缺口和重审条件；独立 Ready 票仍可进入 frontier。具体门禁读取 下方 `<planning-modes>` 标签。
+
 多 change 复用现有父 Implementation Map/Implementation Plan 和组合 DAG，不迁走活动状态。父 `specdev/changes/{change}/tickets-map.md` 仅作无状态入口，模板为 下方 `<ref-p-goal-plan-references-goal-tickets-map-template>` 标签。父成员至少两个；只有一个 change 时使用单 change 模式。
 
 ## 执行底线
@@ -52,7 +54,7 @@
 node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --repo <project-root>
 ```
 
-再按单 change 的 `--stage goal-plan` 或父 change 的 `--stage goal-plan` 运行 Speculo Node 校验器。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。
+再以 `--stage goal-plan` 运行 Speculo Node 校验器：单 change 要求自己的 Goal Plan，合法 draft 可通过结构校验；存在任一父 Map、Plan 或父入口时校验完整父编排，残缺父工件不得回退单 change。校验通过不授予执行权限。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。
 
 ---
 
@@ -66,23 +68,26 @@ node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --r
 
 规划模式描述 Goal Plan 需要额外解决的工程问题。Goal Plan 创建时单独询问 Ticket 是否开启 worktree，默认使用当前 workspace；worktree 与 direct-parent/candidate-merge 由该次 Goal Plan 固定。
 
+本文件定义单 change 的规划与全局执行门。多 change 父编排创建仍要求成员全员 Ready，遵守 下方 `<parent-implementation-orchestration>` 标签。
+
 ## 1. 输入门禁
 
 开始规划前穷尽检查：
 
 - Spec `ready_for_tickets: true`，或上游工件已等价覆盖范围、合同与验收；
-- Tickets Map 与全部 Ticket 存在、Ready、DAG 无环；
+- Tickets Map 与全部计划内 Ticket 存在，范围、合同覆盖、DAG 和所有权完整，DAG 无环；Map Ready 表示结构就绪，不要求所有未来 Ticket 同时 Ready；
+- 等待真实上游产物的未来 Ticket 保持 `status: draft`、`ready: false`，在未决问题中记录缺口、生产者 Ticket、所需证据和 DoR 重审条件；不编造版本、路径或验证入口；
 - 每个验收合同被 Ticket 覆盖；
 - writable/shared path 有唯一 owner，Wave 候选无写冲突；
 - config schema v5，`max_implementation_agents` 与 `max_integration_attempts` 为正整数；UI 设计候选范围读取 planning 配置；
-- 父分支可定位，implementation commit 与本地 integration 已获授权；
-- Deep Ticket 的迁移、兼容、监控、恢复和不可逆批准点完整。
+- 父分支可定位，implementation commit 与本地 integration 的授权状态已记录；`plan` 可以列出待批准项并保持 `ready_for_execution: false`；
+- 待执行 Deep Ticket 的迁移、兼容、监控、恢复和不可逆批准点完整。
 - Ticket 与 `specdev/changes/{change}/spec.md`、`specdev/changes/{change}/ADR.md`、`specdev/adr/`、`specdev/context/` 和当前代码事实不存在未处理冲突；
 - 项目声明的验证命令真实存在，并能观察目标行为；不可运行项有替代证据或明确 blocker；
 - 当前源码基线、父分支、工作区状态和现有用户改动已经实测；
 - 外部合同、标准、参考实现或依赖版本已经固定，不使用浮动的“最新”描述。
 
-缺失上游事实返回其 owner；非 v5 Goal Plan 必须按当前合同重新规划，不能只修改版本号。
+影响整体范围、DAG、合同覆盖或所有权的上游事实缺失时返回其 owner。已定位到未来 Ticket 的局部缺口只阻塞该票及其依赖闭包，不阻塞独立 Ready 生产者。非 v6 Goal Plan 必须按当前合同重新规划，不能只修改版本号。
 
 ## 2. 可组合模式
 
@@ -105,7 +110,7 @@ node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --r
 
 ## 4. Ready 停止条件
 
-存在以下任一情况时 `ready_for_execution: false`：
+Goal 全局执行门与 Ticket DoR 分开判断。以下任一全局条件未满足时 `ready_for_execution: false`；局部 Ticket 的缺口、资源冲突或未通过 DoR 由逐票检查阻塞对应依赖闭包，不升级成全员停止：
 
 - Goal Plan 工作区选择未记录；
 - `current` 模式下 Ticket 无法串行排序或当前 workspace 不是唯一项目写入 owner；
@@ -113,11 +118,13 @@ node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --r
 - 当前模式所需的 implementation commit 或 direct-parent/candidate integration 授权缺失；
 - shared path 没有唯一 owner；
 - E2E 是否需要会改变验收结论但尚未确定；
-- 项目验证命令不能执行或无法观察目标行为，且没有批准的替代证据；
+- 整体目标的验证命令不能执行或无法观察目标行为，且没有批准的替代证据；
 - 当前源码/工作区基线未实测，或外部合同版本仍然浮动；
-- Ticket 与 Spec、ADR、`specdev/adr/`、`specdev/context/` 或代码事实存在未处理冲突；
-- 迁移、发布、不可逆动作或恢复存在高影响未知项；
+- 影响整体目标的 Ticket 与 Spec、ADR、`specdev/adr/`、`specdev/context/` 或代码事实冲突未处理；
+- 整体迁移、发布、不可逆动作或恢复存在高影响未知项；
 - 实现 agent 或 integration attempt 上限超过 config 或平台能力。
+
+全局门通过后仍只调度自身 Ready、依赖成功完成、owner 明确且资源/并发条件满足的 Ticket。上游 done 不自动修改消费者 Ready；Lead 回读真实产物，按 “拆分 Tickets 阶段的 Ticket Ready 检查” 重审后才能更新该票。frontier 为空且仍有未完成票时报告精确缺口与重审条件。
 
 ## 5. 固定执行拓扑
 
@@ -348,6 +355,8 @@ ready_for_execution: false
 |---|---|---|---|---|---|
 
 ### Ticket Quick Reference
+
+未来 draft 票在其未决问题中记录待交付的上游产物、生产者 Ticket、所需证据和 DoR 重审条件；此表投影当前状态，不以 Goal Ready 代替逐票 Ready。
 
 | ID | 可观察产出 | Dependencies | Workspace | Implementation owner | E2E disposition | Evidence |
 |---|---|---|---|---|---|---|
@@ -2040,14 +2049,14 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 加载 下方 `<planning-modes>` 标签：
 
-1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和 Deep Ticket 完整性；
+1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和待执行 Deep Ticket 完整性；未来 draft 票按规划输入门记录局部缺口；
 2. 只读探索影响调度的代码与项目事实；
 3. 识别 migration、high-assurance、reference-conformance、release-coordination 等适用模式；
 4. 从 config 读取 `max_implementation_agents` 与 `max_integration_attempts`，将实际值快照到 `implementation_agent_limit` 与 `integration_attempt_limit`；本计划可以降低但不得超过 config 或平台能力，Lead 不计入；
 5. 根据 workspace 策略记录实现 commit 与 direct-parent/candidate integration 授权事实；缺失时仍可完成 plan 文档，但 ready_for_execution 保持 false，并列为 run 的阻塞条件；
 6. 只询问无法发现且会改变 Gate、Wave、owner、迁移、批准或验收的问题。
 
-**完成标准**：所有计划内 Ticket Ready；Lead、授权、实现并发上限和父分支可判定；没有用 Goal Plan 掩盖上游缺口。
+**完成标准**：计划内 Ticket、范围、覆盖、DAG 与所有权完整；未来 draft 票已记录真实缺口、生产者证据和 DoR 重审条件；Lead、授权状态、实现并发上限和父分支可判定。缺执行授权时可交付规划，但 `ready_for_execution` 保持 `false`。
 
 ### 2. 构建 Outcome、DAG、Wave 与 Gate
 
@@ -2123,6 +2132,8 @@ Goal Plan 不复制 Ticket 的局部施工路线、全部文件预测或逐项�
 ## 完成标准
 
 - Goal Plan schema v6 且 `ready_for_execution` 与状态一致；
+- 规划完成与执行就绪分别报告；允许交付 `draft / ready_for_execution: false`，单 change 不创建父 Implementation Map/Plan；
+- 等待上游产物的未来票保持 draft，局部缺口只阻塞依赖闭包；进入执行的票必须重新通过 DoR，上游完成不自动提升 Ready；
 - Lead 唯一，implementation subagent 上限来自 config/平台能力，review/research agent 不受 SpecDev 数字限制；
 - 每个实现 Ticket 都有 workspace、commit、对应 integration gate 和 Evidence 出口；
 - current 模式不创建 source/candidate worktree，适用 E2E 由 Lead 在 current workspace 运行；required 模式保持 source/parent-candidate 边界；
@@ -2288,7 +2299,7 @@ Lead 将输出保存到调用方自己的既有 Evidence 位置；不创建独�
 ## 每轮循环
 
 1. 重读当前 map、Ticket frontmatter、Gate 与 owner；机器检查依赖、Skill、语义资源和路径，Lead 核验真实授权及当前 Git 事实。
-2. 只有依赖成功满足、ready、owner 可判定且无冲突的票才能进入 dispatch。cancelled 不是成功交付：下游必须重规划依赖，不能自动视为 satisfied。
+2. 只有依赖成功满足、ready、owner 可判定且无冲突的票才能进入 dispatch。单 change 的未来 draft 票只阻塞自身及依赖闭包；上游 done 后仍需 Lead 按真实产物重审 DoR，不自动提升 Ready。cancelled 不是成功交付：下游必须重规划依赖，不能自动视为 satisfied。
 3. current 策略串行；required 仅在 config/宿主允许且写集、语义资源、integration queue 无冲突时并行。不同文件可能共享 API、数据表、锁文件或公共契约，因此不能只比较文件名。
 4. 按票的调用阶段读取并实际执行必需 Skill；按项目协议调用的“技能”可以是宿主技能调用，也可以是完整执行该 SKILL 的程序步骤，但必须记录对应步骤/工具轨迹与输出，不得仅记录阅读完成。
 5. I 返回后核对实现、Skill 执行记录、验证矩阵、实际交付数量和集成证据。失败保留 blocker；不能用减少测试或替换工具来“修好”状态。

@@ -49,6 +49,31 @@ function expectBlocked(error: unknown, code: string): boolean {
 }
 
 describe("Speculo init refresh", () => {
+  it("excludes template Gradle caches on init and refresh while preserving fixtures and runtime bytes", async () => {
+    const target = await tempProject();
+    const pkg = await packageFixture();
+    const fixture = "skills/engineering-standards-builder/examples/fallback/kotlin-gradle";
+    try {
+      await mkdir(join(pkg, "template", fixture, ".gradle"), { recursive: true });
+      await writeFile(join(pkg, "template", fixture, ".gradle/cache.bin"), "template cache");
+      const root = join(target, "speculo");
+      const runtime = join(root, ".speculo/skills/example/.gradle/cache.bin");
+      for (const mode of ["init", "refresh"]) {
+        await initSpeculo(target, { packageRoot: pkg, selection: { workflowIds: ["specdev"] } });
+        assert.equal(await pathExists(join(root, fixture, ".gradle")), false, mode);
+        for (const file of ["build.gradle.kts", "expected.json", "src/main/kotlin/example/App.kt"]) {
+          assert.equal(await readFile(join(root, fixture, file), "utf8"), await readFile(join(pkg, "template", fixture, file), "utf8"));
+        }
+        const managed = await readJson(join(root, ".speculo/managed.json"));
+        assert.ok(!managed.files.some((entry: any) => entry.path.startsWith(`${fixture}/.gradle/`)));
+        if (mode === "init") {
+          await mkdir(dirname(runtime), { recursive: true });
+          await writeFile(runtime, "user runtime bytes");
+        } else assert.equal(await readFile(runtime, "utf8"), "user runtime bytes");
+      }
+    } finally { await rm(target, { recursive: true, force: true }); await rm(pkg, { recursive: true, force: true }); }
+  });
+
   it("creates manifest v2, baselines, selected state, and no migration repair assets", async () => {
     const target = await tempProject();
     try {

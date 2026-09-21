@@ -55,6 +55,8 @@ ready_for_execution: false
 
 ### Ticket Quick Reference
 
+未来 draft 票在其未决问题中记录待交付的上游产物、生产者 Ticket、所需证据和 DoR 重审条件；此表投影当前状态，不以 Goal Ready 代替逐票 Ready。
+
 | ID | 可观察产出 | Dependencies | Workspace | Implementation owner | E2E disposition | Evidence |
 |---|---|---|---|---|---|---|
 | T-01 | ... | — | `current`（required 模式为 `specdev-worktree/<change>/T-01`） | Lead / dynamic dispatch | required / not-required: reason | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |

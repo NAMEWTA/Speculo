@@ -6,7 +6,7 @@ import process from 'node:process';
 
 function usage() {
   return `Usage: node scripts/sync-manifest.mjs --root <skill-root> [--check | --write]\n\n` +
-    `Validate or regenerate manifest.txt. The manifest lists every package file except itself.\n\n` +
+    `Validate or regenerate manifest.txt. Excludes itself, .DS_Store and .gradle caches.\n\n` +
     `Options:\n` +
     `  --root <path>  Skill root (required)\n` +
     `  --check        Fail when manifest.txt is stale (default)\n` +
@@ -42,7 +42,7 @@ async function collectFiles(rootReal) {
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name, 'en'));
     for (const entry of entries) {
-      if (entry.name === '.DS_Store') continue;
+      if (entry.name === '.DS_Store' || entry.name === '.gradle') continue;
       const absolute = path.join(directory, entry.name);
       const relative = toPosix(path.relative(rootReal, absolute));
       if (entry.isSymbolicLink()) throw new Error(`symlink is not allowed in the skill package: ${relative}`);

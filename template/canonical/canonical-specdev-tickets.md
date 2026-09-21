@@ -2201,7 +2201,7 @@ Lead 将输出保存到调用方自己的既有 Evidence 位置；不创建独�
 ## 每轮循环
 
 1. 重读当前 map、Ticket frontmatter、Gate 与 owner；机器检查依赖、Skill、语义资源和路径，Lead 核验真实授权及当前 Git 事实。
-2. 只有依赖成功满足、ready、owner 可判定且无冲突的票才能进入 dispatch。cancelled 不是成功交付：下游必须重规划依赖，不能自动视为 satisfied。
+2. 只有依赖成功满足、ready、owner 可判定且无冲突的票才能进入 dispatch。单 change 的未来 draft 票只阻塞自身及依赖闭包；上游 done 后仍需 Lead 按真实产物重审 DoR，不自动提升 Ready。cancelled 不是成功交付：下游必须重规划依赖，不能自动视为 satisfied。
 3. current 策略串行；required 仅在 config/宿主允许且写集、语义资源、integration queue 无冲突时并行。不同文件可能共享 API、数据表、锁文件或公共契约，因此不能只比较文件名。
 4. 按票的调用阶段读取并实际执行必需 Skill；按项目协议调用的“技能”可以是宿主技能调用，也可以是完整执行该 SKILL 的程序步骤，但必须记录对应步骤/工具轨迹与输出，不得仅记录阅读完成。
 5. I 返回后核对实现、Skill 执行记录、验证矩阵、实际交付数量和集成证据。失败保留 blocker；不能用减少测试或替换工具来“修好”状态。

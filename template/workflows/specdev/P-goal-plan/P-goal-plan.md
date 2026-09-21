@@ -3,7 +3,7 @@ id: specdev/goal-plan
 type: workflow-entry
 workflow: specdev
 name: Goal 规划与执行
-description: 为一个或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
+description: 为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
 keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 ---
 
@@ -27,6 +27,8 @@ keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 
 单 change 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是用户总控入口；Ticket frontmatter 仍是单票状态、依赖、路径的权威，Goal Plan 拥有跨票 Gate、Wave 和授权引用。少量线性票不强制增加厚重计划。
 
+单 change 的 Map 结构就绪、Goal 全局执行门与逐票 DoR 分开判断。等待上游真实产物的未来票可保持 draft，并记录缺口和重审条件；独立 Ready 票仍可进入 frontier。具体门禁读取 `<Path>{roots.workflows}/specdev/P-goal-plan/planning-modes.md</Path>`。
+
 多 change 复用现有父 Implementation Map/Implementation Plan 和组合 DAG，不迁走活动状态。父 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 仅作无状态入口，模板为 `<Path>{roots.workflows}/specdev/P-goal-plan/references/goal-tickets-map-template.md</Path>`。父成员至少两个；只有一个 change 时使用单 change 模式。
 
 ## 执行底线
@@ -47,4 +49,4 @@ keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <map-path> --repo <project-root>
 ```
 
-再按单 change 的 `--stage goal-plan` 或父 change 的 `--stage goal-plan` 运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。
+再以 `--stage goal-plan` 运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`：单 change 要求自己的 Goal Plan，合法 draft 可通过结构校验；存在任一父 Map、Plan 或父入口时校验完整父编排，残缺父工件不得回退单 change。校验通过不授予执行权限。完成时回读真实源、map、Ticket 状态和 Evidence，报告完成/阻塞/失效票、整体验收、实际交付数量、验证命令、未执行项与恢复路径。票全 done 不等于 Goal 自动完成。

@@ -2023,7 +2023,10 @@ function validateMap(path, errors, repoRoot = null) {
 }
 
 function validateGoalPlan(path, errors) {
-  if (!isFile(path)) return null;
+  if (!isFile(path)) {
+    errors.push(`missing Goal Plan: ${basename(path)}`);
+    return null;
+  }
   const { meta, body } = parseFrontmatter(path);
   const required = [
     "schema_version",
@@ -2084,6 +2087,7 @@ function validateGoalPlan(path, errors) {
   const validReadyStates = new Set(["ready", "in_progress"]);
   const validNotReadyStates = new Set(["draft", "blocked", "completed"]);
   if (
+    typeof meta.ready_for_execution !== "boolean" ||
     (meta.ready_for_execution === true && !validReadyStates.has(meta.status)) ||
     (meta.ready_for_execution === false && !validNotReadyStates.has(meta.status))
   ) {
@@ -2314,6 +2318,10 @@ function validateTicket(path, errors) {
   const ticketId = String(meta.id);
   if (!/^T-\d{2,}$/.test(ticketId)) errors.push(`${basename(path)}: invalid Ticket id ${ticketId}`);
   if (!VALID_TICKET_STATUS.has(meta.status)) errors.push(`${basename(path)}: invalid status ${meta.status}`);
+  if (typeof meta.ready !== "boolean") errors.push(`${basename(path)}: ready must be a boolean`);
+  if (new Set(["ready", "in_progress", "review"]).has(meta.status) && meta.ready !== true) {
+    errors.push(`${basename(path)}: executable Ticket must keep ready=true`);
+  }
   if (meta.kind != null && meta.kind !== "" && !VALID_TICKET_KIND.has(meta.kind)) {
     errors.push(`${basename(path)}: invalid kind ${meta.kind}`);
   }
@@ -2810,12 +2818,10 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
 }
 
 function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null) {
-  const required = stage === "goal-plan";
   const mapPath = join(change, "implementation-map.md");
   const planPath = join(change, "implementation-plan.md");
-  if (!required && !isFile(mapPath) && !isFile(planPath)) return null;
-  if (!isFile(mapPath)) errors.push("goal-plan stage requires implementation-map.md");
-  if (!isFile(planPath)) errors.push("goal-plan stage requires implementation-plan.md");
+  if (!isFile(mapPath)) errors.push("parent implementation requires implementation-map.md");
+  if (!isFile(planPath)) errors.push("parent implementation requires implementation-plan.md");
   if (!isFile(mapPath) || !isFile(planPath)) return null;
 
   const parentName = basename(change);
@@ -3193,7 +3199,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
   }
 
-  if (required && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/goal-plan"]).has(parentStatus.current_work)) {
+  if (stage === "goal-plan" && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/goal-plan"]).has(parentStatus.current_work)) {
     errors.push("parent active/blocked status must keep current_work=specdev/goal-plan");
   }
   if (parentStatus?.change_status === "completed") {
@@ -3264,8 +3270,13 @@ function validateChange(change, stage = null, repoRoot = null) {
   const workspace = resolveWorkspaceContract(repoRoot, change);
   errors.push(...workspace.errors);
 
+  // A partial parent must never fall back to the single-change artifact contract.
+  const mapPath = join(change, "tickets-map.md");
+  const isParentImplementation = isFile(join(change, "implementation-map.md")) ||
+    isFile(join(change, "implementation-plan.md")) ||
+    (isFile(mapPath) && parseFrontmatter(mapPath).meta.artifact === "goal-tickets-map");
   const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
-  validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot);
+  if (isParentImplementation) validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot);
   errors.push(...validateInitiative(change));
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
@@ -3297,7 +3308,6 @@ function validateChange(change, stage = null, repoRoot = null) {
   validatePrototypes(change, stage === "prototype", errors);
   validateChangeLearning(change, stage === "learn-change", errors);
 
-  const isParentImplementation = isFile(join(change, "implementation-map.md"));
   const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation;
   const specPath = join(change, "spec.md");
   const spec = isFile(specPath) || specRequired
@@ -3305,10 +3315,9 @@ function validateChange(change, stage = null, repoRoot = null) {
     : null;
   const ticketMode = isDirectory(join(change, "ticket"));
   const mapRequired = !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
-  const mapPath = join(change, "tickets-map.md");
   const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors, repoRoot) : null;
   const goalPlanPath = join(change, "goal-plan.md");
-  const goalPlan = isFile(goalPlanPath) || stage === "goal-plan"
+  const goalPlan = isFile(goalPlanPath) || (stage === "goal-plan" && !isParentImplementation)
     ? validateGoalPlan(goalPlanPath, errors)
     : null;
   validateDesignTree(join(change, "design-tree.json"), change, errors);
@@ -3527,14 +3536,6 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
 
   if (goalPlan?.meta.ready_for_execution === true) {
-    const notReady = [...tickets]
-      .filter(
-        ([, artifact]) =>
-          !new Set(["done", "cancelled"]).has(artifact.meta.status) &&
-          artifact.meta.ready !== true,
-      )
-      .map(([ticketId]) => ticketId);
-    if (notReady.length) errors.push(`Goal Plan is Ready but Tickets are not Ready: ${JSON.stringify(notReady)}`);
     if (spec && spec.meta.ready_for_tickets !== true) {
       errors.push("Goal Plan is Ready but Spec is not ready_for_tickets");
     }

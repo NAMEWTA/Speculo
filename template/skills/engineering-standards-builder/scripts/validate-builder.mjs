@@ -36,7 +36,7 @@ async function collect(rootReal) {
   async function visit(directory) {
     const relDir = toPosix(path.relative(rootReal, directory)) || '.';
     const entries = (await readdir(directory, { withFileTypes: true }))
-      .filter((entry) => entry.name !== '.DS_Store');
+      .filter((entry) => entry.name !== '.DS_Store' && entry.name !== '.gradle');
     entries.sort((a, b) => a.name.localeCompare(b.name, 'en'));
     directories.push({ abs: directory, rel: relDir, entries });
     for (const entry of entries) {
@@ -128,6 +128,8 @@ async function main() {
     }
 
     const skillFile = fileByRel.get('SKILL.md');
+    const entryProcedure = fileByRel.get('references/entry-procedure.md');
+    if (!entryProcedure) errors.push('references/entry-procedure.md is missing');
     if (!skillFile) errors.push('SKILL.md is missing');
     else {
       const skillText = await readFile(skillFile.abs, 'utf8');
@@ -141,8 +143,9 @@ async function main() {
         if (/[<>]/.test(frontmatter.values.description ?? '')) errors.push('frontmatter description must not contain angle brackets');
         if (frontmatter.values['disable-model-invocation'] !== 'true') errors.push('Builder must remain explicitly user-invoked with disable-model-invocation: true');
       }
+      const contractText = entryProcedure ? await readFile(entryProcedure.abs, 'utf8') : '';
       for (const requiredConcept of ['Agent Team', 'generated-skill-set.json', '最小原则', 'Skill 边界']) {
-        if (!skillText.includes(requiredConcept)) errors.push(`SKILL.md is missing core contract: ${requiredConcept}`);
+        if (!contractText.includes(requiredConcept)) errors.push(`references/entry-procedure.md is missing core contract: ${requiredConcept}`);
       }
     }
 
@@ -197,6 +200,7 @@ async function main() {
 
     const allowedReferenceRoots = new Set(['rules', 'typescript', 'java', 'go', 'rust']);
     for (const file of files.filter((item) => item.rel.startsWith('references/'))) {
+      if (file.rel === 'references/entry-procedure.md') continue;
       const first = file.rel.split('/')[1];
       if (!allowedReferenceRoots.has(first)) errors.push(`unexpected top-level reference group: ${file.rel}`);
     }
@@ -254,7 +258,7 @@ async function main() {
       if (actual !== expected) errors.push('manifest.txt is stale; run sync-manifest.mjs --write');
     }
 
-    const flatReferenceFiles = files.filter((file) => /^references\/[^/]+\.md$/.test(file.rel));
+    const flatReferenceFiles = files.filter((file) => /^references\/[^/]+\.md$/.test(file.rel) && file.rel !== 'references/entry-procedure.md');
     if (flatReferenceFiles.length) errors.push(`references must be grouped by rules/language: ${flatReferenceFiles.map((file) => file.rel).join(', ')}`);
 
     if (!warnings.length && files.length > 180) warnings.push(`package contains ${files.length} files; verify progressive disclosure remains focused`);

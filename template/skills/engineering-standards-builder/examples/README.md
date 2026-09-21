@@ -15,3 +15,9 @@
 - `fallback/kotlin-gradle/`：未内置语言只进入通用 fallback，不误套 Java 适配器。
 
 新增适配器必须增加 fixture、`expected.json` 和 self-test 断言。
+
+## fallback 与生成缓存
+
+`fallback/kotlin-gradle/` 是固定的扫描输入：`build.gradle.kts` 和 Kotlin 源码提供识别信号，`expected.json` 要求识别 Kotlin/Gradle/JVM 且不启用 Java 适配器。三者随技能分发并保持版本跟踪；Builder 不会把它们生成为项目业务代码，自测试也不运行 Gradle。
+
+Gradle 命令或 IDE 导入可能在这里创建 `.gradle/`，其中是可再生的构建状态、缓存和锁文件。该目录由 Git、npm 分发、CLI 静态技能复制及 Builder 清单/自校验排除；忽略不阻止 Gradle 再次创建它，无需为运行 Builder 删除夹具或执行 Gradle。

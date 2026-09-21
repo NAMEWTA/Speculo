@@ -59,6 +59,8 @@ async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<
     await cp(source, join(stagedRoot, asset), {
       recursive: asset !== "config.json",
       force: true,
+      // Tooling may import bundled fixtures; its local cache is not a skill asset.
+      filter: (path) => asset !== "skills" || basename(path) !== ".gradle",
     });
   }
 }

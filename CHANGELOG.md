@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **SpecDev Goal routing**: `P-goal-plan` now classifies parent orchestration from Implementation Map, Implementation Plan, or a `goal-tickets-map` entry. A legal single-change Goal no longer requires parent artifacts; a truncated parent still reports the missing parent files. Single-change Goal stage requires a Goal Plan, boolean ready fields, and legal status combinations; Tickets stage may still lack a Goal (#70).
+- **SpecDev progressive ticket readiness**: a single-change Ready Goal no longer demands that every future Ticket is Ready. Legal draft tickets block only themselves and their dependents; independent Ready tickets can enter the frontier. Executable `ready` / `in_progress` / `review` tickets still require `ready: true`. Authorization, dependency, writer, resource, and parent all-Ready creation gates are unchanged (#71).
+- **Builder Gradle caches**: `.gradle/` is ignored by Git, omitted from the npm package and CLI skill copy, and skipped by Builder manifest, validation, and fixture discovery. The `fallback/kotlin-gradle` scan fixtures stay tracked and distributed.
+
+### Tests
+- Added Goal routing, Goal schema, and progressive-readiness coverage in `specdev-local-first`.
+- Added Builder cache-exclusion and routed-entry contract coverage.
+
 ## [1.0.15] - 2026-09-17
 
 ### Added

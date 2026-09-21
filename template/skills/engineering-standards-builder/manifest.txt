@@ -44,6 +44,7 @@ examples/typescript/vue-vite/src/main.ts
 examples/typescript/vue-vite/tsconfig.json
 examples/typescript/vue-vite/vite.config.ts
 README.md
+references/entry-procedure.md
 references/go/00-detection-and-scope.md
 references/go/01-language-and-idioms.md
 references/go/02-modules-packages-and-layout.md

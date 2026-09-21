@@ -50,14 +50,14 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 加载 `<Path>{roots.workflows}/specdev/P-goal-plan/planning-modes.md</Path>`：
 
-1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和 Deep Ticket 完整性；
+1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和待执行 Deep Ticket 完整性；未来 draft 票按规划输入门记录局部缺口；
 2. 只读探索影响调度的代码与项目事实；
 3. 识别 migration、high-assurance、reference-conformance、release-coordination 等适用模式；
 4. 从 config 读取 `max_implementation_agents` 与 `max_integration_attempts`，将实际值快照到 `implementation_agent_limit` 与 `integration_attempt_limit`；本计划可以降低但不得超过 config 或平台能力，Lead 不计入；
 5. 根据 workspace 策略记录实现 commit 与 direct-parent/candidate integration 授权事实；缺失时仍可完成 plan 文档，但 ready_for_execution 保持 false，并列为 run 的阻塞条件；
 6. 只询问无法发现且会改变 Gate、Wave、owner、迁移、批准或验收的问题。
 
-**完成标准**：所有计划内 Ticket Ready；Lead、授权、实现并发上限和父分支可判定；没有用 Goal Plan 掩盖上游缺口。
+**完成标准**：计划内 Ticket、范围、覆盖、DAG 与所有权完整；未来 draft 票已记录真实缺口、生产者证据和 DoR 重审条件；Lead、授权状态、实现并发上限和父分支可判定。缺执行授权时可交付规划，但 `ready_for_execution` 保持 `false`。
 
 ### 2. 构建 Outcome、DAG、Wave 与 Gate
 
@@ -133,6 +133,8 @@ Goal Plan 不复制 Ticket 的局部施工路线、全部文件预测或逐项�
 ## 完成标准
 
 - Goal Plan schema v6 且 `ready_for_execution` 与状态一致；
+- 规划完成与执行就绪分别报告；允许交付 `draft / ready_for_execution: false`，单 change 不创建父 Implementation Map/Plan；
+- 等待上游产物的未来票保持 draft，局部缺口只阻塞依赖闭包；进入执行的票必须重新通过 DoR，上游完成不自动提升 Ready；
 - Lead 唯一，implementation subagent 上限来自 config/平台能力，review/research agent 不受 SpecDev 数字限制；
 - 每个实现 Ticket 都有 workspace、commit、对应 integration gate 和 Evidence 出口；
 - current 模式不创建 source/candidate worktree，适用 E2E 由 Lead 在 current workspace 运行；required 模式保持 source/parent-candidate 边界；

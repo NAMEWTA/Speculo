@@ -47,7 +47,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 ## 场景路由
 
-不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，一个或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账/尚未成 Change 的记事项才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
+不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，单个已拆票 change 或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账/尚未成 Change 的记事项才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
 
 ## Work 条目
 
@@ -61,7 +61,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 - **I-implement** — 实现与验收：执行已授权的 Ready Ticket 或获批 Direct Spec，产生可回读实现和验收证据；不从模糊需求直接写代码。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 - **L-learn-change** — Change 学习：在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。
-- **P-goal-plan** — Goal 规划与执行：为一个或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
+- **P-goal-plan** — Goal 规划与执行：为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
 - **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
 - **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。

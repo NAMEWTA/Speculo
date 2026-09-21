@@ -488,6 +488,248 @@ function currentTicketWorktree(status: "active" | "integrated" = "active"): Reco
   });
 }
 
+async function addControllerTicket(
+  root: string,
+  id: string,
+  dependencies: string[] = [],
+  ready = true,
+): Promise<string> {
+  const original = await readFile(join(root, "ticket", "01-implementation.md"), "utf8");
+  const ticket = original.replaceAll("T-01", id)
+    .replaceAll("src/upstream.ts", `src/${id.toLowerCase()}.ts`)
+    .replace("blocked_by: []", `blocked_by: [${dependencies.join(", ")}]`)
+    .replace("status: ready", `status: ${ready ? "ready" : "draft"}`)
+    .replace("ready: true", `ready: ${ready}`);
+  const file = join(root, "ticket", `${id.slice(2)}-implementation.md`);
+  await writeFile(file, ticket);
+  const mapPath = join(root, "tickets-map.md");
+  await writeFile(mapPath, `${await readFile(mapPath, "utf8")}\n${id}: dependencies ${dependencies.join(", ") || "none"}; repeat DoR after upstream evidence.\n`);
+  return file;
+}
+
+async function progressiveGoalFixture(workspacePolicy: "current" | "required" = "current"): Promise<string> {
+  const root = await controllerFixture();
+  await writeReadyChild(root, changeName, "src/upstream.ts");
+  await writeGoalPlan(root, 3, [], "", workspacePolicy);
+  const file = join(root, "ticket", "01-implementation.md");
+  await writeFile(file, (await readFile(file, "utf8")).replace("owner: unassigned", "owner: lead-session"));
+  return root;
+}
+
+describe("SpecDev Goal routing and progressive readiness", () => {
+  it("validates single-change draft and Ready Goals without parent artifacts", async () => {
+    const root = await progressiveGoalFixture();
+    try {
+      const goalPath = join(root, "goal-plan.md");
+      const readyGoal = await readFile(goalPath, "utf8");
+      for (const content of [readyGoal, readyGoal.replace("status: ready", "status: draft").replace("ready_for_execution: true", "ready_for_execution: false")]) {
+        await writeFile(goalPath, content);
+        const before = await readdir(root);
+        const result = runValidator(root, "goal-plan", dirname(root));
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.deepEqual(await readdir(root), before);
+        assert.equal(await readFile(goalPath, "utf8"), content);
+        assert.ok(!before.includes("implementation-map.md") && !before.includes("implementation-plan.md"));
+      }
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("requires a valid single-change Goal only at the Goal stage", async () => {
+    const root = await progressiveGoalFixture();
+    try {
+      const goalPath = join(root, "goal-plan.md");
+      const readyGoal = await readFile(goalPath, "utf8");
+      await rm(goalPath);
+      assert.equal(runValidator(root, "tickets", dirname(root)).status, 0);
+      const missing = runValidator(root, "goal-plan", dirname(root));
+      assert.equal(missing.status, 1);
+      assert.match(missing.stdout + missing.stderr, /missing Goal Plan/);
+      assert.doesNotMatch(missing.stdout + missing.stderr, /implementation-(map|plan)/);
+      const invalid = [
+        readyGoal.replace("schema_version: 6", "schema_version: 5"),
+        readyGoal.replace("artifact: goal-plan", "artifact: wrong"),
+        readyGoal.replace("status: ready", "status: unknown"),
+        readyGoal.replace("status: ready", "status: draft"),
+        ...['"false"', '"true"', "null", "0", "false"].map(value => readyGoal.replace("ready_for_execution: true", `ready_for_execution: ${value}`)),
+        readyGoal.replace("ready_for_execution: true\n", ""),
+      ];
+      for (const content of invalid) {
+        await writeFile(goalPath, content);
+        const result = runValidator(root, "goal-plan", dirname(root));
+        assert.equal(result.status, 1, content);
+        assert.match(result.stdout + result.stderr, /goal-plan\.md:/);
+        assert.doesNotMatch(result.stdout + result.stderr, /implementation-(map|plan)/);
+      }
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("keeps incomplete parents in the parent branch, including entry-only and plan-only parents", async () => {
+    const root = await fixture();
+    const members = ["2026-09-08-api", "2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root, changeName, "active", "specdev/goal-plan");
+      for (const [index, member] of members.entries()) await writeReadyChild(join(dirname(root), member), member, `src/member-${index}/**`);
+      await writeImplementationArtifacts(root, members);
+      const legacy = runValidator(root, "goal-plan");
+      assert.equal(legacy.status, 0, `legacy parent without entry: ${legacy.stdout}${legacy.stderr}`);
+      const entry = (await readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/references/goal-tickets-map-template.md"), "utf8"))
+        .replaceAll("<YYYY-MM-DD-goal>", changeName).replaceAll("{change}", changeName);
+      await writeFile(join(root, "tickets-map.md"), entry);
+      assert.equal(runValidator(root, "goal-plan").status, 0);
+      const map = await readFile(join(root, "implementation-map.md"), "utf8");
+      const plan = await readFile(join(root, "implementation-plan.md"), "utf8");
+      for (const present of [["map"], ["plan"], ["entry"], ["entry", "plan"], ["entry", "map"]]) {
+        for (const [name, file, content] of [["map", "implementation-map.md", map], ["plan", "implementation-plan.md", plan], ["entry", "tickets-map.md", entry]]) {
+          if (present.includes(name)) await writeFile(join(root, file), content);
+          else await rm(join(root, file), { force: true });
+        }
+        for (const stage of [undefined, "goal-plan"]) {
+          const result = runValidator(root, stage);
+          const output = result.stdout + result.stderr;
+          assert.equal(result.status, 1, `${present}: ${output}`);
+          for (const [name, file] of [["map", "implementation-map.md"], ["plan", "implementation-plan.md"]]) {
+            if (!present.includes(name)) assert.ok(output.includes(`requires ${file}`), output);
+          }
+          assert.doesNotMatch(output, /missing Goal Plan|missing Spec|missing Tickets Map|missing Ticket directory/);
+        }
+      }
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("dispatches a Ready producer while its draft consumer waits for DoR", async () => {
+    const root = await progressiveGoalFixture();
+    try {
+      const consumer = await addControllerTicket(root, "T-02", ["T-01"], false);
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) };
+      const before = await readFile(consumer, "utf8");
+      let result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.validation_errors, []);
+      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.match(JSON.stringify(result.blocked), /not Ready: draft/);
+      assert.equal(result.authorization_checked, false);
+      assert.equal(result.transaction_gateway_checked, false);
+      assert.equal(await readFile(consumer, "utf8"), before);
+      const validation = runValidator(root, "goal-plan", dirname(root));
+      assert.equal(validation.status, 0, validation.stdout + validation.stderr);
+
+      await writeFile(consumer, before.replace("status: draft", "status: ready").replace("ready: false", "ready: true"));
+      result = analyzeMap(input);
+      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.match(JSON.stringify(result.blocked), /dependency not successfully satisfied: T-01/);
+      const goalPath = join(root, "goal-plan.md");
+      await writeFile(goalPath, (await readFile(goalPath, "utf8")).replace("status: ready", "status: draft").replace("ready_for_execution: true", "ready_for_execution: false"));
+      result = analyzeMap(input);
+      assert.deepEqual(result.frontier, []);
+      assert.match(JSON.stringify(result.blocked), /Goal planning gate is not ready/);
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("retains owner, resource and current-writer gates with a draft consumer", async () => {
+    const root = await progressiveGoalFixture("required");
+    try {
+      await addControllerTicket(root, "T-02", ["T-01"], false);
+      const independentPath = await addControllerTicket(root, "T-03");
+      const firstPath = join(root, "ticket", "01-implementation.md");
+      const first = await readFile(firstPath, "utf8");
+      for (const file of [firstPath, independentPath]) {
+        await writeFile(file, (await readFile(file, "utf8")).replace("resource_claims: []", 'resource_claims: ["db:users"]'));
+      }
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) };
+      let result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.match(JSON.stringify(result.deferred), /semantic resource: db:users/);
+
+      await writeGoalPlan(root, 3, [], "", "current");
+      await writeFile(firstPath, first.replace("status: ready", "status: in_progress"));
+      result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
+      assert.match(JSON.stringify(result.blocked), /current workspace/);
+
+      await writeFile(firstPath, first.replace("owner: lead-session", "owner: unassigned"));
+      result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.frontier, ["T-03"]);
+      assert.match(JSON.stringify(result.blocked), /implementation owner not assigned/);
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("still rejects draft members when creating a multi-change parent", async () => {
+    const root = await fixture();
+    const members = ["2026-09-08-api", "2026-09-08-ui"];
+    try {
+      await writeNamedStatus(root, changeName, "active", "specdev/goal-plan");
+      for (const [index, member] of members.entries()) await writeReadyChild(join(dirname(root), member), member, `src/member-${index}/**`);
+      await writeImplementationArtifacts(root, members);
+      const file = join(dirname(root), members[1], "ticket", "01-implementation.md");
+      await writeFile(file, (await readFile(file, "utf8")).replace("status: ready", "status: draft").replace("ready: true", "ready: false"));
+      const result = runValidator(root, "goal-plan");
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, /2026-09-08-ui: T-01: parent creation requires status=ready and ready=true/);
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("reports invalid executable readiness locally and blocks its dependency closure", async () => {
+    const root = await progressiveGoalFixture("required");
+    try {
+      const firstPath = join(root, "ticket", "01-implementation.md");
+      const first = await readFile(firstPath, "utf8");
+      await addControllerTicket(root, "T-02", ["T-01"]);
+      await addControllerTicket(root, "T-03");
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      for (const [status, ready] of [["ready", "false"], ["in_progress", "false"], ["review", "false"], ["ready", '"false"']]) {
+        await writeFile(firstPath, first.replace("status: ready", `status: ${status}`).replace("ready: true", `ready: ${ready}`));
+        const result = analyzeMap({ mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) });
+        assert.deepEqual(result.errors, []);
+        assert.deepEqual(result.frontier, ["T-03"]);
+        assert.ok(result.validation_errors.some((error: any) => error.id === "T-01" && /executable Ticket must keep ready=true/.test(error.message)), JSON.stringify(result));
+        assert.ok(result.blocked.some((node: any) => node.id === "T-02"));
+      }
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
+  it("does not promote a draft consumer when its producer is successfully done", async () => {
+    const root = await progressiveGoalFixture();
+    try {
+      const consumer = await addControllerTicket(root, "T-02", ["T-01"], false);
+      const repo = dirname(root);
+      await writeFile(join(repo, ".git", "info", "exclude"), "*\n");
+      const commit = spawnSync("git", ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "--allow-empty", "-m", "fixture"], { cwd: repo, encoding: "utf8" });
+      assert.equal(commit.status, 0, commit.stderr);
+      const sha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
+      const worktree = currentTicketWorktree("integrated");
+      worktree.base_sha = sha;
+      worktree.source_checkpoint = sha;
+      for (const field of ["parent_before_sha", "source_sha", "result_sha"]) worktree.integration[field] = sha;
+      await writeStatus(root, "active", [worktree]);
+      const firstPath = join(root, "ticket", "01-implementation.md");
+      await writeFile(firstPath, (await readFile(firstPath, "utf8")).replace("status: ready", "status: done"));
+      await mkdir(join(root, "evidence"));
+      await writeFile(join(root, "evidence", "T-01.md"), await readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"));
+      const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
+      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: repo };
+      const before = await readFile(consumer, "utf8");
+      let result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.validation_errors, []);
+      assert.deepEqual(result.done, ["T-01"]);
+      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.blocked, [{ id: "T-02", reasons: ["not Ready: draft"] }]);
+      assert.equal(result.eligible_for_final_verification, false);
+      assert.equal(await readFile(consumer, "utf8"), before);
+      await writeFile(consumer, before.replace("status: draft", "status: ready").replace("ready: false", "ready: true"));
+      result = analyzeMap(input);
+      assert.deepEqual(result.errors, []);
+      assert.deepEqual(result.frontier, ["T-02"]);
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+});
+
 describe("SpecDev local-first contracts", () => {
   it("keeps INDEX passive and loads the root contract only after work activation", async () => {
     const workflowRoot = join(packageRoot, "template/workflows/specdev");

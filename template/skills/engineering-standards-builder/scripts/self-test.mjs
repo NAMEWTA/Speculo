@@ -34,6 +34,7 @@ async function findExpectedFiles(root) {
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name, 'en'));
     for (const entry of entries) {
+      if (entry.name === '.gradle') continue;
       const abs = path.join(directory, entry.name);
       if (entry.isDirectory()) await visit(abs);
       else if (entry.isFile() && entry.name === 'expected.json') result.push(abs);
