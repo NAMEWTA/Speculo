@@ -63,7 +63,7 @@ describe("OPS 2.2 three-worker resource workflow",()=>{
   for(const root of ["C:\\Windows","C:\\Ops:stream"]) {const s=await seed();s.hosts["node-a"]={...host(root),platform:"windows"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/system\/ADS/);}
  });
  it("rejects local connection parameters",async()=>{
-  const s=await seed();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local connection/);
+  const s=await resourceState();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local connection/);
  });
  it("rejects orphan deployments",async()=>{
   const s=await resourceState();delete s.hosts["node-a"];const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/orphan/);
