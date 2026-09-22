@@ -1,0 +1,30 @@
+name: Review validation
+
+on:
+  push:
+    branches: ['review/agent-contracts-hardening']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Export tracked review source
+        run: git archive --format=tar.gz --output=review-source.tar.gz HEAD
+      - name: Retain reproducible source snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: review-source
+          path: review-source.tar.gz
+          retention-days: 3
+      - uses: ./.github/actions/setup
+      - name: Validate baseline
+        run: pnpm check
+      - name: Verify CLI
+        run: pnpm verify-bin
