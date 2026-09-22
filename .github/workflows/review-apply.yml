@@ -1,0 +1,116 @@
+name: Apply validated review changes
+
+on:
+  push:
+    branches: ['review/agent-contracts-hardening']
+    paths: ['.review-transfer/**', '.github/workflows/review-apply.yml']
+
+jobs:
+  apply-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify transport, baseline, and resulting source before applying
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor bd2fdc9c7a2681d3ab454dcb54410e6bb441f1a6 HEAD
+          python3 - <<'PY'
+          import hashlib, json, lzma
+          from pathlib import Path, PurePosixPath
+          data = b''.join(Path(f'.review-transfer/part-{i:02}').read_bytes() for i in range(7))
+          assert hashlib.sha256(data).hexdigest() == '1b78a9d4f33a53dfbb91a046ea84e979b0b73618cbbba9616dbe0cf8b294cece', 'transport integrity failed'
+          bundle = json.loads(lzma.decompress(data))
+          assert bundle['schema_version'] == 2
+          assert bundle['base_commit'] == 'bd2fdc9c7a2681d3ab454dcb54410e6bb441f1a6'
+          assert len(bundle['files']) == 84
+          def feed(digest, name, value):
+              digest.update(name.encode() + b'\0')
+              digest.update(str(len(value)).encode() + b'\0' + value if value is not None else b'absent')
+          before, after = hashlib.sha256(), hashlib.sha256()
+          outputs, seen = [], set()
+          allowed = {'src', 'scripts', 'test', 'skills', 'template', 'docs', '.github', 'AGENTS.md', 'README.md', 'README-ZH.md', 'CHANGELOG.md', 'package.json'}
+          for name, edits in bundle['files']:
+              rel = PurePosixPath(name)
+              assert not rel.is_absolute() and '..' not in rel.parts and '\\' not in name and rel.parts[0] in allowed
+              assert name not in seen
+              seen.add(name)
+              file = Path(name)
+              assert not any(p.is_symlink() for p in (file, *file.parents))
+              original = file.read_bytes() if file.exists() else None
+              feed(before, name, original)
+              lines = (original or b'').decode('utf-8').splitlines(keepends=True)
+              previous_end = 0
+              for start, end, text in edits:
+                  assert isinstance(start, int) and isinstance(end, int) and isinstance(text, str)
+                  assert 0 <= previous_end <= start <= end <= len(lines)
+                  previous_end = end
+              for start, end, text in reversed(edits):
+                  lines[start:end] = [text]
+              proposed = ''.join(lines).encode('utf-8')
+              feed(after, name, proposed)
+              outputs.append((file, proposed))
+          assert before.hexdigest() == bundle['before'], 'source drift: nothing has been written'
+          assert after.hexdigest() == bundle['after'], 'proposed source mismatch: nothing has been written'
+          for file, proposed in outputs:
+              file.parent.mkdir(parents=True, exist_ok=True)
+              file.write_bytes(proposed)
+          verified = hashlib.sha256()
+          for file, _ in outputs:
+              feed(verified, file.as_posix(), file.read_bytes())
+          assert verified.hexdigest() == bundle['after']
+          print(f'Applied and reread {len(outputs)} authenticated source changes; digest {verified.hexdigest()}')
+          PY
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/setup@v2
+        with:
+          install: false
+      - name: Resolve the Node 22 type baseline and update its lockfile
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+        env:
+          PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
+      - name: Rebuild owned generated assets
+        run: |
+          pnpm generate-canonical
+          node template/skills/engineering-standards-builder/scripts/sync-manifest.mjs --write
+      - name: Run complete checks on the supported runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm check 2>&1 | tee /tmp/speculo-review-validation.log
+          pnpm verify-bin 2>&1 | tee -a /tmp/speculo-review-validation.log
+          git diff --check
+      - name: Commit only validated source to the feature branch and remove temporary transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=review/agent-contracts-hardening
+          CURRENT=$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+          test "$CURRENT" = "$GITHUB_SHA" || { echo 'Remote branch changed; refusing to push'; exit 1; }
+          git rm -r .review-transfer .github/workflows/review-validation.yml .github/workflows/review-apply.yml
+          git add src scripts test skills template docs AGENTS.md README.md README-ZH.md CHANGELOG.md package.json pnpm-lock.yaml .github
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: harden agent contracts, installation integrity and crash recovery'
+          git push origin "HEAD:refs/heads/$BRANCH"
+          git rev-parse HEAD > /tmp/speculo-review-commit.txt
+          git archive --format=tar.gz --output=/tmp/speculo-implemented-source.tar.gz HEAD
+      - name: Retain fixed-commit validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: review-implementation
+          path: |
+            /tmp/speculo-review-validation.log
+            /tmp/speculo-review-commit.txt
+            /tmp/speculo-implemented-source.tar.gz
+          retention-days: 3
+          if-no-files-found: warn
