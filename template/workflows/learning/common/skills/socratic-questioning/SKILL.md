@@ -1,6 +1,7 @@
 ---
 name: socratic-questioning
 description: 苏格拉底问答、反问授课或用提问教；当学习者卡住、不知道下一步、指定提问/5E/费曼/生产性失败，或 Q-question 需要出题与讲解配方时使用。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
 ---
 
 # Socratic Questioning

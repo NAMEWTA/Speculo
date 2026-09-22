@@ -13,6 +13,8 @@ keywords: [lesson, 教学, eli5, 图文, explanation]
 
 ## 读取范围
 
+当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；它们是本步骤必需合同，不默认加载其他分支。
+
 1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
 2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
 3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。

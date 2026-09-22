@@ -32,8 +32,13 @@ describe("OPS 2.2 three-worker resource workflow",()=>{
   const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--self-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
  });
  it("runs executor contract tests including node-less bootstrap",()=>{
-  const p=spawnSync(process.execPath,["--test",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs")],{encoding:"utf8",timeout:120000});
+  // Node's inherited test context makes a nested --test exit 0 without running files.
+  const env={...process.env};delete env.NODE_TEST_CONTEXT;
+  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs")],{encoding:"utf8",timeout:120000,env});
   assert.equal(p.status,0,p.stdout+p.stderr);
+  assert.match(p.stdout,/^# tests [1-9][0-9]*$/m,"OPS child runner must execute nonempty tests");
+  assert.match(p.stdout,/^# fail 0$/m,p.stdout+p.stderr);
+  console.log("OPS child runner: "+p.stdout.split(/\r?\n/).filter(line=>/^# (tests|pass|fail|skipped) /.test(line)).join("; "));
  });
  it("validates v3 resource seed with no change lifecycle",async()=>{
   const s=await seed();assert.equal(s.schema_version,3);assert.ok(!("active" in s));validateOpsResources(s,await schema());
@@ -58,7 +63,7 @@ describe("OPS 2.2 three-worker resource workflow",()=>{
   for(const root of ["C:\\Windows","C:\\Ops:stream"]) {const s=await seed();s.hosts["node-a"]={...host(root),platform:"windows"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/system\/ADS/);}
  });
  it("rejects local connection parameters",async()=>{
-  const s=await resourceState();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local connection/);
+  const s=await seed();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local connection/);
  });
  it("rejects orphan deployments",async()=>{
   const s=await resourceState();delete s.hosts["node-a"];const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/orphan/);

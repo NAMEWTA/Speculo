@@ -1,7 +1,6 @@
 ---
 name: source-code-zip
 description: Create a requested source ZIP using the bundled Node script and its ignore rules; do not install dependencies.
-
 ---
 
 # source-code-zip

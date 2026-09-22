@@ -1,6 +1,6 @@
 # Speculo runtime guide
 
-先按当前任务定位相关 workflow、command、skill 或 change，再读取对应入口和分支 reference；不默认整读 `speculo/` 或永久知识索引。
+从项目根字面路径 `speculo/.speculo/workspace.json` 解析 roots，按需读取同目录生成的 `catalog.md`；发现不激活、不授权。先按当前任务定位相关 workflow、command、skill 或 change，再读取对应入口和分支 reference；不默认整读 `speculo/` 或永久知识索引。
 
 - 被动发现：按关键词/ID 搜索 `speculo/workflows/<workflow>/INDEX.md` 的相关行，只定位与当前请求相关的永久知识条目。
 - 激活 workflow：再读取对应 `README.md`、状态投影和当前 Work；只加载当前分支需要的规则、schema、模板与工具。

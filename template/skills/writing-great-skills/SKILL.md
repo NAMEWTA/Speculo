@@ -1,12 +1,12 @@
 ---
-id: writing-great-skills
-type: skill
 name: writing-great-skills
 description: Reference guidance for explicitly requested skill authoring or review; never auto-trigger.
-disable-model-invocation: true
+metadata: {"speculo-id": "writing-great-skills", "speculo-kind": "skill", "speculo-invocation": "user-only"}
 ---
 
 # writing-great-skills
+
+Activation is explicit-only. Metadata is descriptive; enforce host permissions and obtain user authorization before effects.
 
 This file is the routing entry. Read [`references/entry-procedure.md`](references/entry-procedure.md) only after this skill is selected. Read a named reference there only for the active branch.
 

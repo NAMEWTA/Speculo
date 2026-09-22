@@ -31,11 +31,13 @@ Requires: Node.js ≥ 22.22.3 and < 25
 |---|---|
 | `speculo` / `speculo init [target]` | Initialize or refresh a Speculo 1.0 runtime. 0.x installations are intentionally incompatible and must be removed or renamed first. |
 | `speculo version` | Print the installed version and check npm for the latest release. |
-| `speculo doctor [target]` | Read-only validation of the kernel, manifest and runtime installation. |
+| `speculo doctor [target] [--json]` | Read-only installation integrity and recovery diagnostics. |
+| `speculo resolve [target] --path <reference>` | Read-only pointer resolution; does not execute a shell. |
+| `speculo recover [target] --transaction <id>` | Explicit recovery of an identified interrupted refresh. |
 
-Legacy CLI commands and 0.x migration paths are removed. The CLI exposes `init`, `version`, and read-only `doctor`.
+Legacy CLI commands and 0.x migration paths remain removed. The CLI also offers read-only `resolve` and explicit transaction-ID `recover`; doctor reports its installation-only scope.
 
-Initialization updates only a controlled persistent-knowledge block in project `AGENTS.md` for the selected workflows. The block contains references to promoted knowledge paths and explicitly remains lazy: it does not activate a workflow, create a Change, or execute a Work. A missing `CLAUDE.md` is created as a fixed redirect to `AGENTS.md`; existing handbook content is preserved.
+Initialization updates controlled passive-bootstrap and persistent-knowledge blocks in project `AGENTS.md` for all installed workflows. The block contains references to promoted knowledge paths and explicitly remains lazy: it does not activate a workflow, create a Change, or execute a Work. A missing `CLAUDE.md` is created as a fixed redirect to `AGENTS.md`; existing handbook content is preserved.
 
 ## Installed Runtime Assets
 
@@ -45,7 +47,7 @@ After initialization, the target project gains the following AI agent-callable a
 
 | Command | Purpose |
 |---|---|
-| `docs-sync` | Clean workspace, sync project documentation and Agent handbooks from reproducible Git ranges |
+| `docs-sync` | Audit (default), update, or explicitly commit documentation from reproducible Git ranges |
 | `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
 | `git-history-squash` | Confirmed first-parent history convergence with recoverable refs and exact remote leases |
 | `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
@@ -77,7 +79,7 @@ After initialization, the target project gains the following AI agent-callable a
 | **ops** | 3 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
-Every workflow ships an `INDEX.md` as its auto-generated work catalog. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
+Every workflow ships an `INDEX.md` discovery entry. SpecDev/Learning/Ops keep their generated Work catalog in the README activation contract; Person lists Works directly in INDEX. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
 SpecDev T-triage stays the only remote boundary. Use **intake** to freeze a source, **reconcile** to close that original source Issue after local completion, **publish** to project each completed Ticket as a classified GitHub Issue (local-origin work included), and **capture** to park a not-yet-Change note as a still-open GitHub Issue. GitHub is a projection, counter, and inbox — not the development source of truth. Run both reconcile and publish when an intake Change should also count its tickets. Capture does not create a Change.
 
@@ -107,3 +109,13 @@ MIT — see [LICENSE](./LICENSE)
 ## SpecDev Goal migration
 
 The unified P Goal entry, O compatibility route, Initiative exploration and Plan Ticket contracts are documented in [the migration guide](docs/specdev-goal-migration.md). Existing runtime state is not silently rewritten.
+
+## Agent contract hardening
+
+Unattended first installation now installs core only. Select packages explicitly with `speculo init [target] --workflows specdev,learning`; unattended refresh selects already-installed supported packages. `--core-only` refreshes core without removing existing supported workflows. Installed and selected-for-update are separate; no automatic activation or uninstall is implied.
+
+The project AGENTS bootstrap points to `speculo/.speculo/workspace.json`, a generated read-only capability catalog and the runtime guide. Agents that do not read project instructions need an explicit user-provided entry. Public Skill metadata follows the emitted standard profile; workflow-private Skills declare their resolver requirement. `INDEX.md` is a discovery entry: SpecDev/Learning/Ops list Works in README activation contracts, while Person lists them directly in INDEX.
+
+`speculo doctor [target] --json` checks installation integrity (not live services or agent behavior). `speculo resolve [target] --path <reference>` resolves one contained pointer without executing it. Interrupted refreshes retain transaction evidence; after verifying that the original process has stopped, `speculo recover [target] --transaction <id>` performs evidence-checked rollback or committed cleanup. Unknown locks, links and drift are never silently discarded. This is process-interruption recovery, not a universal power-loss or adversarial-filesystem guarantee.
+
+Docs Sync defaults to read-only audit; update and commit require their corresponding user requests. New Ops controllers export credential references by default; plaintext documentation requires an explicitly approved plan. Existing active bindings, historical evidence and legacy plaintext policies are not silently migrated. See [migration and verification notes](docs/agent-contracts-upgrade.md).

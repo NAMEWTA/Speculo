@@ -116,3 +116,9 @@ SpecDev 不假定运行时一定提供项目根变量。Ticket、Evidence、诊�
 - 目录引用是否以 `/` 结束且文件引用是否不以 `/` 结束。
 
 路径检查通过仅表示引用结构正确，不代表工件语义、需求、设计或实现正确。
+
+## 9. 与标准 Skill 的分发边界
+
+本文件是 SpecDev 内部动态工件协议，不是通用 Agent Skills 的文件格式规范。独立标准 Skill 的静态 references/assets 使用相对路径；workflow 私有 Skill 声明 compatibility 后继续使用本 Path 合同。已有持久化引用不批量迁移。
+
+实际执行前可以使用只读 `speculo resolve <project-root> --path '<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>'` 展开单个指针。解析器先打开字面 workspace 路径，拒绝未知 alias、未替换变量、通配符、越界路径与链接跳转；不执行 shell、不授予文件写入权限。完整命令由已获授权调用方使用参数数组构造，不把 Path 标记或用户文本直接交给 shell。

@@ -10,12 +10,12 @@
 
 配置使用 `.speculo/baselines/` 中的上次模板默认值执行 base/local/incoming 三方合并：模板新增项自动增加，模板删除项直接删除，未被用户修改的旧默认值跟随模板更新，用户覆盖值在满足目标合同的前提下保留。只有字段删除、显式 schema 迁移或结构化文件变换时，CLI 才把原文件写入 `back/` 并生成 targeted manifest；opaque 内容不会被整包复制到备份。
 
-`install.json` 使用 schema v3，记录包版本、已安装 workflows、managed manifest 路径和 baseline schema。`kernel.json` 定义共享 change、风险、checkpoint、能力和 trace 位置。Speculo 1.0 不读取或迁移任何 0.x 安装；检测到旧 manifest 时必须先由用户移除或改名旧 `speculo/` 目录。初始化以项目锁、完整 staging、active fingerprint 复验、原子 rename 与失败 rollback 组成一个事务；冲突不会发布部分结果，也不会创建新的 pending marker。
+`install.json` 使用 schema v3，记录包版本、已安装 workflows、managed manifest 路径和 baseline schema。`kernel.json` 定义共享 change、风险、checkpoint、能力和 trace 位置。Speculo 1.0 不读取或迁移任何 0.x 安装；检测到旧 manifest 时必须先由用户移除或改名旧 `speculo/` 目录。初始化使用项目锁、完整 staging、active fingerprint、配套手册 before/after images 与持久事务阶段记录。正常异常回滚；进程中断后保留现场，通过只读 doctor 检查，再由用户显式 recover 处理。多文件交换不是对所有读者全时刻原子的，保证范围是受测试的进程中断恢复，不宣称跨平台掉电原子性。
 
 ## 读取顺序
 
-1. 读取 `workspace.json`，以当前打开项目为 `project_root` 解析公共 roots。嵌套安装时，项目根 `.speculo/` 不是本目录；只有该文件声明的状态根是运行时状态的唯一持久化根，项目根 `.speculo/specdev` 非法。
-2. 从 `../workflows/<workflow>/INDEX.md` 发现 workflow并按需读取其中声明的永久知识；这一步不读取 Work 条目或运行状态。
+1. 从项目根打开字面 `speculo/.speculo/workspace.json`（已在本目录时为 `workspace.json`），以当前打开项目为 `project_root` 解析公共 roots。嵌套安装时，项目根 `.speculo/` 不是本目录；只有该文件声明的状态根是运行时状态的唯一持久化根，项目根 `.speculo/specdev` 非法。
+2. 从本目录生成的 `catalog.md` 定位已安装能力，再按需读取 `../workflows/<workflow>/INDEX.md` 声明的永久知识；这一步不读取 Work 条目或运行状态。
 3. 用户明确激活 workflow 或 work 后，读取 INDEX 指向的 workflow 根 `README.md`，从其中的 Work 条目选择目标并读取具体入口文件。
 4. 按激活合同读取 `<Path>{roots.state}/{workflow}/status.json</Path>`。SpecDev/Learning 再读取当前 change `.status.json` 与 work 产物。Ops schema v3 读取 hosts/projects/deployments/allocations/bindings/releases 及对应运行记录，不创建 `changes/`。
 5. 历史 change（SpecDev/Learning）只从 `<Path>{roots.state}/{workflow}/archive/{YYYY-MM}/{change}/</Path>` 读取。Ops 运行证据在 `hosts/{host_id}/runs/{run_id}` 或 `releases/{run_id}`。
@@ -32,3 +32,9 @@
 - 独立 Skill 只写 `<Path>{roots.state}/skills/{skill}/</Path>`；一次运行目录命名为 `<YYYY-MM-DD>-<kebab-topic>[-NN]`，禁止覆盖。由 command/work 调用时改用调用方提供的 owner 路径。
 - `back/` 由 `speculo init` 单一写入；workflow 和 commands 不得修改。
 - `install.json`、`managed.json`、`baselines/` 与 refresh contract 由 CLI 拥有，workflow 不得创建、修改或删除。
+
+## 显式中断恢复
+
+`speculo doctor [target] --json` 是只读 installation-integrity 检查，验证配置、roots、manifest 与文件摘要，报告尚未检查的领域状态、宿主行为和服务健康。发现 `.speculo-init.lock/transaction.json` 时输出事务 ID 和阶段。确认原执行进程已停止后，执行 `speculo recover [target] --transaction <id>`。事务 ID、宿主、owner PID、安装 before/after hash、配套文件和目录布局必须匹配；未知锁、仍在运行的 owner、内容漂移或越界链接均保留并阻塞。
+
+committed 阶段只完成清理，其他已记录阶段恢复旧安装与旧手册。未进入持久事务的 stage/owner 锁、恢复自身被强制终止留下的 recovery.lock 或清理窗口中的不完整记录须人工核对，不能仅凭锁龄删除。严禁 rm 未识别备份来“解除阻塞”。项目目录必须可信；这不是阻止同账户恶意进程竞态的沙箱。POSIX 使用文件与目录 fsync，Windows 没有通用目录 fsync，掉电恢复需要宿主备份策略。

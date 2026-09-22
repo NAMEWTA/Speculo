@@ -59,10 +59,8 @@ export async function discoverWorkflowCatalog(
         description: frontmatter.description ?? "",
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes("ids must match")) {
-        throw error;
-      }
-      // A directory without INDEX.md is not an installable workflow package.
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      // Only a missing INDEX.md means this is not an installable workflow package.
     }
   }
 
@@ -101,7 +99,7 @@ export async function promptWorkflowSelection(
   catalog: WorkflowCatalog,
   options?: { preSelectedWorkflowIds?: Set<string> }
 ): Promise<WorkflowSelection> {
-  if (!isInteractive()) return selectAllFromCatalog(catalog);
+  if (!isInteractive()) return { workflowIds: [...(options?.preSelectedWorkflowIds ?? [])].filter((id) => catalog.has(id)).sort() };
 
   const choices = [...catalog.values()]
     .sort((left, right) => left.id.localeCompare(right.id))

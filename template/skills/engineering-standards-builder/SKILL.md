@@ -1,10 +1,12 @@
 ---
 name: engineering-standards-builder
 description: Generate or refresh project-specific engineering skills after the user explicitly invokes the builder.
-disable-model-invocation: true
+metadata: {"speculo-invocation": "user-only"}
 ---
 
 # engineering-standards-builder
+
+Activation is explicit-only. Metadata is descriptive; enforce host permissions and obtain user authorization before effects.
 
 This file is the routing entry. Read [`references/entry-procedure.md`](references/entry-procedure.md) only after this skill is selected. Read a named reference there only for the active branch.
 

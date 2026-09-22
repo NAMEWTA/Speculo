@@ -141,7 +141,11 @@ async function main() {
         if (frontmatter.values.name !== 'engineering-standards-builder') errors.push('stable Skill ID must remain engineering-standards-builder for drop-in replacement');
         if (!frontmatter.values.description) errors.push('frontmatter description is missing');
         if (/[<>]/.test(frontmatter.values.description ?? '')) errors.push('frontmatter description must not contain angle brackets');
-        if (frontmatter.values['disable-model-invocation'] !== 'true') errors.push('Builder must remain explicitly user-invoked with disable-model-invocation: true');
+        let metadata = {};
+        try { metadata = JSON.parse(frontmatter.values.metadata ?? '{}'); }
+        catch { errors.push('Builder metadata must use the emitted JSON-flow mapping'); }
+        if (metadata['speculo-invocation'] !== 'user-only') errors.push('Builder must remain explicitly user-invoked with metadata.speculo-invocation=user-only');
+        if (!skillText.includes('Activation is explicit-only.')) errors.push('Builder must retain its visible explicit user selection boundary');
       }
       const contractText = entryProcedure ? await readFile(entryProcedure.abs, 'utf8') : '';
       for (const requiredConcept of ['Agent Team', 'generated-skill-set.json', '最小原则', 'Skill 边界']) {

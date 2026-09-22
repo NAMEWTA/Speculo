@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Agent entry safety**: atomic, idempotent managed handbook blocks; reject linked/shared external files and detect concurrent edits before replacement.
+- **Installation integrity**: doctor validates configuration, roots, managed hashes and installed workflows; structured scenario checks no longer award a behavior score for non-empty traces.
+- **Interrupted refresh**: persist before/after images and phases; explicit transaction-ID recovery refuses live owners, unknown evidence and drift.
+- **OPS permissions**: env and credential-bearing configuration use private permissions; new controllers default to credential references in documentation, with plan-bound plaintext opt-in and legacy-state preservation.
+
+### Changed
+- **Passive discovery**: install the runtime guide and generated catalog; retain knowledge references for unselected installed workflows. Unattended first init is core-only; explicit `--workflows` controls additions.
+- **Portable Skills**: standardize emitted metadata and retain legacy IDs as descriptive compatibility data, without rewriting active Ticket bindings or completed Evidence.
+- **Documentation contracts**: separate docs-sync audit/update/commit, move Learning branch-specific contracts behind direct conditional references, and document non-slash Goal execution.
+- **Validation**: full PR gates on supported Node 22/24, Windows installation smoke, emitted Skill validation, artifact-bound scenario assertions, and explicit historical source-inventory limitations.
+
 ## [1.0.16] - 2026-09-21
 
 ### Fixed

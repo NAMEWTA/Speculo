@@ -1,5 +1,10 @@
-import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
+import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
+import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
+import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
 import { assertNoLegacyPending, prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
@@ -8,7 +13,6 @@ import {
   isInteractive,
   promptWorkflowSelection,
   scanInstalledWorkflows,
-  selectAllFromCatalog,
   type WorkflowCatalog,
   type WorkflowSelection,
 } from "./workflows.js";
@@ -24,19 +28,14 @@ export type SpeculoOptions = {
   packageRoot?: string;
   selection?: WorkflowSelection;
   beforeCommit?: (installRoot: string) => Promise<void>;
+  /** Test/integration fault-injection seam; never enabled through environment variables. */
+  transactionHook?: TransactionHook;
 };
 
 const CORE_ASSETS = [".speculo", "commands", "skills", "config.json"] as const;
 const INSTALL_SUBDIR = "speculo";
 const WORKFLOW_ENTRY = "INDEX.md";
 const STATE_TEMPLATE_DIR = "_state";
-const SPECDEV_WORKTREE_IGNORE = "specdev-worktree/";
-const SPECULO_BACKUP_IGNORE = "speculo/.speculo/back/";
-const KNOWLEDGE_START = "<!-- SPECULO-PERSISTENT-KNOWLEDGE:START -->";
-const KNOWLEDGE_END = "<!-- SPECULO-PERSISTENT-KNOWLEDGE:END -->";
-const LEGACY_SPECULO_BLOCK = /<SPECULO>[\s\S]*?<\/SPECULO>/g;
-const KNOWLEDGE_BLOCK = /<!-- SPECULO-PERSISTENT-KNOWLEDGE:START -->[\s\S]*?<!-- SPECULO-PERSISTENT-KNOWLEDGE:END -->/g;
-
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
 }
@@ -65,104 +64,6 @@ async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<
   }
 }
 
-function hasIgnorePattern(content: string, expected: string): boolean {
-  return content.split(/\r?\n/).some((line) => {
-    const pattern = line.trim();
-    if (!pattern || pattern.startsWith("#") || pattern.startsWith("!")) return false;
-    return pattern.replace(/^\//, "").replace(/\/$/, "") === expected.replace(/^\//, "").replace(/\/$/, "");
-  });
-}
-
-async function ensureRuntimeIgnores(target: string, root: string): Promise<string> {
-  const patterns = [SPECULO_BACKUP_IGNORE];
-  if (await pathExists(join(root, "workflows", "specdev", WORKFLOW_ENTRY))) patterns.unshift(SPECDEV_WORKTREE_IGNORE);
-  const ignorePath = join(target, ".gitignore");
-  if (!(await pathExists(ignorePath))) {
-    await writeFile(ignorePath, patterns.join("\n") + "\n", "utf8");
-    return ".gitignore (created runtime ignores)";
-  }
-  let content = await readFile(ignorePath, "utf8");
-  const newline = content.includes("\r\n") ? "\r\n" : "\n";
-  const missing = patterns.filter((pattern) => !hasIgnorePattern(content, pattern));
-  if (missing.length === 0) return ".gitignore (preserved runtime ignores)";
-  const separator = content.length === 0 || content.endsWith("\n") ? "" : newline;
-  content += separator + missing.join(newline) + newline;
-  await writeFile(ignorePath, content, "utf8");
-  return ".gitignore (updated runtime ignores)";
-}
-
-type KnowledgeReference = { workflow: string; path: string };
-
-async function readPersistentKnowledge(packageRoot: string, workflowIds: string[]): Promise<KnowledgeReference[]> {
-  const references: KnowledgeReference[] = [];
-  for (const workflowId of workflowIds) {
-    const manifestPath = join(assetRoot(packageRoot), "workflows", workflowId, "manifest.json");
-    let manifest: unknown;
-    try {
-      manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    } catch (error) {
-      throw new Error("Invalid workflow manifest: " + manifestPath + " (" + String(error) + ")");
-    }
-    if (manifest === null || typeof manifest !== "object" || Array.isArray(manifest)) {
-      throw new Error("Invalid workflow manifest object: " + manifestPath);
-    }
-    const knowledge = (manifest as { persistent_knowledge?: unknown }).persistent_knowledge;
-    if (knowledge === undefined) continue;
-    if (!Array.isArray(knowledge) || knowledge.some((path) => typeof path !== "string")) {
-      throw new Error("workflow manifest persistent_knowledge must be a string array: " + workflowId);
-    }
-    for (const path of knowledge as string[]) {
-      if (!/^<Path>\{roots\.state\}\/[^<]+<\/Path>$/.test(path) || path.includes("workflows/") || path.includes("_state/") || path.includes("/changes/") || path.includes("/archive/")) {
-        throw new Error("Unsafe workflow manifest persistent_knowledge path: " + workflowId + " -> " + path);
-      }
-      references.push({ workflow: workflowId, path });
-    }
-  }
-  return references;
-}
-
-function renderKnowledgeBlock(references: KnowledgeReference[]): string {
-  if (references.length === 0) return "";
-  const lines = [
-    KNOWLEDGE_START,
-    "## Speculo 永久知识",
-    "",
-    "以下路径只在当前任务相关时按需读取，不会自动激活 workflow 或 Work：",
-    "",
-  ];
-  for (const reference of references) lines.push("- " + reference.workflow + "：" + reference.path);
-  lines.push(KNOWLEDGE_END);
-  return lines.join("\n");
-}
-
-function updateAgentsContent(content: string, references: KnowledgeReference[]): string {
-  const next = content.replace(LEGACY_SPECULO_BLOCK, "").replace(KNOWLEDGE_BLOCK, "");
-  const block = renderKnowledgeBlock(references);
-  if (!block) return next;
-  if (!next) return block + "\n";
-  const separator = next.endsWith("\n\n") ? "" : next.endsWith("\n") ? "\n" : "\n\n";
-  return next + separator + block + "\n";
-}
-
-async function writeAgentFiles(target: string, references: KnowledgeReference[]): Promise<string[]> {
-  const written: string[] = [];
-  const agentsPath = join(target, "AGENTS.md");
-  const hadAgents = await pathExists(agentsPath);
-  const beforeAgents = hadAgents ? await readFile(agentsPath, "utf8") : "";
-  const afterAgents = updateAgentsContent(hadAgents ? beforeAgents : "# AGENTS.md\n", references);
-  if (!hadAgents || afterAgents !== beforeAgents) {
-    await writeFile(agentsPath, afterAgents, "utf8");
-    written.push(hadAgents ? "AGENTS.md (updated persistent knowledge)" : "AGENTS.md (created persistent knowledge)");
-  }
-
-  const claudePath = join(target, "CLAUDE.md");
-  if (!(await pathExists(claudePath))) {
-    await writeFile(claudePath, "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n", "utf8");
-    written.push("CLAUDE.md (created redirect)");
-  }
-  return written;
-}
-
 async function resolveSelection(packageRoot: string, currentRoot: string, options: SpeculoOptions): Promise<WorkflowSelection> {
   const catalog = await discoverWorkflowCatalog(packageRoot);
   if (options.selection) {
@@ -170,8 +71,8 @@ async function resolveSelection(packageRoot: string, currentRoot: string, option
     for (const id of ids) if (!catalog.has(id)) throw new Error("Unknown workflow package: " + id);
     return { workflowIds: ids };
   }
-  if (!isInteractive()) return selectAllFromCatalog(catalog);
   const installed = new Set(await scanInstalledWorkflows(currentRoot));
+  if (!isInteractive()) return { workflowIds: [...installed].filter((id) => catalog.has(id)).sort() };
   return promptWorkflowSelection(catalog, {
     preSelectedWorkflowIds: new Set([...installed].filter((workflowId) => catalog.has(workflowId))),
   });
@@ -224,6 +125,7 @@ async function buildStagedInstall(
     await copyUnselectedCurrentWorkflows(catalog, selection, previousRoot, stagedRoot);
     for (const workflowId of selection.workflowIds) await copySelectedWorkflow(packageRoot, stagedRoot, workflowId);
     const unselectedWorkflowIds = await installedUnselectedWorkflowIds(catalog, selection, previousRoot);
+    await writeDiscoveryAssets(packageRoot, stagedRoot);
     const refresh = await prepareRefresh({
       packageRoot,
       previousRoot,
@@ -239,63 +141,16 @@ async function buildStagedInstall(
   }
 }
 
-type ExternalSnapshot = { path: string; existed: boolean; content?: Buffer };
-
-async function snapshotExternalFiles(target: string): Promise<ExternalSnapshot[]> {
-  const snapshots: ExternalSnapshot[] = [];
-  for (const name of [".gitignore", "AGENTS.md", "CLAUDE.md"]) {
-    const path = join(target, name);
-    if (await pathExists(path)) snapshots.push({ path, existed: true, content: await readFile(path) });
-    else snapshots.push({ path, existed: false });
-  }
-  return snapshots;
-}
-
-async function restoreExternalFiles(snapshots: ExternalSnapshot[]): Promise<void> {
-  for (const snapshot of snapshots) {
-    if (snapshot.existed) await writeFile(snapshot.path, snapshot.content ?? Buffer.alloc(0));
-    else await rm(snapshot.path, { force: true });
-  }
-}
-
-async function replaceInstall(stagedRoot: string, root: string, finalize?: () => Promise<void>): Promise<void> {
-  const expectedFingerprint = await fingerprintTree(stagedRoot);
-  if (!(await pathExists(root))) {
-    await rename(stagedRoot, root);
-    if (await fingerprintTree(root) !== expectedFingerprint) {
-      await rename(root, stagedRoot);
-      throw new Error("post-install validation failed");
-    }
-    try { await finalize?.(); } catch (error) { await rm(root, { recursive: true, force: true }); throw error; }
-    return;
-  }
-  const backupRoot = stagedRoot + "-backup";
-  await rename(root, backupRoot);
-  try {
-    await rename(stagedRoot, root);
-    if (await fingerprintTree(root) !== expectedFingerprint) throw new Error("post-install validation failed");
-    await finalize?.();
-  } catch (error) {
-    try {
-      if (await pathExists(root)) await rename(root, stagedRoot);
-      await rename(backupRoot, root);
-    } catch (rollbackError) {
-      throw new Error("Failed to replace Speculo installation and restore the previous installation: " + String(rollbackError));
-    }
-    throw error;
-  }
-  await rm(backupRoot, { recursive: true, force: true });
-}
-
 export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {}): Promise<SpeculoCommandResult> {
   const target = resolve(targetArg);
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
+  await assertInstallDirectory(target);
   const existed = await pathExists(root);
   await mkdir(target, { recursive: true });
-  const lockRoot = join(target, ".speculo-init.lock");
+  const lockRoot = join(target, LOCK_NAME);
   try {
-    await mkdir(lockRoot);
+    await mkdir(lockRoot, { mode: 0o700 });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
     throw new RefreshBlockedError([{ code: "refresh-locked", path: lockRoot, message: "another speculo init is already running" }]);
@@ -303,6 +158,9 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   let stagedRoot: string | undefined;
   let refresh: RefreshSummary | undefined;
   try {
+    await writeFile(join(lockRoot, ".gitignore"), "*\n", { mode: 0o600 });
+    await writeDurableJson(join(lockRoot, "owner.json"), { schema_version: 1, id: randomUUID(), host: hostname(), pid: process.pid, started_at: new Date().toISOString() });
+    const externalSnapshot = await snapshotExternalFiles(target);
     if (existed) await assertNoLegacyPending(root);
     const catalog = await discoverWorkflowCatalog(packageRoot);
     const selection = await resolveSelection(packageRoot, root, options);
@@ -320,22 +178,20 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     }
     const assets = [".speculo", "config.json", "commands", "skills"];
     assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
-    const references = await readPersistentKnowledge(packageRoot, selection.workflowIds);
-    const externalSnapshot = await snapshotExternalFiles(target);
-    await replaceInstall(stagedRoot, root, async () => {
-      try {
-        assets.push(await ensureRuntimeIgnores(target, root));
-        assets.push(...await writeAgentFiles(target, references));
-      } catch (error) {
-        await restoreExternalFiles(externalSnapshot);
-        throw error;
-      }
-    });
+    const installed = await scanInstalledWorkflows(stagedRoot);
+    const references = await readPersistentKnowledge(stagedRoot, installed);
+    const edits = planExternalEdits(externalSnapshot, references, installed.includes("specdev"));
+    for (const edit of edits) await assertImage(join(target, edit.name), edit.before);
+    await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook);
+    assets.push(...edits.map((edit) => edit.name + " (managed discovery/runtime references)"));
     stagedRoot = undefined;
     if (!refresh) throw new Error("Speculo refresh result was not produced");
     return { target, mode: existed ? "refresh" : "init", assets, refresh };
   } finally {
-    if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
-    await rm(lockRoot, { recursive: true, force: true });
+    // A failed rollback or killed process leaves durable evidence; never delete it in finally.
+    if (!(await hasTransaction(target))) {
+      if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
+      await rm(lockRoot, { recursive: true, force: true });
+    }
   }
 }
