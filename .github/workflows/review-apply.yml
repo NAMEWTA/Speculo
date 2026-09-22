@@ -79,7 +79,7 @@ jobs:
       - name: Rebuild owned generated assets
         run: |
           pnpm generate-canonical
-          node template/skills/engineering-standards-builder/scripts/sync-manifest.mjs --write
+          node template/skills/engineering-standards-builder/scripts/sync-manifest.mjs --root template/skills/engineering-standards-builder --write
       - name: Run complete checks on the supported runtime
         shell: bash
         run: |
