@@ -1,6 +1,8 @@
 ---
-name: specdev-code-review
+name: code-review
 description: 从不可变固定点对本地 diff 执行隔离的标准轴与规范轴审查，供独立 C Work 和 I Work 最终审查共同调用。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
+metadata: {"speculo-legacy-name": "specdev-code-review"}
 ---
 
 # SpecDev Code Review

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -13,19 +16,38 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    name: Build & test
+    name: Full check / Node ${{ matrix.node }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.22.3', '24']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Test and validate all source assets
+        run: pnpm check
+      - name: Verify CLI entry
+        run: pnpm verify-bin
+      - name: Check generated output is reproducible
+        run: |
+          pnpm generate-canonical
+          git diff --exit-code -- template/canonical
+          pnpm generate-canonical
+          git diff --exit-code -- template/canonical
 
-      - name: Setup environment
-        uses: ./.github/actions/setup
-
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
-
-      - name: Verify bin entry
-        run: node scripts/verify-bin.mjs
+  windows-installation:
+    runs-on: windows-latest
+    name: Windows installation smoke / Node 22.22.3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - name: Validate installation and read-only tooling
+        run: node --test dist/test/review-installation.test.js dist/test/review-evaluation.test.js
+      - run: pnpm verify-bin

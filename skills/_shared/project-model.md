@@ -1,6 +1,6 @@
 # Speculo project model
 
-本文件是 `.agents/skills` 对当前 Speculo 模板结构的唯一项目模型。具体作者技能只引用这里，不另行维护目录或所有权副本。
+本文件是维护者 `skills/` 对当前 Speculo 模板结构的唯一项目模型；`.agents/skills/` 只存兼容指针。具体作者技能只引用这里，不另行维护目录或所有权副本。
 
 ## 两个世界
 
@@ -20,7 +20,7 @@ template/
   canonical/
 ```
 
-`.agents/skills/` 中的作者技能只服务于这个源世界。
+`skills/` 中的作者技能及 `.agents/skills/` 兼容指针只服务于这个源世界。
 
 ### 安装运行时世界
 
@@ -41,7 +41,7 @@ template/
 
 能力描述应与运行时的读取顺序一致：
 
-1. 读取 `{roots.state}/workspace.json`，解析公共 roots。
+1. 先从项目入口打开字面路径 `speculo/.speculo/workspace.json`，再解析公共 roots；安装生成的 `.speculo/catalog.md` 只作被动发现。
 2. 从 `{roots.workflows}/<workflow>/INDEX.md` 发现 workflow；需要永久知识时先按 `_shared/memory-retrieval.md` 定位相关条目，再读取少量原文。这一步不激活 workflow 状态机。
 3. 用户明确激活 workflow 或 work 后，读取 workflow 根 `README.md`（若 INDEX 声明），从其中的 Work 条目选择目标并读取其入口。
 4. 通过 `<Path>` 指针只加载当前 work 及当前分支需要的文件。
@@ -79,6 +79,8 @@ Work 读取 workflow state，产生 change 产物，并更新 workflow 与 chang
 ### Workflow common skill
 
 位于 `template/workflows/<workflow>/common/skills/<name>/SKILL.md` 的 workflow 私有可复用能力。只有同一 workflow 中至少两个 work 需要独立调用时才成立。共享规则、schema 和 tools 分别放在 `common/rules`、`common/schemas`、`common/tools`。
+
+模板 `AGENTS.md` 安装为 `speculo/.speculo/AGENTS.md`；项目根手册只原位维护 bootstrap 与永久知识块，不复制完整合同。已安装包继续出现在 catalog 中，本次未选择更新不等于禁用。
 
 ### Canonical
 

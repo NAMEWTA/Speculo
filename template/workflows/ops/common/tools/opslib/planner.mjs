@@ -237,6 +237,7 @@ export function compilePlan(state, specPath) {
     const current = load(state);
     if (current.controller == null) throw new OpsError("initialize the controller first");
     const after = structuredClone(current);
+    if (spec.plaintext_documentation !== undefined) after.policies.plaintext_documentation = spec.plaintext_documentation;
     const ledger = ledgerLoad(state);
     const revisions = spec.resource_updates || {};
     for (const [group, idkey, fixed] of [["hosts", "host_id", ["host_id", "root", "identity", "platform"]], ["projects", "project_id", ["project_id", "kind", "service_type"]]]) {
@@ -277,7 +278,12 @@ export function compilePlan(state, specPath) {
       return op;
     };
     const fileOp = (hostId, did, path, { content = undefined, binary = undefined, mode = undefined } = {}) => {
-      const data = { path, mode: mode ?? defaultFileMode(path) };
+      const secretBearing = credentialsIn(content ?? "").size > 0;
+      const selectedMode = mode ?? (secretBearing ? 0o600 : defaultFileMode(path));
+      if ((secretBearing || /(?:^|[\\/])env[\\/]/.test(path)) && (selectedMode & 0o077)) {
+        throw new OpsError("secret-bearing config/env mode must be 0600 or stricter; use explicit service ownership, not world-readable secrets");
+      }
+      const data = { path, mode: selectedMode };
       if (content !== undefined) data.content = content;
       else data.content_b64 = Buffer.from(binary).toString("base64");
       return add(hostId, did, "write", data);

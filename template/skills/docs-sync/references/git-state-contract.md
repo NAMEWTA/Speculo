@@ -1,6 +1,6 @@
 # Git 与全局 State 契约
 
-本契约定义可复现输入、工作区清洁提交和 docs-sync state v4。调用方拥有 Git 与持久化副作用。
+本契约仅用于用户明确授权的 `mode=commit`，定义可复现输入、工作区清洁提交和 docs-sync state v4。audit/update 不执行本契约中的任何 Git 或 state 写入；调用方拥有 Git 与持久化副作用。
 
 ## 运行前清洁
 

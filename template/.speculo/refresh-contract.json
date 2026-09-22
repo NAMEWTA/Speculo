@@ -10,7 +10,9 @@
     ".speculo/README.md",
     ".speculo/workspace.json",
     ".speculo/refresh-contract.json",
-    ".speculo/kernel.json"
+    ".speculo/kernel.json",
+    ".speculo/AGENTS.md",
+    ".speculo/catalog.md"
   ],
   "reserved_runtime": [
     "README.md",
@@ -22,7 +24,9 @@
     "managed.json",
     "migration.json",
     "baselines",
-    "back"
+    "back",
+    "AGENTS.md",
+    "catalog.md"
   ],
   "project_config": {
     "path": "config.json",

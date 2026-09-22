@@ -580,8 +580,9 @@ test("planner contracts", async (t) => {
   });
 });
 
-test("real native and dual docs", () => runFx((fx) => {
-    const [info, , result] = fx.runSpec();
+test("real native and explicitly approved plaintext dual docs", () => runFx((fx) => {
+    const input = fx.spec(); input.plaintext_documentation = true;
+    const [info, , result] = fx.runSpec(input);
     assert.equal(result.status, "completed", JSON.stringify(result));
     const dep = model.load(fx.state).deployments["app-a-prod"];
     assert.equal(dep.observed_version, "v1");
@@ -979,4 +980,34 @@ test("host services and public ingress are delivered", () => runFx((fx) => {
   assert.ok(fleet.includes("服务一览"));
   assert.ok(fleet.includes("公网访问内网"));
   assert.ok(!fleet.includes("<code>"));
+}));
+
+
+test("new controllers keep secrets out of default documentation", () => runFx((fx) => {
+  assert.equal(model.load(fx.state).policies.plaintext_documentation, false);
+  const [info, plan, result] = fx.runSpec();
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  const remote = join(fx.target, "app-a");
+  const local = join(fx.state, "hosts", "node-a", "deployments", "app-a-prod");
+  for (const path of [join(remote,"README.md"), join(remote,"OPERATIONS.md"), join(local,"README.md"), join(local,"OPERATIONS.md"), join(fx.state,"FLEET-DEPLOYMENTS.md"), join(fx.target,"DEPLOYMENTS.md")]) {
+    assert.ok(!readFileSync(path,"utf8").includes(PASSWORD), path);
+  }
+  assert.match(readFileSync(join(local,"OPERATIONS.md"),"utf8"), /secret_ref:.*app-auth@1/);
+  assert.ok(readFileSync(join(remote,"env","app.env"),"utf8").includes(PASSWORD));
+  assert.equal(plan.operations.find((o) => o.path?.endsWith("env/app.env")).mode, 0o600);
+  if (process.platform !== "win32") assert.equal(statSync(join(remote,"env","app.env")).mode & 0o777, 0o600);
+  assert.equal(readJson(join(local,"docs-receipt.json")).status, "both-sides-verified");
+}));
+
+test("legacy absent policy retains previous explicit plaintext behavior without migration", () => {
+  const status = emptyStatus(); delete status.policies.plaintext_documentation;
+  assert.equal(docs.plaintextDocumentation(status), true);
+  status.policies.plaintext_documentation = false;
+  assert.equal(docs.plaintextDocumentation(status), false);
+});
+
+test("credential-bearing config rejects permissive explicit file modes", () => runFx((fx) => {
+  const spec = fx.spec();
+  spec.deployments[0].files.push({path:"config/auth.conf",content:"{{credential:app-auth@1:password}}",mode:0o644});
+  assert.throws(() => fx.plan(spec), /secret-bearing|private|0600|permission/i);
 }));

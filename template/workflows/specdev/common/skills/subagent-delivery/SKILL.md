@@ -1,6 +1,7 @@
 ---
 name: subagent-delivery
 description: 仅在 Lead 规划派单合同、发出受限任务或验收其返回时调用；不是通用实现入口，外部网页交付仍为 ZIP-only。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
 ---
 
 # Subagent Delivery

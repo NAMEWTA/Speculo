@@ -1,9 +1,7 @@
 ---
-id: github-npm-ops
-type: skill
-name: GitHub npm Ops
+name: github-npm-ops
 description: Perform a requested GitHub issue/PR/CI/security or npm release operation with its matching reference contract.
-
+metadata: {"speculo-id": "github-npm-ops", "speculo-kind": "skill", "speculo-legacy-name": "GitHub npm Ops"}
 ---
 
 # GitHub npm Ops

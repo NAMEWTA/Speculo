@@ -1,6 +1,7 @@
 ---
 name: topic-synthesis
 description: 将 Learning Change 作为不可变原料，生成带 claim 级 provenance 的主题综合并显式发布。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
 ---
 
 # Topic Synthesis

@@ -13,12 +13,14 @@
     "pretest": "pnpm build",
     "generate-canonical": "node scripts/generate-specdev-canonical.mjs",
     "validate-source-parity": "node scripts/check-specdev-source-parity.mjs",
-    "validate-assets": "node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning",
+    "validate-assets": "node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
     "eval:scenarios": "node scripts/evaluate-scenarios.mjs",
     "prepack": "pnpm build",
-    "prepublishOnly": "pnpm test && pnpm validate-assets"
+    "prepublishOnly": "pnpm test && pnpm validate-assets",
+    "validate-skills": "node scripts/validate-skills.mjs",
+    "validate-source-inventory": "node scripts/check-specdev-source-parity.mjs"
   },
   "files": [
     "dist/src",
@@ -53,7 +55,7 @@
     "node": ">=22.22.3 <25"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^22.0.0",
     "fast-xml-parser": "^5.9.3",
     "typescript": "^5.8.3"
   },

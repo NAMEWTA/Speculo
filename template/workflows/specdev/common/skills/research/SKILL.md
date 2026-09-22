@@ -1,6 +1,8 @@
 ---
-name: specdev-research
+name: research
 description: 为调用 Work 的具体决定研究外部技术、依赖、标准或未知行为，逐声明返回一手来源、限制与不确定性，由调用方写入其拥有的工件。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
+metadata: {"speculo-legacy-name": "specdev-research"}
 ---
 
 # SpecDev Research

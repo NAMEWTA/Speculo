@@ -33,11 +33,8 @@ jobs:
           fi
           echo "Version verified: v$PACKAGE_VERSION"
 
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
+      - name: Test and validate assets
+        run: pnpm check
 
       - name: Verify bin entry
         run: node scripts/verify-bin.mjs

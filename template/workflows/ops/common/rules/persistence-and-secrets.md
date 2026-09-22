@@ -14,9 +14,11 @@ Docker 要求明确映射镜像声明的全部 VOLUME，实际启动后再次检
 
 private/credentials.json 是版本化明文账本；credential-put 不会修改服务器密码。相同版本不可覆盖，轮换先增加新版本，再通过独立部署/迁移计划应用与验证。引用形如 app-a-db@1，值占位形如 {{credential:app-a-db@1:password}}。
 
-控制端项目 README、OPERATIONS 与全域总册保存真实值，特殊字符逐字保留。服务端 README 默认无密码但不能缺路径、版本、时间、启动停止、依赖和备份恢复；OPERATIONS 与 DEPLOYMENTS 默认是受限明文。未知旧密码不能编造；密钥认证没有密码，记录实际密钥认证而不是虚构一个口令。
+新安装的控制端项目 README、OPERATIONS 与全域总册默认仅保存 secret_ref、凭据版本与用途；只有获批 `plaintext_documentation: true` 的计划才逐字导出真实值。服务端 README 默认无密码但不能缺路径、版本、时间、启动停止、依赖和备份恢复；OPERATIONS 与 DEPLOYMENTS 默认只保存引用；显式 opt-in 时按各文档职责导出受限明文。未知旧密码不能编造；密钥认证没有密码，记录实际密钥认证而不是虚构一个口令。
 
-POSIX 账本、env 与明文文档 0600、控制端目录 0700。`config/` 与 `*.conf`/`*.acl` 默认 0644，供非 root 容器用户读取只读挂载；Windows 使用受限 ACL，不以 chmod 代替 DACL。明文不进入 Git、Web 目录、构建上下文、普通日志；env 是指定的本地配置文件例外，不能再进入镜像层。示例凭据全为演示，不可用于生产。
+POSIX 账本、env 与明文文档 0600、控制端目录 0700。不含秘密的 `config/` 与 `*.conf`/`*.acl` 默认 0644；含 credential 占位符的配置自动收紧为 0600，显式宽权限会阻塞规划，不以非 root 读取为由放宽秘密权限；Windows 使用受限 ACL，不以 chmod 代替 DACL。明文不进入 Git、Web 目录、构建上下文、普通日志；env 是指定的本地配置文件例外，不能再进入镜像层。示例凭据全为演示，不可用于生产。
+
+旧状态缺 `plaintext_documentation` 字段时保留旧语义，新的 false/true 策略必须通过新计划与精确摘要批准；不复用旧批准，不回写历史 Run/Release。关闭导出不代表删除既有历史明文，历史清理需另行授权。服务 env 与受限 server-files 副本仍包含运行必需真实值；未知硬编码秘密不能仅依赖占位符检测，计划审核仍需人工/Agent 检查。
 
 ## 双边完成门
 

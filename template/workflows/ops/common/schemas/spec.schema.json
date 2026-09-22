@@ -1155,6 +1155,10 @@
         "mappings"
       ],
       "additionalProperties": false
+    },
+    "plaintext_documentation": {
+      "type": "boolean",
+      "description": "Explicitly opt in/out of restricted plaintext document delivery; bound by the plan approval digest."
     }
   },
   "required": [

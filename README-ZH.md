@@ -31,11 +31,13 @@ npm install -g @namewta/speculo
 |---|---|
 | `speculo` / `speculo init [target]` | 初始化或刷新 Speculo 1.0。0.x 安装不兼容，必须先由用户移除或改名旧目录。 |
 | `speculo version` | 显示本地版本并检查 npm 最新版本。 |
-| `speculo doctor [target]` | 只读检查 kernel、manifest 和运行时安装。 |
+| `speculo doctor [target] [--json]` | 只读检查安装完整性与恢复证据。 |
+| `speculo resolve [target] --path <reference>` | 只读解析单个路径，不执行 shell。 |
+| `speculo recover [target] --transaction <id>` | 显式恢复已识别的中断刷新事务。 |
 
-旧 CLI 命令与 0.x 迁移路径全部移除；CLI 公开 `init`、`version` 和只读 `doctor`。
+旧 CLI 命令与 0.x 迁移路径不恢复。新增只读 `resolve` 与需事务 ID 的显式 `recover`；`doctor --json` 检查安装完整性，不认证真实服务健康。
 
-初始化只会根据已选择的 workflow 更新项目 `AGENTS.md` 中受控的永久知识引用块。该块只引用已经提升的知识路径，并明确保持懒激活：不会自动激活 workflow、创建 Change 或执行 Work。缺失的 `CLAUDE.md` 会创建为指向 `AGENTS.md` 的固定重定向；已有手册内容会保留。
+初始化会原位维护项目 `AGENTS.md` 的被动发现 bootstrap 与全部已安装 workflow 的永久知识引用块，保留非受控内容和换行风格。该块只引用已经提升的知识路径，并明确保持懒激活：不会自动激活 workflow、创建 Change 或执行 Work。缺失的 `CLAUDE.md` 会创建为指向 `AGENTS.md` 的固定重定向；已有手册内容会保留。
 
 ## 安装的运行时资产
 
@@ -45,7 +47,7 @@ npm install -g @namewta/speculo
 
 | Command | 用途 |
 |---|---|
-| `docs-sync` | 清洁工作区，基于可复现 Git 区间同步项目文档与 Agent 手册 |
+| `docs-sync` | 基于固定 Git 区间审计（默认）、修改或显式提交文档与 Agent 手册 |
 | `archive-and-consolidate` | 知识生命周期治理：归档过期内容、合并分散知识、清理过时资产 |
 | `git-history-squash` | 受控压缩 Git 历史：确认后收敛 first-parent 区间，保留可恢复引用和精确远端 lease |
 | `git-repository-audit` | 对一个或多个本地 Git 仓库执行只读、可复现的审计 |
@@ -77,7 +79,7 @@ npm install -g @namewta/speculo
 | **ops** | 3 | 主机盘点与项目部署：控制端初始化、主机治理、APP/公共服务部署，并核验双边文档 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
 
-每个 workflow 以 `INDEX.md` 作为自动生成的 work 目录。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
+每个 workflow 以 `INDEX.md` 作为被动发现入口；SpecDev、Learning、Ops 的自动 Work 列表在其 README 激活合同中，Person 由 INDEX 直接列出 Work，不假定它有 README。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
 
 SpecDev 的 T-triage 仍是唯一远程边界。**intake** 冻结来源；**reconcile** 在本地完成后关闭原来的源 Issue；**publish** 把每张已完成 Ticket 投影为带分类标签的 GitHub Issue（本地源也计入）；**capture** 把尚未成 Change 的记事项写成仍 open 的 GitHub Issue。GitHub 是投影、计数器和 inbox，不是开发权威。摄入源既要关源 Issue 又要记账票数时，两条模式都跑。capture 不创建 Change。
 
@@ -107,3 +109,13 @@ MIT — 详见 [LICENSE](./LICENSE)
 ## SpecDev Goal 迁移
 
 统一 P Goal、O 兼容入口、Initiative 多 change 探索和计划型 Ticket 的行为变化见[迁移指南](docs/specdev-goal-migration.md)。不自动改写正在进行的 runtime 状态。
+
+## 安装与兼容边界
+
+非交互首次安装默认仅 core；使用 `speculo init [target] --workflows specdev,learning` 显式选包，或 `--core-only` 仅刷新 core。非交互刷新默认更新已安装的受支持包；未选择更新的已有包及其知识引用保留，不把“不更新”解释为卸载或禁用。
+
+项目根 AGENTS 引用字面 workspace 与生成的只读 catalog；发现不创建 Change、不授予动作。宿主不读取项目 AGENTS 时，需由用户显式提供该入口；没有承诺所有宿主自动发现自定义目录。Skill 使用标准 name/description/metadata，私有 workflow Skill 明确声明 Path 解析依赖。
+
+`speculo resolve [target] --path '<Path>{roots.skills}/docs-sync/SKILL.md</Path>'` 只返回真实路径；不要把原始 Path 标记直接粘进 shell。中断时先运行 `speculo doctor [target] --json`，确认原 owner 停止后才 `speculo recover [target] --transaction <id>`；未知锁或漂移不自动清理。
+
+本轮迁移、review 项目映射与验证边界见 [Agent contracts 升级说明](docs/agent-contracts-upgrade.md)。docs-sync 默认 audit；update 与 commit 需分别来自真实用户请求。新 Ops 控制端默认凭据引用，受限明文导出需新计划显式 opt-in。活跃 Skill 绑定由 Lead 审核后重绑，完成 Evidence 不改写。

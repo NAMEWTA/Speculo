@@ -1,12 +1,12 @@
 ---
-id: git-history-squash
-type: skill
 name: git-history-squash
 description: Plan and execute a confirmed first-parent Git history squash with recoverable refs and exact remote leases; never auto-trigger.
-disable-model-invocation: true
+metadata: {"speculo-id": "git-history-squash", "speculo-kind": "skill", "speculo-invocation": "user-only"}
 ---
 
 # git-history-squash
+
+Activation is explicit-only. Metadata is descriptive; enforce host permissions and obtain user authorization before effects.
 
 This file is the routing entry. Read [`references/entry-procedure.md`](references/entry-procedure.md) only after this skill is selected. Read a named reference there only for the active branch.
 

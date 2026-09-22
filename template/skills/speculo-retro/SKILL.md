@@ -1,9 +1,7 @@
 ---
-id: speculo-retro
-type: skill
-name: Speculo Retro
+name: speculo-retro
 description: Extract and deduplicate friction from Speculo evidence into issue proposals; do not create issues without command confirmation.
-
+metadata: {"speculo-id": "speculo-retro", "speculo-kind": "skill", "speculo-legacy-name": "Speculo Retro"}
 ---
 
 # Speculo Retro

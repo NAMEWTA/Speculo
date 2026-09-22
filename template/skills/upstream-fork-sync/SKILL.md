@@ -1,9 +1,7 @@
 ---
-id: upstream-fork-sync
-type: skill
 name: upstream-fork-sync
 description: Assess a requested fork/upstream checkpoint and produce reproducible diff, conflict, and customization-risk evidence.
-
+metadata: {"speculo-id": "upstream-fork-sync", "speculo-kind": "skill"}
 ---
 
 # upstream-fork-sync

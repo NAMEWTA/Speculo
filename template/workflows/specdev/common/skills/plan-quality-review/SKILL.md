@@ -1,6 +1,8 @@
 ---
-name: specdev-plan-quality-review
+name: plan-quality-review
 description: T 发布计划型 Ticket 或 P 发布/重规划 Goal 前检查决策完备、Skill 调用和执行门禁；不执行代码审查或代替用户批准。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
+metadata: {"speculo-legacy-name": "specdev-plan-quality-review"}
 ---
 
 # Plan Quality Review
