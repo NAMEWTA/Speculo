@@ -35,7 +35,7 @@ host_root/
   _runtime/docker/               # 仅经准备/显式迁移的 Docker Engine
   app-a/
     README.md                    # 版本、时间、路径、依赖、启停、备份恢复
-    OPERATIONS.md                # 策略启用时：受限真实明文凭据
+    OPERATIONS.md                # 默认 secret_ref；获批 opt-in 才导出受限明文
     project.yaml                 # JSON 格式（同时是有效 YAML）资源投影
     compose/compose.yaml        # Docker 时；Dockerfile 同目录
     service/                    # 原生部署定义
@@ -55,7 +55,7 @@ host_root/
 
 明确多实例时使用 `project/instances/environment/instance/`，每个实例重复上述自有布局；顶层 README 变为实例索引。单实例与多实例根不可重叠，不自动搬迁。
 
-部署机对应记录固定为 `state_root/hosts/host_id/deployments/deployment_id/`，包含完整 README、OPERATIONS、deployment.json、server/README、server-files 配置副本与 docs-receipt。全域总册为 FLEET-DEPLOYMENTS.md，真实明文账本为 private/credentials.json。双边记录不等于自动复制业务数据。
+部署机对应记录固定为 `state_root/hosts/host_id/deployments/deployment_id/`，包含完整 README、OPERATIONS、deployment.json、server/README、server-files 配置副本与 docs-receipt。全域总册为 FLEET-DEPLOYMENTS.md，受限真实值账本为 private/credentials.json；新安装的文档默认只记录 secret_ref/版本。双边记录不等于自动复制业务数据。
 
 ## 启动协议
 
@@ -73,11 +73,15 @@ schema_version=3；hosts、projects、deployments、allocations、bindings、rel
 
 ## 路径分配
 
-部署根由 host/project/layout 唯一派生。所有声明的 APP data/config/env/log/backups 路径都必须在该根内；容器只用显式 bind，禁止命名卷、匿名卷、跨项目 bind。默认只读容器根；仅当镜像仍必须写根文件系统时，才允许带 `writable_root_justification` 的 `read_only: false`。config/env 默认 0644 只读挂载，供非 root 镜像用户读取。项目 env 文件集中在 env/；Compose 使用 raw env_file，要求实际 Compose >=2.30。`compose --wait` 之后仍检查容器 running 与 Health=healthy；TCP/docker-proxy 监听不是生产健康证明。
+部署根由 host/project/layout 唯一派生。所有声明的 APP data/config/env/log/backups 路径都必须在该根内；容器只用显式 bind，禁止命名卷、匿名卷、跨项目 bind。默认只读容器根；仅当镜像仍必须写根文件系统时，才允许带 `writable_root_justification` 的 `read_only: false`。env、带 credential 占位符的配置和明文文档采用 0600；不含秘密的 config 默认 0644 只读挂载。不能为非 root 容器读取方便把秘密放宽到 world-readable，应在批准的部署计划中安排 owner/secret 注入。项目 env 文件集中在 env/；Compose 使用 raw env_file，要求实际 Compose >=2.30。`compose --wait` 之后仍检查容器 running 与 Health=healthy；TCP/docker-proxy 监听不是生产健康证明。
 
 原生服务设置 HOME、XDG、缓存、临时目录和 OPS_* 到 APP 根内；Linux systemd 还设置 ProtectSystem/ReadWritePaths。通用自定义命令是用户审核的可执行代码，不是一个能阻止恶意程序所有系统调用的沙箱。来源代码必须可信，必须明确映射项目真实数据参数，并实际验证；发现无法约束的数据路径就阻塞，不能报完成。
 
 systemd 单元等系统控制文件可有计划内的精确例外；业务持久化数据没有该例外。Docker 自身的运行数据固定为 host_root/_runtime/docker；既有 engine 不能被静默迁移。Docker Desktop 的隐藏虚拟机布局不自动等同于原生 Windows 根。
+
+## 凭据文档策略
+
+新控制端 `policies.plaintext_documentation=false`；README、OPERATIONS 与总册默认无真实值。需要受限明文交付时，在输入 spec 中明确设置 `plaintext_documentation: true`，它进入 registry_after 与精确计划批准摘要。旧状态缺字段仍保留旧行为，不由刷新自动改写；收紧时使用显式 false 的新批准计划。旧历史文档/回执不自动改写或删除，应另做授权清理。env 和受限 server-files 配置副本仍按原双边合同交付，不能把“文档脱敏”称作所有状态不含秘密。
 
 ## 副作用边界
 

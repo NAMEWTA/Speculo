@@ -469,6 +469,10 @@
             },
             "strict_docker_root": {
               "const": true
+            },
+            "plaintext_documentation": {
+              "type": "boolean",
+              "description": "Explicit restricted plaintext document export. Missing on legacy state retains the prior policy; new states default false."
             }
           },
           "required": [

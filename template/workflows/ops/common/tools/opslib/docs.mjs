@@ -274,13 +274,13 @@ export function deploymentReadme(status, dep, runId, generatedAt, { ledger = nul
   out.push("## 同项目部署位置\n", replicas.sort((a, b) => a.deployment_id < b.deployment_id ? -1 : 1).map((d) => `- ${d.host_id} / ${d.deployment_id}：${code(d.root)}`).join("\n") + "\n");
   if (controller) out.push("\n本目录是部署机的配置、凭据、运行证据和远端文档记录；不声称自动复制了远端业务数据。数据备份需要独立的备份策略和回执。\n");
   if (includeCredentials) out.push(credentialsText(credentialRefs(status, dep), ledger));
-  else out.push("\n## 凭据记录\n\n本 README 默认不写密码。获授权管理员读取本项目 OPERATIONS.md（启用时）或部署机明文手册；密码未知时必须补齐，不能编造。\n");
+  else out.push("\n## 凭据记录\n\nsecret_ref: " + credentialRefs(status, dep).map(code).join(", ") + "\n\n本文件默认不写密码。凭据按 ID@版本定位受限 private/credentials.json；真实值仅在批准 plaintext_documentation 后导出。未知值不得编造。\n");
   return out.join("\n") + "\n";
 }
 
 export function hostReadme(status, hid, runId, at, { ledger = null, full = false, controller = false } = {}) {
   const host = status.hosts[hid];
-  const includeCredentials = Boolean(full && controller && ledger);
+  const includeCredentials = Boolean(full && controller && ledger && plaintextDocumentation(status));
   const rows = overviewRows(status, hid, { ledger, includeCredentials });
   const out = [
     `# 主机 ${host.display_name} / ${hid}\n`,
@@ -368,6 +368,11 @@ const KNOWLEDGE_INDEX = `# 共享知识索引
 只收录经用户确认、带来源和最后验证时间的知识，不存密码。
 `;
 
+// Legacy absent field retains existing deliberate behavior; init seeds false. Changing policy requires a new approved plan.
+export function plaintextDocumentation(status) {
+  return status.policies.plaintext_documentation ?? true;
+}
+
 export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
   const at = now();
   const rid = plan.run_id;
@@ -381,9 +386,9 @@ export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
   for (const did of [...new Set(verifiedIds)].sort()) {
     const d = status.deployments[did];
     const hid = d.host_id;
-    const readme = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: status.policies.server_readme_credentials });
+    const readme = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: Boolean(status.policies.server_readme_credentials && plaintextDocumentation(status)) });
     addRemote(hid, pathFor(status, d, "README.md"), readme);
-    const operations = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: true });
+    const operations = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: plaintextDocumentation(status) });
     if (status.policies.server_operations) addRemote(hid, pathFor(status, d, "OPERATIONS.md"), operations);
     addRemote(hid, pathFor(status, d, "project.yaml"), JSON.stringify(d, null, 2) + "\n");
     addRemote(hid, pathFor(status, d, "run/release-state.json"), JSON.stringify({
@@ -397,7 +402,7 @@ export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
       addRemote(hid, targetJoin({ ...status.hosts[hid], root: projectroot }, "README.md"), text);
     }
     const prefix = `hosts/${hid}/deployments/${did}`;
-    local[prefix + "/README.md"] = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: true, controller: true });
+    local[prefix + "/README.md"] = deploymentReadme(status, d, rid, at, { ledger, includeCredentials: plaintextDocumentation(status), controller: true });
     local[prefix + "/OPERATIONS.md"] = operations;
     local[prefix + "/deployment.json"] = JSON.stringify(d, null, 2) + "\n";
     local[prefix + "/server/README.md"] = readme;
@@ -420,8 +425,8 @@ export function deliveryBundle(state, plan, status, ledger, verifiedIds) {
     local[`hosts/${hid}/knowledge/host-services.json`] = hostServicesDocument(h);
     if (ingressJson) local[`hosts/${hid}/knowledge/public-ingress.json`] = ingressJson;
   }
-  local["FLEET-DEPLOYMENTS.md"] = fleetDocument(status, Object.keys(status.hosts), rid, at, { ledger, includeCredentials: true });
-  local["README.md"] = "# OPS 控制端\n\n主机记录位于 hosts/<host_id>/；项目关联位于 status.json；项目部署记录位于 hosts/<host_id>/deployments/<deployment_id>/；完整明文总册位于 FLEET-DEPLOYMENTS.md；凭据账本位于 private/credentials.json；执行证据按 host runs / release 保存。主机级入口见 hosts/<id>/knowledge/host-services.json，跨主机公网入口见 knowledge/public-ingress.json。\n\n不得清理此运行态目录来替换静态 workflow。双边文档完成由每次运行 docs-receipt.json 证明。\n";
+  local["FLEET-DEPLOYMENTS.md"] = fleetDocument(status, Object.keys(status.hosts), rid, at, { ledger, includeCredentials: plaintextDocumentation(status) });
+  local["README.md"] = "# OPS 控制端\n\n主机记录位于 hosts/<host_id>/；项目关联位于 status.json；项目部署记录位于 hosts/<host_id>/deployments/<deployment_id>/；总册位于 FLEET-DEPLOYMENTS.md（新安装默认仅引用凭据版本）；凭据账本位于 private/credentials.json；执行证据按 host runs / release 保存。主机级入口见 hosts/<id>/knowledge/host-services.json，跨主机公网入口见 knowledge/public-ingress.json。\n\n不得清理此运行态目录来替换静态 workflow。双边文档完成由每次运行 docs-receipt.json 证明。\n";
   local["docs/standards/DEPLOYMENT-STANDARD.md"] = STANDARD;
   if (!existsSync(join(state, "knowledge", "INDEX.md"))) {
     local["knowledge/INDEX.md"] = "# 共享知识索引\n\n只收录经用户批准、带来源与最后验证日期的通用知识。运行时环境和密码不自动提升为共享知识。跨主机入口规范见各主机 knowledge/public-ingress.json。\n";

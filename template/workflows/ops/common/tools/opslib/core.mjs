@@ -397,7 +397,7 @@ export function emptyStatus() {
     allocations: {},
     bindings: {},
     releases: {},
-    policies: { server_readme_credentials: false, server_operations: true, strict_docker_root: true },
+    policies: { server_readme_credentials: false, server_operations: true, strict_docker_root: true, plaintext_documentation: false },
     updated_at: null,
   };
 }

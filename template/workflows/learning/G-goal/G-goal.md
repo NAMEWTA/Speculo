@@ -15,6 +15,8 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 
 ## 读取范围
 
+当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；它们是本步骤必需合同，不默认加载其他分支。
+
 1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
 2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、项目路径和关键词定位最小相关工件。
 3. 只在本 Work 明确要求恢复、冲突、执行安全、创建 Change 或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
@@ -72,3 +74,7 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 - 覆盖尺：`<Path>{roots.workflows}/learning/G-goal/references/coverage-bar.md</Path>`
 - 停止规则：`<Path>{roots.workflows}/learning/G-goal/references/stop-rules.md</Path>`
 - 外部执行器：`<Path>{roots.workflows}/learning/G-goal/references/external-goal-runner.md</Path>`
+
+## 无 slash-command 宿主
+
+`/goal` 是宿主适配示例，不是额外授权源。宿主没有该命令时，用户可在新执行会话明确请求“按此 Goal-Plan 执行”，同时提供计划路径；该会话成为外部执行器并遵守相同最小读取清单、owner、停止和验收合同。计划会话仍只编译并停止，不自动接管执行。无 team 时按原派单包串行执行；缺必需文件或工具只阻塞受影响分支，不伪造子代理调用。30–40 分钟、每单元 ≤15 节与每课最多10问仍是 Learning 领域合同，不传播为全局 Agent 限制。

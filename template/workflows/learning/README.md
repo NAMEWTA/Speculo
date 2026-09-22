@@ -52,50 +52,7 @@ Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 
 ## Change 工件布局
 
-普通学习 Change 至少包含：
-
-```text
-changes/<change-id>/
-  INDEX.md
-  course.md
-  background/foundation.md
-  baseline.md
-  sources.md
-  lessons/INDEX.md
-  lessons/L-001-<slug>.md
-  homework/INDEX.md
-  homework/HW-001-<slug>-attempt-01.md
-  inquiry/INDEX.md
-  inquiry/IQ-001-<slug>-batch-01.md
-  goal/goal-plan.md
-  goal/chain.md
-  goal/coverage-matrix.md
-  goal/progress.md
-  goal/probes/
-  notes/
-  learning-log.md
-  .status.json
-```
-
-`inquiry/` 由 `Q-question` 拥有；`goal/` 由 `G-goal` 拥有。计划会话只写 Goal-Plan 骨架（`goal-plan.md` / `chain.md` / `coverage-matrix.md` / `progress.md` 与 mine unit 切分），不写 `goal/probes/` 或 `lessons/` 正文。`/goal` Lead 可更新矩阵与 progress 并写入 probes/verify；L 子代理只写被分配的 Lesson；miner 只写自己的 `GP-*-b0N`；不得写入 `inquiry/`。
-
-综合父 Change 使用：
-
-```text
-changes/<topic>-consolidation/
-  INDEX.md
-  .status.json
-  children/<child-id>/                 # C 确认后物理搬入，内容字节不改写
-  synthesis/INDEX.md
-  synthesis/source-manifest.json
-  synthesis/overview.md
-  synthesis/claim-matrix.md
-  synthesis/concept-map.md
-  synthesis/conflicts-and-gaps.md
-  synthesis/revisions/<version>.md
-```
-
-子 Change 的 Lesson、Homework 和后续 Markdown 仍写入 `children/<child-id>/`；父 Change 负责根级锁、位置登记和路由，子 Change 仍是这些工件的 owner。综合输出是可重建的派生视图，不覆盖原始课程、答案或评审。
+创建、恢复或物理移动 Change 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
 
 ## 状态字段
 
@@ -115,21 +72,15 @@ Workflow 自身只读模板；Change 内容只写当前 Change 或其 `children/
 
 ## 课程合同
 
-`L-lesson` 的每份 Lesson 必须有 `lesson_id`、`objective_ids`、`estimated_minutes`（默认 35，标准范围 30–40）、可加总的 `time_budget`、`expression_level`、`coverage_depth` 和 `source_ids`。时间按阅读/视觉/示例/停顿/总结等活动估算，不按字符数承诺。章节顺序可以随主题变化，但每个核心目标都必须有动机与宏观图、通俗直觉、精确定义和英文术语、机制/因果链、至少一种视觉表示及其完整文字等价物、正例、反例或边界、迁移说明、误区、总结和来源。类比必须标出失效边界。
-
-`expression_level=eli5|plain` 只控制词汇、句法、脚手架和类比比例；`coverage_depth=overview|standard|deep` 控制覆盖强度。Lesson 可放非评分的 pause/self-check，但不得生成 Q/A、答案、分数、verdict 或 mastered 字段。外部图片只是可选增强，必须有 alt、caption、source、访问日期和文字等价物，课程不能依赖链接可用性。
-
-学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。每课最多 10 问（两批 5 槽）；满 10 后只拆课，不续问。
+L 授课、G 编译授课合同或验收 Lesson 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
 
 ## Homework 合同
 
-`H-homework` 默认生成五题，覆盖回忆/定义、机制解释、变式应用、全新情境迁移和误区辨析；数量可由用户指定。一个 `HW-...-attempt-NN.md` 按以下顺序包含元数据、Q1…、空白 A1…、`Submission: pending`。学习者填写答案后必须显式写入 `Submission: ready` 并再次激活 H。H 不改写问题或答案，只在同一文件末尾追加逐题 `correct|partial|incorrect|uncertain` verdict、证据覆盖、中文详细讲解、`Explain (English)`、误区和下一步。评审后文件冻结；重答创建新的 attempt 文件并链接旧文件。H 可更新 immediate projection，但不把内容标记为 mastered，也不自动路由其他 Work。
+H 生成/评审作业或 R 引用作业证据时，必须读取 `<Path>{roots.workflows}/learning/common/rules/homework-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
 
 ## 主题整合与冷归档
 
-`C-consolidate` 接受用户选定的 active 或 closed、尚未冷归档的 Change；已冷归档树保持不可变，只能先由用户显式恢复后再参与。C 先输出包含源 ID、当前/旧 locator、时间、哈希、关系、冲突和目标 topic 的 dry-run，用户确认后在锁内原子移动整个目录到 `children/<child-id>/`，失败则回滚。不得选择祖先与后代形成循环，也不得拆开已有综合子树。
-
-综合 claim 必须带 `source_change_id`、Lesson/Homework anchor、外部 `source_id`、evidence status（`draft|supported|contested|unresolved`）和验证时间；C 只有在第二次确认后才更新 `context/domains/<domain>/topics/<topic-id>/`。父 Change 的 effective date 是所有选中源 `updated_at` 的最大值；原始创建/更新时间仍保留。A 只接受用户 close/confirm，在没有活动子树和根锁后把整个树移动到 `archive/YYYY-MM/<root-change>`；不检查作业或掌握，不做综合。
+C 整合、A 归档或恢复物理移动时，必须读取 `<Path>{roots.workflows}/learning/common/rules/consolidation-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
 
 ## 破坏式升级
 

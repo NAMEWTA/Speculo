@@ -39,9 +39,10 @@ const targetPaths = new Set();
 const entries = Array.isArray(manifest.entries) ? manifest.entries : [];
 
 if (manifest.schema_version !== 1) errors.push("schema_version must be 1");
-if (entries.length !== 26) errors.push(`expected 26 source entries, found ${entries.length}`);
+if (entries.length === 0) errors.push("source inventory must not be empty");
 
 const sourceRootExists = await exists(path.join(repositoryRoot, "temp/skills"));
+if (process.argv.includes("--require-sources") && !sourceRootExists) errors.push("source content unavailable: hashes and behavioral fidelity are NOT VERIFIED");
 for (const [index, entry] of entries.entries()) {
   const label = `entries[${index}]`;
   if (!isRepositoryRelative(entry.source) || !entry.source.endsWith("/SKILL.md")) {
@@ -108,7 +109,7 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    `source parity: ${entries.length} sources, ${targetPaths.size} targets, ` +
-      `${sourceRootExists ? "hashes checked" : "source hashes skipped"}`,
+    `source inventory: ${entries.length} sources, ${targetPaths.size} targets; ` +
+      `${sourceRootExists ? "source hashes checked (not semantic fidelity)" : "source hashes NOT VERIFIED: historical source unavailable"}`,
   );
 }

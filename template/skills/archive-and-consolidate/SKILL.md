@@ -1,9 +1,7 @@
 ---
-id: archive-and-consolidate
-type: skill
-name: Archive and Consolidate
+name: archive-and-consolidate
 description: Archive and consolidate completed workflow changes and knowledge; use only for an explicitly selected archive/consolidation or cleanup review.
-
+metadata: {"speculo-id": "archive-and-consolidate", "speculo-kind": "skill", "speculo-legacy-name": "Archive and Consolidate"}
 ---
 
 # Archive and Consolidate

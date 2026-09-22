@@ -587,7 +587,7 @@ function validateCommandReportRoots() {
 function validateCommandAndSkillPaths() {
   const roots = [join(templateRoot, "commands"), join(templateRoot, "skills")];
   const legacyPatterns = [
-    [/speculo\/\.speculo(?:\/|\b)/, "runtime state must use <Path>{roots.state}/...</Path>"],
+    [/speculo\/\.speculo(?!\/workspace\.json)(?:\/|\b)/, "runtime state must use <Path>{roots.state}/...</Path>"],
     [/speculo\/config\.json\b/, "config must use <Path>{roots.config}</Path>"],
     [/speculo\/workflows(?:\/|\b)/, "workflow assets must use <Path>{roots.workflows}/...</Path>"],
     [/(?:^|[\s`(])(?:\.\.\/)+skills\//m, "cross-package skill references must use roots.skills"],

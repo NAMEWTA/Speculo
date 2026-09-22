@@ -567,14 +567,15 @@ describe("CLI surface", () => {
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["person"] } });
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
-      assert.equal(agents, "# AGENTS.md\n");
+      assert.match(agents, /SPECULO-BOOTSTRAP:START/);
+      assert.match(agents, /speculo\/\.speculo\/workspace\.json/);
       assert.doesNotMatch(agents, /SPECULO-PERSISTENT-KNOWLEDGE|<SPECULO>/);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
   });
 
-  it("removes deselected references and legacy forced blocks", async () => {
+  it("retains installed knowledge references and removes legacy forced blocks", async () => {
     const target = await tempProject();
     try {
       await writeFile(join(target, "AGENTS.md"), "# Project rules\n\n<SPECULO>\nlegacy forced workflow\n</SPECULO>\n", "utf8");
@@ -582,8 +583,9 @@ describe("CLI surface", () => {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
       assert.match(agents, /# Project rules/);
-      assert.doesNotMatch(agents, /legacy forced workflow|<SPECULO>|learning\/context/);
+      assert.doesNotMatch(agents, /legacy forced workflow|<SPECULO>/);
       assert.match(agents, /specdev\/adr/);
+      assert.match(agents, /learning\/context/);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

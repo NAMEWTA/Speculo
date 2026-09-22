@@ -2,16 +2,18 @@
 
 docs-sync 必须遵循每个 workflow 的 `INDEX.md`。`docs-sync.json` 是 command 拥有的标准延迟 sidecar，不属于 workflow `_state` 固定骨架。
 
+模式边界：audit 只报告候选；update 只使用本次明确批准的目标且不写 sidecar；以下所有 sidecar 创建、迁移和确认持久化仅用于 commit。
+
 ## 发现
 
 1. 从 `<Path>{roots.workflows}/{workflow}/INDEX.md</Path>` 发现已安装 workflow。
 2. 每个包必须有匹配的 `<Path>{roots.state}/{workflow}/</Path>` 状态根；包或状态根单边缺失时阻塞，不猜测归属。
-3. 读取 `INDEX.md` 中声明的运行时根、持久化约定、固定 archive 和知识 store。
+3. 读取 `INDEX.md` 的发现声明；仅需解析合同或写入 owner 时，再按该入口显式指向的 README/contract 读取对应部分，不假设每个 INDEX 都包含运行合同。
 4. 状态根存在但没有已安装 package 时只报告 orphan，不创建 sidecar。
 
 ## Sidecar v1
 
-每个已安装 workflow 首次 docs-sync 都创建：
+每个已安装 workflow 首次获准的 commit 同步才创建：
 
 ```json
 {
@@ -47,4 +49,4 @@ docs-sync 必须遵循每个 workflow 的 `INDEX.md`。`docs-sync.json` 是 comm
 - `existing-only` store 永远只读。RULES/policy、ADR、CONTEXT、语义冲突和任何知识文件删除均进入 `propose-only`，按目标 workflow 规则取得逐次确认。
 - 不跨 workflow 搬运知识；共享结论必须先确认唯一归属。
 
-完成标准：所有已安装 workflow 都有有效 sidecar；每个有效目标都有唯一 owner、声明边界和确认记录；所有受保护动作均未越权。
+完成标准：commit 模式所有已安装 workflow 都有有效 sidecar；audit/update 不产生 sidecar；每个有效目标都有唯一 owner、声明边界和确认记录；所有受保护动作均未越权。

@@ -1,6 +1,7 @@
 ---
 name: dev-worktree
 description: 管理 SpecDev required Ticket 的 Git worktree；创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
+compatibility: Requires the owning Speculo workflow and its workspace path resolver.
 ---
 
 # Dev Worktree

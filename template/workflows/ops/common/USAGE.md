@@ -129,3 +129,7 @@ node /path/to/ops/common/tools/validate-ops.mjs --self-check
 ```
 
 演练只使用指定新空目录，创建演示 APP 与演示明文凭据，运行真实有限 Node 程序，完成双边文档；不连接其他主机、不安装软件。它不是生产系统验收。
+
+## 凭据文档 opt-in
+
+新安装默认文档只含 secret_ref。输入 spec 的可选 `plaintext_documentation` 布尔值是受计划摘要保护的策略变更，设 true 才导出受限明文，设 false 可显式收紧旧状态。生成计划后照常批准精确摘要并执行；更改策略使旧批准失效。旧状态缺字段保留原语义，CLI 刷新不改历史凭据或回执。env 与 server-files 配置副本仍是受限真实配置，不属于无秘密文档承诺。

@@ -5,7 +5,7 @@
 ## 项目事实
 
 - npm 包：`@namewta/speculo`，运行时 Node.js `>=22.22.3 <25`，包管理器 `pnpm@11.1.3`。
-- CLI：`speculo` → `dist/src/cli.js`；入口支持 `init`、`version`、只读 `doctor`。
+- CLI：`speculo` → `dist/src/cli.js`；入口支持 `init`、`version`、只读 `doctor`/`resolve` 和必须匹配事务 ID 的显式 `recover`。
 - 真实源：`src/`、`template/`、`scripts/`、`test/`、`skills/`。`template/canonical/` 和 workflow AUTO-INDEX 是生成物，不是事实源。
 - `skills/` 是维护者 authoring skills；`.agents/skills/` 只保留兼容指针。系统或插件缓存不属于本项目源。
 
@@ -42,7 +42,7 @@ pnpm verify-bin
 
 ## 验收
 
-修改完成前，运行与范围匹配的测试和 `pnpm validate-assets`；涉及生成物时重建并确认二次运行无 diff。报告实际修改、命令/退出码、未验证项、失败停止点和恢复路径。不要把字符或行数变化表述为 Token 或套餐额度节省比例。
+修改完成前，运行与范围匹配的测试和 `pnpm validate-assets`；涉及生成物时重建并确认二次运行无 diff。新增分发 Skill 运行 `pnpm validate-skills`；格式通过不认证宿主实际调用。报告实际修改、命令/退出码、未验证项、失败停止点和恢复路径。不要把字符或行数变化表述为 Token 或套餐额度节省比例。
 
 ## 发布事实
 

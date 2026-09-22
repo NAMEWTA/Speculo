@@ -48,3 +48,7 @@
 ## 停止
 
 读 `<Path>{roots.workflows}/learning/G-goal/references/stop-rules.md</Path>`。任一过程即停或完成即停触发后，写 `goal/verify.md`：哪些格子闭合、哪些 deferred、哪些仍 uncovered、恢复入口。课写完不是完成。
+
+## 无 slash-command 宿主
+
+`/goal` 是宿主适配示例，不是额外授权源。宿主没有该命令时，用户可在新执行会话明确请求“按此 Goal-Plan 执行”，同时提供计划路径；该会话成为外部执行器并遵守相同最小读取清单、owner、停止和验收合同。计划会话仍只编译并停止，不自动接管执行。无 team 时按原派单包串行执行；缺必需文件或工具只阻塞受影响分支，不伪造子代理调用。30–40 分钟、每单元 ≤15 节与每课最多10问仍是 Learning 领域合同，不传播为全局 Agent 限制。
