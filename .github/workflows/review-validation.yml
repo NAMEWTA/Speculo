@@ -24,6 +24,17 @@ jobs:
           path: review-source.tar.gz
           retention-days: 3
       - uses: ./.github/actions/setup
+      - name: Export offline validation dependencies
+        run: |
+          mkdir review-runtime
+          cp "$(command -v node)" review-runtime/node
+          tar -czf review-dependencies.tar.gz node_modules review-runtime
+      - name: Retain validation dependencies
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: review-dependencies
+          path: review-dependencies.tar.gz
+          retention-days: 1
       - name: Validate baseline
         run: pnpm check
       - name: Verify CLI
