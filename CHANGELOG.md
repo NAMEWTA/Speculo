@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-09-23
+
 ### Fixed
 - **Agent entry safety**: atomic, idempotent managed handbook blocks; reject linked/shared external files and detect concurrent edits before replacement.
 - **Installation integrity**: doctor validates configuration, roots, managed hashes and installed workflows; structured scenario checks no longer award a behavior score for non-empty traces.
