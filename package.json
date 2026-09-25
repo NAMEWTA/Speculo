@@ -55,7 +55,7 @@
     "node": ">=22.22.3 <25"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.6.2",
     "fast-xml-parser": "^5.9.3",
     "typescript": "^5.8.3"
   },
