@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task_id": "prepare-node-a",
+  "title": "为指定服务器准备受限缓存目录",
+  "plan": "先核对 node-a 的身份、接入与专用根目录。仅创建 _host/cache/demo 目录，验证它存在；不安装软件、不改 SSH、不清理业务数据。保留原计划、执行与双边文档回执；失败或结果未知时停止，最后生成本地资产清单。",
+  "valid_for_hours": 2,
+  "scope": {
+    "scope": "server",
+    "server_ids": [
+      "node-a"
+    ],
+    "project_ids": [],
+    "related_project_ids": [],
+    "allow_policy_changes": false,
+    "allow_public_ingress": false,
+    "allow_destructive": false
+  },
+  "input_paths": [],
+  "steps": [
+    {
+      "id": "prepare-cache",
+      "title": "创建并验证专用缓存目录",
+      "spec": {
+        "schema_version": 1,
+        "worker": "H",
+        "operation": "prepare",
+        "hosts": [
+          "node-a"
+        ],
+        "reason": "TEMPLATE ONLY: confirm the real server, root and all affected consumers before execution.",
+        "rollback_note": "Retain the newly created directory; do not remove business data.",
+        "host_actions": [
+          {
+            "host_id": "node-a",
+            "kind": "mkdir",
+            "path": "_host/cache/demo",
+            "reason": "Create only the explicitly scoped demonstration cache directory."
+          },
+          {
+            "host_id": "node-a",
+            "kind": "command",
+            "argv": [
+              "test",
+              "-d",
+              "_host/cache/demo"
+            ],
+            "writes": [],
+            "verification": [
+              {
+                "type": "command",
+                "argv": [
+                  "test",
+                  "-d",
+                  "_host/cache/demo"
+                ]
+              }
+            ],
+            "reason": "Verify only the explicitly created directory."
+          }
+        ]
+      }
+    }
+  ]
+}

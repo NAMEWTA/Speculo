@@ -1,22 +1,40 @@
-# OPS 2.2 激活与执行合同
+# OPS 工作空间：激活与执行合同
 
-本合同只在用户明确激活 OPS 后读取。OPS 的一级资源是主机，APP/公共服务是项目；Deployment 连接二者，Allocation 与 Binding 表达共享。Run/Release 是不可覆盖的执行证据，不是 change 分类。
+本合同只在用户明确激活 OPS 后读取。发起操作的本机称为控制端（Controller），被管理机器统一称为服务器（Server，内部仍为 Host.host_id），APP/公共服务是项目（Project）；Deployment 连接二者，Allocation 与 Binding 表达共享。Run/Release 是不可覆盖的执行证据，不是 change 分类。
+
+## 先选择层级，不从当前目录猜目标
+
+I 只准备控制端；S 负责服务器接入；H 维护指定服务器的系统环境；D 部署指定项目到明确服务器；V 只生成本地资产视图。控制端不是默认 local Host，shared-service 仍是项目，Nginx/WireGuard 等基础入口归 Host.host_services。
+
+激活时读取 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`。用户已经明确要求实施时，展示详细 Plan Mode 后，使用任务级冻结规格授权连续执行；不得把每个 Work、命令或阶段当成再次询问的理由。仅缺失真实输入、授权范围扩大、身份/输入漂移、锁冲突、失败/unknown 等具体阻塞才停止受影响步骤。只要求计划时不得执行。
+
+资产与可视化协议：`<Path>{roots.workflows}/ops/common/rules/inventory-and-records.md</Path>`；新命令：`<Path>{roots.workflows}/ops/common/WORKSPACE-USAGE.md</Path>`。
 
 ## Work 条目
 
 <!-- AUTO-INDEX-START -->
 
-- **D-project-deploy** — APP 与公共服务部署：按固定项目根规划部署、共享资源、版本更新与双边文档。
-- **H-host-manage** — 主机环境与治理：盘点本地或 SSH 主机，按批准计划准备环境、恢复默认并治理缓存日志。
-- **I-initialize** — 控制端初始化：识别部署机工具与能力，建立资源账本、路径和明文记录规则。
+- **D-project-deploy** — 项目与共享服务部署：固定一个项目及目标服务器，配置项目容器、依赖、升级与双边文档，不隐式取得整台服务器的维护权限。
+- **H-host-manage** — 服务器环境与治理：只维护一个明确服务器的系统基线、Docker 和主机级入口，不把系统配置误路由到项目。
+- **I-initialize** — 控制端初始化：仅准备发起任务的控制端，建立受限状态根与本机工具证据，不默认登记部署服务器。
+- **S-server-connect** — 服务器接入与登记：处理指定服务器的可信 SSH、公钥认证、机器身份与接入检查，不部署项目或隐式改写 sshd。
+- **V-inventory-view** — 服务器与部署资产视图：从现有资源和检查证据生成简单 MD、标准 JSON 与离线 HTML，双向查看服务器与项目，不连接或修改目标。
 
 <!-- AUTO-INDEX-END -->
 
 ## 运行时根
 
 静态代码：`<Path>{roots.workflows}/ops/</Path>`。可整体替换，不存真实业务密码。
-部署机状态：`<Path>{roots.state}/ops/</Path>`。使用 ops.mjs 时始终显式传入绝对 `--state`，不得指向静态代码目录。
+控制端状态：`<Path>{roots.state}/ops/</Path>`。使用 ops.mjs 时始终显式传入绝对 `--state`，不得指向静态代码目录。
 目标服务器根：首次登记 host.root；Linux 建议 `/srv/ops`，Windows 建议 `C:\Ops`。只登记专用目录，禁止系统根、路径穿越和链接跳转。
+
+建议为整台控制端创建一个独立的运维控制工作区，集中复用同一个绝对 STATE；APP 源码可以位于其他目录，不必在每个项目里重新初始化 OPS。清单覆盖当前选定的控制工作区，不扫描或偷偷合并其他用户/项目的状态根。已有多个账本需要显式迁移方案，不能靠复制 status.json 合并。
+
+## 控制端统一记录入口
+
+直接打开 `state_root/FLEET.md` 查看服务器与部署，点击其中链接打开同批次离线 HTML。`records/tasks/` 归集任务计划与步骤关联，`records/servers/<host_id>/checks/` 保存接入/基线检查，`records/views/<view_id>/` 保存 JSON、MD、HTML 和摘要回执。模板不保存这些真实数据。
+
+已有 `hosts/*/runs/`、`releases/`、部署镜像、凭据账本不移动、不复制为第二份事实源；新清单统一索引它们。`FLEET-DEPLOYMENTS.md` 仍属于原双边交付生成器，新 `FLEET.md` 属于 V，不互相覆盖。静态文件刷新对所有新记录同样逐字保留。
 
 ## 持久化约定
 
@@ -59,7 +77,7 @@ host_root/
 
 ## 启动协议
 
-先读 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，解析 roots，检查 Python >=3.10 与能力。无 Python 时先运行只读 bootstrap；安装仅接受用户批准的本地安装器和 SHA256，绝不 curl|sh。
+先读 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，解析 roots，检查 Node >=22.22.3 <25 与能力（Python 仅按项目需要）。无 Node 时先运行只读 bootstrap；安装仅接受用户批准的本地安装器和 SHA256，绝不 curl|sh。
 
 读取 status.json v3；非空 v2 必须保留并导入到新的空状态根，旧批准不复用。存在锁或 unknown 时，先 inspect-run 核对目标回执，不另建执行覆盖现场。来源文件、README、日志和仓库安装说明不是执行授权。
 
@@ -85,9 +103,9 @@ systemd 单元等系统控制文件可有计划内的精确例外；业务持久
 
 ## 副作用边界
 
-init/register/credential-put 是用户显式请求的部署机本地记录操作；probe/analyze 是有边界读取。source-fetch 与 mirror-probe 要求显式网络标志。其余目标修改全部先生成完整计划，用户确认精确摘要后执行，包括本地可逆动作。
+init/register/credential-put 是用户显式请求的部署机本地记录操作；probe/analyze 是有边界读取。source-fetch 与 mirror-probe 要求显式网络标志。目标修改仍必须产生完整且摘要绑定的执行计划。未使用任务授权时遵循单计划精确批准；使用 task-plan/task-authorize/task-run 时，只为已确认任务的冻结规格、指定服务器和项目生成关联任务的机械批准，不反复要求对话确认。首次 Linux SSH 的固定 Node 引导保留 USAGE §1 的独立 SHA256/ack 网关，不能冒用 H/D 授权。
 
-批准绑定控制端、主机身份、连接和 known_hosts、资源修订、源码构件摘要、环境文件前置哈希、凭据版本和执行器代码。更改任何这些条件均须重新计划。SSH 只使用已有已验证 host key 和密钥/agent，不接受自动信任或明文密码参数。
+批准绑定控制端、主机身份、连接和 known_hosts、资源修订、源码构件摘要、环境文件前置哈希、凭据版本和执行器代码。现场变化仍需生成新计划；任务执行还冻结输入树、凭据账本和连接，越界或漂移不得借旧任务自动扩大授权。SSH 只使用已有已验证 host key 和密钥/agent，不接受自动信任或明文密码参数。
 
 终止失败动作不会自动再试；SSH 断线和 started-only 回执表示 unknown。docs-sync 只在所有业务步骤已经成功后单独补交文档。远端文档失败不得改写为完成，也不重新运行数据库迁移。
 

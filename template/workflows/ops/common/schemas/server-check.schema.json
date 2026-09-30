@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:server-check:v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "ops-server-check"
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "profile": {
+      "enum": [
+        "base",
+        "compose",
+        "native"
+      ]
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "host_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "registration",
+              "ssh-publickey",
+              "machine-identity",
+              "linux",
+              "node-runtime",
+              "deployment-root",
+              "disk-space",
+              "memory",
+              "docker-daemon",
+              "compose-version",
+              "docker-data-root",
+              "least-privilege",
+              "time-sync",
+              "firewall",
+              "egress",
+              "backup-restore"
+            ]
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "warn",
+              "unknown",
+              "not-applicable"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "required",
+          "detail"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact",
+    "host_id",
+    "profile",
+    "checked_at",
+    "host_digest",
+    "checks"
+  ],
+  "additionalProperties": false
+}
