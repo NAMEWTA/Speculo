@@ -96,11 +96,14 @@ jobs:
           assert.equal(exact.dist.shasum, shasum);
           const publicationLog = readFileSync(join(process.env.RUNNER_TEMP, 'publication.log'), 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
           assert.ok(publicationLog.includes('+ @namewta/speculo@1.0.18'));
+          const logCounts = [...publicationLog.matchAll(/npm notice total files:\s*(\d+)/g)].map(match => Number(match[1]));
           const logShasums = [...publicationLog.matchAll(/npm notice shasum:\s*([a-f0-9]{40})/g)].map(match => match[1]);
           assert.ok(logShasums.length > 0, 'Publication log must contain a package shasum');
+          assert.equal(logShasums.at(-1), shasum, 'Final publication-log shasum must match the registry and downloaded tarball');
+          assert.ok(logCounts.length > 0);
           console.log('Publication log package shasums:', JSON.stringify(logShasums));
           writeFileSync(join(process.env.RUNNER_TEMP, 'published.tgz'), bytes);
-          const evidence = { package: exact.name, version: exact.version, latest: latest.version, gitHead: exact.gitHead ?? null, integrity, shasum, publication_log_shasums: logShasums, publication_log_hash_matches_registry: logShasums.at(-1) === shasum, release_commit: process.env.RELEASE_SHA, release: 'https://github.com/NAMEWTA/Speculo/releases/tag/v1.0.18' };
+          const evidence = { package: exact.name, version: exact.version, latest: latest.version, gitHead: exact.gitHead ?? null, integrity, shasum, publication_log_file_count: logCounts.at(-1), publication_log_shasums: logShasums, publication_log_hash_matches_registry: logShasums.at(-1) === shasum, release_commit: process.env.RELEASE_SHA, release: 'https://github.com/NAMEWTA/Speculo/releases/tag/v1.0.18' };
           writeFileSync(join(process.env.RUNNER_TEMP, 'release-evidence.json'), JSON.stringify(evidence, null, 2));
           console.log('npm version/latest and downloaded SHA-512/SHA-1 verified; gitHead:', exact.gitHead ?? 'not provided by npm');
           NODE
@@ -138,11 +141,13 @@ jobs:
           assert expected.keys() == published.keys(), {'missing': sorted(expected.keys() - published.keys()), 'extra': sorted(published.keys() - expected.keys())}
           mismatches = [name for name in expected if expected[name] != published[name]]
           assert not mismatches, {'different_file_bytes': mismatches}
-          assert len(published) == 459, 'Unexpected package file count'
+          assert len(published) == len(preview['files']) > 0, 'Package count must match the actual release build inventory'
+          assert set(published) == {'package/' + item['path'] for item in preview['files']}, 'All declared files must be present'
           evidence = json.loads((root / 'release-evidence.json').read_text())
+          assert evidence['publication_log_file_count'] == len(published), 'Actual publication-log count must match all archive files'
           evidence.update({'rebuilt_tarball_shasum': preview['shasum'], 'compared_files': len(published), 'all_file_bytes_match_release_build': True, 'original_release_workflow_restored': True, 'verification_only_no_publication': True})
           text = json.dumps(evidence, indent=2)
           print(text)
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
-              out.write('## Published v1.0.18 verified\n\nAll 459 packaged files match the immutable release source build byte-for-byte. No version or tag was changed and nothing was republished.\n\n```json\n' + text + '\n```\n')
+              out.write('## Published v1.0.18 verified\n\nAll packaged files match the immutable release source build byte-for-byte. No version or tag was changed and nothing was republished.\n\n```json\n' + text + '\n```\n')
           PY
