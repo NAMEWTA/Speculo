@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src '{{SCRIPT_CSP}}'; style-src '{{STYLE_CSP}}'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Speculo · OPS 资产清单</title>
+<style>
+:root{color-scheme:light;--ink:#182633;--muted:#596b78;--line:#d7e0e5;--paper:#f3f6f8;--accent:#126c62;--card:#fff}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}header{background:#142d36;color:white;padding:34px max(24px,calc((100vw - 1360px)/2));border-bottom:5px solid #45b9a6}.eyebrow{letter-spacing:.15em;font-size:12px;text-transform:uppercase;color:#a2d8d0}h1{font-size:32px;line-height:1.25;margin:10px 0}h2{font-size:21px;margin:0 0 14px}p{margin:8px 0}header p{color:#cbdde3;max-width:1000px}main{max-width:1408px;margin:auto;padding:24px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 22px}.stat,section,.notice,.filters{background:var(--card);border:1px solid var(--line);border-radius:10px}.stat{padding:16px 20px}.stat strong{display:block;font-size:30px;line-height:1.25}.stat span{color:var(--muted);font-size:13px}.notice{padding:14px 18px;margin-bottom:20px;border-left:4px solid #c38835}.filters{padding:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:end;position:sticky;top:0;z-index:1;box-shadow:0 4px 15px #142d3610}label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}label.search{flex:1;min-width:220px}input,select,button{font:inherit;border:1px solid #b9cbd1;border-radius:6px;padding:9px 12px;background:#fff;color:var(--ink)}input:focus,select:focus,button:focus{outline:3px solid #79c8bb;outline-offset:2px}button{cursor:pointer}button.link{border:0;padding:0;color:var(--accent);background:transparent;text-align:left;text-decoration:underline;text-underline-offset:3px}section{padding:22px;margin:20px 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;background:#eef4f5;font-weight:650;color:#3e5764}td,th{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}tr:last-child td{border-bottom:0}td{max-width:380px;min-width:80px}.muted{color:var(--muted);font-size:12px}.badge{display:inline-block;padding:2px 9px;border-radius:20px;background:#e8eef2;font-size:12px;white-space:nowrap}.pass,.ready,.completed{background:#e0f2e8;color:#216844}.fail,.failed,.blocked{background:#fbe6e5;color:#993b37}.unknown,.stale,.docs_pending,.interrupted,.needs-inspection,.incomplete{background:#fff0d6;color:#865719}.details{font-size:12px}summary{cursor:pointer;color:var(--accent)}.detail-list{padding:6px 0}.check{display:flex;justify-content:space-between;gap:16px;margin:4px 0}.empty{padding:20px;color:var(--muted)}footer{overflow-wrap:anywhere;color:var(--muted);font-size:12px;padding:10px 0 30px}code{font-size:12px}noscript{display:block;padding:24px}@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}main{padding:14px}section{padding:16px}.filters{position:static}header{padding:25px 20px}h1{font-size:25px}td,th{padding:9px}}@media print{.filters{display:none}header{background:white;color:var(--ink);padding:10px}header p{color:var(--muted)}section,.stat{break-inside:avoid}main{padding:0}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">Speculo / Operations workspace</div><h1>服务器与项目，一处查看</h1><p id="meta"></p><p>服务器 → 项目 · 项目 → 服务器 · 系统服务与业务部署分别记录</p></header>
+<main>
+<div class="stats" id="stats"></div>
+<div class="notice"><strong>这是离线快照，不是实时监控。</strong> <span id="notice-text">“ready”仅说明指定 profile 的必需检查项通过；“completed”是记录中的执行结果。未测、过期、身份变化及未完成文档均不能视为生产验收通过。</span></div>
+<div class="filters"><label class="search">搜索服务器、项目、部署、版本或路径<input id="search" type="search" placeholder="输入关键词" autocomplete="off"></label><label>服务器<select id="server"><option value="">全部服务器</option></select></label><label>项目<select id="project"><option value="">全部项目</option></select></label><label>部署记录状态<select id="status"><option value="">全部状态</option></select></label><button id="reset" type="button">重置筛选</button></div>
+<section><h2>01 / 服务器清单</h2><p class="muted">点击项目名称反向查询部署位置。展开检查项可查看尚未验证的基础环境。</p><div class="scroll" id="servers"></div></section>
+<section><h2>02 / 项目清单</h2><p class="muted">项目是逻辑资源；同一项目可以部署在多台服务器。退役实例保留历史记录。</p><div class="scroll" id="projects"></div></section>
+<section><h2>03 / 部署实例</h2><div class="scroll" id="deployments"></div></section>
+<section><h2>04 / 系统服务与依赖</h2><p class="muted">Nginx、WireGuard 等主机级服务不伪装成业务项目；共享依赖通过部署关系显示。</p><div class="scroll" id="services"></div><div class="scroll" id="bindings"></div></section>
+<section><h2>05 / 任务与执行记录</h2><p class="muted">缺少已验证终态的任务需核对原始回执；看板不证明进程仍在运行，也不触发重试、回滚或部署。</p><div class="scroll" id="tasks"></div><details><summary>查看原始 Run / Release 索引</summary><div class="scroll" id="releases"></div></details></section>
+<footer id="footer"></footer>
+</main>
+<noscript>此看板需要本地 JavaScript 才能筛选；同目录 FLEET.md 提供无需脚本的清单。</noscript>
+<script type="application/json" id="fleet-data">{{FLEET_DATA}}</script>
+<script>
+"use strict";
+const data=JSON.parse(document.getElementById("fleet-data").textContent);
+const $=(id)=>document.getElementById(id);
+const byDeployment=new Map(data.deployments.map(d=>[d.deployment_id,d]));
+const labels={registration:"资源登记","ssh-publickey":"SSH 公钥认证","machine-identity":"服务器身份",linux:"Linux 系统","node-runtime":"Node 运行环境","deployment-root":"部署根存在","disk-space":"磁盘空间",memory:"可用内存","docker-daemon":"本机 Docker","compose-version":"Compose 版本","docker-data-root":"Docker 数据目录","least-privilege":"最小权限","time-sync":"时间同步",firewall:"防火墙",egress:"外部依赖连通性","backup-restore":"备份恢复"};
+const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!=null)n.textContent=String(value);if(cls)n.className=cls;return n;};
+const badge=(value)=>node("span",value||"unknown","badge "+String(value||"unknown").replace(/[^a-z_-]/g,""));
+function choose(kind,id){$(kind).value=id;$(kind==="server"?"project":"server").value="";$("search").value="";$("status").value="";render();}
+const link=(kind,id)=>{const n=node("button",id,"link");n.type="button";n.addEventListener("click",()=>choose(kind,id));return n;};
+function links(kind,ids){const n=node("div");if(!ids.length)n.textContent="—";ids.forEach((id,i)=>{if(i)n.append(document.createTextNode(", "));n.append(link(kind,id));});return n;}
+function table(target,headers,rows){const root=$(target);root.replaceChildren();if(!rows.length){root.append(node("p","没有匹配记录。","empty"));return;}const t=node("table"),head=node("thead"),hr=node("tr"),body=node("tbody");for(const h of headers)hr.append(node("th",h));head.append(hr);for(const row of rows){const tr=node("tr");for(const value of row){const td=node("td");if(value instanceof Node)td.append(value);else td.textContent=value==null||value===""?"—":String(value);tr.append(td);}body.append(tr);}t.append(head,body);root.append(t);}
+function checks(s){const d=node("details",null,"details");d.append(node("summary",`${s.profile||"未检查"} · ${s.checked_at||"无时间记录"}`));const wrap=node("div",null,"detail-list");if(!s.checks.length)wrap.textContent="未检查：不能据此推断服务器可用。";for(const c of s.checks){const row=node("div",null,"check");row.append(node("span",(labels[c.id]||c.id)+(c.required?" *":"")),badge(c.status));wrap.append(row);}d.append(wrap);return d;}
+for(const [id,values] of [["server",data.servers.map(s=>s.server_id)],["project",data.projects.map(p=>p.project_id)],["status",[...new Set(data.deployments.map(d=>d.status))].sort()]])for(const value of values){const o=node("option",value);o.value=value;$(id).append(o);}
+$("meta").textContent=`控制端 ${data.controller_id}  /  资源修订 ${data.source_revision}  /  生成于 ${data.generated_at}`;
+$("notice-text").textContent=data.notice;
+for(const [label,value] of [["已登记服务器",data.servers.length],["项目",data.projects.length],["部署实例（含历史）",data.deployments.length],["需关注的服务器",data.servers.filter(s=>s.readiness!=="ready").length]]){const box=node("div",null,"stat");box.append(node("strong",value),node("span",label));$("stats").append(box);}
+$("footer").textContent=`数据格式 v${data.schema_version} · 检查过期阈值 ${data.stale_hours} 小时 · 资源摘要 ${data.source_digest}。此文件可能包含内部拓扑，请勿直接公开发布。`;
+function render(){const server=$("server").value,project=$("project").value,st=$("status").value,q=$("search").value.toLocaleLowerCase();const match=(v)=>!q||JSON.stringify(v).toLocaleLowerCase().includes(q);
+const ds=data.deployments.filter(d=>(!server||d.server_id===server)&&(!project||d.project_id===project)&&(!st||d.status===st)&&match(d));
+const ss=data.servers.filter(s=>(!server||s.server_id===server)&&(!project||s.deployment_ids.some(id=>byDeployment.get(id)?.project_id===project))&&(!st||ds.some(d=>d.server_id===s.server_id))&&(match(s)||ds.some(d=>d.server_id===s.server_id)));
+const ps=data.projects.filter(p=>(!project||p.project_id===project)&&(!server||p.deployment_ids.some(id=>byDeployment.get(id)?.server_id===server))&&(!st||ds.some(d=>d.project_id===p.project_id))&&(match(p)||ds.some(d=>d.project_id===p.project_id)));
+table("servers",["服务器 / 名称","地址 / 系统","检查结果","检查详情（* 必需项）","项目","部署根"],ss.map(s=>[links("server",[s.server_id]),`${s.name} · ${s.address}${s.port?":"+s.port:""} / ${s.platform}`,badge(s.readiness),checks(s),links("project",s.project_ids),s.root]));
+table("projects",["项目","名称","类别 / 服务类型","所在服务器","部署数量"],ps.map(p=>[link("project",p.project_id),p.name,`${p.kind} / ${p.service_type||"—"}`,links("server",p.server_ids),p.deployment_ids.length]));
+table("deployments",["部署实例","项目 / 服务器","环境 / 方法","记录状态","计划版本","验证版本","根目录 / 更新时间"],ds.map(d=>{const where=node("div");where.append(link("project",d.project_id),node("div"),link("server",d.server_id));return[d.deployment_id,where,`${d.environment} / ${d.instance} / ${d.method}`,badge(d.status),d.desired_version,d.observed_version,`${d.root} / ${d.updated_at||"未验证"}`];}));
+table("services",["服务器","主机级服务","类型","systemd 单元","监听端口"],ss.flatMap(s=>s.host_services.map(v=>[link("server",s.server_id),v.service_id,v.kind,v.unit,v.port])));
+const depIds=new Set(ds.map(d=>d.deployment_id));table("bindings",["依赖关系","消费者部署","提供者部署","模式 / 状态"],data.bindings.filter(b=>depIds.has(b.consumer_deployment_id)||depIds.has(b.provider_deployment_id)).map(b=>[b.binding_id,b.consumer_deployment_id,b.provider_deployment_id||"external（不推断服务器）",`${b.mode} / ${b.status}`]));
+table("tasks",["任务","范围","服务器","项目","记录状态","Run"],data.tasks.filter(t=>(!server||t.server_ids.includes(server))&&(!project||t.project_ids.includes(project))&&match(t)).map(t=>[t.task_id,t.scope,links("server",t.server_ids),links("project",t.project_ids),badge(t.status),t.run_ids.join(", ")]));
+table("releases",["Run","Work","服务器","部署实例","记录状态","更新时间"],data.releases.filter(r=>(!server||r.server_ids.includes(server))&&(!project||r.deployment_ids.some(id=>byDeployment.get(id)?.project_id===project))&&match(r)).map(r=>[r.run_id,r.worker,links("server",r.server_ids),r.deployment_ids.join(", "),badge(r.status),r.updated_at]));}
+for(const id of ["search","server","project","status"])$(id).addEventListener("input",render);
+$("reset").addEventListener("click",()=>{for(const id of ["search","server","project","status"])$(id).value="";render();});render();
+</script>
+</body>
+</html>

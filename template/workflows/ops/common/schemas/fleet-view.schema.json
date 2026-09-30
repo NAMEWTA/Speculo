@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:fleet-view:v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "ops-fleet-view"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "controller_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "source_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stale_hours": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 8760
+    },
+    "notice": {
+      "type": "string"
+    },
+    "servers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "server_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "local",
+              "ssh"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "port": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "root": {
+            "type": "string"
+          },
+          "readiness": {
+            "enum": [
+              "unknown",
+              "stale",
+              "blocked",
+              "ready"
+            ]
+          },
+          "profile": {
+            "enum": [
+              null,
+              "base",
+              "compose",
+              "native"
+            ]
+          },
+          "checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "warn",
+                    "unknown",
+                    "not-applicable"
+                  ]
+                },
+                "required": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "status",
+                "required"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "project_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "deployment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "host_services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "service_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                  "maxLength": 80
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "service_id",
+                "kind",
+                "unit",
+                "port"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "server_id",
+          "name",
+          "platform",
+          "transport",
+          "address",
+          "port",
+          "root",
+          "readiness",
+          "profile",
+          "checked_at",
+          "checks",
+          "project_ids",
+          "deployment_ids",
+          "host_services"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "kind": {
+            "type": "string"
+          },
+          "service_type": {
+            "type": "string"
+          },
+          "server_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "deployment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "name",
+          "kind",
+          "service_type",
+          "server_ids",
+          "deployment_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "deployments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "server_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "environment": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "root": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "desired_version": {
+            "type": "string"
+          },
+          "observed_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "run_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "deployment_id",
+          "project_id",
+          "server_id",
+          "environment",
+          "instance",
+          "method",
+          "root",
+          "status",
+          "desired_version",
+          "observed_version",
+          "updated_at",
+          "run_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "binding_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "consumer_deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "provider_deployment_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "binding_id",
+          "consumer_deployment_id",
+          "provider_deployment_id",
+          "mode",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "releases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "worker": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "server_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "deployment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "run_id",
+          "worker",
+          "status",
+          "server_ids",
+          "deployment_ids",
+          "updated_at"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "scope": {
+            "type": "string"
+          },
+          "server_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "project_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "run_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "task_id",
+          "scope",
+          "server_ids",
+          "project_ids",
+          "status",
+          "updated_at",
+          "run_ids"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact",
+    "generated_at",
+    "controller_id",
+    "source_revision",
+    "source_digest",
+    "stale_hours",
+    "notice",
+    "servers",
+    "projects",
+    "deployments",
+    "bindings",
+    "releases",
+    "tasks"
+  ],
+  "additionalProperties": false
+}

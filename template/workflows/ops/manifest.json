@@ -23,30 +23,49 @@
       "context_budget": 16000
     },
     {
+      "id": "server-connect",
+      "after": [
+        "initialize"
+      ],
+      "inputs": [
+        "server",
+        "verified-host-key",
+        "key-or-agent"
+      ],
+      "outputs": [
+        "server-registration",
+        "inventory",
+        "server-checks"
+      ],
+      "risk": "production-critical",
+      "context_budget": 20000
+    },
+    {
       "id": "host-manage",
       "after": [],
       "inputs": [
-        "host",
+        "server",
         "spec",
-        "approval"
+        "task-authorization-or-plan-approval"
       ],
       "outputs": [
         "host-run",
         "verification",
-        "dual-documents"
+        "dual-documents",
+        "server-checks"
       ],
       "risk": "production-critical",
-      "context_budget": 22000
+      "context_budget": 24000
     },
     {
       "id": "project-deploy",
       "after": [],
       "inputs": [
         "project",
-        "hosts",
+        "explicit-servers",
         "bindings",
         "spec",
-        "approval"
+        "task-authorization-or-plan-approval"
       ],
       "outputs": [
         "release",
@@ -54,7 +73,24 @@
         "dual-documents"
       ],
       "risk": "production-critical",
-      "context_budget": 28000
+      "context_budget": 30000
+    },
+    {
+      "id": "inventory-view",
+      "after": [],
+      "inputs": [
+        "resource-state",
+        "server-checks",
+        "task-summaries"
+      ],
+      "outputs": [
+        "fleet-markdown",
+        "fleet-json",
+        "fleet-html",
+        "view-receipt"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 16000
     }
   ]
 }

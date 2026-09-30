@@ -21,20 +21,20 @@ function project(){return {project_id:"app-a",display_name:"APP A",kind:"app",se
 function deployment(){return {deployment_id:"app-a-prod",project_id:"app-a",host_id:"node-a",environment:"prod",instance:"main",layout:"flat",method:"native",version:"v1",observed_version:"v1",root:"/srv/ops/app-a",status:"completed",installed_at:"2026-01-01T00:00:00Z",updated_at:"2026-01-01T00:00:00Z",run_id:"run-test",compose_name:null,storage:[{component:"app",purpose:"storage",path:"/srv/ops/app-a/data/app/storage"}],commands:{start:[],stop:[],verify:[]},credential_refs:[],backup:"verified project backup method",recovery:"explicit recovery only",notes:[],source:project().source,service:{}};}
 async function resourceState(){const s=await seed();s.hosts["node-a"]=host();s.projects["app-a"]=project();s.deployments["app-a-prod"]=deployment();return s;}
 
-describe("OPS 2.2 three-worker resource workflow",()=>{
- it("discovers exactly the three replacement works",async()=>{
+describe("OPS five-entry resource workspace",()=>{
+ it("discovers the five explicitly scoped Works",async()=>{
   const entries=(await readdir(workflowRoot,{withFileTypes:true})).filter(e=>e.isDirectory()&&!["common","_state"].includes(e.name)).map(e=>e.name).sort();
-  assert.deepEqual(entries,["D-project-deploy","H-host-manage","I-initialize"]);
+  assert.deepEqual(entries,["D-project-deploy","H-host-manage","I-initialize","S-server-connect","V-inventory-view"]);
   const catalog=await discoverWorkflowCatalog(packageRoot);assert.ok(catalog.has("ops"));
   const readme=await readFile(join(workflowRoot,"README.md"),"utf8");for(const name of entries)assert.ok(readme.includes("**"+name+"**"));
  });
  it("runs static/package self-check without target mutation",()=>{
   const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--self-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
  });
- it("runs executor contract tests including node-less bootstrap",()=>{
+ it("runs executor, bootstrap and workspace contract/integration tests",()=>{
   // Node's inherited test context makes a nested --test exit 0 without running files.
   const env={...process.env};delete env.NODE_TEST_CONTEXT;
-  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs")],{encoding:"utf8",timeout:120000,env});
+  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs")],{encoding:"utf8",timeout:180000,env});
   assert.equal(p.status,0,p.stdout+p.stderr);
   assert.match(p.stdout,/^# tests [1-9][0-9]*$/m,"OPS child runner must execute nonempty tests");
   assert.match(p.stdout,/^# fail 0$/m,p.stdout+p.stderr);
@@ -84,15 +84,16 @@ describe("OPS 2.2 three-worker resource workflow",()=>{
  it("installs v3 state and never creates old OPS changes directory",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-install-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const s=await json(join(root,".speculo/ops/status.json"));assert.equal(s.schema_version,3);
-   const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("D-project-deploy"));assert.ok(!installed.includes("I-intake-and-assess"));
+   const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("D-project-deploy"));assert.ok(installed.includes("S-server-connect"));assert.ok(installed.includes("V-inventory-view"));assert.ok(!installed.includes("I-intake-and-assess"));
    const stateFiles=await readdir(join(root,".speculo/ops"));assert.ok(!stateFiles.includes("changes"));
   }finally{await rm(target,{recursive:true,force:true});}
  });
- it("refresh preserves private plaintext bytes and POSIX modes",async()=>{
+ it("refresh preserves private and centralized record bytes and POSIX modes",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-refresh-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
+   const record=join(root,".speculo/ops/records/tasks/example/result.json");const recordBytes=Buffer.from('{"synthetic":"preserve-record-byte-for-byte"}\n');await mkdir(dirname(record),{recursive:true,mode:0o700});await writeFile(record,recordBytes,{mode:0o600});
    if(process.platform==="win32")await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}}),/ACL-preserving/);
-   else{await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});assert.deepEqual(await readFile(p),secret);assert.equal((await stat(p)).mode&0o777,0o600);assert.equal((await stat(privateRoot)).mode&0o777,0o700);}
+   else{await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});assert.deepEqual(await readFile(p),secret);assert.equal((await stat(p)).mode&0o777,0o600);assert.equal((await stat(privateRoot)).mode&0o777,0o700);assert.deepEqual(await readFile(record),recordBytes);assert.equal((await stat(record)).mode&0o777,0o600);}
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("preserves legacy empty v2 seed without manufacturing v3 approvals",async()=>{
