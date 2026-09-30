@@ -34,7 +34,8 @@ jobs:
           test "$(git hash-object .github/workflows/release.yml)" = '6ef7808ab6a61ab6ed4b024a963fb81aa6bc4807'
           gh api repos/NAMEWTA/Speculo/git/ref/tags/v1.0.18 > "$RUNNER_TEMP/tag.json"
           gh api repos/NAMEWTA/Speculo/releases/tags/v1.0.18 > "$RUNNER_TEMP/release.json"
-          gh api repos/NAMEWTA/Speculo/actions/jobs/109885805768/logs > "$RUNNER_TEMP/publication.log"
+          # Capture ANSI-containing logs to a file only; parse them after stripping control sequences.
+          gh api --allow-escape-sequences repos/NAMEWTA/Speculo/actions/jobs/109885805768/logs > "$RUNNER_TEMP/publication.log"
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { readFileSync } from 'node:fs';
