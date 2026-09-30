@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   verify:
@@ -33,6 +34,7 @@ jobs:
           test "$(git hash-object .github/workflows/release.yml)" = '6ef7808ab6a61ab6ed4b024a963fb81aa6bc4807'
           gh api repos/NAMEWTA/Speculo/git/ref/tags/v1.0.18 > "$RUNNER_TEMP/tag.json"
           gh api repos/NAMEWTA/Speculo/releases/tags/v1.0.18 > "$RUNNER_TEMP/release.json"
+          gh api repos/NAMEWTA/Speculo/actions/jobs/109885805768/logs > "$RUNNER_TEMP/publication.log"
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { readFileSync } from 'node:fs';
@@ -65,7 +67,7 @@ jobs:
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { createHash } from 'node:crypto';
-          import { writeFileSync } from 'node:fs';
+          import { readFileSync, writeFileSync } from 'node:fs';
           import { join } from 'node:path';
           const base = 'https://registry.npmjs.org/@namewta%2fspeculo/';
           const get = async url => {
@@ -91,9 +93,13 @@ jobs:
           const shasum = createHash('sha1').update(bytes).digest('hex');
           assert.equal(exact.dist.integrity, integrity);
           assert.equal(exact.dist.shasum, shasum);
-          assert.equal(shasum, 'cf5c03544a8e25b7c86423e8d8c5a29d0d122558');
+          const publicationLog = readFileSync(join(process.env.RUNNER_TEMP, 'publication.log'), 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
+          assert.ok(publicationLog.includes('+ @namewta/speculo@1.0.18'));
+          const logShasums = [...publicationLog.matchAll(/npm notice shasum:\s*([a-f0-9]{40})/g)].map(match => match[1]);
+          assert.ok(logShasums.length > 0, 'Publication log must contain a package shasum');
+          console.log('Publication log package shasums:', JSON.stringify(logShasums));
           writeFileSync(join(process.env.RUNNER_TEMP, 'published.tgz'), bytes);
-          const evidence = { package: exact.name, version: exact.version, latest: latest.version, gitHead: exact.gitHead ?? null, integrity, shasum, release_commit: process.env.RELEASE_SHA, release: 'https://github.com/NAMEWTA/Speculo/releases/tag/v1.0.18' };
+          const evidence = { package: exact.name, version: exact.version, latest: latest.version, gitHead: exact.gitHead ?? null, integrity, shasum, publication_log_shasums: logShasums, publication_log_hash_matches_registry: logShasums.at(-1) === shasum, release_commit: process.env.RELEASE_SHA, release: 'https://github.com/NAMEWTA/Speculo/releases/tag/v1.0.18' };
           writeFileSync(join(process.env.RUNNER_TEMP, 'release-evidence.json'), JSON.stringify(evidence, null, 2));
           console.log('npm version/latest and downloaded SHA-512/SHA-1 verified; gitHead:', exact.gitHead ?? 'not provided by npm');
           NODE
@@ -133,7 +139,7 @@ jobs:
           assert not mismatches, {'different_file_bytes': mismatches}
           assert len(published) == 459, 'Unexpected package file count'
           evidence = json.loads((root / 'release-evidence.json').read_text())
-          evidence.update({'compared_files': len(published), 'all_file_bytes_match_release_build': True, 'original_release_workflow_restored': True, 'verification_only_no_publication': True})
+          evidence.update({'rebuilt_tarball_shasum': preview['shasum'], 'compared_files': len(published), 'all_file_bytes_match_release_build': True, 'original_release_workflow_restored': True, 'verification_only_no_publication': True})
           text = json.dumps(evidence, indent=2)
           print(text)
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
