@@ -27,7 +27,7 @@ function fixture(t) {
 function request(id = "task-one") {
   return { schema_version: 1, task_id: id, title: "Prepare one selected server", plan: "Inspect the explicitly selected server, prepare only its declared directory, verify the result, retain the original evidence, and never retry an unknown operation.", valid_for_hours: 2,
     scope: { scope: "server", server_ids: ["node-a"], project_ids: [], related_project_ids: [], allow_policy_changes: false, allow_public_ingress: false, allow_destructive: false }, input_paths: [],
-    steps: [{ id: "prepare-root", title: "Prepare explicit directory", spec: { schema_version: 1, worker: "H", operation: "prepare", reason: "unit fixture", rollback_note: "retain", hosts: ["node-a"], host_actions: [{ host_id: "node-a", kind: "mkdir", path: "_host/cache" }] } }] };
+    steps: [{ id: "prepare-root", title: "Prepare explicit directory", spec: { schema_version: 1, worker: "H", operation: "prepare", reason: "unit fixture", rollback_note: "retain", hosts: ["node-a"], host_actions: [{ host_id: "node-a", kind: "mkdir", path: "_host/cache", reason: "Create only the temporary fixture cache directory" }] } }] };
 }
 function inventory(h) {
   return { identity: h.identity, platform: "linux", tools: { node: { version: "v22.22.3" } },

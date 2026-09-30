@@ -33,7 +33,8 @@
           {
             "host_id": "node-a",
             "kind": "mkdir",
-            "path": "_host/cache/demo"
+            "path": "_host/cache/demo",
+            "reason": "Create only the explicitly scoped demonstration cache directory."
           },
           {
             "host_id": "node-a",
