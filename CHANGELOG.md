@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-09-30
+
+### Added
+- **OPS server onboarding**: add `S-server-connect` and a timestamped 16-item Linux checklist with base, compose, and native profiles. Strict host-key and public-key checks keep unknown or stale evidence distinct from readiness.
+- **OPS inventory view**: add `V-inventory-view` and offline Markdown/JSON/HTML fleet snapshots with server-to-project and project-to-server navigation, deployment instances, host services, dependencies, and task/run references.
+- **Task-scoped execution**: add `task-plan`, `task-authorize`, and `task-run` to freeze scope, inputs, credentials, executor identity, and validity, then run authorized steps without repeated conversational confirmation.
+
+### Changed
+- **Explicit OPS ownership**: separate controller initialization, server access, server administration, project deployment, and inventory viewing. Server and project tasks reject cross-scope or indirect dependency escalation.
+- **Centralized records**: put new task, server-check, and view records under `records/`; retain `status.json` v3 as the resource authority and preserve existing runs, releases, configuration mirrors, and recovery receipts.
+- **Safe offline rendering**: export only allowlisted fields, escape rendered content, use a hash-based content security policy, and publish complete immutable view generations before updating the root `FLEET.md` entry.
+
+### Fixed
+- Complete required reasons in mkdir examples and fixtures; preserve the framework Work activation heading and progressive-read memory pointers.
+
+### Tests
+- Cover task authorization, expiry and drift, H/D scope isolation, failed/unknown execution stops, replay prevention, SSH-check failures, offline rendering, and immutable snapshot consistency.
+- Integrate the workspace with the existing planner/approval/apply gateway and verify installation/refresh preservation of record bytes and permissions.
+
+### Upgrade Notes
+- New modules and schemas change `engine_digest`; regenerate unexecuted approvals and inspect unknown runs before any retry. Do not delete existing runtime records or business data.
+- First public-key installation still requires an existing trusted channel. Live SSH, sudo, systemd, Docker, database recovery, and application deployments require environment-specific acceptance; repository CI does not certify those targets.
+
 ## [1.0.17] - 2026-09-23
 
 ### Fixed
