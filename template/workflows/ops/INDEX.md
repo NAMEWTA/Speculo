@@ -11,7 +11,9 @@ keywords: [ops, 控制端, 服务器, SSH, 项目, 部署, Docker, 持久化, �
 
 本索引仅用于被动发现。用户明确激活 OPS 或指定 Work 后读取 `<Path>{roots.workflows}/ops/README.md</Path>`；被动读取不初始化、不连接服务器、不安装、不执行计划。
 
-## 资源与入口
+## Work 激活
+
+激活后按当前任务读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，再读取当前 Work 与必要规则；索引自身不授予执行或永久知识写入权限。
 
 Controller 是发起任务的本机，Server 对应既有 Host.host_id；Project 是业务或共享服务，Deployment 连接项目、服务器、环境和实例。当前目录、上次服务器和浏览看板都不是隐含执行目标。
 

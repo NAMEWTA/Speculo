@@ -4,7 +4,7 @@
 
 ## 本地环境与范围
 
-使用检索得到的固定版本源文件及改动覆盖集，不是完整仓库 checkout。本地 Node 为 v22.16.0，低于项目声明的 >=22.22.3 <25；未安装 pnpm 或项目依赖。因此不能以本地结果宣称整个 Speculo build/check 已通过。完整仓库集成测试交由 PR 的既有 CI 使用项目支持的 Node 版本运行；本文件建立时尚无 CI 结果。
+使用检索得到的固定版本源文件及改动覆盖集，不是完整仓库 checkout。本地 Node 为 v22.16.0，低于项目声明的 >=22.22.3 <25；未安装 pnpm 或项目依赖。因此不能以本地结果宣称整个 Speculo build/check 已通过。完整仓库集成测试通过 PR 的既有 CI 使用项目支持的 Node 版本运行。下方单独记录已取得的 CI 证据，最终状态以 PR #74 最新提交的检查为准。
 
 ## 已执行
 
@@ -23,11 +23,17 @@
 
 环境策略阻止直接 `file://` 导航（ERR_BLOCKED_BY_ADMINISTRATOR），未更改该策略；页面通过同一 HTML 的浏览器内存加载完成交互验证。因而“离线单文件已生成且无外部依赖”已验证，“本环境直接 file:// 打开”未验证。演示中的机器、地址、项目和状态均为虚构，没有连接真实服务器。
 
-## 已接入但需完整仓库运行
+## 已取得的完整仓库 CI 证据
 
-根 `test/ops-workflow.test.ts` 纳入新测试、五 Work 发现、安装结果与 records 刷新字节/权限保留检查；保留原资源验证、审批和 legacy 测试。完整仓库中的 workspace 集成测试会通过原 model/planner/execution，在专用临时目录执行真实 H mkdir、批准、执行和双边记录，再生成视图。覆盖集缺少这些旧依赖时明确 skip，不伪装成执行成功。
+[PR #74](https://github.com/NAMEWTA/Speculo/pull/74) 使用原有 CI，不降低校验门槛。
 
-PR 检查应运行原 `pnpm check` / `pnpm verify-bin` 及生成物一致性门；最终 CI 状态以 GitHub 对应提交的实际 check/run 结果为准，不以本地模拟结果替代。
+首次运行 [36670865164](https://github.com/NAMEWTA/Speculo/actions/runs/36670865164) 的真实集成测试发现示例及测试夹具的 mkdir 动作缺少必需 reason。已在 4b868d11bc347e6c9e9542b8904eda6a772a1a75 补齐，未删除或放宽原 spec 校验。
+
+第二次运行 [36671473458](https://github.com/NAMEWTA/Speculo/actions/runs/36671473458) 的 Node 24 日志确认：仓库测试 197/197 通过、0 跳过；独立 OPS 子测试 196/196 通过、0 跳过，包含原执行器、bootstrap 和新工作区测试。Windows 安装检查也已通过。真实 workspace 集成测试已通过原 model/planner/approval/apply，在专用临时目录执行 H mkdir、验证双边记录并生成资产视图；不再只有模拟适配器证据。
+
+第二次运行在测试之后的资产校验停止：INDEX.md 缺少固定的“Work 激活”标题。本次修正该标题，并按渐进读取校验合同补齐 activation-and-memory.md 指针；原校验器和 CI 顺序保持不变。该次运行整体仍为失败，不把测试全通过等同整个 check 通过。修正后的完整 CI 结论在 PR 最新提交检查及交付验证补充中记录。
+
+根 test/ops-workflow.test.ts 已纳入五 Work 发现、安装结果、records 刷新字节/权限保留检查，并保留原资源验证、审批和 legacy 测试。未移动历史 Run/Release。完整验收还包括 pnpm validate-assets、pnpm verify-bin 与生成物一致性门，必须分别以实际执行状态为准。
 
 ## 未执行与限制
 
