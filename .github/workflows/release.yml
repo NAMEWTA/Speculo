@@ -4,9 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
+    paths:
+      - '.github/workflows/release.yml'
 
 jobs:
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     name: Release to npm
     permissions:
@@ -71,3 +76,210 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-once:
+    name: Publish authorized v1.0.18 and restore release workflow
+    if: >-
+      github.repository == 'NAMEWTA/Speculo' &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.event.head_commit.message == 'chore(release): prepare one-time v1.0.18 publication'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: speculo-release-once-v1.0.18
+      cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BASE_COMMIT: 0a1ae253cd6d364269ee62d5d97fe388885cf241
+      OPS_COMMIT: 17038eeed6358d64849054fec87dacec80ab8d5e
+      NEXT_VERSION: 1.0.18
+    steps:
+      - name: Checkout exact authorized request
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify source, branch, and unused tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_COMMIT"
+          git merge-base --is-ancestor "$OPS_COMMIT" HEAD
+          test "$(git diff --name-only "$BASE_COMMIT" HEAD)" = '.github/workflows/release.yml'
+          test -z "$(git status --porcelain)"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$GITHUB_SHA"
+          test -z "$(git ls-remote --tags origin "refs/tags/v$NEXT_VERSION")"
+          test "$(git hash-object CHANGELOG.md)" = '6e0ff90749ace598c2e58548c2a2782fdf8d8a9d'
+          test "$(node -p "require('./package.json').version")" = '1.0.17'
+
+      - name: Setup existing release environment
+        uses: ./.github/actions/setup
+        with:
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify registry has not already published this version
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const base = 'https://registry.npmjs.org/@namewta%2fspeculo/';
+          const pending = await fetch(base + '1.0.18', { signal: AbortSignal.timeout(30000) });
+          assert.equal(pending.status, 404, 'Version must be absent; do not overwrite or blindly retry a publication');
+          const latest = await fetch(base + 'latest', { signal: AbortSignal.timeout(30000) });
+          assert.equal(latest.status, 200, 'Registry latest lookup must succeed');
+          assert.equal((await latest.json()).version, '1.0.17', 'Registry latest changed; stop for reconciliation');
+          console.log('Registry preflight: latest=1.0.17; 1.0.18 is not published.');
+          NODE
+
+      - name: Prepare atomic version and changelog; remove one-time job
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const pkg = readFileSync('package.json', 'utf8');
+          assert.equal(JSON.parse(pkg).version, '1.0.17');
+          assert.equal((pkg.match(/"version": "1\.0\.17"/g) || []).length, 1);
+          const changelog = readFileSync('CHANGELOG.md', 'utf8');
+          const marker = '## [Unreleased]\n\n';
+          assert.equal(changelog.split(marker).length, 2);
+          assert.ok(changelog.includes(marker + '## [1.0.17]'), 'Unexpected Unreleased content; preserve and reconcile it');
+          assert.ok(!changelog.includes('## [1.0.18]'));
+          const notes = [
+            '## [1.0.18] - 2026-09-30', '',
+            '### Added',
+            '- **OPS server onboarding**: add `S-server-connect` and a timestamped 16-item Linux checklist with base, compose, and native profiles. Strict host-key and public-key checks keep unknown or stale evidence distinct from readiness.',
+            '- **OPS inventory view**: add `V-inventory-view` and offline Markdown/JSON/HTML fleet snapshots with server-to-project and project-to-server navigation, deployment instances, host services, dependencies, and task/run references.',
+            '- **Task-scoped execution**: add `task-plan`, `task-authorize`, and `task-run` to freeze scope, inputs, credentials, executor identity, and validity, then run authorized steps without repeated conversational confirmation.', '',
+            '### Changed',
+            '- **Explicit OPS ownership**: separate controller initialization, server access, server administration, project deployment, and inventory viewing. Server and project tasks reject cross-scope or indirect dependency escalation.',
+            '- **Centralized records**: put new task, server-check, and view records under `records/`; retain `status.json` v3 as the resource authority and preserve existing runs, releases, configuration mirrors, and recovery receipts.',
+            '- **Safe offline rendering**: export only allowlisted fields, escape rendered content, use a hash-based content security policy, and publish complete immutable view generations before updating the root `FLEET.md` entry.', '',
+            '### Fixed',
+            '- Complete required reasons in mkdir examples and fixtures; preserve the framework Work activation heading and progressive-read memory pointers.', '',
+            '### Tests',
+            '- Cover task authorization, expiry and drift, H/D scope isolation, failed/unknown execution stops, replay prevention, SSH-check failures, offline rendering, and immutable snapshot consistency.',
+            '- Integrate the workspace with the existing planner/approval/apply gateway and verify installation/refresh preservation of record bytes and permissions.', '',
+            '### Upgrade Notes',
+            '- New modules and schemas change `engine_digest`; regenerate unexecuted approvals and inspect unknown runs before any retry. Do not delete existing runtime records or business data.',
+            '- First public-key installation still requires an existing trusted channel. Live SSH, sudo, systemd, Docker, database recovery, and application deployments require environment-specific acceptance; repository CI does not certify those targets.', '',
+          ].join('\n');
+          const updated = changelog.replace(marker, marker + notes + '\n');
+          assert.equal(updated.replace(notes + '\n', ''), changelog, 'Historical changelog must remain byte-for-byte intact');
+          writeFileSync('package.json', pkg.replace('"version": "1.0.17"', '"version": "1.0.18"'));
+          writeFileSync('CHANGELOG.md', updated);
+          writeFileSync(join(process.env.RUNNER_TEMP, 'speculo-release-notes.md'), notes);
+          NODE
+          git show "$BASE_COMMIT:.github/workflows/release.yml" > .github/workflows/release.yml
+          test "$(git hash-object .github/workflows/release.yml)" = '6ef7808ab6a61ab6ed4b024a963fb81aa6bc4807'
+
+      - name: Test and validate release assets
+        run: pnpm check
+
+      - name: Verify bin and reproducible generated assets
+        run: |
+          pnpm verify-bin
+          pnpm generate-canonical
+          git diff --exit-code -- template/canonical
+          pnpm generate-canonical
+          git diff --exit-code -- template/canonical
+
+      - name: Verify distributable contains new OPS assets
+        run: |
+          npm pack --dry-run --json --ignore-scripts > "$RUNNER_TEMP/speculo-pack.json"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const [pkg] = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, 'speculo-pack.json'), 'utf8'));
+          assert.equal(pkg.name, '@namewta/speculo');
+          assert.equal(pkg.version, '1.0.18');
+          const paths = new Set(pkg.files.map(f => f.path));
+          for (const p of ['dist/src/cli.js', 'template/workflows/ops/S-server-connect/S-server-connect.md', 'template/workflows/ops/V-inventory-view/V-inventory-view.md', 'template/workflows/ops/common/tools/opslib/tasks.mjs', 'template/workflows/ops/common/tools/opslib/server_checks.mjs', 'template/workflows/ops/common/templates/FLEET.html']) assert.ok(paths.has(p), `Missing distributed asset: ${p}`);
+          console.log('Package preview verified:', pkg.id, 'files:', pkg.files.length);
+          NODE
+
+      - name: Commit release metadata and push exact main and tag
+        id: release_commit
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          const changed = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' }).trim().split('\n').sort();
+          assert.deepEqual(changed, ['.github/workflows/release.yml', 'CHANGELOG.md', 'package.json']);
+          assert.equal(execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { encoding: 'utf8' }).trim(), '');
+          NODE
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$GITHUB_SHA"
+          test -z "$(git ls-remote --tags origin "refs/tags/v$NEXT_VERSION")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json CHANGELOG.md .github/workflows/release.yml
+          git commit -m 'chore(release): v1.0.18' -m 'Publish the authorized OPS refactor from PR #74; restore the original tag-triggered release workflow.'
+          RELEASE_COMMIT=$(git rev-parse HEAD)
+          test "$(git diff --name-only "$BASE_COMMIT" HEAD)" = "$(printf 'CHANGELOG.md\npackage.json')"
+          test -z "$(git status --porcelain)"
+          git push origin HEAD:refs/heads/main
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_COMMIT"
+          git tag "v$NEXT_VERSION" "$RELEASE_COMMIT"
+          git push origin "refs/tags/v$NEXT_VERSION"
+          test "$(git ls-remote --tags origin "refs/tags/v$NEXT_VERSION" | cut -f1)" = "$RELEASE_COMMIT"
+          echo "sha=$RELEASE_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Release commit and tag verified: $RELEASE_COMMIT"
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v1.0.18
+          target_commitish: ${{ steps.release_commit.outputs.sha }}
+          name: Release v1.0.18
+          body_path: ${{ runner.temp }}/speculo-release-notes.md
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify npm version, latest, commit and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ steps.release_commit.outputs.sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          import { appendFileSync } from 'node:fs';
+          const base = 'https://registry.npmjs.org/@namewta%2fspeculo/';
+          let exact, latest;
+          for (let i = 0; i < 12; i++) {
+            const options = { signal: AbortSignal.timeout(30000), headers: { 'Cache-Control': 'no-cache' } };
+            const [a, b] = await Promise.all([fetch(base + '1.0.18', options), fetch(base + 'latest', options)]);
+            if (a.ok && b.ok) {
+              exact = await a.json(); latest = await b.json();
+              if (exact.version === '1.0.18' && latest.version === '1.0.18') break;
+            }
+            if (i < 11) await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          assert.equal(exact?.version, '1.0.18');
+          assert.equal(latest?.version, '1.0.18');
+          assert.equal(exact?.gitHead, process.env.RELEASE_SHA);
+          assert.ok(exact?.dist?.integrity);
+          const repo = 'repos/NAMEWTA/Speculo/';
+          const api = suffix => JSON.parse(execFileSync('gh', ['api', repo + suffix], { encoding: 'utf8' }));
+          const tag = api('git/ref/tags/v1.0.18');
+          assert.equal(tag.object.sha, process.env.RELEASE_SHA);
+          const release = api('releases/tags/v1.0.18');
+          assert.equal(release.draft, false);
+          assert.equal(release.prerelease, false);
+          assert.ok(release.body?.includes('## [1.0.18]'));
+          const evidence = { version: exact.version, latest: latest.version, gitHead: exact.gitHead, integrity: exact.dist.integrity, release: release.html_url, draft: release.draft, prerelease: release.prerelease, original_release_workflow_restored: true };
+          console.log(JSON.stringify(evidence, null, 2));
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Release verified\n\n```json\n' + JSON.stringify(evidence, null, 2) + '\n```\n');
+          NODE
