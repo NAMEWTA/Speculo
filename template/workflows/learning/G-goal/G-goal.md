@@ -15,11 +15,9 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 
 ## 读取范围
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；它们是本步骤必需合同，不默认加载其他分支。
+当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；只加载本 Work 需要的领域合同。
 
-1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
-2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、项目路径和关键词定位最小相关工件。
-3. 只在本 Work 明确要求恢复、冲突、执行安全、创建 Change 或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
+读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
 
 ## 模式
 
@@ -39,7 +37,7 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 3. 创建或恢复 `YYYY-MM-DD-<kebab-topic>[-NN]` Change，生成 `.status.json`，设置 `phase=planning`、`current_work=learning/goal`。
 4. 读取目标仓库，做编程库存：C4 Context + Container、公开入口、主数据存储、一条主路径与一条失败路径、按模块归组的范围内函数。琐碎 helper、生成代码、测试夹具标 `covered-by-parent` 或 `deferred`，不为它们开课。Lead 可派只读库存员。
 5. 若本 Change 尚无可用 `course.md`，跟随 `<Path>{roots.workflows}/learning/A-assess-and-plan/A-assess-and-plan.md</Path>` 写出 `course.md`、`background/foundation.md`、`baseline.md`、`sources.md` 和 Change `INDEX.md`。这些文件仍归 A 所有；本 Work 只在编译计划时走 A 合同。已有课程地图则核对，不默默重写。
-6. 按模板写出完整计划，禁止留下「待调研」章节，禁止预写探针题目或深化讲义；按库存把课装进 mine unit（每个 ≤15 节，写入 `chain.md` Units 表）：
+6. 按模式表的 Goal-Plan 模板及 `<Path>{roots.workflows}/learning/G-goal/chain-template.md</Path>`、`<Path>{roots.workflows}/learning/G-goal/coverage-matrix-template.md</Path>`、`<Path>{roots.workflows}/learning/G-goal/progress-template.md</Path>` 写出完整计划，禁止留下「待调研」章节，禁止预写探针题目或深化讲义；按库存把课装进 mine unit（每个 ≤15 节，写入 `chain.md` Units 表）：
    - `<Path>{roots.state}/learning/changes/{change}/goal/goal-plan.md</Path>`
    - `<Path>{roots.state}/learning/changes/{change}/goal/chain.md</Path>`
    - `<Path>{roots.state}/learning/changes/{change}/goal/coverage-matrix.md</Path>`
@@ -58,22 +56,6 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 - 粘贴块含 Outcome、verification surface、constraints、boundaries、iteration policy（teach-then-mine、10 问上限、`split-lesson`、Lead 扇出、unit ≤15）、blocked-stop；
 - 文档中的「允许」不构成 `/goal` 之外的额外授权；
 - 不复活 `Q-quiz`，不把 mine 写成学习者问答课。
-
-## 子文件
-
-- 计划模板：`<Path>{roots.workflows}/learning/G-goal/goal-plan-template.md</Path>`
-- Chain 模板：`<Path>{roots.workflows}/learning/G-goal/chain-template.md</Path>`
-- 覆盖矩阵模板：`<Path>{roots.workflows}/learning/G-goal/coverage-matrix-template.md</Path>`
-- 挖掘模板：`<Path>{roots.workflows}/learning/G-goal/probe-template.md</Path>`
-- 进度模板：`<Path>{roots.workflows}/learning/G-goal/progress-template.md</Path>`
-- 模式：`<Path>{roots.workflows}/learning/G-goal/planning-modes.md</Path>`
-- 编排：`<Path>{roots.workflows}/learning/G-goal/orchestration-protocol.md</Path>`
-- Lead 编排：`<Path>{roots.workflows}/learning/G-goal/references/lead-orchestration.md</Path>`
-- 挖掘单元：`<Path>{roots.workflows}/learning/G-goal/references/mine-unit.md</Path>`
-- 拆课规则：`<Path>{roots.workflows}/learning/G-goal/references/split-rules.md</Path>`
-- 覆盖尺：`<Path>{roots.workflows}/learning/G-goal/references/coverage-bar.md</Path>`
-- 停止规则：`<Path>{roots.workflows}/learning/G-goal/references/stop-rules.md</Path>`
-- 外部执行器：`<Path>{roots.workflows}/learning/G-goal/references/external-goal-runner.md</Path>`
 
 ## 无 slash-command 宿主
 
