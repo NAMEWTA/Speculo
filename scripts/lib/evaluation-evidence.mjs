@@ -1,6 +1,6 @@
 import { createHash, createPublicKey, verify } from "node:crypto";
 import { lstat, readFile, readdir, realpath } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isAbsolute, join, parse, relative, resolve, sep } from "node:path";
 import { execFileSync } from "node:child_process";
 
 export const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -17,12 +17,28 @@ export function safeRelative(value) {
 }
 const within = (root, file) => { const rel = relative(resolve(root), resolve(file)); return rel === "" || (!rel.startsWith(`..${sep}`) && rel !== ".." && !isAbsolute(rel)); };
 
-/** Check every existing component, including the supplied root. No symlink traversal. */
+/**
+ * Inspect ancestors rather than comparing realpath strings. Windows may expand
+ * an ordinary 8.3 name or normalize casing without traversing a symlink.
+ */
+async function assertNoSymlinkPath(file) {
+  const absolute = resolve(file), root = parse(absolute).root;
+  let current = root;
+  const check = async () => {
+    if ((await lstat(current)).isSymbolicLink()) throw new Error("evidence path contains a symlink or junction");
+  };
+  await check();
+  for (const part of relative(root, absolute).split(sep).filter(Boolean)) {
+    current = join(current, part);
+    await check();
+  }
+  return absolute;
+}
+
+/** Check the root and every ancestor; absent artifact tails remain legal. */
 export async function evidencePath(root, file) {
   if (!safeRelative(file)) throw new Error("unsafe artifact path");
-  let current = resolve(root);
-  if ((await lstat(current)).isSymbolicLink()) throw new Error("artifact root symlink is not permitted");
-  if (await realpath(current) !== current) throw new Error("artifact root contains a symlink");
+  let current = await assertNoSymlinkPath(root);
   for (const part of file.split("/")) {
     current = join(current, part);
     try { if ((await lstat(current)).isSymbolicLink()) throw new Error("artifact symlink is not permitted"); }
@@ -54,8 +70,10 @@ const versioned = (value) => isObject(value) && nonempty(value.name) && nonempty
  */
 export async function verifyObservation({ bundleRoot, trustPath, repoRoot, scenarios, trace, artifactRoot }) {
   if (!bundleRoot || !trustPath || !repoRoot) throw new Error("observed evaluation requires --bundle, --trust and --repo");
+  await assertNoSymlinkPath(trustPath);
   const trustReal = await realpath(trustPath);
-  if (trustReal !== resolve(trustPath) || [bundleRoot, artifactRoot, repoRoot].some((root) => within(root, trustReal))) {
+  const evidenceRoots = await Promise.all([bundleRoot, artifactRoot, repoRoot].map((root) => realpath(root)));
+  if (evidenceRoots.some((root) => within(root, trustReal))) {
     throw new Error("observer trust must be outside the repository and evidence roots, without symlinks");
   }
   const trust = JSON.parse(await readFile(trustReal, "utf8"));
