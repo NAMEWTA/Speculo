@@ -1,0 +1,49 @@
+name: Work upgrade validation
+
+on:
+  push:
+    branches: [refactor/work-upgrade-2026-10-06]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: work-upgrade-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          node-version: '22.22.3'
+      - name: Capture immutable source and disposable test dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/work-upgrade-evidence"
+          git archive --format=tar 1e698821a65cdd02a40e48f98e78e87ad498617b | gzip > "$RUNNER_TEMP/work-upgrade-evidence/baseline.tar.gz"
+          tar -czf "$RUNNER_TEMP/work-upgrade-evidence/dependencies.tar.gz" node_modules
+          cp "$(command -v node)" "$RUNNER_TEMP/work-upgrade-evidence/node"
+          printf '%s\n' '1e698821a65cdd02a40e48f98e78e87ad498617b' > "$RUNNER_TEMP/work-upgrade-evidence/base-sha.txt"
+          node --version > "$RUNNER_TEMP/work-upgrade-evidence/node-version.txt"
+          pnpm --version > "$RUNNER_TEMP/work-upgrade-evidence/pnpm-version.txt"
+          sha256sum "$RUNNER_TEMP/work-upgrade-evidence/"* > "$RUNNER_TEMP/work-upgrade-evidence/SHA256SUMS"
+      - name: Run existing baseline checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm check 2>&1 | tee "$RUNNER_TEMP/work-upgrade-evidence/baseline-check.log"
+      - name: Preserve baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: work-upgrade-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}/work-upgrade-evidence/
+          retention-days: 7
+          if-no-files-found: error
