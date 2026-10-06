@@ -13,6 +13,8 @@
   "priority":     "priority:critical | priority:high | priority:medium | priority:low",
   "area":         "string|null, 例 area:commands / area:workflows / area:skills / area:cli / area:contract",
   "body":         "string, 见正文结构",
+  "remediation_axis": "code-defect | deterministic-check-gap | context-pointer | judgment-rule | environment-discovery",
+  "regression":   {"positive": "通过样本与可观察结果", "negative": "拒绝/停止样本与不应出现的副作用"},
   "affected":     ["相对路径，例 speculo/commands/archive-and-consolidate.md"],
   "evidence":     ["证据出处，例 <Path>{roots.state}/{workflow}/changes/{change}/.status.json</Path>#phase_history"],
   "disposition":  "file-issue | record-lesson | drop",
@@ -58,7 +60,7 @@
 [改哪个 asset、怎么改。给相对路径与具体方向，不要泛泛而谈。]
 
 ## 验收标准
-[可验证的完成判据，例如断言、命名、契约符合点。]
+[可验证的完成判据、通过/拒绝样本、回归命令与未验证项。机械问题写确定性检查，不以新增提示词代替测试。]
 
 ## 受影响资产
 [列出相关相对路径。]
