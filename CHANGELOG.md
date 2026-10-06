@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-10-06
+
+### Changed
+- Refactor all 30 Work entries across SpecDev (14), OPS (5), Learning (9), and Person (2) into discovery, activation, active-Work, and conditional-reference layers (#78).
+- Keep T-triage modes, implementation branches, OPS scopes, handoff checkpoints, review reuse, and SpecDev-to-OPS delivery aligned with their existing owners and evidence gateways.
+- Prioritize deterministic checks for mechanical retro findings; preserve domain-specific teaching, review, and archive contracts.
+
+### Added
+- Separate fixture, artifact, and observed evaluation tiers; require signed external observer evidence and digest bindings for observed release eligibility rather than model self-reports.
+- Add conditional-reference and reverse-caller audits, bounded read-trace accounting, and native/nested refresh and rollback regression coverage.
+- Record the original upgrade plan, all-Work change matrix, protected-file inventory, compatibility results, and explicit validation boundaries under docs/work-upgrade/.
+
+### Fixed
+- Distinguish architecture report-only requests from selected-design execution.
+- Generate Learning Q/A pairs from the requested count and preserve frozen question/answer snapshots.
+- Handle Windows path normalization without treating ordinary short-name or case aliases as links; continue rejecting symlinks, junctions, and traversal.
+
+### Upgrade Notes
+- No runtime schema migration. Preserve existing state, history, roots, legacy restore keys, writer ownership, locks, permissions, and permanent-knowledge gateways.
+- OPS unknown actions must not be replayed; documentation repair must not rerun business actions. Inspect pending runs before refresh and never reuse invalid approvals.
+- Real Agent/model A/B and production deployments were not performed. The proposed diagnosis relaxation remains disabled; text-size changes are not measured token, cost, or success-rate gains.
+
 ## [1.0.18] - 2026-09-30
 
 ### Added
@@ -784,3 +806,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Legacy v2 workflow categories (dev, doc, person as top-level state trees).
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
+
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v1.0.19...HEAD
+[1.0.19]: https://github.com/NAMEWTA/Speculo/compare/v1.0.18...v1.0.19
