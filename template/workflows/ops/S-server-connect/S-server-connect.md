@@ -11,6 +11,8 @@ keywords: [ops, server-connect, 服务器, 持久化, 明确范围]
 
 激活本 Work 后先读取 `<Path>{roots.workflows}/ops/README.md</Path>`。
 
+## 读取范围
+
 读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前 ID 定位最小证据。
 
 ## 流程与完成标准

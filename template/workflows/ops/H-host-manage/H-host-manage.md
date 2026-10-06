@@ -11,7 +11,7 @@ keywords: [ops, host-manage, 服务器, 持久化, 明确范围]
 
 激活后读取 `<Path>{roots.workflows}/ops/README.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`。输入是一个明确的 local/SSH host_id（用户侧 server_id）；只维护系统环境，不从当前目录推断项目或扩大部署范围。
 
-## 预检与选分支
+## 读取范围与预检
 
 定位最近盘点与当前问题证据。未登记或 SSH 接入未验证时转 `<Path>{roots.workflows}/ops/S-server-connect/S-server-connect.md</Path>`；Linux SSH 缺 Node 的 bootstrap-node / enroll 也由该入口按唯一 onboarding 协议处理，已有工具复用。
 

@@ -135,3 +135,7 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 ## 审查证据复用（仅实际发生时填写）
 
 记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、两轴隔离核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
+
+## OPS 交付（仅用户请求时）
+
+交付前读取 `<Path>{roots.workflows}/specdev/common/rules/deployment-handoff.md</Path>`，记录当前 change/Ticket、代码 revision、实际构件 digest、AC/Evidence、目标与部署约束；回传时只追加经核对的 Run/Release/receipt 指针。未请求写“不适用”，不为填表创建 OPS 任务。
