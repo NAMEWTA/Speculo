@@ -70,6 +70,7 @@ test('steelman work has a complete independent package and valid static referenc
     'deliberate.md',
     'judge.md',
     'evidence-gate.md',
+    'references/state-and-publication.md',
     '_templates/steelman-dossier-template.md',
     '_templates/decision-template.md',
     'tools/validate-steelman-change.mjs',
@@ -84,7 +85,12 @@ test('steelman work has a complete independent package and valid static referenc
   assert.match(entry, /^workflow: person$/m);
   assert.match(entry, /result.*awaiting-user-answer.*completed/s);
   assert.match(entry, /最多向用户提出一个问题/);
-  assert.match(entry, /保留未知顶层字段.*其他 work/m);
+  assert.match(entry, /新建、恢复或状态写入前读取.*references\/state-and-publication\.md/);
+  const publication = await readFile(path.join(workRoot, 'references/state-and-publication.md'), 'utf8');
+  assert.match(publication, /保留未知顶层字段.*其他 work/m);
+  assert.match(publication, /先原子替换正式 dossier，再原子替换 change/);
+  assert.match(publication, /校验失败.*保留可恢复的 `judging`/);
+  assert.deepEqual(await missingStaticReferences(publication), []);
   assert.deepEqual(await missingStaticReferences(entry), []);
 
   const seed = JSON.parse(

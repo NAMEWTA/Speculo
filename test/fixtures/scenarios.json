@@ -3,144 +3,260 @@
     "id": "specdev-intake",
     "workflow": "specdev",
     "trigger": "explicit source intake request",
-    "expected": "freezes a source-backed change; clear local requests need no triage"
+    "expected": "freezes a source-backed change; clear local requests need no triage",
+    "instruction_paths": [
+      "template/workflows/specdev/T-triage/T-triage.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-diagnose",
     "workflow": "specdev",
     "trigger": "reproducible bug",
-    "expected": "requires red evidence before repair"
+    "expected": "requires red evidence before repair",
+    "instruction_paths": [
+      "template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-spec",
     "workflow": "specdev",
     "trigger": "clear external behavior",
-    "expected": "produces a ready specification"
+    "expected": "produces a ready specification",
+    "instruction_paths": [
+      "template/workflows/specdev/S-spec/S-spec.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-ticket",
     "workflow": "specdev",
     "trigger": "ready specification",
-    "expected": "produces decision-complete tickets"
+    "expected": "produces decision-complete tickets",
+    "instruction_paths": [
+      "template/workflows/specdev/T-tickets/T-tickets.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-tdd",
     "workflow": "specdev",
     "trigger": "implementation ticket",
-    "expected": "runs test-first verification"
+    "expected": "runs test-first verification",
+    "instruction_paths": [
+      "template/workflows/specdev/I-implement/I-implement.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-review",
     "workflow": "specdev",
     "trigger": "fixed diff",
-    "expected": "records immutable review input"
+    "expected": "records immutable review input",
+    "instruction_paths": [
+      "template/workflows/specdev/C-code-review/C-code-review.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-recovery",
     "workflow": "specdev",
     "trigger": "failed implementation",
-    "expected": "resumes from checkpoint"
+    "expected": "resumes from checkpoint",
+    "instruction_paths": [
+      "template/workflows/specdev/I-implement/I-implement.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "specdev-archive",
     "workflow": "specdev",
     "trigger": "completed change",
-    "expected": "archives only after evidence"
+    "expected": "archives only after evidence",
+    "instruction_paths": [
+      "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md",
+      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-assess",
     "workflow": "learning",
     "trigger": "new learning goal",
-    "expected": "creates an adaptive course plan"
+    "expected": "creates an adaptive course plan",
+    "instruction_paths": [
+      "template/workflows/learning/A-assess-and-plan/A-assess-and-plan.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-lesson",
     "workflow": "learning",
     "trigger": "course plan ready",
-    "expected": "writes a complete lesson"
+    "expected": "writes a complete lesson",
+    "instruction_paths": [
+      "template/workflows/learning/L-lesson/L-lesson.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-homework",
     "workflow": "learning",
     "trigger": "user explicitly requests homework",
-    "expected": "creates explicit homework; lesson completion alone does not trigger it"
+    "expected": "creates explicit homework; lesson completion alone does not trigger it",
+    "instruction_paths": [
+      "template/workflows/learning/H-homework/H-homework.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-review",
     "workflow": "learning",
     "trigger": "delayed review requested",
-    "expected": "requires real retention evidence"
+    "expected": "requires real retention evidence",
+    "instruction_paths": [
+      "template/workflows/learning/R-review/R-review.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-consolidate",
     "workflow": "learning",
     "trigger": "user selects topic changes",
-    "expected": "creates provenance-backed synthesis"
+    "expected": "creates provenance-backed synthesis",
+    "instruction_paths": [
+      "template/workflows/learning/C-consolidate/C-consolidate.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "learning-reset",
     "workflow": "learning",
     "trigger": "legacy v1 state",
-    "expected": "blocks without migration"
+    "expected": "blocks without migration",
+    "instruction_paths": [
+      "template/workflows/learning/I-init-setup/I-init-setup.md",
+      "template/workflows/learning/README.md",
+      "template/workflows/learning/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-intake",
     "workflow": "ops",
     "trigger": "explicit deployment planning request",
-    "expected": "identifies registered resource target and scope"
+    "expected": "identifies registered resource target and scope",
+    "instruction_paths": [
+      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-plan",
     "workflow": "ops",
     "trigger": "registered host and deployment facts ready",
-    "expected": "creates digest-bound plan"
+    "expected": "creates digest-bound plan",
+    "instruction_paths": [
+      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-approval",
     "workflow": "ops",
-    "trigger": "any target mutation, including reversible local actions",
-    "expected": "requires exact plan approval"
+    "trigger": "target mutation inside or outside a frozen task",
+    "expected": "requires exact plan approval or the existing bounded task authorization; a document saying approved is not authorization",
+    "instruction_paths": [
+      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-execute",
     "workflow": "ops",
     "trigger": "approved plan",
-    "expected": "records typed operations"
+    "expected": "records typed operations",
+    "instruction_paths": [
+      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-rollback",
     "workflow": "ops",
     "trigger": "failed gate",
-    "expected": "stops forward mutation and preserves recovery"
+    "expected": "stops forward mutation and preserves recovery",
+    "instruction_paths": [
+      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "ops-archive",
     "workflow": "ops",
     "trigger": "verified resource run",
-    "expected": "retains immutable Run/Release evidence; does not create a change archive"
+    "expected": "retains immutable Run/Release evidence; does not create a change archive",
+    "instruction_paths": [
+      "template/workflows/ops/V-inventory-view/V-inventory-view.md",
+      "template/workflows/ops/README.md",
+      "template/workflows/ops/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "person-steelman",
     "workflow": "person",
     "trigger": "complex choice",
-    "expected": "freezes two-sided dossier"
+    "expected": "freezes two-sided dossier",
+    "instruction_paths": [
+      "template/workflows/person/S-steelman-deliberation/S-steelman-deliberation.md",
+      "template/workflows/person/INDEX.md",
+      "template/workflows/person/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "person-mao",
     "workflow": "person",
     "trigger": "strategy consultation",
-    "expected": "uses methodology as a decision lens"
+    "expected": "uses methodology as a decision lens",
+    "instruction_paths": [
+      "template/workflows/person/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md",
+      "template/workflows/person/INDEX.md",
+      "template/workflows/person/common/rules/activation-and-memory.md"
+    ]
   },
   {
     "id": "kernel-compaction",
     "workflow": "kernel",
     "trigger": "context threshold reached",
-    "expected": "writes recoverable checkpoint"
+    "expected": "writes recoverable checkpoint",
+    "instruction_paths": [
+      "AGENTS.md"
+    ]
   },
   {
     "id": "kernel-capability",
     "workflow": "kernel",
     "trigger": "model session starts",
-    "expected": "performs capability handshake"
+    "expected": "performs capability handshake",
+    "instruction_paths": [
+      "AGENTS.md"
+    ]
   }
 ]

@@ -15,9 +15,9 @@ keywords: [grill, 设计树, 领域, 决策, 共识]
 
 读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位当前 change 的 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`、`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 和相关 initiative 决策。先找到相关条目再回读必要原文，不默认整读永久 ADR 或索引。
 
-## 过程与边界
+## 当前 change 的访谈与共识
 
-进入访谈必须读取 `<Path>{roots.workflows}/specdev/G-grill-with-docs/references/interview-procedure.md</Path>`，再按触发分支读取 grilling、领域建模、日志格式或 stakeholder questionnaire。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
+进入访谈必须读取 `<Path>{roots.workflows}/specdev/G-grill-with-docs/references/interview-procedure.md</Path>`，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
 
 - 先查仓库可发现事实，只询问会改变行为、架构、风险、范围、迁移或验收的决定。
 - W 的每个 materialized change 在自己的目录拥有设计树和文档；共享答案以来源指针引用，不能共用一棵可写设计树。

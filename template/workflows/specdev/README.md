@@ -14,7 +14,7 @@
 
 Ticket frontmatter 拥有本票状态、依赖、写集与 Skill 调用绑定；普通 map 是背景/路由/图投影；Goal Plan 拥有 Gate、workspace 和恢复决策。多 change 父 tickets-map 只指向原 Implementation Map/Plan，不复制状态。一个未完成 child 仍只能归属于一个未完成父 Goal。
 
-具体职责与冲突裁决读取 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`；新增调用合同读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。
+发生职责或事实冲突时读取 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`；T 绑定、P 调度或 I 执行 Skill 时读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。
 
 ## 持久化约定
 
@@ -24,9 +24,9 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 ## 启动协议
 
-1. 先打开 `<Path>{roots.state}/workspace.json</Path>` 解析 roots，再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位相关 entry 后回读必要原文，不默认整读索引。不得把状态根默认展开成项目根 `.speculo`；项目根 `.speculo/specdev` 非法。
+1. 先打开 `<Path>{roots.state}/workspace.json</Path>` 解析 roots，再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位相关 entry 后回读必要原文，不默认整读索引。
 2. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时使用 `<Path>{roots.workflows}/specdev/I-init-setup/I-init-setup.md</Path>`。保留已知配置，不重复询问。
-3. 从 `<Path>{roots.state}/specdev/status.json</Path>` 定位用户指定或唯一 active change；多个候选需要真实消歧，无候选按原规则创建。
+3. 纯初始化和 T-triage capture 按各自无 change 分支执行；其他 Work 从 `<Path>{roots.state}/specdev/status.json</Path>` 定位用户指定或唯一 active change；多个候选需要真实消歧，无候选按原规则创建。
 4. 读取 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；恢复、创建或状态修改时加载上述状态细则。child 归属未完成父 Goal 时读取对应父 Map/Plan，不接管或覆盖其 owner。
 5. current_work 非空则恢复或显式 handoff；暂停保留恢复键，成功才去重更新 works_run 并清空。其他任务冲突只暂停受影响分支，继续独立、已授权工作。
 6. 按 Work/模式读取必要参考，完成产物、运行验证、回读真实源与状态后再推进。全局状态仅更新本任务 active/archived 索引。
@@ -83,4 +83,4 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
 
-支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。完成转换必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
+支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。

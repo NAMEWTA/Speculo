@@ -18,9 +18,9 @@
 
 ## 读取范围
 
-先读 下方 `<activation-and-memory>` 标签，定位用户指定的 change 或 map，再读状态、当前 map 和所选模式。只有进入 frontier 的 Ticket、命中的项目 Skill、Gate 与恢复证据需要展开；不默认通读所有 Ticket 或永久索引。
+先读 下方 `<activation-and-memory>` 标签，定位用户指定的 change 或 map，再读状态、当前 map 和所选模式。每次只展开实际进入 frontier 的 Ticket、直接依赖 Evidence、命中的项目 Skill、当前 Gate 与恢复证据；不默认通读所有 Ticket 或永久索引。
 
-## 模式与权威
+## 按意图选择模式与权威
 
 | 用户意图 | 模式 | 必须按需读取 |
 |---|---|---|

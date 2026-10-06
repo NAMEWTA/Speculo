@@ -11,7 +11,7 @@
 - **A-archive** — 冷归档：用户明确关闭后移动整个 Change 树到日期目录；不做知识综合或掌握判断。
 - **A-assess-and-plan** — 评估背景并设计课程：以目标和证据为起点建立课程、背景、基线、来源和可变 Lesson 地图。
 - **C-consolidate** — 主题整合：将选定 Change 物理嵌入父 Change，生成带 claim 级 provenance 的可迭代主题综合。
-- **G-goal** — 目标学习（目标模式）：为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；按项目切 ≤15 节的 mine unit，先写齐再按课派 miner。计划会话可跟随 A 写出课程地图，但不写 Lesson、不向学习者提问、不自动串联 H/R/C。
+- **G-goal** — 目标学习（目标模式）：为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图并按库存切 ≤15 的 mine unit，但不写 Lesson、不进行教学探针提问、不自动串联 H/R/C。
 - **H-homework** — 课程作业与评审：以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。
 - **I-init-setup** — 初始化学习系统：初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。
 - **L-lesson** — 完整课程讲解：一次输出 30–40 分钟、通俗但完整的 Lesson；不生成作业、不评分、不宣称掌握。
@@ -56,7 +56,7 @@ Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 
 ## 状态字段
 
-`.speculo/learning/status.json` 与 `.speculo/learning/locations.json` 使用 v2。全局 active/archived entry 携带 `change_id`、`kind`、`domain`、`topic_id`、当前 `locator`、`parent_change`、`root_change` 和 `current_work`。`locations.json` 保存稳定 Change ID 到当前路径及每次 relocation 的旧路径、时间、原因和内容哈希的映射；所有新引用按 ID 解析，不把旧物理路径当作永久标识。
+`<Path>{roots.state}/learning/status.json</Path>` 与 `<Path>{roots.state}/learning/locations.json</Path>` 使用 v2。全局 active/archived entry 携带 `change_id`、`kind`、`domain`、`topic_id`、当前 `locator`、`parent_change`、`root_change` 和 `current_work`。`locations.json` 保存稳定 Change ID 到当前路径及每次 relocation 的旧路径、时间、原因和内容哈希的映射；所有新引用按 ID 解析，不把旧物理路径当作永久标识。
 
 每个 Change 的 `.status.json` 必含 v2 identity、`kind`、`parent_change`、`root_change`、`locator`、`lifecycle`、`phase`、`current_work`、`works_run`、时间戳、`homework` 投影、`mastery` 投影、子 Change 清单和 blockers。`mastery.immediate` 只表示当前作业评审，`mastery.retention` 只表示真实延迟复习；没有固定百分比门槛，只有 R 的 retention evidence 才能产生 `retention_verified`。
 

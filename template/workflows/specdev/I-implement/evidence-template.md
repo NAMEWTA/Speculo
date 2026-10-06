@@ -131,3 +131,11 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 ## 用户交付与源回读
 
 记录用户要求的实际数量、交付位置、源/链接/必要元数据回读、行为差异、备份和未完成项。Goal 有显式数量时在 `<Path>{roots.state}/specdev/changes/{change}/evidence/goal-delivery.md</Path>` 写 Delivery Records，与 map 合同逐项核对。字符统计包含移动后的参考文件，不等同于 Token 或套餐用量。
+
+## 审查证据复用（仅实际发生时填写）
+
+记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、两轴隔离核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
+
+## OPS 交付（仅用户请求时）
+
+交付前读取 `<Path>{roots.workflows}/specdev/common/rules/deployment-handoff.md</Path>`，记录当前 change/Ticket、代码 revision、实际构件 digest、AC/Evidence、目标与部署约束；回传时只追加经核对的 Run/Release/receipt 指针。未请求写“不适用”，不为填表创建 OPS 任务。

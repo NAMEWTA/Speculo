@@ -64,5 +64,6 @@ status: draft
 
 ## 5. 下一步
 
-- 报告生成后询问用户选择一个候选，不批量访谈。
+- 当前请求：report / selected-design。report 到此完成，访谈状态可为 unselected；无高置信候选也可交付。
+- 用户选择原文与候选 ID：仅 selected-design 填写；未选择时不虚构结论、不自动转票。
 - 达成共识的接受项进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。

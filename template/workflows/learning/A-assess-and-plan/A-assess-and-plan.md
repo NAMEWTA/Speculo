@@ -13,12 +13,9 @@ keywords: [评估, baseline, course-design, objectives, background]
 
 ## 读取范围
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；它们是本步骤必需合同，不默认加载其他分支。
+当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；只加载本 Work 需要的领域合同。
 
-1. 先读取 `<Path>{roots.workflows}/learning/README.md</Path>` 与当前 Work 的状态入口。
-2. 再读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
-3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
-
+读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
 
 ## 流程
 

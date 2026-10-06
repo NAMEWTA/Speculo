@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "1e698821a65cdd02a40e48f98e78e87ad498617b",
+  "plan_sha256": "d8a069d9abf36a972fc85e0e16aca6fbbeb78cd0001f437d9893d97a72805ccc",
+  "coverage": {
+    "specdev": 14,
+    "ops": 5,
+    "learning": 9,
+    "person": 2
+  },
+  "entries": [
+    {
+      "id": "specdev/archive-and-consolidate",
+      "path": "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md",
+      "baseline_sha256": "3cd376b1a5dd349501a74b60af8ca66cbd3bb0e6bfadcd3ff9c8746910a39873",
+      "mode": "100644",
+      "characters": 3206,
+      "bytes": 4914,
+      "role": "source"
+    },
+    {
+      "id": "specdev/code-review",
+      "path": "template/workflows/specdev/C-code-review/C-code-review.md",
+      "baseline_sha256": "21f2b15ece7d2c6efeb596c9084362248338acd4e91c4b4ce671da240aa66d7f",
+      "mode": "100644",
+      "characters": 2037,
+      "bytes": 3149,
+      "role": "source"
+    },
+    {
+      "id": "specdev/diagnose-bugs",
+      "path": "template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md",
+      "baseline_sha256": "f3e25a2eedd58f676d5f92552fd58f2c240c84dc38275db7a8cb0dbf49b63288",
+      "mode": "100644",
+      "characters": 3134,
+      "bytes": 5372,
+      "role": "source"
+    },
+    {
+      "id": "specdev/grill-with-docs",
+      "path": "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md",
+      "baseline_sha256": "d9b46a1e3091cb3ffd69f0f9a474cea616d054c48c591fc48960915868f37174",
+      "mode": "100644",
+      "characters": 1336,
+      "bytes": 2082,
+      "role": "source"
+    },
+    {
+      "id": "specdev/implement",
+      "path": "template/workflows/specdev/I-implement/I-implement.md",
+      "baseline_sha256": "c84bc29576e9e4a012750b132e60afcfca6299d9dde047f49e903e41a7c7a939",
+      "mode": "100644",
+      "characters": 1537,
+      "bytes": 2493,
+      "role": "source"
+    },
+    {
+      "id": "specdev/init-setup",
+      "path": "template/workflows/specdev/I-init-setup/I-init-setup.md",
+      "baseline_sha256": "8a55feda6bf1f3ea08fa90288863ed31d7d8f15aa4674941929537eab8d8c361",
+      "mode": "100644",
+      "characters": 5571,
+      "bytes": 8323,
+      "role": "source"
+    },
+    {
+      "id": "specdev/learn-change",
+      "path": "template/workflows/specdev/L-learn-change/L-learn-change.md",
+      "baseline_sha256": "a3cf75732b133277bcaa97ad3ca63e0c3406eb522d62dbfd67a5a0033db49a68",
+      "mode": "100644",
+      "characters": 4087,
+      "bytes": 7733,
+      "role": "source"
+    },
+    {
+      "id": "specdev/goal-plan",
+      "path": "template/workflows/specdev/P-goal-plan/P-goal-plan.md",
+      "baseline_sha256": "18029cba867896d5be5fa92bd52fb9ed61224a4f9addb19685fa2d9112864214",
+      "mode": "100644",
+      "characters": 3348,
+      "bytes": 5220,
+      "role": "source"
+    },
+    {
+      "id": "specdev/prototype",
+      "path": "template/workflows/specdev/P-prototype/P-prototype.md",
+      "baseline_sha256": "02090ae41213ea8357ff781aaa318035a38bf408750b6a28740d95a367f4162f",
+      "mode": "100644",
+      "characters": 3650,
+      "bytes": 6206,
+      "role": "source"
+    },
+    {
+      "id": "specdev/review-architecture",
+      "path": "template/workflows/specdev/R-review-architecture/R-review-architecture.md",
+      "baseline_sha256": "77c0c90a7e935691ef39b906c743d431f05deb888dd17052684aeb404f168c98",
+      "mode": "100644",
+      "characters": 5292,
+      "bytes": 8802,
+      "role": "source"
+    },
+    {
+      "id": "specdev/spec",
+      "path": "template/workflows/specdev/S-spec/S-spec.md",
+      "baseline_sha256": "d7acd2f6072713e49ad17ce1818453442c22faa8c321dc455e7d54065b4932d6",
+      "mode": "100644",
+      "characters": 4288,
+      "bytes": 6944,
+      "role": "source"
+    },
+    {
+      "id": "specdev/tickets",
+      "path": "template/workflows/specdev/T-tickets/T-tickets.md",
+      "baseline_sha256": "80d62df5034cfade9836bb33f097cbe97180b8536b8ead1d86d7b827b4d6eef4",
+      "mode": "100644",
+      "characters": 2366,
+      "bytes": 3774,
+      "role": "source"
+    },
+    {
+      "id": "specdev/triage",
+      "path": "template/workflows/specdev/T-triage/T-triage.md",
+      "baseline_sha256": "262f76744df6700e68056d7e5d2e06c3bd81ad53be2eea71a20bdd87caec30f6",
+      "mode": "100644",
+      "characters": 9013,
+      "bytes": 12465,
+      "role": "source"
+    },
+    {
+      "id": "specdev/wayfinder",
+      "path": "template/workflows/specdev/W-wayfinder/W-wayfinder.md",
+      "baseline_sha256": "c9cb3a34446f8c90170020e14b8c5b9ecd67c201ff2313a979a4e1616c74ff27",
+      "mode": "100644",
+      "characters": 2420,
+      "bytes": 3650,
+      "role": "source"
+    },
+    {
+      "id": "ops/project-deploy",
+      "path": "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+      "baseline_sha256": "8ce4bfad2a152f2c8febea62412dd8478d7a3be7452f73016355b311e5fa9503",
+      "mode": "100644",
+      "characters": 1986,
+      "bytes": 3934,
+      "role": "source"
+    },
+    {
+      "id": "ops/host-manage",
+      "path": "template/workflows/ops/H-host-manage/H-host-manage.md",
+      "baseline_sha256": "11b0a2f8a10071f7c382111abebcd358018cad1456373a908c993e84f9a7488e",
+      "mode": "100644",
+      "characters": 2511,
+      "bytes": 4399,
+      "role": "source"
+    },
+    {
+      "id": "ops/initialize",
+      "path": "template/workflows/ops/I-initialize/I-initialize.md",
+      "baseline_sha256": "79abd401a5faf0a915ef97d0638ebdf4eb487e00496c716cea9c4d06124efdf1",
+      "mode": "100644",
+      "characters": 1187,
+      "bytes": 2249,
+      "role": "source"
+    },
+    {
+      "id": "ops/server-connect",
+      "path": "template/workflows/ops/S-server-connect/S-server-connect.md",
+      "baseline_sha256": "89ba0af86729e6cf297eac2d4ac9c446a21d382a123079c8c3f4b68213cceb43",
+      "mode": "100644",
+      "characters": 1187,
+      "bytes": 2045,
+      "role": "source"
+    },
+    {
+      "id": "ops/inventory-view",
+      "path": "template/workflows/ops/V-inventory-view/V-inventory-view.md",
+      "baseline_sha256": "80b30dcde9f5a511dd10fa062409b206eca61d160ed302a3f7e5fac64bbead5b",
+      "mode": "100644",
+      "characters": 1474,
+      "bytes": 2446,
+      "role": "source"
+    },
+    {
+      "id": "learning/archive",
+      "path": "template/workflows/learning/A-archive/A-archive.md",
+      "baseline_sha256": "8be43311dc96454e5e5cb4b6a96466908c036b9021a09bb0ed3272e06f65c260",
+      "mode": "100644",
+      "characters": 1171,
+      "bytes": 1895,
+      "role": "source"
+    },
+    {
+      "id": "learning/assess-and-plan",
+      "path": "template/workflows/learning/A-assess-and-plan/A-assess-and-plan.md",
+      "baseline_sha256": "07ba388047354f55916dbc4b27f9456a2a82f7acb02e34a476c36fe409c05640",
+      "mode": "100644",
+      "characters": 1709,
+      "bytes": 2729,
+      "role": "source"
+    },
+    {
+      "id": "learning/consolidate",
+      "path": "template/workflows/learning/C-consolidate/C-consolidate.md",
+      "baseline_sha256": "a17b0bc2086d55fa1b330e8811f34b4e3282adb42ed372038b34899f9d01122d",
+      "mode": "100644",
+      "characters": 1930,
+      "bytes": 2964,
+      "role": "source"
+    },
+    {
+      "id": "learning/goal",
+      "path": "template/workflows/learning/G-goal/G-goal.md",
+      "baseline_sha256": "cb5447e9473d52d5e608083f8282ff12d1610c42a66b712c8f906fe289d0d9eb",
+      "mode": "100644",
+      "characters": 5371,
+      "bytes": 7862,
+      "role": "source"
+    },
+    {
+      "id": "learning/homework",
+      "path": "template/workflows/learning/H-homework/H-homework.md",
+      "baseline_sha256": "11ecd3a60f4e3373bb1782f4f63c03eb1c3a8fb456e97e63968f7b7865938dd7",
+      "mode": "100644",
+      "characters": 1471,
+      "bytes": 2395,
+      "role": "source"
+    },
+    {
+      "id": "learning/init-setup",
+      "path": "template/workflows/learning/I-init-setup/I-init-setup.md",
+      "baseline_sha256": "1d54425df22dd5de38e09f69494eca21e705581fef8706f304f722911f1855b4",
+      "mode": "100644",
+      "characters": 1445,
+      "bytes": 2063,
+      "role": "source"
+    },
+    {
+      "id": "learning/lesson",
+      "path": "template/workflows/learning/L-lesson/L-lesson.md",
+      "baseline_sha256": "ae1bdc2a32aaacb04ced1de709fb8bf55456879e1c4840af1cd5d515920b9f2f",
+      "mode": "100644",
+      "characters": 1577,
+      "bytes": 2581,
+      "role": "source"
+    },
+    {
+      "id": "learning/question",
+      "path": "template/workflows/learning/Q-question/Q-question.md",
+      "baseline_sha256": "e3196a44d8d2d59e58db6485bacb262121e0f7646a2682233fa24bd54dbea0ff",
+      "mode": "100644",
+      "characters": 2774,
+      "bytes": 4096,
+      "role": "source"
+    },
+    {
+      "id": "learning/review",
+      "path": "template/workflows/learning/R-review/R-review.md",
+      "baseline_sha256": "013858de2aab40834078156685413b832ed7b06bd6a13bf47d4abc18d9c36661",
+      "mode": "100644",
+      "characters": 1357,
+      "bytes": 2173,
+      "role": "source"
+    },
+    {
+      "id": "person/mao-zedong-cognitive-os",
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md",
+      "baseline_sha256": "a6b3dbb5d94aa74eb4bb26c1077c80e53e1ef7c49db454fa0cab0daf03a3fa66",
+      "mode": "100644",
+      "characters": 3766,
+      "bytes": 6179,
+      "role": "source"
+    },
+    {
+      "id": "person/steelman-deliberation",
+      "path": "template/workflows/person/S-steelman-deliberation/S-steelman-deliberation.md",
+      "baseline_sha256": "f513b48a8212f19962afa6b2720efc16f40e448e316b98995ee5f8fbaf9bced6",
+      "mode": "100644",
+      "characters": 7548,
+      "bytes": 12374,
+      "role": "source"
+    }
+  ],
+  "protected_file_count": 88,
+  "protected_manifest_sha256": "fc043c08852fc8a9f44628166e185f41417db2ea7b72047eaa3439d161c0fa8a",
+  "baseline_validation": {
+    "source": "GitHub Actions run 37463914993, fixed baseline checkout",
+    "command": "pnpm check",
+    "tests": 197,
+    "passed": 197,
+    "failed": 0,
+    "asset_validation": "passed",
+    "agent_behavior": "not-evaluated"
+  },
+  "excluded": [
+    "unpublished local installations",
+    "real runtime state",
+    "production servers",
+    "credentials",
+    "npm release"
+  ]
+}

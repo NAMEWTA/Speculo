@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
@@ -31,7 +31,8 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
     try {
       assert.equal((await evaluateScenarios(fixture, trace, root)).exit_code, 2);
       await mkdir(join(root, "case-a")); await writeFile(join(root, "case-a", "receipt.txt"), "verified\n");
-      assert.equal((await evaluateScenarios(fixture, trace, root)).exit_code, 0);
+      const passed = await evaluateScenarios(fixture, trace, root);
+      assert.equal(passed.exit_code, 0, JSON.stringify(passed));
       trace[0].payload.effect = "external-mutation";
       assert.equal((await evaluateScenarios(fixture, trace, root)).exit_code, 2);
       trace[0].payload.effect = "read-only";
@@ -39,6 +40,25 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
       assert.equal((await evaluateScenarios(fixture, trace, root)).exit_code, 2);
       fixture[0].assertions.artifacts[0].path = "../escape";
       assert.match(JSON.stringify(await evaluateScenarios(fixture, trace, root)), /unsafe artifact path/);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+  it("accepts native temporary roots but rejects symlink or junction ancestors", async () => {
+    const { evidencePath } = await load("scripts/lib/evaluation-evidence.mjs");
+    const root = await mkdtemp(join(tmpdir(), "speculo-eval-path-"));
+    try {
+      const target = join(root, "target"), child = join(target, "child"), link = join(root, "linked");
+      await mkdir(child, { recursive: true });
+      await writeFile(join(child, "receipt.txt"), "verified\n");
+      // Windows TEMP can use an 8.3 name. Case-only spellings are also ordinary
+      // directories, not grounds to weaken the no-symlink/junction policy.
+      const roots = process.platform === "win32" ? [child, child.toUpperCase()] : [child];
+      for (const spelling of roots) {
+        assert.equal(await readFile(await evidencePath(spelling, "receipt.txt"), "utf8"), "verified\n");
+        assert.equal(await evidencePath(spelling, "missing/nested.txt"), join(spelling, "missing", "nested.txt"));
+      }
+      await symlink(target, link, process.platform === "win32" ? "junction" : "dir");
+      await assert.rejects(evidencePath(join(link, "child"), "receipt.txt"), /symlink|junction/);
+      await assert.rejects(evidencePath(child, "../receipt.txt"), /unsafe artifact path/);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 });

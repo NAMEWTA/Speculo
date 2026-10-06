@@ -1,0 +1,693 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "1e698821a65cdd02a40e48f98e78e87ad498617b",
+  "scope": "Expanded explicit immutable-source inventory: CLI, installer metadata, all existing schema/runtime seeds, common tools, CI/release, lockfile and tracked symlinks. This supplements the initial summary-only 88-file inventory.",
+  "files": [
+    {
+      "path": ".github/actions/setup/action.yml",
+      "mode": "100644",
+      "sha256": "69bdf8bec93633c4aec17326462ae683591f11cbca329cf5f1f38523ad2a270c",
+      "bytes": 832
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "mode": "100644",
+      "sha256": "99d1821fae4ba9ab04b6b7a63d0028c64cfbdc3663044f3c2a2e5aef395e1fd8",
+      "bytes": 307
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "sha256": "be567029ad0cceefc4d096dee942ea1dc5108f22e6858e27c369a73f11319e91",
+      "bytes": 1376
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "mode": "100644",
+      "sha256": "025cca7c9573746732b23380fe343b3b0abdaf4062bba4a708932b4fed3ea429",
+      "bytes": 2215
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "sha256": "7d2792c498153cdc5909944d29cf8a8f158fda7627c24cd73b2528f390d6e415",
+      "bytes": 1060
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "mode": "100644",
+      "sha256": "65decad6ad997880c5e72b3d80174f75def2eb44e2eb987ae92151d5b91a5067",
+      "bytes": 13646
+    },
+    {
+      "path": "src/agent-files.ts",
+      "mode": "100644",
+      "sha256": "77219251a923de51da4c468b133fb2f87ed8a131de91e162b0fc0a30dda9ab0f",
+      "bytes": 6625
+    },
+    {
+      "path": "src/cli.ts",
+      "mode": "100644",
+      "sha256": "9d198dcc8ab15415ffeb15f2c6d37b383e6ce300974c56a6f1eb8a80d33206d1",
+      "bytes": 7285
+    },
+    {
+      "path": "src/config.ts",
+      "mode": "100644",
+      "sha256": "2f6395cdfaf7be0f02e6caee3509f1bf55199a9b0494e624852dcee87de1524a",
+      "bytes": 3956
+    },
+    {
+      "path": "src/doctor.ts",
+      "mode": "100644",
+      "sha256": "4c81eee23a274e4b02afb1b55bbb500ae842aaa3b69fa8932a28362009938ea0",
+      "bytes": 8840
+    },
+    {
+      "path": "src/external-files.ts",
+      "mode": "100644",
+      "sha256": "933d6361d1ee49e8bc37821fa604c6f7c5eabac3c268287d0b6b4565cb178384",
+      "bytes": 4020
+    },
+    {
+      "path": "src/index.ts",
+      "mode": "100644",
+      "sha256": "294589433cd000e55a83153c9e920c74f1eb4c3deaa4ea16f797c2aaa27cb343",
+      "bytes": 9144
+    },
+    {
+      "path": "src/kernel.ts",
+      "mode": "100644",
+      "sha256": "6c6960f08240f24486901a51d80e266845617faa671212cdffb4bb39ff85f314",
+      "bytes": 5114
+    },
+    {
+      "path": "src/manifest.ts",
+      "mode": "100644",
+      "sha256": "a858370f6c20486b6faeaa187064848b1de493a44d0463d497a25b3b28fffacc",
+      "bytes": 2482
+    },
+    {
+      "path": "src/ops-resources.ts",
+      "mode": "100644",
+      "sha256": "84bfebd0e4e989630f5c8cd313b8f65e8db24d0f0b1865c68df69b100a194c8e",
+      "bytes": 9184
+    },
+    {
+      "path": "src/paths.ts",
+      "mode": "100644",
+      "sha256": "bd5789bf7d879782c9aac0a73ba9fa83b46166ca93ebf0bc706c3855b3c68aba",
+      "bytes": 3037
+    },
+    {
+      "path": "src/refresh.ts",
+      "mode": "100644",
+      "sha256": "2364bb4997f74dc7a36cd527b85ea48217666d02a6bec1bd5fe5fde0c1de64d5",
+      "bytes": 25836
+    },
+    {
+      "path": "src/structured.ts",
+      "mode": "100644",
+      "sha256": "3f4c7fd2529a636b4112c2d929a46c2c1f69a8a0556ab8db33cc313c11d722dd",
+      "bytes": 28719
+    },
+    {
+      "path": "src/transaction.ts",
+      "mode": "100644",
+      "sha256": "b885f1a390d68059534bbf636c1a0b237c01ee507f70ed439a3d33b7c1990021",
+      "bytes": 8705
+    },
+    {
+      "path": "src/utils.ts",
+      "mode": "100644",
+      "sha256": "9de06719f16d8d2edf509c98a02f4ca738808f5d185695ff3642bc7720ec1107",
+      "bytes": 269
+    },
+    {
+      "path": "src/version.ts",
+      "mode": "100644",
+      "sha256": "47048d400cca42145589b32de9bf5c2b729c1f08ab081e2038dd779b0de5b9e7",
+      "bytes": 3091
+    },
+    {
+      "path": "src/workflows.ts",
+      "mode": "100644",
+      "sha256": "cb4d823204da12e3b7b307392942c7d776737b12702085dc121d863d5c22b5ba",
+      "bytes": 3933
+    },
+    {
+      "path": "template/.speculo/README.md",
+      "mode": "100644",
+      "sha256": "bd3d8e67522b0b9f7e9cb755e7824c0fa55e9ceacaaa76a7af4bf5475c2f80d3",
+      "bytes": 5722
+    },
+    {
+      "path": "template/.speculo/capabilities.json",
+      "mode": "100644",
+      "sha256": "dbf8a9a7a7a95aa16d96160982496c4350af7e1b99dcab7147c80441e678ec89",
+      "bytes": 451
+    },
+    {
+      "path": "template/.speculo/commands/.gitkeep",
+      "mode": "100644",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "template/.speculo/kernel.json",
+      "mode": "100644",
+      "sha256": "b15f36f59c56ac41a2e5f4a3343c29d3be16cc365148b0471358b3e485977897",
+      "bytes": 460
+    },
+    {
+      "path": "template/.speculo/kernel/README.md",
+      "mode": "100644",
+      "sha256": "c162ae2e6f62bcec7f9bea97939468fc9236145d76626478b0c61edcdaed4295",
+      "bytes": 1037
+    },
+    {
+      "path": "template/.speculo/kernel/capability-profile.schema.json",
+      "mode": "100644",
+      "sha256": "ec0ec25197dd74e27f36e4b3c5ae8a094ccee5e4657c7ac6ecd94fe77de1da2c",
+      "bytes": 704
+    },
+    {
+      "path": "template/.speculo/kernel/checkpoint.schema.json",
+      "mode": "100644",
+      "sha256": "f5946c71eec37c048677ad9a601c1bb089a139641a33d0a097a724f0fe409b5b",
+      "bytes": 2990
+    },
+    {
+      "path": "template/.speculo/kernel/trace-event.schema.json",
+      "mode": "100644",
+      "sha256": "ee309b150c0543a2d1738847da28da9987dfd449f5bc03dda3d60b72fd62f58d",
+      "bytes": 502
+    },
+    {
+      "path": "template/.speculo/kernel/workflow-manifest.schema.json",
+      "mode": "100644",
+      "sha256": "218c8045d63c3162b7867c1fbe6fbc23aa0e25a19630e72d1cca5f5dce77ce3e",
+      "bytes": 491
+    },
+    {
+      "path": "template/.speculo/refresh-contract.json",
+      "mode": "100644",
+      "sha256": "5763d7e49f4f16b65839eafefe282d5a143cd4f260113f86002da6f3d38b2c01",
+      "bytes": 750
+    },
+    {
+      "path": "template/.speculo/workspace.json",
+      "mode": "100644",
+      "sha256": "5a976de50641537332b669fa12fe0926e251763b67384686e559f346e371bf34",
+      "bytes": 276
+    },
+    {
+      "path": "template/workflows/learning/_state/archive/.gitkeep",
+      "mode": "100644",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "template/workflows/learning/_state/changes/.gitkeep",
+      "mode": "100644",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "template/workflows/learning/_state/status.json",
+      "mode": "100644",
+      "sha256": "fd5693a99bdeaefb759ea38d3982047b90592e2bfe0989b2f1c2d10ccb22be21",
+      "bytes": 86
+    },
+    {
+      "path": "template/workflows/learning/common/schemas/change-status.schema.json",
+      "mode": "100644",
+      "sha256": "0e8f937401ab3055580c2fb1a39d00b1b6f459a14687942d9cab7134cbac93cf",
+      "bytes": 3913
+    },
+    {
+      "path": "template/workflows/learning/common/schemas/status.schema.json",
+      "mode": "100644",
+      "sha256": "a6fb6ab8f40308d5c5462880d7fd8232eeb31c5e1ca81a7314c0a0ad22919515",
+      "bytes": 1551
+    },
+    {
+      "path": "template/workflows/learning/common/tools/relocate-learning.mjs",
+      "mode": "100644",
+      "sha256": "44afce4ceaa0780aa7332bd6d988ef208b86ecd6521a2868576b1d23897fe493",
+      "bytes": 9077
+    },
+    {
+      "path": "template/workflows/learning/common/tools/validate-learning.mjs",
+      "mode": "100644",
+      "sha256": "8505925019fb72f39caf5ecce82f865c57e749512baf4dce6381e659be2b66d2",
+      "bytes": 31306
+    },
+    {
+      "path": "template/workflows/learning/runtime-contract.json",
+      "mode": "100644",
+      "sha256": "9884f20de6782020cdd1fd168aa4e8bbf35673c48949f9c69421bae713fa6d6c",
+      "bytes": 319
+    },
+    {
+      "path": "template/workflows/ops/_state/status.json",
+      "mode": "100644",
+      "sha256": "9b358d988cc93960ef7f60543c14b95f4e149bc97ffacd06be569469d869cf27",
+      "bytes": 380
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/allocation.schema.json",
+      "mode": "100644",
+      "sha256": "579b0bbcced483cdcf955053e82c46be56500d978d06bedbf7ba720a7f2745a3",
+      "bytes": 1931
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/approval.schema.json",
+      "mode": "100644",
+      "sha256": "5b285420cd8a7dc303cb1e265d2764ae61de9c68abb3f43603cc9c252accb6ab",
+      "bytes": 906
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/binding.schema.json",
+      "mode": "100644",
+      "sha256": "91bd666269c58fb514b3522ed3dc1cb7696ab94aee4664728afa3fbc1241c3c2",
+      "bytes": 1404
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/deployment.schema.json",
+      "mode": "100644",
+      "sha256": "c1bb8891588858813439122269be9acb4b5dcaee07ecd4e05c4733757ab09626",
+      "bytes": 4657
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/fleet-view.schema.json",
+      "mode": "100644",
+      "sha256": "06701c5f6467931e5e35925420b721490c46711dfa48b36914048cb230d59d36",
+      "bytes": 11429
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/host.schema.json",
+      "mode": "100644",
+      "sha256": "0eadb4d9a18947310fc6f3c3f1a7adad55aadbe9e0a79b4e913999ba50227ea3",
+      "bytes": 3071
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/plan.schema.json",
+      "mode": "100644",
+      "sha256": "2ee2161314e198d6414575ce109decaa3b5106ba9967a672375f2e88d97fa905",
+      "bytes": 47318
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/project.schema.json",
+      "mode": "100644",
+      "sha256": "87835475e531e8f49f3580359abe7354b000b2dee16cb0dc4b3f3af61288e86b",
+      "bytes": 1159
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/server-check.schema.json",
+      "mode": "100644",
+      "sha256": "d38170f1620ff3cf68d4e5bef97bc0ffe4354ecd1ed5160efe5c5e3f76c28fa8",
+      "bytes": 1997
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/spec.schema.json",
+      "mode": "100644",
+      "sha256": "d0e81b20f76dba03ac7d22be84b21a412f94d9f6e4051800e0f7c8eb2594b554",
+      "bytes": 30211
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/status.schema.json",
+      "mode": "100644",
+      "sha256": "f26442b74a37cbc1019ef78817411baf82890d64593e825532dbdedd9630a22f",
+      "bytes": 21120
+    },
+    {
+      "path": "template/workflows/ops/common/schemas/task-request.schema.json",
+      "mode": "100644",
+      "sha256": "cff38b2536eb1d910ab725668ec3d5a92d5f65c697c1f831e75bc723789e708b",
+      "bytes": 3156
+    },
+    {
+      "path": "template/workflows/ops/common/tools/bootstrap-volta.sh",
+      "mode": "100755",
+      "sha256": "ca94a570ca2e3a9110708990df1e76c243855df95aeba52882817de0bafd80cb",
+      "bytes": 7240
+    },
+    {
+      "path": "template/workflows/ops/common/tools/bootstrap.ps1",
+      "mode": "100644",
+      "sha256": "380b526779ce315a1f4e2c5d8341640a038159ebad36d44e65c6c9f4644b70aa",
+      "bytes": 1148
+    },
+    {
+      "path": "template/workflows/ops/common/tools/bootstrap.sh",
+      "mode": "100755",
+      "sha256": "9a67c13b244045cadaba0b8d63bb19e3e73d7f931e08097948947bb28a4543e8",
+      "bytes": 1695
+    },
+    {
+      "path": "template/workflows/ops/common/tools/demo-local.mjs",
+      "mode": "100644",
+      "sha256": "e5277a90787a3c05d7e0b6279a2b0c71bec306fb545f7d333429fd9ed3377062",
+      "bytes": 5850
+    },
+    {
+      "path": "template/workflows/ops/common/tools/ops.mjs",
+      "mode": "100644",
+      "sha256": "e7402f83989fc53ede5205e46de2cafca200cdd05b26b36d0ea31945b4fb54ff",
+      "bytes": 332
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/agent.mjs",
+      "mode": "100644",
+      "sha256": "7861a8476b1fc313041a33ac8e0062001274a99191680acbceb2ea0c7ac44d41",
+      "bytes": 45202
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/bootstrap.mjs",
+      "mode": "100644",
+      "sha256": "4932ed73608228bc19e9c8cf82de71d487e439e08814d285fca876b1c4cb53e5",
+      "bytes": 9982
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/cli.mjs",
+      "mode": "100644",
+      "sha256": "cdf1ad949bda143a7a6862ff5269ee1164fa1da31cb64aa5f7b0577fe5f88ca9",
+      "bytes": 16885
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/control_files.mjs",
+      "mode": "100644",
+      "sha256": "0e5955f8df4fd1d36c0938c0930827b0f5eb380a2578a1b06d8d7e7ceaba9129",
+      "bytes": 2422
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/core.mjs",
+      "mode": "100644",
+      "sha256": "f9ef00529b4b1fad59fd1111244b3932b61bf301011af1dc51b1a2879bfe2445",
+      "bytes": 13071
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/docs.mjs",
+      "mode": "100644",
+      "sha256": "333cb4a93b66cdfae79316ccd865590edb54edb0aaead340e982812ab64d2d31",
+      "bytes": 27614
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/execution.mjs",
+      "mode": "100644",
+      "sha256": "c2f86e678c9925a6f095fd6d4ee76341339fca66bd0968af9a444ef992c090fe",
+      "bytes": 21380
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/fleet.mjs",
+      "mode": "100644",
+      "sha256": "f9138fdf9f54744edd49abb1056209a6aaf809aebc596390fe9267272d5057f5",
+      "bytes": 13795
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/host_recipes.mjs",
+      "mode": "100644",
+      "sha256": "f907201118d893886c36a2f90e82ca09b83b1d07c4bb78ee6999e1d9d23e0f0a",
+      "bytes": 7649
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/model.mjs",
+      "mode": "100644",
+      "sha256": "4f48091f0829dab5982231a47992533825cb282aebe1c2aad8215e7c785be750",
+      "bytes": 13930
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/native_windows.mjs",
+      "mode": "100644",
+      "sha256": "a3334b999f9f770cdcf73c3d286d7287bf0a41b4c740e122e203b248f2bfecba",
+      "bytes": 2362
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/planner.mjs",
+      "mode": "100644",
+      "sha256": "56d1d82b85ddd50f173e847303dbf8cc7330a6ad358d2a827a17a48c3ab7039e",
+      "bytes": 48398
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/server_checks.mjs",
+      "mode": "100644",
+      "sha256": "f80ea9e0590b88b2390a51c3eb98a1abbcb1e23f230c5034f242b7864a1a4663",
+      "bytes": 9337
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/services.mjs",
+      "mode": "100644",
+      "sha256": "501f2c947f49940eda45c314b2032eb8677174ca1539f43e707bae706492c0c1",
+      "bytes": 4079
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/sources.mjs",
+      "mode": "100644",
+      "sha256": "07af8ace8c296de8db82d3fdd2a8ced8afd823f2b5ba95539b27ec05f01ea411",
+      "bytes": 2630
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/tasks.mjs",
+      "mode": "100644",
+      "sha256": "262e404e13f49deb9c735fff627dfe48ccca66d57e3c56be414ddfd0ea57214b",
+      "bytes": 24639
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/transport.mjs",
+      "mode": "100644",
+      "sha256": "3d583c023aa3141d8411e10f49fc2c4fd3832fea00d8ef25af4171f1de5df0c8",
+      "bytes": 8367
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/workspace.mjs",
+      "mode": "100644",
+      "sha256": "96421efa1e3c08ae425dada286b7b8a84edf49236002223bd590553a86ab9722",
+      "bytes": 6671
+    },
+    {
+      "path": "template/workflows/ops/common/tools/opslib/workspace_cli.mjs",
+      "mode": "100644",
+      "sha256": "676adc5bdec33fa349fc8957cc2028cce87f44ddc369a32490bbbe6bbc66a182",
+      "bytes": 4662
+    },
+    {
+      "path": "template/workflows/ops/common/tools/validate-ops.mjs",
+      "mode": "100644",
+      "sha256": "389540d08f469f95c7dc82e9d2d4b4289425b8d7efcd3145ca804aecf9ea0a17",
+      "bytes": 3403
+    },
+    {
+      "path": "template/workflows/ops/runtime-contract.json",
+      "mode": "100644",
+      "sha256": "399fdfd250bbed7ce559189e052b4207f5978fad22663c0ea40a401cd4419199",
+      "bytes": 171
+    },
+    {
+      "path": "template/workflows/person/_state/archive/.gitkeep",
+      "mode": "100644",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "template/workflows/person/_state/changes/.gitkeep",
+      "mode": "100644",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "template/workflows/person/_state/status.json",
+      "mode": "100644",
+      "sha256": "e13192e49f1761e8a2b758b49051cc23e72a1e4fb0e620f60be758961ba9a3de",
+      "bytes": 66
+    },
+    {
+      "path": "template/workflows/person/runtime-contract.json",
+      "mode": "100644",
+      "sha256": "bafee49fb8803fe7807ddc04370a0d1d165e92e576dea15c1e1294d0a4edcd7f",
+      "bytes": 177
+    },
+    {
+      "path": "template/workflows/specdev/P-prototype/design-package.schema.json",
+      "mode": "100644",
+      "sha256": "b421a0799cd092683a1ee5c61954dc483966211d61d404e46f8b465e7ca239b3",
+      "bytes": 2236
+    },
+    {
+      "path": "template/workflows/specdev/_state/archive/.gitkeep",
+      "mode": "100644",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "template/workflows/specdev/_state/changes/.gitkeep",
+      "mode": "100644",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "template/workflows/specdev/_state/status.json",
+      "mode": "100644",
+      "sha256": "544ee2a1ae19840267db8743269948122196c05802ccef2c6aa48e09c203270e",
+      "bytes": 85
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/capture.schema.json",
+      "mode": "100644",
+      "sha256": "17282ae29b0683f093cea41d5b0024cb5ef01abe816514e7aff998c6599cbacf",
+      "bytes": 527
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/change-status.schema.json",
+      "mode": "100644",
+      "sha256": "8ce33f3c4b51f2b5d69b8803caf7b1241b35b6bd9c81391c19d6ec81939cdc80",
+      "bytes": 8780
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/code-review.schema.json",
+      "mode": "100644",
+      "sha256": "453a0b41bfa89fdc2cff64e5193f50ff6ffdb2827d30a8e285f995732ee2f0f2",
+      "bytes": 1234
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/config.schema.json",
+      "mode": "100644",
+      "sha256": "a0dc4781041f95f4d92a887a68868bb8cf953f06974dc3262a556e38d8808b86",
+      "bytes": 2368
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/design-tree.schema.json",
+      "mode": "100644",
+      "sha256": "996de47638b9b8b53af77cedc2690a2be34f9d5651f46deaece0dadc02183bd7",
+      "bytes": 1481
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/diagnosis.schema.json",
+      "mode": "100644",
+      "sha256": "e2b1cd2e2dc3d6a69dda142fff97505b14c2e381fb14c54bd5ef92b00bfeed8e",
+      "bytes": 938
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/goal-plan.schema.json",
+      "mode": "100644",
+      "sha256": "3f6c34388f6c713a2c190e167c929fa352f4a7ca76c15d69fd645f8284b7258c",
+      "bytes": 2102
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/goal-tickets-map.schema.json",
+      "mode": "100644",
+      "sha256": "3f59886edb43d6ed8a860af7b7611e146212eca833a5362b442f0db62a42ffc8",
+      "bytes": 807
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/implementation-map.schema.json",
+      "mode": "100644",
+      "sha256": "8fb337d72b7e6d51fe4d6f9d828a469ecb3d3705d2bb10acea9f292a2e77e23d",
+      "bytes": 1352
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/implementation-plan.schema.json",
+      "mode": "100644",
+      "sha256": "19b16ba9299b59b2f4a24ba606d3c0ddce71880cfc0f8852c1c42a9d298ebe8c",
+      "bytes": 2019
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/initiative.schema.json",
+      "mode": "100644",
+      "sha256": "ec55ba7af0a205bd844703b986201283e4b826b0ec28194ddad1add198cd545f",
+      "bytes": 1930
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/publish.schema.json",
+      "mode": "100644",
+      "sha256": "99c88fe18dedb1cb611cd0834626befed8c356fb287b34e4f068d95030df87bd",
+      "bytes": 961
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/source.schema.json",
+      "mode": "100644",
+      "sha256": "346e65dfd754efa47ae814d8d63d4c01d46c3744b36a9fbbf2dbcf69c76c89b0",
+      "bytes": 1067
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/spec.schema.json",
+      "mode": "100644",
+      "sha256": "c9b3060853afa1c1e7cccb11585d739531ac5acd4a6e9b295cc55d0113ab6502",
+      "bytes": 707
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/status.schema.json",
+      "mode": "100644",
+      "sha256": "11c4cc0e99915adacdd25f032132e1b1833fd79a25c67a5676e5b9d5aea6d7dd",
+      "bytes": 932
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/ticket.schema.json",
+      "mode": "100644",
+      "sha256": "4d06c3d93819c2938d17d6579db217e8baa81f911497c99d22a4b99a63d056e1",
+      "bytes": 6324
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/tickets-map.schema.json",
+      "mode": "100644",
+      "sha256": "58e5ed9963be927ce9e4f8a26385ac00d76200eff78077a9799fc1f5c4c92638",
+      "bytes": 1542
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/triage.schema.json",
+      "mode": "100644",
+      "sha256": "1a3f367cb178d81d3695e7f35c693feb74441e5999246d8b3bffff4de4087807",
+      "bytes": 1309
+    },
+    {
+      "path": "template/workflows/specdev/common/schemas/wayfinder-ticket.schema.json",
+      "mode": "100644",
+      "sha256": "d4f346417a60bb3853cea4052da5ef52bd44c85a8bf2b99de540cb3a45f80892",
+      "bytes": 914
+    },
+    {
+      "path": "template/workflows/specdev/common/tools/README.md",
+      "mode": "100644",
+      "sha256": "5efc9ea2225069fc6fca338028bafdf49d79915aa92a357dd45b7a57cc735af2",
+      "bytes": 3928
+    },
+    {
+      "path": "template/workflows/specdev/common/tools/plan-contract.mjs",
+      "mode": "100644",
+      "sha256": "ab1cd29d6228a4d26ec7959741ca849d0a6b114fc419b3c16814d3470f45b1fb",
+      "bytes": 18395
+    },
+    {
+      "path": "template/workflows/specdev/common/tools/ticket-control.mjs",
+      "mode": "100644",
+      "sha256": "68305873c830fa19ea3cdab3e6994707caa1a26189175f924e70021f47690b68",
+      "bytes": 16617
+    },
+    {
+      "path": "template/workflows/specdev/common/tools/validate-specdev.mjs",
+      "mode": "100644",
+      "sha256": "4f63614c3fe0b9e6da7abfcd34daef5af1696777d7b5676815bcff3826c7ba10",
+      "bytes": 155112
+    },
+    {
+      "path": "template/workflows/specdev/runtime-contract.json",
+      "mode": "100644",
+      "sha256": "d8f9b2c249adc4bab3317c524f78b97e3ddd1a3c34cf49c2a5024dc629f76b67",
+      "bytes": 753
+    },
+    {
+      "path": "template/workflows/workflow-manifest.schema.json",
+      "mode": "100644",
+      "sha256": "056465000832a1be4267d73ac647a8cc40450720aae452044808e2f93af60173",
+      "bytes": 639
+    },
+    {
+      "path": "tsconfig.json",
+      "mode": "100644",
+      "sha256": "48f4553fc4d1af47db5ec359196ad338fc79a5722ef87bd1635d09eee85c0d1b",
+      "bytes": 419
+    }
+  ],
+  "count": 114,
+  "verification": "all existing listed files match baseline bytes; no runtime schema or executor changes"
+}

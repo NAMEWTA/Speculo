@@ -6,7 +6,8 @@ Use this short protocol for Speculo maintainer changes. The asset-specific contr
 2. Keep the entry as a router: trigger, scope, required inputs, required references, outputs, owner, stop conditions, and validation.
 3. Read branch references only when their branch is active. Put long examples, schemas, command flags, and templates in references/assets.
 4. Maintain one owner for each rule, state namespace, report, generated block, and runtime write.
-5. After editing, regenerate owned indexes/canonical files, reread the changed entry and references, and run the smallest meaningful normal and failure checks before broader project gates.
+5. When workflow entries or pointers change, run `node scripts/validate-workflow-disclosure.mjs --json --changed <source-path>` to inspect reverse callers, branch conditions and generator impact. Navigation cycles and unlinked candidates require review, not automatic deletion.
+6. After editing, regenerate owned indexes/canonical files, reread the changed entry and references, and run the smallest meaningful normal and failure checks before broader project gates.
 
 ## Fidelity gate
 

@@ -10,7 +10,7 @@
 
 ### Ticket 模式（默认）
 
-先读取 Tickets Map 的总体实施背景与项目 Skill 读取矩阵，再读取适用于 `ALL` 或当前 Ticket 的项目 Skill，随后读取 Ready Ticket、可选子 Goal Plan 和可选父 Implementation Plan。存在父 Plan 时使用其 Lead、workspace/integration 策略和全局门，即使子 Goal Plan 不存在也可以执行；两者都存在时必须策略一致。没有父 Plan 时沿用子 Goal Plan；两者都不存在时，当前主会话作为该 Ticket 的 Lead，并按 Direct Spec 规则执行，不推断 worktree 策略。`required` 模式每个 Ticket 建立独立 worktree；`current` 模式所有受同一计划约束的 Ticket 严格串行，使用当前分支和当前 workspace。
+使用下节规定的输入顺序。父 Implementation Plan 存在时采用其 Lead、workspace/integration 与全局 Gate，即使子 Goal Plan 不存在；两者都有时必须一致。没有父计划沿用子计划；两者都没有时当前主会话作为 Lead，按 Direct Spec 的轻量边界执行，不猜测 worktree 策略。
 
 ### Direct Spec 模式
 
@@ -51,17 +51,11 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 
 加载 `<Path>{roots.workflows}/specdev/I-implement/execution-preflight.md</Path>`。
 
-Ticket 模式：
+预检参考拥有 Ready、依赖证据、真实 Skill、计划版本、owner、权限、Git 状态与 workspace 的完整检查，不在此复写。
 
-1. 验证 Ready、依赖 Evidence、Spec/ADR/Goal Plan、一致性、路径 owner 和验证接缝；确认 Tickets Map 的总体实施背景、项目 Skill 矩阵、当前 Ticket 覆盖与实际文件均有效，并完成规定读取顺序；
-2. 确认子 Goal Plan schema v6（若存在）与父 Implementation Plan schema v1（若存在）、唯一 Lead、workspace 策略、动态 implementation/integration 上限与授权；
-3. `required` 模式以 `purpose=ticket, operation=create|restore` 调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；`current` 模式读取当前 branch、HEAD、dirty 状态并确认没有其他 Ticket implementation writer；
-4. Lead 把 Ticket 设为 `in_progress`；`required` 模式将 change worktree 记录设为 `active`，`current` 模式建立 current workspace 执行记录；
-5. 当前代码使合同失效时停止并返回对应上游 owner。
+通过预检后：`required` Ticket 以 `purpose=ticket, operation=create|restore` 调用 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`；`current` Ticket 确认当前 branch/HEAD/dirty 状态和单 writer。Lead 设置 Ticket 为 `in_progress` 并按策略登记 active worktree 或 current workspace 记录。Direct Spec 不创建虚假 Ticket/worktree 状态。
 
-Direct Spec 模式验证用户批准、轻量合同和 current workspace 唯一写入 owner；不创建虚假 Ticket/worktree 状态。
-
-**完成标准**：按策略完成 workspace、基线、owners、权限与实际 Git 一致；current 模式只有一个 implementation writer 且 Ticket 串行可恢复。
+**完成标准**：真实 workspace、基线、唯一 owners 和授权与预检一致；代码使合同失效时停止并返回上游 owner，current Ticket 严格串行。
 
 ### 2. Lead 决定自行实现或动态派单
 
@@ -86,13 +80,15 @@ Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风
 
 ### 4. TDD 红→绿垂直循环
 
-加载 `<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-test-design.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-mocking.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`。对每个验收行为或关键风险：
+加载 `<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-test-design.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`。对每个验收行为或关键风险：
 
 1. 选择公共接口或稳定接缝；
 2. 编写因目标行为缺失而失败的测试/验证并确认失败原因；
 3. 只写足以通过当前测试的实现；
 4. 运行定向非 E2E 验证；
 5. 保存 red/green 事实并进入下一条窄切片。
+
+涉及外部依赖、隔离策略或已有 Mock 时，先读取 `<Path>{roots.workflows}/specdev/I-implement/tdd-mocking.md</Path>`，再决定是否复用真实接缝或替身。
 
 不得删除测试、放宽断言、吞错、永久跳过或只验证 Mock 调用次数来制造绿色。
 
@@ -126,14 +122,7 @@ Direct Spec 模式由 Lead 在 current workspace 运行轻量合同要求的定�
 
 ### 7. 最终集成与适用 E2E
 
-`required` Ticket 模式中，Lead 以 `purpose=ticket, operation=finalize` 调用 dev-worktree：
-
-1. 在最新父分支的 Lead-owned candidate checkout 组合 source commit；
-2. 运行受影响集成/回归、项目父状态检查和 Ticket 标记 required 的 E2E；
-3. candidate 失败时父分支不动，Ticket 回 `in_progress`/`blocked`；
-4. 父 HEAD 漂移时废弃本轮 candidate，基于最新父分支重建并重跑；
-5. 全部通过后父分支 fast-forward 到 candidate/result SHA；
-6. 重读父 HEAD/tree 和 ancestor 关系后，才允许 Ticket Done。
+`required` Ticket 模式中，Lead 以 `purpose=ticket, operation=finalize` 调用 dev-worktree，并读取 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>`。该参考唯一维护最新父分支 candidate 的组合、检查、失败/漂移、重建、fast-forward、回读与尝试上限过程。验证失败或父 HEAD 漂移，父分支不推进；不能凭来源检查通过标记 Done。
 
 E2E 是否需要由 Ticket/Goal Plan 的实际跨边界风险决定，不限于 UI；不适用必须记录原因。
 
@@ -163,29 +152,6 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ### 9. 返回
 
 Ticket 模式返回 Ticket/change 状态、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、适用 Lead 复盘决定、未验证项和下一路由。Direct Spec 返回 change 状态、`<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`、current workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
-
-## 完成标准
-
-- Ticket 模式按策略完成 current workspace/direct-parent 或 worktree/implementation commit/candidate gate；Direct Spec 的轻量合同、current workspace checkpoint、双轴审查和最终验证完整；
-- current Ticket 的适用 E2E 由 Lead 在 current workspace 运行；required Ticket 的适用 E2E 由 Lead 在 parent-candidate 运行；Direct Spec 适用 E2E 由 Lead 在 current workspace 运行；
-- Lead 独立核对并写全部 SpecDev 工件；
-- Lead 与任何 implementation subagent 都已先读 Tickets Map、再读当前 Ticket 适用的项目 Skill；实现中发现的新匹配 Skill 已同步回 Map 并通过校验；
-- 重复失败或 integration attempt 上限只触发 Lead 复盘；没有 Evidence 中的原因、改变和 owner 决定，不得重置 attempts 或重复派发；
-- current Ticket 父分支只推进到通过的 direct-parent 验证 commit；required Ticket 父分支只推进到通过的 candidate；两者 Ticket Done 都必须与实际 Git 一致；Direct Spec 的完成状态与 current workspace 最终 checkpoint 一致；
-- 实际路径、验证、偏差和状态可由 Evidence 恢复；
-- validator 无 error。
-
-## 子文件引用
-
-- 执行前预检：`<Path>{roots.workflows}/specdev/I-implement/execution-preflight.md</Path>`
-- 代码库设计：`<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
-- Design It Twice：`<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`
-- TDD：`<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-test-design.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-mocking.md</Path>`
-- 代码注释：`<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`
-- Evidence：`<Path>{roots.workflows}/specdev/I-implement/evidence-template.md</Path>`
-- Agent 交付：`<Path>{roots.workflows}/specdev/common/skills/subagent-delivery/SKILL.md</Path>`
-- Worktree：`<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>`
-- 冲突处理：`<Path>{roots.workflows}/specdev/I-implement/merge-conflict-protocol.md</Path>`
 
 ## 计划型票扩展
 

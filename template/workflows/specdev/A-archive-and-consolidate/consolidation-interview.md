@@ -51,4 +51,13 @@ change 内三份文档复用 grill 的既有格式，避免重复发明：
 - 缺少必要外部信息或权限，change 标 blocked；或
 - 继续提问只会产生低影响或纯实现细节，交给对应实现阶段决定。
 
-停止后交回入口 §3，进入知识提升评估。未获代码或实际行为验证的结论一律不提升，只留在 change 内。
+停止后返回 A 的 Archive 模式，进入知识提升评估。未获代码或实际行为验证的结论一律不提升，只留在 change 内。
+
+
+## Consolidate-from-code 模式
+
+1. 创建 `<Path>{roots.state}/specdev/changes/{change}/</Path>`、change 状态、LOG、CONTEXT 和 ADR，并登记 `current_work`。
+2. 按上述访谈过程，每轮先探索代码/配置/测试并陈述证据，再一次只问一个真正影响长期理解的问题。
+3. 按 LOG → CONTEXT → ADR 顺序写入：CONTEXT 只保存项目规范术语；ADR 只有同时满足难逆转、令人意外和真实权衡时才创建。
+4. 用户结论必须由当前代码或实际行为验证；未验证内容留在 LOG，不提升。
+5. 按 change completion 规则由本 Work 关闭该非实现型 change，再进入 Archive 模式的 dry-run/确认流程。

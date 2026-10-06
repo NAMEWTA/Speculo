@@ -2,8 +2,25 @@
 
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { buildDocumentGraph, graphReport, measureReadTrace } from './lib/workflow-document-graph.mjs';
 
-const root = path.resolve(process.argv[2] ?? '.');
+const args = process.argv.slice(2);
+let rootArg = '.', traceFile = null, profileFile = null, json = false;
+const changed = [];
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--json') json = true;
+  else if (['--trace', '--profile', '--changed'].includes(args[i])) {
+    const flag = args[i], value = args[++i];
+    if (!value || value.startsWith('--')) throw new Error(`missing value for ${flag}`);
+    if (flag === '--trace') traceFile = value;
+    else if (flag === '--profile') profileFile = value;
+    else changed.push(value);
+  } else if (args[i].startsWith('--')) throw new Error(`unknown option ${args[i]}`);
+  else if (i === 0) rootArg = args[i];
+  else throw new Error(`unexpected argument ${args[i]}`);
+}
+if (profileFile && !traceFile) throw new Error('--profile requires --trace');
+const root = path.resolve(rootArg);
 const workflowsRoot = path.join(root, 'template', 'workflows');
 const workflows = ['learning', 'specdev', 'ops', 'person'];
 const errors = [];
@@ -46,7 +63,8 @@ for (const workflow of workflows) {
       ? /<Path>\{roots\.workflows\}\/person\/INDEX\.md<\/Path>/
       : new RegExp(`<Path>\\{roots\\.workflows\\}/${workflow}/README\\.md<\\/Path>`);
     requireText(relative, content, rootPointer, 'activation contract pointer');
-    requireText(relative, content, /读取范围/, 'read-scope section');
+    // A direct activation/memory pointer carries the shared read contract.
+    // Do not require every Work to repeat the same paragraph or heading.
     requireText(relative, content, /common\/rules\/activation-and-memory\.md/, 'memory protocol pointer');
   }
 }
@@ -69,10 +87,21 @@ if (personRoot.includes('template/workflows/person/README.md') || personRoot.inc
   errors.push('person/M-mao-zedong-cognitive-os: references a nonexistent README');
 }
 
-if (errors.length) {
-  console.error(`workflow disclosure validation failed: ${errors.length}`);
-  for (const error of errors) console.error(`- ${error}`);
-  process.exit(1);
+const graph = await buildDocumentGraph(root);
+errors.push(...graph.errors);
+const report = graphReport(graph, changed);
+if (traceFile) {
+  const trace = (await readFile(path.resolve(traceFile), 'utf8')).split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  report.reads = measureReadTrace(graph, trace, profileFile ? JSON.parse(await readFile(path.resolve(profileFile), 'utf8')) : {});
+  errors.push(...report.reads.errors);
 }
-
-console.log('workflow disclosure validation: ok');
+report.errors = [...new Set(errors)];
+if (json) console.log(JSON.stringify(report, null, 2));
+else if (report.errors.length) {
+  console.error(`workflow disclosure validation failed: ${report.errors.length}`);
+  for (const error of report.errors) console.error(`- ${error}`);
+} else {
+  console.log(`workflow disclosure validation: ok (${graph.entries.length} Work entries, ${graph.edges.length} potential references)`);
+  console.log(`Navigation audit: ${graph.cycles.length} reference cycles; ${graph.unlinked_candidates.length} unlinked candidates (not deletion authorization; use --json).`);
+}
+process.exitCode = report.errors.length ? 1 : 0;

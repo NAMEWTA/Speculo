@@ -24,10 +24,11 @@ metadata: {"speculo-legacy-name": "specdev-code-review"}
 
 1. 重验 fixed point/head 可解析、三点 diff 非空，失败时不启动 reviewer。
 2. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/source-discovery.md</Path>`，穷尽规范和标准来源。
-3. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
-4. 用户要求全面审查或触及安全、数据迁移、公共契约、并发和恢复时，先加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`，覆盖全部适用风险，不限制 finding 数量。
-5. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path>`，用互不共享发现的上下文分别运行两个轴。
-6. 原顺序返回 `standards` 和 `specification` 两份结果。规范来源不存在时只跳过规范轴并解释，标准轴继续。
+3. 发现已有审查并拟复用时，先读取 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/result-reuse.md</Path>`，完整核对输入、两轴隔离与原始证据；能证明相同的轴保留原结果，其余轴按下列步骤运行；未能证明相同就正常重审两轴。
+4. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
+5. 用户要求全面审查或触及安全、数据迁移、公共契约、并发和恢复时，先加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`，覆盖全部适用风险，不限制 finding 数量。
+6. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path>`，用互不共享发现的上下文分别运行两个轴。
+7. 原顺序返回 `standards` 和 `specification` 两份结果。规范来源不存在时只跳过规范轴并解释，标准轴继续。
 
 ## 输出
 
