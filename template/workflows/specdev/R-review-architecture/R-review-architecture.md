@@ -11,11 +11,11 @@ keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
 
-本 work 以热核级维护性标准审查当前范围：先找会让 module 变浅的结构性坏味道，再找能删掉复杂性的 `code-judo` 机会，再找真正值得深化的 seam。行为正确不构成通过；如果存在更简单的路径，就优先把复杂性删掉，而不是搬家。
+本 work 根据可定位的代码压力审查当前范围：先找会让 module 变浅的结构性坏味道，再找能删掉复杂性的 `code-judo` 机会，再找真正值得深化的 seam。行为正确不构成通过；如果存在更简单的路径，就优先把复杂性删掉，而不是搬家。
 
 本 work 只审查、呈现和访谈，不直接修改产品代码。报告阶段只产出 Markdown 决策记录，不生成 HTML。
 
-本 work 的候选筛选、排序和删除测试见 `<Path>{roots.workflows}/specdev/R-review-architecture/review-rubric.md</Path>`。审查语言必须使用 module、interface、depth、seam、adapter、leverage、locality。
+本 work 的候选筛选、排序和删除测试见 `<Path>{roots.workflows}/specdev/R-review-architecture/review-rubric.md</Path>`。沿用 CONTEXT 与共享设计词汇（module、interface、depth、seam、adapter、leverage、locality）准确表达含义，不为机械出现英文而牺牲理解。
 
 激活时读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前步骤定位输入和证据。
 
@@ -38,7 +38,14 @@ keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接
 
 每个候选都必须说明：files、structural problem、code-judo move、deleted complexity、dependency class、strength、ADR conflict、interview state 和 user conclusion。文件若因为本次变化接近或超过 1k lines，必须显式标注 decomposition pressure，不得默默吞掉。
 
-## 流程
+## 选择交付分支
+
+- `report`（默认）：用户只请求 review/扫描时完成下方探索与报告，候选保持 `unselected`；没有候选是有效结果，不要求用户先选方案才完成报告。
+- `selected-design`：只有用户已经选择一个候选并请求深入设计，才加载 `<Path>{roots.workflows}/specdev/R-review-architecture/references/selected-design.md</Path>`。输入是可回读报告和所选候选；来源漂移先核对影响，不用旧结论代替当前代码。
+
+两分支均不修改生产代码，报告不授权访谈、建票或实施。
+
+## Report 流程
 
 ### 1. 探索
 
@@ -71,22 +78,16 @@ keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接
 - **依赖类别**——`in-process | local-substitutable | ports & adapters | mock`；
 - **ADR 冲突**——只在摩擦真实到值得重审时显示警告。
 
-报告以“最佳推荐”结束；若没有高置信候选，就明确写 `无高置信候选`。此时**不提出 interface**，只询问用户想探索哪一个候选，或者为何没有候选。
+报告以“最佳推荐”结束；若没有高置信候选，就明确写 `无高置信候选`。报告阶段**不提出 interface**；返回候选和证据即可，不强制追加选择问题。
 
 **完成标准**：每个候选字段完整、最佳推荐唯一或明确为空，Markdown 已原子写入并重读。
 
-### 3. 访谈与转票
+## 分支完成、状态与返回
 
-用户选定候选后读取 `<Path>{roots.workflows}/specdev/R-review-architecture/references/selected-design.md</Path>`，完成完整 frontier 访谈及接受方案的 Ticket 交接。保持原有设计共识与报告完成条件，不以移出过程替代门禁。
+`report` 完成条件：范围有依据；高置信候选满足删除测试且每项有当前文件/调用/测试证据、前后对比、收益、强度和 ADR 冲突处理；最佳推荐唯一或明确为“无高置信候选”；Markdown 已原子写入并回读。未选择或拒绝的候选不变成 Ticket。
 
-## 完成标准
+`selected-design` 完成条件：用户选定的一个候选完成参考中的完整 frontier 访谈，或明确 blocked/rejected；只有接受且达成共识的方案才按原 Ticket 治理交接。其他候选保持未选择，不批量要求决定。
 
-- 范围来自用户方向或 Git 热点，未进行无边界扫描；
-- 每个候选通过删除测试并有真实代码压力；
-- 领域使用 CONTEXT 词汇，架构严格使用共享词汇；
-- Markdown 决策记录可重读；
-- 每个候选有前后对比、强度、收益和 ADR 冲突处理；
-- 报告阶段没有提前设计 interface；
-- 用户选择的一个候选完成完整 frontier 访谈；
-- 接受项进入 Ticket 治理，没有直接修改产品代码；
-- 没有把结构性弱候选包装成最佳推荐。
+按本分支真实结果更新 Work 状态：成功才把本 Work 去重加入 `works_run` 并清空 `current_work`，blocked 保留恢复键和原因。报告完成不是产品交付；只有请求本来以非实现审查为终点且满足 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，该终点 owner 才可关闭 change。
+
+返回分支、报告完整路径、审查范围/排除范围、代码证据、候选结论、实际验证与未验证项；有选择时再返回相应设计树/下一 Work。结构检查不证明设计判断正确，不能把弱候选包装成最佳推荐。
