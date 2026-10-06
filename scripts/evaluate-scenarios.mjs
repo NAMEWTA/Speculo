@@ -1,29 +1,23 @@
 #!/usr/bin/env node
-import { createHash } from "node:crypto";
-import { lstat, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
+import { evidencePath, sha256, verifyObservation } from "./lib/evaluation-evidence.mjs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const kinds = new Set(["capability", "context", "tool", "transition", "approval", "evidence"]);
 const object = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const text = (v) => typeof v === "string" && !!v.trim();
-const hash = (v) => createHash("sha256").update(v).digest("hex");
+const hash = sha256;
 const subset = (expected, actual) => object(expected) && object(actual) && Object.entries(expected).every(([k, v]) => JSON.stringify(actual[k]) === JSON.stringify(v));
 
 async function artifactPath(root, caseId, path) {
-  if (!text(path) || /[\\:\x00-\x1f]/.test(path) || path.startsWith("/") || path.split("/").some((p) => !p || p === "." || p === "..")) throw new Error("unsafe artifact path");
-  const full = join(root, caseId, path);
-  let current = resolve(root);
-  for (const part of [caseId, ...path.split("/")]) {
-    current = join(current, part);
-    try { if ((await lstat(current)).isSymbolicLink()) throw new Error("artifact symlink is not permitted"); }
-    catch (error) { if (error.code !== "ENOENT") throw error; }
-  }
-  return full;
+  if (!text(path)) throw new Error("unsafe artifact path");
+  return evidencePath(root, `${caseId}/${path}`);
 }
 
 /** Evaluates supplied trace + actual fixture files, never authenticates external tools or model self-reports. */
-export async function evaluateScenarios(scenarios, trace = null, artifactRoot = null) {
+export async function evaluateScenarios(scenarios, trace = null, artifactRoot = null, options = {}) {
+  if (!["fixtures", "artifacts", "observed"].includes(options.require ?? "fixtures")) throw new Error("invalid evaluation requirement");
   if (!Array.isArray(scenarios) || !scenarios.length) throw new Error("scenario fixture must be a non-empty array");
   const ids = new Set();
   for (const scenario of scenarios) {
@@ -31,8 +25,8 @@ export async function evaluateScenarios(scenarios, trace = null, artifactRoot = 
         !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(scenario.id) || ids.has(scenario.id)) throw new Error("invalid/duplicate scenario");
     ids.add(scenario.id);
   }
-  const base = { schema_version: 2, scenarios: scenarios.length, score: null, evidence_scope: "supplied trace and local fixture artifacts; tool provenance not authenticated" };
-  if (trace === null) return { ...base, trace_events: 0, status: "fixture-ready", behavior: "not-evaluated", exit_code: 0, cases: [] };
+  const base = { schema_version: 2, scenarios: scenarios.length, score: null, evaluation_level: trace === null ? "fixtures" : "artifacts", release_eligible: false, evidence_scope: "supplied trace and local fixture artifacts; tool provenance not authenticated" };
+  if (trace === null) return { ...base, trace_events: 0, status: "fixture-ready", behavior: "not-evaluated", exit_code: options.require && options.require !== "fixtures" ? 2 : 0, cases: [] };
   if (!Array.isArray(trace)) throw new Error("trace must be an event array");
   let sequence = 0;
   const traceErrors = [];
@@ -54,6 +48,11 @@ export async function evaluateScenarios(scenarios, trace = null, artifactRoot = 
     for (const effect of assertions.forbidden_effects ?? []) {
       if (!text(effect)) throw new Error("invalid forbidden effect");
       if (events.some((e) => e.kind === "tool" && e.payload.effect === effect)) failures.push("forbidden effect: " + effect);
+    }
+    if (assertions.forbidden_reads !== undefined && !Array.isArray(assertions.forbidden_reads)) throw new Error("forbidden reads must be an array");
+    for (const path of assertions.forbidden_reads ?? []) {
+      if (!text(path)) throw new Error("invalid forbidden read");
+      if (events.some((e) => e.kind === "context" && (e.payload.path === path || e.payload.path?.startsWith(path.endsWith("/") ? path : `${path}/`)))) failures.push("forbidden read: " + path);
     }
     let index = -1;
     for (const required of assertions.events ?? []) {
@@ -83,14 +82,40 @@ export async function evaluateScenarios(scenarios, trace = null, artifactRoot = 
   }
   const passed = cases.filter((c) => c.status === "passed").length;
   const unevaluated = cases.filter((c) => c.status === "not-evaluated").length;
-  return { ...base, trace_events: trace.length, status: passed === cases.length ? "passed-artifact-gates" : "blocked-scenarios", behavior: passed === cases.length ? "artifact-gates-passed" : "not-proven", passed, not_evaluated: unevaluated, cases, exit_code: passed === cases.length ? 0 : 2 };
+  const result = { ...base, trace_events: trace.length, status: passed === cases.length ? "passed-artifact-gates" : "blocked-scenarios", behavior: passed === cases.length ? "artifact-gates-passed" : "not-proven", passed, not_evaluated: unevaluated, cases, exit_code: passed === cases.length ? 0 : 2 };
+  if (options.require === "observed" || options.bundleRoot) {
+    try {
+      const observation = await verifyObservation({ ...options, scenarios, trace, artifactRoot });
+      if (result.exit_code === 0) return { ...result, evaluation_level: "observed", status: "passed-observed-gates", behavior: "observer-gates-passed", release_eligible: true, observation, evidence_scope: "declared assertions and complete reads/effects/artifacts attested by the configured independent observer; not general semantic correctness" };
+    } catch (error) {
+      return { ...result, status: "blocked-observer-evidence", behavior: "not-proven", exit_code: 2, evidence_error: error.message };
+    }
+  }
+  return result;
+}
+export function parseEvaluationArgs(args) {
+  const options = {}, positional = [];
+  const flags = new Map([["--require", "require"], ["--bundle", "bundleRoot"], ["--trust", "trustPath"], ["--repo", "repoRoot"]]);
+  for (let i = 0; i < args.length; i++) {
+    const key = flags.get(args[i]);
+    if (key) {
+      if (!args[i + 1] || args[i + 1].startsWith("--") || key in options) throw new Error(`missing or duplicate ${args[i]}`);
+      options[key] = args[++i];
+    } else if (args[i].startsWith("--")) throw new Error(`unknown option ${args[i]}`);
+    else positional.push(args[i]);
+  }
+  if (positional.length > 3) throw new Error("usage: evaluate-scenarios.mjs [fixtures.json] [trace.jsonl] [artifact-root] [--require fixtures|artifacts|observed] [--bundle directory --trust keys.json --repo repository]");
+  if (options.bundleRoot && positional.length > 1) throw new Error("--bundle cannot be combined with trace/artifact positional arguments");
+  return { options, positional };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    if (process.argv.length > 5) throw new Error("usage: evaluate-scenarios.mjs [fixtures.json] [trace.jsonl] [artifact-root]");
-    const scenarios = JSON.parse(await readFile(resolve(process.argv[2] ?? "test/fixtures/scenarios.json"), "utf8"));
-    const trace = process.argv[3] ? (await readFile(resolve(process.argv[3]), "utf8")).split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)) : null;
-    const result = await evaluateScenarios(scenarios, trace, process.argv[4] ? resolve(process.argv[4]) : null);
+    const { options, positional } = parseEvaluationArgs(process.argv.slice(2));
+    const scenarios = JSON.parse(await readFile(resolve(positional[0] ?? "test/fixtures/scenarios.json"), "utf8"));
+    const tracePath = options.bundleRoot ? await evidencePath(options.bundleRoot, "trace.jsonl") : positional[1];
+    const trace = tracePath ? (await readFile(resolve(tracePath), "utf8")).split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)) : null;
+    const artifactRoot = options.bundleRoot ? join(resolve(options.bundleRoot), "artifacts") : positional[2] ? resolve(positional[2]) : null;
+    const result = await evaluateScenarios(scenarios, trace, artifactRoot, options);
     console.log(JSON.stringify(result, null, 2)); process.exitCode = result.exit_code;
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

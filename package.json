@@ -20,7 +20,10 @@
     "prepack": "pnpm build",
     "prepublishOnly": "pnpm test && pnpm validate-assets",
     "validate-skills": "node scripts/validate-skills.mjs",
-    "validate-source-inventory": "node scripts/check-specdev-source-parity.mjs"
+    "validate-source-inventory": "node scripts/check-specdev-source-parity.mjs",
+    "eval:artifacts": "node scripts/evaluate-scenarios.mjs --require artifacts",
+    "eval:observed": "node scripts/evaluate-scenarios.mjs --require observed",
+    "eval:release": "node scripts/evaluate-scenarios.mjs --require observed"
   },
   "files": [
     "dist/src",
