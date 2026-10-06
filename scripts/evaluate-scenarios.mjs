@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
-import { evidencePath, sha256, verifyObservation } from "./lib/evaluation-evidence.mjs";
+import { evidencePath, safeRelative, sha256, verifyObservation } from "./lib/evaluation-evidence.mjs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -15,7 +15,7 @@ async function artifactPath(root, caseId, path) {
   return evidencePath(root, `${caseId}/${path}`);
 }
 
-/** Evaluates supplied trace + actual fixture files, never authenticates external tools or model self-reports. */
+/** Evaluate declared assertions; observed mode separately authenticates an operator-trusted export, never a model self-report. */
 export async function evaluateScenarios(scenarios, trace = null, artifactRoot = null, options = {}) {
   if (!["fixtures", "artifacts", "observed"].includes(options.require ?? "fixtures")) throw new Error("invalid evaluation requirement");
   if (!Array.isArray(scenarios) || !scenarios.length) throw new Error("scenario fixture must be a non-empty array");
@@ -31,7 +31,11 @@ export async function evaluateScenarios(scenarios, trace = null, artifactRoot = 
   let sequence = 0;
   const traceErrors = [];
   for (const e of trace) {
-    if (!object(e) || e.schema_version !== 1 || e.sequence !== ++sequence || !kinds.has(e.kind) || !object(e.payload) || !ids.has(e.scenario_id)) traceErrors.push(`event ${sequence}: invalid structure, kind or scenario_id`);
+    if (!object(e) || e.schema_version !== 1 || e.sequence !== ++sequence || !kinds.has(e.kind) || !object(e.payload) || !ids.has(e.scenario_id)) { traceErrors.push(`event ${sequence}: invalid structure, kind or scenario_id`); continue; }
+    const readGuard = options.require === "observed" || options.bundleRoot || scenarios.find((scenario) => scenario.id === e.scenario_id)?.assertions?.forbidden_reads?.length;
+    if (e.kind === "context" && (readGuard || "path" in e.payload) && !safeRelative(e.payload.path)) traceErrors.push(`event ${sequence}: context path must be canonical repository-relative`);
+    if (e.kind === "tool" && (options.require === "observed" || options.bundleRoot) &&
+        (!text(e.payload.name) || !text(e.payload.effect) || !Number.isInteger(e.payload.exit_code))) traceErrors.push(`event ${sequence}: observed tool requires name, effect and actual exit_code`);
   }
   if (traceErrors.length || !trace.length) return { ...base, trace_events: trace.length, status: "blocked-trace", behavior: "not-evaluated", exit_code: 2, trace_errors: traceErrors, cases: [] };
   const cases = [];
@@ -51,7 +55,7 @@ export async function evaluateScenarios(scenarios, trace = null, artifactRoot = 
     }
     if (assertions.forbidden_reads !== undefined && !Array.isArray(assertions.forbidden_reads)) throw new Error("forbidden reads must be an array");
     for (const path of assertions.forbidden_reads ?? []) {
-      if (!text(path)) throw new Error("invalid forbidden read");
+      if (!safeRelative(typeof path === "string" && path.endsWith("/") ? path.slice(0, -1) : path)) throw new Error("invalid forbidden read");
       if (events.some((e) => e.kind === "context" && (e.payload.path === path || e.payload.path?.startsWith(path.endsWith("/") ? path : `${path}/`)))) failures.push("forbidden read: " + path);
     }
     let index = -1;

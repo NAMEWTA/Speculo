@@ -42,7 +42,8 @@ export/
 `trace.jsonl` uses the existing event vocabulary: `capability`, `context`, `tool`,
 `transition`, `approval`, `evidence`. Each event contains `schema_version: 1`, a
 strictly increasing contiguous `sequence`, a declared `scenario_id`, and an
-object `payload`. Context reads include a repository-relative `path`; tool
+object `payload`. Context reads include a canonical repository-relative `path` (no traversal,
+absolute paths, backslashes or duplicate separators); tool
 observations include actual `name`, `exit_code` and classified `effect`. Record
 reads, failures and side effects, not just success summaries. `forbidden_reads`
 assertions match exact paths or directory descendants, not similar prefixes.

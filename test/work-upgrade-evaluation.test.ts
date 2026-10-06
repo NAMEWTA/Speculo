@@ -109,6 +109,19 @@ describe("work upgrade: evaluation levels and independent observation trust", ()
     const result = await evaluateScenarios(scenario(), trace, f.artifacts);
     assert.equal(result.exit_code, 2); assert.match(JSON.stringify(result), /forbidden read/);
   }));
+  it("rejects aliases and missing read paths instead of bypassing a negative assertion", async () => fixture(async (f) => {
+    const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
+    for (const path of ["entry/../private/credentials.json", "private//credentials.json", "./private/credentials.json", "private\\credentials.json", "/private/credentials.json", null, undefined, 1]) {
+      const trace: any[] = events();
+      trace.push({ schema_version: 1, sequence: 2, scenario_id: "case-a", kind: "context", payload: { path } });
+      const result = await evaluateScenarios(scenario(), trace, f.artifacts);
+      assert.equal(result.exit_code, 2); assert.equal(result.status, "blocked-trace");
+      assert.match(JSON.stringify(result), /canonical repository-relative/);
+    }
+    const trace: any[] = events(); trace[0].payload.effect = undefined;
+    const result = await evaluateScenarios(scenario(), trace, f.artifacts, { require: "observed" });
+    assert.equal(result.status, "blocked-trace"); assert.match(JSON.stringify(result), /actual exit_code/);
+  }));
   it("rejects artifact symlinks and path traversal", { skip: process.platform === "win32" }, async () => fixture(async (f) => {
     const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
     const linkRoot = join(f.dir, "linked-artifacts"); await symlink(f.artifacts, linkRoot);

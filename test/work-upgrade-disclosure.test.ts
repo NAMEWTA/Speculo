@@ -71,6 +71,15 @@ describe("work upgrade: potential reference graph and actual read accounting", (
     for (const expected of ["forbidden read", "source drift", "invalid read range", "required read missing"]) assert.ok(result.errors.some((error: string) => error.includes(expected)));
     assert.equal(result.bytes, 0); assert.deepEqual(result.unclassified_reads, ["private/credentials.json"]);
   });
+  it("rejects aliased read paths and reports malformed encoded links", async () => {
+    const { measureReadTrace, extractDocumentReferences } = await load();
+    for (const path of ["docs/../private/key", "private//key", "private\\key", "./private/key", "/private/key"]) {
+      const result = measureReadTrace({ files: new Map() }, [{ kind: "context", payload: { path } }], { forbidden: ["private"] });
+      assert.match(result.errors.join("\n"), /canonical repository-relative/);
+      assert.equal(result.bytes, 0);
+    }
+    assert.match(extractDocumentReferences("[broken](%ZZ.md)", "docs/entry.md")[0].error, /malformed encoded reference/);
+  });
   it("does not infer a read or effective action from an empty trace", async () => {
     const { measureReadTrace } = await load();
     const result = measureReadTrace({ files: new Map() }, []);

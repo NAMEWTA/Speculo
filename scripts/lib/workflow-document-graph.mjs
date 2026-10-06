@@ -1,3 +1,4 @@
+import { safeRelative } from "./evaluation-evidence.mjs";
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -51,7 +52,10 @@ export function extractDocumentReferences(content, source) {
         else if (/[{}<>*]|\.\.\./.test(rawPath)) ref.role = "dynamic";
         else ref.target = posix(join(aliases[pointer.alias], rawPath.replace(/^\//, "")));
       } else if (/[{}<>*]|\.\.\./.test(rawPath)) ref.role = "dynamic";
-      else ref.target = posix(join(dirname(source), decodeURIComponent(rawPath)));
+      else {
+        try { ref.target = posix(join(dirname(source), decodeURIComponent(rawPath))); }
+        catch { ref.error = "malformed encoded reference"; }
+      }
       if (table && /分支|模式|按需/.test(heading) && !firstCell) ref.error = "conditional table pointer has no trigger";
       if (ref.target) ref.role = sourceRole(ref.target);
       refs.push(ref);
@@ -152,13 +156,13 @@ export function measureReadTrace(graph, trace, profile = {}) {
   if (!Array.isArray(trace)) throw new Error("read trace must be an event array");
   const loaded = new Map(), phases = {}, errors = [], unclassified = [];
   const required = profile.required ?? [], forbidden = profile.forbidden ?? [];
-  if (![required, forbidden].every((items) => Array.isArray(items) && items.every((item) => typeof item === "string" && item))) throw new Error("invalid read profile");
+  if (![required, forbidden].every((items) => Array.isArray(items) && items.every((item) => safeRelative(typeof item === "string" && item.endsWith("/") ? item.slice(0, -1) : item)))) throw new Error("invalid read profile");
   let bytes = 0, characters = 0, read_events = 0, first_action = null;
   for (const event of trace) {
     if (event.kind === "tool" && event.payload?.action === "effective" && first_action === null) first_action = { bytes, characters };
     if (event.kind !== "context") continue;
     const p = event.payload;
-    if (!p || typeof p.path !== "string") { errors.push("context event has no path"); continue; }
+    if (!p || !safeRelative(p.path)) { errors.push("context path must be canonical repository-relative"); continue; }
     read_events++;
     if (forbidden.some((path) => p.path === path || p.path.startsWith(path.endsWith("/") ? path : `${path}/`))) errors.push(`forbidden read: ${p.path}`);
     const file = graph.files.get(p.path);

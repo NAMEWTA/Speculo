@@ -14,7 +14,7 @@ D 从原 OPS 网关取得真实 Controller、server_ids、project_id、environme
 
 沿用现有 spec 字段：`resource_updates.projects[].source` 保存真实 type/location/revision，`deployments[].notes` 以字符串记录 change/Ticket、Evidence locator 与 digest/验收约束；部署目标、备份和恢复仍使用原字段。不要添加 schema 不支持的顶层 handoff/status 字段。任务中需要执行或引用的本地构件/脚本按原 `input_paths` 冻结；普通文档指针不是执行权限。
 
-执行、健康与文档回执仍遵守 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`、`<Path>{roots.workflows}/ops/common/rules/persistence-and-secrets.md</Path>` 和 `<Path>{roots.workflows}/ops/common/rules/recovery.md</Path>`。没有交付请求时，本分支不增加开发侧必读材料或部署门。
+执行、健康与文档回执由 OPS D 已激活入口中明确指向的任务授权、持久化与恢复合同拥有；由 OPS 执行方读取并验证，不从 SpecDev 路径解析器展开其他工作流的根。没有交付请求时，本分支不增加开发侧必读材料或部署门。
 
 ## 回传而非代写
 
