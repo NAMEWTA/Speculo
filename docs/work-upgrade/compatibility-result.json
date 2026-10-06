@@ -1,0 +1,31 @@
+{
+  "scope": "disposable local refresh fixtures; no target deployment or Agent behavior certification",
+  "platform": "linux",
+  "node": "v22.22.3",
+  "outcomes": [
+    {
+      "layout": "project-root",
+      "status": "passed",
+      "preserved_files": 8,
+      "phases": [
+        "mixed-refresh",
+        "candidate-refresh",
+        "lock-refusal",
+        "unknown-schema-refusal",
+        "static-rollback"
+      ]
+    },
+    {
+      "layout": "nested-project",
+      "status": "passed",
+      "preserved_files": 8,
+      "phases": [
+        "mixed-refresh",
+        "candidate-refresh",
+        "lock-refusal",
+        "unknown-schema-refusal",
+        "static-rollback"
+      ]
+    }
+  ]
+}
