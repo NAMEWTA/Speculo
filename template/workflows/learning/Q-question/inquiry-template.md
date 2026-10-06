@@ -13,6 +13,8 @@ created_at: <ISO-8601>
 
 # 苏格拉底问答课：<主题>
 
+<!-- 下方五组是默认示例。生成时以本批实际 n 替换 question_count，并生成连续配对的 Q1…Qn/A1…An；不得把用户指定数量截断为五题。 -->
+
 ## 引用
 
 - Change：`<stable change id and current locator>`
