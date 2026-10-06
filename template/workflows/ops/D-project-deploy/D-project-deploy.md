@@ -11,9 +11,7 @@ keywords: [ops, project-deploy, 项目, 持久化, 明确范围]
 
 激活本 Work 后先读取 `<Path>{roots.workflows}/ops/README.md</Path>`。
 
-## 读取范围
-
-读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`，按当前服务器/项目/部署/任务 ID 定位最小证据。只因冲突、unknown、权限或迁移安全需要扩读，不默认遍历全域明文。
+读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前 ID 定位最小证据。规划、执行或恢复前读取 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`、`<Path>{roots.workflows}/ops/common/rules/persistence-and-secrets.md</Path>`、`<Path>{roots.workflows}/ops/common/rules/deployment-layout.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/recovery.md</Path>`；共享依赖再读取 `<Path>{roots.workflows}/ops/common/rules/shared-services.md</Path>`。
 
 ## 流程与完成标准
 
@@ -33,4 +31,4 @@ uninstall 只停止自身、退役绑定和实例，保留所有数据、账号�
 
 完成条件：所有业务步骤与健康检查成功；服务端 README 具有最新版本、时间、配置、持久化、步骤和依赖；控制端对应目录保存完整部署记录和受限真实配置镜像，普通文档默认 secret_ref，明文导出需显式 opt-in；两边文档 SHA256 回执通过。docs_pending 不得报全部完成。最后执行 V 更新项目→服务器与服务器→项目清单。
 
-命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>` 与 `<Path>{roots.workflows}/ops/common/WORKSPACE-USAGE.md</Path>`；执行只通过现有 ops.mjs 网关及明确新增的任务命令，不绕过授权直接拼接目标修改命令。
+需要实际命令参数时，只查当前动作的合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>` 与 `<Path>{roots.workflows}/ops/common/WORKSPACE-USAGE.md</Path>`；执行只通过现有 ops.mjs 网关及明确新增的任务命令，不绕过授权直接拼接目标修改命令。

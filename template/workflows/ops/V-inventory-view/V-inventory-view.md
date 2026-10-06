@@ -11,9 +11,7 @@ keywords: [ops, inventory-view, 资产清单, 持久化, 明确范围]
 
 激活本 Work 后先读取 `<Path>{roots.workflows}/ops/README.md</Path>`。
 
-## 读取范围
-
-读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>` 与 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`，按当前服务器/项目/部署/任务 ID 定位最小证据。只因冲突、unknown、权限或迁移安全需要扩读，不默认遍历全域明文。
+读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前 ID 定位最小证据。
 
 ## 流程与完成标准
 
@@ -27,4 +25,4 @@ keywords: [ops, inventory-view, 资产清单, 持久化, 明确范围]
 
 刷新视图是本地衍生记录操作，不需要每次再确认部署。要重新检查服务器时转 S/H 的明确只读 server-check；要改部署时转 D，新任务不能来自看板按钮。
 
-命令合同：`<Path>{roots.workflows}/ops/common/USAGE.md</Path>` 与 `<Path>{roots.workflows}/ops/common/WORKSPACE-USAGE.md</Path>`；执行只通过现有 ops.mjs 网关及明确新增的任务命令，不绕过授权直接拼接目标修改命令。
+需要命令参数时只查 `<Path>{roots.workflows}/ops/common/WORKSPACE-USAGE.md</Path>` 的 fleet 段。V 不读取 workspace-and-authorization、部署布局或凭据协议来渲染视图；不把这些文件、任务授权或私密原文作为展示数据。

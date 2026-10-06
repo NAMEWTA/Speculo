@@ -19,3 +19,9 @@
 清单固定包括登记、SSH 公钥、机器身份、Linux、Node、根目录、磁盘、内存、Docker、Compose、Docker data-root、最小权限、时间同步、防火墙、外部依赖、备份恢复。后五项没有自动证据时保持 unknown；不抄一套 Linux 加固命令盲目关闭端口/清缓存/升级全机。
 
 完成输出：status.hosts 的明确资源、原 hosts/ID/inventory 盘点、records/servers/ID/checks 的检查回执、剩余缺口和下一 Work。执行 V 刷新本地列表，使用户直接从 FLEET.md 进入对应服务器及项目视图。连接失效/指纹改变先停止，不自动替换 known_hosts 或注册另一台机器为同一身份。
+
+## 固定 Node 引导的完成门
+
+Linux SSH 缺 Node 时由 S 使用 `ops.mjs bootstrap-node`：控制端校验已审核 tar 的 SHA256，scp 到目标，远端 POSIX 展开固定 Volta/Node；必须使用独立 ack/SHA256 网关，不走 H/D plan/approve。引导后必须 enroll（或 register 后 probe --host），取得真实 inventory/snapshot 与 status.hosts 记录，不能只把盘点留在对话中。
+
+已有 Node 不重复安装、不改 shell profile。缺 Node 可以阻塞 apply，但不阻塞安全的登记；Windows/macOS 仍要求目标已有 Node。该能力不绕过初次主机信任、可用 SSH 登录或用户批准的固定构件。

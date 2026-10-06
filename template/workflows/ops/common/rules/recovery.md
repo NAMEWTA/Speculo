@@ -13,3 +13,9 @@ apply 不能执行第二次；resume 只跳过已有成功终态回执，对 sta
 迁移与接管需单独的 verified adoption。adopt_existing/allow_adopt_roots 只承认经过用户批准的既有目录，不意味未知数据库/凭据可被覆盖。写入前保留旧文件在 host_root/_host/runs/run-id/before/，但这些副本不是数据库一致性备份。
 
 清理分两步：有限 cache/log 的同卷 quarantine；另一次批准后 purge-quarantine 精确 run/item。purge 是不可逆删除，只接受成功隔离证据和内容清单匹配，不能把数据、env、备份或 release 目录当成垃圾。
+
+## 证据索引与完成事实
+
+单主机 I/H 的证据留在 `hosts/id/runs/run-id/`，D/跨主机证据留在 `releases/run-id/`，各主机只保存索引。plan.json 与 approval.json 不可覆盖；journal.jsonl 的摘要链能检测修改，但不能独自证明尾部未被有权者完整截断，应保留目标回执和备份。
+
+`planned | running | configured | docs_pending | completed | failed | unknown | retired` 反映不同现场事实。version 是计划版本，observed_version 只在运行验证成功后更新；完成要求 `both-sides-verified`，不能凭容器启动或文档标题。主机/全域总册必须同时含服务一览表（包括主机级入口）和入口规范。
