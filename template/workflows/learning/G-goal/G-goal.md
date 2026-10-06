@@ -3,7 +3,7 @@ id: learning/goal
 type: workflow-entry
 workflow: learning
 name: 目标学习（目标模式）
-description: 为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图并按库存切 ≤15 的 mine unit，但不写 Lesson、不向学习者提问、不自动串联 H/R/C。
+description: 为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图并按库存切 ≤15 的 mine unit，但不写 Lesson、不进行教学探针提问、不自动串联 H/R/C。
 keywords: [goal, 目标模式, 目标学习, chain, coverage, mine, plan, mine-unit]
 ---
 
@@ -33,7 +33,7 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 ## 流程
 
 1. 解析 roots 与 Learning v2 状态。roots 必须来自已打开的 `<Path>{roots.state}/workspace.json</Path>`。若尚无 `status.json` / `locations.json`，先按 `<Path>{roots.workflows}/learning/I-init-setup/I-init-setup.md</Path>` 写入空状态骨架，不创建知识条目。
-2. 范围访谈一次只问一个缺口：项目路径、in-scope 模块/公开 API、out-of-scope、`expression_level`、`coverage_depth`。用户已答过不重复问。
+2. 仅澄清计划范围，不生成教学问题或要求学习者作答课程探针。范围访谈一次只问一个缺口：项目路径、in-scope 模块/公开 API、out-of-scope、`expression_level`、`coverage_depth`。用户已答过不重复问。
 3. 创建或恢复 `YYYY-MM-DD-<kebab-topic>[-NN]` Change，生成 `.status.json`，设置 `phase=planning`、`current_work=learning/goal`。
 4. 读取目标仓库，做编程库存：C4 Context + Container、公开入口、主数据存储、一条主路径与一条失败路径、按模块归组的范围内函数。琐碎 helper、生成代码、测试夹具标 `covered-by-parent` 或 `deferred`，不为它们开课。Lead 可派只读库存员。
 5. 若本 Change 尚无可用 `course.md`，跟随 `<Path>{roots.workflows}/learning/A-assess-and-plan/A-assess-and-plan.md</Path>` 写出 `course.md`、`background/foundation.md`、`baseline.md`、`sources.md` 和 Change `INDEX.md`。这些文件仍归 A 所有；本 Work 只在编译计划时走 A 合同。已有课程地图则核对，不默默重写。

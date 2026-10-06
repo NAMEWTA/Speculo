@@ -17,14 +17,14 @@ keywords: [初始化, learner-profile, context, learning-v2]
 
 1. 读取 `<Path>{roots.state}/learning/status.json</Path>`。不存在时从 `_state/status.json` 原子创建；存在 v1 或未知 schema 时停止并返回 `learning-reset-required`，不修复旧文件。
 2. 读取 `<Path>{roots.workflows}/learning/I-init-setup/learner-profile-template.md</Path>`。只询问无法从环境发现的语言、表达基线、深度、图像/图解偏好、默认 Lesson 时长、Homework 题数和 R 偏好；保留已有字段。
-3. 创建 `changes/`、`archive/`、`context/domains/`，并初始化 `locations.json`、`context/INDEX.md`、`context/REVIEW.md`；不写任何知识条目。
+3. 首次初始化才创建缺失的 `changes/`、`archive/`、`context/domains/`、`locations.json`、`context/INDEX.md`、`context/REVIEW.md`。已有文件先验证并保留，不能重置 active、位置、课程、原答、掌握证据或知识内容；必要文件缺失且存在既有 Change 时报告不一致，不用空索引掩盖。
 4. 运行 `<Path>{roots.workflows}/learning/common/tools/validate-learning.mjs</Path>` 的 state 校验并重读新文件。
 
 ## 完成标准
 
 - 状态、位置登记和 profile 是合法 v2；
-- 没有 active Change、mastered 条目或外部副作用；
-- 空索引可导航，后续 Work 可恢复。
+- 首次空初始化没有虚构 active Change 或 mastered 条目；复核既有系统时原有记录与用户偏好保持不变；
+- 本次没有外部副作用；新建空索引或既有索引均可导航，后续 Work 可恢复。
 
 ## 子文件
 
