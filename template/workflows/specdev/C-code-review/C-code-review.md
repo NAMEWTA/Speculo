@@ -13,12 +13,7 @@ keywords: [code-review, review, diff, fixed-point, PR, 标准, 规范]
 
 C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`；I 的最终审查由 I 写入 Evidence，不写本目录。
 
-## 读取范围
-
-1. 先读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 与当前 Work 的状态入口。
-2. 再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前分支、状态和关键词定位最小相关工件。
-3. 只在本 Work 明确要求恢复、冲突、执行安全或归档证据时扩展为全量读取；缺少匹配证据或 owner/gateway 时停止受影响分支。
-
+激活时读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前步骤定位输入和证据。
 
 ## 输入
 
@@ -32,7 +27,7 @@ C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/spe
 2. **冻结输入**：记录 `git diff <fixed>...<head>` 和 `git log <fixed>..<head> --oneline`。引用无效或 diff 为空时失败，不创建报告。
 3. **发现来源**：调用 `<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`；规范来源缺失时经确认跳过规范轴，标准轴继续。
 4. **隔离审查**：平台支持时并行 reviewer，否则用两个独立完整输入包顺序执行。两轴不得读取对方 finding。
-5. **持久化**：选择下一个未占用 `CR-###`，使用模板写入 `<Path>{roots.state}/specdev/changes/{change}/reviews/CR-###.md</Path>`，原子重读。
+5. **持久化**：选择下一个未占用 `CR-###`，使用 `<Path>{roots.workflows}/specdev/C-code-review/code-review-template.md</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/reviews/CR-###.md</Path>`，原子重读。
 6. **验证与路由**：使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage review` 校验当前 change。无阻塞 finding 时返回完成或 I；局部修复生成/修订 Ticket；规范冲突返回 S/G；无法确定的 blocker 保持 C 可恢复状态。
 
 ## 完成标准
@@ -43,9 +38,3 @@ C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/spe
 - 每个 finding 有路径、风险、依据和满足条件；
 - 报告、状态、验证结果和下一 Work 路径一致；
 - C 未修改项目代码或远程状态。
-
-## 子文件引用
-
-- 公共审查 Skill：`<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`
-- 报告模板：`<Path>{roots.workflows}/specdev/C-code-review/code-review-template.md</Path>`
-- 报告 Schema：`<Path>{roots.workflows}/specdev/common/schemas/code-review.schema.json</Path>`

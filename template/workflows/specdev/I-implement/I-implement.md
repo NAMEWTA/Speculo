@@ -15,9 +15,9 @@ keywords: [implement, Ticket, TDD, Evidence, integration]
 
 先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；从当前 tickets-map 或父 map 定位本票、上游约束、项目 Skill 与执行策略。仅展开当前 Ticket 的正文、直接依赖、适用 Skill 和必要恢复证据，不整读知识库。
 
-## 执行入口
+## 当前票的执行入口
 
-执行必须读取 `<Path>{roots.workflows}/specdev/I-implement/references/implementation-procedure.md</Path>` 和 `<Path>{roots.workflows}/specdev/I-implement/execution-preflight.md</Path>`；这两份合同持有原有 Direct Spec/Ticket、TDD、双轴审查、Git、workspace 与 Evidence 全流程，不得跳过。
+执行必须读取 `<Path>{roots.workflows}/specdev/I-implement/references/implementation-procedure.md</Path>` 和 `<Path>{roots.workflows}/specdev/I-implement/execution-preflight.md</Path>`；执行过程按当前阶段路由设计、TDD、双轴审查和 Evidence；预检单独拥有 Git、workspace、Ready 与授权检查。两者必读，分支参考只在对应 workspace/风险/阶段进入时加载。
 
 1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 实际调用绑定能力并记录证据。旧票缺调用契约时先由 Lead 补齐，不猜测。
 2. 保持 codebase-design、design-it-twice 和 TDD 的适用门禁；进入对应实现步骤再读其 reference。派单时调用 subagent-delivery；Lead 是唯一 SpecDev 状态写入者。

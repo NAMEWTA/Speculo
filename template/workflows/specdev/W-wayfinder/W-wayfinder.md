@@ -15,9 +15,9 @@ W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill →
 
 ## 读取范围
 
-先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；读取共享地图、当前问题与依赖索引，只回读命中原文。低分辨率地图不缓存所有开放票正文。
+先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；先从共享地图定位当前调查 ID，再读当前问题、直接依赖及其 solution comment 原文；共享答案只引用 provenance。低分辨率地图不缓存所有开放票正文。
 
-## 分支
+## 按当前调查选择参考
 
 | 当前需要 | 按需读取 |
 |---|---|

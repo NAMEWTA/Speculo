@@ -22,13 +22,13 @@
 
 先读 下方 `<activation-and-memory>` 标签；按相关条目定位上游 Spec/ADR/CONTEXT、代码与项目 Agent 指令，再回读当前拆分所需原文。只枚举 Skill 的元数据与触发路由，不默认展开全部技能。
 
-## 主流程
+## 从合同到可执行票
 
 1. **输入与范围**：确认目标、非目标、用户指定数量、验收合同和未知项。高影响未决问题回到 G；无 Ready Spec 时，只有用户材料已等价覆盖全部合同才可规划。
 2. **地形与绑定**：定位真实可维护源、调用方、测试接缝和 Skill 根。按 下方 `<ref-common-rules-skill-invocation>` 标签 为每票解析实际 Skill ID、入口摘要、调用阶段、输入、产出与失败动作；没有适用项目 Skill 时记录扫描证据，不造名称。
 3. **垂直切片**：需要具体拆分时读取 下方 `<ref-t-tickets-references-planning-procedure>` 标签 与 下方 `<decomposition-rules>` 标签。保留 Prefactor、Expand → Migrate → Contract 和真实 DAG，不按技术层制造空价值任务。
 4. **写 Plan**：使用 下方 `<ticket-template>` 标签。Lite 仅减少不适用说明，不删用户数量、权限、验收或停止条件。所有新增票使用 `plan_contract_version: 1`，旧票按迁移协议补齐后再执行。
-5. **写总控**：使用 下方 `<tickets-map-template>` 标签，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；状态仍从票投影。依赖、路径与语义共享资源都需检查。
+5. **写总控**：使用 下方 `<tickets-map-template>` 标签，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；状态仍从票投影。按 AC 反查至少一个负责验证的 Ticket，暴露未覆盖和重复所有权；依赖环、路径重叠与语义共享资源分别检查，不能用“可并行”文字替代实际 DAG/写集。
 6. **Definition of Ready**：读取 下方 `<ticket-readiness>` 标签，并调用 下方 `<ref-common-skills-plan-quality-review-skill>` 标签。缺失引用、必需 Skill、可运行验收或权限边界，当前票不可 ready。
 7. **与用户核对**：展示全部票、可观察产物、依赖、深度、风险、Skill 和未决问题。保留用户要求的交付数量；已授权自主规划且无关键未知时不重复请求形式确认。
 8. **验证、回读和交付**：按下述命令检查，再回读真实 Ticket/Map，报告修改、验证结果和未完成项。规划完成不自动进入实现。
