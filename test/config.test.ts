@@ -45,3 +45,35 @@ describe("configuration reconciliation", () => {
     }), /has type string; expected number/);
   });
 });
+
+
+describe("review R2: JSON own-key semantics", () => {
+  const json = (text: string) => JSON.parse(text);
+  const special = '{"__proto__":{"safe_marker":true},"constructor":"custom","toString":"text","hasOwnProperty":3}';
+  it("preserves all allowed special keys, including nested data, without changing prototypes", () => {
+    const local = json(special); local.nested = json(special);
+    const before = JSON.stringify(local);
+    const result = reconcileConfig({ baseline: { nested: {} }, local, incoming: { nested: {} }, allowsUnknown: () => true });
+    assert.deepEqual(JSON.parse(JSON.stringify(result.value)), local);
+    assert.equal(Object.getPrototypeOf(result.value), Object.prototype);
+    assert.equal(Object.getPrototypeOf(result.value.nested), Object.prototype);
+    assert.equal(Object.hasOwn(Object.prototype, "safe_marker"), false);
+    assert.equal(JSON.stringify(local), before);
+    assert.equal(Object.hasOwn(result.value, "__proto__"), true);
+  });
+  it("handles incoming and baseline special keys with the normal three-way merge rules", () => {
+    const baseline = json('{"__proto__":{"default":1},"constructor":"old","toString":"old"}');
+    const local = json('{"__proto__":{"default":1},"constructor":"user","toString":"old"}');
+    const incoming = json('{"__proto__":{"default":2},"constructor":"new","hasOwnProperty":true}');
+    const result = reconcileConfig({ baseline, local, incoming, allowsUnknown: () => true });
+    assert.deepEqual(result.value, json('{"__proto__":{"default":2},"constructor":"user","hasOwnProperty":true}'));
+    assert.deepEqual(result.removedPaths, ["toString"]);
+  });
+  it("counts disallowed special keys as explicit removals and still rejects real type conflicts", () => {
+    const result = reconcileConfig({ local: json(special), incoming: {}, allowsUnknown: () => false });
+    assert.deepEqual(result.value, {});
+    assert.deepEqual(result.removedPaths, ["__proto__", "constructor", "hasOwnProperty", "toString"]);
+    assert.equal(result.stats.removed, 4);
+    assert.throws(() => reconcileConfig({ baseline: { constructor: 1 }, local: { constructor: "custom" }, incoming: { constructor: 2 }, allowsUnknown: () => true }), /expected number/);
+  });
+});

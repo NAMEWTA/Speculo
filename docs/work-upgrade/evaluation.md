@@ -2,7 +2,8 @@
 
 This is maintainer validation, not a new workflow runtime. The authorized plan is
 [plan.md](plan.md), F01/F02 and E1. Production servers and real runtime roots are
-not fixtures.
+not fixtures. The [2026-10-07 audit fixes](../audit-fixes-2026-10-07.md) tighten
+consumed-source coverage and introduce observation payload v2 as documented below.
 
 ## Three independent statements
 
@@ -42,8 +43,9 @@ export/
 `trace.jsonl` uses the existing event vocabulary: `capability`, `context`, `tool`,
 `transition`, `approval`, `evidence`. Each event contains `schema_version: 1`, a
 strictly increasing contiguous `sequence`, a declared `scenario_id`, and an
-object `payload`. Context reads include a canonical repository-relative `path` (no traversal,
-absolute paths, backslashes or duplicate separators); tool
+object `payload`. Context reads include a canonical repository-relative `path`
+(no traversal, absolute paths, backslashes or duplicate separators), the actual
+byte `sha256`, and `role: instruction | data` for observation payload v2. Tool
 observations include actual `name`, `exit_code` and classified `effect`. Record
 reads, failures and side effects, not just success summaries. `forbidden_reads`
 assertions match exact paths or directory descendants, not similar prefixes.
@@ -56,7 +58,7 @@ UTF-8 `canonicalJSON(payload)` (exported by the evidence module). Payload fields
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "kind": "speculo-host-observation",
   "run_id": "<unique actual run id>",
   "repetition": 1,
@@ -77,12 +79,28 @@ UTF-8 `canonicalJSON(payload)` (exported by the evidence module). Payload fields
 ```
 
 Instruction coverage includes every scenario's declared `instruction_paths`,
-plus the actual conditional references consumed. The artifact inventory includes
-all regular files under `artifacts`, sorted by path. Extra files, changed bytes,
-path traversal, symlink substitution, version drift and missing coverage fail.
-Host/model metadata and the raw log are supplied by the independent observer,
-not by the workload. The scorer verifies their binding and observer trust; it
-cannot establish an external observer's honesty by itself.
+plus every actual conditional instruction read in the trace. Each instruction's
+signed digest must match both the current regular file and its regular Git blob
+at `repository_commit`; HEAD alone is not source evidence. `--repo` must identify
+the Git worktree root. Dirty, staged-only or untracked instructions require a new
+committed source and observation. Byte-changing checkout filters or line-ending
+conversions are not normalized: use a byte-identical source checkout.
+
+In v2, an explicitly classified `data` read is checked against its actual file
+bytes via the signed trace, without requiring that business input to be committed.
+A listed or scenario-required instruction cannot be downgraded to data. Truthful
+classification remains the independent collector's responsibility. Legacy payload
+v1 is still supported conservatively: untyped reads count as instructions, all
+context reads require byte digests, and no data-role exception is allowed. Missing
+coverage requires a fresh trusted export, not workload-authored repairs. The
+outer envelope, trust schema and normalized event schema remain unchanged.
+
+The artifact inventory includes all regular files under `artifacts`, sorted by
+path. Extra files, changed bytes, path traversal, symlink substitution, version
+drift and missing coverage fail. Host/model metadata and the raw log are supplied
+by the independent observer, not by the workload. The scorer verifies their
+binding and observer trust; it cannot establish an external observer's honesty
+by itself.
 
 ## Trust and redaction
 
