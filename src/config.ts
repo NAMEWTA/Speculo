@@ -117,12 +117,15 @@ export function reconcileConfig(options: ConfigMergeOptions): ConfigMergeResult 
     ]);
     for (const key of [...keys].sort()) {
       const value = merge(
-        isMissing(baseline) || !(key in baseline) ? MISSING : baseline[key],
-        key in local ? local[key] : MISSING,
-        key in incoming ? incoming[key] : MISSING,
+        isMissing(baseline) || !Object.hasOwn(baseline, key) ? MISSING : baseline[key],
+        Object.hasOwn(local, key) ? local[key] : MISSING,
+        Object.hasOwn(incoming, key) ? incoming[key] : MISSING,
         [...path, key],
       );
-      if (!isMissing(value)) output[key] = value;
+      if (!isMissing(value)) {
+        // JSON keys are data, including __proto__; never invoke prototype setters.
+        Object.defineProperty(output, key, { value, enumerable: true, writable: true, configurable: true });
+      }
     }
     return output;
   }
