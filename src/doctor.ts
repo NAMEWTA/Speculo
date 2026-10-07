@@ -105,7 +105,9 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
     const entries = await readdir(target);
     if (entries.includes(LOCK_NAME)) {
       let detail = "unidentified lock; inspect owner.json, do not automatically delete it";
-      try { const j = await readTransaction(target); detail = `transaction ${j.id}, phase ${j.phase}; after confirming its owner stopped: speculo recover ${JSON.stringify(target)} --transaction ${j.id}`; }
+      try { const j = await readTransaction(target); detail = j.schema_version === 1
+        ? `transaction ${j.id}, phase ${j.phase}; legacy-transaction-snapshot v1: preserve all evidence; automatic recovery is blocked because modes/directories were not recorded; manual recovery needs independently verified permissions and directory evidence`
+        : `transaction ${j.id}, phase ${j.phase}; after confirming its owner stopped: speculo recover ${JSON.stringify(target)} --transaction ${j.id}`; }
       catch (error) { detail += "; " + String(error); }
       add("refresh-transaction", false, detail);
     }

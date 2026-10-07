@@ -2,14 +2,14 @@ import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { lstat, mkdir, rename, rm } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import { fingerprintTree } from "./manifest.js";
+import { fingerprintTree, isTreeFingerprint, TREE_FINGERPRINT_PREFIX } from "./manifest.js";
 import { EXTERNAL_NAMES, assertImage, imageDigest, readImage, replaceImage, syncDirectory, writeDurableJson, type ExternalEdit } from "./external-files.js";
 
 export const LOCK_NAME = ".speculo-init.lock";
 export type TransactionPhase = "prepared" | "old-renamed" | "installed" | "external-finalized" | "committed" | "rolled-back";
 export type TransactionHook = (phase: TransactionPhase) => Promise<void>;
 type Journal = {
-  schema_version: 1; id: string; host: string; pid: number; target: string;
+  schema_version: 1 | 2; id: string; host: string; pid: number; target: string;
   stage: string; backup: string; before: string; after: string;
   phase: TransactionPhase; external: ExternalEdit[];
 };
@@ -33,15 +33,17 @@ export async function readTransaction(target: string): Promise<Journal> {
   const raw = await readImage(journalPath(target));
   if (!raw) throw new Error("unidentified-lock: no durable transaction; inspect owner.json and preserve all residues");
   const j = JSON.parse(Buffer.from(raw.content, "base64").toString("utf8")) as Journal;
-  if (j.schema_version !== 1 || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
+  if (!j || typeof j !== "object" || ![1, 2].includes(j.schema_version) || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
       typeof j.host !== "string" || !Number.isSafeInteger(j.pid) || j.pid < 1 ||
       !/^\.speculo-init-stage-[A-Za-z0-9]+$/.test(j.stage) || j.backup !== j.stage + "-backup" ||
-      !/^(absent|[a-f0-9]{64})$/.test(j.before) || !/^[a-f0-9]{64}$/.test(j.after) ||
+      !(j.schema_version === 1
+        ? typeof j.before === "string" && /^(absent|[a-f0-9]{64})$/.test(j.before) && typeof j.after === "string" && /^[a-f0-9]{64}$/.test(j.after)
+        : isTreeFingerprint(j.before) && isTreeFingerprint(j.after, false)) ||
       !["prepared", "old-renamed", "installed", "external-finalized", "committed", "rolled-back"].includes(j.phase) ||
       !Array.isArray(j.external) || j.external.length !== EXTERNAL_NAMES.length ||
-      new Set(j.external.map((e) => e.name)).size !== EXTERNAL_NAMES.length) throw new Error("invalid-transaction-journal");
+      new Set(j.external.map((e) => e?.name)).size !== EXTERNAL_NAMES.length) throw new Error("invalid-transaction-journal");
   for (const e of j.external) {
-    if (!EXTERNAL_NAMES.includes(e.name)) throw new Error("invalid-transaction-external-path");
+    if (!e || !EXTERNAL_NAMES.includes(e.name)) throw new Error("invalid-transaction-external-path");
     for (const value of [e.before, e.after]) {
       if (value !== null && (!value || typeof value.content !== "string" || !Number.isInteger(value.mode) || value.mode < 0 || value.mode > 0o777 ||
           Buffer.from(value.content, "base64").toString("base64") !== value.content)) throw new Error("invalid-transaction-file-image");
@@ -50,13 +52,25 @@ export async function readTransaction(target: string): Promise<Journal> {
   return j;
 }
 
+/** Legacy content-only journals remain readable, but cannot prove safe cleanup. */
+function assertCurrentSnapshot(j: Journal): void {
+  if (j.schema_version !== 2) {
+    throw new Error("legacy-transaction-snapshot: v1 omitted modes and directories; preserve journal, lock, stage and backup; manual recovery requires an independently verified snapshot; do not relabel or delete the journal");
+  }
+  if ((j.before !== "absent" && !j.before.startsWith(TREE_FINGERPRINT_PREFIX)) || !j.after.startsWith(TREE_FINGERPRINT_PREFIX)) {
+    throw new Error("snapshot-platform-mismatch: recover on the original snapshot platform; preserve all evidence");
+  }
+}
+
 async function save(j: Journal, phase: TransactionPhase): Promise<void> {
+  assertCurrentSnapshot(j);
   await writeDurableJson(journalPath(j.target), { ...j, phase });
   j.phase = phase;
 }
 
 /** Validate every source before moving any directory or restoring any external file. */
 async function rollback(j: Journal): Promise<void> {
+  assertCurrentSnapshot(j);
   const root = join(j.target, "speculo"), stage = join(j.target, j.stage), backup = join(j.target, j.backup);
   for (const path of [root, stage, backup]) await directory(path);
   const r = await fingerprintTree(root), s = await fingerprintTree(stage), b = await fingerprintTree(backup);
@@ -84,6 +98,7 @@ async function rollback(j: Journal): Promise<void> {
 }
 
 async function finish(j: Journal): Promise<void> {
+  assertCurrentSnapshot(j);
   const root = join(j.target, "speculo"), backup = join(j.target, j.backup);
   await directory(root); await directory(backup);
   if (await fingerprintTree(root) !== j.after) throw new Error("recovery-drift: committed installation changed");
@@ -95,7 +110,8 @@ async function finish(j: Journal): Promise<void> {
 }
 
 export async function commitInstall(target: string, stagedRoot: string, before: string, external: ExternalEdit[], hook?: TransactionHook): Promise<void> {
-  const j: Journal = { schema_version: 1, id: randomUUID(), host: hostname(), pid: process.pid, target,
+  if (!isTreeFingerprint(before) || (before !== "absent" && !before.startsWith(TREE_FINGERPRINT_PREFIX))) throw new Error("invalid-current-tree-snapshot");
+  const j: Journal = { schema_version: 2, id: randomUUID(), host: hostname(), pid: process.pid, target,
     stage: basename(stagedRoot), backup: basename(stagedRoot) + "-backup", before,
     after: await fingerprintTree(stagedRoot), phase: "prepared", external };
   const root = join(target, "speculo");
@@ -104,14 +120,19 @@ export async function commitInstall(target: string, stagedRoot: string, before: 
   await save(j, "prepared");
   try {
     await hook?.("prepared");
+    // Recheck after the durable checkpoint, before moving any user directory.
+    if (await fingerprintTree(root) !== before || await fingerprintTree(stagedRoot) !== j.after) throw new Error("concurrent-drift: prepared snapshot changed");
     if (before !== "absent") await rename(root, join(target, j.backup));
     await syncDirectory(target);
     await save(j, "old-renamed"); await hook?.("old-renamed");
+    if (await fingerprintTree(root) !== "absent" || await fingerprintTree(join(target, j.backup)) !== before || await fingerprintTree(stagedRoot) !== j.after) throw new Error("concurrent-drift: renamed snapshot changed");
     await rename(stagedRoot, root); await syncDirectory(target);
     await save(j, "installed"); await hook?.("installed");
-    if (await fingerprintTree(root) !== j.after) throw new Error("post-install validation failed");
+    if (await fingerprintTree(root) !== j.after || await fingerprintTree(join(target, j.backup)) !== before) throw new Error("post-install validation failed: snapshot drift");
     for (const e of external) await replaceImage(join(target, e.name), e.before, e.after);
     await save(j, "external-finalized"); await hook?.("external-finalized");
+    if (await fingerprintTree(root) !== j.after || await fingerprintTree(join(target, j.backup)) !== before) throw new Error("concurrent-drift: final snapshot changed");
+    for (const e of external) await assertImage(join(target, e.name), e.after);
     await save(j, "committed"); await hook?.("committed");
     await finish(j);
   } catch (error) {
@@ -129,6 +150,7 @@ export async function recoverInstall(targetArg: string, id: string): Promise<{ i
   const target = resolve(targetArg);
   const j = await readTransaction(target);
   if (j.id !== id) throw new Error("recovery-transaction-mismatch");
+  assertCurrentSnapshot(j);
   if (j.host !== hostname()) throw new Error("recovery-host-mismatch: inspect the original host before recovery");
   try { process.kill(j.pid, 0); throw new Error("recovery-owner-live: stop the owning process first"); }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error; }

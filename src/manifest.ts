@@ -63,10 +63,42 @@ export async function collectFiles(
   return files.sort((left, right) => left.path.localeCompare(right.path));
 }
 
+/** Versioned transaction snapshot. Managed-file manifests retain their old format. */
+export const TREE_FINGERPRINT_PREFIX = `tree-v2-${process.platform === "win32" ? "windows" : "posix"}:`;
+export function isTreeFingerprint(value: unknown, allowAbsent = true): value is string {
+  return typeof value === "string" && ((allowAbsent && value === "absent") ||
+    /^tree-v2-(posix|windows):[a-f0-9]{64}$/.test(value));
+}
+
+/**
+ * Includes the root, empty directories, node types, link targets, file bytes,
+ * and POSIX permission/special bits. Windows mode/ACL semantics are deliberately
+ * not represented as POSIX permissions. No links are followed. This is a drift
+ * guard in a trusted project directory, not an atomic filesystem snapshot.
+ */
 export async function fingerprintTree(root: string): Promise<string> {
-  if (!(await pathExists(root))) return "absent";
-  const files = await collectFiles(root, { rejectSymlinks: false });
-  const hash = createHash("sha256");
-  for (const file of files) hash.update(`${file.path}\0${file.bytes}\0${file.sha256}\n`);
-  return hash.digest("hex");
+  try { await lstat(root); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return "absent"; throw error; }
+  const hash = createHash("sha256").update(TREE_FINGERPRINT_PREFIX);
+  async function visit(path: string, name: string): Promise<void> {
+    const stat = await lstat(path);
+    const mode = process.platform === "win32" ? null : stat.mode & 0o7777;
+    // Length-delimited JSON records prevent ambiguous paths or link contents.
+    const record = (fields: unknown[]) => { hash.update(JSON.stringify([name, ...fields]) + "\n"); };
+    if (stat.isSymbolicLink()) {
+      record(["symlink", mode, await readlink(path)]);
+    } else if (stat.isDirectory()) {
+      record(["directory", mode]);
+      for (const child of (await readdir(path)).sort()) {
+        await visit(join(path, child), name ? `${name}/${child}` : child);
+      }
+    } else if (stat.isFile()) {
+      const data = await sha256File(path);
+      record(["file", mode, data.bytes, data.sha256]);
+    } else {
+      throw new Error(`unsupported-snapshot-node: ${name || "."}; preserve installation`);
+    }
+  }
+  await visit(root, "");
+  return TREE_FINGERPRINT_PREFIX + hash.digest("hex");
 }
