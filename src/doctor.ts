@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { sha256File } from "./manifest.js";
 import { containedPath, safeRelativePath, validateWorkspace } from "./paths.js";
 import { readTransaction, LOCK_NAME } from "./transaction.js";
+import { inspectProjectedSkills } from "./agent-skills.js";
 
 export type DoctorResult = {
   target: string; healthy: boolean; scope: "installation-integrity";
@@ -101,6 +102,7 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
       add("workflow:" + workflow, ok, ok ? "entry, manifest and runtime contract present" : "workflow contract mismatch");
     } catch (error) { add("workflow:" + workflow, false, String(error)); }
   }
+  for (const check of await inspectProjectedSkills(target, workflows)) add(check.id, check.ok, check.message);
   try {
     const entries = await readdir(target);
     if (entries.includes(LOCK_NAME)) {
@@ -113,5 +115,5 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
     }
     for (const name of entries.filter((name) => name.startsWith(".speculo-init-stage-") || name.startsWith(".speculo-file-"))) add("refresh-residue:" + name, false, "preserve residue; inspect transaction evidence before cleanup");
   } catch (error) { add("project-directory", false, String(error)); }
-  return { target, healthy: checks.every((c) => c.ok), scope: "installation-integrity", notChecked: ["domain-state-transitions", "live-service-health", "agent-behavior"], checks };
+  return { target, healthy: checks.every((c) => c.ok), scope: "installation-integrity", notChecked: ["domain-state-transitions", "live-service-health", "agent-behavior", "host-skill-invocation"], checks };
 }

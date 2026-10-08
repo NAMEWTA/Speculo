@@ -5,6 +5,7 @@ import { hostname, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, it } from "node:test";
+import { sha256Buffer } from "../src/agent-skills.js";
 import { initSpeculo } from "../src/index.js";
 import { updateAgentsContent } from "../src/agent-files.js";
 import { doctorSpeculo } from "../src/doctor.js";
@@ -132,6 +133,34 @@ describe("review: process-interruption recovery", () => {
       assert.deepEqual((await readdir(target)).filter((name) => name.startsWith(".speculo-init-")), []);
     }));
   }
+  it("rolls managed agent skills back and leaves unmanaged skills in place", { skip: process.platform === "win32", timeout: 60000 }, async () => fixture(async (target) => {
+    await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, agentSkills: { mode: "set", workflowIds: ["learning"], templateNames: [] } });
+    await mkdir(join(target, ".agents", "skills", "custom-skill"), { recursive: true });
+    await writeFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "user owned\n");
+    const skillPath = join(target, ".agents", "skills", "learning-l-lesson", "SKILL.md");
+    const manifestPath = join(target, ".agents", "skills", ".speculo-managed.json");
+    const edited = (await readFile(skillPath, "utf8")).replace("事实源", "事实来源");
+    await writeFile(skillPath, edited);
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as { works: Array<{ id: string; sha256: string }> };
+    const work = manifest.works.find((item) => item.id === "learning-l-lesson");
+    assert.ok(work);
+    work.sha256 = sha256Buffer(edited);
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    await writeFile(join(target, "speculo/commands/status.md"), "previous static override\n");
+    const before = await fingerprintTree(join(target, "speculo"));
+    const program = `import {initSpeculo} from ${JSON.stringify(pathToFileURL(resolve("dist/src/index.js")).href)}; await initSpeculo(${JSON.stringify(target)}, {packageRoot:${JSON.stringify(packageRoot)},selection:{workflowIds:["learning"]},agentSkills:{mode:"keep"},transactionHook:async phase=>{if(phase==="skills-projected")process.kill(process.pid,"SIGKILL")}});`;
+    const child = spawnSync(process.execPath, ["--input-type=module", "-e", program], { encoding: "utf8", timeout: 30000 });
+    assert.equal(child.signal, "SIGKILL", child.stderr);
+    const j = await readTransaction(target);
+    assert.equal(j.phase, "skills-projected");
+    assert.equal(j.schema_version, 2);
+    const outcome = await recoverInstall(target, j.id);
+    assert.equal(outcome.outcome, "rolled-back");
+    assert.equal(await fingerprintTree(join(target, "speculo")), before);
+    assert.equal(await readFile(skillPath, "utf8"), edited);
+    assert.equal(await readFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "utf8"), "user owned\n");
+    assert.deepEqual((await readdir(target)).filter((name) => name.startsWith(".speculo-init-")), []);
+  }));
   it("keeps transaction evidence when concurrent content prevents rollback", async () => fixture(async (target) => {
     await initSpeculo(target, opts);
     await assert.rejects(initSpeculo(target, { ...opts, transactionHook: async (phase) => {

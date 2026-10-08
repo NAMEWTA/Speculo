@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Optional Agent Skills projection**: interactive init can expose each selected workflow Work as a pointer skill, and link chosen template skills, under the target project's `.agents/skills/` for Agents `/skills`. Fresh unattended installs still write nothing there. `--agent-skills` accepts `none`, `keep`, `template`, `template:<id>+<id>`, and workflow ids. Managed names roll back with the init transaction; unmanaged skill directories stay in place.
+
 ## [1.0.19] - 2026-10-06
 
 ### Changed

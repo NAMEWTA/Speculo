@@ -1,8 +1,9 @@
-import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
+import { MANAGED_MANIFEST, planSkillProjection, resolveAgentSkillRequest, type AgentSkillRequest } from "./agent-skills.js";
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
 import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
@@ -22,11 +23,15 @@ export type SpeculoCommandResult = {
   mode: "init" | "refresh";
   assets: string[];
   refresh: RefreshSummary;
+  agentSkills: { works: number; template: number };
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
   selection?: WorkflowSelection;
+  agentSkills?: AgentSkillRequest;
+  /** Interactive CLI asks after workflow selection. Library callers stay non-interactive unless they set this. */
+  promptAgentSkills?: boolean;
   beforeCommit?: (installRoot: string) => Promise<void>;
   /** Test/integration fault-injection seam; never enabled through environment variables. */
   transactionHook?: TransactionHook;
@@ -42,6 +47,14 @@ function assetRoot(packageRoot: string): string {
 
 function installRoot(target: string): string {
   return join(target, INSTALL_SUBDIR);
+}
+
+function counts(value: unknown): { works: number; template: number } {
+  const manifest = value as { works?: unknown; template_skills?: unknown };
+  return {
+    works: Array.isArray(manifest.works) ? manifest.works.length : 0,
+    template: Array.isArray(manifest.template_skills) ? manifest.template_skills.length : 0,
+  };
 }
 
 async function ensureAssetSource(packageRoot: string, asset: string): Promise<string> {
@@ -182,11 +195,22 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const references = await readPersistentKnowledge(stagedRoot, installed);
     const edits = planExternalEdits(externalSnapshot, references, installed.includes("specdev"));
     for (const edit of edits) await assertImage(join(target, edit.name), edit.before);
-    await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook);
+    const skillRequest = await resolveAgentSkillRequest({
+      target, packageRoot, catalog, installedWorkflowIds: installed, request: options.agentSkills, prompt: options.promptAgentSkills === true,
+    });
+    const projection = await planSkillProjection({
+      target, stagedRoot, packageRoot, packageVersion: refresh.targetVersion, installedWorkflowIds: installed, request: skillRequest,
+    });
+    if (projection.blockers.length) throw new RefreshBlockedError(projection.blockers);
+    await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook, projection.records);
     assets.push(...edits.map((edit) => edit.name + " (managed discovery/runtime references)"));
     stagedRoot = undefined;
     if (!refresh) throw new Error("Speculo refresh result was not produced");
-    return { target, mode: existed ? "refresh" : "init", assets, refresh };
+    const manifestPath = join(target, ".agents", "skills", MANAGED_MANIFEST);
+    const agentSkills = await pathExists(manifestPath)
+      ? counts(JSON.parse(await readFile(manifestPath, "utf8")))
+      : { works: 0, template: 0 };
+    return { target, mode: existed ? "refresh" : "init", assets, refresh, agentSkills };
   } finally {
     // A failed rollback or killed process leaves durable evidence; never delete it in finally.
     if (!(await hasTransaction(target))) {

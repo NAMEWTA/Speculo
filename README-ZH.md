@@ -114,6 +114,8 @@ MIT — 详见 [LICENSE](./LICENSE)
 
 非交互首次安装默认仅 core；使用 `speculo init [target] --workflows specdev,learning` 显式选包，或 `--core-only` 仅刷新 core。非交互刷新默认更新已安装的受支持包；未选择更新的已有包及其知识引用保留，不把“不更新”解释为卸载或禁用。
 
+Agent Skills 投影是另一步，默认不写入。交互式 init 会询问：哪些已选 workflow 要把每个 Work 做成指针技能，以及哪些模板自带 Skill 要链出去。唯一写入目录是目标项目的 `.agents/skills/`。打开 Agents 后输入 `/skills` 即可看到。Work 指针不复制 references，第一条指令就是读取真实 Work 入口。模板 Skill 是指向 `speculo/skills/<name>` 的相对符号链接。省略 `--agent-skills` 时，已有且干净的投影会保持，全新安装则什么都不创建。`speculo init --agent-skills none` 只删除 Speculo 自己管理的名字。`.agents/skills/` 里的非受管目录会保留。`validate-skills` 只检查输出格式，不认证宿主一定会调用这些技能。
+
 项目根 AGENTS 引用字面 workspace 与生成的只读 catalog；发现不创建 Change、不授予动作。宿主不读取项目 AGENTS 时，需由用户显式提供该入口；没有承诺所有宿主自动发现自定义目录。Skill 使用标准 name/description/metadata，私有 workflow Skill 明确声明 Path 解析依赖。
 
 `speculo resolve [target] --path '<Path>{roots.skills}/docs-sync/SKILL.md</Path>'` 只返回真实路径；不要把原始 Path 标记直接粘进 shell。中断时先运行 `speculo doctor [target] --json`，确认原 owner 停止后才 `speculo recover [target] --transaction <id>`；未知锁或漂移不自动清理。
