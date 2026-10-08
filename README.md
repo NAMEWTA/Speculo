@@ -55,33 +55,32 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 10 Skills
+### 9 Skills
 
 | Skill | Purpose |
 |---|---|
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
-| `github-npm-ops` | GitHub issue/PR triage and npm operations |
 | `git-history-squash` | Controlled first-parent history convergence with recoverable local ref transactions and exact remote leases |
 | `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
-| `speculo-retro` | Retrospective analysis |
+| `retrospective` | Retrospective analysis |
 | `upstream-fork-sync` | Assess fork/upstream deltas from proven integration checkpoints and persist reproducible diff and conflict reports |
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
-| `writing-great-skills` | Authoring guidance for agent skills |
+| `writing-for-agents` | Authoring guidance for agent skills |
 
 ### 4 Workflow Packages
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
 | **learning** | 9 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, Socratic inquiry lessons, Goal-Plan compilation for later external /goal execution (teach a mine-unit of ≤15 lessons, then fan out miners), single-file homework review, optional retention review, and provenance-preserving topic synthesis |
-| **specdev** | 14 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, triage (intake / reconcile / publish / capture), and wayfinding |
-| **ops** | 3 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
+| **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, development retrospectives, GitHub/PR/release triage, and wayfinding |
+| **ops** | 5 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
 
 Every workflow ships an `INDEX.md` discovery entry. SpecDev/Learning/Ops keep their generated Work catalog in the README activation contract; Person lists Works directly in INDEX. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
-SpecDev T-triage stays the only remote boundary. Use **intake** to freeze a source, **reconcile** to close that original source Issue after local completion, **publish** to project each completed Ticket as a classified GitHub Issue (local-origin work included), and **capture** to park a not-yet-Change note as a still-open GitHub Issue. GitHub is a projection, counter, and inbox — not the development source of truth. Run both reconcile and publish when an intake Change should also count its tickets. Capture does not create a Change.
+SpecDev T-triage owns ten modes: queue, intake, reconcile, publish, capture, pr-delivery, ci-security, release-preflight, release, and recover. **publish** projects completed Tickets to Issues; **release** publishes packages/GitHub Releases. Its remote protocol can be reused without activating a Work or creating a change. PR delivery uses per-change records; independent CI/release operations use their own recoverable ledger. R-retro reviews development activities through the shared retrospective Skill. See the [upgrade report](docs/specdev-upgrade/implementation-report.md) for migration and verification details.
 
 ## Documentation
 

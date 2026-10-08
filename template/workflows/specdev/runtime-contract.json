@@ -5,14 +5,16 @@
     "path": ".speculo/specdev/config.json",
     "template": "workflows/specdev/I-init-setup/config-template.json",
     "baseline": ".speculo/baselines/workflows/specdev/config.json",
-    "schema_version": 5,
+    "schema_version": 6,
     "optional": true,
     "additional_properties": {
       "": false,
       "git": false,
       "execution": false,
       "verification": true,
-      "planning": true
+      "planning": true,
+      "github": false,
+      "github.labels": true
     }
   },
   "structured_state": [

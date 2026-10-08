@@ -88,3 +88,10 @@ W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只�
 新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有经过核实的 Skill 调用绑定、语义资源和执行计划；Map 路由是其投影。规则为 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
 
 父 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
+
+## 新增工件 owner
+
+- T：<Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> 拥有 PR 交付回执；<Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path> 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
+- R-retro：<Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path> 拥有活动复盘建议和来源；不成为永久知识。
+- P：<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
+- 来源更新：<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 冻结后保持不变。T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。

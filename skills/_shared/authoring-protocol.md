@@ -11,4 +11,4 @@ Use this short protocol for Speculo maintainer changes. The asset-specific contr
 
 ## Fidelity gate
 
-Before changing any document, read `template/skills/writing-great-skills/references/document-contract.md` from the repository root. Preserve explicit deliverable counts, default tools, permission boundaries, validation and failure stops. Back up canonical user-owned sources; preserve links and metadata. Describe actual behavior differences and whole-source character changes, including extracted references; do not infer token/quota savings.
+Before changing any document, read `template/skills/writing-for-agents/references/document-contract.md` from the repository root. Preserve explicit deliverable counts, default tools, permission boundaries, validation and failure stops. Back up canonical user-owned sources; preserve links and metadata. Describe actual behavior differences and whole-source character changes, including extracted references; do not infer token/quota savings.

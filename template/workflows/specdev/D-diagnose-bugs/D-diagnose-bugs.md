@@ -69,3 +69,9 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ```
 
 根因确认后将本 Work 加入 `works_run` 并清空 `current_work`，返回 diagnosis 和下一 Work：局部修复进入 Tickets/I，公共行为或高风险进入 S/Tickets，缺 seam 进入 R，仍无根因则保持 blocked 或进入 W。
+
+## 脱敏与强制变异证据
+
+在日志、报告和重现材料中移除 token、Cookie、认证头、秘密配置、个人数据及机器绝对路径；保留项目相对定位和必要错误形态。原始敏感数据不进入长期工件。
+
+如果使用强制变异检验测试敏感性，先记录未变异文件的 hash/diff，实际修改目标后读取 git diff 与运行路径，证明变异已落到执行文件。只有测试因预期行为断言失败才算有效 red；编译错误、未选中测试、变异未落地均为无效证据。恢复原内容，复跑基线并核对 diff。D 输出诊断及修复不变量，正式修复仍交 I。

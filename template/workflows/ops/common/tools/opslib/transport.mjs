@@ -1,7 +1,7 @@
 /** Strict host-key SSH and subprocess local transport. No passwords in argv. */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, posix, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonical, digest, noSymlinks, OpsError, redact, UnknownResult } from "./core.mjs";
 import { fingerprint } from "./agent.mjs";
@@ -107,8 +107,8 @@ export function posixSend(endpoint, localFile, remotePath, { timeout = 180 } = {
     throw new OpsError("POSIX bootstrap is Linux-only; PowerShell targets still require an existing Node");
   }
   noSymlinks(localFile, { allowMissing: false });
-  if (typeof remotePath !== "string" || !isAbsolute(remotePath) || remotePath.split("/").includes("..") || /[\s\n\r]/.test(remotePath)) {
-    throw new OpsError("remote scp path must be absolute without spaces or ..");
+  if (typeof remotePath !== "string" || !posix.isAbsolute(remotePath) || remotePath.split("/").includes("..") || /[\s\\\0]/.test(remotePath)) {
+    throw new OpsError("remote scp path must be POSIX absolute without whitespace, backslashes, NUL or ..");
   }
   const argv = sshArgv(endpoint, { scp: true });
   argv.push("--", localFile, `${endpoint.username}@${endpoint.hostname}:${remotePath}`);

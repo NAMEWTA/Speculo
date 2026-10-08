@@ -1,58 +1,169 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v5",
+  "$id": "urn:speculo:specdev:config:v6",
   "title": "SpecDev Configuration",
   "type": "object",
-  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
+  "required": [
+    "schema_version",
+    "interaction_language",
+    "artifact_language",
+    "git",
+    "execution",
+    "verification",
+    "planning",
+    "github"
+  ],
   "properties": {
-    "schema_version": {"const": 5},
-    "interaction_language": {"type": "string", "minLength": 1},
-    "artifact_language": {"type": "string", "minLength": 1},
+    "schema_version": {
+      "const": 6
+    },
+    "interaction_language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_language": {
+      "type": "string",
+      "minLength": 1
+    },
     "git": {
       "type": "object",
-      "required": ["default_branch"],
+      "required": [
+        "default_branch"
+      ],
       "properties": {
-        "default_branch": {"type": ["string", "null"]}
+        "default_branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },
     "execution": {
       "type": "object",
-      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": [
+        "max_implementation_agents",
+        "max_integration_attempts",
+        "deep_ticket_human_approval",
+        "shared_path_owner"
+      ],
       "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1},
-        "max_integration_attempts": {"type": "integer", "minimum": 1},
-        "deep_ticket_human_approval": {"type": "boolean"},
-        "shared_path_owner": {"type": "string", "minLength": 1}
+        "max_implementation_agents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_integration_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deep_ticket_human_approval": {
+          "type": "boolean"
+        },
+        "shared_path_owner": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "verification": {
       "type": "object",
-      "required": ["test", "typecheck", "lint", "build"],
+      "required": [
+        "test",
+        "typecheck",
+        "lint",
+        "build"
+      ],
       "properties": {
-        "test": {"type": ["string", "null"]},
-        "typecheck": {"type": ["string", "null"]},
-        "lint": {"type": ["string", "null"]},
-        "build": {"type": ["string", "null"]}
+        "test": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "typecheck": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "build": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": true
     },
     "planning": {
       "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_design_default_candidates", "ui_design_max_candidates"],
+      "required": [
+        "default_depth",
+        "require_ready_gate",
+        "require_evidence",
+        "ui_design_default_candidates",
+        "ui_design_max_candidates"
+      ],
       "properties": {
-        "default_depth": {"enum": ["lite", "standard", "deep"]},
-        "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"},
-        "ui_design_default_candidates": {"type": "integer", "minimum": 2, "maximum": 4},
-        "ui_design_max_candidates": {"type": "integer", "minimum": 2, "maximum": 4}
+        "default_depth": {
+          "enum": [
+            "lite",
+            "standard",
+            "deep"
+          ]
+        },
+        "require_ready_gate": {
+          "type": "boolean"
+        },
+        "require_evidence": {
+          "type": "boolean"
+        },
+        "ui_design_default_candidates": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        },
+        "ui_design_max_candidates": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        }
       },
       "additionalProperties": true
+    },
+    "github": {
+      "type": "object",
+      "required": [
+        "include_external_prs",
+        "labels"
+      ],
+      "properties": {
+        "include_external_prs": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
-  "allOf": [{
-    "$comment": "ui_design_default_candidates <= ui_design_max_candidates is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
-  }],
+  "allOf": [
+    {
+      "$comment": "ui_design_default_candidates <= ui_design_max_candidates is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
+    }
+  ],
   "additionalProperties": false
 }

@@ -28,3 +28,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 回读真实 Spec、Ready 结论与状态，按激活合同只更新本 change 与全局索引的所属项。返回 Spec 完整路径、主要行为/验收合同、范围、验证接缝、风险、高影响缺口和验证结果。成功完成本 Work 才更新 `works_run` 并清空 `current_work`；可恢复失败保留入口。
 
 只有用户请求或工作流已显式串联时才进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`；产出 Ready Spec 本身不授权实施。
+
+## 原型证据
+
+可以引用已验证 LOGIC/UI 原型中的行为、边界与已确认决定，记录具体 locator 和验证证据；源码片段可承载设计选择，但不自动成为生产实现。未闭合高影响产品决定返回 G，S 综合已确认设计而不重新开启无关访谈。

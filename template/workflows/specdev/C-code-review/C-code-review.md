@@ -23,7 +23,7 @@ C 是独立 review 入口，不实施修复。它拥有 `<Path>{roots.state}/spe
 
 ## 流程
 
-1. **解析固定点**：使用 `git rev-parse` 把固定点和 HEAD 固定为 SHA；PR 先通过 `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` 的 `pr-read` 获得 base/head SHA，并确保对应对象可在本地解析。
+1. **解析固定点**：使用 `git rev-parse` 把固定点和 HEAD 固定为 SHA；PR 先通过 `<Path>{roots.workflows}/specdev/T-triage/remote-operations.md</Path>` 的 `pr-read` 获得 base/head SHA，并确保对应对象可在本地解析。
 2. **冻结输入**：记录 `git diff <fixed>...<head>` 和 `git log <fixed>..<head> --oneline`。引用无效或 diff 为空时失败，不创建报告。
 3. **发现来源**：调用 `<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`；规范来源缺失时经确认跳过规范轴，标准轴继续。
 4. **隔离审查**：仅按公共 Skill 的完整输入复用门接受既有结果；需要执行的轴在平台支持时并行 reviewer，否则用两个独立完整输入包顺序执行。两轴不得读取对方 finding。

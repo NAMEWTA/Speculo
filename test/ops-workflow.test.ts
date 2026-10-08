@@ -34,7 +34,9 @@ describe("OPS five-entry resource workspace",()=>{
  it("runs executor, bootstrap and workspace contract/integration tests",()=>{
   // Node's inherited test context makes a nested --test exit 0 without running files.
   const env={...process.env};delete env.NODE_TEST_CONTEXT;
-  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs")],{encoding:"utf8",timeout:180000,env});
+  // Windows executes hundreds of real registry/process probes in disposable fixtures.
+  // Keep every assertion; allow that measured platform overhead rather than skipping integration.
+  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs")],{encoding:"utf8",timeout:process.platform==="win32"?900000:180000,env});
   assert.equal(p.status,0,p.stdout+p.stderr);
   assert.match(p.stdout,/^# tests [1-9][0-9]*$/m,"OPS child runner must execute nonempty tests");
   assert.match(p.stdout,/^# fail 0$/m,p.stdout+p.stderr);

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, statSync, symlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { digest, emptyStatus, now, writeJson } from "../tools/opslib/core.mjs";
@@ -18,7 +18,7 @@ function fixture(t) {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const state = join(root, "state"); mkdirSync(state);
   const s = emptyStatus(); s.controller = { controller_id: "controller-a", state_root: state, created_at: now() };
-  for (const id of ["node-a", "node-b"]) s.hosts[id] = { host_id: id, display_name: id, platform: "linux", transport: "local", root: join(root, id), identity: "a".repeat(64), connection: {} };
+  for (const id of ["node-a", "node-b"]) s.hosts[id] = { host_id: id, display_name: id, platform: process.platform === "win32" ? "windows" : "linux", transport: "local", root: join(root, id), identity: "a".repeat(64), connection: {} };
   for (const id of ["app-a", "app-b"]) s.projects[id] = { project_id: id, display_name: id, kind: "app", service_type: null, source: { type: "local", location: join(root, "source"), revision: "v1" } };
   writeJson(join(state, "status.json"), s);
   const save = () => writeJson(join(state, "status.json"), s);
@@ -32,7 +32,13 @@ function request(id = "task-one") {
 function inventory(h) {
   return { identity: h.identity, platform: "linux", tools: { node: { version: "v22.22.3" } },
     snapshots: { [h.root]: { kind: "directory" } }, diagnostics: { disks: { [h.root]: { free: 4 * 1024 ** 3 } }, memory: { MemAvailable: 1024 ** 3 } },
-    docker_control: { status: "observed", endpoint: "unix:///var/run/docker.sock", data_root: join(h.root, "_runtime/docker"), compose_version: "2.30.0" } };
+    docker_control: { status: "observed", endpoint: "unix:///var/run/docker.sock", data_root: posix.join(h.root, "_runtime/docker"), compose_version: "2.30.0" } };
+}
+function linuxServer(f) {
+  return Object.assign(f.s.hosts["node-a"], { platform: "linux", root: "/srv/speculo-test/node-a" });
+}
+function directoryLink(target, path) {
+  symlinkSync(target, path, process.platform === "win32" ? "junction" : "dir");
 }
 function adapterFor(f, options = {}) {
   const calls = { compile: 0, approve: 0, apply: 0 };
@@ -76,7 +82,7 @@ test("explicit layer routing distinguishes controller, access, server, project a
 test("workspace rejects guessed roots, traversal, symlinks, duplicate JSON keys and orphan deployments", (t) => {
   const f = fixture(t);
   for (const path of [".", "/", f.state + "/../state"]) assert.throws(() => statePath(path));
-  const link = join(f.root, "linked"); symlinkSync(f.state, link, "dir"); assert.throws(() => statePath(link), /symlink/);
+  const link = join(f.root, "linked"); directoryLink(f.state, link); assert.throws(() => statePath(link), /symlink/);
   writeFileSync(join(f.state, "status.json"), '{"schema_version":3,"schema_version":3}'); assert.throws(() => readRegistry(f.state), /duplicate JSON/);
   f.s.deployments.dangling = { deployment_id: "dangling", host_id: "missing", project_id: "app-a" }; f.save(); assert.throws(() => readRegistry(f.state), /orphan/);
 });
@@ -90,7 +96,7 @@ test("CLI help works without network, server dependencies or state", () => {
   const r = spawnSync(process.execPath, [path, "workspace-help"], { encoding: "utf8" }); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /server-check/);
 });
 test("Linux checklist distinguishes missing, failed, profile-ready and stale evidence", (t) => {
-  const f = fixture(t), h = f.s.hosts["node-a"], inv = inventory(h), at = new Date("2026-01-01T00:00:00Z");
+  const f = fixture(t), h = linuxServer(f), inv = inventory(h), at = new Date("2026-01-01T00:00:00Z");
   assert.equal(readiness(assessServer(h), at.toISOString(), { at }), "unknown");
   assert.equal(readiness(assessServer(h, { profile: "compose", inventory: inv }), at.toISOString(), { at }), "ready");
   assert.equal(readiness(assessServer(h, { profile: "compose", inventory: inv }), at.toISOString(), { at: new Date("2026-01-03T00:00:00Z") }), "stale");
@@ -100,7 +106,7 @@ test("Linux checklist distinguishes missing, failed, profile-ready and stale evi
   }
 });
 test("server check uses pinned public-key-only SSH and records restricted evidence", async (t) => {
-  const f = fixture(t), h = f.s.hosts["node-a"], kh = join(f.root, "known_hosts"); writeFileSync(kh, "fixture verified key");
+  const f = fixture(t), h = linuxServer(f), kh = join(f.root, "known_hosts"); writeFileSync(kh, "fixture verified key");
   Object.assign(h, { transport: "ssh", connection: { hostname: "example.invalid", username: "deploy", known_hosts: kh } }); f.save();
   let spawned = 0, called = 0;
   const a = { sshArgv: () => ["ssh", "-o", "StrictHostKeyChecking=yes"], spawn: (_cmd, args) => { spawned++; assert.ok(args.includes("PasswordAuthentication=no")); assert.ok(args.includes("KbdInteractiveAuthentication=no")); return { status: 0 }; }, call: () => { called++; return inventory(h); } };
@@ -111,7 +117,7 @@ test("server check uses pinned public-key-only SSH and records restricted eviden
   writeFileSync(kh, "different key"); assert.notEqual(check.host_digest, targetDigest(h));
 });
 test("failed SSH login never triggers Node probe and is not reported ready", async (t) => {
-  const f = fixture(t), h = f.s.hosts["node-a"], kh = join(f.root, "known_hosts"); writeFileSync(kh, "fixture"); Object.assign(h, { transport: "ssh", connection: { hostname: "invalid", username: "deploy", known_hosts: kh } }); f.save();
+  const f = fixture(t), h = linuxServer(f), kh = join(f.root, "known_hosts"); writeFileSync(kh, "fixture"); Object.assign(h, { transport: "ssh", connection: { hostname: "invalid", username: "deploy", known_hosts: kh } }); f.save();
   const r = await checkServer(f.state, "node-a", {}, { sshArgv: () => ["ssh"], spawn: () => ({ status: 255 }), call: () => { throw new Error("must not probe"); } });
   assert.equal(r.status, "blocked"); assert.equal(r.checks.find(c => c.id === "machine-identity").status, "unknown");
 });
@@ -210,7 +216,10 @@ test("fleet writes immutable generations, verifies readback and retains one cons
   const before = readFileSync(first.markdown, "utf8"); writeFileSync(first.html, "tampered"); assert.throws(() => generateFleet(f.state, { at }), /readback mismatch/); assert.equal(readFileSync(first.markdown, "utf8"), before);
 });
 test("fleet refuses symlink outputs and catalog locks without overwriting old entry", (t) => {
-  const f = fixture(t), outside = join(f.root, "outside.txt"); writeFileSync(outside, "untouched"); symlinkSync(outside, join(f.state, "FLEET.md"));
+  const f = fixture(t), outsideDir = join(f.root, "outside"), outside = join(outsideDir, "sentinel.txt");
+  mkdirSync(outsideDir); writeFileSync(outside, "untouched");
+  if (process.platform === "win32") directoryLink(outsideDir, join(f.state, "FLEET.md"));
+  else symlinkSync(outside, join(f.state, "FLEET.md"));
   assert.throws(() => generateFleet(f.state), /symlink/); assert.equal(readFileSync(outside, "utf8"), "untouched");
   rmSync(join(f.state, "FLEET.md")); mkdirSync(join(f.state, ".locks/catalog"), { recursive: true }); assert.throws(() => generateFleet(f.state), /catalog lock/);
 });

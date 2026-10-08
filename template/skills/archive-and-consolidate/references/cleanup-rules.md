@@ -4,7 +4,7 @@
 
 ## 扫描范围
 
-1. 读取目标 workflow `INDEX.md` 的持久化约定表，提取所有知识型 store（名称含"永久"或位于 `adr/`、`context/` 等公认目录下）且真实存在的。
+1. 从已经解析的 workflow 激活合同取得持久化约定，结合 INDEX 永久知识指针确认 store 与写入 owner；不能假定 INDEX 包含运行合同或仅凭目录名称取得写入权。
 2. 尚未创建的 lazy store 记为 `missing`，不为清理而创建。
 3. 扫描当前代码、文档、active changes 和 archive 中对 ADR、context 条目及具体文件名的引用。
 4. 额外扫描：归档目录中可能指向知识文件的孤立引用。

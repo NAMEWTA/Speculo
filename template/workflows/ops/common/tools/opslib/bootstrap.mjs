@@ -1,7 +1,7 @@
 /** Node-less Linux SSH bootstrap: pinned Volta/Node via POSIX + scp, then enroll. */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, basename, isAbsolute, join } from "node:path";
+import { dirname, basename, join, posix as posixPath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { digest, exact, identifier, newId, noSymlinks, NodeMissing, now, OpsError, privateDir, rootPath, targetJoin, writeJson } from "./core.mjs";
 import { register, validateHost } from "./model.mjs";
@@ -142,8 +142,8 @@ export function bootstrapNode(args) {
   const installers = installerDir(hostRoot);
   const voltaHome = managedVoltaHome(hostRoot, args.account);
   posixCall(endpoint, "#!/bin/sh\nset -eu\nmkdir -p -- \"$1\" \"$2\"\n", { args: [installers, voltaHome] });
-  const remoteVolta = join(installers, volta.filename);
-  const remoteNode = join(installers, node.filename);
+  const remoteVolta = posixPath.join(installers, volta.filename);
+  const remoteNode = posixPath.join(installers, node.filename);
   posixSend(endpoint, volta.file, remoteVolta);
   posixSend(endpoint, node.file, remoteNode);
   const applied = posixCall(endpoint, SCRIPT, {
@@ -181,7 +181,7 @@ export function enroll(state, request) {
     if (posix.tools?.node === "missing" || posix.node_usable === false) throw new NodeMissing(posix);
     const discovery = host.identity === "discover" || host.identity == null;
     if (discovery) host.identity = "0".repeat(64);
-    if (!isAbsolute(host.connection.node)) {
+    if (!posixPath.isAbsolute(host.connection.node) || host.connection.node.includes("\\")) {
       throw new OpsError("connection.node must be the absolute path returned by bootstrap-node");
     }
     validateHost(host);

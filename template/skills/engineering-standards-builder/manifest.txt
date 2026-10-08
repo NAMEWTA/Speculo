@@ -1,3 +1,4 @@
+agents/openai.yaml
 examples/fallback/kotlin-gradle/build.gradle.kts
 examples/fallback/kotlin-gradle/expected.json
 examples/fallback/kotlin-gradle/src/main/kotlin/example/App.kt
@@ -44,7 +45,6 @@ examples/typescript/vue-vite/src/main.ts
 examples/typescript/vue-vite/tsconfig.json
 examples/typescript/vue-vite/vite.config.ts
 README.md
-references/entry-procedure.md
 references/go/00-detection-and-scope.md
 references/go/01-language-and-idioms.md
 references/go/02-modules-packages-and-layout.md
@@ -67,6 +67,7 @@ references/rules/05-files-directories-and-naming.md
 references/rules/06-apis-errors-resources-and-concurrency.md
 references/rules/07-documentation-and-comments.md
 references/rules/08-testing-strategy.md
+references/rules/09-mechanical-guardrails.md
 references/rules/09-security-configuration-and-data.md
 references/rules/10-performance-observability-and-i18n.md
 references/rules/11-tooling-quality-gates-and-ci.md

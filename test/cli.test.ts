@@ -102,7 +102,7 @@ describe("Speculo init refresh", () => {
       assert.match(agents, /<Path>\{roots\.state\}\/specdev\/adr\/<\/Path>/);
       assert.match(agents, /<Path>\{roots\.state\}\/specdev\/context\/<\/Path>/);
       assert.doesNotMatch(agents, /workflows\/specdev|INDEX\.md|<SPECULO>/);
-      assert.equal(await readFile(join(target, "CLAUDE.md"), "utf8"), "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n");
+      assert.equal(await readFile(join(target, "CLAUDE.md"), "utf8"), "# CLAUDE.md\n\n@AGENTS.md\n");
       assert.deepEqual(await residue(target), []);
     } finally {
       await rm(target, { recursive: true, force: true });

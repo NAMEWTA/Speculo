@@ -2,13 +2,13 @@
 id: retro
 type: command
 name: Speculo Retro
-description: Analyze confirmed Speculo usage friction and propose or create GitHub issues through the npm/GitHub operation skill.
+description: Analyze confirmed Speculo usage friction and propose or create GitHub issues through the T-triage remote operation protocol.
 keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 ---
 
 # Retro 命令
 
-**外部写操作 + 目标仓库写死。** 本命令最后一步会通过 `gh` 向 `NAMEWTA/Speculo` 创建 issue——不论在哪个项目仓库中激活，目标仓库一律不可覆盖。确认前只输出计划，不调用 `gh`。
+**外部写操作 + 目标仓库写死。** 本命令最后一步会通过 `gh` 向 `NAMEWTA/Speculo` 创建 issue——不论在哪个项目仓库中激活，目标仓库一律不可覆盖。确认前可执行只读检索和 dry-run，远程写入为零。
 
 ## 归档路径模式
 
@@ -18,19 +18,21 @@ keywords: [retro, 复盘, 痛点, feedback, issue, 优化, 反馈]
 - `<topic>` 从复盘范围或用户主题提取，使用小写 kebab-case；无法判断时使用 `speculo`。
 - 禁止把命令报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
 
-## 调用的 skills
+## 调用的能力
 
-- `<Path>{roots.skills}/speculo-retro/SKILL.md</Path>` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
-- `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
+- `<Path>{roots.skills}/retrospective/SKILL.md</Path>` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
+- `<Path>{roots.workflows}/specdev/T-triage/remote-operations.md</Path>` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
+
+若当前安装没有 SpecDev/T-triage，报告缺失依赖，继续本地复盘与提案；远程步骤待用户安装该 workflow 后恢复，不静默初始化。
 
 ## 执行步骤
 
-1. 读取 `<Path>{roots.skills}/speculo-retro/SKILL.md</Path>`，解析 `<Path>{roots.config}</Path>` 与 `<Path>{roots.state}/workspace.json</Path>`（不存在时以默认值静默降级），采集对话、command 报告、change 状态以及各 `INDEX.md` 声明的知识 store。
+1. 从调用方 workspace 或项目入口定位 `<Path>speculo/.speculo/workspace.json</Path>` 并解析 roots；缺失或冲突时只做当前会话分析，不猜测持久化目录。读取 `<Path>{roots.skills}/retrospective/SKILL.md</Path>`，按明确 scope 定位相关报告、change 与知识条目，不扩大为全量历史采集。
 2. 用该 skill 产出规范化复盘结论：去重、分级、根因化的 issue-ready 提案清单，附丢弃/合并说明与每条处置建议。
 3. 创建 command 专属目录 `<Path>{roots.state}/commands/retro/</Path>`，把复盘结论写入带 scope 的 Markdown 报告。
-4. **去重**：调用 `github-npm-ops` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
-5. **外部写操作边界**：向用户展示将要创建的 issue 清单（标题、类型/优先级标签、正文摘要、目标仓库 `NAMEWTA/Speculo`）与去重结果，等待用户明确确认。没有确认时只输出计划，不调用 `gh`。
-6. 用户确认后，按优先级倒序调用 `github-npm-ops` 的 `operation=issue-create` confirmed 分支。任一条失败时停止后续创建，报告已建/未建清单，不重复创建同一条。
+4. **去重**：调用 `T-triage 远程操作协议` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
+5. 本命令把分析类型映射为 bug→bug、friction/ergonomics→enhancement、missing-capability→feature-request、doc-gap→documentation；优先级映射 priority:<level>，可选 area:<area>。先只读确认远程标签，缺失时列为待处理，不擅自创建。展示精确标题、标签、正文、目标 `NAMEWTA/Speculo` 与去重结果，取得或沿用覆盖这些内容的明确授权；否则只保留报告。
+6. 按优先级调用 issue-create --apply，每项保存稳定 marker=retro:<报告文件名>:<序号>、正文摘要与授权。正文包含该 HTML marker 和 AI 协助说明；请求超时先查原 marker，不制造第二条。任一失败停止后续创建，在本报告记录已建/未建与恢复条件。此操作不激活 T、不创建 change、不占用 current_work。
 7. 把每条提案的最终 issue 编号/URL 回写进本次报告的「提交结果」小节；返回报告路径、3-5 条复盘摘要和已创建 issue 链接清单。
 
 ## 产物模板

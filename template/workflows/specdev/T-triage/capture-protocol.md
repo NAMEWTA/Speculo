@@ -29,7 +29,7 @@ capture **不得**：
 失败即停，零远程写入。已有账本行保持原 state。
 
 1. 每条纳入记录有 id（`YYYY-MM-DD-<kebab>`）、现在时摘要、且 `kind` 为 bug、feature、refactor、investigation、operations、documentation 或 review。禁止 `mixed`。
-2. 调用 `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` 能读目标 repo、能 dry-run `issue-create`。本协议只用 `issue-search` / `issue-create`。
+2. 调用 `<Path>{roots.workflows}/specdev/T-triage/remote-operations.md</Path>` 能读目标 repo、能 dry-run `issue-create`。本协议只用 `issue-search` / `issue-create`。
 3. 分类映射见 `<Path>{roots.workflows}/specdev/T-triage/references/classification-map.md</Path>`。缺 type 标签时 dry-run 表列出将创建的标签，授权后才 `gh label create`。
 4. 用户看见完整 dry-run 表（id、标题、标签、正文、reason）并给出 **本次** 明确确认。
 

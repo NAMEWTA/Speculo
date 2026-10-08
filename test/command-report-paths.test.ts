@@ -32,7 +32,7 @@ describe("command report roots", () => {
   it("blocks archive-and-consolidate reports under {roots.commands}", () => {
     const command = read("template/commands/archive-and-consolidate.md");
     const skill = read("template/skills/archive-and-consolidate/SKILL.md");
-    const procedure = read("template/skills/archive-and-consolidate/references/entry-procedure.md");
+    const procedure = read("template/skills/archive-and-consolidate/SKILL.md");
 
     assert.match(command, /<Path>\{roots\.state\}\/commands\/archive-and-consolidate\//);
     assert.match(command, /\{roots\.commands\}\/archive-and-consolidate\//);
@@ -41,7 +41,7 @@ describe("command report roots", () => {
     assert.match(command, /不是报告根/);
     assert.match(command, /<Path>\{roots\.skills\}\/archive-and-consolidate\/SKILL\.md<\/Path>/);
 
-    assert.match(skill, /when `commands_root` is not `\{roots\.state\}\/commands`/);
+    assert.match(skill, /commands_root.*\{roots\.state\}\/commands/);
 
     assert.match(procedure, /`commands_root` 必须解析为 `<Path>\{roots\.state\}\/commands<\/Path>`/);
     assert.match(procedure, /<Path>\{roots\.state\}\/commands\/archive-and-consolidate\//);
@@ -57,7 +57,7 @@ describe("command report roots", () => {
   it("routes git-history-squash through confirmation gates and split namespaces", () => {
     const command = read("template/commands/git-history-squash.md");
     const skill = read("template/skills/git-history-squash/SKILL.md");
-    const procedure = read("template/skills/git-history-squash/references/entry-procedure.md");
+    const procedure = read("template/skills/git-history-squash/SKILL.md");
 
     assert.match(command, /disable-model-invocation: true/);
     assert.match(command, /<Path>\{roots\.state\}\/commands\/git-history-squash\//);

@@ -31,15 +31,24 @@ function object(value: unknown): JsonObject {
 
 export function readSpecdevConfig(local: JsonObject): { value: JsonObject; migrated: boolean } {
   const version = Number(local.schema_version);
-  if (version === 5) return { value: local, migrated: false };
-  throw new Error("SpecDev config schema v5 is required; 1.0 does not migrate older config schemas");
+  if (version === 6) return { value: local, migrated: false };
+  if (version === 5) {
+    if ("github" in local) throw new Error("SpecDev v5 config has an undeclared github field; resolve ownership before migration");
+    const value = { ...local, schema_version: 6, github: { include_external_prs: false, labels: {} } };
+    validateSpecdevConfig(value);
+    return { value, migrated: true };
+  }
+  throw new Error("SpecDev config schema v6 is required; only v5 has an explicit migration");
 }
 
 export function validateSpecdevConfig(config: JsonObject): void {
-  if (config.schema_version !== 5) throw new Error("SpecDev config schema_version must be 5");
+  if (config.schema_version !== 6) throw new Error("SpecDev config schema_version must be 6");
   if (typeof config.interaction_language !== "string" || typeof config.artifact_language !== "string") {
     throw new Error("SpecDev config language values must be strings");
   }
+  const github = object(config.github);
+  if (typeof github.include_external_prs !== "boolean" || !github.labels || typeof github.labels !== "object" || Array.isArray(github.labels) || Object.values(github.labels).some(v => typeof v !== "string" || !v.trim())) throw new Error("SpecDev config github requires include_external_prs and string label mappings");
+  assertExactKeys(github, ["include_external_prs", "labels"], "SpecDev config github");
   const git = object(config.git);
   if (!(git.default_branch === null || typeof git.default_branch === "string")) {
     throw new Error("SpecDev config git.default_branch must be a string or null");

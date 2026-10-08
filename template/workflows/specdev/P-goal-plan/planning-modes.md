@@ -13,7 +13,7 @@
 - 等待真实上游产物的未来 Ticket 保持 `status: draft`、`ready: false`，在未决问题中记录缺口、生产者 Ticket、所需证据和 DoR 重审条件；不编造版本、路径或验证入口；
 - 每个验收合同被 Ticket 覆盖；
 - writable/shared path 有唯一 owner，Wave 候选无写冲突；
-- config schema v5，`max_implementation_agents` 与 `max_integration_attempts` 为正整数；UI 设计候选范围读取 planning 配置；
+- config schema v6，`max_implementation_agents` 与 `max_integration_attempts` 为正整数；UI 设计候选范围读取 planning 配置；
 - 父分支可定位，implementation commit 与本地 integration 的授权状态已记录；`plan` 可以列出待批准项并保持 `ready_for_execution: false`；
 - 待执行 Deep Ticket 的迁移、兼容、监控、恢复和不可逆批准点完整。
 - Ticket 与 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`、`<Path>{roots.state}/specdev/adr/</Path>`、`<Path>{roots.state}/specdev/context/</Path>` 和当前代码事实不存在未处理冲突；

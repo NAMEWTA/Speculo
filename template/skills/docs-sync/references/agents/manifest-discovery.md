@@ -2,8 +2,7 @@
 
 ## 核心规则
 
-目录中存在任一 manifest 文件 → **允许且必须有** `AGENTS.md`。
-目录中不存在任何 manifest 文件 → 已存在的 `AGENTS.md` 必须删除，**禁止创建**。
+按真实作用域和独有约束决定是否需要手册；manifest 是定位证据，不是唯一许可或强制创建条件。没有 manifest 不能成为删除用户手册的理由。
 
 ## Manifest 文件注册表
 
@@ -58,6 +57,7 @@
 4. **检测 manifest**：对每个非忽略目录，检查是否存在任何 manifest 文件。
 5. **选择主 manifest**：按优先级选择。
 6. **应用过滤**：若用户指定了 `manifest_filter`，仅保留匹配该类型的目录。
+7. **补充作用域边界**：检查已定位的嵌套手册、独立测试/生成物约束、部署与安全边界；即使无 manifest，有真实独有约束仍可纳入。候选目录只有在减少歧义或提供独有规则时才生成手册，不按 manifest 数量机械铺开。
 
 ### 构建父子树
 
@@ -65,9 +65,9 @@
 2. 每个目录的**父 manifest 目录** = 路径上最近的祖先 manifest 目录。
 3. 项目根目录（`repo-root`）的父级为 `null`。
 
-## 特批例外：scripts-docs 目录
+## 无 manifest 的作用域
 
-某些目录虽无 manifest 但值得保留 AGENTS.md，需用户显式指定或按约定自动检测：
+scripts-docs 是常见例子，不是唯一合法例外；按实际规则作用域保留或创建手册，不需要仅因无 manifest 另设批准门：
 
 ### 自动检测条件
 
@@ -81,10 +81,10 @@
 
 ## 清理规则
 
-### 必须清理（删除 AGENTS.md 和 CLAUDE.md）
+### 仅提出清理候选（按已确认范围和所有权执行）
 
-- 任何无 manifest 目录下的 `AGENTS.md`
-- 任何无 manifest 目录下的 `CLAUDE.md`
+- 已证实过期且不再有独有作用域约束的 AGENTS.md
+- 对应手册已确认移除且由调用方拥有的 CLAUDE.md
 - 忽略目录（`node_modules` 等）下的任何 `AGENTS.md` 或 `CLAUDE.md`
 
 ### 不清理

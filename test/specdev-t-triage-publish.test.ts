@@ -92,8 +92,11 @@ async function writeTriage(
   const publishAction = extras.publishAction ?? "not-requested";
   const lines = [
     "---",
-    "schema_version: 1",
+    "schema_version: 2",
     "artifact: triage",
+    "disposition: needs-triage",
+    "verification: pending",
+    "remote_actions: []",
     `change: ${changeName}`,
     `mode: ${extras.mode ?? "publish"}`,
     "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
@@ -193,8 +196,11 @@ describe("SpecDev T-triage publish projection", () => {
         join(root, "triage.md"),
         [
           "---",
-          "schema_version: 1",
+          "schema_version: 2",
           "artifact: triage",
+          "disposition: needs-triage",
+          "verification: pending",
+          "remote_actions: []",
           `change: ${changeName}`,
           "mode: intake",
           "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
@@ -405,8 +411,8 @@ describe("SpecDev T-triage publish projection", () => {
       readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/public-projection.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md"), "utf8"),
     ]);
-    assert.match(entry, /mode=publish|\*\*publish\*\*/);
-    assert.match(entry, /specdev:published/);
+    assert.match(entry, /\| publish \|/);
+    assert.match(map, /specdev:published/);
     assert.match(protocol, /include-cancelled/);
     assert.match(protocol, /skipped:cancelled/);
     assert.match(protocol, /issue-create/);

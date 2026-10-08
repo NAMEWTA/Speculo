@@ -52,7 +52,8 @@ async function writeConfig(root: string, maxImplementationAgents = 3, maxIntegra
   const configRoot = join(dirname(root), ".speculo", "specdev");
   await mkdir(configRoot, { recursive: true });
   await writeFile(join(configRoot, "config.json"), JSON.stringify({
-    schema_version: 5,
+    schema_version: 6,
+    github: { include_external_prs: false, labels: {} },
     interaction_language: "zh-CN",
     artifact_language: "zh-CN",
     git: { default_branch: "main" },
@@ -325,8 +326,11 @@ async function writeSourceAndTriage(root: string, externalAction = "pending-clos
     join(root, "triage.md"),
     [
       "---",
-      "schema_version: 1",
+      "schema_version: 2",
       "artifact: triage",
+      "disposition: needs-triage",
+      "verification: pending",
+      "remote_actions: []",
       `change: ${changeName}`,
       "mode: intake",
       "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
@@ -763,7 +767,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
-    assert.equal(workDirs.length, 14);
+    assert.equal(workDirs.length, 15);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -812,7 +816,7 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
 
-    assert.equal(config.schema_version, 5);
+    assert.equal(config.schema_version, 6);
     assert.equal(config.execution.max_implementation_agents, 3);
     assert.equal(config.execution.max_integration_attempts, 3);
     assert.equal(config.planning.ui_design_default_candidates, 3);
@@ -1382,6 +1386,23 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
+  it("validates evolved source snapshots without overwriting the frozen original", async () => {
+    const root = await fixture();
+    try {
+      await writeStatus(root); await writeSourceAndTriage(root);
+      const original = await readFile(join(root, "source.md"), "utf8");
+      const triage = await readFile(join(root, "triage.md"), "utf8");
+      await mkdir(join(root, "sources"));
+      const snapshot = original.replace("artifact: source", "artifact: source\nsupersedes_source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>");
+      await writeFile(join(root, "sources/SRC-001.md"), snapshot);
+      await writeFile(join(root, "triage.md"), triage.replace("/source.md</Path>", "/sources/SRC-001.md</Path>"));
+      const valid = runValidator(root, "triage"); assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+      assert.equal(await readFile(join(root, "source.md"), "utf8"), original);
+      await writeFile(join(root, "sources/SRC-001.md"), snapshot.replace("/source.md</Path>", "/sources/SRC-099.md</Path>"));
+      const invalid = runValidator(root, "triage"); assert.match(invalid.stdout + invalid.stderr, /existing distinct supersedes_source/);
+    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+  });
+
   it("rejects hypotheses before diagnosis has red evidence", async () => {
     const root = await fixture();
     try {
@@ -1592,7 +1613,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(resumable.status, 0, resumable.stdout + resumable.stderr);
       const completion = runValidator(root, "prototype");
       assert.equal(completion.status, 1);
-      assert.match(completion.stdout + completion.stderr, /requires at least one ready UI design package/);
+      assert.match(completion.stdout + completion.stderr, /requires at least one ready UI or logic design package/);
     } finally {
       await rm(dirname(root), { recursive: true, force: true });
     }
@@ -1693,8 +1714,10 @@ const path = process.env.FAKE_GH_STATE;
 const state = JSON.parse(fs.readFileSync(path, "utf8"));
 const args = process.argv.slice(2);
 state.actions.push(args.join(" "));
-if (args[0] === "issue" && args[1] === "view") {
-  console.log(JSON.stringify({ number: 1, title: "Issue", body: "Body", state: state.state, url: "https://github.com/owner/repo/issues/1", author: { login: "user" }, labels: [], createdAt: "2026-08-07", updatedAt: "2026-08-07", comments: state.comments }));
+if (args[0] === "api" && args[1].includes("/comments?")) {
+  console.log(JSON.stringify([state.comments]));
+} else if (args[0] === "api" && args[1].endsWith("/issues/1")) {
+  console.log(JSON.stringify({ number: 1, title: "Issue", body: "Body", state: state.state.toLowerCase(), html_url: "https://github.com/owner/repo/issues/1", user: { login: "user" }, labels: [], created_at: "2026-08-07", updated_at: "2026-08-07", comments: state.comments.length }));
 } else if (args[0] === "issue" && args[1] === "comment") {
   state.comments.push({ body: args[args.indexOf("--body") + 1] });
 } else if (args[0] === "issue" && args[1] === "close") {
@@ -1706,7 +1729,7 @@ fs.writeFileSync(path, JSON.stringify(state));
 `,
       );
       await chmod(fakeGh, 0o755);
-      const transport = join(packageRoot, "template/skills/github-npm-ops/scripts/issue-transport.mjs");
+      const transport = join(packageRoot, "template/workflows/specdev/T-triage/scripts/github-transport.mjs");
       const args = [
         transport,
         "issue-comment-close",

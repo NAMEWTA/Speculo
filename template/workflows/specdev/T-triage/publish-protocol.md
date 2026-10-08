@@ -23,7 +23,7 @@ publish **不得**改 Ticket / Spec / Evidence / Goal / change completed 事实�
 
 1. 按 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` 重验本地完成。
 2. 至少一张可发布票：status `done`，或用户选择纳入的 `cancelled`。没有 Ticket 文件（纯 Direct Spec）时停止；v1 不发 Change 级单 Issue。
-3. 调用 `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` 能读目标 repo、能 dry-run `issue-create`。
+3. 调用 `<Path>{roots.workflows}/specdev/T-triage/remote-operations.md</Path>` 能读目标 repo、能 dry-run `issue-create`。
 4. 分类映射见 `<Path>{roots.workflows}/specdev/T-triage/references/classification-map.md</Path>`。缺 type 标签时 dry-run 表列出将创建的标签，授权后才 `gh label create`。
 5. Change `classification` 为 `mixed` 时，确认表上每张纳入票都有 `kind`。
 6. 用户看见完整 dry-run 表（标题、标签、正文、关闭评论、reason）并给出 **本次** 明确确认。

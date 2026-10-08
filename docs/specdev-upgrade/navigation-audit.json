@@ -1,0 +1,415 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-08",
+  "method": "逐项按目录 owner、入口发现方式与调用形式判断，图的无入边不代表运行时不可达。",
+  "cycles": [
+    {
+      "id": 1,
+      "paths": [
+        "template/commands/git-history-squash.md",
+        "template/skills/git-history-squash/SKILL.md"
+      ],
+      "decision": "retain",
+      "reason": "入口与条件参考互相导航；按需读取，不递归装载。"
+    },
+    {
+      "id": 2,
+      "paths": [
+        "template/skills/docs-sync/references/readme-contract.md",
+        "template/skills/docs-sync/references/readme-writing-guide.md"
+      ],
+      "decision": "retain",
+      "reason": "入口与条件参考互相导航；按需读取，不递归装载。"
+    },
+    {
+      "id": 3,
+      "paths": [
+        "template/skills/writing-for-agents/GLOSSARY.md",
+        "template/skills/writing-for-agents/SKILL.md",
+        "template/skills/writing-for-agents/references/authoring-principles.md"
+      ],
+      "decision": "retain",
+      "reason": "入口与条件参考互相导航；按需读取，不递归装载。"
+    },
+    {
+      "id": 4,
+      "paths": [
+        "template/workflows/learning/A-archive/A-archive.md",
+        "template/workflows/learning/A-assess-and-plan/A-assess-and-plan.md",
+        "template/workflows/learning/C-consolidate/C-consolidate.md",
+        "template/workflows/learning/G-goal/G-goal.md",
+        "template/workflows/learning/G-goal/goal-plan-template.md",
+        "template/workflows/learning/G-goal/planning-modes.md",
+        "template/workflows/learning/G-goal/references/external-goal-runner.md",
+        "template/workflows/learning/H-homework/H-homework.md",
+        "template/workflows/learning/I-init-setup/I-init-setup.md",
+        "template/workflows/learning/L-lesson/L-lesson.md",
+        "template/workflows/learning/Q-question/Q-question.md",
+        "template/workflows/learning/R-review/R-review.md",
+        "template/workflows/learning/README.md"
+      ],
+      "decision": "retain",
+      "reason": "README/INDEX 与 Work 路由构成导航强连通分量；仅激活当前 Work。"
+    },
+    {
+      "id": 5,
+      "paths": [
+        "template/workflows/ops/D-project-deploy/D-project-deploy.md",
+        "template/workflows/ops/H-host-manage/H-host-manage.md",
+        "template/workflows/ops/I-initialize/I-initialize.md",
+        "template/workflows/ops/README.md",
+        "template/workflows/ops/S-server-connect/S-server-connect.md",
+        "template/workflows/ops/V-inventory-view/V-inventory-view.md"
+      ],
+      "decision": "retain",
+      "reason": "README/INDEX 与 Work 路由构成导航强连通分量；仅激活当前 Work。"
+    },
+    {
+      "id": 6,
+      "paths": [
+        "template/workflows/person/INDEX.md",
+        "template/workflows/person/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md",
+        "template/workflows/person/S-steelman-deliberation/S-steelman-deliberation.md"
+      ],
+      "decision": "retain",
+      "reason": "README/INDEX 与 Work 路由构成导航强连通分量；仅激活当前 Work。"
+    },
+    {
+      "id": 7,
+      "paths": [
+        "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md",
+        "template/workflows/specdev/A-archive-and-consolidate/consolidation-interview.md",
+        "template/workflows/specdev/C-code-review/C-code-review.md",
+        "template/workflows/specdev/C-code-review/code-review-template.md",
+        "template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md",
+        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md",
+        "template/workflows/specdev/G-grill-with-docs/references/interview-procedure.md",
+        "template/workflows/specdev/I-implement/I-implement.md",
+        "template/workflows/specdev/I-implement/references/implementation-procedure.md",
+        "template/workflows/specdev/I-implement/tdd-rules.md",
+        "template/workflows/specdev/I-init-setup/I-init-setup.md",
+        "template/workflows/specdev/L-learn-change/L-learn-change.md",
+        "template/workflows/specdev/P-goal-plan/P-goal-plan.md",
+        "template/workflows/specdev/P-goal-plan/goal-plan-template.md",
+        "template/workflows/specdev/P-goal-plan/planning-modes.md",
+        "template/workflows/specdev/P-goal-plan/references/goal-tickets-map-template.md",
+        "template/workflows/specdev/P-goal-plan/references/multi-change-plan.md",
+        "template/workflows/specdev/P-goal-plan/references/single-change-plan.md",
+        "template/workflows/specdev/P-prototype/P-prototype.md",
+        "template/workflows/specdev/R-retro/R-retro.md",
+        "template/workflows/specdev/R-review-architecture/R-review-architecture.md",
+        "template/workflows/specdev/R-review-architecture/architecture-review-template.md",
+        "template/workflows/specdev/R-review-architecture/proposal-to-ticket.md",
+        "template/workflows/specdev/R-review-architecture/references/selected-design.md",
+        "template/workflows/specdev/R-review-architecture/review-rubric.md",
+        "template/workflows/specdev/README.md",
+        "template/workflows/specdev/S-spec/S-spec.md",
+        "template/workflows/specdev/T-tickets/T-tickets.md",
+        "template/workflows/specdev/T-tickets/decomposition-rules.md",
+        "template/workflows/specdev/T-tickets/references/planning-procedure.md",
+        "template/workflows/specdev/T-tickets/ticket-readiness.md",
+        "template/workflows/specdev/T-tickets/tickets-map-template.md",
+        "template/workflows/specdev/T-triage/T-triage.md",
+        "template/workflows/specdev/T-triage/capture-protocol.md",
+        "template/workflows/specdev/T-triage/ci-security-protocol.md",
+        "template/workflows/specdev/T-triage/intake-protocol.md",
+        "template/workflows/specdev/T-triage/pr-delivery-protocol.md",
+        "template/workflows/specdev/T-triage/queue-protocol.md",
+        "template/workflows/specdev/T-triage/references/issue-pr-policy.md",
+        "template/workflows/specdev/T-triage/triage-template.md",
+        "template/workflows/specdev/W-wayfinder/W-wayfinder.md",
+        "template/workflows/specdev/W-wayfinder/references/initiative-discovery.md",
+        "template/workflows/specdev/W-wayfinder/references/map-traversal.md",
+        "template/workflows/specdev/W-wayfinder/wayfinder-map-template.md",
+        "template/workflows/specdev/common/README.md",
+        "template/workflows/specdev/common/rules/artifact-contract.md",
+        "template/workflows/specdev/common/rules/design-it-twice.md",
+        "template/workflows/specdev/common/rules/deviation-control.md",
+        "template/workflows/specdev/common/rules/domain-modeling.md",
+        "template/workflows/specdev/common/rules/operating-governance.md",
+        "template/workflows/specdev/common/rules/planning-principles.md",
+        "template/workflows/specdev/common/rules/readiness-and-depth.md",
+        "template/workflows/specdev/common/rules/workflow-routing.md"
+      ],
+      "decision": "retain",
+      "reason": "README/INDEX 与 Work 路由构成导航强连通分量；仅激活当前 Work。"
+    }
+  ],
+  "unlinked": [
+    {
+      "path": "skills/_shared/memory-retrieval.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/_shared/validation-gates.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/speculo-write-canonical/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/speculo-write-command/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/speculo-write-skill/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/speculo-write-work/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "skills/speculo-write-workflows/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：维护者入口由宿主技能目录/AGENTS 定位，共享文件由 authoring 合同调用；非分发 Work 边。"
+    },
+    {
+      "path": "template/commands/archive-and-consolidate.md",
+      "decision": "retain",
+      "reason": "保留：用户显式命令入口，独立发现，不要求其他 Work 引用。"
+    },
+    {
+      "path": "template/commands/git-repository-audit.md",
+      "decision": "retain",
+      "reason": "保留：用户显式命令入口，独立发现，不要求其他 Work 引用。"
+    },
+    {
+      "path": "template/commands/retro.md",
+      "decision": "retain",
+      "reason": "保留：用户显式命令入口，独立发现，不要求其他 Work 引用。"
+    },
+    {
+      "path": "template/commands/status.md",
+      "decision": "retain",
+      "reason": "保留：用户显式命令入口，独立发现，不要求其他 Work 引用。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/assets/archive-plan-template.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/assets/cleanup-candidate-template.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/assets/consolidation-plan-template.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/references/archive-rules.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/references/cleanup-rules.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/references/consolidation-rules.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/archive-and-consolidate/references/knowledge-graduation.md",
+      "decision": "retain",
+      "reason": "保留：archive Skill 的步骤直接以相对文件名指定该规则/模板；图只识别 Path 和 Markdown 链接。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/claude-redirect.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/content-contract.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/evidence-collection.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/manifest-discovery.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/role-classification.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/aggregator-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/capability-module-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/contract-module-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/repo-root-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/runnable-app-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/templates/scripts-docs-AGENTS.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/docs-sync/references/agents/writing-style.md",
+      "decision": "retain",
+      "reason": "保留：agents-contract 与角色分支按相对路径/模板通配读取，不是无调用文件。"
+    },
+    {
+      "path": "template/skills/engineering-standards-builder/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：宿主按 Skill description 发现的独立能力入口。"
+    },
+    {
+      "path": "template/skills/optimize-codex-config/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：宿主按 Skill description 发现的独立能力入口。"
+    },
+    {
+      "path": "template/skills/upstream-fork-sync/SKILL.md",
+      "decision": "retain",
+      "reason": "保留：宿主按 Skill description 发现的独立能力入口。"
+    },
+    {
+      "path": "template/workflows/learning/common/rules/artifact-contract.md",
+      "decision": "retain",
+      "reason": "保留待该 workflow 独立审计：Learning 规则或派生模板，当前升级不授权仅凭零入边删除。"
+    },
+    {
+      "path": "template/workflows/learning/common/rules/knowledge-organization.md",
+      "decision": "retain",
+      "reason": "保留待该 workflow 独立审计：Learning 规则或派生模板，当前升级不授权仅凭零入边删除。"
+    },
+    {
+      "path": "template/workflows/learning/common/rules/mastery-policy.md",
+      "decision": "retain",
+      "reason": "保留待该 workflow 独立审计：Learning 规则或派生模板，当前升级不授权仅凭零入边删除。"
+    },
+    {
+      "path": "template/workflows/learning/common/rules/path-reference-contract.md",
+      "decision": "retain",
+      "reason": "保留待该 workflow 独立审计：Learning 规则或派生模板，当前升级不授权仅凭零入边删除。"
+    },
+    {
+      "path": "template/workflows/learning/common/skills/topic-synthesis/claim-template.md",
+      "decision": "retain",
+      "reason": "保留待该 workflow 独立审计：Learning 规则或派生模板，当前升级不授权仅凭零入边删除。"
+    },
+    {
+      "path": "template/workflows/ops/common/rules/research-and-decisions.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/custom.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/docker-engine.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/elasticsearch.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/minio.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/mysql.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/service-profiles/redis.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/templates/CONTROLLER-RECORD.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/templates/EXECUTION-PLAN.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/templates/HOST-README.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/ops/common/templates/PROJECT-README.md",
+      "decision": "retain",
+      "reason": "保留：OPS 服务配置/生成模板/规则，含程序或 USAGE 字面路径调用；本次不重构 OPS。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/_templates/mao-consultation-output-template.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/references/research/10-personality-profile.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/references/research/11-analysis-frameworks.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/references/research/12-strategy-frameworks.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/references/research/13-organization-action.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    },
+    {
+      "path": "template/workflows/person/M-mao-zedong-cognitive-os/references/research/14-voice-and-dialogue.md",
+      "decision": "retain",
+      "reason": "保留：Person 的分支研究与输出模板，按 deliver/research 约定读取；本次不改其职责。"
+    }
+  ]
+}

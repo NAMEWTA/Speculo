@@ -20,6 +20,9 @@ close_capability: not-applicable
 - **Labels or classification supplied by source:** none / ...
 - **Attachments:** none / URL references only
 - **Redactions:** none / description of omitted sensitive material
+- **Pagination / fetched at:** GitHub 来源填完整性、每类条数及读取时间；其他来源不适用
+- **Base / head SHA:** PR 填固定值，其他来源不适用
+- **Supersedes:** 新快照在 frontmatter 填 supersedes_source 指向前一不可变快照；初次来源不适用
 
 ## Original Content
 
@@ -28,3 +31,7 @@ close_capability: not-applicable
 ## Source Comments
 
 <按来源顺序保存评论；没有评论时写“无”。>
+
+## PR Evidence
+
+PR 来源保存 reviews、review comments、文件清单和完整 diff；分页缺失或 SHA 漂移阻塞分诊。非 PR 来源写不适用。

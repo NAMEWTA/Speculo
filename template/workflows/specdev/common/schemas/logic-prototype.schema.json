@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:logic-prototype:v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "id",
+    "status",
+    "verification",
+    "html_sha256",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "logic-prototype"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^LOGIC-[0-9]{3,}$"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "blocked",
+        "ready"
+      ]
+    },
+    "verification": {
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "unknown"
+      ]
+    },
+    "html_sha256": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

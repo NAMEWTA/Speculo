@@ -1,6 +1,6 @@
 # Authoring quality
 
-本模型将 `template/skills/writing-great-skills/SKILL.md` 的方法用于 Speculo 资产。目标是让 Agent 每次遵循同一可检查过程，而不是追求字面相同的输出。
+本模型将 `template/skills/writing-for-agents/SKILL.md` 的方法用于 Speculo 资产。目标是让 Agent 每次遵循同一可检查过程，而不是追求字面相同的输出。
 
 ## 预测性
 
@@ -73,4 +73,4 @@ AGENTS 是项目事实和发现入口，Skill 是可复用能力，Command 拥�
 
 评估当前任务实际读取的依赖闭包，不以入口行数最少为目标。每次必读短流程留在入口，只有真正按条件的分支才下沉；不增加无条件中转层。保留单一共享权威，允许就近简短提醒安全边界。变更先固定正常、近邻负例、越权和恢复场景，验证实际产物与工具事实；结构校验和自述 Evidence 不认证真实宿主行为。
 
-已分发 Skill 使用标准 name/description/metadata。宿主扩展留在适配说明，不把 metadata 当授权。升级 name/hash 时登记兼容旧 ID，活跃票由 Lead 检查后重新绑定并重验，完成证据不可改写。来源清单应记录真实 upstream URL、revision、路径、hash、license 与适配说明；历史缺失明确记 unknown，不补造溯源。
+已分发 Skill 使用标准 name/description/metadata。宿主扩展留在适配说明，不把 metadata 当授权。升级 name/hash 时登记迁移映射，不保留重复可执行旧入口，活跃票由 Lead 检查后重新绑定并重验，完成证据不可改写。来源清单应记录真实 upstream URL、revision、路径、hash、license 与适配说明；历史缺失明确记 unknown，不补造溯源。

@@ -34,6 +34,10 @@ node Speculo Node 校验器 --stage spec --repo <project-root> specdev/changes/{
 
 只有用户请求或工作流已显式串联时才进入 “拆分 Tickets 阶段”；产出 Ready Spec 本身不授权实施。
 
+## 原型证据
+
+可以引用已验证 LOGIC/UI 原型中的行为、边界与已确认决定，记录具体 locator 和验证证据；源码片段可承载设计选择，但不自动成为生产实现。未闭合高影响产品决定返回 G，S 综合已确认设计而不重新开启无关访谈。
+
 ---
 
 ## 参考内容
@@ -320,6 +324,13 @@ W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边�
 
 父 `specdev/changes/{change}/tickets-map.md` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 
+## 新增工件 owner
+
+- T：specdev/changes/{change}/pull-requests/PR-###.md 拥有 PR 交付回执；specdev/triage-runs/TRI-###.md 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
+- R-retro：specdev/changes/{change}/retro/RETRO-###.md 拥有活动复盘建议和来源；不成为永久知识。
+- P：specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
+- 来源更新：specdev/changes/{change}/source.md 冻结后保持不变。T 将后续读取写入 specdev/changes/{change}/sources/SRC-###.md，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
+
 </artifact-contract>
 
 <readiness-and-depth>
@@ -547,7 +558,7 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
@@ -571,6 +582,10 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
     "require_evidence": true,
     "ui_design_default_candidates": 3,
     "ui_design_max_candidates": 4
+  },
+  "github": {
+    "include_external_prs": false,
+    "labels": {}
   }
 }
 ```
@@ -582,60 +597,171 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v5",
+  "$id": "urn:speculo:specdev:config:v6",
   "title": "SpecDev Configuration",
   "type": "object",
-  "required": ["schema_version", "interaction_language", "artifact_language", "git", "execution", "verification", "planning"],
+  "required": [
+    "schema_version",
+    "interaction_language",
+    "artifact_language",
+    "git",
+    "execution",
+    "verification",
+    "planning",
+    "github"
+  ],
   "properties": {
-    "schema_version": {"const": 5},
-    "interaction_language": {"type": "string", "minLength": 1},
-    "artifact_language": {"type": "string", "minLength": 1},
+    "schema_version": {
+      "const": 6
+    },
+    "interaction_language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_language": {
+      "type": "string",
+      "minLength": 1
+    },
     "git": {
       "type": "object",
-      "required": ["default_branch"],
+      "required": [
+        "default_branch"
+      ],
       "properties": {
-        "default_branch": {"type": ["string", "null"]}
+        "default_branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },
     "execution": {
       "type": "object",
-      "required": ["max_implementation_agents", "max_integration_attempts", "deep_ticket_human_approval", "shared_path_owner"],
+      "required": [
+        "max_implementation_agents",
+        "max_integration_attempts",
+        "deep_ticket_human_approval",
+        "shared_path_owner"
+      ],
       "properties": {
-        "max_implementation_agents": {"type": "integer", "minimum": 1},
-        "max_integration_attempts": {"type": "integer", "minimum": 1},
-        "deep_ticket_human_approval": {"type": "boolean"},
-        "shared_path_owner": {"type": "string", "minLength": 1}
+        "max_implementation_agents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_integration_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deep_ticket_human_approval": {
+          "type": "boolean"
+        },
+        "shared_path_owner": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "verification": {
       "type": "object",
-      "required": ["test", "typecheck", "lint", "build"],
+      "required": [
+        "test",
+        "typecheck",
+        "lint",
+        "build"
+      ],
       "properties": {
-        "test": {"type": ["string", "null"]},
-        "typecheck": {"type": ["string", "null"]},
-        "lint": {"type": ["string", "null"]},
-        "build": {"type": ["string", "null"]}
+        "test": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "typecheck": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "build": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": true
     },
     "planning": {
       "type": "object",
-      "required": ["default_depth", "require_ready_gate", "require_evidence", "ui_design_default_candidates", "ui_design_max_candidates"],
+      "required": [
+        "default_depth",
+        "require_ready_gate",
+        "require_evidence",
+        "ui_design_default_candidates",
+        "ui_design_max_candidates"
+      ],
       "properties": {
-        "default_depth": {"enum": ["lite", "standard", "deep"]},
-        "require_ready_gate": {"type": "boolean"},
-        "require_evidence": {"type": "boolean"},
-        "ui_design_default_candidates": {"type": "integer", "minimum": 2, "maximum": 4},
-        "ui_design_max_candidates": {"type": "integer", "minimum": 2, "maximum": 4}
+        "default_depth": {
+          "enum": [
+            "lite",
+            "standard",
+            "deep"
+          ]
+        },
+        "require_ready_gate": {
+          "type": "boolean"
+        },
+        "require_evidence": {
+          "type": "boolean"
+        },
+        "ui_design_default_candidates": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        },
+        "ui_design_max_candidates": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        }
       },
       "additionalProperties": true
+    },
+    "github": {
+      "type": "object",
+      "required": [
+        "include_external_prs",
+        "labels"
+      ],
+      "properties": {
+        "include_external_prs": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
-  "allOf": [{
-    "$comment": "ui_design_default_candidates <= ui_design_max_candidates is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
-  }],
+  "allOf": [
+    {
+      "$comment": "ui_design_default_candidates <= ui_design_max_candidates is enforced by validate-specdev.mjs because JSON Schema cannot compare sibling numeric values."
+    }
+  ],
   "additionalProperties": false
 }
 ```

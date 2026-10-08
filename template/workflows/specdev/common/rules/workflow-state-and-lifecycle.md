@@ -57,7 +57,7 @@
 
 ## 状态字段
 
-`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 保留各自 schema v3；新 Ticket/Map 使用附加 plan_contract_version: 1，config 使用 schema v5，Goal Plan 使用 schema v6，Implementation Map/Plan 使用 schema v1，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
+`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 保留各自 schema v3；新 Ticket/Map 使用附加 plan_contract_version: 1，config 使用 schema v6，Goal Plan 使用 schema v6，Implementation Map/Plan 使用 schema v1，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
 
 - `schema_version`（数字）：全局状态 schema 版本，固定为 `5`。
 - `workflow`（字符串）：workflow 标识，固定为 `"specdev"`。

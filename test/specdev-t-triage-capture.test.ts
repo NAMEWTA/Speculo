@@ -77,8 +77,11 @@ async function changeFixture(): Promise<string> {
     join(root, "triage.md"),
     [
       "---",
-      "schema_version: 1",
+      "schema_version: 2",
       "artifact: triage",
+      "disposition: needs-triage",
+      "verification: pending",
+      "remote_actions: []",
       `change: ${changeName}`,
       "mode: intake",
       "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
@@ -272,8 +275,11 @@ describe("SpecDev T-triage capture inbox", () => {
         join(root, "triage.md"),
         [
           "---",
-          "schema_version: 1",
+          "schema_version: 2",
           "artifact: triage",
+          "disposition: needs-triage",
+          "verification: pending",
+          "remote_actions: []",
           `change: ${changeName}`,
           "mode: capture",
           "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
@@ -362,9 +368,9 @@ describe("SpecDev T-triage capture inbox", () => {
       readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/public-projection.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/T-triage/intake-protocol.md"), "utf8"),
     ]);
-    assert.match(entry, /\*\*capture\*\*/);
-    assert.match(entry, /specdev:captured/);
-    assert.match(entry, /既不创建也不选择 change/);
+    assert.match(entry, /\| capture \|/);
+    assert.match(map, /specdev:captured/);
+    assert.match(entry, /capture 不创建也不选择 change/);
     assert.match(protocol, /issue-create/);
     assert.match(protocol, /issue-comment-close/);
     assert.match(protocol, /1 条记录 = 1 次未来 intake/);

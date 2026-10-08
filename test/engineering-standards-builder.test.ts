@@ -36,7 +36,7 @@ it("keeps Gradle fixture caches out of Builder manifests, validation and self-te
     assert.equal(dirty.status, 0, dirty.stderr);
     assert.equal(dirty.stdout, clean.stdout);
     assert.match(before, /examples\/fallback\/kotlin-gradle\/expected\.json/);
-    assert.match(before, /references\/entry-procedure\.md/);
+    assert.match(before, /SKILL\.md/);
     assert.doesNotMatch(before, /\.gradle\//);
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
@@ -46,7 +46,7 @@ it("validates the Builder contract through its routed entry without allowing arb
   const root = join(temp, "engineering-standards-builder");
   try {
     await cp(source, root, { recursive: true, filter: file => basename(file) !== ".gradle" });
-    const procedurePath = join(root, "references/entry-procedure.md");
+    const procedurePath = join(root, "SKILL.md");
     const procedure = await readFile(procedurePath, "utf8");
     await writeFile(procedurePath, procedure.replaceAll("Skill 边界", "boundary"));
     let result = run(root, "validate-builder.mjs");
@@ -54,10 +54,10 @@ it("validates the Builder contract through its routed entry without allowing arb
     assert.match(result.stderr, /missing core contract: Skill 边界/);
     await writeFile(procedurePath, procedure);
     const entryPath = join(root, "SKILL.md");
-    await writeFile(entryPath, (await readFile(entryPath, "utf8")).replace("[\u0060references/entry-procedure.md\u0060](references/entry-procedure.md)", "entry procedure"));
+    await writeFile(entryPath, (await readFile(entryPath, "utf8")).replace("[工程约束](references/rules/09-mechanical-guardrails.md)", "工程约束"));
     result = run(root, "validate-builder.mjs");
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /orphan reference not reachable from SKILL.md: references\/entry-procedure.md/);
+    assert.match(result.stderr, /orphan reference not reachable from SKILL.md: references\/rules\/09-mechanical-guardrails.md/);
     await writeFile(join(root, "references/unexpected.md"), "# Unexpected\n");
     result = run(root, "validate-builder.mjs");
     assert.equal(result.status, 1);

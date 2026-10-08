@@ -32,3 +32,9 @@ Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</P
 远程动作不参与本地完成判定。Triage `external_action` 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。Triage `publish_action` 为 `pending`/`publish-failed` 时先恢复或结束 publish；`not-requested`、`published` 或 `waived` 才允许 Archive。`not-requested` 是默认，未点过 publish 的 change 不被新模式绑架。归档后工件只读。
 
 **完成标准**：完成声明可由本地工件、Git 与验证重建；只有一个 owner 命中；失败 candidate 不污染父分支。
+
+## 非实现复盘终点与 PR 归档门
+
+仅有 R-retro（可先经 T intake）的 review-only change，以 completed 的 RETRO 报告作为等价验收；不能同时存在 Spec、Ticket、Map、Goal Plan、implementation 工件、Evidence 或 worktree。报告 sources 非空、结果诚实、全部验收完成，owner 按原完成转换规则更新状态；存在实现工件时仍走原实现完成门。insufficient-evidence 仅表示报告完整，不表示问题已解决。
+
+PR requested=true 且 status=planned/failed 时阻塞归档；delivery_target=ready 时 draft 也保持未闭合。draft 目标可由 draft/ready 满足，ready 目标只由 ready 满足；waived 须记录放弃交付的授权与原因。创建成功不等于已授权 merge。独立 TRI 不因关联 change 就参与完成/归档门。

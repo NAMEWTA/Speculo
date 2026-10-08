@@ -1,0 +1,206 @@
+{
+  "baseline": "4da7513a191223aa5173b4adf0c7dfca155f1d01",
+  "metric": "Unicode code points after CRLF-to-LF normalization, complete text sources including references/scripts/assets; binary files excluded; generated canonical reported separately; not token or cost measurements.",
+  "groups": [
+    {
+      "path": "template/skills",
+      "generated": false,
+      "before": {
+        "files": 165,
+        "characters": 537356
+      },
+      "after": {
+        "files": 179,
+        "characters": 476493
+      },
+      "character_delta": -60863
+    },
+    {
+      "path": "template/workflows/specdev",
+      "generated": false,
+      "before": {
+        "files": 201,
+        "characters": 1478990
+      },
+      "after": {
+        "files": 229,
+        "characters": 1533842
+      },
+      "character_delta": 54852
+    },
+    {
+      "path": "skills",
+      "generated": false,
+      "before": {
+        "files": 21,
+        "characters": 82171
+      },
+      "after": {
+        "files": 21,
+        "characters": 82222
+      },
+      "character_delta": 51
+    },
+    {
+      "path": "src",
+      "generated": false,
+      "before": {
+        "files": 16,
+        "characters": 133917
+      },
+      "after": {
+        "files": 17,
+        "characters": 172098
+      },
+      "character_delta": 38181
+    },
+    {
+      "path": "scripts",
+      "generated": false,
+      "before": {
+        "files": 13,
+        "characters": 133939
+      },
+      "after": {
+        "files": 15,
+        "characters": 183128
+      },
+      "character_delta": 49189
+    },
+    {
+      "path": "test",
+      "generated": false,
+      "before": {
+        "files": 24,
+        "characters": 335776
+      },
+      "after": {
+        "files": 26,
+        "characters": 369558
+      },
+      "character_delta": 33782
+    },
+    {
+      "path": "template/canonical",
+      "generated": true,
+      "before": {
+        "files": 7,
+        "characters": 296797
+      },
+      "after": {
+        "files": 7,
+        "characters": 306241
+      },
+      "character_delta": 9444
+    },
+    {
+      "path": "template/workflows/ops",
+      "generated": false,
+      "before": {
+        "files": 83,
+        "characters": 595106
+      },
+      "after": {
+        "files": 83,
+        "characters": 600635
+      },
+      "character_delta": 5529
+    },
+    {
+      "path": ".github/workflows",
+      "generated": false,
+      "before": {
+        "files": 2,
+        "characters": 3561
+      },
+      "after": {
+        "files": 2,
+        "characters": 3988
+      },
+      "character_delta": 427
+    }
+  ],
+  "removed_paths": [
+    "template/skills/archive-and-consolidate/references/entry-procedure.md",
+    "template/skills/docs-sync/references/entry-procedure.md",
+    "template/skills/engineering-standards-builder/references/entry-procedure.md",
+    "template/skills/git-history-squash/references/entry-procedure.md",
+    "template/skills/github-npm-ops/SKILL.md",
+    "template/skills/github-npm-ops/references/ci-and-security-ops.md",
+    "template/skills/github-npm-ops/references/entry-procedure.md",
+    "template/skills/github-npm-ops/references/failure-recovery.md",
+    "template/skills/github-npm-ops/references/issue-pr-triage.md",
+    "template/skills/github-npm-ops/references/issue-transport.md",
+    "template/skills/github-npm-ops/references/package-json-checklist.md",
+    "template/skills/github-npm-ops/references/preflight-checklist.md",
+    "template/skills/github-npm-ops/references/publish-detection.md",
+    "template/skills/github-npm-ops/references/release-notes-injection.md",
+    "template/skills/github-npm-ops/references/release-pipeline.md",
+    "template/skills/github-npm-ops/references/setup-npm-token.md",
+    "template/skills/github-npm-ops/references/troubleshooting-playbook.md",
+    "template/skills/github-npm-ops/references/version-bump-flow.md",
+    "template/skills/github-npm-ops/references/workflow-yaml-reference.md",
+    "template/skills/github-npm-ops/scripts/issue-transport.mjs",
+    "template/skills/optimize-codex-config/references/entry-procedure.md",
+    "template/skills/source-code-zip/references/entry-procedure.md",
+    "template/skills/speculo-retro/SKILL.md",
+    "template/skills/speculo-retro/references/entry-procedure.md",
+    "template/skills/speculo-retro/references/friction-taxonomy.md",
+    "template/skills/speculo-retro/references/issue-drafting-sop.md",
+    "template/skills/upstream-fork-sync/references/entry-procedure.md",
+    "template/skills/writing-great-skills/GLOSSARY.md",
+    "template/skills/writing-great-skills/SKILL.md",
+    "template/skills/writing-great-skills/references/document-contract.md",
+    "template/skills/writing-great-skills/references/entry-procedure.md",
+    "template/workflows/specdev/G-grill-with-docs/adr-format.md",
+    "template/workflows/specdev/G-grill-with-docs/context-format.md",
+    "template/workflows/specdev/G-grill-with-docs/domain-modeling-rules.md",
+    "template/workflows/specdev/I-implement/design-it-twice.md"
+  ],
+  "added_paths": [
+    "template/skills/engineering-standards-builder/agents/openai.yaml",
+    "template/skills/engineering-standards-builder/references/rules/09-mechanical-guardrails.md",
+    "template/skills/git-history-squash/agents/openai.yaml",
+    "template/skills/retrospective/references/friction-taxonomy.md",
+    "template/skills/retrospective/references/issue-drafting-sop.md",
+    "template/skills/retrospective/SKILL.md",
+    "template/skills/source-code-zip/references/cli-reference.md",
+    "template/skills/writing-for-agents/agents/openai.yaml",
+    "template/skills/writing-for-agents/GLOSSARY.md",
+    "template/skills/writing-for-agents/references/authoring-principles.md",
+    "template/skills/writing-for-agents/references/document-contract.md",
+    "template/skills/writing-for-agents/SKILL.md",
+    "template/workflows/specdev/common/rules/adr-format.md",
+    "template/workflows/specdev/common/rules/context-format.md",
+    "template/workflows/specdev/common/rules/design-it-twice.md",
+    "template/workflows/specdev/common/rules/domain-modeling.md",
+    "template/workflows/specdev/common/schemas/logic-prototype.schema.json",
+    "template/workflows/specdev/common/schemas/pull-request.schema.json",
+    "template/workflows/specdev/common/schemas/retrospective.schema.json",
+    "template/workflows/specdev/common/schemas/triage-run.schema.json",
+    "template/workflows/specdev/common/tools/delivery-artifacts.mjs",
+    "template/workflows/specdev/P-prototype/logic-protocol.md",
+    "template/workflows/specdev/P-prototype/logic-template.md",
+    "template/workflows/specdev/P-prototype/project-preview-protocol.md",
+    "template/workflows/specdev/R-retro/R-retro.md",
+    "template/workflows/specdev/R-retro/retro-template.md",
+    "template/workflows/specdev/T-triage/ci-security-protocol.md",
+    "template/workflows/specdev/T-triage/pr-delivery-protocol.md",
+    "template/workflows/specdev/T-triage/pr-record-template.md",
+    "template/workflows/specdev/T-triage/queue-protocol.md",
+    "template/workflows/specdev/T-triage/references/issue-pr-policy.md",
+    "template/workflows/specdev/T-triage/references/release-authentication.md",
+    "template/workflows/specdev/T-triage/references/release-notes-injection.md",
+    "template/workflows/specdev/T-triage/references/workflow-yaml-reference.md",
+    "template/workflows/specdev/T-triage/release-preflight.md",
+    "template/workflows/specdev/T-triage/release-protocol.md",
+    "template/workflows/specdev/T-triage/release-recovery.md",
+    "template/workflows/specdev/T-triage/remote-operations.md",
+    "template/workflows/specdev/T-triage/scripts/github-transport.mjs",
+    "template/workflows/specdev/T-triage/triage-run-template.md",
+    "scripts/check-specdev-upstream.mjs",
+    "scripts/specdev-upstream.json",
+    "test/specdev-upgrade.test.ts"
+  ],
+  "integration_revision": "fddad355fadf263493e44bffec3469d185b1608f"
+}

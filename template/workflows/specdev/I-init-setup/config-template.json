@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
@@ -23,5 +23,9 @@
     "require_evidence": true,
     "ui_design_default_candidates": 3,
     "ui_design_max_candidates": 4
+  },
+  "github": {
+    "include_external_prs": false,
+    "labels": {}
   }
 }

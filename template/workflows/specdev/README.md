@@ -62,11 +62,12 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 - **L-learn-change** — Change 学习：在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。
 - **P-goal-plan** — Goal 规划与执行：为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
-- **P-prototype** — UI 设计原型：检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
+- **P-prototype** — 逻辑与 UI 原型：按需验证离线逻辑模型，或检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
+- **R-retro** — 开发复盘：对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn-change，Speculo 产品反馈使用 retro 命令。
 - **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 编写计划型 Tickets：将已澄清的 Spec 或等价获批计划拆为可验收的实施 Ticket，并绑定真实项目 Skill；不用于探索未知需求或执行代码。
-- **T-triage** — 请求分诊：需要冻结外部来源、审计摄入、对 completed change 回写来源 Issue、把已完成 Ticket 投影为带分类标签的 GitHub Issue，或把尚未成 Change 的记事项写成仍 open 的 GitHub Issue 时使用；已清晰的本地需求不必为了路由而经本入口。
+- **T-triage** — 请求分诊与 GitHub 交付：摄入与核验外部请求、投影本地完成事实、交付 PR，或按明确目标处理 CI、安全告警、npm/GitHub Release 预检、发布和恢复；清晰的本地需求直接进入对应 Work。
 - **W-wayfinder** — 探索大需求与 Change 边界：大需求的 change 边界或实施路线尚不可见时建立探索地图，并分别澄清各 change；已有清晰 Spec 时不触发。
 
 <!-- AUTO-INDEX-END -->
@@ -84,3 +85,13 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 ```
 
 支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
+
+## 远程交付、逻辑原型与复盘
+
+T 拥有 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>，首次独立 CI/安全/发布操作时按模板建立，恢复更新原记录。此 namespace 不占用 change.current_work、不写开发状态、不参与默认归档门。其他入口只复用 T 的 remote-operations 时，原调用方仍拥有报告，不创建 TRI 或 change。
+
+PR 由 T 写入 <Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path>；R-retro 写入 <Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path>；P 的逻辑原型写入 <Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/</Path>。均首次按最小未用 ID 创建，更新原子写入并重读；schema 在 common/schemas，验证由 common/tools/validate-specdev.mjs 负责。
+
+config schema v6 增加 github.include_external_prs（boolean，默认 false）与 github.labels（语义名→仓库标签的字符串映射，默认空）。I 初始化，CLI 从合法 v5 通过 staging 升级；已有语言、执行、验证与规划配置保留。标签缺失只阻塞对应远程写操作。全局 status v5 与 change status v6 不变。
+
+入口选择：需要活动复盘进入 <Path>{roots.workflows}/specdev/R-retro/R-retro.md</Path>；包发布进入 T 的 release，Ticket→Issue 仍为 publish。Completed/archived 对象的复盘建立独立 review-only change，不修改原完成状态。新工件版本均为 v1，triage 新写入为 v2；旧 v1 仅历史只读，活动分支由 T 明确重验后转换，不由 CLI 批改。

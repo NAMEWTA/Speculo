@@ -74,7 +74,7 @@ Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风
 
 加载 `<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`，检查模块、接口、类型、不变量、顺序/错误/性能语义、接缝、适配器、依赖分类、测试观察点和既有公共合同。
 
-存在多个不改变上层契约的局部设计时，可运行 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`。超出 Ticket 或改变产品/公共合同/数据/兼容/安全时，返回架构审查、Grill、Spec 或 Ticket owner。陌生外部依赖使用 research Skill。
+存在多个不改变上层契约的局部设计时，可运行 `<Path>{roots.workflows}/specdev/common/rules/design-it-twice.md</Path>`。超出 Ticket 或改变产品/公共合同/数据/兼容/安全时，返回架构审查、Grill、Spec 或 Ticket owner。陌生外部依赖使用 research Skill。
 
 **完成标准**：局部设计与上层契约一致，稳定接缝和依赖策略明确。
 

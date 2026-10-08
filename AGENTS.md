@@ -30,7 +30,7 @@ pnpm verify-bin
 - `template/workflows/<workflow>/<Letter>-<name>/`：一个可恢复步骤；只读取当前分支需要的规则、schema、模板和工具。
 - `skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
 
-当前模板包含 7 个 commands、10 个顶层 skills、4 个 workflows：Learning 9 works、SpecDev 14 works、Ops 5 works、Person 2 works。
+当前模板包含 7 个 commands、9 个顶层 skills、4 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works。
 
 ## 边界与停止条件
 
@@ -50,4 +50,4 @@ pnpm verify-bin
 
 ## 文档重构保真
 
-编辑前读取 `skills/_shared/authoring-protocol.md`；完整合同在 `template/skills/writing-great-skills/references/document-contract.md`。保留真实源、软链接、模式、许可及必要 frontmatter；保留用户明确产物数量、默认工具、权限和失败停止条件。新增行为单列说明；局部归属冲突不得扩大成接管其他任务。
+编辑前读取 `skills/_shared/authoring-protocol.md`；完整合同在 `template/skills/writing-for-agents/references/document-contract.md`。保留真实源、软链接、模式、许可及必要 frontmatter；保留用户明确产物数量、默认工具、权限和失败停止条件。新增行为单列说明；局部归属冲突不得扩大成接管其他任务。

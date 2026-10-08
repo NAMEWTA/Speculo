@@ -17,7 +17,8 @@ const MACHINE_ABS = /(?:\/Users\/|\/home\/|\/mnt\/|\/tmp\/|\/var\/|\/workspace\/
 
 function specdevConfig(): string {
   return `${JSON.stringify({
-    schema_version: 5,
+    schema_version: 6,
+    github: { include_external_prs: false, labels: {} },
     interaction_language: "zh-CN",
     artifact_language: "zh-CN",
     git: { default_branch: "main" },

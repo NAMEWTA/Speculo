@@ -25,8 +25,10 @@ import {
   validateGoalMap, validateInitiative, resolveProjectSource,
 } from "./plan-contract.mjs";
 
+import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
+
 const DOMAIN_SCHEMA_VERSION = 3;
-const CONFIG_SCHEMA_VERSION = 5;
+const CONFIG_SCHEMA_VERSION = 6;
 const GOAL_PLAN_SCHEMA_VERSION = 6;
 const IMPLEMENTATION_MAP_SCHEMA_VERSION = 1;
 const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 1;
@@ -50,6 +52,7 @@ const EXPECTED_WORKS = new Set([
   "P-goal-plan",
   "P-prototype",
   "R-review-architecture",
+  "R-retro",
   "S-spec",
   "T-tickets",
   "T-triage",
@@ -163,6 +166,8 @@ const VALID_STAGES = new Set([
   "goal-plan",
   "implement",
   "learn-change",
+  "retro",
+  "pr-delivery",
   "review",
   "prototype",
   "wayfinder",
@@ -927,7 +932,7 @@ function validateExecutionContractAssets(root) {
     configTemplate.planning.ui_design_max_candidates > 4 ||
     configTemplate.planning.ui_design_max_candidates < configTemplate.planning.ui_design_default_candidates
   ) {
-    errors.push("config-template.json must define SpecDev config v5 with positive execution limits and valid UI design candidate bounds");
+    errors.push("config-template.json must define SpecDev config v6 with positive execution limits and valid UI design candidate bounds");
   }
   for (const obsolete of ["auto_commit", "worktree_for_parallel", "max_parallel"]) {
     if (JSON.stringify(configTemplate).includes(`\"${obsolete}\"`)) {
@@ -938,13 +943,13 @@ function validateExecutionContractAssets(root) {
   const configSchema = JSON.parse(readText(configSchemaPath));
   const limit = configSchema.properties?.execution?.properties?.max_implementation_agents;
   if (
-    configSchema.$id !== "urn:speculo:specdev:config:v5" ||
+    configSchema.$id !== "urn:speculo:specdev:config:v6" ||
     configSchema.properties?.schema_version?.const !== CONFIG_SCHEMA_VERSION ||
     limit?.minimum !== 1 ||
     configSchema.properties?.execution?.properties?.max_integration_attempts?.minimum !== 1 ||
     configSchema.additionalProperties !== false
   ) {
-    errors.push("config.schema.json must define the strict SpecDev config v5 execution contract");
+    errors.push("config.schema.json must define the strict SpecDev config v6 execution contract");
   }
 
   const goalPlanSchema = JSON.parse(readText(goalPlanSchemaPath));
@@ -1026,7 +1031,7 @@ function capabilityChecks(root) {
       "triage",
       [
         join(root, "T-triage", "T-triage.md"),
-        ["source.md", "intake", "reconcile", "publish", "publish.md", "specdev:published", "capture", "capture.md", "specdev:captured", "唯一权威", "远程写入为零"],
+        ["intake", "reconcile", "publish", "capture", "capture.md", "pr-delivery", "ci-security", "release-preflight", "recover", "remote-operations.md"],
       ],
     ],
     [
@@ -1360,7 +1365,7 @@ function validateSource(path, expectedChange, errors) {
   return { path, meta, body };
 }
 
-function validateTriage(path, expectedChange, errors) {
+function validateTriage(path, expectedChange, errors, historical = false) {
   if (!isFile(path)) {
     errors.push("missing triage artifact");
     return null;
@@ -1381,8 +1386,14 @@ function validateTriage(path, expectedChange, errors) {
   ];
   const missing = required.filter((key) => !(key in meta));
   if (missing.length) errors.push(`triage.md: missing keys ${JSON.stringify(missing)}`);
-  if (meta.schema_version !== 1 || meta.artifact !== "triage") {
-    errors.push("triage.md: artifact/schema_version must be triage/1");
+  if ((meta.schema_version !== 2 && !(historical && meta.schema_version === 1)) || meta.artifact !== "triage") {
+    errors.push("triage.md: artifact/schema_version must be triage/2; v1 is historical read-only");
+  }
+  if (meta.schema_version === 2) {
+    if (!["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"].includes(meta.disposition)) errors.push("triage.md: invalid disposition");
+    if (!["pending", "passed", "failed", "unknown"].includes(meta.verification)) errors.push("triage.md: invalid verification");
+    if (!Array.isArray(meta.remote_actions) || meta.remote_actions.some(v => typeof v !== "string")) errors.push("triage.md: remote_actions must be an array of locators");
+    if (meta.disposition === "ready-for-agent" && meta.verification !== "passed") errors.push("triage.md: ready-for-agent requires passed verification");
   }
   if (meta.change !== expectedChange) errors.push("triage.md: change must equal directory name");
   if (!VALID_TRIAGE_MODE.has(meta.mode)) errors.push(`triage.md: invalid mode ${meta.mode}`);
@@ -1403,8 +1414,15 @@ function validateTriage(path, expectedChange, errors) {
     errors.push(`triage.md: invalid publish_action ${meta.publish_action}`);
   }
   meta.publish_action = publishAction;
-  if (!String(meta.source ?? "").includes("/source.md</Path>")) {
-    errors.push("triage.md: source must reference the local source.md artifact");
+  const prefix = `<Path>{roots.state}/specdev/changes/${expectedChange}/`;
+  const sourceRef = typeof meta.source === "string" ? meta.source.replaceAll("{change}", expectedChange) : "";
+  const localSource = sourceRef.startsWith(prefix) && sourceRef.endsWith("</Path>") ? sourceRef.slice(prefix.length, -7) : null;
+  if (!localSource || !/^(?:source\.md|sources\/SRC-[0-9]{3,}\.md)$/.test(localSource)) errors.push("triage.md: source must reference a local source artifact in this change");
+  else if (localSource !== "source.md") {
+    const selected = validateSource(join(dirname(path),localSource),expectedChange,errors);
+    const previous = typeof selected?.meta.supersedes_source === "string" ? selected.meta.supersedes_source.replaceAll("{change}",expectedChange) : "";
+    const previousLocal = previous.startsWith(prefix) && previous.endsWith("</Path>") ? previous.slice(prefix.length,-7) : "";
+    if (!/^(?:source\.md|sources\/SRC-[0-9]{3,}\.md)$/.test(previousLocal) || previousLocal === localSource || !isFile(join(dirname(path),previousLocal))) errors.push("triage.md: evolved snapshot requires an existing distinct supersedes_source in this change");
   }
   for (const heading of ["## 当前判定", "## 未知项", "## 路由", "## 外部动作"]) {
     if (!body.includes(heading)) errors.push(`triage.md: missing '${heading}'`);
@@ -1703,11 +1721,18 @@ function validatePrototypes(change, required, errors) {
       continue;
     }
     if (!entry.isDirectory()) {
-      errors.push(`${label}: prototypes may only contain UI-NNN design directories`);
+      errors.push(`${label}: prototypes may only contain UI-NNN or LOGIC-NNN directories`);
+      continue;
+    }
+    if (/^LOGIC-\d{3,}$/.test(entry.name)) {
+      const logic = validateRecord(join(entryPath, "logic.md"), "logic-prototype", parseFrontmatter, basename(change));
+      errors.push(...logic.errors);
+      if (logic.meta.status === "ready" && logic.errors.length === 0) readyCount++;
+      paths.push(join(entryPath, "logic.md"));
       continue;
     }
     if (!/^UI-\d{3,}$/.test(entry.name)) {
-      errors.push(`${label}: prototype design directory must use UI-NNN`);
+      errors.push(`${label}: prototype design directory must use UI-NNN or LOGIC-NNN`);
       continue;
     }
 
@@ -1749,7 +1774,7 @@ function validatePrototypes(change, required, errors) {
     }
   }
   if (required && readyCount === 0) {
-    errors.push("prototype stage requires at least one ready UI design package");
+    errors.push("prototype stage requires at least one ready UI or logic design package");
   }
   return paths;
 }
@@ -3180,7 +3205,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
   const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
   if (!config || config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
-    errors.push("implementation-plan.md: SpecDev config v5 with positive execution limits is required");
+    errors.push("implementation-plan.md: SpecDev config v6 with positive execution limits is required");
   } else {
     if (plan.meta.implementation_agent_limit > configuredAgents) {
       errors.push(`implementation-plan.md: implementation_agent_limit ${plan.meta.implementation_agent_limit} exceeds config max_implementation_agents ${configuredAgents}`);
@@ -3291,7 +3316,7 @@ function validateChange(change, stage = null, repoRoot = null) {
     : null;
   const triagePath = join(change, "triage.md");
   const triage = isFile(triagePath) || sourceRequired
-    ? validateTriage(triagePath, basename(change), errors)
+    ? validateTriage(triagePath, basename(change), errors, changeStatus?.archived === true && stage === null)
     : null;
   const publishPath = join(change, "publish.md");
   const publishRequired = Boolean(
@@ -3307,8 +3332,17 @@ function validateChange(change, stage = null, repoRoot = null) {
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors);
   validateChangeLearning(change, stage === "learn-change", errors);
+  const retro = validateRecords(change, "retrospective", parseFrontmatter);
+  const prs = validateRecords(change, "pull-request", parseFrontmatter);
+  errors.push(...retro.errors, ...prs.errors);
+  if (stage === "retro" && !retro.records.some(r => r.meta.status === "completed")) errors.push("retro stage requires a completed retrospective");
+  if (stage === "pr-delivery" && !prs.records.length) errors.push("pr-delivery stage requires a PR record");
+  if (stage === "complete" && prs.records.some(r => r.meta.requested === true && (["planned", "failed"].includes(r.meta.status) || (r.meta.delivery_target === "ready" && r.meta.status === "draft")))) errors.push("complete stage cannot archive pending PR delivery");
+  const retroOnly = retro.records.length > 0 && retro.errors.length === 0 && retro.records.every(r => r.meta.status === "completed") &&
+    changeStatus?.works_run?.includes("specdev/retro") && changeStatus.works_run.every(w => ["specdev/retro", "specdev/triage"].includes(w)) &&
+    !["spec.md", "ticket", "tickets-map.md", "goal-plan.md", "implementation-map.md", "implementation-plan.md", "evidence"].some(p => existsSync(join(change,p))) && !changeStatus.worktrees?.length;
 
-  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation;
+  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation && !retroOnly;
   const specPath = join(change, "spec.md");
   const spec = isFile(specPath) || specRequired
     ? validateSpec(specPath, errors, warnings)
@@ -3565,7 +3599,7 @@ function validateChange(change, stage = null, repoRoot = null) {
   }
   if (
     stage === "complete" &&
-    !ticketFiles.length &&
+    !ticketFiles.length && !retroOnly &&
     !isFile(join(change, "implementation-map.md")) &&
     !isFile(join(change, "evidence", "direct-spec.md"))
   ) {
@@ -3612,7 +3646,7 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check | --capture <capture.md>");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
   return 2;
 }
 
@@ -3621,6 +3655,7 @@ function main(argv) {
   let stage = null;
   let repoRoot = null;
   let capturePath = null;
+  let triageRunPath = null;
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -3636,6 +3671,8 @@ function main(argv) {
       index += 1;
     } else if (arg.startsWith("--repo=")) {
       repoRoot = arg.slice("--repo=".length);
+    } else if (arg === "--triage-run") {
+      triageRunPath = argv[++index] ?? null;
     } else if (arg === "--capture") {
       capturePath = argv[index + 1] ?? null;
       index += 1;
@@ -3648,6 +3685,10 @@ function main(argv) {
     }
   }
   if (stage !== null && !VALID_STAGES.has(stage)) return usage();
+  if (triageRunPath) {
+    if (selfCheckRequested || positional.length || stage !== null || capturePath || repoRoot) return usage();
+    return printResults(validateRecord(resolve(triageRunPath), "triage-run", parseFrontmatter).errors, []);
+  }
   if (selfCheckRequested) {
     if (positional.length || stage !== null || capturePath) return usage();
     const scriptDirectory = dirname(fileURLToPath(import.meta.url));

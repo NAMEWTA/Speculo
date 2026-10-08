@@ -525,6 +525,35 @@ function structuredBackups(changes: StructuredChange[], stagedRoot: string): Bac
   }));
 }
 
+/** Retired public assets may disappear only when the previous manifest proves ownership. */
+async function validateRetiredSkills(previousRoot: string): Promise<void> {
+  const retired = ["github-npm-ops", "speculo-retro", "writing-great-skills"];
+  const manifest = await readJson(join(previousRoot, ".speculo", "managed.json"), ".speculo/managed.json");
+  const records = Array.isArray(manifest.files) ? manifest.files as JsonObject[] : [];
+  const owned = new Map(records.map(record => [record.path, record]));
+  const blockers: RefreshBlocker[] = [];
+  async function visit(path: string): Promise<void> {
+    const stats = await lstat(path), key = toPosix(relative(previousRoot, path));
+    if (stats.isSymbolicLink() || (!stats.isDirectory() && !stats.isFile())) {
+      blockers.push({ code: "retired-asset-conflict", path: key, message: "retired asset has an unowned node type" });
+    } else if (stats.isDirectory()) {
+      for (const name of await readdir(path)) await visit(join(path, name));
+    } else {
+      const record = owned.get(key);
+      const digest = createHash("sha256").update(await readFile(path)).digest("hex");
+      if (record?.owner !== "core/skills" || record.sha256 !== digest) {
+        blockers.push({ code: "retired-asset-conflict", path: key, message: "preserve locally modified or unowned retired asset; reconcile it explicitly before refresh" });
+      }
+    }
+  }
+  for (const id of retired) {
+    const path = join(previousRoot, "skills", id);
+    try { await lstat(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; throw error; }
+    await visit(path);
+  }
+  if (blockers.length) throw new RefreshBlockedError(blockers);
+}
+
 export async function assertNoLegacyPending(previousRoot: string): Promise<void> {
   const marker = join(previousRoot, ".speculo", "migration.json");
   if (!(await pathExists(marker))) return;
@@ -548,6 +577,7 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   const stagedState = join(options.stagedRoot, ".speculo");
 
   if (options.existed) {
+    await validateRetiredSkills(options.previousRoot);
     await assertNoSymlinks(previousState);
     const opaqueBefore = await opaqueFiles(previousState, reserved, workflowContracts);
     await copyPreviousRuntime(options.previousRoot, options.stagedRoot, reserved);

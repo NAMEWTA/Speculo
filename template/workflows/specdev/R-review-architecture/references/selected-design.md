@@ -11,7 +11,7 @@
 - 新概念加入 change CONTEXT；永久 CONTEXT 不存在时延迟到归档提升；
 - 模糊术语当场精炼；
 - 用户的选择同时难以逆转、没有上下文会令人惊讶且来自真实权衡时，询问是否记录 ADR；任一条件不满足就留在 LOG/Ticket，不制造 ADR；
-- 替代 interface 需要探索时使用 `<Path>{roots.workflows}/specdev/I-implement/design-it-twice.md</Path>`；
+- 替代 interface 需要探索时使用 `<Path>{roots.workflows}/specdev/common/rules/design-it-twice.md</Path>`；
 - 如果候选最终只是把复杂性搬家，而不是删掉它，在访谈中直接回退，不把它升级成 Ticket。
 
 将选择、访谈状态与结论同步到 Markdown；每次运行只访谈用户选择的候选，不批量迫使用户决定所有卡片。

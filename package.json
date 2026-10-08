@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Workflow-packaged AI collaboration assets with state-safe refresh tooling.",
   "type": "module",
   "bin": {
@@ -13,7 +13,7 @@
     "pretest": "pnpm build",
     "generate-canonical": "node scripts/generate-specdev-canonical.mjs",
     "validate-source-parity": "node scripts/check-specdev-source-parity.mjs",
-    "validate-assets": "node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning",
+    "validate-assets": "node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/check-specdev-upstream.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
     "eval:scenarios": "node scripts/evaluate-scenarios.mjs",
@@ -23,11 +23,14 @@
     "validate-source-inventory": "node scripts/check-specdev-source-parity.mjs",
     "eval:artifacts": "node scripts/evaluate-scenarios.mjs --require artifacts",
     "eval:observed": "node scripts/evaluate-scenarios.mjs --require observed",
-    "eval:release": "node scripts/evaluate-scenarios.mjs --require observed"
+    "eval:release": "node scripts/evaluate-scenarios.mjs --require observed",
+    "validate-upstream": "node scripts/check-specdev-upstream.mjs"
   },
   "files": [
     "dist/src",
-    "template"
+    "scripts/validate-skills.mjs",
+    "template",
+    "THIRD-PARTY-NOTICES.md"
   ],
   "keywords": [
     "speculo",

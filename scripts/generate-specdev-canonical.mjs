@@ -202,9 +202,9 @@ const canonicalDocuments = [
       reference("G-grill-with-docs/design-tree-template.json", {
         format: "json",
       }),
-      reference("G-grill-with-docs/domain-modeling-rules.md"),
-      reference("G-grill-with-docs/adr-format.md"),
-      reference("G-grill-with-docs/context-format.md"),
+      reference("common/rules/domain-modeling.md"),
+      reference("common/rules/adr-format.md"),
+      reference("common/rules/context-format.md"),
       reference("G-grill-with-docs/log-format.md"),
       reference("G-grill-with-docs/stakeholder-questionnaire.md"),
       sharedSources.artifactContract,

@@ -41,7 +41,7 @@ jobs:
 
   windows-installation:
     runs-on: windows-latest
-    name: Windows installation smoke / Node 22.22.3
+    name: Windows installation and OPS smoke / Node 22.22.3
     steps:
       - uses: actions/checkout@v7
         with:
@@ -50,4 +50,8 @@ jobs:
       - run: pnpm build
       - name: Validate installation and read-only tooling
         run: node --test dist/test/review-installation.test.js dist/test/review-evaluation.test.js
+      - name: Validate Windows OPS controller contracts
+        run: node --test template/workflows/ops/common/tests/test_ops_bootstrap.mjs template/workflows/ops/common/tests/test_ops_workspace.mjs
+      - name: Verify link rejection and native deployment secret protection
+        run: node --test --test-name-pattern="^symlink rejected$|new controllers keep secrets" template/workflows/ops/common/tests/test_ops.mjs
       - run: pnpm verify-bin

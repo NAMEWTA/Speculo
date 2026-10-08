@@ -25,8 +25,8 @@ description: <一句模型或人类可用的摘要>
 ```
 
 - `name` 与目录名一致。
-- Model-invoked：省略 `disable-model-invocation`，description 以主导词开头并覆盖每个真实触发分支。
-- User-invoked：设置 `disable-model-invocation: true`，description 只给人类说明用途，不堆触发同义词。
+- Model-invoked：description 覆盖真实触发分支。
+- User-invoked：Codex 使用 agents/openai.yaml 的 policy.allow_implicit_invocation: false；Claude 使用 disable-model-invocation: true。metadata 仅描述，不承担权限。Speculo 路径不是宿主自动发现目录。
 - 只有当前 Agent skill 运行时已实际支持且项目已有先例的字段才加入；不凭想象扩展 schema。
 
 ## Description

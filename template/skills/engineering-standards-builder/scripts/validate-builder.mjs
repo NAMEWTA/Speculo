@@ -128,8 +128,6 @@ async function main() {
     }
 
     const skillFile = fileByRel.get('SKILL.md');
-    const entryProcedure = fileByRel.get('references/entry-procedure.md');
-    if (!entryProcedure) errors.push('references/entry-procedure.md is missing');
     if (!skillFile) errors.push('SKILL.md is missing');
     else {
       const skillText = await readFile(skillFile.abs, 'utf8');
@@ -145,11 +143,11 @@ async function main() {
         try { metadata = JSON.parse(frontmatter.values.metadata ?? '{}'); }
         catch { errors.push('Builder metadata must use the emitted JSON-flow mapping'); }
         if (metadata['speculo-invocation'] !== 'user-only') errors.push('Builder must remain explicitly user-invoked with metadata.speculo-invocation=user-only');
-        if (!skillText.includes('Activation is explicit-only.')) errors.push('Builder must retain its visible explicit user selection boundary');
+        if (!skillText.includes('本 Skill 只在用户明确调用时运行。')) errors.push('Builder must retain its visible explicit user selection boundary');
       }
-      const contractText = entryProcedure ? await readFile(entryProcedure.abs, 'utf8') : '';
+      const contractText = skillText;
       for (const requiredConcept of ['Agent Team', 'generated-skill-set.json', '最小原则', 'Skill 边界']) {
-        if (!contractText.includes(requiredConcept)) errors.push(`references/entry-procedure.md is missing core contract: ${requiredConcept}`);
+        if (!contractText.includes(requiredConcept)) errors.push(`SKILL.md is missing core contract: ${requiredConcept}`);
       }
     }
 
@@ -204,7 +202,6 @@ async function main() {
 
     const allowedReferenceRoots = new Set(['rules', 'typescript', 'java', 'go', 'rust']);
     for (const file of files.filter((item) => item.rel.startsWith('references/'))) {
-      if (file.rel === 'references/entry-procedure.md') continue;
       const first = file.rel.split('/')[1];
       if (!allowedReferenceRoots.has(first)) errors.push(`unexpected top-level reference group: ${file.rel}`);
     }
@@ -262,7 +259,7 @@ async function main() {
       if (actual !== expected) errors.push('manifest.txt is stale; run sync-manifest.mjs --write');
     }
 
-    const flatReferenceFiles = files.filter((file) => /^references\/[^/]+\.md$/.test(file.rel) && file.rel !== 'references/entry-procedure.md');
+    const flatReferenceFiles = files.filter((file) => /^references\/[^/]+\.md$/.test(file.rel));
     if (flatReferenceFiles.length) errors.push(`references must be grouped by rules/language: ${flatReferenceFiles.map((file) => file.rel).join(', ')}`);
 
     if (!warnings.length && files.length > 180) warnings.push(`package contains ${files.length} files; verify progressive disclosure remains focused`);

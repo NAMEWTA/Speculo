@@ -1,8 +1,11 @@
 ---
-schema_version: 1
+schema_version: 2
 artifact: triage
 change: <YYYY-MM-DD-topic>
 mode: intake
+disposition: needs-triage
+verification: pending
+remote_actions: []
 source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>
 classification: investigation
 risk: medium

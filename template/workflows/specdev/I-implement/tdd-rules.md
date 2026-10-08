@@ -15,3 +15,7 @@
 - 一个循环只有一个 seam、一个测试和一个最小实现；
 - 测试没有通过删除、跳过、吞错或放宽断言制造绿色；
 - review 前没有以“顺手重构”扩大切片。
+
+## 强制变异验证
+
+使用强制变异时，先保存基线 hash/diff，修改后核对实际执行文件的 diff 与测试选择。只有预期行为断言 red 才有效；编译错误、错测或变异未落地均不计。恢复原内容、复跑基线并核对 diff，把全过程记入 Evidence。诊断协议见 <Path>{roots.workflows}/specdev/D-diagnose-bugs/D-diagnose-bugs.md</Path>。

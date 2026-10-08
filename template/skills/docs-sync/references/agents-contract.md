@@ -49,7 +49,7 @@
   ```
   # CLAUDE.md
 
-  Speculo agent handbook: see [AGENTS.md](./AGENTS.md).
+  @AGENTS.md
   ```
 
 - 所有代理指令、事实和规则写入 `AGENTS.md`，不把 `CLAUDE.md` 当作权威内容载体。

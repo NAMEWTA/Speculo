@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const allowed = new Set(["name", "description", "license", "compatibility", "metadata", "allowed-tools"]);
+const allowed = new Set(["name", "description", "license", "compatibility", "metadata", "allowed-tools", "disable-model-invocation"]);
 /** Validator for the deliberately small emitted YAML profile; unsupported YAML is rejected, not guessed. */
 export function validateSkill(content, directory) {
   const errors = [], fields = Object.create(null);
@@ -22,6 +22,8 @@ export function validateSkill(content, directory) {
   if (typeof fields.description !== "string" || !fields.description.trim() || fields.description.length > 1024 || ["|", ">"].includes(fields.description)) errors.push("description must be a single-line string (1..1024)");
   if (fields.compatibility !== undefined && (typeof fields.compatibility !== "string" || !fields.compatibility || fields.compatibility.length > 500)) errors.push("invalid compatibility");
   if (fields.metadata !== undefined && (!fields.metadata || typeof fields.metadata !== "object" || Array.isArray(fields.metadata) || Object.values(fields.metadata).some((v) => typeof v !== "string"))) errors.push("metadata must map string keys to string values");
+  if (fields["disable-model-invocation"] !== undefined && !["true", "false"].includes(fields["disable-model-invocation"])) errors.push("disable-model-invocation must be a YAML boolean");
+  if (fields.metadata?.["speculo-invocation"] === "user-only" && fields["disable-model-invocation"] !== "true") errors.push("user-only skills require Claude disable-model-invocation: true");
   return errors;
 }
 export async function validateSkills(root) {
@@ -33,7 +35,14 @@ export async function validateSkills(root) {
       if (entry.isDirectory()) await walk(path);
       else if (entry.name === "SKILL.md") {
         checked++;
-        for (const error of validateSkill(await readFile(path, "utf8"), basename(dirname(path)))) errors.push(`${path}: ${error}`);
+        const content = await readFile(path, "utf8");
+        for (const error of validateSkill(content, basename(dirname(path)))) errors.push(`${path}: ${error}`);
+        if (/"speculo-invocation"\s*:\s*"user-only"/.test(content)) {
+          try {
+            const profile = await readFile(join(dirname(path), "agents/openai.yaml"), "utf8");
+            if (!/^policy:\r?\n  allow_implicit_invocation: false\s*$/m.test(profile)) errors.push(`${path}: user-only skill lacks Codex explicit invocation policy`);
+          } catch { errors.push(`${path}: missing agents/openai.yaml`); }
+        }
       }
     }
   }

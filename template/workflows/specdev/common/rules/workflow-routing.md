@@ -24,3 +24,9 @@
 
 
 本地已清晰请求不强制绕行 Triage。完成后要记账才选 publish；尚未成 Change、只想先留 inbox 记录才选 capture。publish、reconcile 与 capture 写不同远程对象，可先后执行。G 是单 change Grill，P-prototype 是 UI 设计，不与统一 P-goal-plan 混淆。W 发现候选后逐个交 G/S/T；单 change 拆票后可交 P 规划，多个 child 创建父 Goal 前仍须全部 Ready。原缺陷诊断 D、风险分诊、远程 reconcile、完成后发布投影和记事项捕获职责不删除。
+
+## 复盘与交付路由
+
+开发环境/流程复盘 → <Path>{roots.workflows}/specdev/R-retro/R-retro.md</Path>。代码讲解仍为 L；Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+
+长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。

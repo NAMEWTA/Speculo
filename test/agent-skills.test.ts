@@ -40,7 +40,8 @@ describe("agent skill projection", () => {
         assert.doesNotMatch(work.body, /disable-model-invocation/);
       }
     }
-    assert.equal(count, 30);
+    assert.equal(count, 31);
+    assert.ok(ids.has("specdev-r-retro"));
     const person = await discoverWorks(join(packageRoot, "template", "workflows", "person"), "person", "Person");
     const mao = person.find((work) => work.id === "person-m-mao-zedong-cognitive-os");
     assert.ok(mao);
@@ -52,8 +53,8 @@ describe("agent skill projection", () => {
     const ids = new Set(["learning", "ops", "person", "specdev"]);
     assert.equal(parseAgentSkillSpec("none", ids).mode, "none");
     assert.equal(parseAgentSkillSpec("keep", ids).mode, "keep");
-    const parsed = parseAgentSkillSpec("template:docs-sync+writing-great-skills,specdev", ids);
-    assert.deepEqual(parsed, { mode: "set", workflowIds: ["specdev"], templateNames: ["docs-sync", "writing-great-skills"] });
+    const parsed = parseAgentSkillSpec("template:docs-sync+writing-for-agents,specdev", ids);
+    assert.deepEqual(parsed, { mode: "set", workflowIds: ["specdev"], templateNames: ["docs-sync", "writing-for-agents"] });
     assert.throws(() => parseAgentSkillSpec("mirror-skills", ids), /unknown workflow/);
     assert.throws(() => parseAgentSkillSpec("none,specdev", ids), /used alone/);
   });

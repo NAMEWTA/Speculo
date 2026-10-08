@@ -40,9 +40,9 @@
 
 分别使用：
 
-- `<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/rules/adr-format.md</Path>`
 - `<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
-- `<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
+- `<Path>{roots.workflows}/specdev/common/rules/context-format.md</Path>`
 - `<Path>{roots.workflows}/specdev/common/schemas/design-tree.schema.json</Path>`
 
 恢复时先读取四份工件，按 design tree 的节点状态恢复，避免重复询问已关闭问题。
@@ -90,7 +90,7 @@
 
 ### 5. 同步 change-local 领域模型
 
-加载 `<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
+加载 `<Path>{roots.workflows}/specdev/common/rules/domain-modeling.md</Path>`。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
 
 历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 change ADR 被替代时建立 supersedes 链。同步只更新本 change 工件，不创建、合并或改写永久 `context/`、`adr/`；它记录共识生长过程，不授权产品实现。
 
@@ -127,8 +127,8 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 
 - 质询协议：`<Path>{roots.workflows}/specdev/G-grill-with-docs/grilling-protocol.md</Path>`
 - 设计树模板：`<Path>{roots.workflows}/specdev/G-grill-with-docs/design-tree-template.json</Path>`
-- 领域建模：`<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`
-- ADR 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`
-- CONTEXT 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`
+- 领域建模：`<Path>{roots.workflows}/specdev/common/rules/domain-modeling.md</Path>`
+- ADR 格式：`<Path>{roots.workflows}/specdev/common/rules/adr-format.md</Path>`
+- CONTEXT 格式：`<Path>{roots.workflows}/specdev/common/rules/context-format.md</Path>`
 - LOG 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
 - Stakeholder 问卷：`<Path>{roots.workflows}/specdev/G-grill-with-docs/stakeholder-questionnaire.md</Path>`

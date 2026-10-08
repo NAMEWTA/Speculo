@@ -11,4 +11,4 @@
 
 详细状态、所有权和副作用合同由各 workflow 的 `INDEX.md`、`README.md`、`common/rules/` 和 schema 定义。
 
-编辑任何文档时，读取 `<Path>{roots.skills}/writing-great-skills/references/document-contract.md</Path>` 的保真合同（不自动激活该 Skill）。保留能力、用户明确的交付数量、默认工具、验收与失败停止条件；模式专属流程和长示例按明确入口下沉。真实源优先，保留软链接、许可与必要元数据，不修改系统/插件缓存。交付实际修改、完整前后字符统计、备份、验证和未完成项；没有实际用量对比不宣称 Token 或额度节省比例。
+编辑任何文档时，读取 `<Path>{roots.skills}/writing-for-agents/references/document-contract.md</Path>` 的保真合同（不自动激活该 Skill）。保留能力、用户明确的交付数量、默认工具、验收与失败停止条件；模式专属流程和长示例按明确入口下沉。真实源优先，保留软链接、许可与必要元数据，不修改系统/插件缓存。交付实际修改、完整前后字符统计、备份、验证和未完成项；没有实际用量对比不宣称 Token 或额度节省比例。

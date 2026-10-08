@@ -16,7 +16,7 @@ description: 编辑 Speculo 的 `template/skills/<name>/`；仅在新增、合�
 - [`../_shared/authoring-quality.md`](../_shared/authoring-quality.md)
 - [`../_shared/authoring-protocol.md`](../_shared/authoring-protocol.md)
 - [`references/skill-contract.md`](references/skill-contract.md)
-- `template/skills/writing-great-skills/SKILL.md`
+- `template/skills/writing-for-agents/SKILL.md`
 
 再按目标读取目标 skill、真实调用方和同主导词资产。不要默认读取全部 template。
 

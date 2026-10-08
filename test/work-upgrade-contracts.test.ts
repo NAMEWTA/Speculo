@@ -4,12 +4,12 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-const read = (file: string) => readFile(join(process.cwd(), file), 'utf8');
+const read = async (file: string) => (await readFile(join(process.cwd(), file), 'utf8')).replaceAll('\r\n', '\n');
 const entry = (workflow: string, work: string) => read(`template/workflows/${workflow}/${work}/${work}.md`);
 // These are source-contract regressions, not a claim of real model execution.
 test('authorized plan and audited stable IDs cover all original thirty Works', async () => {
   const baseline = JSON.parse(await read('docs/work-upgrade/baseline.json'));
-  assert.equal(createHash('sha256').update(await read('docs/work-upgrade/plan.md')).digest('hex'), baseline.plan_sha256);
+  assert.equal(createHash('sha256').update((await read('docs/work-upgrade/plan.md')).replaceAll('\r\n', '\n')).digest('hex'), baseline.plan_sha256);
   assert.equal(baseline.entries.length, 30);
   for (const original of baseline.entries) {
     const text = await read(original.path);
@@ -17,16 +17,18 @@ test('authorized plan and audited stable IDs cover all original thirty Works', a
     assert.match(text, /type: workflow-entry/);
   }
 });
-test('triage has four independently scoped modes and capture never selects a change', async () => {
+test('triage separates all ten modes and capture never selects a change', async () => {
   const text = await entry('specdev', 'T-triage');
   for (const mode of ['intake', 'reconcile', 'publish', 'capture']) {
-    assert.ok(text.includes(`**${mode}**`)); assert.ok(text.includes(`/T-triage/${mode}-protocol.md`));
+    assert.ok(text.includes(`| ${mode} |`)); assert.ok(text.includes(`/T-triage/${mode}-protocol.md`));
   }
-  assert.match(text, /capture.*既不创建也不选择 change/);
-  assert.match(text, /不写 `current_work`，不读取 change-completion/);
-  assert.match(text, /未授权时远程写入为零/);
-  assert.match(text, /账本已经存在时校验账本，不为校验创建它/);
-  assert.match(text, /GitHub 不是开发 tracker/);
+  for (const mode of ['queue', 'pr-delivery', 'ci-security', 'release-preflight', 'release', 'recover']) assert.ok(text.includes(`| ${mode} |`));
+  assert.match(text, /capture 不创建也不选择 change，不写 current_work/);
+  assert.match(text, /仅账本存在时 --capture，不为验证创建账本/);
+  assert.match(text, /GitHub 不成为开发 tracker/);
+  const transport = await read('template/workflows/specdev/T-triage/remote-operations.md');
+  assert.match(transport, /--apply/);
+  assert.match(transport, /授权/);
 });
 test('architecture report is a terminal Work result, not mandatory interview or implementation', async () => {
   const text = await entry('specdev', 'R-review-architecture');
@@ -92,11 +94,11 @@ test('Dev to OPS handoff uses existing spec fields and separate completion owner
   assert.equal(schema.properties.handoff, undefined);
 });
 test('retro remediation does not add automatic prompt, knowledge or remote writes', async () => {
-  const text = await read('template/skills/speculo-retro/references/entry-procedure.md');
+  const text = await read('template/skills/retrospective/SKILL.md');
   for (const kind of ['code-defect', 'deterministic-check-gap', 'context-pointer', 'judgment-rule', 'environment-discovery']) assert.ok(text.includes(kind));
   assert.match(text, /只提出建议，不直接改 AGENTS/);
   assert.match(text, /不创建远程 Issue/);
-  const draft = await read('template/skills/speculo-retro/references/issue-drafting-sop.md');
+  const draft = await read('template/skills/retrospective/references/issue-drafting-sop.md');
   assert.match(draft, /"regression"/); assert.match(draft, /不写文件、不调用 `gh`、不创建 issue/);
 });
 test('native OPS self-check still passes without changing its engine or schemas', () => {

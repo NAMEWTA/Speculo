@@ -2,18 +2,22 @@
 id: specdev/prototype
 type: workflow-entry
 workflow: specdev
-name: UI 设计原型
-description: 检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
+name: 逻辑与 UI 原型
+description: 按需验证离线逻辑模型，或检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
 keywords: [prototype, UI 原型, 风格检测, 设计系统, HTML, CSS, 交互, design tokens]
 ---
 
-# UI 设计原型
+# 逻辑与 UI 原型
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/README.md</Path>`，再执行本入口。
 
 本 Work 的主导词是**设计定向**：先从项目事实识别现状，再让用户看到基于功能而非流行色推荐的候选，最后把选择固化为既可阅读又可运行的 UI 设计包。P 不修改生产 UI；后续 S、Tickets 和 I 以设计包为视觉与交互权威。
 
 激活时读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前步骤定位输入和证据。
+
+## 分支选择
+
+逻辑/状态/规则验证读取 <Path>{roots.workflows}/specdev/P-prototype/logic-protocol.md</Path>，跳过下方 UI 专属步骤。UI 仍默认离线持久化，默认 3 个、最多 4 个方案。只有用户明确要求项目内预览时读取 <Path>{roots.workflows}/specdev/P-prototype/project-preview-protocol.md</Path>；其临时写集与清理由该分支管理，下方 UI 设计权威与离线交付保持。
 
 ## 输入与所有权
 

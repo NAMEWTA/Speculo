@@ -38,9 +38,9 @@
 change 内三份文档复用 grill 的既有格式，避免重复发明：
 
 - 设计日志：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`；
-- 领域上下文：`<Path>{roots.workflows}/specdev/G-grill-with-docs/context-format.md</Path>`；
-- 架构决策：`<Path>{roots.workflows}/specdev/G-grill-with-docs/adr-format.md</Path>`；
-- 领域建模规则：`<Path>{roots.workflows}/specdev/G-grill-with-docs/domain-modeling-rules.md</Path>`。
+- 领域上下文：`<Path>{roots.workflows}/specdev/common/rules/context-format.md</Path>`；
+- 架构决策：`<Path>{roots.workflows}/specdev/common/rules/adr-format.md</Path>`；
+- 领域建模规则：`<Path>{roots.workflows}/specdev/common/rules/domain-modeling.md</Path>`。
 
 同步顺序固定：先 LOG，再 CONTEXT，最后 ADR。CONTEXT 只描述当前真相，历史轨迹留在 LOG；未确认的解读不得写成已接受 ADR；与现有永久 ADR 冲突时建立 supersedes 链，不重写历史。高影响条目带来源标识（`USER-DECISION`、`CODE:`、`RESEARCH:`、`ADR-###`）。
 

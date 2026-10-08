@@ -6,8 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-10-08
+
 ### Added
 - **Optional Agent Skills projection**: interactive init can expose each selected workflow Work as a pointer skill, and link chosen template skills, under the target project's `.agents/skills/` for Agents `/skills`. Fresh unattended installs still write nothing there. `--agent-skills` accepts `none`, `keep`, `template`, `template:<id>+<id>`, and workflow ids. Managed names roll back with the init transaction; unmanaged skill directories stay in place.
+- Add SpecDev R-retro, offline logic prototypes, and explicitly enabled project UI previews. SpecDev now has 15 Works; all workflows expose 31 Work entries.
+- Add PR delivery and standalone CI/release records with schema validation, fixed source snapshots, authorization evidence, and recovery receipts.
+- Track all 38 upstream Skill dispositions and 110 fixed-revision source hashes, retaining third-party license and attribution evidence.
+
+### Changed
+- Merge all GitHub/npm operations into T-triage, including Issue/PR intake, delivery, CI/security, release preflight, publishing, and recovery. Ticket-to-Issue `publish` remains separate from package `release`.
+- Rename `speculo-retro` to `retrospective` and `writing-great-skills` to `writing-for-agents`; consolidate duplicated guidance. Nine top-level Skills remain.
+- Align Skill metadata and authoring rules with host-specific invocation controls, and generate owned CLAUDE bridges using `@AGENTS.md`.
+
+### Fixed
+- Preserve ownership, user edits, runtime data, and transactional rollback when migrating SpecDev config v5 to v6 and retiring old static Skill assets.
+- Normalize Linux SSH target paths independently of Windows controller paths; reject invalid scp destinations before execution.
+- Correct cross-platform OPS fixtures, require meaningful shell failure evidence, and exercise Windows junction rejection without silently passing unexecuted checks.
+- Include the runtime Skill validator in the npm package for optional Agent Skills projection.
+
+### Upgrade Notes
+- Remove the standalone `github-npm-ops` entry; use SpecDev T-triage. Rebind active Tickets that reference renamed or removed Skills and check Ready again. Historical evidence remains read-only.
+- Existing owned static assets are replaced only after staging and ownership checks. Modified or unowned retired assets block the affected refresh; use the existing doctor/resolve/recover transaction flow.
+- Real GitHub/npm operations still require their own explicit authorization. Standalone CI/release operations do not reopen implementation state or implicitly become change completion gates.
+
+AI assistance was used for this implementation, review, and release preparation.
 
 ## [1.0.19] - 2026-10-06
 

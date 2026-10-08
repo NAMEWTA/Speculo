@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { createHash } from "node:crypto";
@@ -18,6 +18,7 @@ import * as model from "../tools/opslib/model.mjs";
 const toolsDir = join(dirname(fileURLToPath(import.meta.url)), "../tools");
 const scriptPath = join(toolsDir, "bootstrap-volta.sh");
 const ACK = "I-APPROVE-THIS-BOOTSTRAP";
+const linuxExecution = { skip: process.platform !== "linux" && "Requires Linux /bin/sh and a Linux Node executable; SSH protocol contracts run on every platform" };
 
 function sha256(p) {
   return createHash("sha256").update(readFileSync(p)).digest("hex");
@@ -58,13 +59,14 @@ function pinFor(archives, arch = "linux-x64") {
   return { ...base, archives: { ...base.archives, [arch]: slot } };
 }
 
-function mockTransport({ probeJson = null } = {}) {
+function mockTransport({ probeJson = null, agentJson = null, applyJson = null } = {}) {
   const prev = transport.transportHooks.spawnSync;
   const log = [];
   transport.transportHooks.spawnSync = (cmd, args, kw) => {
     log.push({ cmd, args: [...args], encoding: kw.encoding, inputIsBuffer: Buffer.isBuffer(kw.input) });
     const last = args[args.length - 1];
     if (cmd === "scp") {
+      if (applyJson) return { status: 0, stdout: Buffer.alloc(0), stderr: Buffer.alloc(0) };
       const local = args[args.length - 2];
       const spec = args[args.length - 1];
       const remotePath = spec.slice(spec.indexOf(":") + 1);
@@ -80,11 +82,13 @@ function mockTransport({ probeJson = null } = {}) {
         return { status: 0, stdout: Buffer.from(JSON.stringify(probeJson) + "\n"), stderr: Buffer.alloc(0) };
       }
       if (String(last).includes("--input-type=module")) {
+        if (agentJson) return { status: 0, stdout: Buffer.from(JSON.stringify({ ok: true, result: agentJson }) + "\n"), stderr: Buffer.alloc(0) };
         const parts = splitRemote(last);
         return spawnSync(parts[0], parts.slice(1), {
           input: kw.input, encoding: "buffer", timeout: kw.timeout, maxBuffer: kw.maxBuffer,
         });
       }
+      if (applyJson) return { status: 0, stdout: Buffer.from(String(last).includes("--apply") ? JSON.stringify(applyJson) + "\n" : ""), stderr: Buffer.alloc(0) };
       const parts = splitRemote(last);
       return spawnSync(parts[0], parts.slice(1), {
         input: kw.input, encoding: "buffer", timeout: kw.timeout, maxBuffer: kw.maxBuffer,
@@ -182,7 +186,20 @@ test("scp uses the same host-key contract", () => {
   } finally { transport.transportHooks.spawnSync = prev; rmSync(d, { recursive: true, force: true }); }
 });
 
-test("bootstrap-volta apply installs wrapper and does not touch profile", () => {
+test("scp rejects controller paths and unsafe Linux paths before spawning", (t) => {
+  const d = mkdtempSync(join(tmpdir(), "ops-scp-path-"));
+  t.after(() => rmSync(d, { recursive: true, force: true }));
+  const kh = join(d, "known_hosts"), local = join(d, "archive.tar.gz");
+  writeFileSync(kh, "fixture pinned key\n"); writeFileSync(local, "reviewed archive");
+  const prev = transport.transportHooks.spawnSync;
+  t.after(() => { transport.transportHooks.spawnSync = prev; });
+  transport.transportHooks.spawnSync = () => { assert.fail("invalid paths must not reach scp"); };
+  for (const path of ["C:\\server\\archive.tar.gz", "C:/server/archive.tar.gz", "\\\\server\\share\\archive.tar.gz", "/srv/ops\\archive.tar.gz", "relative.tar.gz", "/srv/../archive.tar.gz", "/srv/space name.tar.gz", "/srv/nul\0.tar.gz"]) {
+    assert.throws(() => transport.posixSend({ hostname: "host.invalid", username: "ops", known_hosts: kh }, local, path), /remote scp path/);
+  }
+});
+
+test("bootstrap-volta apply installs wrapper and does not touch profile", linuxExecution, () => {
   const d = mkdtempSync(join(tmpdir(), "ops-vol-"));
   const home = join(d, "home");
   mkdirSync(home);
@@ -205,28 +222,33 @@ test("bootstrap-volta apply installs wrapper and does not touch profile", () => 
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
-test("bootstrap-volta apply without ack blocked", () => {
+test("bootstrap-volta apply without ack blocked", linuxExecution, () => {
   const d = mkdtempSync(join(tmpdir(), "ops-ack-"));
   const archives = makeArchives(d);
   const p = spawnSync("/bin/sh", [scriptPath, "--apply", archives.voltaTar, archives.voltaSha, archives.nodeTar, archives.nodeSha, join(d, "volta"), "24.21.0", "nope"], { encoding: "utf8" });
-  assert.notEqual(p.status, 0);
+  assert.equal(p.error, undefined);
+  assert.equal(p.status, 2);
+  assert.match(p.stderr, /acknowledgement/);
   rmSync(d, { recursive: true, force: true });
 });
 
-test("bootstrap-volta sha mismatch blocked", () => {
+test("bootstrap-volta sha mismatch blocked", linuxExecution, () => {
   const d = mkdtempSync(join(tmpdir(), "ops-sha-"));
   const archives = makeArchives(d);
   const p = spawnSync("/bin/sh", [scriptPath, "--apply", archives.voltaTar, "0".repeat(64), archives.nodeTar, archives.nodeSha, join(d, "volta"), "24.21.0", ACK], { encoding: "utf8" });
-  assert.notEqual(p.status, 0);
+  assert.equal(p.error, undefined);
+  assert.equal(p.status, 2);
+  assert.match(p.stderr, /installer changed after review/);
   assert.ok(!existsSync(join(d, "volta", "bin", "ops-node")));
   rmSync(d, { recursive: true, force: true });
 });
 
-function cliFixture() {
+function cliFixture({ executeLinux = false } = {}) {
   const tmp = mkdtempSync(join(tmpdir(), "ops-bootcli-"));
   const state = join(tmp, "controller");
-  const target = join(tmp, "server");
-  mkdirSync(target, { recursive: true });
+  // A simulated Linux SSH target is not a path on the controller filesystem.
+  const target = executeLinux ? join(tmp, "server") : "/srv/speculo-bootstrap-test";
+  if (executeLinux) mkdirSync(target, { recursive: true });
   const kh = join(tmp, "known_hosts");
   writeFileSync(kh, "fixture pinned key\n");
   const prevProbe = cliHooks.probeLocal;
@@ -250,6 +272,39 @@ const missingProbe = {
   tools: { node: "missing", volta: "missing", tar: "/bin/tar", sha256sum: "/usr/bin/sha256sum" },
   node_path: null, node_version: null, node_usable: false, profile_has_volta: false,
 };
+
+test("Linux SSH bootstrap and enrollment preserve remote paths on every controller platform", () => {
+  const fx = cliFixture();
+  const connectionNode = posix.join(fx.target, "_host/toolchains/ops/volta/bin/ops-node");
+  const mock = mockTransport({ probeJson: missingProbe, applyJson: { status: "installed", connection_node: connectionNode, profile_unchanged: true } });
+  try {
+    const host = sshHost({ root: fx.target, kh: fx.kh, node: "node" });
+    const conn = writeConn(fx.tmp, host);
+    const r = captureMain(["bootstrap-node", "--state", fx.state, "--host-id", host.host_id, "--connection-file", conn, "--apply", "--account", "ops", "--host-root", fx.target, "--ack", ACK,
+      "--volta-archive", fx.archives.voltaTar, "--volta-sha256", fx.archives.voltaSha, "--node-archive", fx.archives.nodeTar, "--node-sha256", fx.archives.nodeSha]);
+    assert.equal(r.code, 0, r.stderr);
+    const boot = JSON.parse(r.stdout), pins = pinFor(fx.archives).archives["linux-x64"];
+    const paths = [pins.volta.filename, pins.node.filename].map(name => posix.join(fx.target, "_host/installers", name));
+    assert.deepEqual(mock.log.filter(e => e.cmd === "scp").map(e => e.args.at(-1)), paths.map(p => "ops@host.invalid:" + p));
+    const applyArgs = splitRemote(mock.log.find(e => e.cmd === "ssh" && e.args.at(-1).includes("--apply")).args.at(-1));
+    assert.deepEqual(applyArgs.slice(applyArgs.indexOf("--apply") + 1), [paths[0], fx.archives.voltaSha, paths[1], fx.archives.nodeSha, posix.dirname(posix.dirname(connectionNode)), fx.archives.nodeVersion, ACK]);
+    assert.equal(JSON.parse(readFileSync(boot.receipt, "utf8")).connection_node, connectionNode);
+    assert.deepEqual(Object.keys(model.load(fx.state).hosts), []);
+    mock.restore();
+    host.connection.node = connectionNode;
+    const enrollFile = join(fx.tmp, "register.json"); writeFileSync(enrollFile, JSON.stringify({ hosts: [host], projects: [] }));
+    const inventory = { identity: "a".repeat(64), platform: "linux", tools: { node: { path: connectionNode, version: "v24.21.0" } } };
+    const enrolledMock = mockTransport({ probeJson: { ...missingProbe, tools: { ...missingProbe.tools, node: connectionNode }, node_path: connectionNode, node_usable: true }, agentJson: inventory });
+    try {
+      const enrolled = captureMain(["--state", fx.state, "enroll", "--file", enrollFile]);
+      assert.equal(enrolled.code, 0, enrolled.stderr);
+      assert.equal(model.load(fx.state).hosts[host.host_id].connection.node, connectionNode);
+      const snapshot = JSON.parse(enrolled.stdout).hosts[0].snapshot;
+      assert.deepEqual(JSON.parse(readFileSync(snapshot, "utf8")), inventory);
+      assert.equal(enrolledMock.log.filter(e => e.args.at(-1).includes("--input-type=module")).length, 2);
+    } finally { enrolledMock.restore(); }
+  } finally { mock.restore(); fx.cleanup(); }
+});
 
 test("discover probe without node returns node-missing", () => {
   const fx = cliFixture();
@@ -313,6 +368,7 @@ test("bootstrap-node sha mismatch blocked", () => {
       "--node-archive", fx.archives.nodeTar, "--node-sha256", fx.archives.nodeSha,
     ]);
     assert.equal(r.code, 2);
+    assert.match(r.stderr, /sha256 does not match the reviewed pin/i);
     assert.ok(!mock.log.some((e) => String(e.args.at(-1) || "").includes("--apply")));
   } finally { mock.restore(); fx.cleanup(); }
 });
@@ -362,8 +418,8 @@ test("bootstrap-node skips when node exists", () => {
   } finally { mock.restore(); fx.cleanup(); }
 });
 
-test("bootstrap-node apply then enroll writes inventory and status", () => {
-  const fx = cliFixture();
+test("bootstrap-node apply then enroll writes inventory and status", linuxExecution, () => {
+  const fx = cliFixture({ executeLinux: true });
   const home = join(fx.tmp, "home");
   mkdirSync(home);
   writeFileSync(join(home, ".bashrc"), "keep-me\n");
@@ -435,10 +491,11 @@ test("enroll without node blocked", () => {
 test("probe --connection-file still does not imply register", () => {
   const fx = cliFixture();
   const mock = mockTransport({
-    probeJson: { ...missingProbe, tools: { ...missingProbe.tools, node: process.execPath }, node_path: process.execPath, node_usable: true },
+    probeJson: { ...missingProbe, tools: { ...missingProbe.tools, node: "/usr/bin/node" }, node_path: "/usr/bin/node", node_usable: true },
+    agentJson: { identity: "a".repeat(64), platform: "linux" },
   });
   try {
-    const host = sshHost({ root: fx.target, kh: fx.kh, node: process.execPath, identity: "discover" });
+    const host = sshHost({ root: fx.target, kh: fx.kh, identity: "discover" });
     const conn = writeConn(fx.tmp, host);
     const r = captureMain(["probe", "--connection-file", conn]);
     assert.equal(r.code, 0, r.stderr);

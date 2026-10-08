@@ -49,7 +49,7 @@
       "source_sha256": "72448cebcb37870399dc4907b95d9d350a0e5cab02d660b65143c0b1e454ff99",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/domain-modeling-rules.md"
+        "template/workflows/specdev/common/rules/domain-modeling.md"
       ],
       "integration_deltas": [
         "Uses change-local LOG, CONTEXT and ADR ownership before knowledge promotion"
@@ -264,7 +264,7 @@
       "source_sha256": "e285f12827365f96a082a41f100db294b64a6aa1efcec3830040559eb302e6d9",
       "classification": "superseded",
       "targets": [
-        "template/skills/writing-great-skills/SKILL.md",
+        "template/skills/writing-for-agents/SKILL.md",
         "skills/_shared/authoring-quality.md"
       ],
       "rationale": "The shipped authoring reference and maintainer quality model already provide the stronger single source"

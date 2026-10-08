@@ -16,7 +16,7 @@
 
 ## 3. 幂等执行
 
-调用 `<Path>{roots.skills}/github-npm-ops/SKILL.md</Path>` 的 `issue-comment-close`，marker 固定为 `specdev:<change>:completion`。执行前重读 Issue 与评论：
+调用 `<Path>{roots.workflows}/specdev/T-triage/remote-operations.md</Path>` 的 `issue-comment-close`，marker 固定为 `specdev:<change>:completion`。执行前重读 Issue 与评论：
 
 - 已关闭且 marker 存在：按已完成恢复；
 - marker 存在但 Issue 仍 open：只重试 close；

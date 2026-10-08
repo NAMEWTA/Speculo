@@ -175,16 +175,13 @@ test("lock is not autobroken", () => {
   });
   rmSync(d, { recursive: true, force: true });
 });
-test("symlink rejected", () => {
+test("symlink rejected", (t) => {
   const d = mkdtempSync(join(tmpdir(), "ops-link-"));
+  t.after(() => rmSync(d, { recursive: true, force: true }));
   mkdirSync(join(d, "real"));
-  try { symlinkSync(join(d, "real"), join(d, "link"), "dir"); }
-  catch (e) {
-    if (process.platform === "win32") { rmSync(d, { recursive: true, force: true }); return; }
-    throw e;
-  }
+  symlinkSync(join(d, "real"), join(d, "link"), process.platform === "win32" ? "junction" : "dir");
   assert.throws(() => atomicWrite(join(d, "link", "a.txt"), "x"), OpsError);
-  rmSync(d, { recursive: true, force: true });
+  assert.equal(existsSync(join(d, "real", "a.txt")), false);
 });
 test("file permissions", () => {
   const d = mkdtempSync(join(tmpdir(), "ops-perm-"));
@@ -994,7 +991,7 @@ test("new controllers keep secrets out of default documentation", () => runFx((f
   }
   assert.match(readFileSync(join(local,"OPERATIONS.md"),"utf8"), /secret_ref:.*app-auth@1/);
   assert.ok(readFileSync(join(remote,"env","app.env"),"utf8").includes(PASSWORD));
-  assert.equal(plan.operations.find((o) => o.path?.endsWith("env/app.env")).mode, 0o600);
+  assert.equal(plan.operations.find((o) => o.path === join(remote, "env", "app.env")).mode, 0o600);
   if (process.platform !== "win32") assert.equal(statSync(join(remote,"env","app.env")).mode & 0o777, 0o600);
   assert.equal(readJson(join(local,"docs-receipt.json")).status, "both-sides-verified");
 }));

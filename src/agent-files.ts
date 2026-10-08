@@ -81,7 +81,7 @@ export function planExternalEdits(snapshots: Map<ExternalName, FileImage>, refer
     let text = bytes(before).toString("utf8");
     if (before && !bytes(before).equals(Buffer.from(text))) throw new Error(`external-encoding: ${name} must be UTF-8`);
     if (name === "AGENTS.md") text = updateAgentsContent(before ? text : "# AGENTS.md\n", references);
-    if (name === "CLAUDE.md" && !before) text = "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n";
+    if (name === "CLAUDE.md" && (!before || text.trim() === "# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md)." || text.trim() === "# CLAUDE.md\r\n\r\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).")) text = "# CLAUDE.md\n\n@AGENTS.md\n";
     if (name === ".gitignore") {
       const newline = text.includes("\r\n") ? "\r\n" : "\n";
       const patterns = ["speculo/.speculo/back/", ".speculo-init.lock/", ".speculo-init-stage-*/", ".speculo-file-*.tmp", ...(specdevInstalled ? ["specdev-worktree/"] : [])];
