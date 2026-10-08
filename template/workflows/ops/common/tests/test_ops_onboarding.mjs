@@ -22,7 +22,7 @@ function fixture(t, local = false) {
   const registry = emptyStatus();
   registry.controller = { controller_id: "fixture", state_root: state, created_at: "2026-01-01T00:00:00Z" };
   writeFileSync(join(state, "status.json"), JSON.stringify(registry));
-  writeFileSync(join(state, "private/credentials.json"), '{"schema_version":1,"entries":{}}');
+  writeFileSync(join(state, "private/credentials.json"), '{"schema_version":1,"entries":{}}', { mode: 0o600 });
   const knownHosts = join(dir, "known_hosts"); writeFileSync(knownHosts, "synthetic pinned key\n");
   const host = { host_id: "node-a", display_name: "Node A", platform: local ? process.platform === "win32" ? "windows" : process.platform : "linux",
     transport: local ? "local" : "ssh", root: local ? join(dir, "target") : "/home/wta/ops", identity: "a".repeat(64),

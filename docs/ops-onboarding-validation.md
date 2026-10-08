@@ -57,3 +57,5 @@
 2026-10-08，版本从 1.0.20 提升至 1.0.21。`pnpm check` 退出码 0：完整仓库测试 292 项，267 pass、0 fail、25 skip，随后资产验证通过；OPS 内部集成套件随完整测试执行。`pnpm verify-bin`、独立 `pnpm validate-assets`、S-server-connect 反向引用审计及 `git diff --check` 均退出码 0。OPS AUTO-INDEX 连续两次生成与原字节一致。上述结果补充先前实施阶段未运行完整仓库测试的范围；真实服务器和 Linux 专属用例的本地限制仍有效。
 
 发布准备前的 package.json 与 CHANGELOG.md 备份位于 `C:/Users/cdewta/AppData/Local/Temp/speculo-v1.0.21-release-backup`，完整检查日志位于同一临时目录的 `speculo-v1.0.21-check.log`。发布由 v1.0.21 标签触发既有 GitHub Actions，远端结果单独核验。
+
+首次 release CI（37759342864）在 Linux 本地初始化夹具上失败：临时凭据文件默认权限过宽，已有 ledgerLoad 权限门正确拒绝；npm 与 GitHub Release 均未执行。夹具改为以 0600 创建文件，运行时权限门未修改。修复后定向接入测试退出码 0（14 项，13 pass、1 Linux skip），资产验证退出码 0；通过受旧标签对象约束的 force-with-lease 更新尚未发布的 v1.0.21 标签，再由 Linux CI 完整验证。失败日志保存在临时目录 speculo-v1.0.21-ci-failed.log。
