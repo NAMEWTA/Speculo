@@ -14,6 +14,7 @@ import * as bootstrap from "../tools/opslib/bootstrap.mjs";
 import { initialize, main, cliHooks } from "../tools/opslib/cli.mjs";
 import * as agent from "../tools/opslib/agent.mjs";
 import * as model from "../tools/opslib/model.mjs";
+import { onboardingHooks, discoverServer, confirmServerRoot } from "../tools/opslib/onboarding.mjs";
 
 const toolsDir = join(dirname(fileURLToPath(import.meta.url)), "../tools");
 const scriptPath = join(toolsDir, "bootstrap-volta.sh");
@@ -258,9 +259,13 @@ function cliFixture({ executeLinux = false } = {}) {
   const archives = makeArchives(tmp);
   const prevPin = bootstrap.bootstrapHooks.loadPin;
   bootstrap.bootstrapHooks.loadPin = () => pinFor(archives);
+  const previousObserve = onboardingHooks.observe;
+  onboardingHooks.observe = (h, root) => ({ identity: executeLinux ? agent.fingerprint() : "a".repeat(64), platform: "linux", username: h.connection.username, uid: "1000", home: "/home/ops", node: null, node_version: null, ...(root ? {root_check: {exists: false, writable: true, nonempty: false, owner: null}} : {}) });
   return {
     tmp, state, target, kh, archives,
+    confirm(host) { const d = discoverServer(state, host.host_id, host); const r = confirmServerRoot(state, host.host_id, d.discovery.receipt_id, host.root, "fixture-user", "Confirm only this isolated simulated target root"); host.root_confirmation = r.root_confirmation; },
     cleanup() {
+      onboardingHooks.observe = previousObserve;
       bootstrap.bootstrapHooks.loadPin = prevPin;
       rmSync(tmp, { recursive: true, force: true });
     },
@@ -279,6 +284,7 @@ test("Linux SSH bootstrap and enrollment preserve remote paths on every controll
   const mock = mockTransport({ probeJson: missingProbe, applyJson: { status: "installed", connection_node: connectionNode, profile_unchanged: true } });
   try {
     const host = sshHost({ root: fx.target, kh: fx.kh, node: "node" });
+    fx.confirm(host);
     const conn = writeConn(fx.tmp, host);
     const r = captureMain(["bootstrap-node", "--state", fx.state, "--host-id", host.host_id, "--connection-file", conn, "--apply", "--account", "ops", "--host-root", fx.target, "--ack", ACK,
       "--volta-archive", fx.archives.voltaTar, "--volta-sha256", fx.archives.voltaSha, "--node-archive", fx.archives.nodeTar, "--node-sha256", fx.archives.nodeSha]);
@@ -290,6 +296,15 @@ test("Linux SSH bootstrap and enrollment preserve remote paths on every controll
     assert.deepEqual(applyArgs.slice(applyArgs.indexOf("--apply") + 1), [paths[0], fx.archives.voltaSha, paths[1], fx.archives.nodeSha, posix.dirname(posix.dirname(connectionNode)), fx.archives.nodeVersion, ACK]);
     assert.equal(JSON.parse(readFileSync(boot.receipt, "utf8")).connection_node, connectionNode);
     assert.deepEqual(Object.keys(model.load(fx.state).hosts), []);
+    // A new confirmation cannot reset an interrupted bootstrap's machine/root guard.
+    fx.confirm(host); writeConn(fx.tmp, host);
+    const retryArgs = ["bootstrap-node", "--state", fx.state, "--host-id", host.host_id, "--connection-file", conn, "--apply", "--account", "ops", "--host-root", fx.target, "--ack", ACK,
+      "--volta-archive", fx.archives.voltaTar, "--node-archive", fx.archives.nodeTar];
+    const blockedRetry = captureMain(retryArgs); assert.equal(blockedRetry.code, 2); assert.match(blockedRetry.stderr, /already started/);
+    assert.equal(mock.log.filter(e => e.cmd === "scp").length, 2);
+    const recovered = captureMain([...retryArgs, "--recover-ack", "I-VERIFIED-BOOTSTRAP-IS-STOPPED", "--recovery-statement", "Fixture only: the simulated old process is stopped; retry exactly the same pinned inputs"]);
+    assert.equal(recovered.code, 0, recovered.stderr);
+    assert.ok(readdirSync(join(fx.state, "hosts", host.host_id, "bootstrap")).some(n => n.startsWith("recovery-")));
     mock.restore();
     host.connection.node = connectionNode;
     const enrollFile = join(fx.tmp, "register.json"); writeFileSync(enrollFile, JSON.stringify({ hosts: [host], projects: [] }));
@@ -352,6 +367,18 @@ test("bootstrap-node apply without ack blocked", () => {
     ]);
     assert.equal(r.code, 2);
     assert.ok(r.stderr.includes("I-APPROVE-THIS-BOOTSTRAP"));
+  } finally { mock.restore(); fx.cleanup(); }
+});
+
+test("bootstrap with valid archives but no root confirmation cannot write or upload", () => {
+  const fx = cliFixture(), mock = mockTransport({ probeJson: missingProbe });
+  try {
+    const host = sshHost({ root: fx.target, kh: fx.kh, node: "node" }), conn = writeConn(fx.tmp, host);
+    const r = captureMain(["bootstrap-node", "--state", fx.state, "--host-id", host.host_id, "--connection-file", conn, "--apply", "--account", "ops", "--host-root", fx.target, "--ack", ACK,
+      "--volta-archive", fx.archives.voltaTar, "--node-archive", fx.archives.nodeTar]);
+    assert.equal(r.code, 2); assert.match(r.stderr, /root-confirm/);
+    assert.equal(mock.log.filter(e => e.cmd === "scp").length, 0);
+    assert.ok(mock.log.every(e => e.args.at(-1).includes("--probe")));
   } finally { mock.restore(); fx.cleanup(); }
 });
 
@@ -428,6 +455,7 @@ test("bootstrap-node apply then enroll writes inventory and status", linuxExecut
   const mock = mockTransport({ probeJson: missingProbe });
   try {
     const host = sshHost({ root: fx.target, kh: fx.kh, node: "node" });
+    fx.confirm(host);
     const conn = writeConn(fx.tmp, host);
     const applied = captureMain([
       "bootstrap-node", "--state", fx.state, "--host-id", "wsl-a",
@@ -518,7 +546,7 @@ test("environmentSpec uses managed volta path", () => {
     host_id: "node-a", display_name: "Node A", platform: process.platform === "win32" ? "windows" : "linux",
     transport: "local", root: target, identity: agent.fingerprint(), connection: {},
   };
-  model.register(state, { hosts: [host], projects: [] });
+  const legacy = model.load(state); legacy.hosts[host.host_id] = host; model.save(state, legacy); // existing runtime, no fabricated confirmation
   const prev = recipes.hostRecipesHooks.call;
   const voltaBin = core.targetJoin(host, "_host/toolchains/ops/volta/bin/volta");
   recipes.hostRecipesHooks.call = (_h, req) => {
@@ -554,7 +582,7 @@ test("environmentSpec still throws when volta truly absent", () => {
     host_id: "node-a", display_name: "Node A", platform: process.platform === "win32" ? "windows" : "linux",
     transport: "local", root: target, identity: agent.fingerprint(), connection: {},
   };
-  model.register(state, { hosts: [host], projects: [] });
+  const legacy = model.load(state); legacy.hosts[host.host_id] = host; model.save(state, legacy); // existing runtime, no fabricated confirmation
   const prev = recipes.hostRecipesHooks.call;
   recipes.hostRecipesHooks.call = (_h, req) => {
     if (req.action === "snapshot") return { paths: { [req.paths[0]]: { kind: "absent" } } };

@@ -2,6 +2,10 @@
 
 只读取当前 H 任务命中的章节；多个 profile 的依赖必须全部过门，不因按需读取省掉适用检查。
 
+## 最小初始化
+
+读取 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path>。server-initialize-spec 只生成缺少目录的 mkdir 规格并交付原生成器文档；不安装 Docker、不迁移已有数据、不修改账号默认环境。重复检查复用已有目录，任何文件类型、权限或 owner 冲突停止受影响步骤。
+
 ## 工具环境
 
 区分系统版本、用户默认、项目 pin、服务环境。environment-spec 支持明确版本的 uv、Volta、SDKMAN 管理配方；管理器缺失先用经过审核的安装器。保留旧默认与旧目录，不能为统一外观先删除旧环境。工作流不擅自改写用户 shell profile；激活新管理器入口是另一个明确的准备动作。

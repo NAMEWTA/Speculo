@@ -11,6 +11,7 @@ import { load, save, ledgerLoad, validate, validateStatus } from "./model.mjs";
 import { locatePlan, envFile, sliceDigest } from "./planner.mjs";
 import { call as transportCall, hostTransportDigest } from "./transport.mjs";
 import { deliveryBundle } from "./docs.mjs";
+import { validateRootConfirmation } from "./onboarding.mjs";
 
 const COMMON = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -18,6 +19,7 @@ export function defaultEngineDigest() {
   const opslib = join(COMMON, "tools", "opslib");
   const schemas = join(COMMON, "schemas");
   const files = [
+    join(COMMON, "tools", "server-discover.sh"),
     ...readdirSync(opslib).filter((n) => n.endsWith(".mjs")).map((n) => join(opslib, n)),
     ...readdirSync(schemas).filter((n) => n.endsWith(".json")).map((n) => join(schemas, n)),
   ].sort();
@@ -245,6 +247,7 @@ function deliver(state, folder, plan, status, execution, ledger) {
   }
   const receipt = { schema_version: 1, run_id: plan.run_id, plan_digest: digest(plan), completed_at: now(), documents: bundle.acks, status: "both-sides-verified" };
   writeJson(join(folder, "docs-receipt.json"), receipt);
+  for (const hid of Object.keys(plan.hosts)) writeJson(join(state, "hosts", hid, "docs-receipt.json"), receipt);
   for (const did of eligible) {
     const dep = status.deployments[did];
     writeJson(join(state, "hosts", dep.host_id, "deployments", did, "docs-receipt.json"), receipt);
@@ -279,6 +282,7 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
     verifyJournal(join(folder, "journal.jsonl"));
     for (const [hid, h] of Object.entries(plan.hosts)) {
       if (hostTransportDigest(h) !== plan.transport_digests[hid]) throw new OpsError("SSH connection/known_hosts changed since approval");
+      validateRootConfirmation(state, h, { fresh: true });
     }
     for (const [ref, wanted] of Object.entries(plan.credential_versions)) {
       const [cid, v] = ref.split("@");

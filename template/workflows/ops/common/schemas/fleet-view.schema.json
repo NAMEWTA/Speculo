@@ -170,6 +170,70 @@
               ],
               "additionalProperties": false
             }
+          },
+          "login_account": {
+            "type": "string"
+          },
+          "root_confirmation": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "confirmed",
+                  "unverified",
+                  "legacy-registered"
+                ]
+              },
+              "login_home": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "confirmed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "login_home",
+              "confirmed_at"
+            ],
+            "additionalProperties": false
+          },
+          "initialization": {
+            "type": "object",
+            "properties": {
+              "registered": {
+                "const": true
+              },
+              "directory": {
+                "type": "string"
+              },
+              "documents": {
+                "enum": [
+                  "unknown",
+                  "both-sides-verified"
+                ]
+              },
+              "runtime": {
+                "enum": [
+                  "unverified",
+                  "native",
+                  "compose"
+                ]
+              }
+            },
+            "required": [
+              "registered",
+              "directory",
+              "documents",
+              "runtime"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

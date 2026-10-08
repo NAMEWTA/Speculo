@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:root-confirmation:v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "ops-root-confirmation"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "platform": {
+      "enum": [
+        "linux",
+        "windows",
+        "darwin"
+      ]
+    },
+    "transport": {
+      "enum": [
+        "local",
+        "ssh"
+      ]
+    },
+    "identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uid": {
+          "type": "string"
+        },
+        "home": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "username",
+        "uid",
+        "home"
+      ],
+      "additionalProperties": false
+    },
+    "endpoint_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "discovery": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "maxLength": 80
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "confirmed_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact",
+    "receipt_id",
+    "host_id",
+    "platform",
+    "transport",
+    "identity",
+    "root",
+    "account",
+    "endpoint_digest",
+    "discovery",
+    "confirmed_at",
+    "by",
+    "statement"
+  ],
+  "additionalProperties": false
+}

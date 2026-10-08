@@ -2,7 +2,7 @@
 
 ## 硬性路径
 
-Host 登记后 root 固定；Project 使用 kebab ID；Deployment 默认 root/project，同级 APP 与公共服务。多实例显式用 root/project/instances/env/instance。不能通过 symlink、junction、UNC、ADS、相对路径越界或双重登记绕过。
+首次接入按 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path> 探测实际登录主目录，建议其 ops 子目录并由用户选定。Host 登记后 root 固定，更换账号不改根；Project 使用 kebab ID；Deployment 默认 root/project，同级 APP 与公共服务。多实例显式用 root/project/instances/env/instance。不能通过 symlink、junction、UNC、ADS、相对路径越界或双重登记绕过。
 
 业务持久化目录为 data/component/purpose；日志 logs/component；环境 env/；生成配置 config/。Dockerfile 与 Compose 同在 compose/。原生服务配置在 service/，其文件不自动改变业务数据归属。系统服务文件是单独审批的控制文件例外，不是数据存储例外。
 

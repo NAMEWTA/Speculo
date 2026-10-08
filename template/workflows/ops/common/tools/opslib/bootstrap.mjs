@@ -3,13 +3,14 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, basename, join, posix as posixPath } from "node:path";
 import { fileURLToPath } from "node:url";
-import { digest, exact, identifier, newId, noSymlinks, NodeMissing, now, OpsError, privateDir, rootPath, targetJoin, writeJson } from "./core.mjs";
+import { digest, exact, identifier, newId, noSymlinks, NodeMissing, now, OpsError, privateDir, readJson, rootPath, targetJoin, withLock, writeJson } from "./core.mjs";
 import { register, validateHost } from "./model.mjs";
 import { call, posixCall, posixSend, validateSshEndpoint } from "./transport.mjs";
+import { confirmedBootstrapHost, validateRootConfirmation } from "./onboarding.mjs";
 
 const ACK = "I-APPROVE-THIS-BOOTSTRAP";
 const TOOLS = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SCRIPT = readFileSync(join(TOOLS, "bootstrap-volta.sh"), "utf8");
+const SCRIPT = readFileSync(join(TOOLS, "bootstrap-volta.sh"), "utf8").replace(/\r\n?/g, "\n");
 const PIN_PATH = join(TOOLS, "..", "toolchains", "volta-linux.json");
 
 export function loadVoltaPin() {
@@ -47,7 +48,7 @@ function parseJsonLine(stdout, label) {
 export function posixProbe(endpoint, nodePath) {
   const args = ["--probe"];
   if (nodePath) args.push(String(nodePath));
-  const r = posixCall(endpoint, SCRIPT, { args });
+  const r = posixCall(endpoint, SCRIPT, { args, sudo: false });
   return parseJsonLine(r.stdout, "posix probe");
 }
 
@@ -124,7 +125,7 @@ export function bootstrapNode(args) {
   if (args.ack !== ACK) throw new OpsError("explicit acknowledgement I-APPROVE-THIS-BOOTSTRAP is required");
   if (!args.account) throw new OpsError("--account is required");
   if (!args.host_root) throw new OpsError("--host-root is required");
-  identifier(args.account, "toolchain account");
+  if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,79}$/.test(args.account)) throw new OpsError("unsafe toolchain account");
   const hostRoot = rootPath(args.host_root, "linux");
   const nodeVersion = rejectUnpinned("node version", args.node_version || pin.node_version);
   if (nodeVersion !== pin.node_version) throw new OpsError("node version must match the reviewed pin " + pin.node_version);
@@ -139,29 +140,53 @@ export function bootstrapNode(args) {
     allowNetwork: Boolean(args.allow_network), cacheDir, label: "Node",
   });
 
+  // Only read operations precede confirmation. The remote write gate is shared with H/D.
+  const confirmed = confirmedBootstrapHost(args.state, host, args.host_id, hostRoot);
+  if (args.account !== endpoint.username) throw new OpsError("bootstrap account must be the observed SSH login account");
+  if (/[\s\\\0]/.test(hostRoot)) throw new OpsError("Node bootstrap scp requires a root without whitespace or backslashes; use an existing Node or a supported dedicated path");
+
   const installers = installerDir(hostRoot);
   const voltaHome = managedVoltaHome(hostRoot, args.account);
-  posixCall(endpoint, "#!/bin/sh\nset -eu\nmkdir -p -- \"$1\" \"$2\"\n", { args: [installers, voltaHome] });
-  const remoteVolta = posixPath.join(installers, volta.filename);
-  const remoteNode = posixPath.join(installers, node.filename);
-  posixSend(endpoint, volta.file, remoteVolta);
-  posixSend(endpoint, node.file, remoteNode);
-  const applied = posixCall(endpoint, SCRIPT, {
-    args: ["--apply", remoteVolta, volta.sha256, remoteNode, node.sha256, voltaHome, nodeVersion, ACK],
-    timeout: 600,
-  });
-  const result = parseJsonLine(applied.stdout, "posix apply");
-  result.status = result.status || "installed";
-  result.posix_probe = posix;
-  result.arch = arch;
+  return withLock(join(args.state, ".locks", "catalog"), { operation: "bootstrap-node", host_id: args.host_id }, () => {
+    validateRootConfirmation(args.state, confirmed, { fresh: true, freshLegacy: true, checkEndpoint: true });
+    const rootConfirmation = confirmed.root_confirmation ?? null;
+    const attempt = join(args.state, "hosts", args.host_id, "bootstrap", "attempt-" + digest({ identity: confirmed.identity, root: hostRoot }).slice(0, 24) + ".json");
+    const inputDigest = digest({ identity: confirmed.identity, root: hostRoot, account: args.account, node_version: nodeVersion, volta_sha256: volta.sha256, node_sha256: node.sha256 });
+    noSymlinks(attempt);
+    if (existsSync(attempt)) {
+      const previous = readJson(attempt);
+      if (args.recover_ack !== "I-VERIFIED-BOOTSTRAP-IS-STOPPED" || !args.recovery_statement?.trim()) throw new OpsError("bootstrap already started; inspect " + attempt + " and remote state, then explicitly supply --recover-ack I-VERIFIED-BOOTSTRAP-IS-STOPPED --recovery-statement with the actual recovery authorization; never replay blindly");
+      if (previous.input_digest !== inputDigest) throw new OpsError("bootstrap recovery inputs differ from the original attempt; preserve evidence and prepare a separate repair plan");
+      writeJson(join(dirname(attempt), newId("recovery") + ".json"), { previous_attempt: previous, ack: args.recover_ack, statement: args.recovery_statement, at: now() }, { exclusive: true });
+    }
+    writeJson(attempt, { status: "started", host_id: args.host_id, root: hostRoot, root_confirmation: rootConfirmation, input_digest: inputDigest, at: now() });
+    const owner = JSON.stringify({ host_id: args.host_id, identity: confirmed.identity });
+    // Match the existing agent-owned marker. Run as the login account so scp can write.
+    // Recheck links immediately before mkdir; never chown/chmod an existing parent.
+    posixCall(endpoint, "#!/bin/sh\nset -eu\numask 077\n[ ! -e \"$3/_host/execution.lock\" ] && [ ! -L \"$3/_host/execution.lock\" ] || { echo 'target execution lock exists; inspect before bootstrap' >&2; exit 2; }\nfor dest in \"$1\" \"$2\"; do p=$dest; while [ \"$p\" != / ]; do [ ! -L \"$p\" ] || exit 2; p=$(dirname -- \"$p\"); done; done\nmkdir -p -- \"$1\" \"$2\"\nif [ ! -e \"$3/.ops-host.json\" ]; then (set -C; printf '%s\\n' \"$4\" > \"$3/.ops-host.json\"); fi\n", { sudo: false, args: [installers, voltaHome, hostRoot, owner] });
+    const remoteVolta = posixPath.join(installers, volta.filename);
+    const remoteNode = posixPath.join(installers, node.filename);
+    posixSend(endpoint, volta.file, remoteVolta);
+    posixSend(endpoint, node.file, remoteNode);
+    const applied = posixCall(endpoint, SCRIPT, {
+      args: ["--apply", remoteVolta, volta.sha256, remoteNode, node.sha256, voltaHome, nodeVersion, ACK],
+      timeout: 600,
+      sudo: false,
+    });
+    const result = parseJsonLine(applied.stdout, "posix apply");
+    result.status = result.status || "installed";
+    result.posix_probe = posix;
+    result.arch = arch;
 
-  if (args.state && args.host_id) {
-    identifier(args.host_id);
-    const receipt = join(args.state, "hosts", args.host_id, "bootstrap", newId("receipt") + ".json");
-    writeJson(receipt, { ...result, host_id: args.host_id, at: now() });
-    result.receipt = receipt;
-  }
-  return result;
+    if (args.state && args.host_id) {
+      identifier(args.host_id);
+      const receipt = join(args.state, "hosts", args.host_id, "bootstrap", newId("receipt") + ".json");
+      writeJson(receipt, { ...result, host_id: args.host_id, at: now() });
+      writeJson(attempt, { status: "installed", host_id: args.host_id, root: hostRoot, root_confirmation: rootConfirmation, input_digest: inputDigest, receipt, at: now() });
+      result.receipt = receipt;
+    }
+    return result;
+  });
 }
 
 export function enroll(state, request) {
@@ -188,6 +213,7 @@ export function enroll(state, request) {
     const observed = call(host, { action: "probe", ...(discovery ? { identity: null } : {}) }, { timeout: 180 });
     host.identity = observed.identity;
     validateHost(host);
+    validateRootConfirmation(state, host, { checkEndpoint: true });
     register(state, { hosts: [host], projects: request.projects });
     const inventory = call(host, { action: "probe" }, { timeout: 180 });
     const snap = join(state, "hosts", host.host_id, "inventory", newId("snapshot") + ".json");

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:ops:server-discovery:v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "ops-server-discovery"
+    },
+    "discovery_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "discovered_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "endpoint": {
+      "type": "object",
+      "properties": {
+        "host_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "maxLength": 80
+        },
+        "platform": {
+          "enum": [
+            "linux",
+            "windows",
+            "darwin"
+          ]
+        },
+        "transport": {
+          "enum": [
+            "local",
+            "ssh"
+          ]
+        },
+        "connection": {
+          "type": "object",
+          "properties": {
+            "hostname": {
+              "type": "string",
+              "minLength": 1
+            },
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "known_hosts": {
+              "type": "string",
+              "minLength": 1
+            },
+            "identity_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "node": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sudo": {
+              "type": "boolean"
+            },
+            "shell": {
+              "enum": [
+                "posix",
+                "powershell"
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "host_id",
+        "platform",
+        "transport",
+        "connection"
+      ],
+      "additionalProperties": false
+    },
+    "endpoint_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "facts": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "platform": {
+          "enum": [
+            "linux",
+            "windows",
+            "darwin"
+          ]
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uid": {
+          "type": "string"
+        },
+        "home": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "node_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "identity",
+        "platform",
+        "username",
+        "uid",
+        "home",
+        "node",
+        "node_version"
+      ],
+      "additionalProperties": false
+    },
+    "suggested_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registered": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact",
+    "discovery_id",
+    "host_id",
+    "discovered_at",
+    "endpoint",
+    "endpoint_digest",
+    "facts",
+    "suggested_root",
+    "registered"
+  ],
+  "additionalProperties": false
+}

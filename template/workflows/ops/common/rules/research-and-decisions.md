@@ -9,6 +9,14 @@
 | [SSH configuration Skill](https://github.com/BagelHole/DevOps-Security-Agent-Skills/blob/0365f57a079b1332f95cf26e31dd2d5332a8399f/infrastructure/servers/ssh-configuration/SKILL.md) | key/agent、指纹、客户端配置、公钥分发、轮换先验证新 key | 密钥/agent 优先、公钥认证单独验收、保留旧通道、接入失败明确阻塞 | 不默认无口令私钥，不自动清 agent，不照搬 sshd 算法清单/关闭密码登录，不隐式添加 ProxyJump 能力 |
 | [Speculo 基线执行器](https://github.com/NAMEWTA/Speculo/tree/60389759ede9f8c4f14b2f7e70da614dfe574ece/template/workflows/ops/common/tools/opslib) | planner、execution、transport、agent、CLI 与 schema | 复用摘要批准、受限写集、身份验证、失败停止、双边回执 | 不重写已有安全底座，不移动历史 Run，不用可视化替代真实验收 |
 
+## 2.3 首次根确认与 Host/Project 分工
+
+- [Ansible 主机变量与连接参数](https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html)：采用机器身份、登录账号和提权参数分别表达的方法，账号主目录在提权前探测。
+- [Kamal 服务器声明](https://kamal-deploy.org/docs/configuration/servers/)：采用项目显式声明目标服务器的方法，保留 Deployment 环境/实例关联；默认 root 登录和自动 Docker 安装不进入本 workflow 的默认初始化。
+- [pyinfra](https://github.com/pyinfra-dev/pyinfra)：采用先获取事实、再计算必要操作的方法；最小初始化只生成缺失目录动作，保留原摘要批准和恢复。
+
+资料于 2026-10-08 在线读取，只采用方法并自行实现，没有复制外部代码或增加运行依赖。已有 SSH Skill 的固定提交、许可与采用边界保留。新增行为是首次根目录的真实用户选择门；建议不等于确认。换账号保留原根，旧 v3 不自动迁移或补写历史确认。
+
 ## 设计取舍
 
 一次授权的对象是有限任务与精确规格，不是“此后所有运维”。本次任务 runner 增加编译前/后的目标与修改集检查，保留原逐 Run 审批文件，但不要求每步由用户再次对话确认。它不是签名授权系统，也不是防御拥有控制端写权限的恶意管理员的沙箱。

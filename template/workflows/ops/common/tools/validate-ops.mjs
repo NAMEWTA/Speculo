@@ -26,7 +26,7 @@ try {
       const text = readFileSync(join(root, id, id + ".md"), "utf8");
       if (!text.includes("type: workflow-entry") || !text.includes("读取范围") || !text.includes("id: ops/" + id.slice(2))) throw new Error("invalid work " + id);
     }
-    for (const file of ["INDEX.md", "README.md", "manifest.json", "runtime-contract.json", "common/USAGE.md", "common/WORKSPACE-USAGE.md", "common/CAPABILITIES.md", "common/templates/FLEET.html", "common/schemas/fleet-view.schema.json", "common/schemas/task-request.schema.json", "common/schemas/server-check.schema.json", "common/tools/opslib/execution.mjs", "common/tools/opslib/tasks.mjs", "common/tools/opslib/fleet.mjs"]) {
+    for (const file of ["INDEX.md", "README.md", "manifest.json", "runtime-contract.json", "common/USAGE.md", "common/WORKSPACE-USAGE.md", "common/CAPABILITIES.md", "common/templates/FLEET.html", "common/schemas/fleet-view.schema.json", "common/schemas/task-request.schema.json", "common/schemas/server-check.schema.json", "common/tools/opslib/execution.mjs", "common/tools/opslib/tasks.mjs", "common/tools/opslib/fleet.mjs", "common/tools/opslib/onboarding.mjs", "common/tools/server-discover.sh", "common/schemas/server-discovery.schema.json", "common/schemas/root-confirmation.schema.json", "common/rules/host-root-and-onboarding.md"]) {
       if (!existsSync(join(root, file))) throw new Error("missing " + file);
     }
     for (const name of readdirSync(join(root, "common/schemas")).filter((x) => x.endsWith(".json"))) {

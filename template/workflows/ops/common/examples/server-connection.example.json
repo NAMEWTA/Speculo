@@ -1,0 +1,11 @@
+{
+  "platform": "linux",
+  "transport": "ssh",
+  "connection": {
+    "hostname": "REPLACE.invalid",
+    "username": "wta",
+    "port": 22,
+    "known_hosts": "/REPLACE/verified_known_hosts",
+    "sudo": false
+  }
+}

@@ -7,7 +7,7 @@
 | 用户目的 | scope / Work | 必需输入 | 明确不做 |
 | --- | --- | --- | --- |
 | 准备发起操作的本机 | controller / I | 控制端 ID、绝对 state 根 | 不默认把本机登记为服务器 |
-| 接入一台服务器 | access / S | 一个 server_id、可信连接与身份 | 不部署项目、不自动信任主机密钥 |
+| 接入一台服务器 | access / S | 一个 server_id、可信连接与身份、首次根选择 | 不部署项目、不自动信任主机密钥 |
 | 配置系统环境、Docker、Nginx | server / H | 一个已登记 server_id | 不从 cwd 推断 project |
 | 安装 APP 或共享服务 | project / D | 一个 project_id、明确 server_ids、真实需求 | 不猜服务器、不把主机级入口伪装成 APP |
 | 看服务器/项目清单 | inventory / V | 已初始化 state 根 | 不联网、不部署、不授予后续操作权限 |
@@ -36,4 +36,4 @@ H 入口选择一台明确服务器；一个 server 任务可以串行多个 H �
 
 正常完成必须以原 apply 返回 completed 且双边回执成立为准，再生成 V 的本地视图。V 失败记为“执行结果已保存、视图生成失败”，不能重跑业务。文档或索引不会自动变成永久知识；知识写入仍走原 owner/gateway 并获得独立同意。
 
-当前任务编排只接入 H/D；I 初始化和 S 的首次信任建立/固定 Node bootstrap 保留原网关，不用任务授权掩盖缺失的 SSH 登录条件。
+首次根选择按 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path> 执行。server-root-confirm 只记录真实用户路径决定，不代替安装授权；已有明确指定不重复询问。当前任务编排只接入 H/D；I 初始化和 S 的首次信任建立/固定 Node bootstrap 保留原网关，不用任务授权掩盖缺失的 SSH 登录条件。

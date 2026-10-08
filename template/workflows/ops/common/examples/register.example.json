@@ -5,15 +5,19 @@
       "display_name": "REPLACE: reviewed target",
       "platform": "linux",
       "transport": "ssh",
-      "root": "/srv/ops",
+      "root": "/home/wta/ops",
       "identity": "0000000000000000000000000000000000000000000000000000000000000000",
       "connection": {
         "hostname": "REPLACE.invalid",
-        "username": "ops",
+        "username": "wta",
         "port": 22,
         "known_hosts": "/REPLACE/known_hosts",
-        "node": "/srv/ops/_host/toolchains/ops/volta/bin/ops-node",
+        "node": "/home/wta/ops/_host/toolchains/wta/volta/bin/ops-node",
         "sudo": true
+      },
+      "root_confirmation": {
+        "receipt_id": "root-replace-with-real-receipt",
+        "digest": "0000000000000000000000000000000000000000000000000000000000000000"
       }
     }
   ],

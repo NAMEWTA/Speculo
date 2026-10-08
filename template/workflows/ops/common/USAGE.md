@@ -1,4 +1,4 @@
-# OPS 2.2 操作手册
+# OPS 2.3 操作手册
 
 命令中的 WORKFLOW 是解压后的静态 ops 路径，STATE 是部署机永久状态绝对路径。示例用 Linux；PowerShell 传相同参数即可。所有示例密码、主机名和提交值均为演示，不可当作生产配置。
 
@@ -12,13 +12,13 @@ node /path/to/ops/common/tools/ops.mjs probe --output /safe/path/local-inventory
 
 没有 Node 时运行 common/tools/bootstrap.sh probe 或 bootstrap.ps1 -Probe，只做检测。经过批准的本地安装器还需精确 SHA256 与确认字符串。完成后重新 init。SSH 目标缺 Node 不要对本机 bootstrap.sh 假装能装远端，改走下面的 `bootstrap-node`。
 
-初次远端将 host.json 中 identity 写为 discover（仅 probe 支持），connection 包含 hostname、username、known_hosts，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。目标还没有 Node 时不要填一个 PATH 上的 `node` 然后把盘点留在对话里：
+首次接入先按 WORKSPACE-USAGE 的 server-discover → 用户选定根 → server-root-confirm 流程取得 root_confirmation，再将返回 identity/root/root_confirmation 放入 host.json；新登记缺确认会阻塞。初次远端的 identity=discover 仅可用于只读 probe 或 enroll 的身份重验，connection 包含 hostname、username、known_hosts，可选 port、identity_file、sudo、shell。known_hosts 必须已经通过可信方式核对，不能自动信任 ssh-keyscan 输出。目标还没有 Node 时不要填一个 PATH 上的 `node` 然后把盘点留在对话里：
 
 ```sh
 node /path/to/ops/common/tools/ops.mjs bootstrap-node --connection-file /safe/path/host-discovery.json --probe
 # 若 tools.node=missing，准备已审核的 volta/node tar（SHA256 见 common/toolchains/volta-linux.json），再：
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops bootstrap-node --apply \
-  --connection-file /safe/path/host-discovery.json --host-id node-a --account ops --host-root /srv/ops \
+  --connection-file /safe/path/host-discovery.json --host-id node-a --account wta --host-root /home/wta/ops \
   --volta-archive /safe/volta-2.0.2-linux.tar.gz --volta-sha256 PINNED \
   --node-archive /safe/node-v24.21.0-linux-x64.tar.gz --node-sha256 PINNED \
   --ack I-APPROVE-THIS-BOOTSTRAP
@@ -37,7 +37,7 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops enroll --fi
 node /path/to/ops/common/tools/ops.mjs probe --connection-file /safe/path/host-discovery.json --output /safe/path/host-observed.json
 ```
 
-核对后将真实 identity 写回 register.json，再登记。正式 register 不接受 discover。
+核对后将真实 identity、用户确认的 root 及返回的 root_confirmation 写回 register.json，再登记。正式 register 不接受 discover；示例中的零摘要不能作为确认回执。
 
 ```sh
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops register --file /safe/path/register.json
@@ -90,7 +90,7 @@ H.host_actions 支持 mkdir、write-file（host.root 内相对路径；不得写
 
 ## 5. 升级、共享与迁移
 
-upgrade/rollback 与 deploy 使用相同完整 Deployment 输入，但 version、构件、环境变更都必须显式。Project.source 或 Host.connection 更新通过 spec.resource_updates（固定身份/root/kind 不可改），再探测和批准。
+upgrade/rollback 与 deploy 使用相同完整 Deployment 输入，但 version、构件、环境变更都必须显式。Project.source 更新通过 spec.resource_updates。Host.connection 更新由 S 的 server-connection-spec 先验证同机与原根权限，再走精确 plan/approve/apply；固定身份/root/kind 和 root_confirmation 不可改，H/D task 不承接连接变更。
 
 公共服务先作为 shared-service 登记并部署。Allocation 带逻辑资源 owner 与 app credential，Binding 将 APP 指向 provider。创建 allocation 必须配 provision/mysql|redis|minio|existing；existing 必须实际验证。示例见 common/examples 与 service-profiles。
 

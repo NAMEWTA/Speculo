@@ -285,6 +285,7 @@ export function hostReadme(status, hid, runId, at, { ledger = null, full = false
   const out = [
     `# 主机 ${host.display_name} / ${hid}\n`,
     `主机持久化根：${code(host.root)}；更新：${at}；运行：${runId}。\n`,
+    `连接账号：${code(host.connection.username ?? "显式本机账号")}；根目录确认：${host.root_confirmation ? code(host.root_confirmation.receipt_id) : "既有登记（保留原根，不补造历史确认）"}。更换连接账号不改变该根。\n`,
     "APP 与公共服务同级。主机级入口（WireGuard/Nginx/探测）登记为 host_services，不是假的 APP 目录。通用规范见 docs/standards/DEPLOYMENT-STANDARD.md。\n",
     "## 服务一览\n",
     renderOverviewTable(rows, { includeCredentials }),

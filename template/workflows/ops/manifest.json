@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "ops",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "persistent_knowledge": [
     "<Path>{roots.state}/ops/knowledge/</Path>",
     "<Path>{roots.state}/ops/hosts/{host_id}/knowledge/</Path>",
@@ -30,19 +30,24 @@
       "inputs": [
         "server",
         "verified-host-key",
-        "key-or-agent"
+        "key-or-agent",
+        "user-selected-persistence-root"
       ],
       "outputs": [
         "server-registration",
         "inventory",
-        "server-checks"
+        "server-checks",
+        "login-account-discovery",
+        "root-confirmation"
       ],
       "risk": "production-critical",
       "context_budget": 20000
     },
     {
       "id": "host-manage",
-      "after": [],
+      "after": [
+        "server-connect"
+      ],
       "inputs": [
         "server",
         "spec",
@@ -59,7 +64,9 @@
     },
     {
       "id": "project-deploy",
-      "after": [],
+      "after": [
+        "host-manage"
+      ],
       "inputs": [
         "project",
         "explicit-servers",

@@ -775,10 +775,36 @@ export function benchmarkMirrors(req) {
   };
 }
 
+export function onboardingObservation(root = null) {
+  const account = userInfo();
+  const result = { identity: fingerprint(), platform: process.platform === "win32" ? "windows" : process.platform,
+    username: account.username, uid: String(account.uid), home: account.homedir, node: process.execPath, node_version: process.version };
+  if (root) {
+    if (!isAbsolute(root) || root.split(/[\\/]/).includes("..")) throw new Failure("unsafe discovery root");
+    noLinks(root);
+    let parent = root;
+    while (!existsSync(parent)) parent = dirname(parent);
+    if (!statSync(parent).isDirectory()) throw new Failure("root ancestor is not a directory");
+    let writable = true;
+    try { accessSync(parent, fsConstants.W_OK | fsConstants.X_OK); } catch { writable = false; }
+    const present = existsSync(root);
+    for (const rel of [".ops-host.json", "_host", "_runtime", "docs", "knowledge", "README.md", "DEPLOYMENTS.md"]) noLinks(join(root, rel));
+    const marker = join(root, ".ops-host.json");
+    let owner = null;
+    if (existsSync(marker)) {
+      if (!statSync(marker).isFile() || statSync(marker).size > 16384) throw new Failure("invalid root owner marker");
+      owner = rj(marker);
+    }
+    result.root_check = { exists: present, writable, nonempty: present && readdirSync(root).length > 0, owner };
+  }
+  return result;
+}
+
 export function main(req) {
   const identity = fingerprint();
   if (req.identity && identity !== req.identity) throw new Failure("target identity drift");
   const action = req.action;
+  if (action === "onboarding") return onboardingObservation(req.root);
   if (action === "probe") return inventory(req);
   if (action === "mirror-probe") return benchmarkMirrors(req);
   if (action === "snapshot") return { identity, paths: Object.fromEntries((req.paths || []).map((p) => [p, fileState(p)])), at: stamp() };

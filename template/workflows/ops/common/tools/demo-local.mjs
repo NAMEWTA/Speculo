@@ -9,6 +9,7 @@ import { register, putCredential } from "./opslib/model.mjs";
 import { probeLocal } from "./opslib/transport.mjs";
 import { compilePlan } from "./opslib/planner.mjs";
 import { approval, apply } from "./opslib/execution.mjs";
+import { discoverServer, confirmServerRoot } from "./opslib/onboarding.mjs";
 
 export function run(output) {
   output = resolve(output);
@@ -22,10 +23,13 @@ export function run(output) {
   const inventory = probeLocal();
   const platform = inventory.platform;
   if (!["linux", "darwin", "windows"].includes(platform)) throw new OpsError("unsupported platform");
+  const discovered = discoverServer(state, "demo-local", { platform, transport: "local", connection: {} });
+  const confirmed = confirmServerRoot(state, "demo-local", discovered.discovery.receipt_id, target, "demo-user", "Run this explicitly requested disposable demo only inside its new output/server directory.");
   register(state, {
     hosts: [{
       host_id: "demo-local", display_name: "Disposable local demo", platform, transport: "local",
       connection: {}, root: target, identity: inventory.identity,
+      root_confirmation: confirmed.root_confirmation,
     }],
     projects: [{
       project_id: "app-a", display_name: "Demo APP A", kind: "app", service_type: null,

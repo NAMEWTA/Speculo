@@ -67,7 +67,7 @@ function setupFixture() {
     project_id: "app-a", display_name: "APP A", kind: "app", service_type: null,
     source: { type: "local", location: join(tmp, "source"), revision: "v1" },
   };
-  model.register(state, { hosts: [host], projects: [project] });
+  const legacy = model.load(state); legacy.hosts[host.host_id] = host; legacy.projects[project.project_id] = project; model.save(state, legacy); // pre-upgrade v3 fixture
   model.putCredential(state, { credential_id: "app-auth", version: 1, purpose: "Synthetic test only", values: { username: "app-user", password: PASSWORD } });
   const spec = (version = "v1", operation = "deploy", program = null) => {
     if (program == null) {
@@ -440,7 +440,7 @@ test("planner contracts", async (t) => {
   });
   await each("unrelated host registration does not block approval", (fx) => {
     const [info] = fx.plan();
-    model.register(fx.state, { hosts: [{ ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }] });
+    const legacy = model.load(fx.state); legacy.hosts["node-b"] = { ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }; model.save(fx.state, legacy); // preserve legacy multi-root executor coverage
     fx.approve(info);
   });
   await each("touched host catalog drift blocks approval", (fx) => {
@@ -888,7 +888,7 @@ test("control file helpers", () => {
 });
 
 test("disjoint host plans apply sequentially", () => runFx((fx) => {
-  model.register(fx.state, { hosts: [{ ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }] });
+  const legacy = model.load(fx.state); legacy.hosts["node-b"] = { ...fx.host, host_id: "node-b", display_name: "Node B", root: join(fx.tmp, "server-b") }; model.save(fx.state, legacy); // preserve legacy multi-root executor coverage
   const specA = {
     schema_version: 1, worker: "H", operation: "maintain", hosts: ["node-a"], reason: "Host A cache fixture",
     rollback_note: "Keep isolated cache until a separate purge is approved.",

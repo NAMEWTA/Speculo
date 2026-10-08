@@ -36,7 +36,7 @@ describe("OPS five-entry resource workspace",()=>{
   const env={...process.env};delete env.NODE_TEST_CONTEXT;
   // Windows executes hundreds of real registry/process probes in disposable fixtures.
   // Keep every assertion; allow that measured platform overhead rather than skipping integration.
-  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs")],{encoding:"utf8",timeout:process.platform==="win32"?900000:180000,env});
+  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs"),join(workflowRoot,"common/tests/test_ops_onboarding.mjs")],{encoding:"utf8",timeout:process.platform==="win32"?900000:180000,env});
   assert.equal(p.status,0,p.stdout+p.stderr);
   assert.match(p.stdout,/^# tests [1-9][0-9]*$/m,"OPS child runner must execute nonempty tests");
   assert.match(p.stdout,/^# fail 0$/m,p.stdout+p.stderr);
@@ -46,6 +46,13 @@ describe("OPS five-entry resource workspace",()=>{
   const s=await seed();assert.equal(s.schema_version,3);assert.ok(!("active" in s));validateOpsResources(s,await schema());
  });
  it("validates a correctly mapped native deployment",async()=>validateOpsResources(await resourceState(),await schema()));
+ it("accepts optional root-confirmation references in v3 and rejects malformed digests",async()=>{
+  const s=await resourceState(),sc=await schema();
+  s.hosts["node-a"].root_confirmation={receipt_id:"root-fixture",digest:"a".repeat(64)};
+  validateOpsResources(s,sc);
+  s.hosts["node-a"].root_confirmation.digest="invalid";
+  assert.throws(()=>validateOpsResources(s,sc),/pattern/);
+ });
  it("rejects an extra resource-state field under real schema",async()=>{
   const s=await seed();s.unreviewed=true;const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/unknown/);
  });
@@ -94,8 +101,19 @@ describe("OPS five-entry resource workspace",()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-refresh-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
    const record=join(root,".speculo/ops/records/tasks/example/result.json");const recordBytes=Buffer.from('{"synthetic":"preserve-record-byte-for-byte"}\n');await mkdir(dirname(record),{recursive:true,mode:0o700});await writeFile(record,recordBytes,{mode:0o600});
+   const statePath=join(root,".speculo/ops/status.json"),legacy=await resourceState();await writeJson(statePath,legacy);
+   const stateBytes=await readFile(statePath);
+   const preserved=new Map([
+    ["records/servers/node-a/onboarding/discovery-fixture.json",Buffer.from('{"synthetic":"immutable-discovery-evidence"}\n')],
+    ["records/servers/node-a/onboarding/root-fixture.json",Buffer.from('{"synthetic":"actual-root-confirmation-evidence"}\n')],
+    ["runs/run-legacy/plan.json",Buffer.from('{"synthetic":"legacy-run-do-not-rewrite"}\n')],
+    ["hosts/node-a/deployments/app-a-prod/docs-receipt.json",Buffer.from('{"synthetic":"legacy-release-receipt"}\n')],
+   ]);
+   for(const [name,bytes] of preserved){const path=join(root,".speculo/ops",name);await mkdir(dirname(path),{recursive:true,mode:0o700});await writeFile(path,bytes,{mode:0o600});}
    if(process.platform==="win32")await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}}),/ACL-preserving/);
    else{await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});assert.deepEqual(await readFile(p),secret);assert.equal((await stat(p)).mode&0o777,0o600);assert.equal((await stat(privateRoot)).mode&0o777,0o700);assert.deepEqual(await readFile(record),recordBytes);assert.equal((await stat(record)).mode&0o777,0o600);}
+   assert.deepEqual(await readFile(statePath),stateBytes);assert.deepEqual(await readFile(p),secret);assert.deepEqual(await readFile(record),recordBytes);
+   for(const [name,bytes] of preserved)assert.deepEqual(await readFile(join(root,".speculo/ops",name)),bytes,name);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("preserves legacy empty v2 seed without manufacturing v3 approvals",async()=>{

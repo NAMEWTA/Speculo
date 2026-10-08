@@ -7,6 +7,8 @@
 | 控制端 | Node 标准库 CLI（ops.mjs）；状态、锁、受限凭据、计划、执行 | 无第三方 npm 包；使用一个专用控制工作区的绝对 STATE，不按当前 APP 目录隐式切换 |
 | 明确范围 | I 控制端、S 服务器接入、H 服务器维护、D 项目部署、V 资产视图；route 输出明确主体 | server 是 Host.host_id 的用户名称，不是新增第二套服务器账本；原 I/H/D 命令兼容 |
 | 连续执行 | 冻结任务规格、一次原始授权、关联原生 plan/approval/apply，逐步骤验证 | H/D 任务内不重复询问；范围/输入/连接/凭据/执行器漂移或过期停止；任意命令仍是受信任代码，不是沙箱 |
+| 首次持久化根 | server-discover 不提权读取真实主目录；server-root-confirm 记录用户选定根，新 Host 必需回执 | Linux 无需 Node；其他 SSH 平台需已有 Node；默认真实主目录下 ops，确认不授权安装，旧根不迁移 |
+| Host 最小初始化 | server-initialize-spec 生成目录及原双边文档计划；server-connection-spec 验证同机换账号 | Docker/语言环境按需求准备；不递归改 HOME；现有 scp 对含空白根的 Node 引导在写入前阻塞 |
 | Linux 接入检查 | SSH 公钥认证、身份、Node、根目录、容量与 Compose profile；16 项清单、时间和摘要 | 公钥/agent 与可信 known_hosts 必须先存在；没有首次密码登录、公钥自动分发或自动信任主机密钥功能；未测安全项明确 unknown |
 | Linux local | 原生 oneshot；systemd 配置/权限/健康门；Docker Engine Compose | systemd、Docker 和特权配置需要真实有权限主机验收；临时目录测试不能代替 |
 | SSH | OpenSSH 密钥或 agent；固定 known_hosts；目标身份；可 sudo -n；Linux 缺 Node 可用固定 Volta 引导 | 引导 pin 见 common/toolchains/volta-linux.json；Windows 仍要求已有 Node；不实现交互式 SSH 密码登录 |

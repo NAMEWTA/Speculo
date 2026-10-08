@@ -21,7 +21,7 @@ keywords: [ops, initialize, 控制端, 持久化, 明确范围]
 
 使用 init 创建控制端身份与绝对 state 根，记录当前工具版本；不会顺便连接远端或清理当前机器。控制端受限账本和默认凭据文档策略按 `<Path>{roots.workflows}/ops/common/rules/persistence-and-secrets.md</Path>` 初始化，不加载后续服务器部署配方。新文档只含 secret_ref，明文交付必须显式 opt-in；真实 env/配置镜像仍受限保存。
 
-只按用户已指定的服务器与项目登记，不编造身份、用户名、旧密码或工具版本。控制端需要作为部署目标时必须另外明确登记 local Host，不能把“本机准备”自动变成项目配置。初始化系统软件时再读取 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>` 和原 I/H 的完整 spec/plan；缺少管理员权限就报告阻塞，不绕过 sudo。
+服务器登记和根选择交给 S，项目登记/安排交给 D；不编造身份、用户名、旧密码或工具版本。控制端需要作为部署目标时必须另外明确登记 local Host，不能把“本机准备”自动变成项目配置。初始化系统软件时再读取 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>` 和原 I/H 的完整 spec/plan；缺少管理员权限就报告阻塞，不绕过 sudo。
 
 完成条件：控制端状态有效、目录权限受限、工具盘点有证据，后续入口可以独立运行。未具备的服务器能力明确列为缺口。下一步接入服务器用 S，查看已登记资产用 V。
 

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.21] - 2026-10-08
+
+### Added
+- Add OPS server discovery without requiring Node on Linux, explicit persistent-root confirmation receipts, and minimal host initialization with controller and host documentation.
+- Show connection accounts, root-confirmation evidence, and separate registration, directory, documentation, and runtime readiness in fleet views.
+
+### Fixed
+- Reject duplicate machine registration, unsafe or unowned roots, and stale identity, trust, or confirmation evidence; preserve existing host roots when changing connection accounts.
+- Use the confirmed login account for new host root locks and bootstrap, and retain Node bootstrap recovery evidence to prevent unintended replay.
+
+### Upgrade Notes
+- OPS is now 2.3.0; existing host roots, status schema v3, runtime records, and recovery boundaries remain in place. Changed executor/schema digests require regenerating unexecuted plans.
+- Real SSH hosts, sudo, Docker, and production deployments were not exercised locally. Windows skips Linux shell/tar tests; the Linux release workflow runs the full test suite before publishing.
+
+AI assistance was used for this implementation, review, and release preparation.
+
 ## [1.0.20] - 2026-10-08
 
 ### Added

@@ -8,7 +8,7 @@ import { hostname } from "node:os";
 import { dirname, join, posix, win32 } from "node:path";
 import { spawnSync } from "node:child_process";
 
-export const VERSION = "2.2.0";
+export const VERSION = "2.3.0";
 const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const SECRET_RE = /\{\{credential:([a-z0-9-]+)@([1-9][0-9]*):([A-Za-z_][A-Za-z0-9_]*)\}\}/g;
 

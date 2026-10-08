@@ -2,8 +2,42 @@
 import { identifier, exact, newId, now, OpsError, targetJoin, within } from "./core.mjs";
 import { load } from "./model.mjs";
 import { call as transportCall } from "./transport.mjs";
+import { validateRootConfirmation, discoverServer } from "./onboarding.mjs";
 
 export const hostRecipesHooks = { call: transportCall };
+
+export function initializeHostSpec(state, hid) {
+  const status = load(state), host = status.hosts[hid];
+  if (!host) throw new OpsError("unknown server; complete S first");
+  validateRootConfirmation(state, host, { fresh: true });
+  const dirs = ["_host/cache", "_host/installers", "_host/toolchains", "_runtime", "docs/standards", "knowledge"];
+  const paths = dirs.map((p) => targetJoin(host, p));
+  const inventory = hostRecipesHooks.call(host, { action: "probe", paths, disk_roots: [host.root] }, { timeout: 180 });
+  if (inventory.identity !== host.identity) throw new OpsError("host initialization identity drift");
+  const actions = dirs.flatMap((path, i) => {
+    const observed = inventory.snapshots?.[paths[i]];
+    if (observed?.kind === "directory") return [];
+    if (observed?.kind !== "absent") throw new OpsError("initialization path conflict: " + paths[i]);
+    return [{ host_id: hid, kind: "mkdir", path, mode: 0o750, reason: "Prepare only the selected Host root; keep all existing data and account permissions" }];
+  });
+  return { schema_version: 1, worker: "H", operation: "prepare", hosts: [hid], host_actions: actions,
+    acknowledged_consumers: Object.values(status.deployments).filter((d) => d.host_id === hid && d.status !== "retired").map((d) => d.deployment_id).sort(),
+    reason: "Minimal Host initialization: managed directories and verified bilateral host documents; project runtimes are prepared only when needed",
+    rollback_note: "Preserve all existing directories and data. Inspect unknown runs; docs-sync repairs documents without reinstalling anything.", risk: "external-mutation" };
+}
+
+export function connectionSpec(state, hid, endpoint) {
+  const status = load(state), host = status.hosts[hid];
+  if (!host) throw new OpsError("unknown server; complete S first");
+  if (endpoint.platform !== host.platform || endpoint.transport !== host.transport) throw new OpsError("connection update cannot change platform or transport");
+  const discovery = discoverServer(state, hid, endpoint);
+  if (discovery.facts.identity !== host.identity) throw new OpsError("new connection is a different machine");
+  const updated = { ...host, connection: endpoint.connection };
+  validateRootConfirmation(state, updated, { fresh: true, freshLegacy: true });
+  return { schema_version: 1, worker: "H", operation: "maintain", hosts: [hid], resource_updates: { hosts: [updated] },
+    reason: "S verified connection update for the same machine; preserve Host identity, root and original root confirmation",
+    rollback_note: "Keep the old login channel available; use a new exact approved plan to restore it if needed. Never move the root to the new account home.", risk: "external-mutation" };
+}
 
 function shlexQuote(s) {
   if (s === "") return "''";

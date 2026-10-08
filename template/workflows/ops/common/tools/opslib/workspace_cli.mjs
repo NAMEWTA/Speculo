@@ -5,9 +5,16 @@ import { readBoundedJson, readRegistry, route, statePath } from "./workspace.mjs
 import { checkServer } from "./server_checks.mjs";
 import { generateFleet } from "./fleet.mjs";
 import { authorizeTask, prepareTask, runTask } from "./tasks.mjs";
+import { discoverServer, confirmServerRoot } from "./onboarding.mjs";
+import { initializeHostSpec, connectionSpec } from "./host_recipes.mjs";
+import { writeJson } from "./core.mjs";
 
-export const COMMANDS = Object.freeze(["workspace-help", "route", "server-check", "fleet", "task-plan", "task-authorize", "task-run"]);
+export const COMMANDS = Object.freeze(["workspace-help", "route", "server-discover", "server-root-confirm", "server-initialize-spec", "server-connection-spec", "server-check", "fleet", "task-plan", "task-authorize", "task-run"]);
 const options = {
+  "server-discover": ["server", "connection-file"],
+  "server-root-confirm": ["server", "discovery", "root", "by", "statement"],
+  "server-initialize-spec": ["server", "output"],
+  "server-connection-spec": ["server", "connection-file", "output"],
   route: ["scope", "server", "project"],
   "server-check": ["server", "profile", "min-free-mib", "min-memory-mib"],
   fleet: ["stale-hours"], "task-plan": ["file"],
@@ -59,6 +66,18 @@ export async function main(argv = process.argv.slice(2)) {
     load(state);
     let result;
     switch (args.command) {
+      case "server-discover": result = discoverServer(state, required(args, "server"), readBoundedJson(required(args, "connection-file"))); break;
+      case "server-root-confirm": result = confirmServerRoot(state, required(args, "server"), required(args, "discovery"), required(args, "root"), required(args, "by"), required(args, "statement")); break;
+      case "server-initialize-spec":
+      case "server-connection-spec": {
+        const output = required(args, "output");
+        if (!isAbsolute(output)) throw new OpsError("--output must be absolute");
+        const spec = args.command === "server-initialize-spec" ? initializeHostSpec(state, required(args, "server"))
+          : connectionSpec(state, required(args, "server"), readBoundedJson(required(args, "connection-file")));
+        writeJson(output, spec, { exclusive: true });
+        result = { status: "generated-not-executed", spec_path: output, next: "plan -> exact approve -> apply; root selection is not installation authorization" };
+        break;
+      }
       case "route": result = route(readRegistry(state), { scope: required(args, "scope"), server_ids: list(args.server), project_ids: list(args.project) }); break;
       case "server-check": result = await checkServer(state, required(args, "server"), { profile: args.profile ?? "base",
         minFreeMiB: integer(args["min-free-mib"], 1024), minMemoryMiB: integer(args["min-memory-mib"], 256) }); break;

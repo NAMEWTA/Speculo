@@ -2,6 +2,7 @@
 import { existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateRootConfirmation, assertUniqueMachine } from "./onboarding.mjs";
 import { readFileSync } from "node:fs";
 import {
   OpsError, canonical, digest, emptyStatus, exact, identifier, now, readJson, relative,
@@ -260,6 +261,11 @@ export function register(state, request) {
         const key = item[idkey];
         if (key in s[group] && digest(s[group][key]) !== digest(item)) {
           throw new OpsError(`registered identity is immutable through register: ${group}/${key}; use a reviewed migration`);
+        }
+        if (group === "hosts" && !(key in s.hosts)) {
+          validateHost(item);
+          assertUniqueMachine(s, item);
+          validateRootConfirmation(state, item, { require: true, checkEndpoint: true });
         }
         s[group][key] = item;
       }

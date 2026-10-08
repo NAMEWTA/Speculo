@@ -75,12 +75,12 @@ function buffers(p) {
   return { stdout, stderr };
 }
 
-export function posixCall(endpoint, script, { timeout = 180, args = [], sudo = false } = {}) {
+export function posixCall(endpoint, script, { timeout = 180, args = [], sudo } = {}) {
   validateSshEndpoint(endpoint);
   if ((endpoint.shell ?? "posix") === "powershell") {
     throw new OpsError("POSIX bootstrap is Linux-only; PowerShell targets still require an existing Node");
   }
-  const useSudo = sudo || endpoint.sudo;
+  const useSudo = sudo ?? endpoint.sudo;
   let remote = ["/bin/sh", "-s", "--", ...args.map(String)];
   if (useSudo) remote = ["sudo", "-n", "--", ...remote];
   const argv = sshArgv(endpoint);
@@ -155,7 +155,11 @@ export function call(host, request, { timeout = 1800 } = {}) {
   const c = host.connection;
   const argv = sshArgv(c);
   let remote = [c.node, "--input-type=module"];
-  if (c.sudo) remote = ["sudo", "-n", "--", ...remote];
+  // New confirmed roots and their owner/lock files belong to the login account.
+  // Running first lock as root would make later unprivileged discovery unreadable.
+  // Legacy Hosts retain their existing privilege behavior.
+  const useSudo = c.sudo && !(host.root_confirmation && ["lock", "unlock"].includes(request.action));
+  if (useSudo) remote = ["sudo", "-n", "--", ...remote];
   let remoteCommand;
   if ((c.shell ?? "posix") === "powershell") {
     if (c.sudo) throw new OpsError("sudo not valid for PowerShell transport");

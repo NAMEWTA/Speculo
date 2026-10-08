@@ -12,6 +12,7 @@ import { allocationOperation } from "./services.mjs";
 import { credentialRefs, planReport, remotePaths } from "./docs.mjs";
 import { taskFiles } from "./native_windows.mjs";
 import { engineDigest } from "./execution.mjs";
+import { validateRootConfirmation } from "./onboarding.mjs";
 import { assertSafeControlPath, defaultFileMode, reservedHostDocumentPaths } from "./control_files.mjs";
 
 export const plannerHooks = { call: transportCall };
@@ -246,6 +247,7 @@ export function compilePlan(state, specPath) {
         if (previous == null || fixed.some((k) => previous[k] !== item[k])) {
           throw new OpsError("resource update cannot change identity/root/kind; create explicit migration resources");
         }
+        if (group === "hosts" && digest(previous.root_confirmation ?? null) !== digest(item.root_confirmation ?? null)) throw new OpsError("root confirmation cannot be removed or replaced through resource updates");
         after[group][item[idkey]] = structuredClone(item);
       }
     }
@@ -668,6 +670,7 @@ export function compilePlan(state, specPath) {
     const snapshots = {};
     const docPreconditions = {};
     for (const [hid, host] of Object.entries(selected)) {
+      validateRootConfirmation(state, host, { fresh: true });
       const paths = new Set(ops.filter((o) => o.host_id === hid && ["write", "quarantine", "purge-quarantine"].includes(o.kind)).map((o) => o.path));
       for (const did of uniqueDocs) {
         if (after.deployments[did].host_id === hid) for (const p of remotePaths(after, after.deployments[did])) paths.add(p);

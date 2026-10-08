@@ -11,6 +11,8 @@ keywords: [ops, inventory-view, 资产清单, 持久化, 明确范围]
 
 激活本 Work 后先读取 `<Path>{roots.workflows}/ops/README.md</Path>`。
 
+视图按 Host 与 Project 双向组织，并列出连接账号、持久化根、根确认状态以及目录/双边文档/项目运行环境的分别验证结果；旧根标记 legacy-registered，不补造确认。只读取允许的回执摘要，不输出确认原话或私钥来源。
+
 ## 读取范围
 
 读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，按当前 ID 定位最小证据。

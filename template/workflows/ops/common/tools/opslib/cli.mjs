@@ -223,6 +223,7 @@ function parseArgs(argv) {
     grab("--connection-file"); grab("--host-id"); grab("--account"); grab("--host-root");
     grab("--volta-archive"); grab("--volta-sha256"); grab("--node-archive"); grab("--node-sha256");
     grab("--node-version"); grab("--ack");
+    grab("--recover-ack"); grab("--recovery-statement");
     out.probe = flag("--probe");
     out.apply = flag("--apply");
     out.allow_network = flag("--allow-network");

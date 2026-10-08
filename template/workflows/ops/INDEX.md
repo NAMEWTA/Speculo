@@ -15,6 +15,8 @@ keywords: [ops, 控制端, 服务器, SSH, 项目, 部署, Docker, 持久化, �
 
 激活后按当前任务读取 `<Path>{roots.workflows}/ops/common/rules/activation-and-memory.md</Path>`，再读取当前 Work 与必要规则；索引自身不授予执行或永久知识写入权限。
 
+使用顺序为控制端初始化、指定 Host 初始化、Project 安排到明确 Host。首次 Host 的持久化根由用户选定，建议真实登录主目录下 ops；换账号后仍复用原根。
+
 Controller 是发起任务的本机，Server 对应既有 Host.host_id；Project 是业务或共享服务，Deployment 连接项目、服务器、环境和实例。当前目录、上次服务器和浏览看板都不是隐含执行目标。
 
 I-initialize：只准备控制端。

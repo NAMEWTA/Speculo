@@ -9,16 +9,20 @@
 - **D-project-deploy** — 项目与共享服务部署：固定一个项目及目标服务器，配置项目容器、依赖、升级与双边文档，不隐式取得整台服务器的维护权限。
 - **H-host-manage** — 服务器环境与治理：只维护一个明确服务器的系统基线、Docker 和主机级入口，不把系统配置误路由到项目。
 - **I-initialize** — 控制端初始化：仅准备发起任务的控制端，建立受限状态根与本机工具证据，不默认登记部署服务器。
-- **S-server-connect** — 服务器接入与登记：处理指定服务器的可信 SSH、公钥认证、机器身份与接入检查，不部署项目或隐式改写 sshd。
+- **S-server-connect** — 服务器接入与登记：处理指定服务器的可信 SSH、真实登录主目录探测、用户确认持久化根及接入登记，不部署项目或隐式改写 sshd。
 - **V-inventory-view** — 服务器与部署资产视图：从现有资源和检查证据生成简单 MD、标准 JSON 与离线 HTML，双向查看服务器与项目，不连接或修改目标。
 
 <!-- AUTO-INDEX-END -->
 
 ## 运行时根
 
-先打开 workspace 解析 roots。静态代码在 `<Path>{roots.workflows}/ops/</Path>`，真实状态在 `<Path>{roots.state}/ops/</Path>`；调用 `<Path>{roots.workflows}/ops/common/tools/ops.mjs</Path>` 始终显式传绝对 `--state`，不能指向静态代码目录。首次登记专用 host.root，Linux 建议 `/srv/ops`、Windows 建议 `C:\Ops`，拒绝系统根、路径穿越与链接跳转。
+先打开 workspace 解析 roots。静态代码在 `<Path>{roots.workflows}/ops/</Path>`，真实状态在 `<Path>{roots.state}/ops/</Path>`；调用 `<Path>{roots.workflows}/ops/common/tools/ops.mjs</Path>` 始终显式传绝对 `--state`，不能指向静态代码目录。首次连接先只读识别真实登录账号与主目录，建议其 `ops` 子目录；用户明确选择后才登记 host.root。根统一承载文档、项目及运行数据，确认后按 Host 复用，换账号不换根。既有根保留，不自动迁移。完整协议见 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path>。
 
 控制端宜集中复用一个独立运维工作区，APP 源码可在其他目录；不从 cwd 猜服务器或项目，不扫描/合并其他状态根。多个已有账本需要显式迁移，不能复制 status.json 冒充合并。
+
+## 三段流程与两个维度
+
+I 初始化控制端 → S 接入指定 Host、确认根并登记 → H 最小初始化 Host → D 将指定 Project 部署到明确 Host。服务器与项目分别管理，Deployment 关联二者；V 双向查看。最小初始化不默认安装 Docker 或语言环境，按项目需求补齐。
 
 ## 启动协议
 
@@ -41,7 +45,7 @@
 
 ## 状态字段
 
-status.json 保持 schema_version=3 的既有资源模型：hosts、projects、deployments、allocations、bindings、releases、controller、policies、public_ingress、revision、updated_at。主机基础入口 Nginx/WireGuard 属于 Host.host_services，不伪装成 APP；公共 MySQL/Redis/MinIO 属于项目。
+status.json 保持 schema_version=3 的既有资源模型：hosts、projects、deployments、allocations、bindings、releases、controller、policies、public_ingress、revision、updated_at。Host.root_confirmation 可选引用 S 的独立回执（receipt_id/digest）；新 Host 登记必需，旧 v3 Host 缺省兼容。S 独占 `<Path>{roots.state}/ops/records/servers/{host_id}/onboarding/</Path>`；双边生成器更新 `<Path>{roots.state}/ops/hosts/{host_id}/docs-receipt.json</Path>`，原 Run 回执保持不覆盖。主机基础入口 Nginx/WireGuard 属于 Host.host_services，不伪装成 APP；公共 MySQL/Redis/MinIO 属于项目。
 
 version 与 observed_version 分开，未知/未测/过期不改成成功。部署完成必须有真实业务健康与 `both-sides-verified`；docs_pending 不是全部完成。
 

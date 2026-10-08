@@ -17,7 +17,34 @@ node "$OPS" --state "$STATE" init --controller-id control-a
 node "$OPS" --state "$STATE" route --scope access --server node-a
 ```
 
-按 S 的 server-onboarding.md 完成可信指纹、key/agent、必要的固定 Node 引导与 enroll。route 允许为尚未登记的 server_id 给出 S 路由，但不会连接/登记它。首次密码登录和公钥分发不是现有 runtime 的自动能力；缺登录通道必须明确阻塞，不能降低 SSH 校验标准。
+按 S 的 server-onboarding.md 完成可信指纹与 key/agent，再读取 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path>。route 只路由；首次密码登录和公钥分发仍需既有可信交互通道。
+
+连接文件提供 platform、transport、connection，结构见 <Path>{roots.workflows}/ops/common/examples/server-connection.example.json</Path>。Linux 无需预装 Node 或预填 root：
+
+~~~sh
+node "$OPS" --state "$STATE" server-discover --server node-a --connection-file /safe/connection.json
+# Agent 展示实际账号、主目录和建议根，记录用户指定或接受路径的原话。
+node "$OPS" --state "$STATE" server-root-confirm --server node-a --discovery RETURNED_DISCOVERY_ID --root /home/wta/ops --by actual-user --statement '用户实际给出的路径确认语句及来源'
+~~~
+
+将返回的 identity/root/root_confirmation 原样写入 Host 连接/登记文件。默认建议为真实登录主目录下 ops，root 通常 /root/ops、wta 通常 /home/wta/ops，自定义主目录以实际探测为准。已有明确指定不重复询问；建议本身不是确认，取消或未确认不写目标。根确认不代替安装授权。
+
+已有 Node 时 enroll；缺 Node 时按 USAGE 的固定 bootstrap-node 网关执行，连接文件须携带确认回执，--account 使用实际登录账号，--host-root 与确认一致。登记后最小初始化：
+
+~~~sh
+node "$OPS" --state "$STATE" server-initialize-spec --server node-a --output /safe/host-initialize.json
+node "$OPS" --state "$STATE" plan --file /safe/host-initialize.json
+# 走原 approve/apply，或把规格放入已授权 H/D task。
+~~~
+
+最小初始化只准备受管目录和双边文档；Docker/Compose、语言环境及入口服务按项目需要经 H 准备。登记、目录准备、文档交付和项目运行基线分别验证。
+
+同机换账号先准备新连接文件并保留原 root：
+
+~~~sh
+node "$OPS" --state "$STATE" server-connection-spec --server node-a --connection-file /safe/new-connection.json --output /safe/connection-update.json
+# S 拥有的精确 plan/approve/apply；不通过 H/D task 更换连接，不撤销旧通道。
+~~~
 
 已有真实服务器登记后：
 
@@ -62,7 +89,7 @@ CLI 故意不把 task-plan 等同授权；入口替用户完成后续命令，�
 node "$OPS" --state "$STATE" fleet --stale-hours 24
 ```
 
-直接打开输出的 FLEET.md，点击离线看板；也可直接打开命令返回的 HTML 绝对路径。无需启动 Web 服务。服务器、项目、部署记录状态和关键词可筛选；点击项目/服务器可反向查询。看板只读，不提供远程连接、部署、重试按钮，不拉取实时健康数据。
+直接打开输出的 FLEET.md，点击离线看板；也可直接打开命令返回的 HTML 绝对路径。无需启动 Web 服务。服务器、项目、部署记录状态和关键词可筛选；新增连接账号、已确认根、目录/文档/运行基线分别验证状态，旧根标为 legacy-registered，不导出确认原话；点击项目/服务器可反向查询。看板只读，不提供远程连接、部署、重试按钮，不拉取实时健康数据。
 
 MD/HTML/JSON 同批次持久化在 records/views，根 FLEET.md 最后更新。新看板不覆盖原 FLEET-DEPLOYMENTS.md。输出虽无凭据字段，仍包含内部拓扑，不能直接公开上传。
 

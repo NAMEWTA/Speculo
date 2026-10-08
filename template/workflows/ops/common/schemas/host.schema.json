@@ -76,6 +76,25 @@
     },
     "host_services": {
       "$ref": "#/$defs/host_services"
+    },
+    "root_confirmation": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "maxLength": 80
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "digest"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

@@ -17,6 +17,10 @@ keywords: [ops, host-manage, 服务器, 持久化, 明确范围]
 
 计划、执行或恢复前必须读取 `<Path>{roots.workflows}/ops/common/rules/workspace-and-authorization.md</Path>`、`<Path>{roots.workflows}/ops/common/rules/persistence-and-secrets.md</Path>` 和 `<Path>{roots.workflows}/ops/common/rules/recovery.md</Path>`。按本次 profile 读取 `<Path>{roots.workflows}/ops/H-host-manage/references/host-profiles.md</Path>` 的工具环境、Docker/镜像源、资源清理或系统控制/入口章节。
 
+## 最小初始化
+
+首次准备 Host 先读 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path>，使用 server-initialize-spec 生成 H/prepare 规格，经原批准/执行通道补齐根内目录及双边文档。复用现有目录，不改账号 HOME 权限；Docker、语言环境和入口服务按具体需求补齐。登记成功不等于目录、文档或项目运行环境已就绪。
+
 ## 计划与执行
 
 明确受影响消费者 `acknowledged_consumers`；任务还需列 `related_project_ids` 与相关 server_ids。计划包含下载、系统控制文件、服务重启、默认恢复、持久化和验证。影响项目布局/双边文档时先读 `<Path>{roots.workflows}/ops/common/rules/deployment-layout.md</Path>`；共享服务消费者再读 `<Path>{roots.workflows}/ops/common/rules/shared-services.md</Path>`。

@@ -17,7 +17,7 @@ keywords: [ops, project-deploy, 项目, 持久化, 明确范围]
 
 ## 流程与完成标准
 
-先固定 project_id、显式 server_ids、环境和实例；公共 MySQL/Redis/MinIO 作为 shared-service 项目，Host.host_services 里的 Nginx/WireGuard 不伪装成项目。服务器缺接入走 S，缺系统基线走 H；已明确授权的前置 H/D specs 可组成同一 task 顺序执行，不重复确认。
+先固定 project_id、显式 server_ids、环境和实例；读取 <Path>{roots.workflows}/ops/common/rules/host-root-and-onboarding.md</Path>，展示每个目标已登记 host.root 和派生项目根，不从 cwd、默认 HOME 或上次目标猜测；新 Host 缺根确认先转 S。公共 MySQL/Redis/MinIO 作为 shared-service 项目，Host.host_services 里的 Nginx/WireGuard 不伪装成项目。服务器缺接入走 S，缺系统基线走 H；已明确授权的前置 H/D specs 可组成同一 task 顺序执行，不重复确认。
 
 从用户指定的本地路径或固定 Git commit 读取实际清单；analyze 不执行仓库代码。网络获取源码必须用户允许并固定完整提交，不用浮动 main/tag。修改来源版本用 resource_updates 写进新计划，而非伪造旧部署的源码版本。任务执行所用本地构件/脚本放入 input_paths 冻结，编译器新发现的未审阅输入必须停止。
 
