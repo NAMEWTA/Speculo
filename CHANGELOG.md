@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.22] - 2026-10-08
+
+### Removed
+- Move `optimize-codex-config` out of the template skills. The maintained copy is `wta-skills-hub` `skills/system/optimize-codex-config`. Eight top-level Skills remain.
+
+### Upgrade Notes
+- A refresh that keeps an existing Agent Skills projection stops when `optimize-codex-config` is still recorded, because that template skill is no longer in the package. Remove the managed name before refreshing, and install the skill from `@namewta/skills-hub` when it is still needed.
+
+AI assistance was used for this implementation, review, and release preparation.
+
 ## [1.0.21] - 2026-10-08
 
 ### Added

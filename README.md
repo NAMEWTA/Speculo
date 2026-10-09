@@ -55,14 +55,13 @@ After initialization, the target project gains the following AI agent-callable a
 | `retro` | Retrospective analysis with `gh issue` creation |
 | `status` | Summary of installed workflows, active changes, and anomalies |
 
-### 9 Skills
+### 8 Skills
 
 | Skill | Purpose |
 |---|---|
 | `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
 | `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
 | `git-history-squash` | Controlled first-parent history convergence with recoverable local ref transactions and exact remote leases |
-| `optimize-codex-config` | Audit and optimize local Codex configuration, custom Responses providers, permissions, and compaction failures |
 | `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
 | `retrospective` | Retrospective analysis |
 | `upstream-fork-sync` | Assess fork/upstream deltas from proven integration checkpoints and persist reproducible diff and conflict reports |

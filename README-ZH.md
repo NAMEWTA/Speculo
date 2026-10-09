@@ -55,14 +55,13 @@ npm install -g @namewta/speculo
 | `retro` | 回顾分析，可创建 `gh issue` |
 | `status` | 已安装 workflow、活跃变更与异常摘要 |
 
-### 9 个 Skills
+### 8 个 Skills
 
 | Skill | 用途 |
 |---|---|
 | `archive-and-consolidate` | 归档过期内容、合并分散知识、清理过时资产 |
 | `docs-sync` | 文档审计，以及 AGENTS.md / CLAUDE.md 手册的增量维护或完整重建 |
 | `git-history-squash` | 受控压缩 Git 历史并保留可恢复引用 |
-| `optimize-codex-config` | 体检并优化本机 Codex 配置、第三方 Responses 接口、权限和 compaction 故障 |
 | `source-code-zip` | 生成无外部依赖、仅含源码的隔离交付 ZIP |
 | `retrospective` | 回顾分析 |
 | `upstream-fork-sync` | 从已证明的集成检查点评估 fork/upstream 增量，并持久化可复现的 diff 与冲突报告 |
