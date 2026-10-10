@@ -2,54 +2,46 @@
 id: learning/question
 type: workflow-entry
 workflow: learning
-name: 苏格拉底问答课
-description: 以一批约 5 题激活已知与未知，学习者作答后追加详细讲解、纠错与深化；一批生成一节 inquiry-lesson。无 Change 时可自行创建 lightweight inquiry Change。不自动串联 L/H/R。
-keywords: [反问, 苏格拉底, socratic, inquiry, 提问课, questioning, 激活, 问答课]
+name: 深度探究与苏格拉底问答课
+description: tutor 默认约 5 题、作答后讲解；explore 主动发现盲区并深入到处理与验证。无 Change 可创建轻量主题；两种模式不混写，不自动串联 L/H/R。
+keywords: [反问, 苏格拉底, socratic, inquiry, 提问课, questioning, 问答课, 主动挖掘, 盲区, 深度探究, explore]
 ---
 
-# 苏格拉底问答课
+# 深度探究与苏格拉底问答课
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/README.md</Path>`。
 
 ## 读取范围
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；只加载本 Work 需要的领域合同。
+读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>` 与 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题和证据 ID 定位最小输入，不默认整读 context/archive。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+两种模式均读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>` 与 `<Path>{roots.workflows}/learning/common/rules/question-map-contract.md</Path>`。只有工程、Agent 或外部工具主题读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。
 
-## 流程
+<!-- portable:question:start -->
+## 模式选择
 
-1. 解析 roots 与 Learning v2 状态。若尚无 `status.json` / `locations.json`，先按 I-init-setup 写入空状态骨架，不创建知识条目。
-2. 若没有可用 Change：根据用户主题创建 lightweight inquiry Change `YYYY-MM-DD-<kebab-topic>`，写入 `INDEX.md`、最小 `course.md`/`baseline.md`/`sources.md`、`inquiry/INDEX.md`、`learning-log.md` 和 `.status.json`（`phase=teaching`，`current_work=learning/question`）。不假装已完成 A-assess-and-plan 的完整课程地图。
-3. 若已有 Change：按 Activation 合同只读取对应 course/OBJ/Lesson/baseline/notes/inquiry 索引；不整读 archive 或其他 Change。
-4. 读取 `<Path>{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md</Path>` 与 `<Path>{roots.workflows}/learning/common/rules/questioning-policy.md</Path>`。按用户指定教法或默认 `socratic` 配方生成本批 n 题：用户指定正整数时使用该值，否则默认 5；不套用 G-goal 的 mine 十问上限。
-5. 创建 `inquiry/IQ-<NNN>-<slug>-batch-NN.md`：元数据（question_count=n）、Q1…Qn、空白 A1…An、`Response: pending`。更新 `inquiry/INDEX.md`。不得把答案写入题目。
-6. 学习者填写 A1…并写入精确行 `Response: ready` 后再次激活本 Work。校验回答原文与标记，冻结 Q/A。
-7. 只在同一文件末尾追加 `## Teaching` 与 `## Inquiry Lesson`。Teaching 逐题给出思路复原、`aligned|partial|off|uncertain`、中文详解、`Explain (English)`、纠错路径、先前未覆盖知识和来源锚点。Inquiry Lesson 把本批 n 题收成一节短课单元，并以 keep-alive 钩子指向下一批、缺失 OBJ、L、H 或 R。将 `Response:` 更新为 `closed`。
-8. 更新 `learning-log.md` 与 Change `.status.json`：`works_run` 追加 `learning/question`，清空 `current_work`。不写 mastered，不写入 `lessons/` 或 `homework/`，不自动激活其他 Work。重答必须新建 batch 文件并链接旧文件。
+`mode=tutor|explore` 与 `teaching_method` 是不同维度。显式 mode 优先；恢复时未指定则沿用当前工件模式；新任务要求“考我、让我先答、苏格拉底练习”时使用 tutor，要求“替我主动挖掘、找出未提出的问题、直接深入讲解”时使用 explore；其余默认 tutor。既希望深挖又希望自己回答时仍可用 tutor 加强内容深度，不必强制切换模式。
 
-## 当前批次验证
+tutor 保持先作答后讲解，一批默认 5 题，用户指定正整数 n 则生成 n 对连续 Q/A，不能截断或套用其他模式上限。explore 直接发现、解释和推演，不伪造学习者答案、提交状态或理解表现。两种方式都要解释重要发现的原因，并推进主要分支到证据与验证。
 
-生成新批次后，以实际用户数量 n（未指定则 5）运行：
+已有未提交问答批次时要求直接探索，另建探索记录并关联原问题，保留原始批次及提交状态；不能替学习者填 A、自动提交或原地改成自问自答。恢复请求没有提供可定位的权威工件时，先找本主题实际记录，不能虚构上次进度。
+<!-- portable:question:end -->
 
-```bash
-node <Path>{roots.workflows}/learning/Q-question/tools/validate-inquiry.mjs</Path> --change-dir <Path>{roots.state}/learning/changes/{change}</Path> --file <当前批次相对路径> --expected-count <n>
-```
+## 共同启动
 
-关闭前先在当前 change 内保留用户已提交的 `Response: ready` 原文快照，用候选 closed 文件和 `--before <ready快照相对路径>` 校验 Q/A 与元数据字节不变，再发布候选。快照作为当前批次证据，不新建状态树；归档或合并中的 change 通过稳定 ID 解析当前 locator，不把示例 changes 路径当永久位置。失败不更新 Response 或状态。工具只检查结构与所提供的原文字节，不认证回答作者或授课质量；旧历史不会被全局重写或自动迁移。
+1. 解析 roots 与 Learning v2 状态、stable Change ID、当前 locator 和根锁。缺少 status.json/locations.json 时按 I-init-setup 初始化空骨架；未知 schema、v1、锁冲突、越界或 parent cycle 按激活合同阻塞。任何状态写入仍须满足入口授权。
+2. 没有可用 Change 时，按用户主题创建 lightweight inquiry Change `YYYY-MM-DD-<kebab-topic>`：INDEX.md、最小 course.md/baseline.md/sources.md、inquiry/INDEX.md、learning-log.md 和 .status.json（phase=teaching，current_work=learning/question）。不假装完成完整课程设计。轻量模板读取 `<Path>{roots.workflows}/learning/Q-question/lightweight-course-template.md</Path>`。
+3. 已有 Change 时只取对应 course/OBJ/Lesson/baseline/notes 和 inquiry 索引相关项；问题地图首次使用才创建，不回填旧历史。恢复已关闭记录只读，后续建立新批次或探索。
+4. 按上方规则选模式并只加载对应分支。`mode=tutor` 读取 `<Path>{roots.workflows}/learning/Q-question/references/tutor-mode.md</Path>`；`mode=explore` 读取 `<Path>{roots.workflows}/learning/Q-question/references/exploration-mode.md</Path>`。不要同时执行两个分支。
 
-## 完成标准
+## 工件与完成边界
 
-- 一批默认 5 题；数量可由用户指定，但必须 Q/A 成对且连续编号；
-- `Response: pending|ready|closed` 状态可审计；ready 之前不得出现 Teaching / Inquiry Lesson；
-- Teaching 是授课讲解，不是 H 的评分 Review，不得使用 `Submission` 或 `verdict: correct|partial|incorrect` 字段名；
-- 本批全部题目生成一节 Inquiry Lesson；完整 30–40 分钟讲义仍归 L-lesson；
-- 无 Change 时本 Work 可自行创建 lightweight inquiry Change，不得因缺少 A 产物而拒绝开问；
-- 真新手或高元素交互时必须提供降级探针或建议先走 L-lesson。
+- tutor 使用 inquiry/IQ-*.md：Response: pending → ready → closed，冻结原 Q/A 后追加 Teaching 与 Inquiry Lesson；完整协议及 validate-inquiry 命令在 tutor 分支。
+- explore 使用 inquiry/explorations/EX-*.md 与 inquiry/question-map.json；独立结构验证，不送入 IQ 的提交状态机。
+- Q 只拥有当前 Change 的 inquiry/ 及已授权的索引、日志、状态更新；不写 lessons/、homework/、goal/、mastery 或永久 context，不自动激活 L/H/R/G。
+- 问题地图的 resolved 不表示 mastered；只有真实延迟复习证据才能由原 owner 更新 retention。结构验证不认证教学质量。
+- 先验证工件与引用、发布工件，再更新索引/日志和 Change 状态。失败保留候选与恢复证据，不提前清空 blocker 或推进完成。
 
-## 子文件
+## 网页适配
 
-- 问答课模板：`<Path>{roots.workflows}/learning/Q-question/inquiry-template.md</Path>`
-- 轻量课程模板：`<Path>{roots.workflows}/learning/Q-question/lightweight-course-template.md</Path>`
-- 提问政策：`<Path>{roots.workflows}/learning/common/rules/questioning-policy.md</Path>`
-- 提问引擎：`<Path>{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md</Path>`
+仅编译独立网页能力时读取 `<Path>{roots.workflows}/learning/common/rules/portable-learning-runtime.md</Path>`；工作区执行不加载该适配，不改变原 Response 精确行协议。
