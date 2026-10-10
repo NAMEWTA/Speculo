@@ -10,6 +10,7 @@ const problemId = /^P-\d{3,}$/;
 const explorationId = /^EX-\d{3,}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const statuses = new Set(['open', 'exploring', 'resolved', 'needs_evidence', 'deferred']);
 const evidenceStates = new Set(['unverified', 'supported', 'tested']);
+const learnerFields = new Set(['mastered', 'mastery', 'retention_verified', 'verdict', 'response', 'submission']);
 const scope = 'structure, graph and supplied references only; not teaching quality, mastery or test authenticity';
 
 export function safeRelative(value) {
@@ -29,7 +30,7 @@ export function validateQuestionMap(map) {
   for (const q of map.questions) {
     if (!object(q)) { errors.push('question must be an object'); continue; }
     const label = text(q.id) ? q.id : 'question';
-    if (!problemId.test(q.id ?? '') || byId.has(q.id)) errors.push(`${label}: invalid or duplicate id`);
+    if (typeof q.id !== 'string' || !problemId.test(q.id) || byId.has(q.id)) errors.push(`${label}: invalid or duplicate id`);
     else byId.set(q.id, q);
     if (!(q.parent_id === null || (typeof q.parent_id === 'string' && problemId.test(q.parent_id)))) errors.push(`${label}: invalid parent_id`);
     if (!new Set(['user', 'answer', 'material', 'inference']).has(q.origin)) errors.push(`${label}: invalid origin`);
@@ -46,7 +47,7 @@ export function validateQuestionMap(map) {
     if (q.revisit_reason !== undefined && !text(q.revisit_reason)) errors.push(`${label}: revisit_reason cannot be empty`);
     if (q.evidence_status === 'tested' && !(safeRelative(q.test_evidence) && q.test_evidence.startsWith('inquiry/evidence/'))) errors.push(`${label}: tested requires an inquiry/evidence/ record`);
     if (q.test_evidence !== undefined && !(safeRelative(q.test_evidence) && q.test_evidence.startsWith('inquiry/evidence/'))) errors.push(`${label}: unsafe test_evidence`);
-    if (['mastered', 'mastery', 'retention_verified', 'verdict', 'Response', 'Submission'].some((key) => key in q)) errors.push(`${label}: learner assessment fields are not allowed`);
+    if (Object.keys(q).some((key) => learnerFields.has(key.toLowerCase()))) errors.push(`${label}: learner assessment fields are not allowed`);
   }
   for (const [id, q] of byId) if (q.parent_id !== null && !byId.has(q.parent_id)) errors.push(`${id}: parent is missing`);
   // Iterative traversal avoids recursion/stack limits for long, valid histories.
@@ -83,6 +84,7 @@ export function validateExploration(markdown, map, { artifact, expectedCount } =
     if (!line.trim() || line.trim().startsWith('#')) continue;
     const field = /^([a-z][a-z0-9_]*):[ \t]*(.*?)[ \t]*$/.exec(line);
     if (!field || fields.has(field[1])) { fail('invalid or duplicate exploration metadata'); continue; }
+    if (learnerFields.has(field[1]) || /^[qa]\d+$/.test(field[1])) fail('explore metadata must not contain learner answer/assessment protocol');
     fields.set(field[1], field[2]);
   }
   const id = fields.get('exploration_id'), status = fields.get('status');
