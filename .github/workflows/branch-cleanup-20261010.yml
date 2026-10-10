@@ -1,0 +1,132 @@
+name: One-time authorized branch cleanup
+on:
+  push:
+    branches: ['chore/branch-cleanup-20261010-60cdd0a8']
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+concurrency:
+  group: speculo-authorized-branch-cleanup
+  cancel-in-progress: false
+jobs:
+  cleanup:
+    if: github.repository == 'NAMEWTA/Speculo' && github.ref == 'refs/heads/chore/branch-cleanup-20261010-60cdd0a8'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify closed PRs and delete only exact approved branch heads
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY_CLEANUP'
+          import base64
+          import json
+          import os
+          import re
+          import subprocess
+          import tempfile
+          import urllib.parse
+          import urllib.request
+          
+          REPO = 'NAMEWTA/Speculo'
+          MAIN = '60cdd0a8d3c3308a643ab4a3f3630f3e8b1865dd'
+          TEMP = 'chore/branch-cleanup-20261010-60cdd0a8'
+          EXPECTED = {
+              'dependabot/npm_and_yarn/inquirer/prompts-8.7.3': '7c2f0b463f904c7e6affab19f2edcd969a558481',
+              'dependabot/npm_and_yarn/types/node-25.9.9': '54bbf35c11d833ae6ede3aa5906550cf0fc5096e',
+              'feat/issue-81-media-workflow': '9e215fb9ae2101b5504952d829128ffc89b03f68',
+              'feat/learning-deep-inquiry-20261010': '24454c52860c722730a8c24c1902b221664255db',
+          }
+          
+          def require(condition, message):
+              if not condition:
+                  raise RuntimeError(message)
+          
+          def api(path):
+              request = urllib.request.Request('https://api.github.com/repos/' + REPO + path,
+                  headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                           'Accept': 'application/vnd.github+json', 'User-Agent': 'speculo-authorized-branch-cleanup'})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+          
+          def collection(path):
+              result = []
+              separator = '&' if '?' in path else '?'
+              for page in range(1, 11):
+                  batch = api(path + separator + 'per_page=100&page=' + str(page))
+                  require(isinstance(batch, list), 'Unexpected collection response')
+                  result.extend(batch)
+                  if len(batch) < 100:
+                      return result
+              raise RuntimeError('Pagination exceeded guard; no partial inventory accepted')
+          
+          def branches():
+              return {row['name']: row for row in collection('/branches')}
+          
+          require(os.environ['GITHUB_REPOSITORY'] == REPO, 'Wrong repository')
+          require(os.environ['GITHUB_EVENT_NAME'] == 'push', 'Wrong event')
+          require(os.environ['GITHUB_REF'] == 'refs/heads/' + TEMP, 'Wrong cleanup ref')
+          require(re.fullmatch('[0-9a-f]{40}', os.environ['GITHUB_SHA']), 'Invalid cleanup SHA')
+          require(api('')['default_branch'] == 'main', 'Default branch changed')
+          pr = api('/pulls/85')
+          require(pr['state'] == 'closed' and pr['merged'] and pr['base']['ref'] == 'main'
+                  and pr['merge_commit_sha'] == MAIN, 'PR 85 no longer matches approved merge')
+          issue = api('/issues/81')
+          require(issue['state'] == 'closed' and issue['state_reason'] == 'completed', 'Issue 81 not completed')
+          require(not collection('/pulls?state=open'), 'An open PR exists; stop cleanup')
+          
+          expected = dict(EXPECTED, **{TEMP: os.environ['GITHUB_SHA']})
+          observed = branches()
+          require(set(observed) == set(expected) | {'main'}, 'Branch inventory changed')
+          require(observed['main']['commit']['sha'] == MAIN, 'main moved; stop cleanup')
+          records = []
+          for name, sha in expected.items():
+              require(name != 'main' and not observed[name]['protected'], 'Protected branch in deletion set')
+              require(observed[name]['commit']['sha'] == sha, 'Branch head changed: ' + name)
+              if name == TEMP:
+                  continue
+              related = collection('/pulls?state=all&head=' + urllib.parse.quote('NAMEWTA:' + name, safe=''))
+              require(related and all(p['state'] == 'closed' for p in related), 'No closed PR evidence: ' + name)
+              matching = [p for p in related if p['head']['sha'] == sha]
+              require(matching, 'Closed PR does not match branch SHA: ' + name)
+              if name.startswith('feat/'):
+                  require(any(p['merged_at'] for p in matching), 'Feature PR was not merged: ' + name)
+                  comparison = api('/compare/' + sha + '...' + MAIN)
+                  require(comparison['merge_base_commit']['sha'] == sha, 'Feature not contained in main: ' + name)
+              records.append({'branch': name, 'sha': sha,
+                              'prs': [{'number': p['number'], 'merged': bool(p['merged_at'])} for p in matching]})
+          print('Verified cleanup inventory: ' + json.dumps(records), flush=True)
+          
+          # No checkout, repository code execution, persisted credentials, or main/tag refspecs.
+          # Every deletion has an exact lease; the server must accept all ref updates atomically.
+          auth = base64.b64encode(('x-access-token:' + os.environ['GH_TOKEN']).encode()).decode()
+          print('::add-mask::' + auth, flush=True)
+          env = dict(os.environ)
+          env.update(GIT_CONFIG_COUNT='2', GIT_CONFIG_KEY_0='credential.helper', GIT_CONFIG_VALUE_0='',
+              GIT_CONFIG_KEY_1='http.https://github.com/.extraheader', GIT_CONFIG_VALUE_1='AUTHORIZATION: basic ' + auth,
+              GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull, GIT_TERMINAL_PROMPT='0')
+          for key in list(env):
+              if key.startswith('GIT_TRACE') or key == 'GIT_CURL_VERBOSE':
+                  env.pop(key)
+          with tempfile.TemporaryDirectory(prefix='speculo-branch-cleanup-') as directory:
+              subprocess.run(['git', 'init', '--bare', '--quiet', directory], check=True, timeout=20)
+              command = ['git', '-C', directory, 'push', '--atomic', '--porcelain']
+              command += ['--force-with-lease=refs/heads/' + name + ':' + sha for name, sha in expected.items()]
+              command += ['https://github.com/' + REPO + '.git']
+              command += [':refs/heads/' + name for name in expected]
+              subprocess.run(command[:5] + ['--dry-run'] + command[5:], check=True, env=env, timeout=60)
+              require(not collection('/pulls?state=open'), 'PR opened during preflight')
+              require(api('/git/ref/heads/main')['object']['sha'] == MAIN, 'main moved during preflight')
+              subprocess.run(command, check=True, env=env, timeout=90)
+          
+          remaining = branches()
+          require(set(remaining) == {'main'}, 'Cleanup incomplete or new branch created; inspect before retrying')
+          require(remaining['main']['commit']['sha'] == MAIN, 'main changed concurrently')
+          result = {'deleted': records, 'temporary_branch_deleted': TEMP,
+                    'remaining_branches': ['main'], 'main_sha': MAIN, 'main_modified_by_cleanup': False}
+          print('CLEANUP_VERIFIED ' + json.dumps(result), flush=True)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as report:
+              report.write('# Authorized branch cleanup completed\n\n```json\n' + json.dumps(result, indent=2) + '\n```\n')
+          PY_CLEANUP
