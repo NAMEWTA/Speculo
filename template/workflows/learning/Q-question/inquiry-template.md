@@ -22,6 +22,10 @@ created_at: <ISO-8601>
 - 教法：`socratic | 5e-recipe | feynman | productive-failure | custom`
 - Skill：`socratic-questioning`
 
+## 问题来源
+
+本批每题关联问题地图 ID、父问题或触发证据，简述为什么值得问但不泄露目标答案。新题来自相关盲区、前一批回答或新情境；复问注明理由。
+
 ## Questions
 
 ### Q1 — 澄清与定义

@@ -35,7 +35,9 @@ try {
   const runtime = readJSON(join(workflow, 'runtime-contract.json'));
   need(runtime.schema_version === 1 && runtime.workflow === 'media' && runtime.opaque_default === 'preserve-byte-for-byte', 'runtime contract');
   for (const file of readdirSync(join(workflow, 'common/schemas'))) readJSON(join(workflow, 'common/schemas', file));
-  validateStatus(readJSON(join(workflow, '_state/status.json')));
+  // The installer excludes _state from static assets and seeds the runtime separately.
+  // Package mode still requires the seed; runtime mode validates the explicit state below.
+  if (!state) validateStatus(readJSON(join(workflow, '_state/status.json')));
   const registry = readFileSync(join(workflow, 'common/rules/external-skills.md'), 'utf8');
   for (const name of ['Punk-Skill', 'video-talkcraft', 'yichen-skills', 'jianying-headless', 'jianying-editor-skill', 'content-boom-monitor', 'video-to-subtitle-summary-skill', 'baoyu-skills', 'HyperFrames', 'everything-claude-code', 'hand-drawn-styles', 'video-use', 'huashu-art-motion']) need(registry.includes(name), `registry: ${name}`);
   function walk(dir) {
