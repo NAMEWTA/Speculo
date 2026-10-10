@@ -22,7 +22,7 @@ for (let i = 0; i < args.length; i++) {
 if (profileFile && !traceFile) throw new Error('--profile requires --trace');
 const root = path.resolve(rootArg);
 const workflowsRoot = path.join(root, 'template', 'workflows');
-const workflows = ['learning', 'specdev', 'ops', 'person'];
+const workflows = ['learning', 'specdev', 'ops', 'person', 'media'];
 const errors = [];
 
 async function read(relative) {

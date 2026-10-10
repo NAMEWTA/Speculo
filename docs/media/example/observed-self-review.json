@@ -1,0 +1,83 @@
+{
+  "evidence_kind": "executed",
+  "reviewer": "assistant self-review of nine rendered stills and ordered time sequence; not independent human approval",
+  "input_digest": "ac7471159cf0ca5900161c293bd93e0f5e197442754e0fa3d6ee5073fdc1febe",
+  "preview": {
+    "path": "preview.mp4",
+    "duration_seconds": 18,
+    "sha256": "bbedb81f26356a30fa7b03ba1bd3a3e281e83c93d0d10bcceb3c1560bac8d0d8"
+  },
+  "stills": [
+    {
+      "shot_id": "shot-1",
+      "path": "stills/shot-1-1.png",
+      "sha256": "1207ab0193f56d2614b3fca52a5a326f89930f176cdf01131ddb003a7f7073d2",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-1",
+      "path": "stills/shot-1-2.png",
+      "sha256": "94517fdf694ab48fe7eb2d475b211247b323cc9ddd4ef4582ef4d046e53436df",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-1",
+      "path": "stills/shot-1-3.png",
+      "sha256": "762b99e10a6a6766f6fe2e48075266ee29bd491d079be93a894e8cb599c43e9d",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-2",
+      "path": "stills/shot-2-1.png",
+      "sha256": "042bbed7a00e0c003c3c0eae15c35a6bef5a764b43c3d1e43710c3903c069e88",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-2",
+      "path": "stills/shot-2-2.png",
+      "sha256": "0b4d2f327114568e1404a0ca30cfc57c891510d8306f360f64d25da1ee540efd",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-2",
+      "path": "stills/shot-2-3.png",
+      "sha256": "5a555cd7dcc175142e0d47114a1e89ee822889cc4636ac2f96e98dcb8bda2367",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-3",
+      "path": "stills/shot-3-1.png",
+      "sha256": "6318403b89b5a99c5ac458c74bf02b04954bd21eef69b0fd77ea9d5b7cedc0c5",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-3",
+      "path": "stills/shot-3-2.png",
+      "sha256": "1372b26d242230b107e69cb26bac32bff5307828d3cc475eb81e287d4e11229d",
+      "accepted": true
+    },
+    {
+      "shot_id": "shot-3",
+      "path": "stills/shot-3-3.png",
+      "sha256": "2a503a4096af1a1f32a7b71e25a5c37cc34ece7569fb8d6409ac86bbdd541d7a",
+      "accepted": true
+    }
+  ],
+  "checks": {
+    "fonts": true,
+    "captions": true,
+    "aspect": true,
+    "rhythm": true,
+    "audio_sync": true,
+    "determinism": true
+  },
+  "scores": {
+    "accuracy": 9,
+    "readability": 9,
+    "visual_consistency": 9,
+    "rhythm": 8,
+    "audio_visual": 8
+  },
+  "blockers": [],
+  "notes": "Silent choice is explicit: audio_sync checks absence of an unintended audio track, not spoken alignment. Inspected nine actual frames and deterministic timing; not a general human motion-quality approval. Nothing published; no performance data."
+}

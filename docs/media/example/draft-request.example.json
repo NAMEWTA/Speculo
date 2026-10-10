@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "content_id": "safe-drafts",
+  "revision": 1,
+  "channel": "local-demo",
+  "account": "fictional-demo-account",
+  "title": "Review before handoff",
+  "body": "Original silent demonstration: one brief, real preview, local draft. This is a workflow example, not a published marketing result.",
+  "media": [
+    "final.mp4"
+  ],
+  "claims": [],
+  "sources": [],
+  "approvals": [],
+  "publication_authorization": "not-authorized",
+  "evidence_kind": "simulated-approvals"
+}

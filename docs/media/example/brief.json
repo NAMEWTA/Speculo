@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "content_id": "safe-drafts",
+  "topic": "Safe drafts",
+  "conclusion": "Review before handoff",
+  "audience": "Creators",
+  "platform": "local-demo",
+  "style": "clean typography",
+  "font": "DejaVu Sans",
+  "duration_seconds": 18,
+  "width": 640,
+  "height": 360,
+  "fps": 12,
+  "colors": [
+    "#101828",
+    "#ffffff",
+    "#7ef4cc"
+  ],
+  "voice": {
+    "mode": "silent"
+  },
+  "hooks": [
+    {
+      "kind": "result",
+      "text": "One brief, consistent drafts"
+    },
+    {
+      "kind": "pain",
+      "text": "Stop rebuilding every asset"
+    },
+    {
+      "kind": "counterintuitive",
+      "text": "Do less automatic publishing"
+    }
+  ],
+  "sources": [],
+  "claims": []
+}

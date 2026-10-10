@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "narration": null,
+  "audio": null,
+  "transcript": null,
+  "shots": [
+    {
+      "id": "shot-01",
+      "start": null,
+      "end": null,
+      "message": null,
+      "narration": null,
+      "caption": null,
+      "visual": null,
+      "assets": []
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "workflow": "media",
+  "config": null,
+  "structured_state": [
+    ".speculo/media/status.json",
+    ".speculo/media/changes/**/.status.json"
+  ],
+  "opaque_default": "preserve-byte-for-byte"
+}

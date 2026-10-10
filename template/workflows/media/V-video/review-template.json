@@ -1,0 +1,27 @@
+{
+  "evidence_kind": "unverified",
+  "reviewer": null,
+  "input_digest": null,
+  "preview": {
+    "path": null,
+    "sha256": null,
+    "duration_seconds": null
+  },
+  "stills": [],
+  "checks": {
+    "fonts": null,
+    "captions": null,
+    "aspect": null,
+    "rhythm": null,
+    "audio_sync": null,
+    "determinism": null
+  },
+  "scores": {
+    "accuracy": null,
+    "readability": null,
+    "visual_consistency": null,
+    "rhythm": null,
+    "audio_visual": null
+  },
+  "blockers": []
+}
