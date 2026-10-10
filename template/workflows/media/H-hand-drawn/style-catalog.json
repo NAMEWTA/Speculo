@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/threerocks/hand-drawn-styles",
+  "checked_at": "2026-10-10",
+  "recipes_vendored": false,
+  "styles": [
+    {
+      "id": "1",
+      "name": "极简黑白线条讲解漫画",
+      "aliases": [
+        "xkcd",
+        "stickman",
+        "minimal-line",
+        "极简线条",
+        "火柴人"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "2",
+      "name": "蜡笔童涂",
+      "aliases": [
+        "crayon",
+        "kid-crayon"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "3",
+      "name": "吉卜力风",
+      "aliases": [
+        "ghibli",
+        "吉卜力"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "3.1",
+      "name": "蜡笔童涂-潦草自画版",
+      "aliases": [
+        "rawkid",
+        "kid-scrawl",
+        "stick-kid",
+        "family-crayon-card"
+      ],
+      "requires_references": true
+    },
+    {
+      "id": "4",
+      "name": "小豆人涂鸦信息图",
+      "aliases": [
+        "bean",
+        "blob"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "5",
+      "name": "MS Paint 烂涂鸦",
+      "aliases": [
+        "ms-paint",
+        "bad-doodle",
+        "ugly"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "6",
+      "name": "圆珠笔单线涂鸦",
+      "aliases": [
+        "scribble",
+        "pen-scribble",
+        "ballpoint"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "7",
+      "name": "蜡笔实拍",
+      "aliases": [
+        "real-crayon",
+        "crayon-photo"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "8",
+      "name": "水墨写意",
+      "aliases": [
+        "ink-wash",
+        "ink",
+        "shuimo",
+        "chinese-painting"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "9",
+      "name": "复古像素",
+      "aliases": [
+        "pixel",
+        "pixel-art",
+        "8-bit",
+        "16-bit"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "10",
+      "name": "情绪叙事淡彩速写",
+      "aliases": [
+        "emo-sketch",
+        "story-sketch",
+        "watercolor-sketch",
+        "light-watercolor"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "11",
+      "name": "二维水彩风格",
+      "aliases": [
+        "retro-concept",
+        "mid-century",
+        "concept-art",
+        "gouache-concept"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "12",
+      "name": "暖光童画",
+      "aliases": [
+        "sunlit-storybook",
+        "vis-dev",
+        "storybook-visdev"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "13",
+      "name": "北欧纸雕",
+      "aliases": [
+        "paper-folk",
+        "papercraft",
+        "nordic-papercraft",
+        "quilling"
+      ],
+      "requires_references": true
+    },
+    {
+      "id": "14",
+      "name": "北欧绘本水粉",
+      "aliases": [
+        "nordic-storybook",
+        "scandi-gouache",
+        "scandinavian-storybook",
+        "soft-gouache"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "15",
+      "name": "大鼻软偶",
+      "aliases": [
+        "softnose",
+        "softnose-vinyl",
+        "bignose-toy",
+        "vinyl-toy",
+        "art-toy"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "16",
+      "name": "聚光水粉立绘",
+      "aliases": [
+        "gouache-spotlight",
+        "spotlight-gouache",
+        "character-spotlight"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "17",
+      "name": "墨线绘本",
+      "aliases": [
+        "inked-storybook",
+        "ink-storybook",
+        "sketch-storybook"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "18",
+      "name": "暖色扁平绘本",
+      "aliases": [
+        "warm-flat-storybook",
+        "flat-storybook",
+        "geometric-storybook",
+        "warm-flat"
+      ],
+      "requires_references": false
+    },
+    {
+      "id": "19",
+      "name": "圆头红线极简童画",
+      "aliases": [
+        "roundhead-redline",
+        "redline-roundhead",
+        "graphite-redline"
+      ],
+      "requires_references": true
+    },
+    {
+      "id": "20",
+      "name": "暖黄墨线情绪小剧场",
+      "aliases": [
+        "warm-yellow-ink-story",
+        "yellow-ink-story",
+        "mustard-ink-story"
+      ],
+      "requires_references": true
+    }
+  ]
+}

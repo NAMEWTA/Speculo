@@ -1,0 +1,12 @@
+{
+  "evidence_kind": "executed-local-export-with-simulated-approvals",
+  "digest": "764df7aa7b44aa7f6b6cc2498a910ece2537dc94598686fd8cf44245a0e048b2",
+  "publication_performed": false,
+  "side_effects": [],
+  "package_name": "safe-drafts-r1-764df7aa7b44",
+  "media_copied": [
+    "media/1-final.mp4"
+  ],
+  "repeat_reused": true,
+  "limitation": "No user approval, live account, upload, publication, or platform metrics are claimed."
+}

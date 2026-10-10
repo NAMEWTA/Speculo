@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "narration": "Explicit silent original demo with on-screen text, no voice track.",
+  "audio": null,
+  "transcript": null,
+  "shots": [
+    {
+      "id": "shot-1",
+      "start": 0,
+      "end": 6,
+      "message": "Start with a brief",
+      "narration": "silent: on-screen text only",
+      "caption": "Brief",
+      "visual": "Typography and progress line",
+      "assets": []
+    },
+    {
+      "id": "shot-2",
+      "start": 6,
+      "end": 12,
+      "message": "Review the preview",
+      "narration": "silent: on-screen text only",
+      "caption": "Preview",
+      "visual": "Typography and progress line",
+      "assets": []
+    },
+    {
+      "id": "shot-3",
+      "start": 12,
+      "end": 18,
+      "message": "Export a local draft",
+      "narration": "silent: on-screen text only",
+      "caption": "Draft",
+      "visual": "Typography and progress line",
+      "assets": []
+    }
+  ]
+}

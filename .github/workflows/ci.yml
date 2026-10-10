@@ -49,7 +49,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm build
       - name: Validate installation and read-only tooling
-        run: node --test dist/test/review-installation.test.js dist/test/review-evaluation.test.js
+        run: node --test dist/test/review-installation.test.js dist/test/review-evaluation.test.js dist/test/media-workflow.test.js
       - name: Validate Windows OPS controller contracts
         run: node --test template/workflows/ops/common/tests/test_ops_bootstrap.mjs template/workflows/ops/common/tests/test_ops_workspace.mjs
       - name: Verify link rejection and native deployment secret protection

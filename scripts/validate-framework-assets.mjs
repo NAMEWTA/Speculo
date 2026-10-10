@@ -82,6 +82,7 @@ const workflowPersistentKnowledge = {
   ]),
   ops: new Set(["<Path>{roots.state}/ops/knowledge/</Path>", "<Path>{roots.state}/ops/hosts/{host_id}/knowledge/</Path>", "<Path>{roots.state}/ops/projects/{project_id}/knowledge/</Path>"]),
   person: new Set(),
+  media: new Set(["<Path>{roots.state}/media/context/INDEX.md</Path>"]),
 };
 
 function validateWorkflowManifest(workflowId, workflowDir) {

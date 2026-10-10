@@ -68,7 +68,7 @@ npm install -g @namewta/speculo
 | `engineering-standards-builder` | 为当前项目生成 TypeScript/JavaScript/React/Node 工程规范 Skill |
 | `writing-for-agents` | Agent Skill 编写参考 |
 
-### 4 个 Workflow Packages
+### 5 个 Workflow Packages
 
 | Workflow | Work 条目 | 说明 |
 |---|---:|---|
@@ -76,10 +76,13 @@ npm install -g @namewta/speculo
 | **specdev** | 15 | 本地优先的规范驱动开发：归档、代码审查、诊断、设计访谈、实现、初始化、学习、目标编排、原型、架构审查、Spec、Ticket、开发复盘、GitHub/PR/发布分诊与寻路 |
 | **ops** | 5 | 主机盘点与项目部署：控制端初始化、主机治理、APP/公共服务部署，并核验双边文档 |
 | **person** | 2 | 人物方法论与严谨审议 workflow（毛泽东认知操作系统、双向钢人论证） |
+| **media** | 7 | 有证据的内容简报、对标拆解、固定画风提示词、代码视频、本地分发草稿与人工反馈复盘；本期不真实发布 |
 
-每个 workflow 以 `INDEX.md` 作为被动发现入口；SpecDev、Learning、Ops 的自动 Work 列表在其 README 激活合同中，Person 由 INDEX 直接列出 Work，不假定它有 README。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
+每个 workflow 以 `INDEX.md` 作为被动发现入口；SpecDev、Learning、Ops、Media 的自动 Work 列表在其 README 激活合同中，Person 由 INDEX 直接列出 Work，不假定它有 README。Work 条目遵循 `<Letter>-<work_name>/<Letter>-<work_name>.md` 命名，配合渐进式展示子文件，并通过 `workspace.json` 中的 `<Path>{roots.xxx}/...</Path>` 指针解析运行时路径。
 
 T-triage 统一拥有 queue、intake、reconcile、publish、capture、pr-delivery、ci-security、release-preflight、release、recover 十种模式。**publish** 将已完成 Ticket 投影为 Issue；**release** 发布包或 GitHub Release。其他入口可直接复用远程协议，不激活 Work、不创建 change。PR 交付使用 change 内记录；独立 CI/发布使用可恢复操作账本。新增 R-retro 通过共享 retrospective Skill 复盘开发活动。迁移与验证说明见[升级交付报告](docs/specdev-upgrade/implementation-report.md)。
+
+内容创作安装、四份网页独立入口、技能许可和18秒演示见 [Media 使用与验收](docs/media/README.md)。
 
 ## 文档
 

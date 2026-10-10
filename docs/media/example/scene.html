@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Safe drafts — deterministic demo</title>
+<style>html,body{margin:0;width:640px;height:360px;overflow:hidden;background:#101828}canvas{display:block}</style>
+<canvas id="scene" width="640" height="360" aria-label="Brief, preview, local draft"></canvas>
+<script>
+const ctx = document.getElementById('scene').getContext('2d');
+const stages = [
+ ['ONE BRIEF', 'Start with a clear promise.', 'Audience / evidence / format'],
+ ['REAL PREVIEW', 'Review before you render.', 'Three stills per shot / visible checks'],
+ ['LOCAL DRAFT', 'Keep the human handoff.', 'No upload / no login / no auto-publish']
+];
+window.render = function(t) {
+ t = Math.max(0, Math.min(17.999, Number(t)));
+ const stage = Math.min(2, Math.floor(t / 6)), phase = (t - stage * 6) / 6;
+ const offset = 18 * Math.pow(1 - Math.min(1, phase * 6), 3);
+ ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+ ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, 640, 360);
+ ctx.fillStyle = '#7ef4cc'; ctx.font = 'bold 12px "DejaVu Sans", sans-serif';
+ ctx.fillText('MEDIA WORKFLOW / ORIGINAL SILENT DEMO', 36, 36);
+ ctx.fillStyle = '#253449'; ctx.fillRect(36, 61, 568, 2);
+ ctx.fillStyle = '#7ef4cc'; ctx.fillRect(36, 61, 568 * t / 18, 2);
+ ctx.fillStyle = '#a1b2c8'; ctx.font = '14px "DejaVu Sans", sans-serif'; ctx.fillText(`0${stage + 1} / 03`, 36, 100);
+ ctx.fillStyle = '#ffffff'; ctx.font = 'bold 38px "DejaVu Sans", sans-serif'; ctx.fillText(stages[stage][0], 36, 162 + offset);
+ ctx.font = '24px "DejaVu Sans", sans-serif'; ctx.fillText(stages[stage][1], 36, 207 + offset);
+ ctx.fillStyle = '#a1b2c8'; ctx.font = '15px "DejaVu Sans", sans-serif'; ctx.fillText(stages[stage][2], 36, 246 + offset);
+ ctx.fillStyle = '#7ef4cc'; ctx.font = '12px "DejaVu Sans", sans-serif'; ctx.fillText('BRIEF  →  PREVIEW  →  DRAFT', 36, 324);
+ ctx.fillStyle = '#a1b2c8'; ctx.fillText(`${t.toFixed(1)}s`, 566, 324);
+};
+window.render(0);
+</script></html>

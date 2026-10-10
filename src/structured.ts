@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { assertJsonObject, type JsonObject } from "./config.js";
 import { pathExists } from "./utils.js";
 import { validateOpsResources } from "./ops-resources.js";
+import { validateMediaState } from "./media-state.js";
 
 export type StructuredChange = {
   path: string;
@@ -463,6 +464,7 @@ export async function validateStructuredRuntime(stagedRoot: string, selectedWork
     learning: async () => validateLearningState(stagedRoot),
     ops: async () => validateOpsState(stagedRoot),
     person: async () => validatePersonState(stagedRoot),
+    media: async () => validateMediaState(stagedRoot),
     specdev: async () => { changes.push(...await validateSpecdevState(stagedRoot)); },
   };
   for (const workflowId of selectedWorkflowIds) await handlers[workflowId]?.();

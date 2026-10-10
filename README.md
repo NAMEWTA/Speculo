@@ -68,7 +68,7 @@ After initialization, the target project gains the following AI agent-callable a
 | `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
 | `writing-for-agents` | Authoring guidance for agent skills |
 
-### 4 Workflow Packages
+### 5 Workflow Packages
 
 | Workflow | Work Entries | Description |
 |---|---:|---|
@@ -76,10 +76,13 @@ After initialization, the target project gains the following AI agent-callable a
 | **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, development retrospectives, GitHub/PR/release triage, and wayfinding |
 | **ops** | 5 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
 | **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
+| **media** | 7 | Evidence-led content briefs, reference deconstruction, fixed-style prompts, deterministic code video, local distribution drafts and manual-feedback retrospectives; no real publication |
 
-Every workflow ships an `INDEX.md` discovery entry. SpecDev/Learning/Ops keep their generated Work catalog in the README activation contract; Person lists Works directly in INDEX. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
+Every workflow ships an `INDEX.md` discovery entry. SpecDev/Learning/Ops/Media keep their generated Work catalog in the README activation contract; Person lists Works directly in INDEX. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
 
 SpecDev T-triage owns ten modes: queue, intake, reconcile, publish, capture, pr-delivery, ci-security, release-preflight, release, and recover. **publish** projects completed Tickets to Issues; **release** publishes packages/GitHub Releases. Its remote protocol can be reused without activating a Work or creating a change. PR delivery uses per-change records; independent CI/release operations use their own recoverable ledger. R-retro reviews development activities through the shared retrospective Skill. See the [upgrade report](docs/specdev-upgrade/implementation-report.md) for migration and verification details.
+
+See [Media workflow and the 18-second example](docs/media/README.md) for local-only production, web prompts, skill licensing and acceptance evidence.
 
 ## Documentation
 
@@ -114,7 +117,7 @@ Unattended first installation now installs core only. Select packages explicitly
 
 Agent Skills projection is a separate opt-in. Interactive init asks which selected workflows should expose each Work as a pointer skill, and which built-in template skills should be linked. The only directory written is the target project's `.agents/skills/`. Open Agents and type `/skills` to see them. A work pointer contains no copied references: its first instruction is to read the real Work entry. Template skills are relative symlinks to `speculo/skills/<name>`. Omitting `--agent-skills` leaves an existing clean projection in place and creates nothing on a fresh install. `speculo init --agent-skills none` removes only Speculo-managed names. Unmanaged directories in `.agents/skills/` are left alone. `validate-skills` checks the emitted profile; it does not certify that a host will invoke the skill.
 
-The project AGENTS bootstrap points to `speculo/.speculo/workspace.json`, a generated read-only capability catalog and the runtime guide. Agents that do not read project instructions need an explicit user-provided entry. Public Skill metadata follows the emitted standard profile; workflow-private Skills declare their resolver requirement. `INDEX.md` is a discovery entry: SpecDev/Learning/Ops list Works in README activation contracts, while Person lists them directly in INDEX.
+The project AGENTS bootstrap points to `speculo/.speculo/workspace.json`, a generated read-only capability catalog and the runtime guide. Agents that do not read project instructions need an explicit user-provided entry. Public Skill metadata follows the emitted standard profile; workflow-private Skills declare their resolver requirement. `INDEX.md` is a discovery entry: SpecDev/Learning/Ops/Media list Works in README activation contracts, while Person lists them directly in INDEX.
 
 `speculo doctor [target] --json` checks installation integrity (not live services or agent behavior). `speculo resolve [target] --path <reference>` resolves one contained pointer without executing it. Interrupted refreshes retain transaction evidence; after verifying that the original process has stopped, `speculo recover [target] --transaction <id>` performs evidence-checked rollback or committed cleanup. Unknown locks, links and drift are never silently discarded. This is process-interruption recovery, not a universal power-loss or adversarial-filesystem guarantee.
 

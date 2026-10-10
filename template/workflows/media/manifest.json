@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "media",
+  "version": "1.0.0",
+  "persistent_knowledge": [
+    "<Path>{roots.state}/media/context/INDEX.md</Path>"
+  ],
+  "stages": [
+    {
+      "id": "init-setup",
+      "after": [],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "init-setup-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 8000
+    },
+    {
+      "id": "brief",
+      "after": [],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "brief-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 16000
+    },
+    {
+      "id": "deconstruct",
+      "after": [],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "deconstruct-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 8000
+    },
+    {
+      "id": "video",
+      "after": [
+        "brief"
+      ],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "video-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 16000
+    },
+    {
+      "id": "hand-drawn",
+      "after": [],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "hand-drawn-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 8000
+    },
+    {
+      "id": "publish-draft",
+      "after": [
+        "brief"
+      ],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "publish-draft-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 8000
+    },
+    {
+      "id": "retro",
+      "after": [
+        "publish-draft"
+      ],
+      "inputs": [
+        "user-request",
+        "current-owned-evidence"
+      ],
+      "outputs": [
+        "retro-artifacts"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 8000
+    }
+  ]
+}
