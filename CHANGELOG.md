@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.23] - 2026-10-10
+
+### Added
+- Add the Media workflow with seven Works for evidence-led content briefs, reference deconstruction, deterministic code-video rendering, reviewed hand-drawn prompt extraction, local distribution drafts, and manual feedback retrospectives (issue #81, PR #85).
+- Add four portable Media canonical prompts, skill provenance and licensing registry, and a reproducible 18-second local video demonstration.
+- Add Learning proactive inquiry, production blind-spot exploration, evidence maps, and portable Lesson/Question canonical prompts.
+
+### Fixed
+- Fix Media's installed-state validation so excluded `_state` template seeds are not required at runtime; reject invalid state without mutating existing runtime data.
+- Preserve Learning and Media generation/validation in the combined repository checks; cover installation, repeated refresh, and cross-platform compatibility.
+
+### Upgrade Notes
+- Media's publishing capability is deliberately local-draft-only: it does not log in, upload, publish, call paid model APIs, or automate platform accounts.
+- Third-party hand-drawn recipes are not bundled. Exact style extraction requires a separately reviewed full upstream package and its applicable dependencies and rights.
+- The associated PR passed Linux Node 22.22.3 / 24 and Windows Node 22.22.3 CI before merge. Release publication requires the tagged release workflow to pass independently.
+
+AI assistance was used for implementation, review, and release preparation.
+
 ## [1.0.22] - 2026-10-08
 
 ### Removed
