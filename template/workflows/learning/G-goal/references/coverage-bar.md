@@ -30,3 +30,7 @@ v1 只实现编程四轴。其他领域可同构为 units / properties / structu
 ## 挖掘扇出
 
 挖掘扇出上界是 `mine_unit_cap=15`，不是必须凑满。4 节的小项目按 4 节挖。切分规则读 `<Path>{roots.workflows}/learning/G-goal/references/mine-unit.md</Path>`。
+
+## 盲区发现与实际处置
+
+授课、miner 和覆盖验收读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`；生产相关代码还读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。将相关发现映射回上述矩阵格子，记录遗漏原因、影响、源码证据和验证设计；不把假设情境写成已发生事故。共享方法不增加问题配额，不改变十问后拆课、unit 上限或计划/执行授权边界。

@@ -4,6 +4,9 @@
 
 `audience=mine` 的 probes 只写入 `G-goal` 拥有的 `goal/probes/`。审问对象是已写 Lesson 与源码，不是学习者；禁止 `inquiry/`、`Response:`、`Submission:`、verdict、mastered。tutor 批次仍只写 `inquiry/`。
 
+先读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`，将提问动作与内容覆盖分开；工程主题按需读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。本文件的作答协议只属于 tutor；explore 不用空 A 或 Response，也不借 teaching_method 改协议。
+
+<!-- portable:recipes:start -->
 ## 配方
 
 用户可指定 `teaching_method`；缺省为 `socratic`。配方只改变 Q1–Q5 的写法，不改变文件协议。
@@ -17,6 +20,8 @@
 | 用户自定 | 编译进同一 5 槽，缺槽用 `socratic` 补 |
 
 每题标注 `objective_id`、`bloom_level`、`socratic_move`、`expected_evidence`、`difficulty`。数量默认 5，可由用户改，但必须 Q/A 成对连续。
+
+<!-- portable:recipes:end -->
 
 ## mine 数量上限
 
@@ -32,11 +37,16 @@
 - 禁止写入 `lessons/` 或 `homework/`。
 - `audience=mine` 禁止上述 learner 协议字段，也禁止 miner 写 `lessons/`。
 
-## 讲解与 keep-alive
+<!-- portable:teaching:start -->
+## 讲解与后续探究
 
 `## Teaching` 每题必须有：思路复原、判定、中文详解、`Explain (English)`、纠错路径、先前未覆盖知识、来源锚点。
 `## Inquiry Lesson` 把本批收成一节短课：地图、机制、边界、稳定误区、下一步激活钩子。
-每一份 Teaching 结尾必须有 keep-alive 钩子（下一批种子、缺失 OBJ、建议 L/H/R），不得把本批写成终点。
+每一份 Teaching 结尾保留 keep-alive 钩子（新证据产生的下一批种子、缺失目标或可选补课/作业/复习），同时说明本轮停止原因。不得把本批说成知识终点，也不得为了续问反复询问已答内容或在用户要求结束后继续。钩子只是建议，不自动执行后续。
+
+重要的未覆盖知识应说明为什么容易遗漏、忽略的影响和验证方法；教学判断不是作业评分或掌握认证。真新手先用降级探针与中性脚手架；连续三题卡住仍无进展时必须调整教法，但不必等到三题才提供帮助。
+
+<!-- portable:teaching:end -->
 
 ## 新手逃逸与 Change
 

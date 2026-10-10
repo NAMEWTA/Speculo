@@ -1,6 +1,6 @@
 # Learning v2 Activation Contract
 
-本合同只在用户明确激活 Learning 或其中一个 Work 后读取。Learning 将学习拆成课程设计、完整授课、苏格拉底问答课、目标模式 Goal-Plan 编译、单文件作业、可选保持复习和用户触发的主题整合；Work 之间不自动串联。
+本合同只在用户明确激活 Learning 或其中一个 Work 后读取。Learning 将学习拆成课程设计、完整授课、苏格拉底问答与主动探究、目标模式 Goal-Plan 编译、单文件作业、可选保持复习和用户触发的主题整合；Work 之间不自动串联。
 
 激活后读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、Lesson/OBJ、topic 和 evidence 关键词定位最小相关工件；不默认整读 context、archive 或其他 Change。
 
@@ -15,7 +15,7 @@
 - **H-homework** — 课程作业与评审：以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。
 - **I-init-setup** — 初始化学习系统：初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。
 - **L-lesson** — 完整课程讲解：一次输出 30–40 分钟、通俗但完整的 Lesson；不生成作业、不评分、不宣称掌握。
-- **Q-question** — 苏格拉底问答课：以一批约 5 题激活已知与未知，学习者作答后追加详细讲解、纠错与深化；一批生成一节 inquiry-lesson。无 Change 时可自行创建 lightweight inquiry Change。不自动串联 L/H/R。
+- **Q-question** — 深度探究与苏格拉底问答课：tutor 默认约 5 题、作答后讲解；explore 主动发现盲区并深入到处理与验证。无 Change 可创建轻量主题；两种模式不混写，不自动串联 L/H/R。
 - **R-review** — 延迟保持与周期复习：用户主动指定后，用真实时间间隔验证回忆、机制和迁移，并更新 retention evidence。
 
 <!-- AUTO-INDEX-END -->
@@ -27,7 +27,7 @@
 
 ## 持久化约定
 
-所有课程、背景、作业、问答课、Goal-Plan、回答、Review、synthesis 和位置登记均写入 `<Path>{roots.state}/learning/</Path>`；工作流模板只提供合同和空骨架。
+所有课程、背景、作业、问答课、探索记录、问题地图、Goal-Plan、回答、Review、synthesis 和位置登记均写入 `<Path>{roots.state}/learning/</Path>`；工作流模板只提供合同和空骨架。
 
 ## Work 图与激活
 
@@ -36,7 +36,7 @@ I-init-setup -> A-assess-and-plan -> (user chooses) L-lesson
                                            |\
                                            | H-homework -> (optional) R-review
                                            |\
-                                           +-> Q-question (inquiry/)
+                                           +-> Q-question (tutor IQ / explore EX; inquiry/)
                                            |\
                                            +-> G-goal (goal/ Goal-Plan; later /goal: mine-unit T then M then D)
 
@@ -73,6 +73,12 @@ Workflow 自身只读模板；Change 内容只写当前 Change 或其 `children/
 ## 课程合同
 
 L 授课、G 编译授课合同或验收 Lesson 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
+
+## 主动探究与问题地图
+
+Q 的 mode=tutor 保留默认五题、用户指定 n、Response: pending/ready/closed 与原文冻结；mode=explore 写独立探索记录，不要求先答、不伪造学习者答案。两者共同遵循 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`，并按主题决定是否加载生产检查。L 用讲解案例呈现重要遗漏，不改成口试；G 的源码挖掘预算及计划/执行分离不变。
+
+问题地图与探索只在当前 Change 的 inquiry/ 下惰性生成，不修改全局 v2 schema，不回填历史，不获得 mastery/context 的写权限。当前阶段结束可保留 needs_evidence/deferred，不等于掌握或穷尽。工件关系见 `<Path>{roots.workflows}/learning/common/rules/question-map-contract.md</Path>`。
 
 ## Homework 合同
 
