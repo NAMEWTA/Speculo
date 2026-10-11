@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-10-11
+
+### Added
+- Add performance investigation to SpecDev architecture review, documentation execution to Implement, and incident-evidence triage to Diagnosis while keeping all 15 Work entry paths, IDs, and recovery keys (#86).
+- Add shared error/recovery, test-reliability, Agent-experience, documentation, and engineering-evidence rules, plus read-only Git review-scope and specialist-evidence validators with 51 focused regression tests.
+
+### Changed
+- Connect evidence-led discovery, decisions, specifications, Tickets, Goals, implementation, review, delivery, learning, retrospectives, and archival through the existing SpecDev owners and artifacts.
+- Allow the existing Release workflow to be explicitly dispatched for a version tag; branch dispatches cannot publish. Tag/version validation, tests, npm authentication, and publication remain in the original workflow.
+
+### Fixed
+- Replace unconditional test deletion, adapter-count requirements, terminology bans, and blanket side-effect advice with context-dependent design rules and explicit regression-coverage obligations.
+- Distinguish exact Git review scopes, valid empty diffs, unconfirmed incident explanations, incomparable performance claims, stale evidence, and partial remote outcomes.
+
+### Upgrade Notes
+- No runtime schema migration: existing configuration, persistence roots, ownership, authorization, archive gateways, and historical records remain unchanged. Other workflow sources, top-level Skills, commands, and CLI behavior are unchanged by #86.
+- This package also includes the Media and Learning changes documented under 1.0.23 below; the latest GitHub Release verified during preparation was v1.0.22.
+- Real model/host multi-turn Work evaluation was not performed; passing structural and executable tests does not certify model compliance or token savings.
+
+AI assistance was used for implementation, review, and release preparation.
+
 ## [1.0.23] - 2026-10-10
 
 ### Added
