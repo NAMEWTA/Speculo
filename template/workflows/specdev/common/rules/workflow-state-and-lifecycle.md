@@ -92,3 +92,9 @@
 ## 扩展工件与兼容
 
 W 可写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`：它只拥有候选 change 边界与目标指针，不复制各 child 的状态。父 Goal 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 使用 goal-tickets-map 指针合同，权威仍是父 Implementation Map/Plan。旧 O restore key 不变；旧票继续可读，未完成旧票在新执行前由 Lead 显式补全调用绑定、交付约束并重新过门禁，不自动迁移、重置状态或改写他人事务。
+
+## 专业分支的原位恢复
+
+performance/documentation/evidence-triage 是原 Work 内的模式，不是新的 current_work 或 works_run 值。R 的记录留 architecture-review，I 留原 Evidence，D 留 diagnosis/diagnostics；格式见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。普通旧工件不回填，归档和已完成历史不重写，config/status/change/Goal/Spec/Ticket 版本不变。
+
+恢复时先核对原 owner、Lead epoch、输入/Skill/代码 checkpoint 和未决动作。仅使受影响证据失效；不能把“结果未保存”解释为操作未发生，不能清空 attempts 或转移锁来恢复。执行、远程账本和 A 的网关继续由原 owner 管理；只阻塞受影响的依赖闭包。

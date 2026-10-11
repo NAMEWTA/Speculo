@@ -30,3 +30,16 @@
 开发环境/流程复盘 → <Path>{roots.workflows}/specdev/R-retro/R-retro.md</Path>。代码讲解仍为 L；Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
+
+## 专业分支与相邻请求
+
+| 请求 | 入口/分支 | 不因此触发 |
+|---|---|---|
+| 测量哪个用户操作值得优化 | R-review-architecture / performance | 不直接实现，不先发明性能阈值 |
+| 已有性能故障需要确认根因 | D-diagnose-bugs | 不把微基准替代原始症状 |
+| 一次性事件暂时无法重现 | D / evidence-triage | 不标记 root-cause-confirmed，不创建 Ready 修复 |
+| 已批准的文档维护 | I-implement / documentation | 不新建文档 workflow，不伪造 TDD |
+| 只审查文档或某个 commit | C-code-review | 不写项目、不把单 commit 扩大到 HEAD |
+| 理解已实现 change | L-learn-change | 不改 Learning workflow，不永久晋升 |
+
+只读调查或审查不是后续修改授权。清晰的小请求继续走原适用阶段，不因增加专业分支强制进入 W/G/Triage；无差异、无候选和证据不足均可诚实返回，不制造工作量。

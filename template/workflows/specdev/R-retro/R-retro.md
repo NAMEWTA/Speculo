@@ -19,6 +19,10 @@ keywords: [retro, retrospective, 复盘, 环境, 反馈, 改进]
 4. 按 <Path>{roots.workflows}/specdev/R-retro/retro-template.md</Path> 创建 <Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path>，选择最小未占用 ID。原子保存并重读，运行 SpecDev --stage retro；修订保留来源与被替代结论。
 5. 验证通过后追加 works_run=specdev/retro 并清空 current_work；证据不足可完成一份 outcome=insufficient-evidence 的诚实报告，不冒充解决问题。只读复盘不创建 Spec/Ticket 或 implementation Evidence。review-only change 按专用完成门关闭。
 
+## 改进必须能被证伪
+
+逐项判断是规则缺失、规则未接入、规则判断错、测试不能失败或环境事实变化。建议说明真正修改位置、owner、正反验收、恢复影响和新增维护成本；不要对每个问题都增加一条提示词。记录已观察因果、尚未验证解释和不采纳理由，复盘报告不等于修复完成。
+
 ## 结果与路由
 
 合法 outcome：findings、no-findings、insufficient-evidence。发现的 disposition 为 file-issue / lesson-only / discard / duplicate；每项记录理由，允许没有发现。

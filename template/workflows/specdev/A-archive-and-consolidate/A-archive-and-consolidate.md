@@ -35,6 +35,12 @@ A 是 SpecDev 的归档 wrapper：它拥有模式选择、SpecDev 完成门和�
 
 读取 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/consolidation-interview.md</Path>`，由本 Work 创建知识 change、按代码证据访谈并验证后关闭，再回到 Archive 模式。LOG/CONTEXT/ADR 先在该 change 内形成；未验证结论留在 LOG，不直接提升永久知识。
 
+## 晋升前的语义筛选
+
+检查当前性、跨 change 决策价值、实际实现证据、适用范围、真实备选和后果；已接受但尚未实现的计划不能写成当前产品事实。按未来决策价值毕业，不按年龄、字数或数量配额。机械局部修改可以不晋升，但原 change 与必要历史仍保留。
+
+同主题先判断复用、局部取代或完整取代，合并前保留独有理由、负向保证、验证义务与恢复条件。未毕业解释留在原 change；不复制 DSH 的 Notes 树、冻结清单或双语三件套。干预范围仍由原全局归档网关的 dry-run/confirmed 和漂移检查决定。
+
 ## 副作用
 
 Dry-run 不修改文件。归档移动、知识 merge/rewrite/delete、Git 动作均在计划展示后单独确认。归档目录完成后只读；后续纠正通过新 change 和 supersedes 链完成。

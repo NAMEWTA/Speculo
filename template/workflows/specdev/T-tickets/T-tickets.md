@@ -35,6 +35,12 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 需要正式 Goal、多 change、迁移或跨票 Gate 时交给 `<Path>{roots.workflows}/specdev/P-goal-plan/P-goal-plan.md</Path>`；少量线性票可从 map 按已授权范围调用 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`。不得以“精简”为理由静默更换默认工具或少交付。
 
+## 工程义务与证据失效
+
+每票按实际影响列明真实生产消费者、接口两端、文档/升级说明、回归与模型可见输出的责任；删除测试要给出原风险在新测试中的承接。风险及证据选择使用 <Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>，失败状态使用 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>。工具定义或上下文变更才加载 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。
+
+将有关检查合并进负责该行为的 Ticket，不为每个检查项创建一票。documentation 仍用现有 kind，性能实施引用 R 的测量基线，不增加分类 schema。每票说明 base/head、配置、输入或 Skill 改变后哪些证据需重新验证。
+
 ## 原型证据
 
 可以引用已验证 LOGIC/UI 原型中的行为、边界与已确认决定，记录具体 locator 和验证证据；源码片段可承载设计选择，但不自动成为生产实现。未闭合高影响产品决定返回 G，S 综合已确认设计而不重新开启无关访谈。

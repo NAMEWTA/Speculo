@@ -19,3 +19,7 @@
 ## 强制变异验证
 
 使用强制变异时，先保存基线 hash/diff，修改后核对实际执行文件的 diff 与测试选择。只有预期行为断言 red 才有效；编译错误、错测或变异未落地均不计。恢复原内容、复跑基线并核对 diff，把全过程记入 Evidence。诊断协议见 <Path>{roots.workflows}/specdev/D-diagnose-bugs/D-diagnose-bugs.md</Path>。
+
+## 纯说明与测试承接
+
+纯文档按 <Path>{roots.workflows}/specdev/I-implement/references/documentation-procedure.md</Path> 执行适用验证，不伪造代码红绿；prompt/tool/output 改动仍属行为。旧测试删除必须覆盖其行为、错误、兼容和回归义务，具体按 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。

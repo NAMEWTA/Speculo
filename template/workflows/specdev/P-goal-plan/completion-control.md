@@ -41,3 +41,7 @@ Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candida
 Lead 是 Goal Plan change 的唯一完成 owner。没有 Goal Plan 的单 Ticket/Direct Spec 由当前 I-implement owner 按 change completion 规则完成。Archive 不补造完成证据。
 
 **完成标准**：所有通过、阻塞、取消和未验证声明均定位到权威工件、命令与 Git checkpoint；失败不会推进父分支或 Done。
+
+## 完成声明的版本
+
+关闭前核对最终实际代码/配置/构件与证据版本，说明未运行项、行为差异和残余风险。性能微基准、原型或 mock 不替代明确要求的真实路径。PR/Issue/发布分别回读原账本，远程 pending 不伪装已交付。

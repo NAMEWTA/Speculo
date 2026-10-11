@@ -3,8 +3,8 @@ id: specdev/diagnose-bugs
 type: workflow-entry
 workflow: specdev
 name: 诊断 Bug
-description: 先建立会在精确症状上变红的紧凑反馈回路，再通过最小化、排名假设和单变量探针确认根因，输出修复契约而不实施生产修复。
-keywords: [bug, 诊断, 红灯, tight-loop, 根因, 复现, 假设]
+description: 调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。
+keywords: [bug, 诊断, 红灯, tight-loop, 根因, 复现, 假设, incident, 事件证据]
 ---
 
 # 诊断 Bug
@@ -32,11 +32,11 @@ D 拥有：
 
 ## 流程
 
-### 1. 建立并执行红灯回路
+### 1. 建立并执行红灯反馈回路
 
 加载 `<Path>{roots.workflows}/specdev/D-diagnose-bugs/feedback-loop.md</Path>`。按其顺序尝试测试、HTTP/CLI、浏览器、追踪回放、夹具、模糊循环、bisect、差分和最终 HITL。保存命令、至少一次真实输出、精确症状断言、运行时间、确定性或复现率，以及 Agent 可运行性。
 
-无法建立回路时立即使用诊断模板写 `status: blocked`、`feedback_loop_ready: false`、已尝试方式和所需输入；假设表保持为空，保留 `current_work` 后返回。不得继续阅读代码来构造根因理论。
+无法建立回路时使用诊断模板写 `status: blocked`、`feedback_loop_ready: false`、已尝试方式和所需输入；假设表保持为空，保留 `current_work`。不得继续阅读代码来构造根因理论并据此宣称已确认；可以进入下述事件证据分支收集观察与下一安全检查，但不能直接进入正式假设实验或 Ready 修复。
 
 **完成标准**：一条已运行命令快速、可重复、由 Agent 执行，并能在用户精确症状上变红。
 
@@ -69,6 +69,12 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ```
 
 根因确认后将本 Work 加入 `works_run` 并清空 `current_work`，返回 diagnosis 和下一 Work：局部修复进入 Tickets/I，公共行为或高风险进入 S/Tickets，缺 seam 进入 R，仍无根因则保持 blocked 或进入 W。
+
+## 一次性事件与 CI flake
+
+故障不可再次触发或缺安全复现条件时，读取 <Path>{roots.workflows}/specdev/D-diagnose-bugs/references/incident-evidence.md</Path> 进入 evidence-triage。保持原 D ID、diagnosis/diagnostics 和合法状态；事实收集不等于根因确认，未知解释不写入已确认字段。
+
+涉及并发、时钟、子进程或 CI 易抖动测试时，再读 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；核对实际 worker/job 拓扑与资源释放，以显式同步制造竞态，不用无证据的 sleep、宽 timeout、全套串行或重试当根因修复。
 
 ## 脱敏与强制变异证据
 

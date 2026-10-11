@@ -95,3 +95,9 @@ W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只�
 - R-retro：<Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path> 拥有活动复盘建议和来源；不成为永久知识。
 - P：<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
 - 来源更新：<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 冻结后保持不变。T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
+
+## 专业分支的证据归属
+
+R.performance 的测量卡、原始样本引用和优化候选仍由 architecture-review 拥有，不直接修改生产代码。I.documentation 修改获批项目文档并在原本票或 Direct Spec Evidence 保存验证；不另造文档状态。D.evidence-triage 在 diagnosis 的现象/事件节记录观察、未知与下一检查；它不是已经接受的根因或修复合同。具体记录见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。
+
+代码、运行证据可以证明计划尚未实现或已过时，但不能改写用户目标。ADR 记录采纳与真实备选；未确认解释属于 LOG/设计树，未完成计划不能进入当前事实摘要。实际文档职责遵守 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>。

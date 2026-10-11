@@ -67,3 +67,7 @@ status: draft
 - 当前请求：report / selected-design。report 到此完成，访谈状态可为 unselected；无高置信候选也可交付。
 - 用户选择原文与候选 ID：仅 selected-design 填写；未选择时不虚构结论、不自动转票。
 - 达成共识的接受项进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。
+
+## 性能测量（仅 performance 分支）
+
+按 <Path>{roots.workflows}/specdev/R-review-architecture/references/performance-review.md</Path> 填写用户操作、工作量/入口/时钟/环境/冷暖/排除成本、原始样本、内存与端到端边界、最强保留理由、候选及停止条件；无样本明确 inconclusive。使用 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path> 的标记记录，不把提案收益当已实施结果。普通结构报告不制造测量数据。

@@ -53,3 +53,19 @@ Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施�
 父实现 change 的 Implementation Orchestration Evidence 不能替代子 Evidence。它至少记录最终 Map revision、全部成员最终状态和子证据指针、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、stale candidate 处理、偏差和残余风险。任何成员未 completed 或整体验证未通过时不得形成父完成证据。
 
 Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按公共投影规则生成，不替代本文件的完整记录。
+
+## 6. 按改动选择检查与复用证据
+
+先固定当前真实 base/head、dirty 写集、配置和消费者，选择能在本次回归上失败的最窄检查；动态配置、Worker、子进程、发布构件或跨模块接口需显式选择真实入口。CI 负责目标项目规定的全量矩阵，本地不因 commit/push 机械重跑刚通过且仍有效的检查；原 required Gate 不因此降级。
+
+复用记录须给出原证据、代码/输入/配置/Skill 摘要、命令选择、环境和仍成立的原因。基线合入、head 改变、配置/依赖/生成器或被测输入变化时重估失效范围；不能把不相关改动当作所有证据永久无效，也不能沿用旧 head 的完成结论。readiness、skipped、pending、环境失败和未运行分别报告。
+
+异步、资源、CI 或测试删除使用 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；失败后的状态和安全继续使用 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>。验证结果须关联真实退出、事件、文件或输出，不能只相信组件/Agent 自报。
+
+## 7. 特殊行为与文档证据
+
+纯文档使用可执行示例、链接、类型与生成一致性、源码语义核对；不适用代码 TDD/E2E时明确理由。prompt、工具定义、错误或 UI/CLI 字符串改变属于行为变化，检查真实模型/用户可见内容，不只检查 Markdown。UI 原型、mock、真实服务器演示分别标记；录制证据对应准确提交、环境、运行方式和片段，不能拼接不同运行冒充一次成功，也不强制无关任务录 GIF。
+
+性能测量必须有真实用户操作、可比较工作量/时钟/冷暖状态、原始样本与端到端结论；微基准改善不能代替整体收益。专业分支仅在原报告追加 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>，结构通过不证明测量、翻译或工具执行真实。
+
+删除、合并测试的决定需记录旧行为/错误/兼容/回归到新用例的覆盖承接；无法证明就保留。新准入规则至少有一个从真实执行入口失败的反例，并在恢复基线后确认通过。

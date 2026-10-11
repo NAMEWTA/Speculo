@@ -139,3 +139,7 @@ subagent 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和
 ## OPS 交付（仅用户请求时）
 
 交付前读取 `<Path>{roots.workflows}/specdev/common/rules/deployment-handoff.md</Path>`，记录当前 change/Ticket、代码 revision、实际构件 digest、AC/Evidence、目标与部署约束；回传时只追加经核对的 Run/Release/receipt 指针。未请求写“不适用”，不为填表创建 OPS 任务。
+
+## 工程检查的选择与失效
+
+记录为什么选择这些定向检查、覆盖哪些消费者与风险；复用时列原 checkpoint/配置/输入/Skill 与有效性，失效时只列受影响项。测试删除列旧风险到新测试的承接；资源清理记录真正完成信号。专业分支按 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path> 在本文件追加标记记录；普通实施不要求空白记录，结构通过不认证真实运行。

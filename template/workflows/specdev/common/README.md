@@ -24,6 +24,14 @@
 - 代码库设计：`<Path>{roots.workflows}/specdev/common/rules/codebase-design.md</Path>`
 - 父实现编排：`<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`
 
+## 按风险加载工程标准
+
+- 设计或执行失败、重试、取消、未知结果时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>。
+- 异步、并发资源、CI flake 或删除替换测试时读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。
+- 项目文档的当前事实、归属、升级说明和语义保真使用 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>，注释仍由原注释规则负责。
+- 工具定义、prompt、Work/Skill 或上下文加载变化时读取 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。
+- 仅新专业分支记录 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>；它是原报告中的观察，不是新的任务状态。
+
 ## 结构化工件 Schema
 
 - 全局配置：`<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>`

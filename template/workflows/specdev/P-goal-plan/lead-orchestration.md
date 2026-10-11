@@ -36,3 +36,7 @@ Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结�
 只有 Lead 的复盘决定已写入 Evidence，才可将当前 Ticket 的 `attempts` 重置为 `0` 并发出新 Dispatch Packet；新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么。没有实质变化时不得重新派发同一请求。上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态。
 
 **完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单、返回与重复失败后的 Lead 决定可从 Evidence 恢复。
+
+## 可解释的再派发
+
+重复 blocker 且没有新证据时保持原停滞停止。新的 Dispatch 明确改变输入、方法、范围、环境或处置的哪一项；仅更换 Agent、重置 attempts、让用户再答相同问题不构成恢复。旧历史保留，按原 owner 和依赖闭包处理。

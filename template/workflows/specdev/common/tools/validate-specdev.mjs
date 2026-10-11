@@ -26,6 +26,8 @@ import {
 } from "./plan-contract.mjs";
 
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
+import { reviewScopeCLI } from "./review-scope.mjs";
+import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
 const CONFIG_SCHEMA_VERSION = 6;
@@ -1077,7 +1079,7 @@ function capabilityChecks(root) {
       "code-review",
       [
         join(root, "C-code-review", "C-code-review.md"),
-        ["git diff <fixed>...<head>", "固定点", "标准轴", "规范轴", "未合并排名", "reviews/CR-###.md"],
+        ["--review-scope", "baseline", "range", "commit", "pr", "no-diff", "固定点", "标准轴", "规范轴", "未合并排名", "reviews/CR-###.md"],
       ],
     ],
     [
@@ -1274,6 +1276,16 @@ function selfCheck(root) {
   errors.push(...references.errors);
   warnings.push(...references.warnings);
   errors.push(...capabilityChecks(root));
+  errors.push(...validateEngineeringPackage(root));
+  // Run real runner regressions; these tests never recursively request self-check.
+  try {
+    execFileSync(process.execPath, ["--test", join(root, "common", "tools", "tests", "engineering.test.mjs")], {
+      encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    errors.push(`engineering regressions failed: ${error.stdout ?? ""}${error.stderr ?? error.message}`);
+  }
 
   const obsolete = [
     "P-goal-plan/input-validation.md",
@@ -1646,6 +1658,9 @@ function validateDiagnosis(path, expectedChange, errors) {
   }
   if (typeof meta.feedback_loop_ready !== "boolean") {
     errors.push("diagnosis.md: feedback_loop_ready must be boolean");
+  }
+  if (["minimizing", "testing-hypotheses", "root-cause-confirmed"].includes(meta.status) && meta.feedback_loop_ready !== true) {
+    errors.push("diagnosis.md: advanced diagnosis requires ready feedback loop and real red evidence");
   }
   if (meta.feedback_loop_ready) {
     if (!String(meta.red_command ?? "").trim() || !String(meta.red_evidence ?? "").trim()) {
@@ -3285,7 +3300,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   return { map, plan, members, tasks, memberStatuses, ticketByTask };
 }
 
-function validateChange(change, stage = null, repoRoot = null) {
+function validateChange(change, stage = null, repoRoot = null, engineeringKind = null) {
   const errors = [];
   const warnings = [];
   if (!isDirectory(change)) {
@@ -3635,6 +3650,7 @@ function validateChange(change, stage = null, repoRoot = null) {
     }
   }
 
+  errors.push(...validateEngineeringArtifacts(change, engineeringKind));
   return { errors, warnings };
 }
 
@@ -3646,11 +3662,13 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] <change-directory> | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr> [comparison options] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
   return 2;
 }
 
 function main(argv) {
+  if (argv[0] === "--review-scope") return reviewScopeCLI(argv.slice(1));
+  let engineeringKind = null;
   let selfCheckRequested = false;
   let stage = null;
   let repoRoot = null;
@@ -3659,7 +3677,10 @@ function main(argv) {
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === "--self-check") {
+    if (arg === "--engineering") {
+      if (engineeringKind !== null || !ENGINEERING_KINDS.has(argv[index + 1])) return usage();
+      engineeringKind = argv[++index];
+    } else if (arg === "--self-check") {
       selfCheckRequested = true;
     } else if (arg === "--stage") {
       stage = argv[index + 1] ?? null;
@@ -3685,6 +3706,7 @@ function main(argv) {
     }
   }
   if (stage !== null && !VALID_STAGES.has(stage)) return usage();
+  if (engineeringKind !== null && (selfCheckRequested || capturePath || triageRunPath || positional.length !== 1)) return usage();
   if (triageRunPath) {
     if (selfCheckRequested || positional.length || stage !== null || capturePath || repoRoot) return usage();
     return printResults(validateRecord(resolve(triageRunPath), "triage-run", parseFrontmatter).errors, []);
@@ -3703,7 +3725,7 @@ function main(argv) {
     return printResults(errors, []);
   }
   if (positional.length === 1) {
-    const result = validateChange(resolve(positional[0]), stage, repoRoot);
+    const result = validateChange(resolve(positional[0]), stage, repoRoot, engineeringKind);
     return printResults(result.errors, result.warnings);
   }
   return usage();

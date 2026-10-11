@@ -3,8 +3,8 @@ id: specdev/review-architecture
 type: workflow-entry
 workflow: specdev
 name: 架构审查
-description: 从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
-keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接缝, code-judo]
+description: 审查指定代码范围的结构与维护成本，或测量真实用户操作的性能并形成候选；只报告或深入用户选定的设计，不直接实施优化。
+keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接缝, code-judo, performance, benchmark, 性能]
 ---
 
 # 架构审查
@@ -36,14 +36,22 @@ keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接
 
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
 
-每个候选都必须说明：files、structural problem、code-judo move、deleted complexity、dependency class、strength、ADR conflict、interview state 和 user conclusion。文件若因为本次变化接近或超过 1k lines，必须显式标注 decomposition pressure，不得默默吞掉。
+结构 report 的每个候选都必须说明：files、structural problem、code-judo move、deleted complexity、dependency class、strength、ADR conflict、interview state 和 user conclusion。文件若因为本次变化接近或超过 1k lines，必须显式标注 decomposition pressure，不得默默吞掉。
 
 ## 选择交付分支
 
 - `report`（默认）：用户只请求 review/扫描时完成下方探索与报告，候选保持 `unselected`；没有候选是有效结果，不要求用户先选方案才完成报告。
 - `selected-design`：只有用户已经选择一个候选并请求深入设计，才加载 `<Path>{roots.workflows}/specdev/R-review-architecture/references/selected-design.md</Path>`。输入是可回读报告和所选候选；来源漂移先核对影响，不用旧结论代替当前代码。
 
-两分支均不修改生产代码，报告不授权访谈、建票或实施。
+结构报告、已选设计和性能分支均不修改生产代码，报告不授权访谈、建票或实施。
+
+## Performance 分支
+
+选择 performance 时直接执行此参考，不强制运行下方结构 Report 流程；只读性能报告是有效终点，不要求先选择优化方案。
+
+用户要求定位性能成本或评估优化时读取 <Path>{roots.workflows}/specdev/R-review-architecture/references/performance-review.md</Path>，以真实用户操作、工作量、冷暖状态、时钟、原始样本和端到端结果形成测量与候选。performance 使用原 architecture-review 报告，不新建状态；代码实施仍交 S/T/P/I。无瓶颈、无收益、拒绝优化与证据不足均可诚实返回。需要确认已有性能故障根因时进入 D。
+
+结构/简化候选同时核对 API、状态、配置、重复表示、缓存失效、兼容与测试的实际维护成本、动态加载和真实消费者。单一 provider 不自动等于多余抽象；不要为删行数删除义务。
 
 ## Report 流程
 
@@ -83,6 +91,8 @@ keywords: [架构审查, 维护性, 浅模块, 深模块, 局部性, 杠杆, 接
 **完成标准**：每个候选字段完整、最佳推荐唯一或明确为空，Markdown 已原子写入并重读。
 
 ## 分支完成、状态与返回
+
+`performance` 完成条件：测量卡、原始样本或明确缺口、可比较性和候选依据完整，工程证据检查已运行；baseline/inconclusive 是调查结果，不代表优化已经交付。报告已回读，后续实施必须另有授权。
 
 `report` 完成条件：范围有依据；高置信候选满足删除测试且每项有当前文件/调用/测试证据、前后对比、收益、强度和 ADR 冲突处理；最佳推荐唯一或明确为“无高置信候选”；Markdown 已原子写入并回读。未选择或拒绝的候选不变成 Ticket。
 

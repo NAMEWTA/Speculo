@@ -20,6 +20,12 @@
 
 读取 下方 `<activation-and-memory>` 标签；定位当前 change 的 `specdev/changes/{change}/design-tree.json`、`specdev/changes/{change}/LOG.md`、`specdev/changes/{change}/CONTEXT.md`、`specdev/changes/{change}/ADR.md` 和相关 initiative 决策。先找到相关条目再回读必要原文，不默认整读永久 ADR 或索引。
 
+## 按风险选择问题
+
+涉及失败、重试、取消或恢复时读取 下方 `<ref-common-rules-error-handling>` 标签：谁拥有状态，何时算成功，超时后副作用是否未知，谁核实结果，什么可以重复，哪些依赖应停止？涉及工具/prompt/context 时再读取 下方 `<ref-common-rules-agent-experience>` 标签。问题由当前 change 风险触发，不固定全问；仓库能查明的事实先查，高影响取舍才询问用户。
+
+局部 ADR 保留真实问题、采纳决定、考虑过的替代方案、代价、适用范围和验证义务。未确认方案留 LOG/设计树，不编造备选，也不把已采纳但未实现的决定写成已交付。
+
 ## 当前 change 的访谈与共识
 
 进入访谈必须读取 下方 `<ref-g-grill-with-docs-references-interview-procedure>` 标签，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
@@ -65,6 +71,10 @@
 - 每个已回答、延后或拒绝的节点追加一条 `specdev/changes/{change}/LOG.md` 记录，并把 `LOG-###` 写回节点的 `log_ref`。
 - 每轮开始前原子更新 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
 - LOG、设计树及已确认的 CONTEXT/ADR 同步只用于恢复和领域建模，不构成实现授权。只有 frontier 为空且用户确认共识后才路由下游 work。
+
+## 生产风险问题
+
+按当前 change 风险选择状态 owner、成功时点、取消后仍在运行的工作、重复/乱序调用、服务端超时的未知副作用、旧数据解释与恢复验证。依据 下方 `<ref-common-rules-error-handling>` 标签 定义可观察保证；不要把能查明的代码事实反问用户。
 
 </grilling-protocol>
 
@@ -339,6 +349,12 @@ W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边�
 - R-retro：specdev/changes/{change}/retro/RETRO-###.md 拥有活动复盘建议和来源；不成为永久知识。
 - P：specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
 - 来源更新：specdev/changes/{change}/source.md 冻结后保持不变。T 将后续读取写入 specdev/changes/{change}/sources/SRC-###.md，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
+
+## 专业分支的证据归属
+
+R.performance 的测量卡、原始样本引用和优化候选仍由 architecture-review 拥有，不直接修改生产代码。I.documentation 修改获批项目文档并在原本票或 Direct Spec Evidence 保存验证；不另造文档状态。D.evidence-triage 在 diagnosis 的现象/事件节记录观察、未知与下一检查；它不是已经接受的根因或修复合同。具体记录见 下方 `<ref-common-rules-engineering-evidence>` 标签。
+
+代码、运行证据可以证明计划尚未实现或已过时，但不能改写用户目标。ADR 记录采纳与真实备选；未确认解释属于 LOG/设计树，未完成计划不能进入当前事实摘要。实际文档职责遵守 下方 `<ref-common-rules-documentation-standard>` 标签。
 
 </artifact-contract>
 
@@ -1127,6 +1143,75 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 </activation-and-memory>
 
+<ref-common-rules-error-handling>
+
+# 错误、状态保证与恢复
+
+在设计、实现或审查失败、重试、取消、后台任务和恢复时读取。此规则决定失败后的工程判断；既有授权、状态 owner 与远程操作协议仍分别拥有执行权，不在这里创建账本或更换恢复网关。
+
+## 先定义失败后仍成立的事实
+
+预期失败使用可区分的类型或稳定代码，保存必要原因和处理信息；不要解析展示文案来选择恢复分支。无法预期的缺陷可以作为异常报告，但不能被 catch 转成成功。对每个可能改变状态的操作，记录实际处理者、报告者、清理责任及失败后的保证：
+
+| 已知副作用 | 可以作出的判断 | 下一步 |
+|---|---|---|
+| 未开始或确认未发生 | 未产生本次效果 | 仍需核对授权、取消与重试条件 |
+| 已确认全部提交 | 效果已发生 | 回读结果，不能再次创建相同效果 |
+| 已确认部分发生 | 只有已核实部分可信 | 停止依赖完整结果的工作，按 owner 的补偿或继续协议处理 |
+| 结果未知 | 无法保证没发生或已成功 | 保留原操作标识，先对账；不能声称回滚或安全重试 |
+
+捕获异常不撤销已经发生的修改，记录日志不等于完成恢复。只有受影响状态的 owner 能证明后续操作的前置条件仍成立；否则停止依赖该状态的工作、弃用无效实例或升级处理。无关、独立且已授权工作仍可继续。
+
+## 重试、取消与无进展
+
+重试必须说明安全重复的依据、执行 owner、取消途径和预算。只读、可幂等重试和需要先确认副作用的操作分别处理；“发生了超时”本身不能证明可重复。持续监督需要可释放的生命周期和可见降级，不伪装为有限次数操作。
+
+同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 “请求分诊阶段” 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
+
+取消只说明发出了取消请求，不保证远端副作用或子进程已经停止。传播 signal 后仍需等待属于本操作的完成信号；清理失败和业务失败分别报告，不能用后者隐藏前者。
+
+## 面向用户的结果
+
+最终说明必须指出受影响操作、已知影响、尚不确定的结果、系统当前处置和下一安全动作。失效状态持续存在时，提示也应持续可见；错误提示组件不能随已关闭的来源界面一起消失。保留有效数据，不为展示瞬时错误清空它。使用目标项目原有语言和诊断机制；敏感内部信息不进入公开文案。主要报告渠道失败时有独立的安全回退。
+
+S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录，D 调查实际失败，C 追踪所有可达路径。验证应观察外部状态、文件、事件、退出或用户可见结果，不只断言异常被捕获。
+
+## 判断示例
+
+请求创建 PR 后超时，应先按稳定 marker 查询原目标；直接重发可能重复创建。读取无副作用的数据遇到临时网络错误，在预算、取消和环境允许时可以重试。这两个场景不能共享无条件 retry。
+
+方法参考：DeepSeek Harness 的错误处理标准，固定参考版本见 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-error-handling/SKILL.md</Url>；这里采用 SpecDev 原有 owner 和持久化，不导入其运行时实现。
+
+</ref-common-rules-error-handling>
+
+<ref-common-rules-agent-experience>
+
+# 面向 Agent 的工具与 Work 体验
+
+修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动子 Agent。
+
+## 发现、加载与执行分开
+
+description 写真实触发时机、任务范围和相近但不适用的场景，不写“资深专家”式角色自述。先展示用途、可用动作和必要限制，再按模式加载正文或 reference。延后资源必须有可理解的描述、可靠定位和读取条件；不能为减少首轮内容把必要信息藏到不可发现的位置。
+
+已加载同版本正文的同一次任务不重复读取；输入范围、摘要或 owner 变化时重读受影响内容。首次选中只看到摘要时必须读正文，不能从名称推导步骤。实际执行记录继续遵守 下方 `<ref-common-rules-skill-invocation>` 标签；读过入口不是执行完成。
+
+## 工具描述与结果
+
+参数的范围、默认值、配对和使用条件写在参数定义中。工具说明描述行为与返回，避免复制其他工具或系统段已经拥有的规则。权限、破坏性副作用、不可重复操作和必需验证必须在动作之前可见；描述不是底层权限检查的替代。
+
+返回有界的结果摘要以及可回读的 ID、路径或游标，明确截断、遗漏、分页和证据完整性。包含少量当前动作确实需要的邻近上下文，不整页倒出日志，也不因过度裁剪迫使下一步反复搜索。缺少资源、格式无效和加载失败要能辨认，不伪造可用性。
+
+## 作为行为验证
+
+检查模型真正收到的工具 schema、prompt、结果和诊断，覆盖正常、失败、取消、权限不足、重复调用和恢复中的适用分支。用户直接调用已注入的 Work 不应再次重复加载同一正文。仅宿主支持时才依赖自动/显式调用元数据；文字字段本身不是安全控制。
+
+比较优化前后实际首轮输入、总读取、重复调用、误触发和任务结果。在没有同模型、同工具、同任务的实际使用记录时，只报告文件字符或字节变化，不能宣称 token、费用或配额节省。已有正反任务观察与结构检查分别报告。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/agent-experience/SKILL.md</Url>。SpecDev 不因此获得 DSH 的运行时 Skill 加载器。
+
+</ref-common-rules-agent-experience>
+
 <ref-g-grill-with-docs-references-interview-procedure>
 
 # 设计访谈（带文档）
@@ -1264,6 +1349,10 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - LOG 格式：下方 `<log-format>` 标签
 - Stakeholder 问卷：下方 `<stakeholder-questionnaire>` 标签
 
+## 决策记录的完整性
+
+结晶时区分采纳决定与实际落地；ADR 留真实备选、理由、代价、适用范围和验证义务，未确认解释留 LOG。以后路径/命名变化更新当前事实，决定改变则保留取代关系；永久知识仍经 A，不把提案当作已实现。
+
 </ref-g-grill-with-docs-references-interview-procedure>
 
 <ref-common-rules-skill-invocation>
@@ -1297,3 +1386,143 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 摘要变更先由 Lead 检查影响、更新绑定和 map 后重验；不自动接受最新文件，不回写已完成旧证据。
 
 </ref-common-rules-skill-invocation>
+
+<ref-common-rules-engineering-evidence>
+
+# 专业分支的工程证据
+
+本规则只约束新运行的 R.performance、I.documentation 和 D.evidence-triage；既有工件与主持久化 schema 不升级。普通 Work 不要求额外记录。记录是某次 checkpoint 的观察，不拥有 Ticket/Goal/change 状态、授权或恢复锁；不能用它代替原 Evidence、诊断和验收。
+
+## 写入原 owner
+
+在原工件正文添加 `Engineering Evidence` 小节及一个标记为 `json specdev-engineering-evidence` 的代码围栏，里面是一个 JSON 对象。performance 位于 specdev/changes/{change}/architecture-review.md；incident 位于 specdev/changes/{change}/diagnosis.md；documentation 位于原本票 specdev/changes/{change}/evidence/T-NN.md 或原 specdev/changes/{change}/evidence/direct-spec.md。禁止写到另一模式的 owner，旧归档与旧完成证据不回填。
+
+公共字段：`version: 1`、`kind`、实际源码/输入的 `checkpoint`、非空 `evidence` 字符串数组。指针使用原 Path/来源定位约定，不写机器绝对路径、密钥或未脱敏数据。记录每次真实观察，恢复时追加新 checkpoint 的证据；不能更改旧事实来制造成功。
+
+## Performance
+
+`operation` 是用户操作，`outcome` 为 baseline、improved、no-gain 或 inconclusive，`uncertainty` 解释测量局限。没有样本时只能 inconclusive。baseline/candidate 各含实际 `checkpoint`、`entrypoint`、`environment`、`clock`、`workload`、64 位 `workload_digest`、`unit`（ms/bytes/ops/s）、`direction`（lower/higher）、`cache`（cold/warm/not-applicable）、`excluded_costs` 字符串数组和有限非负 `samples` 数组。
+
+普通 R 调查只记录 baseline 或 inconclusive；improved/no-gain 需已有可比较的 baseline 与 candidate。比较除源码 checkpoint 外的工作量、入口、环境、时钟、单位、方向、缓存与排除成本必须一致。improved 还需 `behavior_verification: passed`，并且样本算术均值沿目标方向改善。满足这些必要条件仍不证明超过噪声、具备统计显著性、内存可接受或测量真实，Lead 必须回读数据与行为证据。
+
+## Documentation
+
+记录 `owner_paths`（真实源指针数组）、`outcome`（verified/partial/blocked）、`visible_behavior_changed` 布尔值、`behavior_verification`（passed/failed/not-run/not-applicable），以及非空 `claims` 数组。每项 claim 有 subject、method（command/source/manual）、state（verified/unverified）和 evidence。未验证项必须写 reason；verified 的 command 项还必须有 command、`executed: true`、`exit_code: 0` 和非空 output 原始结果摘要数组。
+
+总体 verified 要求所有声明 verified；可见行为改变时必须有 passed 的行为证据。partial/blocked 是诚实的阶段结果，不授予 Ticket done。工具仍不能认证 Agent 自报，Lead 继续核对真实命令、输出和来源。
+
+## Incident
+
+记录非空 facts、unknowns、next_checks 字符串数组；`feedback_loop_ready: false` 与 `root_cause_confirmed: false` 必须明确。这是事件证据截面，不是根因结论。正式 diagnosis 的红灯、假设和状态仍由原诊断规则验证；未来获得红灯后保留原事件观察，转入正常 D 流程，不把旧观察改写成当时已确认。
+
+## 验证入口
+
+新分支分别执行现有校验器的 `--engineering performance`、`--engineering documentation` 或 `--stage diagnosis --engineering incident`，输入当前 change。可与原 `--repo` 和适用 `--stage` 结合。没有标记记录的历史工件继续按原规则验证；显式专业模式缺少记录会失败，已有标记记录在普通 change 校验中也会检查。
+
+代码块语法是 `json specdev-engineering-evidence`，不是新文件类型。校验器只读，无论成功、失败或不完整都不写状态、不创建缺失工件、不执行命令、不获取授权。源记录、结构校验、真实工具执行和宿主观察是不同证据，报告时分别说明。
+
+</ref-common-rules-engineering-evidence>
+
+<ref-common-rules-documentation-standard>
+
+# 开发文档的归属、保真与验证
+
+在 SpecDev 中新增、修改、审查或整理项目文档时读取。本规则负责开发文档的工程要求，不改写全局写作能力。注释继续使用 下方 `<ref-common-rules-code-commenting-rule>` 标签；工件冲突遵守 下方 `<artifact-contract>` 标签。
+
+## 一项事实的负责位置
+
+Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、接口说明与 README 描述当前行为；change ADR 保存已经接受的决定和真实取舍；CONTEXT 保存本 change 已确认领域语义；LOG 保存讨论、待验证解释和被替代结论；Evidence 记录实际验证。永久知识仅经 A 晋升，archive 是只读历史。
+
+按读者与任务区分教程和查询参考。教程按前置知识与操作顺序组织，参考限定自身负责的主题。上层文档只说明下属职责并链接具体 owner，不复制整个子模块实现。用户不需要的内部过程不要挤进入口；详细信息需要可定位而不是被删掉。
+
+## 改写前保留完整命题
+
+逐项保留行动者、动作、条件、时间与顺序、必须/可以/禁止、例外、所有权、副作用、失败保证及后果。删掉这些词可能改变行为，不是简单精简。局部使用点仍要有安全调用所需的完整契约；长篇理由、历史和算法说明链接其 owner。参考或生成内容先改真实源，再重建派生文件，不手工改生成物。
+
+正文描述当前机制，不保留“本轮修改”“下一张 PR”“审查者已认可”或只有某次会话才能解释的编号。必要历史与事故证据留在 LOG/ADR/复盘中；真实 issue、公开规范和可定位历史引用不因出现编号就删除。未知理由保持未知，不补写想象中的设计史。
+
+## 运行声明与升级说明
+
+字段、默认值、命令和平台行为查 owning source，并在有执行条件时运行文档给出的实际操作。仅检查文字或链接不能证明命令成功。缺少网络、凭据、平台或权限时，明确未执行项、风险与验证 owner；不换成模拟后声称真实路径已验证。
+
+外部可感知的破坏性变更在引入时同步升级说明：受影响对象、旧新行为、精确迁移步骤、成功确认和真实恢复限制。用户数据已经发布就不是可随意覆盖的开发数据；预发布名称不解除兼容义务。使用目标项目已有升级文档位置，没有惯例时由当前任务批准的项目文档路径承载，不新建 SpecDev 永久 namespace。
+
+双语或多语仅在目标项目要求时同步。保留未改变的已审文本，核对条款含义、术语、代码及链接；哈希或结构一致不证明翻译正确。不要照搬 DSH 的双语三件套、行数对齐和字数配额。
+
+## 文档维护与可见行为
+
+纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 下方 `<ref-i-implement-references-documentation-procedure>` 标签；C 可仅审查，不获得写入权。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-prose-standard/SKILL.md</Url> 与 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/AGENTS.md</Url>。
+
+</ref-common-rules-documentation-standard>
+
+<ref-common-rules-code-commenting-rule>
+
+# Code Commenting Rule
+
+注释只用于记录**代码本身无法清晰表达，但对正确使用或安全修改至关重要的信息**。
+
+## Requirements
+
+- 优先通过命名、类型、结构、断言和测试表达意图；不要用注释掩盖复杂或含糊的代码。
+- 公共 API 应说明调用契约，包括重要的输入限制、返回语义、错误、副作用、并发、所有权和安全要求。
+- 内部实现仅在必要时解释非显然的：
+  - 设计原因与取舍；
+  - 不变量；
+  - 顺序约束；
+  - 安全或并发风险；
+  - 兼容、迁移或 workaround 的原因与退出条件。
+- 单位、时区、精度、哨兵值、生命周期等无法由类型或名称表达时必须说明。
+- TODO 必须包含可追踪标识、具体动作以及完成或删除条件。
+- 修改代码行为时，必须同步检查并更新相关注释。
+
+## Do Not
+
+- 不要为每个函数或方法机械添加注释。
+- 不要逐行复述代码。
+- 不要解释名称和类型已经表达的信息。
+- 不要保留注释掉的旧代码。
+- 不要记录修改历史或临时开发过程。
+- 不要猜测“为了性能”“为了兼容”等设计原因。
+- 不要使用注释数量或覆盖率衡量质量。
+
+## Decision Rule
+
+添加注释前确认：
+
+1. 这条信息是否无法由代码清晰表达？
+2. 缺少它是否可能导致错误使用或错误修改？
+3. 它是否在正常重构后仍然有效？
+
+只有答案均为“是”时才添加注释。
+
+> 公共接口记录 Contract；内部实现记录非显然的 Why、Invariant 和 Risk。
+
+</ref-common-rules-code-commenting-rule>
+
+<ref-i-implement-references-documentation-procedure>
+
+# 文档维护执行分支
+
+仅在已授权的 Ready documentation Ticket 或满足原条件的 Direct Spec 中使用；当前 Work 仍为 `specdev/implement`，权限、workspace、commit 和验收仍走 I。文档建议或审查请求不授权写入。入口预检和两轴审查不因选择本分支消失。
+
+## 定位事实与修改范围
+
+读取 下方 `<ref-common-rules-documentation-standard>` 标签，先定位项目的真实源码、当前接口说明、相关 README、生成器和适用写作规范。区分只改说明、修正示例以及改变 prompt/tool/CLI/UI 可见行为。按 Ticket 的获批写集维护项目文档；Evidence 留在原 change 的本票文件或 Direct Spec Evidence，不创建第二份文档状态。
+
+列出每条行为声明的 owner 与验证方法：源码、类型、实际命令、运行场景或人工核对。先修 owner，再同步相应派生物与项目要求的语言侧；禁止手改生成文件。保存行为、条件、否定、例外、失败与所有权，消除仅本会话可理解的叙述。
+
+## 验证与交付
+
+纯说明修改使用相关链接、类型片段、示例、生成一致性和语义核对，不伪造代码 red/green。写入命令实际运行后才记录对应成功结果；缺网络、平台、凭据或权限时保留未验证和责任人，不替换成 mock 后写“真实入口通过”。
+
+可见行为改变时，补充实际输出或目标项目的行为快照/场景证据，并在需要时读取 下方 `<ref-common-rules-agent-experience>` 标签。默认值、错误、兼容或数据格式变化与代码同改；外部破坏的升级说明在当前改动产生，写清旧新行为、受影响者、迁移验证与真实回退限制。
+
+在原 Evidence 记录 `Engineering Evidence`，kind 为 `documentation`；字段与校验见 下方 `<ref-common-rules-engineering-evidence>` 标签。每项声明为 verified 或 unverified；总体 partial/blocked 不等于 Ticket done。新分支使用 `--engineering documentation` 校验对应原工件，再完成 I 的适用项目验证、两轴审查、状态回读和交付。
+
+## 失败与恢复
+
+以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
+
+</ref-i-implement-references-documentation-procedure>

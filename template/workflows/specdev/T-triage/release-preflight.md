@@ -11,3 +11,7 @@
 7. 需要文档同步时，由 <Path>{roots.commands}/docs-sync.md</Path> 处理其 state、bootstrap 和范围；T 不改 sidecar。
 
 完成条件：记录中的 targets 数组及 Targets 正文列出每个包、registry、版本、dist-tag 与发布判定，Evidence 引用固定 SHA 的检查；unknown/冲突保留 blocked。预检通过并不授权 commit/push/tag/发布。
+
+## 兼容与用户迁移
+
+核对实际已发布基线、待发布构件与适用升级说明。说明受影响者、旧新行为、迁移步骤和确认结果；回退须有真实保证。预发布数据也有兼容义务，不能当作可随意丢弃的开发数据。

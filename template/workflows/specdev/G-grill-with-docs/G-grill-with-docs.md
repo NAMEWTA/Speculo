@@ -15,6 +15,12 @@ keywords: [grill, 设计树, 领域, 决策, 共识]
 
 读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位当前 change 的 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`、`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 和相关 initiative 决策。先找到相关条目再回读必要原文，不默认整读永久 ADR 或索引。
 
+## 按风险选择问题
+
+涉及失败、重试、取消或恢复时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>：谁拥有状态，何时算成功，超时后副作用是否未知，谁核实结果，什么可以重复，哪些依赖应停止？涉及工具/prompt/context 时再读取 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。问题由当前 change 风险触发，不固定全问；仓库能查明的事实先查，高影响取舍才询问用户。
+
+局部 ADR 保留真实问题、采纳决定、考虑过的替代方案、代价、适用范围和验证义务。未确认方案留 LOG/设计树，不编造备选，也不把已采纳但未实现的决定写成已交付。
+
 ## 当前 change 的访谈与共识
 
 进入访谈必须读取 `<Path>{roots.workflows}/specdev/G-grill-with-docs/references/interview-procedure.md</Path>`，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。

@@ -16,6 +16,10 @@
 
 只有极小、局部、单一行为、低风险、可逆且无需 Ticket DAG 的工作，才可在用户批准后直接基于 Spec/ADR/CONTEXT 在 current workspace 执行。先确认目标、IN/OUT、唯一写入 owner、可写范围、关键不变量、验证和验收。出现公共 API/schema、迁移、安全、高风险、多个行为或并行需求时返回 T-tickets。
 
+### Documentation 分支
+
+Ready documentation Ticket 或获批 Direct Spec 需要维护项目文档时读取 <Path>{roots.workflows}/specdev/I-implement/references/documentation-procedure.md</Path>。继续执行下方全部适用预检、workspace、commit、双轴审查、Evidence 和完成步骤；仅纯说明变更的代码红绿循环由可运行示例/类型/链接/生成与事实验证替代。prompt/tool/CLI/UI 文案属于可见行为，不能按纯说明豁免。
+
 ## 输入
 
 两种模式都必须读取：
@@ -80,7 +84,7 @@ Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风
 
 ### 4. TDD 红→绿垂直循环
 
-加载 `<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-test-design.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`。对每个验收行为或关键风险：
+加载 `<Path>{roots.workflows}/specdev/I-implement/tdd-rules.md</Path>`、`<Path>{roots.workflows}/specdev/I-implement/tdd-test-design.md</Path>` 和 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`。纯说明文档按上方 documentation 分支验证；其余对每个验收行为或关键风险：
 
 1. 选择公共接口或稳定接缝；
 2. 编写因目标行为缺失而失败的测试/验证并确认失败原因；
@@ -93,6 +97,8 @@ Ticket 模式下，Lead 根据 Ticket 独立性、路径冲突、上下文、风
 不得删除测试、放宽断言、吞错、永久跳过或只验证 Mock 调用次数来制造绿色。
 
 新增或修改代码注释时，先判断信息能否由命名、类型或结构表达，并同步维护受行为变化影响的既有注释。
+
+涉及错误、取消、并发或资源释放时，按 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path> 验证实际状态与清理完成。注册、Worker、CLI、配置和发布路径要覆盖真正入口；删除旧测试前核对全部风险承接，不因为新接口测试存在就删除。
 
 ### 5. 实现检查、commit 与 Lead 接收
 

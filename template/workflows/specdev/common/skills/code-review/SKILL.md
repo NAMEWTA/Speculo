@@ -13,7 +13,7 @@ metadata: {"speculo-legacy-name": "specdev-code-review"}
 
 - `fixed_point`：已解析的 commit SHA；
 - `head`：已解析的 HEAD/checkpoint SHA；
-- `diff_command`：固定为三点 diff；
+- `diff_command`：由调用方冻结的实际 argv；legacy 默认三点，显式 range/commit 使用已确认端点，不由 reviewer 换范围；
 - `commit_log`：固定点之后的 commit 列表；
 - `spec_sources`：零个或多个本地权威来源；
 - `standards_sources`：仓库编码标准来源；
@@ -22,7 +22,7 @@ metadata: {"speculo-legacy-name": "specdev-code-review"}
 
 ## 流程
 
-1. 重验 fixed point/head 可解析、三点 diff 非空，失败时不启动 reviewer。
+1. 重验 fixed point/head、实际 diff 语义和摘要；无效引用不启动 reviewer。合法空 diff 由调用方返回 no-diff，不伪造 approved 或复用非空报告。显式范围不得回退为默认三点比较。
 2. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/source-discovery.md</Path>`，穷尽规范和标准来源。
 3. 发现已有审查并拟复用时，先读取 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/result-reuse.md</Path>`，完整核对输入、两轴隔离与原始证据；能证明相同的轴保留原结果，其余轴按下列步骤运行；未能证明相同就正常重审两轴。
 4. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
@@ -51,3 +51,5 @@ Finding 必须包含 severity、项目相对 Path/代码块、具体风险、依
 - 两个 reviewer 上下文没有相互发现污染；
 - 每个发现可定位且说明行为风险；
 - 两轴按固定顺序返回，缺失规范没有掩盖标准审查。
+
+对适用风险先给出可证伪反例，再追踪消费者、实现、测试及恢复；测试覆盖率、配对哈希或 schema 成功不代替语义审查。错误和可靠性分别引用 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。

@@ -48,3 +48,7 @@ node <Path>{roots.workflows}/specdev/P-prototype/tools/materialize-prototype.mjs
 随后运行局部 validator、项目可用的 HTML/CSS/JS 检查和浏览器视口检查，把命令、退出码、关键输出与截图相对路径写入 `Validation and Handoff`。
 
 **完成标准**：物化二次运行无 diff；最终页面离线可用；所有验收项有证据而不是口头断言。
+
+## 状态矩阵与证据标记
+
+为适用正常/空/加载/失败/取消/重试/权限不足/恢复场景记录预期反馈与交互。核对主题、窗口边缘、响应式、键盘、focus 和遮挡。每个录制或截图标明原型/真实服务/fixture、准确源码与环境；不同运行不能拼成一次成功，原型不证明生产行为。

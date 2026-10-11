@@ -31,6 +31,10 @@ W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill →
 | 生成地图、问题与答案 | 下方 `<wayfinder-map-template>` 标签、下方 `<investigation-ticket-template>` 标签、下方 `<solution-comment-template>` 标签 |
 | 选定清晰 change 交给 Goal | 下方 `<ref-w-wayfinder-references-initiative-discovery>` 标签 的交接门禁 |
 
+## 调查的决策价值
+
+每张调查说明它影响的决定、已知事实、缺失证据、最小调查、结束条件和下一 owner。只对目的地相关的兼容、迁移、权限、故障、成本和部署约束展开，不把“全面研究”变成无限搜索。答案需有可回读来源；没有依据的候选继续未知，不能以调查完成代替产品完成。
+
 ## 必留纪律
 
 - 目的地约束所有调查；能精确陈述的问题成为调查票，尚不能陈述的留在战争迷雾，目标外内容不自动升级。
@@ -74,6 +78,10 @@ resolution: null
 ## 问题
 
 <此 Ticket 要解决的一个决策、调查或解除阻塞工作。>
+
+## 调查价值
+
+本问题影响的决定、已经可查的事实、缺失证据、最小调查、结束条件与下一 owner。只展开与目的地相关的风险；research/prototype/task 不自动转生产实现。
 
 </investigation-ticket-template>
 
