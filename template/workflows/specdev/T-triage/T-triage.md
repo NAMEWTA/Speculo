@@ -13,7 +13,7 @@ keywords: [triage, issue, PR, intake, reconcile, publish, capture, queue, releas
 
 ## 选择模式
 
-只读取选中分支，publish 专指 Ticket→Issue，release 专指包/GitHub Release。
+只读取选中分支，publish 专指 Ticket→Issue，release 专指包/GitHub Release。按意图先分组：请求摄入（queue/capture/intake）、完成投影（reconcile/publish）、PR 交付、CI/安全、版本发布（preflight/release）、原记录恢复。组名只是导航，不增加模式或 owner。
 
 | 模式 | 协议 | owner 与结果 |
 |---|---|---|
@@ -37,6 +37,12 @@ keywords: [triage, issue, PR, intake, reconcile, publish, capture, queue, releas
 capture 不创建也不选择 change，不写 current_work，只使用 <Path>{roots.state}/specdev/capture.md</Path>。queue 只返回候选。CI/发布独立记录写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>；T 在首次具体操作时选最小未用 ID，按 <Path>{roots.workflows}/specdev/T-triage/triage-run-template.md</Path> 原子写入并重读，不占用 change 状态。recover 使用原账本 owner。
 
 尚未完成 change 的 intake 在 current_work 为空时登记 specdev/triage，他项占用先恢复或 handoff；成功去重追加 works_run 并清空 current_work，可恢复失败保留。已完成 change 的 reconcile/publish 和 PR 交付只更新各自账本，不占用 current_work，不重开实现状态。PR 不能修改来源关闭、Ticket publish 或 capture 状态。远程失败不能把已完成代码状态改回未完成。
+
+## 远程结果与检查有效期
+
+区分本地完成、push、PR created/ready/merged、Issue closed、npm 和 GitHub Release 的逐目标回执。queued、pending、skipped、未启动或环境失败不能写 passed；只重跑真正失效或失败的检查。PR/依赖交付固定真实 base/head、顺序和授权，改写后重新核对审查及 CI。删除来源分支前确认没有未完成依赖，不硬编码宿主必有某个 stack 扩展。
+
+超时先沿原 marker/目标对账，部分成功恢复原账本，不重建、不把远程失败倒灌为代码未完成。CI 资源问题按需读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；升级说明与实际构件、已发布基线和用户迁移步骤一起核对，不在 release 当天补造兼容承诺。
 
 ## 验证与返回
 

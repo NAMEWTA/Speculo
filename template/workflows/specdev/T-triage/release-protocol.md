@@ -10,3 +10,7 @@
 6. Release 正文来自已确认版本说明，按需读取 <Path>{roots.workflows}/specdev/T-triage/references/release-notes-injection.md</Path>。需要补记 docs-sync 输入节点时再次调用 docs-sync，由它维护游标；tag 保持不变。
 
 记录最终 SHA/tag/run ID、每个目标读回结果、docs-sync 结果或不适用原因。任一 required 目标未知或失败不得标 completed，保留已发布事实和后续恢复条件。全部通过才将 TRI 标 completed，运行 --triage-run 校验并返回报告。
+
+## 逐目标成功与未知结果
+
+npm、GitHub Release、tag 和其他获批目标各有回执，部分成功只恢复未完成部分。超时先核实原目标，不重复执行已确认效果；缺必需验证仍阻塞，不改本地开发完成状态。

@@ -23,3 +23,7 @@
 - 同义反复地重算预期值；
 - 绕过公共接口验证内部存储；
 - 只覆盖 happy path，遗漏 Ticket 明确的错误与边界行为。
+
+## 测试可靠性
+
+对真实 runner、配置、Worker、子进程和发布构件选择明确入口；运行资源立即登记清理并等待完成。用目标行为失败证明 red，不只断言 mock 次数。并发/时间/全局变量参见 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>，压力重复不是确定性竞态测试。

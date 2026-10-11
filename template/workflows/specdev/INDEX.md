@@ -24,3 +24,7 @@ keywords: [specdev, local-first, 规格驱动开发, decision-complete, prototyp
 ## Work 激活
 
 用户明确激活 SpecDev 或其中某个 Work 后，读取 `<Path>{roots.workflows}/specdev/README.md</Path>` 取得 Work 条目、启动、恢复、状态、所有权和副作用合同，再进入目标 Work。仅发现本索引或读取永久知识不加载该合同。
+
+## 专业能力定位
+
+用户明确激活对应 Work 后再加载其分支：性能测量用 R-review-architecture；获批文档维护用 I-implement；无法复现事件的证据收集用 D-diagnose-bugs。保留原入口，不新增 Work ID 或另一套技能目录；只想了解当前 change 的实现仍用 L-learn-change。

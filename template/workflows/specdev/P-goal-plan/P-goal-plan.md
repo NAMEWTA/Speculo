@@ -41,6 +41,12 @@ keywords: [goal, 目标, plan, run, resume, replan, verify, Lead]
 - 他人 owner、资源或事务冲突仅暂停受影响的依赖闭包；继续独立已授权工作，不抢占、解锁或覆盖他人内容。正式记忆仍只走原网关。
 - 调度调用 `<Path>{roots.workflows}/specdev/I-implement/I-implement.md</Path>`；调度器不代替实现、审核或授权。长期运行指可恢复，不承诺后台或无限运行。
 
+## 证据复用与停滞恢复
+
+验证复用按 <Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path> 核对代码、配置、输入、Skill、环境和原输出；只使受影响证据失效。升级兼容、迁移、用户可见行为或性能测量仅在风险相关时成为 Goal Gate，不增加普遍必跑流程。
+
+保留原无进展停止：同一 blocker 没有新证据时不重复派发。新 Dispatch 必须说明输入、方法、范围、环境或责任处置的实质变化；换 Agent 或清空 attempts 不是变化。恢复仍核对原授权、owner、Lead epoch 和未决副作用，不接管他人资源。
+
 ## 校验与交付
 
 从 map 运行只读控制检查（它不执行代码或授予写权限）：

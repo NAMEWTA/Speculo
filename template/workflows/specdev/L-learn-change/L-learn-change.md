@@ -19,6 +19,10 @@ keywords: [learn-change, change 学习, 开发后提问, 零基础, 大一新生
 4. **生成与保存**：读取 `<Path>{roots.workflows}/specdev/L-learn-change/references/lesson-format.md</Path>` 的完整格式和命名合同。先画 ASCII 全图，再按实际关系画短小结构/数据/调用/状态图；用短句解释箭头，术语先日常解释再给专业名字。验证零背景读者能复述三个答案；不能时拆图或换词，不灌长文。
 5. **追加而非覆盖**：从 `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 及同目录真实图解的最大编号取下一号；先原子创建 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>` 新图解，再更新索引并回读。重讲同主题仍新增编号，保留旧文件、原顺序和全部历史行。产物仅为纯 Markdown/ASCII，不生成 HTML、CSS、SVG、图片或浏览器依赖，不写 `<Path>{roots.state}/learning/</Path>`、生产代码、永久知识或远程系统。
 
+## 事实、理由与解释
+
+图解中明确已验证实现事实、可定位设计理由、教学类比与未知。讲解失败或恢复时引用实际契约与证据，不编造事故；旧计划与现状不同要指出差异，不把提案当事实。重新讲同主题仍追加新编号，不覆盖历史，不改 Learning workflow，也不把理解总结直接晋升永久知识。
+
 ## 验收与恢复
 
 ```bash

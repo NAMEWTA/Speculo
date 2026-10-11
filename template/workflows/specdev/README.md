@@ -33,7 +33,7 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 ## 状态字段
 
-全局 status/config 保留 v5；change status 与 Goal Plan 保留 v6；Spec/Ticket/Map 保留 v3，新增 Plan 扩展版本 1；父 Map/Plan 保留 v1。详细字段、枚举、worktree Evidence 与旧工件兼容见状态细则，不为压缩文档另建状态库。
+全局 status 保留 v5，config 保留 v6；change status 与 Goal Plan 保留 v6；Spec/Ticket/Map 保留 v3，新增 Plan 扩展版本 1；父 Map/Plan 保留 v1。详细字段、枚举、worktree Evidence 与旧工件兼容见状态细则，不为压缩文档另建状态库。
 
 ## 路径分配
 
@@ -49,22 +49,30 @@ CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator
 
 不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，单个已拆票 change 或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账/尚未成 Change 的记事项才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
 
+## Work 能力与专业分支
+
+每个 Work 的具名入口 Markdown 就是可调用技能入口，保持原 id、名称、路径与恢复键；Work 不等同于一个常驻 worker，也不要求启动子 Agent。按用户意图与已有工件进入，不把全部 Work 串成每次必跑流水线。
+
+R 的 performance 分支先测量再给优化候选；I 的 documentation 分支在原 Ready Ticket/获批 Direct Spec 内维护项目文档；D 的 evidence-triage 只收集事件证据，不宣称根因确认。这些分支使用原 Work、原 owner 和原工件，不修改主持久化 schema。T 继续拥有原远程模式和账本，不另设发布状态库。
+
+同一次任务已加载且摘要未变的规则不机械重复读取；必要安全限制仍在动作前核对，范围/摘要/owner 变化时只重读受影响内容。专业证据的结构检查不认证真实工具或模型行为。
+
 ## Work 条目
 
 
 <!-- AUTO-INDEX-START -->
 
 - **A-archive-and-consolidate** — 归档与沉淀：校验本地完成、源 Issue reconcile 门和票级 publish_action 门，复用全局归档能力移动 completed change 并提升当前知识，或从代码访谈形成可归档知识 change。
-- **C-code-review** — 代码审查：将 commit、branch、tag、merge-base 或 PR 解析为本地不可变固定点，执行隔离的标准轴与规范轴审查并持久化可恢复报告。
-- **D-diagnose-bugs** — 诊断 Bug：先建立会在精确症状上变红的紧凑反馈回路，再通过最小化、排名假设和单变量探针确认根因，输出修复契约而不实施生产修复。
+- **C-code-review** — 代码审查：按用户指定的 PR、单 commit、区间或基线冻结真实比较范围，执行隔离的标准轴与规范轴审查；有效空差异诚实返回，不实施修复或发布。
+- **D-diagnose-bugs** — 诊断 Bug：调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。
 - **G-grill-with-docs** — Change 决策访谈：一个已界定 change 仍有产品、领域或架构决定待确认时进行可恢复访谈；跨 change 边界未清晰时先用 W。
-- **I-implement** — 实现与验收：执行已授权的 Ready Ticket 或获批 Direct Spec，产生可回读实现和验收证据；不从模糊需求直接写代码。
+- **I-implement** — 实现与验收：执行已授权的 Ready Ticket 或获批 Direct Spec，覆盖代码实现与文档维护，产生可回读验收证据；不从模糊需求或只读审查直接写入。
 - **I-init-setup** — 初始化设置：初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。
 - **L-learn-change** — Change 学习：在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。
 - **P-goal-plan** — Goal 规划与执行：为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。
 - **P-prototype** — 逻辑与 UI 原型：按需验证离线逻辑模型，或检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。
 - **R-retro** — 开发复盘：对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn-change，Speculo 产品反馈使用 retro 命令。
-- **R-review-architecture** — 架构审查：从用户指定范围或 Git 热点扫描代码库中的结构性坏味道、代码 judo 机会和维护性风险，以中文 Markdown 记录高置信候选，并对用户选择的一个方案运行设计树访谈。
+- **R-review-architecture** — 架构审查：审查指定代码范围的结构与维护成本，或测量真实用户操作的性能并形成候选；只报告或深入用户选定的设计，不直接实施优化。
 - **S-spec** — 编写 Spec：综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。
 - **T-tickets** — 编写计划型 Tickets：将已澄清的 Spec 或等价获批计划拆为可验收的实施 Ticket，并绑定真实项目 Skill；不用于探索未知需求或执行代码。
 - **T-triage** — 请求分诊与 GitHub 交付：摄入与核验外部请求、投影本地完成事实、交付 PR，或按明确目标处理 CI、安全告警、npm/GitHub Release 预检、发布和恢复；清晰的本地需求直接进入对应 Work。
@@ -84,7 +92,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
 
-支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
+支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、retro、pr-delivery、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
 
 ## 远程交付、逻辑原型与复盘
 

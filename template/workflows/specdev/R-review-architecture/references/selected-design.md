@@ -21,3 +21,7 @@
 ### 4. 转化为执行工作
 
 只有被接受且有具体变更压力的提案进入 `<Path>{roots.workflows}/specdev/T-tickets/T-tickets.md</Path>`。加载 `<Path>{roots.workflows}/specdev/R-review-architecture/proposal-to-ticket.md</Path>`，按 Prefactor、Standard 或 Deep/expand-contract 建立 Ready 治理；只有能删除复杂性的提案才继续，纯重排和 thin wrapper 不进入 Ticket。
+
+## 从候选到验收
+
+接受的简化必须保持现存消费者、安全、兼容和持久数据义务；若主动放弃能力，交上游明确批准。原测试删除逐项给出承接证据；性能候选把可比较测量和行为保持一并交票，不将估计收益改写为已验证。

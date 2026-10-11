@@ -11,3 +11,7 @@
 5. 读回 URL、正文、draft 状态与 SHA，原子更新记录并重读，运行 SpecDev --stage pr-delivery。失败保留原记录；超时先按 marker 和分支查询。
 
 requested=false 或 waived 的记录不挡归档；明确请求且 pending/failed 的 PR 交付挡对应交付门，不回退已完成代码事实。创建成功不意味着 merge 或 release 已获授权。返回 PR、记录、验证和下一动作。
+
+## 证据与精确远端
+
+把演示、构件和检查绑定本次 base/head 与真实模式；没有 checks、queued、pending、skipped 或环境失败分别说明。报告 PR 已创建/ready/merged 的真实阶段，不把 API 请求接收当合并完成。依赖 PR 顺序与删除前零依赖都需回读；不假定 gh stack 可用。

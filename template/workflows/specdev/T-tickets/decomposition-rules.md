@@ -54,3 +54,7 @@
 ### Bug fix
 
 已确认根因时，以 `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` 的修复契约为依据；根因未知时先运行 `<Path>{roots.workflows}/specdev/D-diagnose-bugs/D-diagnose-bugs.md</Path>`。
+
+## 工程证据随行为切片
+
+把文档、失败恢复、真实入口与回归检查放入拥有该行为的票，不逐检查项拆票制造交接。复杂迁移保留 Expand → Migrate → Contract 的真实顺序和旧数据核对；低风险文档继续使用现有 documentation kind。

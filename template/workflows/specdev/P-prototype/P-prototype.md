@@ -19,6 +19,10 @@ keywords: [prototype, UI 原型, 风格检测, 设计系统, HTML, CSS, 交互, 
 
 逻辑/状态/规则验证读取 <Path>{roots.workflows}/specdev/P-prototype/logic-protocol.md</Path>，跳过下方 UI 专属步骤。UI 仍默认离线持久化，默认 3 个、最多 4 个方案。只有用户明确要求项目内预览时读取 <Path>{roots.workflows}/specdev/P-prototype/project-preview-protocol.md</Path>；其临时写集与清理由该分支管理，下方 UI 设计权威与离线交付保持。
 
+## 交互和逻辑状态
+
+按项目风险验证正常、空、加载、失败、取消、重试、权限不足和恢复状态。复用既有 token/组件；主题、窗口边缘、响应式、键盘、focus、遮挡与可访问性均由真实项目需求决定，不搬 DSH 视觉常量。失败反馈遵守 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>，提示与有效数据有明确生命周期。原型只证明原型路径，不冒充生产或真实 API 验收。
+
 ## 输入与所有权
 
 - 必需输入：目标项目或新产品设想、核心用户任务，以及当前 SpecDev change。

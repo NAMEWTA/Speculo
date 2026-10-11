@@ -132,3 +132,7 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - CONTEXT 格式：`<Path>{roots.workflows}/specdev/common/rules/context-format.md</Path>`
 - LOG 格式：`<Path>{roots.workflows}/specdev/G-grill-with-docs/log-format.md</Path>`
 - Stakeholder 问卷：`<Path>{roots.workflows}/specdev/G-grill-with-docs/stakeholder-questionnaire.md</Path>`
+
+## 决策记录的完整性
+
+结晶时区分采纳决定与实际落地；ADR 留真实备选、理由、代价、适用范围和验证义务，未确认解释留 LOG。以后路径/命名变化更新当前事实，决定改变则保留取代关系；永久知识仍经 A，不把提案当作已实现。

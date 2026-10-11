@@ -16,6 +16,10 @@ updated_at: <ISO-8601>
 
 只记录可观察现象、受影响对象、严重度和时间范围。
 
+### 事件证据调查（无法安全复现时）
+
+分开记录直接观察与来源、时间/版本、矛盾、缺失资料、待验证解释和下一安全检查。保持正式假设表为空，根因与修复合同未确认；捕获物仅使用原 diagnostics。按 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path> 在本文件追加 incident 记录，不虚构红灯。
+
 ## 2. 红灯反馈回路
 
 - **命令：**
