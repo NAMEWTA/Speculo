@@ -1,0 +1,40 @@
+@@FILE common/tools/validate-specdev.mjs
+@@EDIT 28 28 2
+import { reviewScopeCLI } from "./review-scope.mjs";
+import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
+@@EDIT 1079 1080 1
+        ["--review-scope", "baseline", "range", "commit", "pr", "no-diff", "固定点", "标准轴", "规范轴", "未合并排名", "reviews/CR-###.md"],
+@@EDIT 1276 1276 10
+  errors.push(...validateEngineeringPackage(root));
+  // Run real runner regressions; these tests never recursively request self-check.
+  try {
+    execFileSync(process.execPath, ["--test", join(root, "common", "tools", "tests", "engineering.test.mjs")], {
+      encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    errors.push(`engineering regressions failed: ${error.stdout ?? ""}${error.stderr ?? error.message}`);
+  }
+@@EDIT 1648 1648 3
+  }
+  if (["minimizing", "testing-hypotheses", "root-cause-confirmed"].includes(meta.status) && meta.feedback_loop_ready !== true) {
+    errors.push("diagnosis.md: advanced diagnosis requires ready feedback loop and real red evidence");
+@@EDIT 3287 3288 1
+function validateChange(change, stage = null, repoRoot = null, engineeringKind = null) {
+@@EDIT 3637 3637 1
+  errors.push(...validateEngineeringArtifacts(change, engineeringKind));
+@@EDIT 3648 3649 1
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr> [comparison options] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
+@@EDIT 3653 3653 2
+  if (argv[0] === "--review-scope") return reviewScopeCLI(argv.slice(1));
+  let engineeringKind = null;
+@@EDIT 3661 3662 4
+    if (arg === "--engineering") {
+      if (engineeringKind !== null || !ENGINEERING_KINDS.has(argv[index + 1])) return usage();
+      engineeringKind = argv[++index];
+    } else if (arg === "--self-check") {
+@@EDIT 3687 3687 1
+  if (engineeringKind !== null && (selfCheckRequested || capturePath || triageRunPath || positional.length !== 1)) return usage();
+@@EDIT 3705 3706 1
+    const result = validateChange(resolve(positional[0]), stage, repoRoot, engineeringKind);
+@@END

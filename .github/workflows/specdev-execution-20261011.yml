@@ -19,7 +19,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: '24'
-      - name: Export pinned baseline and run isolated implementation
+      - name: Apply exact reviewed sources, validate and publish isolated result
         env:
           BASE_SHA: 8e204c619576c92c1aa3c9a5476746045d1fb69e
           TARGET_BRANCH: refactor/specdev-dsh-work-upgrade-20261011
@@ -29,20 +29,12 @@ jobs:
           evidence="$RUNNER_TEMP/specdev-evidence"
           mkdir -p "$evidence"
           git archive "$BASE_SHA" | gzip > "$evidence/source.tar.gz"
-          tar -czf "$evidence/node-modules.tar.gz" node_modules
-          cp "$(command -v node)" "$evidence/node"
-          gzip "$evidence/node"
           printf '%s\n' "$BASE_SHA" > "$evidence/base-sha.txt"
-          if [ ! -f .specdev-execution/changes.patch.gz ]; then
-            node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check > "$evidence/baseline-self-check.log" 2>&1
-            exit 0
-          fi
-          gzip -dc .specdev-execution/changes.patch.gz > "$RUNNER_TEMP/specdev-changes.patch"
+          transfer="$GITHUB_WORKSPACE/.specdev-execution"
           out="$RUNNER_TEMP/specdev-output"
           git worktree add --detach "$out" "$BASE_SHA"
+          python3 "$transfer/apply.py" "$transfer/parts" "$out" | tee "$evidence/source-digests.log"
           cd "$out"
-          git apply --check "$RUNNER_TEMP/specdev-changes.patch"
-          git apply "$RUNNER_TEMP/specdev-changes.patch"
           python3 - <<'PY'
           import subprocess
           paths = subprocess.check_output(['git','status','--porcelain','-z'], text=True).split('\0')
@@ -52,11 +44,14 @@ jobs:
                   raise SystemExit('Out-of-scope source modification: '+p)
           PY
           pnpm install --frozen-lockfile 2>&1 | tee "$evidence/install.log"
+          node skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/specdev --check 2>&1 | tee "$evidence/index-check.log"
           node scripts/generate-specdev-canonical.mjs 2>&1 | tee "$evidence/generation.log"
           node --test template/workflows/specdev/common/tools/tests/*.test.mjs 2>&1 | tee "$evidence/specdev-tests.log"
           pnpm check 2>&1 | tee "$evidence/full-check.log"
           pnpm verify-bin 2>&1 | tee "$evidence/verify-bin.log"
           node scripts/generate-specdev-canonical.mjs --check 2>&1 | tee "$evidence/generation-check.log"
+          node scripts/generate-specdev-canonical.mjs 2>&1 | tee "$evidence/generation-second.log"
+          node scripts/generate-specdev-canonical.mjs --check 2>&1 | tee "$evidence/generation-second-check.log"
           git diff --check
           python3 - <<'PY'
           import subprocess

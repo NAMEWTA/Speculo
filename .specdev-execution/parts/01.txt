@@ -1,0 +1,315 @@
+@@FILE R-review-architecture/references/performance-review.md
+@@EDIT 0 0 27
+# 性能测量与优化候选
+
+仅在用户明确要求性能分析，或已有测量指出真实用户操作成本时进入。当前 Work 仍为 `specdev/review-architecture`，结果写回 <Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>；不创建性能状态库，不修改生产实现。已有性能故障需要确认根因时交 D。
+
+## 测量前冻结问题
+
+确认用户操作、可观察完成点、典型与长尾工作量、资源限制、允许的行为差异和停止条件。读取当前源码、构建入口及现有 benchmark；基于真实消费者而不是函数外观提出候选。缺权限或数据时报告无法测量，不估造结果。
+
+测量卡记录操作、代码 checkpoint、输入构造与 digest、入口、环境、单位、方向、时钟起止、冷暖状态、排除的外部模型/网络成本、原始样本、内存保留及判定方式。允许的时间/内存预算需要项目或用户依据，不照搬 DSH 常量。只有零个测量样本时结果必须为 `inconclusive`。
+
+使用脱敏的固定合成输入，不能把用户原始 prompt、路径、身份、密钥或可识别片段放入 fixture。冷启动使用独立进程与临时根；暖态明确保留何种缓存。临时探针、独立 fixture 或基准脚本仍须明确授权及清理，不能把性能调查当成生产重构许可。
+
+## 测量与判断
+
+先保存基线，再按已获授权做最小区分性实验；一次改变一个因果因素。相同输入、入口、环境、时钟、冷暖条件和完成点才能比较。记录全部样本与选择汇总方式的理由，不挑最快一轮；均值下降本身不证明收益超出噪声。端到端操作与局部阶段分别测量；峰值、暂时分配和可达对象保留也分别说明。
+
+优化候选说明真实调用方、重复工作、预计复杂度、可证伪干预、最强保留理由、维护成本和必须保持的行为。缓存需要失效策略、有界保留、独立取消与释放；删除解析/冻结/校验前说明所有权与信任边界。提升吞吐不能隐瞒长尾延迟或内存恶化。
+
+没有瓶颈、没有净收益、证据不够或不值得增加复杂性都是合法结论。报告候选不自动建票；用户接受后按原 S/T/P/I 链执行。只有优化实际实施且行为验证通过，才能把可比较数据作为“已改善”候选证据；R 的普通调查通常只产出基线及提案。
+
+## 可回读记录与验收
+
+在原报告增加 `Engineering Evidence`，记录格式见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>，kind 为 `performance`。新分支运行现有校验器的 `--engineering performance`，输入当前 change；它会拒绝无样本的测量声明、不可比较记录和与数字相反的改善声明，但不认证时钟、数据真实性或统计显著性。
+
+行为回归和性能反例分开。实际改进交 I 后，检查必须能在原实现或受控成本回引时失败；把预算放宽到退化也通过，不构成保护。汇报原始数据、包含与排除成本、候选、拒绝原因、已执行检查及未覆盖路径。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-speed-up-perf/SKILL.md</Url>。
+@@END
+@@FILE R-review-architecture/references/selected-design.md
+@@EDIT 23 23 4
+
+## 从候选到验收
+
+接受的简化必须保持现存消费者、安全、兼容和持久数据义务；若主动放弃能力，交上游明确批准。原测试删除逐项给出承接证据；性能候选把可比较测量和行为保持一并交票，不将估计收益改写为已验证。
+@@END
+@@FILE R-review-architecture/review-rubric.md
+@@EDIT 52 52 4
+
+## 维护义务与最强反对理由
+
+候选记录真实生产消费者、动态配置/加载、第三方接口、数据与兼容义务。明确移除了哪些状态、配置、表示、失效路径和测试负担，剩余 glue 的代价是什么，以及最强保留理由。单 provider 或静态零调用不自动证明可删；代码行数只用于发现，不作收益指标。性能提案必须先使用 <Path>{roots.workflows}/specdev/R-review-architecture/references/performance-review.md</Path> 测量。
+@@END
+@@FILE README.md
+@@EDIT 35 36 1
+全局 status 保留 v5，config 保留 v6；change status 与 Goal Plan 保留 v6；Spec/Ticket/Map 保留 v3，新增 Plan 扩展版本 1；父 Map/Plan 保留 v1。详细字段、枚举、worktree Evidence 与旧工件兼容见状态细则，不为压缩文档另建状态库。
+@@EDIT 51 51 8
+## Work 能力与专业分支
+
+每个 Work 的具名入口 Markdown 就是可调用技能入口，保持原 id、名称、路径与恢复键；Work 不等同于一个常驻 worker，也不要求启动子 Agent。按用户意图与已有工件进入，不把全部 Work 串成每次必跑流水线。
+
+R 的 performance 分支先测量再给优化候选；I 的 documentation 分支在原 Ready Ticket/获批 Direct Spec 内维护项目文档；D 的 evidence-triage 只收集事件证据，不宣称根因确认。这些分支使用原 Work、原 owner 和原工件，不修改主持久化 schema。T 继续拥有原远程模式和账本，不另设发布状态库。
+
+同一次任务已加载且摘要未变的规则不机械重复读取；必要安全限制仍在动作前核对，范围/摘要/owner 变化时只重读受影响内容。专业证据的结构检查不认证真实工具或模型行为。
+
+@@EDIT 57 59 2
+- **C-code-review** — 代码审查：按用户指定的 PR、单 commit、区间或基线冻结真实比较范围，执行隔离的标准轴与规范轴审查；有效空差异诚实返回，不实施修复或发布。
+- **D-diagnose-bugs** — 诊断 Bug：调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。
+@@EDIT 60 61 1
+- **I-implement** — 实现与验收：执行已授权的 Ready Ticket 或获批 Direct Spec，覆盖代码实现与文档维护，产生可回读验收证据；不从模糊需求或只读审查直接写入。
+@@EDIT 66 67 1
+- **R-review-architecture** — 架构审查：审查指定代码范围的结构与维护成本，或测量真实用户操作的性能并形成候选；只报告或深入用户选定的设计，不直接实施优化。
+@@EDIT 86 87 1
+支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、retro、pr-delivery、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
+@@END
+@@FILE S-spec/S-spec.md
+@@EDIT 21 21 4
+## 失败与兼容合同
+
+适用时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>，把未开始/部分发生/已提交/未知结果、重复/乱序/取消、可重试前提、状态有效性和可见诊断写入原 AC/NFR。公共接口与旧数据变更须给出兼容、迁移和恢复限制。每项绑定真实可观察接缝或待建设接缝，不虚构错误码、性能阈值或安全保证。已知低风险变更不为了填表增加无关条款。
+
+@@END
+@@FILE S-spec/spec-template.md
+@@EDIT 95 95 4
+
+## 失败与兼容补充（适用时）
+
+在原 AC/NFR 编号下记录取消/重复/乱序、未开始/部分提交/已提交/未知结果、可安全重试前提、状态 owner、可观察错误和旧数据迁移/恢复限制。这里只补充适用合同，不新增另一套验收编号或实现计划。
+@@END
+@@FILE T-tickets/T-tickets.md
+@@EDIT 37 37 6
+## 工程义务与证据失效
+
+每票按实际影响列明真实生产消费者、接口两端、文档/升级说明、回归与模型可见输出的责任；删除测试要给出原风险在新测试中的承接。风险及证据选择使用 <Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>，失败状态使用 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>。工具定义或上下文变更才加载 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。
+
+将有关检查合并进负责该行为的 Ticket，不为每个检查项创建一票。documentation 仍用现有 kind，性能实施引用 R 的测量基线，不增加分类 schema。每票说明 base/head、配置、输入或 Skill 改变后哪些证据需重新验证。
+
+@@END
+@@FILE T-tickets/decomposition-rules.md
+@@EDIT 56 56 4
+
+## 工程证据随行为切片
+
+把文档、失败恢复、真实入口与回归检查放入拥有该行为的票，不逐检查项拆票制造交接。复杂迁移保留 Expand → Migrate → Contract 的真实顺序和旧数据核对；低风险文档继续使用现有 documentation kind。
+@@END
+@@FILE T-tickets/ticket-readiness.md
+@@EDIT 50 50 4
+
+## 适用工程义务
+
+Ready 前确认真实调用方、文档/升级说明、正常与失败验证、恢复条件和证据失效条件。删除测试有风险承接；性能票有测量基线和真实用户操作；文档票分清纯说明与可见行为。缺少 required 验证不因工具暂不可用而标 ready。
+@@END
+@@FILE T-tickets/ticket-template.md
+@@EDIT 151 151 4
+
+## 工程验收补充（适用时）
+
+列明真实消费者/入口、文档和升级说明、错误后的状态保证、恢复责任、旧测试的风险承接，以及代码/输入/配置/Skill 变化时需重验的证据。性能票引用用户操作与基线；documentation 票区分纯说明与模型/用户可见变化。无关项写不适用及理由，不逐项另造 Ticket。
+@@END
+@@FILE T-triage/T-triage.md
+@@EDIT 15 16 1
+只读取选中分支，publish 专指 Ticket→Issue，release 专指包/GitHub Release。按意图先分组：请求摄入（queue/capture/intake）、完成投影（reconcile/publish）、PR 交付、CI/安全、版本发布（preflight/release）、原记录恢复。组名只是导航，不增加模式或 owner。
+@@EDIT 40 40 6
+## 远程结果与检查有效期
+
+区分本地完成、push、PR created/ready/merged、Issue closed、npm 和 GitHub Release 的逐目标回执。queued、pending、skipped、未启动或环境失败不能写 passed；只重跑真正失效或失败的检查。PR/依赖交付固定真实 base/head、顺序和授权，改写后重新核对审查及 CI。删除来源分支前确认没有未完成依赖，不硬编码宿主必有某个 stack 扩展。
+
+超时先沿原 marker/目标对账，部分成功恢复原账本，不重建、不把远程失败倒灌为代码未完成。CI 资源问题按需读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；升级说明与实际构件、已发布基线和用户迁移步骤一起核对，不在 release 当天补造兼容承诺。
+
+@@END
+@@FILE T-triage/ci-security-protocol.md
+@@EDIT 11 11 4
+
+## 区分失败与掩盖
+
+先核对 job 的实际 SHA、配置、执行和跳过原因，再分类产品、基线或环境失败。并发资源/时钟/清理问题按 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path> 设计有效回归，不无依据地增加 retry、sleep、timeout 或串行化。安全事实不清时不扩大权限或吞掉检查。
+@@END
+@@FILE T-triage/pr-delivery-protocol.md
+@@EDIT 13 13 4
+
+## 证据与精确远端
+
+把演示、构件和检查绑定本次 base/head 与真实模式；没有 checks、queued、pending、skipped 或环境失败分别说明。报告 PR 已创建/ready/merged 的真实阶段，不把 API 请求接收当合并完成。依赖 PR 顺序与删除前零依赖都需回读；不假定 gh stack 可用。
+@@END
+@@FILE T-triage/release-preflight.md
+@@EDIT 13 13 4
+
+## 兼容与用户迁移
+
+核对实际已发布基线、待发布构件与适用升级说明。说明受影响者、旧新行为、迁移步骤和确认结果；回退须有真实保证。预发布数据也有兼容义务，不能当作可随意丢弃的开发数据。
+@@END
+@@FILE T-triage/release-protocol.md
+@@EDIT 12 12 4
+
+## 逐目标成功与未知结果
+
+npm、GitHub Release、tag 和其他获批目标各有回执，部分成功只恢复未完成部分。超时先核实原目标，不重复执行已确认效果；缺必需验证仍阻塞，不改本地开发完成状态。
+@@END
+@@FILE T-triage/release-recovery.md
+@@EDIT 18 18 4
+
+## 证据失效与原 owner
+
+恢复原 TRI 和逐目标回执，核对 tag/版本/构件 digest/授权和外部状态。目标或正文漂移先重新确认范围；不凭旧记录重发，不清除他人锁，不把未知结果标失败后无条件重试。
+@@END
+@@FILE W-wayfinder/W-wayfinder.md
+@@EDIT 28 28 4
+## 调查的决策价值
+
+每张调查说明它影响的决定、已知事实、缺失证据、最小调查、结束条件和下一 owner。只对目的地相关的兼容、迁移、权限、故障、成本和部署约束展开，不把“全面研究”变成无限搜索。答案需有可回读来源；没有依据的候选继续未知，不能以调查完成代替产品完成。
+
+@@END
+@@FILE W-wayfinder/investigation-ticket-template.md
+@@EDIT 16 16 4
+
+## 调查价值
+
+本问题影响的决定、已经可查的事实、缺失证据、最小调查、结束条件与下一 owner。只展开与目的地相关的风险；research/prototype/task 不自动转生产实现。
+@@END
+@@FILE common/README.md
+@@EDIT 25 25 8
+
+## 按风险加载工程标准
+
+- 设计或执行失败、重试、取消、未知结果时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>。
+- 异步、并发资源、CI flake 或删除替换测试时读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。
+- 项目文档的当前事实、归属、升级说明和语义保真使用 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>，注释仍由原注释规则负责。
+- 工具定义、prompt、Work/Skill 或上下文加载变化时读取 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。
+- 仅新专业分支记录 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>；它是原报告中的观察，不是新的任务状态。
+@@END
+@@FILE common/rules/agent-experience.md
+@@EDIT 0 0 23
+# 面向 Agent 的工具与 Work 体验
+
+修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动子 Agent。
+
+## 发现、加载与执行分开
+
+description 写真实触发时机、任务范围和相近但不适用的场景，不写“资深专家”式角色自述。先展示用途、可用动作和必要限制，再按模式加载正文或 reference。延后资源必须有可理解的描述、可靠定位和读取条件；不能为减少首轮内容把必要信息藏到不可发现的位置。
+
+已加载同版本正文的同一次任务不重复读取；输入范围、摘要或 owner 变化时重读受影响内容。首次选中只看到摘要时必须读正文，不能从名称推导步骤。实际执行记录继续遵守 <Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>；读过入口不是执行完成。
+
+## 工具描述与结果
+
+参数的范围、默认值、配对和使用条件写在参数定义中。工具说明描述行为与返回，避免复制其他工具或系统段已经拥有的规则。权限、破坏性副作用、不可重复操作和必需验证必须在动作之前可见；描述不是底层权限检查的替代。
+
+返回有界的结果摘要以及可回读的 ID、路径或游标，明确截断、遗漏、分页和证据完整性。包含少量当前动作确实需要的邻近上下文，不整页倒出日志，也不因过度裁剪迫使下一步反复搜索。缺少资源、格式无效和加载失败要能辨认，不伪造可用性。
+
+## 作为行为验证
+
+检查模型真正收到的工具 schema、prompt、结果和诊断，覆盖正常、失败、取消、权限不足、重复调用和恢复中的适用分支。用户直接调用已注入的 Work 不应再次重复加载同一正文。仅宿主支持时才依赖自动/显式调用元数据；文字字段本身不是安全控制。
+
+比较优化前后实际首轮输入、总读取、重复调用、误触发和任务结果。在没有同模型、同工具、同任务的实际使用记录时，只报告文件字符或字节变化，不能宣称 token、费用或配额节省。已有正反任务观察与结构检查分别报告。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/agent-experience/SKILL.md</Url>。SpecDev 不因此获得 DSH 的运行时 Skill 加载器。
+@@END
+@@FILE common/rules/artifact-contract.md
+@@EDIT 97 97 6
+
+## 专业分支的证据归属
+
+R.performance 的测量卡、原始样本引用和优化候选仍由 architecture-review 拥有，不直接修改生产代码。I.documentation 修改获批项目文档并在原本票或 Direct Spec Evidence 保存验证；不另造文档状态。D.evidence-triage 在 diagnosis 的现象/事件节记录观察、未知与下一检查；它不是已经接受的根因或修复合同。具体记录见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。
+
+代码、运行证据可以证明计划尚未实现或已过时，但不能改写用户目标。ADR 记录采纳与真实备选；未确认解释属于 LOG/设计树，未完成计划不能进入当前事实摘要。实际文档职责遵守 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>。
+@@END
+@@FILE common/rules/codebase-design.md
+@@EDIT 8 9 1
+以下术语用于讨论设计的共同含义，不是词语禁令。项目已有精确的 API、service、component、process/security boundary 等概念时使用其原名；不要为了套用词汇掩盖真实工程语义。
+@@EDIT 10 11 1
+**Module（模块）** — 任何具有接口和实现的东西。有意识地与规模无关：函数、类、包或跨层切片。unit、component 或 service 可以是项目内具体模块类型，不要求改名。
+@@EDIT 12 13 1
+**Interface（接口）** — 调用者正确使用模块所需了解的一切：类型签名，还包括不变量、顺序约束、错误模式、必需配置和性能特征。API/signature 只覆盖部分调用知识时，补充遗漏的约束，而不是禁止这些准确名称。
+@@EDIT 18 19 1
+**Seam（缝合点）** _(Michael Feathers)_ — 一个可以在不编辑该位置的情况下改变行为的地方；模块接口所在的*位置*。缝合点放在哪里本身就是一个设计决策，与缝合点后面放什么不同。process、security、transaction boundary 与 DDD bounded context 各有明确含义，不统称为 seam。
+@@EDIT 61 62 1
+- **适配器数量不是设计门槛。** 用真实消费者、测试隔离、安全、生命周期或扩展义务证明接缝价值；一个生产实现也可能需要稳定接口，两个实现也可能只是无价值间接层。不要为满足数量发明第二个适配器。
+@@EDIT 67 68 1
+1. **需要替换、测试隔离或独立资源生命周期时显式接收依赖。** 在组装入口创建实例是正常职责；不为注入无状态常量或没有变化依据的对象增加配置。下面比较需要替换外部支付依赖的情形：
+@@EDIT 79 80 1
+2. **纯计算优先返回结果；必要副作用明确由谁拥有。** 写文件、发请求等业务行为不能为了纯函数形式被删除，需声明失败后的状态保证、重试与清理。以下示例只比较计算函数的局部设计：
+@@EDIT 91 92 1
+3. **小而明确的调用接口。** 减少调用者必须理解的独立选择；方法变少不保证测试变少，隐藏分支、不明确的可选参数与隐式默认仍需要验证。
+@@EDIT 105 106 1
+- **模糊地互换 boundary、seam、interface**：分别说清进程/安全边界、可替换点或调用契约，不禁止具有准确语义的工程术语。
+@@EDIT 117 118 1
+纯计算、内存状态、无 I/O。先检查合并能否集中相关变化而保留独立职责；通过稳定调用接口测试。不要仅因进程内运行就合并不同领域或生命周期。
+@@EDIT 121 122 1
+具有本地测试替代品的依赖（PGLite 替代 Postgres、内存文件系统）。先验证替代品覆盖目标契约，尤其是事务、并发、权限及失败语义；有替代品本身不证明等价。深化后的模块在测试套件中使用运行的替代品进行测试。接缝是内部的；在模块的外部接口处不需要端口。
+@@EDIT 135 136 1
+- **证明接缝承担的义务，不按适配器计数。** 生产消费者、可靠测试、第三方扩展或安全隔离可以证明单实现接缝的价值；缺少这些依据时再质疑端口。不得仅凭数量删除已发布接口，也不发明第二实现来为抽象辩护。
+@@EDIT 140 141 1
+- 删除旧测试前，逐项列出其行为、错误路径、兼容约束和历史回归，并定位新测试的承接证据。仅仅存在新的深模块接口测试，不证明覆盖等价；不能证明时保留旧测试或补齐缺口。删除决定与必要反例记录在本票 Evidence。
+@@EDIT 143 144 1
+- 测试优先描述可观察行为并经受内部重构；实现变化使某个测试需要调整，是复核其保护义务的信号，不自动证明测试冗余。生命周期、安全和性能约束可能需要内部观测，理由与公共行为证据分别说明。
+@@EDIT 148 148 2
+
+涉及生命周期、失败和重试时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>；涉及测试替换或并发资源时读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。简化以减少实际维护义务为目标，不以删除行数、接口数或测试数为配额。
+@@END
+@@FILE common/rules/documentation-standard.md
+@@EDIT 0 0 29
+# 开发文档的归属、保真与验证
+
+在 SpecDev 中新增、修改、审查或整理项目文档时读取。本规则负责开发文档的工程要求，不改写全局写作能力。注释继续使用 <Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>；工件冲突遵守 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>。
+
+## 一项事实的负责位置
+
+Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、接口说明与 README 描述当前行为；change ADR 保存已经接受的决定和真实取舍；CONTEXT 保存本 change 已确认领域语义；LOG 保存讨论、待验证解释和被替代结论；Evidence 记录实际验证。永久知识仅经 A 晋升，archive 是只读历史。
+
+按读者与任务区分教程和查询参考。教程按前置知识与操作顺序组织，参考限定自身负责的主题。上层文档只说明下属职责并链接具体 owner，不复制整个子模块实现。用户不需要的内部过程不要挤进入口；详细信息需要可定位而不是被删掉。
+
+## 改写前保留完整命题
+
+逐项保留行动者、动作、条件、时间与顺序、必须/可以/禁止、例外、所有权、副作用、失败保证及后果。删掉这些词可能改变行为，不是简单精简。局部使用点仍要有安全调用所需的完整契约；长篇理由、历史和算法说明链接其 owner。参考或生成内容先改真实源，再重建派生文件，不手工改生成物。
+
+正文描述当前机制，不保留“本轮修改”“下一张 PR”“审查者已认可”或只有某次会话才能解释的编号。必要历史与事故证据留在 LOG/ADR/复盘中；真实 issue、公开规范和可定位历史引用不因出现编号就删除。未知理由保持未知，不补写想象中的设计史。
+
+## 运行声明与升级说明
+
+字段、默认值、命令和平台行为查 owning source，并在有执行条件时运行文档给出的实际操作。仅检查文字或链接不能证明命令成功。缺少网络、凭据、平台或权限时，明确未执行项、风险与验证 owner；不换成模拟后声称真实路径已验证。
+
+外部可感知的破坏性变更在引入时同步升级说明：受影响对象、旧新行为、精确迁移步骤、成功确认和真实恢复限制。用户数据已经发布就不是可随意覆盖的开发数据；预发布名称不解除兼容义务。使用目标项目已有升级文档位置，没有惯例时由当前任务批准的项目文档路径承载，不新建 SpecDev 永久 namespace。
+
+双语或多语仅在目标项目要求时同步。保留未改变的已审文本，核对条款含义、术语、代码及链接；哈希或结构一致不证明翻译正确。不要照搬 DSH 的双语三件套、行数对齐和字数配额。
+
+## 文档维护与可见行为
+
+纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 <Path>{roots.workflows}/specdev/I-implement/references/documentation-procedure.md</Path>；C 可仅审查，不获得写入权。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-prose-standard/SKILL.md</Url> 与 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/AGENTS.md</Url>。
+@@END
+@@FILE common/rules/engineering-evidence.md
+@@EDIT 0 0 31
+# 专业分支的工程证据
+
+本规则只约束新运行的 R.performance、I.documentation 和 D.evidence-triage；既有工件与主持久化 schema 不升级。普通 Work 不要求额外记录。记录是某次 checkpoint 的观察，不拥有 Ticket/Goal/change 状态、授权或恢复锁；不能用它代替原 Evidence、诊断和验收。
+
+## 写入原 owner
+
+在原工件正文添加 `Engineering Evidence` 小节及一个标记为 `json specdev-engineering-evidence` 的代码围栏，里面是一个 JSON 对象。performance 位于 <Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>；incident 位于 <Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>；documentation 位于原本票 <Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path> 或原 <Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>。禁止写到另一模式的 owner，旧归档与旧完成证据不回填。
+
+公共字段：`version: 1`、`kind`、实际源码/输入的 `checkpoint`、非空 `evidence` 字符串数组。指针使用原 Path/来源定位约定，不写机器绝对路径、密钥或未脱敏数据。记录每次真实观察，恢复时追加新 checkpoint 的证据；不能更改旧事实来制造成功。
+
+## Performance
+
+`operation` 是用户操作，`outcome` 为 baseline、improved、no-gain 或 inconclusive，`uncertainty` 解释测量局限。没有样本时只能 inconclusive。baseline/candidate 各含实际 `checkpoint`、`entrypoint`、`environment`、`clock`、`workload`、64 位 `workload_digest`、`unit`（ms/bytes/ops/s）、`direction`（lower/higher）、`cache`（cold/warm/not-applicable）、`excluded_costs` 字符串数组和有限非负 `samples` 数组。
+
+普通 R 调查只记录 baseline 或 inconclusive；improved/no-gain 需已有可比较的 baseline 与 candidate。比较除源码 checkpoint 外的工作量、入口、环境、时钟、单位、方向、缓存与排除成本必须一致。improved 还需 `behavior_verification: passed`，并且样本算术均值沿目标方向改善。满足这些必要条件仍不证明超过噪声、具备统计显著性、内存可接受或测量真实，Lead 必须回读数据与行为证据。
+
+## Documentation
+
+记录 `owner_paths`（真实源指针数组）、`outcome`（verified/partial/blocked）、`visible_behavior_changed` 布尔值、`behavior_verification`（passed/failed/not-run/not-applicable），以及非空 `claims` 数组。每项 claim 有 subject、method（command/source/manual）、state（verified/unverified）和 evidence。未验证项必须写 reason；verified 的 command 项还必须有 command、`executed: true`、`exit_code: 0` 和非空 output 原始结果摘要数组。
+
+总体 verified 要求所有声明 verified；可见行为改变时必须有 passed 的行为证据。partial/blocked 是诚实的阶段结果，不授予 Ticket done。工具仍不能认证 Agent 自报，Lead 继续核对真实命令、输出和来源。
+
+## Incident
+
+记录非空 facts、unknowns、next_checks 字符串数组；`feedback_loop_ready: false` 与 `root_cause_confirmed: false` 必须明确。这是事件证据截面，不是根因结论。正式 diagnosis 的红灯、假设和状态仍由原诊断规则验证；未来获得红灯后保留原事件观察，转入正常 D 流程，不把旧观察改写成当时已确认。
+
+## 验证入口
+
+新分支分别执行现有校验器的 `--engineering performance`、`--engineering documentation` 或 `--stage diagnosis --engineering incident`，输入当前 change。可与原 `--repo` 和适用 `--stage` 结合。没有标记记录的历史工件继续按原规则验证；显式专业模式缺少记录会失败，已有标记记录在普通 change 校验中也会检查。
+
+代码块语法是 `json specdev-engineering-evidence`，不是新文件类型。校验器只读，无论成功、失败或不完整都不写状态、不创建缺失工件、不执行命令、不获取授权。源记录、结构校验、真实工具执行和宿主观察是不同证据，报告时分别说明。
+@@END
