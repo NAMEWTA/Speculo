@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   cleanup:
-    if: github.repository == 'NAMEWTA/Speculo' && github.ref == 'refs/heads/chore/branch-cleanup-20261010-60cdd0a8'
+    if: github.repository == 'NAMEWTA/Speculo' && github.ref == 'refs/heads/chore/branch-cleanup-20261010-60cdd0a8' && github.event.deleted == false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   prepare:
-    if: github.repository == 'NAMEWTA/Speculo' && github.run_attempt == 1
+    if: github.repository == 'NAMEWTA/Speculo' && github.run_attempt == 1 && github.event.deleted == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

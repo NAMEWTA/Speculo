@@ -14,6 +14,8 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 正文描述当前机制，不保留“本轮修改”“下一张 PR”“审查者已认可”或只有某次会话才能解释的编号。必要历史与事故证据留在 LOG/ADR/复盘中；真实 issue、公开规范和可定位历史引用不因出现编号就删除。未知理由保持未知，不补写想象中的设计史。
 
+数字和来源没有核实就写未验证，不编造备选方案或测试经历。HTTP API、服务、进程边界和事务边界有实际含义时保留精确术语，不机械替换成 module/seam。
+
 ## 运行声明与升级说明
 
 字段、默认值、命令和平台行为查 owning source，并在有执行条件时运行文档给出的实际操作。仅检查文字或链接不能证明命令成功。缺少网络、凭据、平台或权限时，明确未执行项、风险与验证 owner；不换成模拟后声称真实路径已验证。
@@ -25,5 +27,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 ## 文档维护与可见行为
 
 纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 <Path>{roots.workflows}/specdev/I-implement/references/documentation-procedure.md</Path>；C 可仅审查，不获得写入权。
+
+没有所需行为层运行能力时报告缺口，并按原 Gate 保持未通过，不能借文档任务绕过。验收回读修改源和派生物，列出检查、未验证项及明确的新增行为；不用字数变化宣称 Token 或费用节省。
 
 方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-prose-standard/SKILL.md</Url> 与 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/AGENTS.md</Url>。
