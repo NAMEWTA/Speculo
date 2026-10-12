@@ -1,0 +1,88 @@
+name: Isolated SpecDev implementation 20261011
+on:
+  push:
+    branches: [automation/specdev-work-upgrade-20261011]
+permissions:
+  contents: write
+concurrency:
+  group: isolated-specdev-upgrade-20261011
+  cancel-in-progress: false
+jobs:
+  implementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: ./.github/actions/setup
+        with:
+          node-version: '24'
+      - name: Apply exact reviewed sources, validate and publish isolated result
+        env:
+          BASE_SHA: 8e204c619576c92c1aa3c9a5476746045d1fb69e
+          TARGET_BRANCH: refactor/specdev-dsh-work-upgrade-20261011
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/specdev-evidence"
+          mkdir -p "$evidence"
+          git archive "$BASE_SHA" | gzip > "$evidence/source.tar.gz"
+          printf '%s\n' "$BASE_SHA" > "$evidence/base-sha.txt"
+          transfer="$GITHUB_WORKSPACE/.specdev-execution"
+          out="$RUNNER_TEMP/specdev-output"
+          git worktree add --detach "$out" "$BASE_SHA"
+          python3 "$transfer/apply.py" "$transfer/parts" "$out" | tee "$evidence/source-digests.log"
+          cd "$out"
+          python3 - <<'PY'
+          import subprocess
+          paths = subprocess.check_output(['git','status','--porcelain','-z'], text=True).split('\0')
+          for row in filter(None, paths):
+              p=row[3:]
+              if not p.startswith('template/workflows/specdev/'):
+                  raise SystemExit('Out-of-scope source modification: '+p)
+          PY
+          pnpm install --frozen-lockfile 2>&1 | tee "$evidence/install.log"
+          node skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/specdev --check 2>&1 | tee "$evidence/index-check.log"
+          node scripts/generate-specdev-canonical.mjs 2>&1 | tee "$evidence/generation.log"
+          node --test template/workflows/specdev/common/tools/tests/*.test.mjs 2>&1 | tee "$evidence/specdev-tests.log"
+          pnpm check 2>&1 | tee "$evidence/full-check.log"
+          pnpm verify-bin 2>&1 | tee "$evidence/verify-bin.log"
+          node scripts/generate-specdev-canonical.mjs --check 2>&1 | tee "$evidence/generation-check.log"
+          node scripts/generate-specdev-canonical.mjs 2>&1 | tee "$evidence/generation-second.log"
+          node scripts/generate-specdev-canonical.mjs --check 2>&1 | tee "$evidence/generation-second-check.log"
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          paths=subprocess.check_output(['git','status','--porcelain','-z'],text=True).split('\0')
+          for row in filter(None,paths):
+              p=row[3:]
+              allowed=p.startswith('template/workflows/specdev/') or (p.startswith('template/canonical/canonical-specdev-') and p.endswith('.md'))
+              if not allowed: raise SystemExit('Out-of-scope final modification: '+p)
+          protected=['runtime-contract.json','common/schemas','I-init-setup/config-template.json','I-init-setup/status-template.json','I-init-setup/change-status-template.json']
+          for p in protected:
+              subprocess.run(['git','diff','--exit-code','--','template/workflows/specdev/'+p],check=True)
+          PY
+          git config user.name 'Speculo AI-assisted maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add template/workflows/specdev template/canonical/canonical-specdev-*.md
+          git diff --cached --stat > "$evidence/diff-stat.txt"
+          git diff --cached --numstat > "$evidence/diff-numstat.txt"
+          git diff --cached --binary > "$evidence/final.patch"
+          git commit -m 'refactor(specdev): upgrade all Work contracts and evidence-driven development' -m 'Implement the approved DSH-inspired SpecDev plan while retaining 15 Work IDs, persistence schemas, ownership and recovery paths. AI-assisted implementation; no other workflows or global runtime changes.'
+          git archive HEAD | gzip > "$evidence/result-source.tar.gz"
+          git rev-parse HEAD > "$evidence/result-sha.txt"
+          if git ls-remote --exit-code origin "refs/heads/$TARGET_BRANCH" >/dev/null 2>&1; then
+            echo 'Target branch already exists; refusing overwrite' >&2
+            exit 1
+          fi
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+          test "$(git ls-remote origin "refs/heads/$TARGET_BRANCH" | cut -f1)" = "$(git rev-parse HEAD)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: specdev-execution-evidence
+          path: ${{ runner.temp }}/specdev-evidence/
+          retention-days: 7
+          if-no-files-found: error
