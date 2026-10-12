@@ -1,6 +1,6 @@
 # Speculo project model
 
-本文件是维护者 `skills/` 对当前 Speculo 模板结构的唯一项目模型；`.agents/skills/` 只存兼容指针。具体作者技能只引用这里，不另行维护目录或所有权副本。
+本文件是维护者 `.agents/skills/` 对当前 Speculo 模板结构的唯一项目模型；各作者技能的完整正本及配套资源直接存放在该目录。具体作者技能只引用这里，不另行维护目录或所有权副本。
 
 ## 两个世界
 
@@ -20,7 +20,7 @@ template/
   canonical/
 ```
 
-`skills/` 中的作者技能及 `.agents/skills/` 兼容指针只服务于这个源世界。
+`.agents/skills/` 中的作者技能只服务于这个源世界。
 
 ### 安装运行时世界
 

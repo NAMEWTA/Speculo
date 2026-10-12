@@ -88,7 +88,7 @@ T-triage 统一拥有 queue、intake、reconcile、publish、capture、pr-delive
 
 - [AGENTS.md](./AGENTS.md) — AI 代理手册（权威）
 - [CHANGELOG.md](./CHANGELOG.md) — 发布历史
-- [skills/](./skills/) — Speculo 维护者内部编写工具（编写契约自包含于 `_shared/` 与各 skill 的 `references/`）
+- [.agents/skills/](./.agents/skills/) — Speculo 维护者完整编写技能（共享契约位于 `_shared/`，各 skill 的 `references/` 与 `scripts/` 直接随正本存放）
 - [README.md](./README.md) — English version
 
 ## 致敬与开源传承

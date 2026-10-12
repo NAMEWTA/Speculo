@@ -6,8 +6,8 @@
 
 - npm 包：`@namewta/speculo`，运行时 Node.js `>=22.22.3 <25`，包管理器 `pnpm@11.1.3`。
 - CLI：`speculo` → `dist/src/cli.js`；入口支持 `init`、`version`、只读 `doctor`/`resolve` 和必须匹配事务 ID 的显式 `recover`。
-- 真实源：`src/`、`template/`、`scripts/`、`test/`、`skills/`。`template/canonical/` 和 workflow AUTO-INDEX 是生成物，不是事实源。
-- `skills/` 是维护者 authoring skills；`.agents/skills/` 只保留兼容指针。系统或插件缓存不属于本项目源。
+- 真实源：`src/`、`template/`、`scripts/`、`test/`、`.agents/skills/`。`template/canonical/` 和 workflow AUTO-INDEX 是生成物，不是事实源。
+- `.agents/skills/` 直接存放维护者 authoring skills 的完整正本及共享规则、references、scripts；不另设根级 `skills/` 或兼容指针。系统或插件缓存不属于本项目源。
 
 ## 常用命令
 
@@ -28,7 +28,7 @@ pnpm verify-bin
 - `template/skills/<name>/SKILL.md`：按需触发的可复用能力；分支规则在 `references/`，机械动作在 `scripts/`。
 - `template/workflows/<workflow>/INDEX.md`：被动发现与永久知识入口；激活后读取同目录 `README.md`，再读取当前 Work。
 - `template/workflows/<workflow>/<Letter>-<name>/`：一个可恢复步骤；只读取当前分支需要的规则、schema、模板和工具。
-- `skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
+- `.agents/skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
 
 当前模板包含 7 个 commands、8 个顶层 skills、5 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works、Media 7 works。
 
@@ -50,4 +50,4 @@ pnpm verify-bin
 
 ## 文档重构保真
 
-编辑前读取 `skills/_shared/authoring-protocol.md`；完整合同在 `template/skills/writing-for-agents/references/document-contract.md`。保留真实源、软链接、模式、许可及必要 frontmatter；保留用户明确产物数量、默认工具、权限和失败停止条件。新增行为单列说明；局部归属冲突不得扩大成接管其他任务。
+编辑前读取 `.agents/skills/_shared/authoring-protocol.md`；完整合同在 `template/skills/writing-for-agents/references/document-contract.md`。保留真实源、软链接、模式、许可及必要 frontmatter；保留用户明确产物数量、默认工具、权限和失败停止条件。新增行为单列说明；局部归属冲突不得扩大成接管其他任务。

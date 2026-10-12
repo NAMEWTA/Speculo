@@ -300,11 +300,11 @@ test('semantic scenarios are explicitly unevaluated specifications, not syntheti
 
 // Full checkout integration: the local connector-only fixture does not include this maintainer tool.
 test('generated learning documents pass the repository isolated-persistence auditor',
-  { skip: !existsSync(join(repo, 'skills/speculo-write-canonical/scripts/build-canonical.mjs')) },
+  { skip: !existsSync(join(repo, '.agents/skills/speculo-write-canonical/scripts/build-canonical.mjs')) },
   async () => temporary(async (root) => {
     const { generateLearning } = await generator();
     await sourceFixture(root); await generateLearning({ root });
-    const result = spawnSync(process.execPath, [join(repo, 'skills/speculo-write-canonical/scripts/build-canonical.mjs'),
+    const result = spawnSync(process.execPath, [join(repo, '.agents/skills/speculo-write-canonical/scripts/build-canonical.mjs'),
       '--repo', root, '--audit-dir', 'template/canonical'], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
   }));

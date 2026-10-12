@@ -18,6 +18,10 @@ describe("work upgrade: potential reference graph and actual read accounting", (
     ]);
     const report = graphReport(graph, ["template/workflows/specdev/S-spec/S-spec.md"]);
     assert.ok(report.impact.generators.includes("scripts/generate-specdev-canonical.mjs"));
+    assert.ok(report.impact.generators.includes(".agents/skills/speculo-write-workflows/scripts/generate-index.mjs"));
+    const maintainer = graph.files.get(".agents/skills/speculo-write-workflows/SKILL.md");
+    assert.ok(maintainer?.content, "maintainer skill source must be included in the default graph");
+    assert.ok(graph.edges.some((edge: any) => edge.source === maintainer.path && edge.target === ".agents/skills/_shared/authoring-protocol.md"));
     assert.match(report.caveat, /not deletion authorization/);
     for (const node of graph.files.values()) if (node.role === "evidence") assert.equal(node.content, undefined);
   });

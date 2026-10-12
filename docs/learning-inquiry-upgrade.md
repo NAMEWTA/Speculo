@@ -62,7 +62,7 @@ EX 的五个二级章节为 Scope、Discovery、Deep Dive、Verification、Next�
 
 网页专属的输入降级、目录命名和提交映射集中在 runtime 适配中；不反向放宽原生合同。固定项目 URL 只出现一次；运行时学习资料仍应记录真实来源定位。新增成品由测试在隔离目录调用仓库现有 canonical 持久化审计器，避免把本改动扩大为其他 canonical 的重构。
 
-工作流 AUTO-INDEX 使用现有 `skills/speculo-write-workflows/scripts/generate-index.mjs` 从 Work frontmatter 生成；不要手改生成块。
+工作流 AUTO-INDEX 使用现有 `.agents/skills/speculo-write-workflows/scripts/generate-index.mjs` 从 Work frontmatter 生成；不要手改生成块。
 
 ## 验证与证据层级
 

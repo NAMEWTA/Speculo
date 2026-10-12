@@ -113,7 +113,7 @@ export async function buildDocumentGraph(root, options = {}) {
       }
     }
   }
-  for (const dir of options.roots ?? ["template/workflows", "template/skills", "template/commands", "skills"]) await walk(join(root, dir));
+  for (const dir of options.roots ?? ["template/workflows", "template/skills", "template/commands", ".agents/skills"]) await walk(join(root, dir));
   for (const edge of edges) {
     if (edge.error) errors.push(`${edge.source}:${edge.line}: ${edge.error}`);
     if (!edge.target) continue;
@@ -146,7 +146,7 @@ export function affectedCallers(graph, changed) {
   return { callers: [...seen].filter((path) => !changed.includes(path)).sort(),
     generators: [
       ...(changed.some((path) => path.startsWith("template/workflows/specdev/")) ? ["scripts/generate-specdev-canonical.mjs"] : []),
-      ...(changed.some(isEntry) ? ["skills/speculo-write-workflows/scripts/generate-index.mjs"] : []),
+      ...(changed.some(isEntry) ? [".agents/skills/speculo-write-workflows/scripts/generate-index.mjs"] : []),
     ],
   };
 }

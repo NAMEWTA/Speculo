@@ -88,7 +88,7 @@ See [Media workflow and the 18-second example](docs/media/README.md) for local-o
 
 - [AGENTS.md](./AGENTS.md) — AI agent handbook (authoritative)
 - [CHANGELOG.md](./CHANGELOG.md) — Release history
-- [skills/](./skills/) — Internal authoring tools for Speculo maintainers (self-contained authoring contracts under `_shared/` and per-skill `references/`)
+- [.agents/skills/](./.agents/skills/) — Complete authoring skills for Speculo maintainers (shared contracts under `_shared/`, with each skill's `references/` and `scripts/` stored alongside its entry)
 - [README-ZH.md](./README-ZH.md) — 中文镜像
 
 ## Acknowledgments — Honoring Open Source Heritage

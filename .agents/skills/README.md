@@ -2,6 +2,8 @@
 
 本目录用于维护 Speculo 仓库自身的 `template/` 资产，不是安装到用户项目中的运行时 skill 集。
 
+维护者技能的完整正本直接位于 `.agents/skills/`；各 `SKILL.md` 与配套 references、scripts 一起维护，共享规则位于 `_shared/`。
+
 ## 能力
 
 - `speculo-write-skill`：创建或重构 `template/skills/<skill>/`。
@@ -30,19 +32,19 @@
 ## 一次性校验
 
 ```bash
-node skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
+node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .
 ```
 
 更新 workflow 的 AUTO-INDEX：
 
 ```bash
-node skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/<workflow>
+node .agents/skills/speculo-write-workflows/scripts/generate-index.mjs template/workflows/<workflow>
 ```
 
 生成 canonical：
 
 ```bash
-node skills/speculo-write-canonical/scripts/build-canonical.mjs \
+node .agents/skills/speculo-write-canonical/scripts/build-canonical.mjs \
   --repo . \
   --entry template/<asset-entry>.md \
   --output template/canonical/<canonical-name>.md
