@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "media",
   "version": "1.0.0",
   "persistent_knowledge": [
@@ -103,5 +103,24 @@
       "risk": "local-reversible",
       "context_budget": 8000
     }
-  ]
+  ],
+  "entry": "SKILL.md",
+  "works": [
+    "media-b-brief/SKILL.md",
+    "media-d-deconstruct/SKILL.md",
+    "media-h-hand-drawn/SKILL.md",
+    "media-i-init-setup/SKILL.md",
+    "media-p-publish-draft/SKILL.md",
+    "media-r-retro/SKILL.md",
+    "media-v-video/SKILL.md"
+  ],
+  "work_stages": {
+    "media-b-brief/SKILL.md": [],
+    "media-d-deconstruct/SKILL.md": [],
+    "media-h-hand-drawn/SKILL.md": [],
+    "media-i-init-setup/SKILL.md": [],
+    "media-p-publish-draft/SKILL.md": [],
+    "media-r-retro/SKILL.md": [],
+    "media-v-video/SKILL.md": []
+  }
 }

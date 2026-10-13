@@ -1,6 +1,6 @@
 ---
 name: speculo-write-skill
-description: 编辑 Speculo 的 `template/skills/` 下的技能；仅在新增、合并、重命名或审计 skill 触发、入口、references、scripts、assets 或所有权时使用。
+description: 编辑 Speculo 的 领域/Work 标准 Skill 与私有 common Skill 下的技能；仅在新增、合并、重命名或审计 skill 触发、入口、references、scripts、assets 或所有权时使用。
 ---
 
 # Speculo Write Skill
@@ -16,7 +16,7 @@ description: 编辑 Speculo 的 `template/skills/` 下的技能；仅在新增�
 - [`../_shared/authoring-quality.md`](../_shared/authoring-quality.md)
 - [`../_shared/authoring-protocol.md`](../_shared/authoring-protocol.md)
 - [`references/skill-contract.md`](references/skill-contract.md)
-- `template/skills/writing-for-agents/SKILL.md`
+- `template/references/writing-for-agents/writing-contract.md`
 
 再按目标读取目标 skill、真实调用方和同主导词资产。不要默认读取全部 template。
 
@@ -24,7 +24,7 @@ description: 编辑 Speculo 的 `template/skills/` 下的技能；仅在新增�
 
 1. 确认唯一职责、真实触发分支、调用方、写入 owner 和 `model-invoked | user-invoked`。
 2. 只把每次运行必需内容留在 `SKILL.md`；分支规则、示例、schema 和 flags 放入 references/assets，并在触发处指针化。
-3. 修改 `template/skills/<name>/` 及其调用方；不要创建未声明的 `.speculo` namespace。
+3. 修改 目标 `SKILL.md` 及资源目录 及其调用方；不要创建未声明的 `.speculo` namespace。
 4. 运行共享 gates、正常/失败场景和项目资产校验；需要生成物时由生成器重建。
 
 ## 停止条件

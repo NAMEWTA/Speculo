@@ -77,10 +77,10 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
   const planFile = join(root,parent ? 'implementation-plan.md' : 'goal-plan.md');
   const plan = existsSync(planFile) ? readArtifact(planFile) : null;
   const strategy = plan?.meta.ticket_workspace_policy ?? 'current';
-  let limit = strategy === 'current' ? 1 : plan?.meta.implementation_agent_limit;
+  let limit = strategy === 'current' ? 1 : plan?.meta.concurrent_implementation_limit;
   if (!['current','required'].includes(strategy) || !Number.isInteger(limit) || limit < 1) errors.push('invalid workspace strategy or implementation limit');
   const config = findConfig(root);
-  if (plan && (!config || !Number.isInteger(config.execution?.max_implementation_agents) || plan.meta.implementation_agent_limit > config.execution.max_implementation_agents)) errors.push('plan implementation limit is not backed by existing config');
+  if (plan && (!config || !Number.isInteger(config.execution?.max_concurrent_implementations) || plan.meta.concurrent_implementation_limit > config.execution.max_concurrent_implementations)) errors.push('plan implementation limit is not backed by existing config');
 
   for (const member of members) {
     const memberRoot = parent ? join(dirname(root),member) : root;
@@ -153,7 +153,7 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
   for (const node of nodes.values()) {
     node.reasons.push(...node.validationErrors);
     if (!terminal.has(node.artifact.meta.status) && (!plan || plan.meta.ready_for_execution !== true)) node.reasons.push('Goal planning gate is not ready for execution');
-    if (!terminal.has(node.artifact.meta.status) && node.artifact.meta.plan_contract_version !== 1) node.reasons.push('legacy Ticket needs explicit Plan-contract upgrade before dispatch');
+    if (node.artifact.meta.plan_contract_version !== 1) node.reasons.push('Ticket requires current plan_contract_version: 1');
   }
   const goalDigest = stableGoalContract(plan,entry);
   for (const node of nodes.values()) {

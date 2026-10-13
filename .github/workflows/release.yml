@@ -39,7 +39,9 @@ jobs:
         run: pnpm check
 
       - name: Verify bin entry
-        run: node scripts/verify-bin.mjs
+        run: |
+          pnpm verify-bin
+          pnpm verify-package
 
       - name: Extract release notes from CHANGELOG.md
         run: |

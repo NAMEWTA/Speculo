@@ -1,7 +1,7 @@
 {
   "name": "@namewta/speculo",
-  "version": "1.0.24",
-  "description": "Workflow-packaged AI collaboration assets with state-safe refresh tooling.",
+  "version": "2.0.0",
+  "description": "Standard agent skills, commands and project methods with state-safe installation.",
   "type": "module",
   "bin": {
     "speculo": "./dist/src/cli.js"
@@ -11,13 +11,13 @@
     "build": "pnpm clean && tsc -p tsconfig.json",
     "test": "node --test dist/test/*.test.js",
     "pretest": "pnpm build",
-    "generate-canonical": "node scripts/generate-specdev-canonical.mjs && node scripts/generate-learning-canonical.mjs && node scripts/generate-media-canonical.mjs",
+    "generate-canonical": "node scripts/generate-specdev-canonical.mjs && node scripts/generate-learning-canonical.mjs && node scripts/generate-media-canonical.mjs && node scripts/generate-person-canonical.mjs",
     "validate-source-parity": "node scripts/check-specdev-source-parity.mjs",
-    "validate-assets": "node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/check-specdev-upstream.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/generate-learning-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning && node scripts/generate-media-canonical.mjs --check && node template/workflows/media/common/tools/validate-media.mjs --workflow-root template/workflows/media",
+    "validate-assets": "node scripts/generate-runtime.mjs --check && node scripts/generate-domain-index.mjs --check && node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/check-specdev-upstream.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/generate-learning-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning && node scripts/generate-media-canonical.mjs --check && node template/workflows/media/common/tools/validate-media.mjs --workflow-root template/workflows/media && node scripts/generate-person-canonical.mjs --check && node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
     "eval:scenarios": "node scripts/evaluate-scenarios.mjs",
-    "prepack": "pnpm build",
+    "prepack": "pnpm generate-assets && pnpm build",
     "prepublishOnly": "pnpm test && pnpm validate-assets",
     "validate-skills": "node scripts/validate-skills.mjs",
     "validate-source-inventory": "node scripts/check-specdev-source-parity.mjs",
@@ -25,11 +25,16 @@
     "eval:observed": "node scripts/evaluate-scenarios.mjs --require observed",
     "eval:release": "node scripts/evaluate-scenarios.mjs --require observed",
     "validate-upstream": "node scripts/check-specdev-upstream.mjs",
-    "eval:learning": "node scripts/evaluate-scenarios.mjs test/fixtures/learning-inquiry-scenarios.json"
+    "eval:learning": "node scripts/evaluate-scenarios.mjs test/fixtures/learning-inquiry-scenarios.json",
+    "generate-runtime": "node scripts/generate-runtime.mjs",
+    "generate-index": "node scripts/generate-domain-index.mjs",
+    "generate-assets": "pnpm generate-runtime && pnpm generate-index && pnpm generate-canonical",
+    "verify-package": "node scripts/verify-package.mjs",
+    "verify-generated": "node scripts/verify-generated.mjs",
+    "validate-disposition": "node scripts/validate-disposition.mjs"
   },
   "files": [
     "dist/src",
-    "scripts/validate-skills.mjs",
     "template",
     "THIRD-PARTY-NOTICES.md"
   ],
@@ -63,10 +68,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "fast-xml-parser": "^5.9.3",
+    "esbuild": "^0.28.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.5.2"
+    "@inquirer/prompts": "^8.5.2",
+    "yaml": "^2.9.1"
   }
 }

@@ -1,47 +1,168 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:goal-plan:v6",
+  "$id": "urn:speculo:specdev:goal-plan:v7",
   "title": "SpecDev Goal Plan Frontmatter",
   "type": "object",
   "required": [
-    "schema_version", "artifact", "change", "status", "modes", "orchestration",
-    "lead", "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate",
+    "schema_version",
+    "artifact",
+    "change",
+    "status",
+    "modes",
+    "orchestration",
+    "lead",
+    "concurrent_implementation_limit",
+    "integration_attempt_limit",
+    "ticket_workspace_policy",
+    "integration_gate",
     "ready_for_execution"
   ],
   "properties": {
-    "schema_version": {"const": 6},
-    "artifact": {"const": "goal-plan"},
-    "change": {"type": "string", "minLength": 1},
-    "status": {"enum": ["draft", "ready", "in_progress", "completed", "blocked"]},
+    "schema_version": {
+      "const": 7
+    },
+    "artifact": {
+      "const": "goal-plan"
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "completed",
+        "blocked"
+      ]
+    },
     "modes": {
       "type": "array",
-      "items": {"enum": ["migration", "high-assurance", "reference-conformance", "release-coordination"]},
+      "items": {
+        "enum": [
+          "migration",
+          "high-assurance",
+          "reference-conformance",
+          "release-coordination"
+        ]
+      },
       "uniqueItems": true
     },
-    "orchestration": {"const": "lead-directed"},
-    "lead": {"type": "string", "minLength": 1},
-    "implementation_agent_limit": {"type": "integer", "minimum": 1},
-    "integration_attempt_limit": {"type": "integer", "minimum": 1},
-    "ticket_workspace_policy": {"enum": ["current", "required"]},
-    "integration_gate": {"enum": ["direct-parent", "candidate-merge"]},
-    "ready_for_execution": {"type": "boolean"}
+    "orchestration": {
+      "const": "lead-directed"
+    },
+    "lead": {
+      "type": "string",
+      "minLength": 1
+    },
+    "concurrent_implementation_limit": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "integration_attempt_limit": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ticket_workspace_policy": {
+      "enum": [
+        "current",
+        "required"
+      ]
+    },
+    "integration_gate": {
+      "enum": [
+        "direct-parent",
+        "candidate-merge"
+      ]
+    },
+    "ready_for_execution": {
+      "type": "boolean"
+    }
   },
   "allOf": [
     {
-      "if": {"properties": {"ticket_workspace_policy": {"const": "current"}}, "required": ["ticket_workspace_policy"]},
-      "then": {"properties": {"integration_gate": {"const": "direct-parent"}}}
+      "if": {
+        "properties": {
+          "ticket_workspace_policy": {
+            "const": "current"
+          }
+        },
+        "required": [
+          "ticket_workspace_policy"
+        ]
+      },
+      "then": {
+        "properties": {
+          "integration_gate": {
+            "const": "direct-parent"
+          }
+        }
+      }
     },
     {
-      "if": {"properties": {"ticket_workspace_policy": {"const": "required"}}, "required": ["ticket_workspace_policy"]},
-      "then": {"properties": {"integration_gate": {"const": "candidate-merge"}}}
+      "if": {
+        "properties": {
+          "ticket_workspace_policy": {
+            "const": "required"
+          }
+        },
+        "required": [
+          "ticket_workspace_policy"
+        ]
+      },
+      "then": {
+        "properties": {
+          "integration_gate": {
+            "const": "candidate-merge"
+          }
+        }
+      }
     },
     {
-      "if": {"properties": {"status": {"enum": ["draft", "blocked", "completed"]}}, "required": ["status"]},
-      "then": {"properties": {"ready_for_execution": {"const": false}}}
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "draft",
+              "blocked",
+              "completed"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready_for_execution": {
+            "const": false
+          }
+        }
+      }
     },
     {
-      "if": {"properties": {"status": {"enum": ["ready", "in_progress"]}}, "required": ["status"]},
-      "then": {"properties": {"ready_for_execution": {"const": true}}}
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ready",
+              "in_progress"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready_for_execution": {
+            "const": true
+          }
+        }
+      }
     }
   ],
   "additionalProperties": false

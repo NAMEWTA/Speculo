@@ -1,3 +1,4 @@
+import {changeFixture as seedChange} from "./workspace-fixture.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { mkdtemp, mkdir, readFile, writeFile, rm, cp } from "node:fs/promises";
@@ -11,7 +12,7 @@ import { planExternalEdits } from "../src/agent-files.js";
 import { image, bytes, type ExternalName, type FileImage } from "../src/external-files.js";
 
 const root = process.cwd(), wf = join(root, "template/workflows/specdev");
-const transportModule = () => import(pathToFileURL(join(wf, "T-triage/scripts/github-transport.mjs")).href);
+const transportModule = () => import(pathToFileURL(join(wf, "specdev-t-triage/scripts/github-transport.mjs")).href);
 const artifactModule = () => import(pathToFileURL(join(wf, "common/tools/delivery-artifacts.mjs")).href);
 const validatorModule = () => import(pathToFileURL(join(wf, "common/tools/validate-specdev.mjs")).href);
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
@@ -154,11 +155,11 @@ test("delivery records enforce verification, completed release targets and nonem
 });
 
 test("retro-only completion needs no implementation and requested PR delivery remains an independent gate", async () => {
-  const temp=await mkdtemp(join(tmpdir(),"speculo-retro-gates-")),id="2026-10-08-review",change=join(temp,id);
+  const temp=await mkdtemp(join(tmpdir(),"speculo-retro-gates-")),id="2026-10-08-review",change=await seedChange(temp,id);
   try {
     await mkdir(join(change,"retro"),{recursive:true});
-    const cfg=join(temp,".speculo/specdev");await mkdir(cfg,{recursive:true});
-    await cp(join(wf,"I-init-setup/config-template.json"),join(cfg,"config.json"));
+    const cfg=join(temp,".agents/speculo/.speculo/specdev");await mkdir(cfg,{recursive:true});
+    await cp(join(wf,"specdev-i-init-setup/assets/config-template.json"),join(cfg,"config.json"));
     const auth={status:"not-authorized",source:null,granted_at:null,scope:"No implementation requested"};
     const status={schema_version:6,artifact:"change-status",change:id,change_status:"completed",current_work:null,works_run:["specdev/retro"],claimed_investigations:[],execution_authorization:{implementation_commit:auth,local_candidate_integration:auth,source_cleanup:auth},leadership:{current:"lead",epoch:1,assigned_at:"2026-10-08T00:00:00Z",history:[]},created_at:"2026-10-08T00:00:00Z",updated_at:"2026-10-08T00:00:00Z",completed_at:"2026-10-08T00:00:00Z",archived:false,archive_path:null,blockers:[],deviations:[],worktrees:[]};
     const sp=join(change,".status.json");await writeFile(sp,JSON.stringify(status));
@@ -190,18 +191,15 @@ test("logic prototypes require inline offline content, browser evidence and matc
     assert.match(errors,/offline/);assert.match(errors,/digest/);
   } finally {await rm(temp,{recursive:true,force:true});}
 });
-test("config v5 migrates without changing user options and unsupported versions fail", async () => {
-  const template=JSON.parse(await readFile(join(wf,"I-init-setup/config-template.json"),"utf8"));
-  const old={...template,schema_version:5,interaction_language:"en"};delete old.github;
-  const before=JSON.stringify(old), result=readSpecdevConfig(old);
-  assert.equal(result.migrated,true);assert.equal(result.value.schema_version,6);assert.equal(result.value.interaction_language,"en");
-  assert.deepEqual(result.value.github,{include_external_prs:false,labels:{}});assert.equal(JSON.stringify(old),before);
-  assert.throws(()=>readSpecdevConfig({...old,schema_version:4}),/only v5/);
-  assert.throws(()=>readSpecdevConfig({...old,github:{}}),/ownership/);
+test("config accepts only the current schema without migrating user data", async () => {
+  const template=JSON.parse(await readFile(join(wf,"specdev-i-init-setup/assets/config-template.json"),"utf8"));
+  const current={...template,interaction_language:"en"};
+  assert.equal(readSpecdevConfig(current).value,current);
+  for(const version of [4,5,6])assert.throws(()=>readSpecdevConfig({...current,schema_version:version}),/must be 7/);
 });
-test("native CLAUDE import upgrades only exact generated legacy bridge", () => {
+test("CLAUDE existing text remains user owned", () => {
   for(const [text,expected] of [
-    ["# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n","# CLAUDE.md\n\n@AGENTS.md\n"],
+    ["# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n","# CLAUDE.md\n\nSpeculo agent handbook: see [AGENTS.md](./AGENTS.md).\n"],
     ["# User instructions\nKeep this exact content.\n","# User instructions\nKeep this exact content.\n"],
   ]) {
     const snapshots=new Map<ExternalName,FileImage>([["CLAUDE.md",image(text)]]);
@@ -210,41 +208,21 @@ test("native CLAUDE import upgrades only exact generated legacy bridge", () => {
   }
 });
 
-test("explicit-only skills require separate Claude and Codex invocation profiles", async () => {
-  const {validateSkill,validateSkills}=await import(pathToFileURL(join(root,"scripts/validate-skills.mjs")).href);
-  const content='---\nname: sample\ndescription: Explicit test authoring request\ndisable-model-invocation: true\nmetadata: {"speculo-invocation":"user-only"}\n---\nUse for an explicit request.\n';
-  assert.deepEqual(validateSkill(content,"sample"),[]);
-  assert.match(validateSkill(content.replace("disable-model-invocation: true","disable-model-invocation: false"),"sample").join("\n"),/Claude/);
-  const temp=await mkdtemp(join(tmpdir(),"speculo-host-policy-")),dir=join(temp,"template/sample");
-  try {
-    await mkdir(join(dir,"agents"),{recursive:true});await writeFile(join(dir,"SKILL.md"),content);
-    await writeFile(join(dir,"agents/openai.yaml"),"policy:\n  allow_implicit_invocation: true\n");
-    assert.match((await validateSkills(temp)).errors.join("\n"),/Codex/);
-    await writeFile(join(dir,"agents/openai.yaml"),"policy:\n  allow_implicit_invocation: false\n");
-    assert.deepEqual((await validateSkills(temp)).errors,[]);
-  } finally {await rm(temp,{recursive:true,force:true});}
+test("source Skill rejects host-only extensions; Command projection owns policy", async () => {
+ const {validateSkill}=await import(pathToFileURL(join(root,"scripts/validate-skills.mjs")).href);
+ const content='---\nname: sample\ndescription: Explicit request\ndisable-model-invocation: true\n---\n';
+ assert.match(validateSkill(content,"sample").join("\n"),/unsupported top-level/);
+ assert.deepEqual(validateSkill(content.replace('disable-model-invocation: true\n',''),"sample"),[]);
 });
-test("refresh migrates v5, removes proven retired assets and blocks local retired modifications", async () => {
-  const temp=await mkdtemp(join(tmpdir(),"speculo-upgrade-install-"));
-  const pkg=join(temp,"package"),project=join(temp,"project");
-  try {
-    await cp(join(root,"template"),join(pkg,"template"),{recursive:true});
-    await writeFile(join(pkg,"package.json"),JSON.stringify({version:"1.0.19"}));await mkdir(project);
-    const retired=join(pkg,"template/skills/github-npm-ops");await mkdir(retired,{recursive:true});
-    await writeFile(join(retired,"SKILL.md"),"---\nname: github-npm-ops\ndescription: Historical fixture\n---\n");
-    await initSpeculo(project,{packageRoot:pkg,selection:{workflowIds:["specdev"]}});
-    const runtime=join(project,"speculo/.speculo/specdev"),config=join(runtime,"config.json");
-    const current=JSON.parse(await readFile(join(wf,"I-init-setup/config-template.json"),"utf8"));
-    delete current.github;current.schema_version=5;current.interaction_language="en";
-    await writeFile(config,JSON.stringify(current));await writeFile(join(runtime,"opaque.bin"),Buffer.from([0,255,10,0]));
-    const installed=join(project,"speculo/skills/github-npm-ops/SKILL.md"),original=await readFile(installed,"utf8");
-    await writeFile(installed,original+"\nUser modification\n");
-    await assert.rejects(initSpeculo(project,{packageRoot:root,selection:{workflowIds:["specdev"]}}),error=>String(error).includes("blocked"));
-    assert.equal(await readFile(config,"utf8"),JSON.stringify(current));
-    await writeFile(installed,original);
-    await initSpeculo(project,{packageRoot:root,selection:{workflowIds:["specdev"]}});
-    await assert.rejects(readFile(installed),{code:"ENOENT"});
-    const upgraded=JSON.parse(await readFile(config,"utf8"));assert.equal(upgraded.schema_version,6);assert.equal(upgraded.interaction_language,"en");
-    assert.deepEqual(await readFile(join(runtime,"opaque.bin")),Buffer.from([0,255,10,0]));
-  } finally {await rm(temp,{recursive:true,force:true});}
+
+test("old config schemas are rejected and opaque runtime bytes are preserved", async () => {
+ const temp=await mkdtemp(join(tmpdir(),"speculo-reject-old-config-"));
+ try {
+  await initSpeculo(temp,{packageRoot:root,selection:{workflowIds:["specdev"]}});
+  const runtime=join(temp,".agents/speculo/.speculo/specdev"),config=join(runtime,"config.json");
+  const current=JSON.parse(await readFile(join(wf,"specdev-i-init-setup/assets/config-template.json"),"utf8"));current.schema_version=5;
+  const original=JSON.stringify(current);await writeFile(config,original);await writeFile(join(runtime,"opaque.bin"),Buffer.from([0,255,10,0]));
+  await assert.rejects(initSpeculo(temp,{packageRoot:root,selection:{workflowIds:["specdev"]}}),/blocked/);
+  assert.equal(await readFile(config,"utf8"),original);assert.deepEqual(await readFile(join(runtime,"opaque.bin")),Buffer.from([0,255,10,0]));
+ } finally {await rm(temp,{recursive:true,force:true});}
 });

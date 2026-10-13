@@ -6,9 +6,9 @@ import path from 'node:path';
 import test from 'node:test';
 
 const root = process.cwd();
-const workRoot = path.join(root, 'template/workflows/person/S-steelman-deliberation');
+const workRoot = path.join(root, 'template/workflows/person/person-s-steelman-deliberation');
 const generator = path.join(root, '.agents/skills/speculo-write-workflows/scripts/generate-index.mjs');
-const validator = path.join(workRoot, 'tools/validate-steelman-change.mjs');
+const validator = path.join(workRoot, 'scripts/validate-steelman-change.mjs');
 
 function runNode(script: string, args: string[], cwd = root) {
   return spawnSync(process.execPath, [script, ...args], {
@@ -50,39 +50,25 @@ async function missingStaticReferences(markdown: string): Promise<string[]> {
   return missing;
 }
 
-async function writeWorkEntry(
-  workflowRoot: string,
-  directory: string,
-  name: string,
-  description: string,
-): Promise<void> {
-  const directoryPath = path.join(workflowRoot, directory);
-  await mkdir(directoryPath, { recursive: true });
-  await writeFile(
-    path.join(directoryPath, `${directory}.md`),
-    `---\nid: demo/${directory.slice(2)}\ntype: workflow-entry\nworkflow: demo\nname: ${name}\ndescription: ${description}\nkeywords: [demo]\n---\n`,
-  );
-}
-
 test('steelman work has a complete independent package and valid static references', async () => {
   const requiredFiles = [
-    'S-steelman-deliberation.md',
-    'deliberate.md',
-    'judge.md',
-    'evidence-gate.md',
+    'SKILL.md',
+    'references/deliberate.md',
+    'references/judge.md',
+    'references/evidence-gate.md',
     'references/state-and-publication.md',
-    '_templates/steelman-dossier-template.md',
-    '_templates/decision-template.md',
-    'tools/validate-steelman-change.mjs',
+    'assets/templates/steelman-dossier-template.md',
+    'assets/templates/decision-template.md',
+    'scripts/validate-steelman-change.mjs',
   ];
   for (const relative of requiredFiles) {
     await readFile(path.join(workRoot, relative), 'utf8');
   }
 
-  const entry = await readFile(path.join(workRoot, 'S-steelman-deliberation.md'), 'utf8');
-  assert.match(entry, /^id: person\/steelman-deliberation$/m);
-  assert.match(entry, /^type: workflow-entry$/m);
-  assert.match(entry, /^workflow: person$/m);
+  const entry = await readFile(path.join(workRoot, 'SKILL.md'), 'utf8');
+  assert.match(entry, /^  speculo-id: person\/steelman-deliberation$/m);
+  assert.match(entry, /^  speculo-kind: work-skill$/m);
+  assert.match(entry, /^  speculo-domain: person$/m);
   assert.match(entry, /result.*awaiting-user-answer.*completed/s);
   assert.match(entry, /最多向用户提出一个问题/);
   assert.match(entry, /新建、恢复或状态写入前读取.*references\/state-and-publication\.md/);
@@ -98,20 +84,20 @@ test('steelman work has a complete independent package and valid static referenc
   ) as { schema_version: number; workflow: string; active: unknown[] };
   assert.deepEqual(seed, { schema_version: 1, workflow: 'person', active: [] });
 
-  const index = await readFile(path.join(root, 'template/workflows/person/INDEX.md'), 'utf8');
-  assert.match(index, /\*\*M-mao-zedong-cognitive-os\*\*/);
-  assert.match(index, /\*\*S-steelman-deliberation\*\*/);
-  assert.doesNotMatch(index, /AUTO-INDEX-(?:START|END)/);
+  const index = await readFile(path.join(root, 'template/workflows/person/SKILL.md'), 'utf8');
+  assert.match(index, /person\/mao-zedong-cognitive-os/);
+  assert.match(index, /person\/steelman-deliberation/);
+  assert.match(index, /AUTO-INDEX-(?:START|END)/);
 });
 
 test('static-reference audit detects an injected missing work file', async () => {
-  const entry = await readFile(path.join(workRoot, 'S-steelman-deliberation.md'), 'utf8');
+  const entry = await readFile(path.join(workRoot, 'SKILL.md'), 'utf8');
   const broken = entry.replace(
-    'person/S-steelman-deliberation/deliberate.md',
-    'person/S-steelman-deliberation/missing-deliberate.md',
+    'person/person-s-steelman-deliberation/references/deliberate.md',
+    'person/person-s-steelman-deliberation/missing-deliberate.md',
   );
   assert.deepEqual(await missingStaticReferences(broken), [
-    '{roots.workflows}/person/S-steelman-deliberation/missing-deliberate.md',
+    '{roots.workflows}/person/person-s-steelman-deliberation/missing-deliberate.md',
   ]);
 });
 
@@ -129,58 +115,19 @@ test('steelman validator self-check covers waiting, completion, and failure mode
   assert.match(result.stdout, /PASS rejects evasive judgment/);
 });
 
-test('whole-file workflow index generation is deterministic and detects staleness', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'speculo-person-index-'));
-  t.after(async () => rm(temp, { recursive: true, force: true }));
-  const workflowRoot = path.join(temp, 'person');
-  await cp(path.join(root, 'template/workflows/person'), workflowRoot, { recursive: true });
-
-  const staleIndex = `---\nid: person/index\ntype: workflow-index\nworkflow: person\nauto_generated: true\n---\n\n# person — Work Index\n\n> stale\n`;
-  await writeFile(path.join(workflowRoot, 'INDEX.md'), staleIndex);
-
-  const stale = runNode(generator, [workflowRoot, '--check']);
-  assert.equal(stale.status, 1);
-  assert.match(stale.stderr, /STALE INDEX/);
-
-  const generated = runNode(generator, [workflowRoot]);
-  assert.equal(generated.status, 0, `${generated.stdout}\n${generated.stderr}`);
-  const first = await readFile(path.join(workflowRoot, 'INDEX.md'), 'utf8');
-  assert.match(first, /M-mao-zedong-cognitive-os[\s\S]*S-steelman-deliberation/);
-  assert.doesNotMatch(first, /AUTO-INDEX-(?:START|END)/);
-
-  const check = runNode(generator, [workflowRoot, '--check']);
-  assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
-  const second = await readFile(path.join(workflowRoot, 'INDEX.md'), 'utf8');
-  assert.equal(second, first);
+test('domain routing regeneration preserves source YAML and handwritten content', async (t) => {
+ const temp=await mkdtemp(path.join(os.tmpdir(),'speculo-domain-index-'));t.after(()=>rm(temp,{recursive:true,force:true}));
+ const workflowRoot=path.join(temp,'person');await cp(path.join(root,'template/workflows/person'),workflowRoot,{recursive:true});
+ const file=path.join(workflowRoot,'SKILL.md'),original=await readFile(file,'utf8');
+ const stale=original.replace(/<!-- AUTO-INDEX-START -->[\s\S]*?<!-- AUTO-INDEX-END -->/,'<!-- AUTO-INDEX-START -->\nstale\n<!-- AUTO-INDEX-END -->');
+ await writeFile(file,stale);const check=runNode(generator,[workflowRoot,'--check']);assert.equal(check.status,1);assert.match(check.stderr,/STALE domain routing/);assert.equal(await readFile(file,'utf8'),stale);
+ const generated=runNode(generator,[workflowRoot]);assert.equal(generated.status,0,generated.stderr);const next=await readFile(file,'utf8');assert.equal(next,original.replaceAll('\r\n','\n'));
+ assert.equal(runNode(generator,[workflowRoot,'--check']).status,0);assert.equal(await readFile(file,'utf8'),next);
 });
-
-test('marker-mode generation preserves handwritten README content and sorts works', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'speculo-marker-index-'));
-  t.after(async () => rm(temp, { recursive: true, force: true }));
-  const workflowRoot = path.join(temp, 'demo');
-  await mkdir(workflowRoot, { recursive: true });
-  await writeFile(
-    path.join(workflowRoot, 'INDEX.md'),
-    `---\nid: demo\ntype: workflow\nworkflow: demo\nname: Demo\ndescription: Demo workflow\nkeywords: [demo]\n---\n\n# Demo\n\nRead README after activation.\n`,
-  );
-  await writeFile(
-    path.join(workflowRoot, 'README.md'),
-    `# Demo Contract\n\nHandwritten before.\n\n<!-- AUTO-INDEX-START -->\n\nstale\n\n<!-- AUTO-INDEX-END -->\n\nHandwritten after.\n`,
-  );
-  await writeWorkEntry(workflowRoot, 'B-beta', 'Beta', 'Second');
-  await writeWorkEntry(workflowRoot, 'A-alpha', 'Alpha', 'First');
-
-  const generated = runNode(generator, [workflowRoot]);
-  assert.equal(generated.status, 0, `${generated.stdout}\n${generated.stderr}`);
-  const index = await readFile(path.join(workflowRoot, 'INDEX.md'), 'utf8');
-  const readme = await readFile(path.join(workflowRoot, 'README.md'), 'utf8');
-  assert.doesNotMatch(index, /AUTO-INDEX-(?:START|END)|A-alpha|B-beta/);
-  assert.match(readme, /Handwritten before\./);
-  assert.match(readme, /Handwritten after\./);
-  assert.match(readme, /A-alpha[\s\S]*B-beta/);
-  assert.equal((readme.match(/AUTO-INDEX-START/g) ?? []).length, 1);
-  assert.equal((readme.match(/AUTO-INDEX-END/g) ?? []).length, 1);
-
-  const check = runNode(generator, [workflowRoot, '--check']);
-  assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
+test('domain generation rejects invalid identity and unsafe registry entries without writing',async(t)=>{
+ const temp=await mkdtemp(path.join(os.tmpdir(),'speculo-domain-invalid-'));t.after(()=>rm(temp,{recursive:true,force:true}));
+ const workflowRoot=path.join(temp,'person');await cp(path.join(root,'template/workflows/person'),workflowRoot,{recursive:true});
+ const file=path.join(workflowRoot,'SKILL.md'),original=await readFile(file,'utf8'),manifestPath=path.join(workflowRoot,'manifest.json');
+ const manifest=JSON.parse(await readFile(manifestPath,'utf8'));manifest.works=['../outside/SKILL.md'];await writeFile(manifestPath,JSON.stringify(manifest));
+ assert.equal(runNode(generator,[workflowRoot]).status,1);assert.equal(await readFile(file,'utf8'),original);
 });

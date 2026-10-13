@@ -1,13 +1,14 @@
+import { parseFrontmatter } from "../../template/lib/speculo-runtime.mjs";
 import { safeRelative } from "./evaluation-evidence.mjs";
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
-const aliases = { workflows: "template/workflows", skills: "template/skills", commands: "template/commands", speculo: "template", config: "template/config.json", state: "template/.speculo" };
+const aliases = { workflows: "template/workflows", skills: ".agents/skills", references: "template/references", commands: "template/commands", speculo: "template", config: "template/config.json", state: "template/.speculo" };
 const posix = (value) => value.split(sep).join("/");
 const inside = (root, path) => { const rel = relative(root, path); return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`)); };
 const digest = (value) => createHash("sha256").update(value).digest("hex");
-const isEntry = (path) => /^template\/workflows\/[^/]+\/([^/]+)\/\1\.md$/.test(path);
+const isEntry = (path) => /^template\/workflows\/([^/]+)\/\1-[a-z]-[^/]+\/SKILL\.md$/.test(path);
 const isEvidence = (path) => /\/(books|research-snapshot)\//.test(path);
 
 export function sourceRole(path) {
@@ -30,25 +31,22 @@ export function extractDocumentReferences(content, source) {
       if (/^(?:[a-z][a-z\d+.-]*:|#)/i.test(m[1]) || /[<>]/.test(m[1])) continue;
       pointers.push({ raw: m[0], alias: null, path: m[1] });
     }
-    if (!inFence && /^template\/workflows\/[^/]+\/(INDEX|README)\.md$/.test(source)) {
-      const work = line.match(/^- \*\*([A-Z]-[a-z0-9-]+)\*\*/)?.[1];
-      if (work) refs.push({ source, line: index + 1, raw: line, kind: "discovery", condition: line.split("**").slice(2).join("**").trim(), target: `${dirname(source)}/${work}/${work}.md`, role: "source", error: null });
-    }
     for (const pointer of pointers) {
       const rawPath = pointer.path.split("#")[0];
       const table = line.trim().startsWith("|");
       const firstCell = table ? line.split("|")[1].trim() : null;
       let condition = table ? firstCell : line.replace(/<Path>[\s\S]*?<\/Path>/g, "[reference]").trim();
       const branch = /分支|模式|按需|路由|按阶段/.test(heading) || /(?:when\b|仅|需要|时[，：,]|步骤\s*\d|模式|分支|恢复|生成|创建)/i.test(condition);
-      let kind = branch ? "conditional" : "reference";
+      let kind = /^template\/workflows\/[^/]+\/SKILL\.md$/.test(source) && rawPath.endsWith("/SKILL.md") ? "discovery" : branch ? "conditional" : "reference";
       if (/只作定位|只用于定位|下一|转交|返回.*Work|路由到/.test(condition)) kind = "navigation";
-      if (isEntry(source) && /\/(?:README|INDEX)\.md$/.test(rawPath) && !rawPath.includes("/common/")) kind = "activation";
+      if (isEntry(source) && rawPath.endsWith('/common/rules/domain-runtime.md')) kind = "activation";
       if (isEntry(source) && rawPath.endsWith("/common/rules/activation-and-memory.md")) kind = "activation";
       const ref = { source, line: index + 1, raw: pointer.raw, kind, condition, target: null, role: "source", error: null };
       if (pointer.alias) {
         if (!(pointer.alias in aliases)) { if (!["xxx", "X"].includes(pointer.alias)) ref.error = "unknown root alias"; }
+        else if (pointer.alias === "workflows" && /^\/(?:\{[\w-]+\}|[a-z-]+)\/(?:INDEX|README)\.md$/.test(rawPath)) ref.error = "retired domain entry; use the registered SKILL.md";
         else if (/[\\\x00-\x1f]/.test(rawPath) || rawPath.split("/").includes("..")) ref.error = "escaping Path reference";
-        else if (pointer.alias === "state" || pointer.alias === "config") ref.role = "runtime";
+        else if (pointer.alias === "state" || pointer.alias === "config" || pointer.alias === "skills") ref.role = "runtime";
         else if (/[{}<>*]|\.\.\./.test(rawPath)) ref.role = "dynamic";
         else ref.target = posix(join(aliases[pointer.alias], rawPath.replace(/^\//, "")));
       } else if (/[{}<>*]|\.\.\./.test(rawPath)) ref.role = "dynamic";
@@ -107,13 +105,13 @@ export async function buildDocumentGraph(root, options = {}) {
         if (role === "evidence") { files.set(path, { path, role, bytes: (await stat(file)).size, characters: null, entry: false }); continue; }
         const data = await readFile(file), content = data.toString("utf8");
         const metadata = content.match(/^---\s*\n([\s\S]*?)\n---/)?.[1] ?? "";
-        const id = metadata.match(/^id:\s*(.+)$/m)?.[1] ?? null;
+        const id = isEntry(path) ? parseFrontmatter(content).fields.metadata?.["speculo-id"] : null;
         files.set(path, { path, role, bytes: data.length, characters: [...content].length, sha256: digest(data), entry: isEntry(path), id, content });
         edges.push(...extractDocumentReferences(content, path));
       }
     }
   }
-  for (const dir of options.roots ?? ["template/workflows", "template/skills", "template/commands", ".agents/skills"]) await walk(join(root, dir));
+  for (const dir of options.roots ?? ["template/workflows", "template/references", "template/commands", ".agents/skills"]) await walk(join(root, dir));
   for (const edge of edges) {
     if (edge.error) errors.push(`${edge.source}:${edge.line}: ${edge.error}`);
     if (!edge.target) continue;

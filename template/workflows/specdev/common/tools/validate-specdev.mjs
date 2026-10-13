@@ -19,6 +19,7 @@ import {
 import { execFileSync } from "node:child_process";
 import { dirname, basename, extname, join, relative, resolve, sep, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseFrontmatter as parseYaml, workspaceForPathSync, validateSkill } from "../../../../lib/speculo-runtime.mjs";
 
 import {
   validateTicketPlan, validatePlanMap, validateInvocationCoverage,
@@ -30,35 +31,36 @@ import { reviewScopeCLI } from "./review-scope.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
-const CONFIG_SCHEMA_VERSION = 6;
-const GOAL_PLAN_SCHEMA_VERSION = 6;
+const CONFIG_SCHEMA_VERSION = 7;
+const GOAL_PLAN_SCHEMA_VERSION = 7;
 const IMPLEMENTATION_MAP_SCHEMA_VERSION = 1;
-const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 1;
+const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 2;
 const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
 const STATE_ROOT_PREFIX = "{roots.state}/";
+const REFERENCES_PREFIX = "{roots.references}/";
 const SKILLS_PREFIX = "{roots.skills}/";
 const COMMANDS_PREFIX = "{roots.commands}/";
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const EXPECTED_WORKS = new Set([
-  "A-archive-and-consolidate",
-  "C-code-review",
-  "D-diagnose-bugs",
-  "G-grill-with-docs",
-  "I-implement",
-  "I-init-setup",
-  "L-learn-change",
-  "P-goal-plan",
-  "P-prototype",
-  "R-review-architecture",
-  "R-retro",
-  "S-spec",
-  "T-tickets",
-  "T-triage",
-  "W-wayfinder",
+  "specdev-a-archive-and-consolidate",
+  "specdev-c-code-review",
+  "specdev-d-diagnose-bugs",
+  "specdev-g-grill-with-docs",
+  "specdev-i-implement",
+  "specdev-i-init-setup",
+  "specdev-l-learn-change",
+  "specdev-p-goal-plan",
+  "specdev-p-prototype",
+  "specdev-r-review-architecture",
+  "specdev-r-retro",
+  "specdev-s-spec",
+  "specdev-t-tickets",
+  "specdev-t-triage",
+  "specdev-w-wayfinder",
 ]);
 const EXPECTED_COMMON_DIRS = new Set(["rules", "schemas", "skills", "tools"]);
 const VALID_TICKET_STATUS = new Set([
@@ -214,7 +216,7 @@ const REQUIRED_GOAL_PLAN_SECTIONS = new Set([
 ]);
 const REQUIRED_LEAD_GOAL_PLAN_MARKERS = [
   "### Lead Orchestration",
-  "Implementation subagents",
+  "Concurrent implementations",
   "Read-only agents",
   "execution-time dynamic",
   "### Ticket Workspace and Integration",
@@ -291,136 +293,6 @@ function walk(root) {
   return paths;
 }
 
-function parseScalar(raw) {
-  const value = raw.trim();
-  if (value === "true" || value === "True") return true;
-  if (value === "false" || value === "False") return false;
-  if (value === "null" || value === "Null" || value === "~") return null;
-  if (/^-?\d+$/.test(value)) return Number(value);
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1);
-  }
-  if (value.startsWith("[") && value.endsWith("]")) {
-    // JSON object arrays are used by the additive Skill invocation contract.
-    // Keep the existing plain YAML scalar-list form for old artifacts.
-    try { return JSON.parse(value); } catch { /* legacy scalar list below */ }
-    const inner = value.slice(1, -1).trim();
-    if (inner.startsWith("{")) throw new Error("invalid JSON object array in frontmatter");
-    if (!inner) return [];
-    return inner.split(",").map((item) => parseScalar(item));
-  }
-  if (value.startsWith("{") && value.endsWith("}")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-}
-
-function findSpecdevConfigByAncestry(change) {
-  let current = resolve(change);
-  while (true) {
-    const candidate = join(current, ".speculo", "specdev", "config.json");
-    if (isFile(candidate)) {
-      try {
-        return JSON.parse(readText(candidate));
-      } catch {
-        return null;
-      }
-    }
-    const parent = dirname(current);
-    if (parent === current) return null;
-    current = parent;
-  }
-}
-
-function uniqueResolved(paths) {
-  const seen = new Set();
-  const result = [];
-  for (const path of paths) {
-    const resolved = resolve(path);
-    if (seen.has(resolved)) continue;
-    seen.add(resolved);
-    result.push(resolved);
-  }
-  return result;
-}
-
-function ancestorsOf(start) {
-  const dirs = [];
-  let current = resolve(start);
-  while (true) {
-    dirs.push(current);
-    const parent = dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  return dirs;
-}
-
-function parseWorkspaceCandidate(filePath, projectRoot) {
-  if (!isFile(filePath)) return null;
-  let data;
-  try {
-    data = JSON.parse(readText(filePath));
-  } catch {
-    return null;
-  }
-  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
-  if (data.schema_version !== 1 || data.path_base !== "project-root") return null;
-  const state = data.roots?.state;
-  if (typeof state !== "string" || !state.trim()) return null;
-  const declared = toPosix(state).replace(/^\.?\//, "").replace(/\/$/, "");
-  if (
-    !declared ||
-    declared.split("/").includes("..") ||
-    isAbsolute(declared) ||
-    ABSOLUTE_MACHINE_PATH_RE.test(declared)
-  ) {
-    return null;
-  }
-  const expected = resolve(projectRoot, declared, "workspace.json");
-  if (expected !== resolve(filePath)) return null;
-  return {
-    filePath: resolve(filePath),
-    projectRoot: resolve(projectRoot),
-    stateDeclared: declared,
-    stateRoot: resolve(projectRoot, declared),
-    data,
-  };
-}
-
-function workspaceProbes(projectRoot) {
-  const root = resolve(projectRoot);
-  return [
-    { projectRoot: root, filePath: join(root, "speculo", ".speculo", "workspace.json") },
-    { projectRoot: root, filePath: join(root, ".speculo", "workspace.json") },
-  ];
-}
-
-function collectWorkspaceCandidates(repoRoot, change) {
-  const probes = [];
-  if (repoRoot) {
-    probes.push(...workspaceProbes(repoRoot));
-  } else {
-    for (const dir of uniqueResolved([...ancestorsOf(change), ...ancestorsOf(process.cwd())])) {
-      probes.push(...workspaceProbes(dir));
-    }
-  }
-  const found = new Map();
-  for (const probe of probes) {
-    const parsed = parseWorkspaceCandidate(probe.filePath, probe.projectRoot);
-    if (!parsed) continue;
-    if (!found.has(parsed.filePath)) found.set(parsed.filePath, parsed);
-  }
-  return [...found.values()];
-}
-
 function isLegalChangeLocation(changeAbs, stateRoot) {
   const name = basename(changeAbs);
   if (resolve(stateRoot, "specdev", "changes", name) === changeAbs) return true;
@@ -434,53 +306,15 @@ function isLegalChangeLocation(changeAbs, stateRoot) {
 }
 
 function resolveWorkspaceContract(repoRoot, change) {
-  const changeAbs = resolve(change);
-  const candidates = collectWorkspaceCandidates(repoRoot, changeAbs);
-  if (!candidates.length) {
-    return { mode: "legacy", errors: [], config: null, specdevRoot: null, stateDeclared: null };
-  }
-  const uniqueRoots = uniqueResolved(candidates.map((candidate) => candidate.stateRoot));
-  if (uniqueRoots.length > 1) {
-    const declared = [...new Set(candidates.map((candidate) => candidate.stateDeclared))].sort();
-    return {
-      mode: "strict",
-      errors: [`conflicting workspace.json roots.state (${declared.join(" vs ")})`],
-      config: null,
-      specdevRoot: null,
-      stateDeclared: null,
-    };
-  }
-  const workspace = candidates[0];
-  const specdevRoot = join(workspace.stateRoot, "specdev");
-  const errors = [];
-  if (!isLegalChangeLocation(changeAbs, workspace.stateRoot)) {
-    errors.push(
-      `change is outside workspace roots.state (${workspace.stateDeclared}/specdev); project-root .speculo/specdev is illegal`,
-    );
-  }
-  let config = null;
-  const configPath = join(specdevRoot, "config.json");
-  if (isFile(configPath)) {
-    try {
-      config = JSON.parse(readText(configPath));
-    } catch {
-      config = null;
-    }
-  }
-  return {
-    mode: "strict",
-    errors,
-    config,
-    specdevRoot,
-    stateDeclared: workspace.stateDeclared,
-  };
+  try {
+    const {projectRoot,workspace}=workspaceForPathSync(repoRoot??change);
+    const stateRoot=resolve(projectRoot,workspace.roots.state),specdevRoot=join(stateRoot,"specdev");
+    const errors=isLegalChangeLocation(resolve(change),stateRoot)?[]:["change is outside workspace roots.state (.agents/speculo/.speculo/specdev); project-root .speculo/specdev is illegal"];
+    let config=null; try {config=JSON.parse(readText(join(specdevRoot,"config.json")));}catch{}
+    return {mode:"strict",errors,config,specdevRoot,stateDeclared:workspace.roots.state};
+  } catch(error) {return {mode:"strict",errors:[String(error)],config:null,specdevRoot:null,stateDeclared:null};}
 }
-
-function findSpecdevConfig(change, repoRoot = null) {
-  const contract = resolveWorkspaceContract(repoRoot, change);
-  if (contract.mode === "strict") return contract.config;
-  return findSpecdevConfigByAncestry(change);
-}
+function findSpecdevConfig(change,repoRoot=null) {return resolveWorkspaceContract(repoRoot,change).config;}
 
 function positiveConfigLimit(config, key, fallback) {
   const value = config?.execution?.[key];
@@ -488,37 +322,10 @@ function positiveConfigLimit(config, key, fallback) {
 }
 
 function parseFrontmatter(path) {
-  const text = readText(path);
-  const lines = text.split(/\r?\n/);
-  if (lines[0]?.trim() !== "---") return { meta: {}, body: text };
-  const end = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
-  if (end < 0) return { meta: {}, body: text };
-
-  const meta = {};
-  let currentListKey = null;
-  for (const line of lines.slice(1, end)) {
-    const stripped = line.trim();
-    if (!stripped || stripped.startsWith("#")) continue;
-    if (currentListKey && /^\s+-\s+/.test(line)) {
-      meta[currentListKey].push(parseScalar(line.replace(/^\s+-\s+/, "")));
-      continue;
-    }
-    currentListKey = null;
-    const colon = line.indexOf(":");
-    if (colon < 0) continue;
-    const key = line.slice(0, colon).trim();
-    if (["__proto__", "constructor", "prototype"].includes(key) || Object.hasOwn(meta, key)) {
-      throw new Error(`${path}: duplicate or unsafe frontmatter key ${key}`);
-    }
-    const raw = line.slice(colon + 1).trim();
-    if (!raw) {
-      meta[key] = [];
-      currentListKey = key;
-    } else {
-      meta[key] = parseScalar(raw);
-    }
-  }
-  return { meta, body: lines.slice(end + 1).join("\n") };
+  const text=readText(path);
+  if(!text.startsWith("---"))return {meta:{},body:text};
+  const parsed=parseYaml(text);
+  return {meta:parsed.fields,body:parsed.body};
 }
 
 function escapeRegExp(value) {
@@ -661,7 +468,7 @@ function validatePathValue(value, { allowProject = true } = {}) {
     }
     return null;
   }
-  for (const [prefix, name] of [[SKILLS_PREFIX, "skills"], [COMMANDS_PREFIX, "commands"]]) {
+  for (const [prefix, name] of [[SKILLS_PREFIX, "skills"], [REFERENCES_PREFIX,"references"], [COMMANDS_PREFIX, "commands"]]) {
     if (value.startsWith(prefix)) {
       const suffix = value.slice(prefix.length);
       if (
@@ -698,7 +505,7 @@ function validateDocumentReferences(root) {
   const entries = walk(root);
   const frozenResearchRoot = join(
     root,
-    "P-prototype",
+    "specdev-p-prototype",
     "design-library",
     "research-snapshot",
   );
@@ -750,13 +557,13 @@ function validateDocumentReferences(root) {
             );
           }
         }
-      } else if (payload.startsWith(SKILLS_PREFIX) || payload.startsWith(COMMANDS_PREFIX)) {
-        const isSkill = payload.startsWith(SKILLS_PREFIX);
-        const prefix = isSkill ? SKILLS_PREFIX : COMMANDS_PREFIX;
+      } else if (payload.startsWith(REFERENCES_PREFIX) || payload.startsWith(COMMANDS_PREFIX)) {
+        const isSkill = payload.startsWith(REFERENCES_PREFIX);
+        const prefix = isSkill ? REFERENCES_PREFIX : COMMANDS_PREFIX;
         const referenced = payload.slice(prefix.length);
         if (!PLACEHOLDER_RE.test(referenced)) {
           const templateRoot = resolve(root, "..", "..");
-          const target = join(templateRoot, isSkill ? "skills" : "commands", referenced);
+          const target = join(templateRoot, isSkill ? "references" : "commands", referenced);
           if (!existsSync(target)) {
             errors.push(`${label}:${lineNumber(text, match.index)}: broken public Path ${payload}`);
           }
@@ -852,7 +659,7 @@ function validateJsonFiles(root) {
 
 function validateGlobalStatusAssets(root) {
   const errors = [];
-  const paths = [join(root, "I-init-setup", "status-template.json")];
+  const paths = [join(root, "specdev-i-init-setup", "assets/status-template.json")];
   if (isDirectory(join(root, "_state"))) {
     paths.unshift(join(root, "_state", "status.json"));
   }
@@ -900,8 +707,8 @@ function validateGlobalStatusAssets(root) {
 
 function validateExecutionContractAssets(root) {
   const errors = [];
-  const configTemplatePath = join(root, "I-init-setup", "config-template.json");
-  const changeTemplatePath = join(root, "I-init-setup", "change-status-template.json");
+  const configTemplatePath = join(root, "specdev-i-init-setup", "assets/config-template.json");
+  const changeTemplatePath = join(root, "specdev-i-init-setup", "assets/change-status-template.json");
   const configSchemaPath = join(root, "common", "schemas", "config.schema.json");
   const goalPlanSchemaPath = join(root, "common", "schemas", "goal-plan.schema.json");
   const changeSchemaPath = join(root, "common", "schemas", "change-status.schema.json");
@@ -924,8 +731,8 @@ function validateExecutionContractAssets(root) {
   const configTemplate = JSON.parse(readText(configTemplatePath));
   if (
     configTemplate.schema_version !== CONFIG_SCHEMA_VERSION ||
-    !Number.isInteger(configTemplate.execution?.max_implementation_agents) ||
-    configTemplate.execution.max_implementation_agents < 1 ||
+    !Number.isInteger(configTemplate.execution?.max_concurrent_implementations) ||
+    configTemplate.execution.max_concurrent_implementations < 1 ||
     !Number.isInteger(configTemplate.execution?.max_integration_attempts) ||
     configTemplate.execution.max_integration_attempts < 1 ||
     !Number.isInteger(configTemplate.planning?.ui_design_default_candidates) ||
@@ -934,7 +741,7 @@ function validateExecutionContractAssets(root) {
     configTemplate.planning.ui_design_max_candidates > 4 ||
     configTemplate.planning.ui_design_max_candidates < configTemplate.planning.ui_design_default_candidates
   ) {
-    errors.push("config-template.json must define SpecDev config v6 with positive execution limits and valid UI design candidate bounds");
+    errors.push("config-template.json must define SpecDev config v7 with positive execution limits and valid UI design candidate bounds");
   }
   for (const obsolete of ["auto_commit", "worktree_for_parallel", "max_parallel"]) {
     if (JSON.stringify(configTemplate).includes(`\"${obsolete}\"`)) {
@@ -943,29 +750,29 @@ function validateExecutionContractAssets(root) {
   }
 
   const configSchema = JSON.parse(readText(configSchemaPath));
-  const limit = configSchema.properties?.execution?.properties?.max_implementation_agents;
+  const limit = configSchema.properties?.execution?.properties?.max_concurrent_implementations;
   if (
-    configSchema.$id !== "urn:speculo:specdev:config:v6" ||
+    configSchema.$id !== "urn:speculo:specdev:config:v7" ||
     configSchema.properties?.schema_version?.const !== CONFIG_SCHEMA_VERSION ||
     limit?.minimum !== 1 ||
     configSchema.properties?.execution?.properties?.max_integration_attempts?.minimum !== 1 ||
     configSchema.additionalProperties !== false
   ) {
-    errors.push("config.schema.json must define the strict SpecDev config v6 execution contract");
+    errors.push("config.schema.json must define the strict SpecDev config v7 execution contract");
   }
 
   const goalPlanSchema = JSON.parse(readText(goalPlanSchemaPath));
   if (
-    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v6" ||
+    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v7" ||
     goalPlanSchema.properties?.schema_version?.const !== GOAL_PLAN_SCHEMA_VERSION ||
     goalPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
-    goalPlanSchema.properties?.implementation_agent_limit?.minimum !== 1 ||
+    goalPlanSchema.properties?.concurrent_implementation_limit?.minimum !== 1 ||
     goalPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
     !["current", "required"].every((value) => goalPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
     !["direct-parent", "candidate-merge"].every((value) => goalPlanSchema.properties?.integration_gate?.enum?.includes(value)) ||
     goalPlanSchema.additionalProperties !== false
   ) {
-    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v6 workspace strategy contract");
+    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v7 workspace strategy contract");
   }
 
   const changeTemplate = JSON.parse(readText(changeTemplatePath));
@@ -1001,10 +808,10 @@ function validateExecutionContractAssets(root) {
   }
   const implementationPlanSchema = JSON.parse(readText(implementationPlanSchemaPath));
   if (
-    implementationPlanSchema.$id !== "urn:speculo:specdev:implementation-plan:v1" ||
+    implementationPlanSchema.$id !== "urn:speculo:specdev:implementation-plan:v2" ||
     implementationPlanSchema.properties?.schema_version?.const !== IMPLEMENTATION_PLAN_SCHEMA_VERSION ||
     implementationPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
-    implementationPlanSchema.properties?.implementation_agent_limit?.minimum !== 1 ||
+    implementationPlanSchema.properties?.concurrent_implementation_limit?.minimum !== 1 ||
     implementationPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
     !["current", "required"].every((value) => implementationPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
     implementationPlanSchema.additionalProperties !== false
@@ -1019,7 +826,7 @@ function capabilityChecks(root) {
     [
       "init",
       [
-        join(root, "I-init-setup", "I-init-setup.md"),
+        join(root, "specdev-i-init-setup", "SKILL.md"),
         [
           "tracking-template",
           "domain-layout-template",
@@ -1032,28 +839,28 @@ function capabilityChecks(root) {
     [
       "triage",
       [
-        join(root, "T-triage", "T-triage.md"),
+        join(root, "specdev-t-triage", "SKILL.md"),
         ["intake", "reconcile", "publish", "capture", "capture.md", "pr-delivery", "ci-security", "release-preflight", "recover", "remote-operations.md"],
       ],
     ],
     [
       "spec",
       [
-        join(root, "S-spec", "S-spec.md"),
-        ["用户故事", "验收合同", "代码", "CONTEXT", "ADR", "验证接缝", "ready_for_tickets"],
+        join(root, "specdev-s-spec", "SKILL.md"),
+        ["用户端到端行为", "验收合同", "代码", "CONTEXT", "ADR", "验证接缝", "ready_for_tickets"],
       ],
     ],
     [
       "tickets",
       [
-        join(root, "T-tickets", "T-tickets.md"),
+        join(root, "specdev-t-tickets", "SKILL.md"),
         ["Prefactor", "垂直切片", "Expand", "与用户核对", "Definition of Ready"],
       ],
     ],
     [
       "goal-plan",
       [
-        join(root, "P-goal-plan", "P-goal-plan.md"),
+        join(root, "specdev-p-goal-plan", "SKILL.md"),
         [
           "Outcome",
           "权威来源",
@@ -1061,7 +868,7 @@ function capabilityChecks(root) {
           "Gate",
           "Wave",
           "lead-directed",
-          "implementation_agent_limit",
+          "concurrent_implementation_limit",
           "candidate-merge",
           "lead-orchestration.md",
           "Definition of Done",
@@ -1071,70 +878,70 @@ function capabilityChecks(root) {
     [
       "implement",
       [
-        join(root, "I-implement", "I-implement.md"),
-        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "parent-candidate", "subagent-delivery", "实现 commit"],
+        join(root, "specdev-i-implement", "SKILL.md"),
+        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "parent-candidate", "共享编排方法", "实现 commit"],
       ],
     ],
     [
       "code-review",
       [
-        join(root, "C-code-review", "C-code-review.md"),
+        join(root, "specdev-c-code-review", "SKILL.md"),
         ["--review-scope", "baseline", "range", "commit", "pr", "no-diff", "固定点", "标准轴", "规范轴", "未合并排名", "reviews/CR-###.md"],
       ],
     ],
     [
       "prototype",
       [
-        join(root, "P-prototype", "P-prototype.md"),
+        join(root, "specdev-p-prototype", "SKILL.md"),
         ["设计定向", "风格", "design-system.md", "comparison", "HTML/CSS/JS", "design-library/INDEX.md"],
       ],
     ],
     [
       "learn-change",
       [
-        join(root, "L-learn-change", "L-learn-change.md"),
+        join(root, "specdev-l-learn-change", "SKILL.md"),
         ["开发完成后", "零专业背景", "$ARGUMENTS", "ASCII", "learning/index.md", "{number}_{topic}.md", "{roots.state}/learning/"],
       ],
     ],
     [
       "wayfinder",
       [
-        join(root, "W-wayfinder", "W-wayfinder.md"),
+        join(root, "specdev-w-wayfinder", "SKILL.md"),
         ["共享地图", "claimed_investigations", "wayfinder:prototype", "wayfinder:grilling", "solution comment", "每个会话"],
       ],
     ],
     [
       "architecture-review",
       [
-        join(root, "R-review-architecture", "R-review-architecture.md"),
+        join(root, "specdev-r-review-architecture", "SKILL.md"),
         ["结构性坏味道", "code-judo", "删除测试", "高置信候选", "最佳推荐"],
       ],
     ],
     [
       "architecture-review-rubric",
       [
-        join(root, "R-review-architecture", "review-rubric.md"),
+        join(root, "specdev-r-review-architecture", "references/review-rubric.md"),
         ["删除测试", "文件大小", "高置信候选", "spaghetti growth"],
       ],
     ],
     [
       "archive",
       [
-        join(root, "A-archive-and-consolidate", "A-archive-and-consolidate.md"),
+        join(root, "specdev-a-archive-and-consolidate", "SKILL.md"),
         ["archive-single", "dry-run", "external_action", "publish_action", "consolidate-from-code", "archive-and-consolidate"],
       ],
     ],
     [
       "grill",
       [
-        join(root, "G-grill-with-docs", "G-grill-with-docs.md"),
+        join(root, "specdev-g-grill-with-docs", "SKILL.md"),
         ["完整 frontier", "design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md", "推荐答案", "永久 namespace 对 G 只读"],
       ],
     ],
     [
       "diagnosis",
       [
-        join(root, "D-diagnose-bugs", "D-diagnose-bugs.md"),
+        join(root, "specdev-d-diagnose-bugs", "SKILL.md"),
         ["红灯", "反馈回路", "最小化", "可证伪", "根因", "回归测试"],
       ],
     ],
@@ -1156,35 +963,35 @@ function capabilityChecks(root) {
     "common/rules/codebase-design.md",
     "common/schemas/design-tree.schema.json",
     "common/schemas/wayfinder-ticket.schema.json",
-    "G-grill-with-docs/design-tree-template.json",
-    "W-wayfinder/local-tracker-contract.md",
-    "W-wayfinder/solution-comment-template.md",
+    "specdev-g-grill-with-docs/assets/design-tree-template.json",
+    "specdev-w-wayfinder/references/local-tracker-contract.md",
+    "specdev-w-wayfinder/assets/solution-comment-template.md",
     "common/rules/parent-implementation-orchestration.md",
     "common/schemas/implementation-map.schema.json",
     "common/schemas/implementation-plan.schema.json",
     "common/schemas/capture.schema.json",
-    "T-triage/capture-protocol.md",
-    "T-triage/capture-template.md",
-    "T-triage/issue-record-template.md",
-    "T-triage/tools/capture-status.mjs",
+    "specdev-t-triage/references/capture-protocol.md",
+    "specdev-t-triage/assets/capture-template.md",
+    "specdev-t-triage/assets/issue-record-template.md",
+    "specdev-t-triage/scripts/capture-status.mjs",
   ]) {
     if (!isFile(join(root, required))) errors.push(`missing architecture/wayfinding contract ${required}`);
   }
 
-  const mapTemplate = join(root, "W-wayfinder", "wayfinder-map-template.md");
+  const mapTemplate = join(root, "specdev-w-wayfinder", "assets/wayfinder-map-template.md");
   if (isFile(mapTemplate) && /^## (?:开放 Tickets|调查清单)/m.test(readText(mapTemplate))) {
     errors.push("Wayfinder map template must query open Tickets instead of caching them");
   }
 
-  const goalPlanTemplate = join(root, "P-goal-plan", "goal-plan-template.md");
+  const goalPlanTemplate = join(root, "specdev-p-goal-plan", "assets/goal-plan-template.md");
   if (!isFile(goalPlanTemplate)) {
     errors.push("missing Goal Plan template");
   } else {
     const text = readText(goalPlanTemplate);
     for (const required of [
-      "schema_version: 6",
+      "schema_version: 7",
       "orchestration: lead-directed",
-      "implementation_agent_limit: 3",
+      "concurrent_implementation_limit: 3",
       "integration_attempt_limit: 3",
       "ticket_workspace_policy: current",
       "integration_gate: direct-parent",
@@ -1209,11 +1016,11 @@ function selfCheck(root) {
   const errors = [];
   const warnings = [];
 
-  if (!isFile(join(root, "INDEX.md"))) errors.push("missing package INDEX");
+  if (!isFile(join(root, "SKILL.md"))) errors.push("missing domain Skill");
 
   const actualWorks = new Set(
     readdirSync(root, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name))
+      .filter((entry) => entry.isDirectory() && /^specdev-[a-z]-/.test(entry.name))
       .map((entry) => entry.name),
   );
   const missingWorks = [...EXPECTED_WORKS].filter((name) => !actualWorks.has(name));
@@ -1223,23 +1030,16 @@ function selfCheck(root) {
 
   const ids = [];
   for (const directoryName of [...actualWorks].sort()) {
-    const entry = join(root, directoryName, `${directoryName}.md`);
+    const entry = join(root, directoryName, "SKILL.md");
     if (!isFile(entry)) {
       errors.push(`missing work entry ${toPosix(relative(root, entry))}`);
       continue;
     }
     const { meta } = parseFrontmatter(entry);
-    if (meta.type !== "workflow-entry") {
-      errors.push(`${toPosix(relative(root, entry))}: type must be workflow-entry`);
-    }
-    if (meta.workflow !== "specdev") {
-      errors.push(`${toPosix(relative(root, entry))}: workflow must be specdev`);
-    }
-    if (typeof meta.id !== "string" || !meta.id.startsWith("specdev/")) {
-      errors.push(`${toPosix(relative(root, entry))}: invalid work id`);
-    } else {
-      ids.push(meta.id);
-    }
+    errors.push(...validateSkill(readText(entry),directoryName).map(error=>entry+": "+error));
+    if(meta.metadata?.["speculo-kind"]!=="work-skill" || meta.metadata?.["speculo-domain"]!=="specdev")errors.push(entry+": invalid Work metadata");
+    const id=meta.metadata?.["speculo-id"];
+    if(typeof id!=="string"||!id.startsWith("specdev/"))errors.push(entry+": invalid work id");else ids.push(id);
   }
   if (ids.length !== new Set(ids).size) errors.push("duplicate workflow entry id");
 
@@ -1377,7 +1177,7 @@ function validateSource(path, expectedChange, errors) {
   return { path, meta, body };
 }
 
-function validateTriage(path, expectedChange, errors, historical = false) {
+function validateTriage(path, expectedChange, errors) {
   if (!isFile(path)) {
     errors.push("missing triage artifact");
     return null;
@@ -1398,8 +1198,8 @@ function validateTriage(path, expectedChange, errors, historical = false) {
   ];
   const missing = required.filter((key) => !(key in meta));
   if (missing.length) errors.push(`triage.md: missing keys ${JSON.stringify(missing)}`);
-  if ((meta.schema_version !== 2 && !(historical && meta.schema_version === 1)) || meta.artifact !== "triage") {
-    errors.push("triage.md: artifact/schema_version must be triage/2; v1 is historical read-only");
+  if (meta.schema_version !== 2 || meta.artifact !== "triage") {
+    errors.push("triage.md: artifact/schema_version must be triage/2");
   }
   if (meta.schema_version === 2) {
     if (!["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"].includes(meta.disposition)) errors.push("triage.md: invalid disposition");
@@ -1721,8 +1521,8 @@ function validatePrototypes(change, required, errors) {
     dirname(fileURLToPath(import.meta.url)),
     "..",
     "..",
-    "P-prototype",
-    "tools",
+    "specdev-p-prototype",
+    "scripts",
     "validate-design-package.mjs",
   );
   const paths = [];
@@ -2076,7 +1876,7 @@ function validateGoalPlan(path, errors) {
     "modes",
     "orchestration",
       "lead",
-      "implementation_agent_limit",
+      "concurrent_implementation_limit",
       "integration_attempt_limit",
     "ticket_workspace_policy",
     "integration_gate",
@@ -2100,8 +1900,8 @@ function validateGoalPlan(path, errors) {
   if (typeof meta.lead !== "string" || !meta.lead.trim()) {
     errors.push(`${basename(path)}: lead must be a non-empty recoverable locator`);
   }
-  if (!Number.isInteger(meta.implementation_agent_limit) || meta.implementation_agent_limit < 1) {
-    errors.push(`${basename(path)}: implementation_agent_limit must be a positive integer`);
+  if (!Number.isInteger(meta.concurrent_implementation_limit) || meta.concurrent_implementation_limit < 1) {
+    errors.push(`${basename(path)}: concurrent_implementation_limit must be a positive integer`);
   }
   if (!Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) {
     errors.push(`${basename(path)}: integration_attempt_limit must be a positive integer`);
@@ -2161,14 +1961,14 @@ function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot 
     errors.push(`${basename(path)}: SpecDev config.json is required to validate execution limits`);
     return;
   }
-  const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
+  const configuredAgents = positiveConfigLimit(config, "max_concurrent_implementations", 0);
   const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
   if (config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
     errors.push(`${basename(path)}: SpecDev config.json must use schema v${CONFIG_SCHEMA_VERSION} with positive execution limits`);
     return;
   }
-  if (goalPlan.meta.implementation_agent_limit > configuredAgents) {
-    errors.push(`${basename(path)}: implementation_agent_limit ${goalPlan.meta.implementation_agent_limit} exceeds config max_implementation_agents ${configuredAgents}`);
+  if (goalPlan.meta.concurrent_implementation_limit > configuredAgents) {
+    errors.push(`${basename(path)}: concurrent_implementation_limit ${goalPlan.meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${configuredAgents}`);
   }
   if (goalPlan.meta.integration_attempt_limit > configuredAttempts) {
     errors.push(`${basename(path)}: integration_attempt_limit ${goalPlan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
@@ -2868,7 +2668,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   const map = parseFrontmatter(mapPath);
   const plan = parseFrontmatter(planPath);
   const mapKeys = ["schema_version", "artifact", "change", "status", "revision", "members", "tasks", "dependencies", "serializations"];
-  const planKeys = ["schema_version", "artifact", "change", "status", "source_map_revision", "orchestration", "lead", "implementation_agent_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution"];
+  const planKeys = ["schema_version", "artifact", "change", "status", "source_map_revision", "orchestration", "lead", "concurrent_implementation_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution"];
   for (const [label, meta, expected] of [
     ["implementation-map.md", map.meta, mapKeys],
     ["implementation-plan.md", plan.meta, planKeys],
@@ -2899,7 +2699,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   if (plan.meta.orchestration !== "lead-directed" || typeof plan.meta.lead !== "string" || !plan.meta.lead.trim()) {
     errors.push("implementation-plan.md: lead-directed orchestration requires a recoverable Lead");
   }
-  for (const key of ["implementation_agent_limit", "integration_attempt_limit"]) {
+  for (const key of ["concurrent_implementation_limit", "integration_attempt_limit"]) {
     if (!Number.isInteger(plan.meta[key]) || plan.meta[key] < 1) {
       errors.push(`implementation-plan.md: ${key} must be a positive integer`);
     }
@@ -3217,20 +3017,20 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   }
 
   const config = findSpecdevConfig(change, repoRoot);
-  const configuredAgents = positiveConfigLimit(config, "max_implementation_agents", 0);
+  const configuredAgents = positiveConfigLimit(config, "max_concurrent_implementations", 0);
   const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
   if (!config || config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
-    errors.push("implementation-plan.md: SpecDev config v6 with positive execution limits is required");
+    errors.push("implementation-plan.md: SpecDev config v7 with positive execution limits is required");
   } else {
-    if (plan.meta.implementation_agent_limit > configuredAgents) {
-      errors.push(`implementation-plan.md: implementation_agent_limit ${plan.meta.implementation_agent_limit} exceeds config max_implementation_agents ${configuredAgents}`);
+    if (plan.meta.concurrent_implementation_limit > configuredAgents) {
+      errors.push(`implementation-plan.md: concurrent_implementation_limit ${plan.meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${configuredAgents}`);
     }
     if (plan.meta.integration_attempt_limit > configuredAttempts) {
       errors.push(`implementation-plan.md: integration_attempt_limit ${plan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
     }
   }
-  if (activeImplementations > plan.meta.implementation_agent_limit) {
-    errors.push(`parent implementation agent limit exceeded: ${activeImplementations} active for limit ${plan.meta.implementation_agent_limit}`);
+  if (activeImplementations > plan.meta.concurrent_implementation_limit) {
+    errors.push(`parent implementation agent limit exceeded: ${activeImplementations} active for limit ${plan.meta.concurrent_implementation_limit}`);
   }
   if (plan.meta.ticket_workspace_policy === "current" && activeCurrentWriters > 1) {
     errors.push(`parent current policy permits only one active implementation writer; found ${activeCurrentWriters}`);
@@ -3331,7 +3131,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     : null;
   const triagePath = join(change, "triage.md");
   const triage = isFile(triagePath) || sourceRequired
-    ? validateTriage(triagePath, basename(change), errors, changeStatus?.archived === true && stage === null)
+    ? validateTriage(triagePath, basename(change), errors)
     : null;
   const publishPath = join(change, "publish.md");
   const publishRequired = Boolean(

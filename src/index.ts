@@ -1,13 +1,14 @@
+import { INSTALL_ROOT, DEFAULT_ROOTS, readWorkspace, validateWorkspace } from "./paths.js";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
-import { MANAGED_MANIFEST, planSkillProjection, resolveAgentSkillRequest, type AgentSkillRequest } from "./agent-skills.js";
+import { readProjectionManifest, planSkillProjection, resolveAgentSkillRequest, type AgentSkillRequest } from "./agent-skills.js";
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
-import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, type TransactionHook } from "./transaction.js";
+import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, TRANSACTIONS_ROOT, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
-import { assertNoLegacyPending, prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
+import { prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
@@ -23,13 +24,15 @@ export type SpeculoCommandResult = {
   mode: "init" | "refresh";
   assets: string[];
   refresh: RefreshSummary;
-  agentSkills: { works: number; template: number };
+  agentSkills: { projected: number };
+  warnings: string[];
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
   selection?: WorkflowSelection;
   agentSkills?: AgentSkillRequest;
+  claudeSkills?: AgentSkillRequest;
   /** Interactive CLI asks after workflow selection. Library callers stay non-interactive unless they set this. */
   promptAgentSkills?: boolean;
   beforeCommit?: (installRoot: string) => Promise<void>;
@@ -37,9 +40,9 @@ export type SpeculoOptions = {
   transactionHook?: TransactionHook;
 };
 
-const CORE_ASSETS = [".speculo", "commands", "skills", "config.json"] as const;
-const INSTALL_SUBDIR = "speculo";
-const WORKFLOW_ENTRY = "INDEX.md";
+const CORE_ASSETS = [".speculo", "commands", "references", "lib", "config.json"] as const;
+const INSTALL_SUBDIR = INSTALL_ROOT;
+const WORKFLOW_ENTRY = "SKILL.md";
 const STATE_TEMPLATE_DIR = "_state";
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
@@ -47,14 +50,6 @@ function assetRoot(packageRoot: string): string {
 
 function installRoot(target: string): string {
   return join(target, INSTALL_SUBDIR);
-}
-
-function counts(value: unknown): { works: number; template: number } {
-  const manifest = value as { works?: unknown; template_skills?: unknown };
-  return {
-    works: Array.isArray(manifest.works) ? manifest.works.length : 0,
-    template: Array.isArray(manifest.template_skills) ? manifest.template_skills.length : 0,
-  };
 }
 
 async function ensureAssetSource(packageRoot: string, asset: string): Promise<string> {
@@ -72,7 +67,7 @@ async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<
       recursive: asset !== "config.json",
       force: true,
       // Tooling may import bundled fixtures; its local cache is not a skill asset.
-      filter: (path) => asset !== "skills" || basename(path) !== ".gradle",
+      filter: (path) => basename(path) !== ".gradle",
     });
   }
 }
@@ -132,12 +127,16 @@ async function buildStagedInstall(
   existed: boolean,
 ): Promise<{ stagedRoot: string; refresh: RefreshSummary }> {
   await mkdir(target, { recursive: true });
-  const stagedRoot = await mkdtemp(join(target, ".speculo-init-stage-"));
+  await mkdir(join(target, TRANSACTIONS_ROOT), { recursive: true });
+  const stagedRoot = await mkdtemp(join(target, TRANSACTIONS_ROOT, "stage-"));
   try {
     await copyCoreAssets(packageRoot, stagedRoot);
     await copyUnselectedCurrentWorkflows(catalog, selection, previousRoot, stagedRoot);
     for (const workflowId of selection.workflowIds) await copySelectedWorkflow(packageRoot, stagedRoot, workflowId);
     const unselectedWorkflowIds = await installedUnselectedWorkflowIds(catalog, selection, previousRoot);
+    const workspace = { schema_version: 2, layout_version: "agents-v2", installation_id: existed ? (await readWorkspace(target)).installation_id : randomUUID(), path_base: "project-root", roots: DEFAULT_ROOTS };
+    validateWorkspace(workspace);
+    await writeFile(join(stagedRoot, ".speculo", "workspace.json"), JSON.stringify(workspace, null, 2) + "\n");
     await writeDiscoveryAssets(packageRoot, stagedRoot);
     const refresh = await prepareRefresh({
       packageRoot,
@@ -161,6 +160,7 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   await assertInstallDirectory(target);
   const existed = await pathExists(root);
   await mkdir(target, { recursive: true });
+  await mkdir(join(target, ".agents"), { recursive: true });
   const lockRoot = join(target, LOCK_NAME);
   try {
     await mkdir(lockRoot, { mode: 0o700 });
@@ -174,7 +174,7 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     await writeFile(join(lockRoot, ".gitignore"), "*\n", { mode: 0o600 });
     await writeDurableJson(join(lockRoot, "owner.json"), { schema_version: 1, id: randomUUID(), host: hostname(), pid: process.pid, started_at: new Date().toISOString() });
     const externalSnapshot = await snapshotExternalFiles(target);
-    if (existed) await assertNoLegacyPending(root);
+
     const catalog = await discoverWorkflowCatalog(packageRoot);
     const selection = await resolveSelection(packageRoot, root, options);
     const initialFingerprint = await fingerprintTree(root);
@@ -185,11 +185,11 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     if (await fingerprintTree(root) !== initialFingerprint) {
       throw new RefreshBlockedError([{
         code: "concurrent-drift",
-        path: "speculo",
+        path: INSTALL_ROOT,
         message: "the active installation changed while refresh staging was in progress",
       }]);
     }
-    const assets = [".speculo", "config.json", "commands", "skills"];
+    const assets = [".speculo", "config.json", "commands", "references", "lib"];
     assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
     const installed = await scanInstalledWorkflows(stagedRoot);
     const references = await readPersistentKnowledge(stagedRoot, installed);
@@ -199,18 +199,14 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
       target, packageRoot, catalog, installedWorkflowIds: installed, request: options.agentSkills, prompt: options.promptAgentSkills === true,
     });
     const projection = await planSkillProjection({
-      target, stagedRoot, packageRoot, packageVersion: refresh.targetVersion, installedWorkflowIds: installed, request: skillRequest,
+      target, stagedRoot, packageRoot, packageVersion: refresh.targetVersion, installedWorkflowIds: installed, request: skillRequest, claudeRequest: options.claudeSkills,
     });
     if (projection.blockers.length) throw new RefreshBlockedError(projection.blockers);
     await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook, projection.records);
     assets.push(...edits.map((edit) => edit.name + " (managed discovery/runtime references)"));
     stagedRoot = undefined;
     if (!refresh) throw new Error("Speculo refresh result was not produced");
-    const manifestPath = join(target, ".agents", "skills", MANAGED_MANIFEST);
-    const agentSkills = await pathExists(manifestPath)
-      ? counts(JSON.parse(await readFile(manifestPath, "utf8")))
-      : { works: 0, template: 0 };
-    return { target, mode: existed ? "refresh" : "init", assets, refresh, agentSkills };
+    return { target, mode: existed ? "refresh" : "init", assets, refresh, agentSkills: { projected: projection.count }, warnings: projection.warnings.map(w=>`${w.code} ${w.path}: ${w.message}`) };
   } finally {
     // A failed rollback or killed process leaves durable evidence; never delete it in finally.
     if (!(await hasTransaction(target))) {

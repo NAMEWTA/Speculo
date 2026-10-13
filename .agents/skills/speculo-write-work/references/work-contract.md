@@ -1,31 +1,22 @@
 # Work authoring contract
 
-## 路径与命名
+## 结构与身份
 
-```text
-template/workflows/<workflow>/<Letter>-<slug>/
-  <Letter>-<slug>.md
-  <branch-file>.md       # 可选
-```
-
-`Letter` 是便于发现的稳定前缀；slug 为 kebab-case。入口文件与目录完全同名。
-
-## Frontmatter
-
-当前 workflow-entry 形态：
+入口为 template/workflows/<domain>/<domain>-<letter>-<name>/SKILL.md；可选 references/、scripts/、assets/。name 必须等于目录名，字母小写；business ID 保持 domain/semantic-id。领域 manifest 注册每个 Work。
 
 ```yaml
 ---
-id: <workflow>/<semantic-id>
-type: workflow-entry
-workflow: <workflow>
-name: <显示名>
-description: <从输入推进到结果的一句话>
-keywords: [<主导词>, <真实检索词>]
+name: specdev-i-implement
+description: 完成一个已授权实现步骤并返回验证证据。
+metadata:
+  speculo-kind: work-skill
+  speculo-id: specdev/implement
+  speculo-domain: specdev
+  speculo-contract-version: "2"
 ---
 ```
 
-`semantic-id` 可以与去掉字母前缀的 slug 对齐；以目标 workflow 现有 id 和调用方为事实源。重命名时同步 INDEX、状态中的 `work_id` 约定、交叉引用、canonical 和测试。
+YAML 使用真实解析器，metadata 只含字符串值。投影保持 YAML 字节，不重写名称、描述或扩展。重命名同步 manifest、领域路由、引用、canonical、测试；不靠旧路径兼容表。
 
 ## 入口内容
 
@@ -60,7 +51,7 @@ Work 入口通常包含：
 
 - 必需输入：缺失即阻塞；
 - 可选输入：不存在时静默跳过；
-- 冲突裁决：使用 workflow `artifact-contract` 或根 README 激活合同的规则；
+- 冲突裁决：使用 workflow `artifact-contract` 或common/rules/domain-runtime.md 激活合同的规则；
 - 外部事实：代码、测试、schema、配置和经验证文档；
 - 用户决定：只承载无法从仓库发现的高影响取舍。
 
@@ -78,7 +69,7 @@ Work 还可以更新：
 
 - `{roots.state}/<workflow>/status.json`；
 - change `.status.json`；
-- 根 README 激活合同明确声明且由该 work 拥有的长期 namespace。
+- common/rules/domain-runtime.md 激活合同明确声明且由该 work 拥有的长期 namespace。
 
 `template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。Work 不写 command 报告或 docs-sync sidecar。
 

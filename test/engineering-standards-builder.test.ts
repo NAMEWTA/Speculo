@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { it } from "node:test";
 
-const source = join(process.cwd(), "template/skills/engineering-standards-builder");
+const source = join(process.cwd(), "template/commands/engineering-standards-builder");
 
 function run(root: string, script: string, args: string[] = []) {
   return spawnSync(process.execPath, [join(root, "scripts", script), "--root", root, ...args], { encoding: "utf8" });
@@ -36,7 +36,7 @@ it("keeps Gradle fixture caches out of Builder manifests, validation and self-te
     assert.equal(dirty.status, 0, dirty.stderr);
     assert.equal(dirty.stdout, clean.stdout);
     assert.match(before, /examples\/fallback\/kotlin-gradle\/expected\.json/);
-    assert.match(before, /SKILL\.md/);
+    assert.match(before, /COMMAND\.md/);
     assert.doesNotMatch(before, /\.gradle\//);
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
@@ -46,18 +46,18 @@ it("validates the Builder contract through its routed entry without allowing arb
   const root = join(temp, "engineering-standards-builder");
   try {
     await cp(source, root, { recursive: true, filter: file => basename(file) !== ".gradle" });
-    const procedurePath = join(root, "SKILL.md");
+    const procedurePath = join(root, "COMMAND.md");
     const procedure = await readFile(procedurePath, "utf8");
     await writeFile(procedurePath, procedure.replaceAll("Skill 边界", "boundary"));
     let result = run(root, "validate-builder.mjs");
     assert.equal(result.status, 1);
     assert.match(result.stderr, /missing core contract: Skill 边界/);
     await writeFile(procedurePath, procedure);
-    const entryPath = join(root, "SKILL.md");
+    const entryPath = join(root, "COMMAND.md");
     await writeFile(entryPath, (await readFile(entryPath, "utf8")).replace("[工程约束](references/rules/09-mechanical-guardrails.md)", "工程约束"));
     result = run(root, "validate-builder.mjs");
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /orphan reference not reachable from SKILL.md: references\/rules\/09-mechanical-guardrails.md/);
+    assert.match(result.stderr, /orphan reference not reachable from COMMAND.md: references\/rules\/09-mechanical-guardrails.md/);
     await writeFile(join(root, "references/unexpected.md"), "# Unexpected\n");
     result = run(root, "validate-builder.mjs");
     assert.equal(result.status, 1);

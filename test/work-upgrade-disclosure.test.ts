@@ -16,7 +16,7 @@ describe("work upgrade: potential reference graph and actual read accounting", (
       "media/brief", "media/deconstruct", "media/hand-drawn", "media/init-setup",
       "media/publish-draft", "media/retro", "media/video",
     ]);
-    const report = graphReport(graph, ["template/workflows/specdev/S-spec/S-spec.md"]);
+    const report = graphReport(graph, ["template/workflows/specdev/specdev-s-spec/SKILL.md"]);
     assert.ok(report.impact.generators.includes("scripts/generate-specdev-canonical.mjs"));
     assert.ok(report.impact.generators.includes(".agents/skills/speculo-write-workflows/scripts/generate-index.mjs"));
     const maintainer = graph.files.get(".agents/skills/speculo-write-workflows/SKILL.md");
@@ -27,8 +27,8 @@ describe("work upgrade: potential reference graph and actual read accounting", (
   });
   it("distinguishes dynamic/runtime pointers, examples, conditionals and escaping references", async () => {
     const { extractDocumentReferences } = await load();
-    const source = "template/workflows/specdev/S-spec/S-spec.md";
-    const refs = extractDocumentReferences('## 分支\n| 写 Spec 时 | <Path>{roots.workflows}/specdev/S-spec/spec-template.md</Path> |\n<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>\n`[example](not-a-file.md)`\n<Path>{roots.workflows}/../outside.md</Path>\n| | <Path>{roots.workflows}/specdev/README.md</Path> |\n', source);
+    const source = "template/workflows/specdev/specdev-s-spec/SKILL.md";
+    const refs = extractDocumentReferences('## 分支\n| 写 Spec 时 | <Path>{roots.workflows}/specdev/specdev-s-spec/assets/spec-template.md</Path> |\n<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>\n`[example](not-a-file.md)`\n<Path>{roots.workflows}/../outside.md</Path>\n| | <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path> |\n', source);
     assert.equal(refs.length, 4);
     assert.equal(refs[0].kind, "conditional"); assert.equal(refs[0].condition, "写 Spec 时");
     assert.equal(refs[1].role, "runtime"); assert.match(refs[2].error, /escaping/); assert.match(refs[3].error, /no trigger/);
@@ -37,17 +37,29 @@ describe("work upgrade: potential reference graph and actual read accounting", (
     const { buildDocumentGraph, affectedCallers } = await load();
     const root = await mkdtemp(join(tmpdir(), "speculo-graph-"));
     try {
-      const dir = join(root, "template/workflows/example/A-alpha"); await mkdir(dir, { recursive: true });
-      await writeFile(join(root, "template/workflows/example/README.md"), "- **A-alpha** — 仅请求 alpha 时使用\n");
-      await writeFile(join(dir, "A-alpha.md"), "---\nid: example/alpha\n---\n读取 [branch](branch.md)\n");
-      await writeFile(join(dir, "branch.md"), "返回 [entry](A-alpha.md)\n读取 [missing](missing.md)\n");
+      const dir = join(root, "template/workflows/example/example-a-alpha"); await mkdir(dir, { recursive: true });
+      await writeFile(join(root, "template/workflows/example/SKILL.md"), "- 仅请求 alpha 时读取 <Path>{roots.workflows}/example/example-a-alpha/SKILL.md</Path>\n");
+      await writeFile(join(dir, "SKILL.md"), "---\nname: example-a-alpha\ndescription: Example\nmetadata: {speculo-id: example/alpha}\n---\n读取 [branch](branch.md)\n");
+      await writeFile(join(dir, "branch.md"), "返回 [entry](SKILL.md)\n读取 [missing](missing.md)\n");
       const graph = await buildDocumentGraph(root);
       assert.ok(graph.errors.some((error: string) => error.includes("missing.md")));
       assert.ok(graph.cycles.some((cycle: string[]) => cycle.length === 2));
-      const callers = affectedCallers(graph, ["template/workflows/example/A-alpha/branch.md"]).callers;
-      assert.ok(callers.includes("template/workflows/example/A-alpha/A-alpha.md"));
-      assert.ok(callers.includes("template/workflows/example/README.md"));
+      const callers = affectedCallers(graph, ["template/workflows/example/example-a-alpha/branch.md"]).callers;
+      assert.ok(callers.includes("template/workflows/example/example-a-alpha/SKILL.md"));
+      assert.ok(callers.includes("template/workflows/example/SKILL.md"));
     } finally { await rm(root, { recursive: true, force: true }); }
+  });
+  it("rejects retired domain entry pointers including dynamic workflow names", async () => {
+    const { extractDocumentReferences } = await load();
+    for (const domain of ["specdev", "{workflow}"]) {
+      for (const entry of ["INDEX.md", "README.md"]) {
+        const refs = extractDocumentReferences(`<Path>{roots.workflows}/${domain}/${entry}</Path>`, "template/commands/status/COMMAND.md");
+        assert.match(refs[0].error, /retired domain entry/);
+      }
+    }
+    for (const path of ["{roots.workflows}/{workflow}/SKILL.md", "{roots.workflows}/person/person-m-mao-zedong-cognitive-os/books/README.md", "{roots.state}/learning/context/INDEX.md"]) {
+      assert.equal(extractDocumentReferences(`<Path>${path}</Path>`, "template/commands/status/COMMAND.md")[0].error, null);
+    }
   });
   it("counts overlapping read ranges once and separates first-load phases", async () => {
     const { measureReadTrace } = await load();

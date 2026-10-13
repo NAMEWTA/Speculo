@@ -12,10 +12,10 @@
 - JSON 可解析；
 - asset id 与路径一致；
 - skill 入口名为 `SKILL.md`；
-- command 是 `commands/<id>.md`；
-- work 目录和入口同名；
-- workflow 有唯一 `INDEX.md`；
-- `type: workflow` 的根 README 中 AUTO-INDEX 标记成对且唯一，INDEX 不含标记；`type: workflow-index` / `auto_generated: true` INDEX 不含标记并由生成器拥有整文件。
+- command 是 `commands/<id>/COMMAND.md`；
+- Work 目录与 YAML name 一致，入口固定 SKILL.md；
+- workflow 有唯一 领域 `SKILL.md`；
+- 领域 SKILL.md 的 AUTO-INDEX 标记成对且唯一；manifest v2 完整注册 Work 与阶段，业务 ID 唯一；源 YAML 只使用标准字段。
 
 每个目标文件都通过后完成。
 
@@ -25,7 +25,7 @@
 
 ## Gate 4 — 所有权
 
-逐个写路径标记 owner：workflow、change、command、独立 skill、docs-sync 或项目。独立 skill 只能拥有 `{roots.state}/skills/<skill>/`；被 command/work 调用时使用调用方提供的 owner 路径。发现跨 owner 写入时，移动职责或增加明确的调用/确认边界。所有写入只有一个 owner 后完成。
+逐个写路径标记 owner：domain、change、command、docs-sync 或项目。Work 写本领域 change，Command 写 `{roots.state}/commands/<id>/`；共享方法使用调用方的 owner 路径，不新增 skill 状态。发现跨 owner 写入时，移动职责或增加明确的调用/确认边界。所有写入只有一个 owner 后完成。
 
 ## Gate 5 — 过程质量
 
@@ -46,7 +46,7 @@
 
 ## Gate 6 — 生成物
 
-- Workflow 按 INDEX frontmatter 选择 README 标记区块或 INDEX 整文件模式，并从当前 work 重建；
+- 领域路由从 manifest 和 Work YAML 重建，唯一生成区在领域 SKILL.md；
 - Canonical 从源的传递静态依赖闭包重建；
 - 生成物没有手工专属规则；
 - 再运行生成器得到无 diff 的结果。

@@ -34,7 +34,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 ## 3. Agent 声明
 
-subagent 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
+任务执行者 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
 
 ## 4. 失败分类与完整性
 

@@ -1,1 +1,57 @@
-{"schema_version":1,"id":"person","version":"1.0.0","persistent_knowledge":[],"stages":[{"id":"frame","after":[],"inputs":["question"],"outputs":["dossier"],"risk":"read-only","context_budget":14000},{"id":"deliberate","after":["frame"],"inputs":["dossier"],"outputs":["decision"],"risk":"read-only","context_budget":18000},{"id":"act","after":["deliberate"],"inputs":["decision"],"outputs":["actions"],"risk":"local-reversible","context_budget":10000}]}
+{
+  "schema_version": 2,
+  "id": "person",
+  "version": "1.0.0",
+  "persistent_knowledge": [],
+  "stages": [
+    {
+      "id": "frame",
+      "after": [],
+      "inputs": [
+        "question"
+      ],
+      "outputs": [
+        "dossier"
+      ],
+      "risk": "read-only",
+      "context_budget": 14000
+    },
+    {
+      "id": "deliberate",
+      "after": [
+        "frame"
+      ],
+      "inputs": [
+        "dossier"
+      ],
+      "outputs": [
+        "decision"
+      ],
+      "risk": "read-only",
+      "context_budget": 18000
+    },
+    {
+      "id": "act",
+      "after": [
+        "deliberate"
+      ],
+      "inputs": [
+        "decision"
+      ],
+      "outputs": [
+        "actions"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 10000
+    }
+  ],
+  "entry": "SKILL.md",
+  "works": [
+    "person-m-mao-zedong-cognitive-os/SKILL.md",
+    "person-s-steelman-deliberation/SKILL.md"
+  ],
+  "work_stages": {
+    "person-m-mao-zedong-cognitive-os/SKILL.md": [],
+    "person-s-steelman-deliberation/SKILL.md": []
+  }
+}

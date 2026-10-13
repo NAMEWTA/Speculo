@@ -42,7 +42,7 @@ for (const path of core.managed_metadata ?? []) {
 
 const workflowsRoot = join(template, "workflows");
 for (const entry of readdirSync(workflowsRoot, { withFileTypes: true })) {
-  if (!entry.isDirectory() || entry.name.startsWith("_") || !existsSync(join(workflowsRoot, entry.name, "INDEX.md"))) continue;
+  if (!entry.isDirectory() || entry.name.startsWith("_") || !existsSync(join(workflowsRoot, entry.name, "SKILL.md"))) continue;
   const label = `workflow ${entry.name} runtime contract`;
   const contractPath = join(workflowsRoot, entry.name, "runtime-contract.json");
   if (!existsSync(contractPath)) {

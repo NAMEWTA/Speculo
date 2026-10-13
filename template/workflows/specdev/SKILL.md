@@ -1,0 +1,46 @@
+---
+name: specdev
+description: "用于需求澄清、规格、任务规划、实现、审查和交付的工程协作；只读发现不启动 Goal。"
+metadata:
+  speculo-kind: domain-skill
+  speculo-id: domain/specdev
+  speculo-domain: specdev
+  speculo-contract-version: "2"
+---
+
+# specdev
+
+## 发现与激活
+
+只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+
+明确进入本领域后读取 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+
+## 能力路由
+
+<!-- AUTO-INDEX-START -->
+
+- **specdev/archive-and-consolidate** — 归档与沉淀：<Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>
+- **specdev/code-review** — 代码审查：<Path>{roots.workflows}/specdev/specdev-c-code-review/SKILL.md</Path>
+- **specdev/diagnose-bugs** — 诊断 Bug：<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/SKILL.md</Path>
+- **specdev/grill-with-docs** — Change 决策访谈：<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>
+- **specdev/implement** — 实现与验收：<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>
+- **specdev/init-setup** — 初始化设置：<Path>{roots.workflows}/specdev/specdev-i-init-setup/SKILL.md</Path>
+- **specdev/learn-change** — Change 学习：给零基础新生的图解：<Path>{roots.workflows}/specdev/specdev-l-learn-change/SKILL.md</Path>
+- **specdev/goal-plan** — Goal 规划与执行：<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>
+- **specdev/prototype** — 逻辑与 UI 原型：<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>
+- **specdev/retro** — 开发复盘：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
+- **specdev/review-architecture** — 架构审查：<Path>{roots.workflows}/specdev/specdev-r-review-architecture/SKILL.md</Path>
+- **specdev/spec** — 编写 Spec：<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>
+- **specdev/tickets** — 编写计划型 Tickets：<Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>
+- **specdev/triage** — 请求分诊与 GitHub 交付：<Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path>
+- **specdev/wayfinder** — 探索大需求与 Change 边界：<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>
+
+<!-- AUTO-INDEX-END -->
+
+## 永久知识
+
+- <Path>{roots.state}/specdev/adr/</Path>
+- <Path>{roots.state}/specdev/context/</Path>
+
+正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。

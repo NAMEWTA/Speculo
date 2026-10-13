@@ -12,7 +12,8 @@ const SOURCE_ROOTS = {
   speculo: 'template',
   state: 'template/.speculo',
   commands: 'template/commands',
-  skills: 'template/skills',
+  skills: '.agents/skills',
+  references: 'template/references',
   workflows: 'template/workflows',
 };
 const TEXT_EXTENSIONS = new Set([

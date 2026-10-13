@@ -45,7 +45,7 @@
       "path": "skills/engineering/code-review/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/C-code-review/C-code-review.md"
+        "template/workflows/specdev/specdev-c-code-review/SKILL.md"
       ],
       "rationale": "Keep two review axes and persistent evidence, without arbitrary output caps."
     },
@@ -63,7 +63,7 @@
       "path": "skills/engineering/diagnosing-bugs/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md"
+        "template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md"
       ],
       "rationale": "Require landed mutation, expected red, redaction and restored baseline."
     },
@@ -81,7 +81,7 @@
       "path": "skills/engineering/grill-with-docs/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"
+        "template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md"
       ],
       "rationale": "Persist design tree, log, context and accepted decisions."
     },
@@ -90,7 +90,7 @@
       "path": "skills/engineering/implement-spec/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/P-goal-plan/P-goal-plan.md"
+        "template/workflows/specdev/specdev-p-goal-plan/SKILL.md"
       ],
       "rationale": "Use existing Lead/frontier and integration gates; no automatic push, merge or cleanup."
     },
@@ -99,7 +99,7 @@
       "path": "skills/engineering/implement/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/I-implement/I-implement.md"
+        "template/workflows/specdev/specdev-i-implement/SKILL.md"
       ],
       "rationale": "Preserve Ready, ownership and durable Evidence."
     },
@@ -108,7 +108,7 @@
       "path": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/R-review-architecture/R-review-architecture.md"
+        "template/workflows/specdev/specdev-r-review-architecture/SKILL.md"
       ],
       "rationale": "Separate review from selected design and implementation."
     },
@@ -117,7 +117,7 @@
       "path": "skills/engineering/pr/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/T-triage/pr-delivery-protocol.md"
+        "template/workflows/specdev/specdev-t-triage/references/pr-delivery-protocol.md"
       ],
       "rationale": "Summary/evidence/before-after/merge risk with durable authorized delivery."
     },
@@ -126,7 +126,7 @@
       "path": "skills/engineering/prototype/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/P-prototype/P-prototype.md"
+        "template/workflows/specdev/specdev-p-prototype/SKILL.md"
       ],
       "rationale": "Add offline logic and explicit project preview; retain UI default 3/max 4."
     },
@@ -144,7 +144,7 @@
       "path": "skills/engineering/retro/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/R-retro/R-retro.md"
+        "template/workflows/specdev/specdev-r-retro/SKILL.md"
       ],
       "rationale": "Separate development retrospective, reusable analysis and Speculo product feedback."
     },
@@ -153,7 +153,7 @@
       "path": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/I-init-setup/I-init-setup.md"
+        "template/workflows/specdev/specdev-i-init-setup/SKILL.md"
       ],
       "rationale": "Use existing initialization and project standards, no duplicate installer."
     },
@@ -162,7 +162,7 @@
       "path": "skills/engineering/tdd/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/I-implement/tdd-rules.md"
+        "template/workflows/specdev/specdev-i-implement/references/tdd-rules.md"
       ],
       "rationale": "Preserve behavior-first red-green, independent expected values and landed mutation proof."
     },
@@ -171,7 +171,7 @@
       "path": "skills/engineering/to-spec/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/S-spec/S-spec.md"
+        "template/workflows/specdev/specdev-s-spec/SKILL.md"
       ],
       "rationale": "Synthesize accepted decisions and verified prototype behavior."
     },
@@ -180,7 +180,7 @@
       "path": "skills/engineering/to-tickets/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/T-tickets/T-tickets.md"
+        "template/workflows/specdev/specdev-t-tickets/SKILL.md"
       ],
       "rationale": "Keep vertical slices, expand-contract, dependencies and path ownership."
     },
@@ -189,7 +189,7 @@
       "path": "skills/engineering/triage/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/T-triage/T-triage.md"
+        "template/workflows/specdev/specdev-t-triage/SKILL.md"
       ],
       "rationale": "Full Issue/PR intake with local authority and isolated remote ledgers."
     },
@@ -198,7 +198,7 @@
       "path": "skills/engineering/wayfinder/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/W-wayfinder/W-wayfinder.md"
+        "template/workflows/specdev/specdev-w-wayfinder/SKILL.md"
       ],
       "rationale": "Retain one investigation per session and persistent claims."
     },
@@ -235,7 +235,7 @@
       "path": "skills/in-progress/setup-ts-deep-modules/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/skills/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
+        "template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
       ],
       "rationale": "Evidence-based public/private dependency constraints with pass/fail/pass checks."
     },
@@ -286,7 +286,7 @@
       "path": "skills/misc/setup-pre-commit/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/skills/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
+        "template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
       ],
       "rationale": "Inspect existing guardrails; no implicit dependency or hook installation."
     },
@@ -295,7 +295,7 @@
       "path": "skills/productivity/grill-me/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"
+        "template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md"
       ],
       "rationale": "Fold interview/clarification into the existing design Work."
     },
@@ -304,7 +304,7 @@
       "path": "skills/productivity/grilling/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"
+        "template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md"
       ],
       "rationale": "Merge clarification without a duplicate entry."
     },
@@ -313,7 +313,7 @@
       "path": "skills/productivity/handoff/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/commands/handoff.md"
+        "template/commands/handoff/COMMAND.md"
       ],
       "rationale": "Preserve source pointers, owner, checkpoints and unresolved actions."
     },
@@ -329,7 +329,7 @@
       "path": "skills/productivity/to-questionnaire/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"
+        "template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md"
       ],
       "rationale": "Reuse durable questionnaires in design clarification."
     },
@@ -338,7 +338,7 @@
       "path": "skills/productivity/wait-what/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/G-grill-with-docs/G-grill-with-docs.md"
+        "template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md"
       ],
       "rationale": "Clarify only consequential ambiguity and retain current goal."
     },
@@ -347,7 +347,7 @@
       "path": "skills/productivity/writing-for-agents/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/skills/writing-for-agents/SKILL.md"
+        "template/references/writing-for-agents/writing-contract.md"
       ],
       "rationale": "Unified authoring, fidelity and host-specific invocation profiles."
     }

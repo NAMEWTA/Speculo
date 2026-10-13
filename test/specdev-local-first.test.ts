@@ -8,6 +8,8 @@ import { basename, dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
+import { DEFAULT_ROOTS } from "../src/paths.js";
+const fixtureProject = (p:string):string => p.split(/[\\/]\.agents[\\/]speculo[\\/]/)[0];
 const changeName = "2026-08-07-local-first";
 const validator = join(
   packageRoot,
@@ -15,50 +17,51 @@ const validator = join(
 );
 const prototypeTemplate = join(
   packageRoot,
-  "template/workflows/specdev/P-prototype/design-system-template.md",
+  "template/workflows/specdev/specdev-p-prototype/assets/design-system-template.md",
 );
 const prototypeMaterializer = join(
   packageRoot,
-  "template/workflows/specdev/P-prototype/tools/materialize-prototype.mjs",
+  "template/workflows/specdev/specdev-p-prototype/scripts/materialize-prototype.mjs",
 );
 const specTemplate = join(
   packageRoot,
-  "template/workflows/specdev/S-spec/spec-template.md",
+  "template/workflows/specdev/specdev-s-spec/assets/spec-template.md",
 );
 const ticketsMapTemplate = join(
   packageRoot,
-  "template/workflows/specdev/T-tickets/tickets-map-template.md",
+  "template/workflows/specdev/specdev-t-tickets/assets/tickets-map-template.md",
 );
 const ticketTemplate = join(
   packageRoot,
-  "template/workflows/specdev/T-tickets/ticket-template.md",
+  "template/workflows/specdev/specdev-t-tickets/assets/ticket-template.md",
 );
 
 async function fixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-local-first-"));
-  const root = join(parent, changeName);
-  await mkdir(root);
+  const root = join(parent, ".agents/speculo/.speculo/specdev/changes", changeName);
+  await mkdir(root,{recursive:true});
+  await writeFile(join(parent,".agents/speculo/.speculo/workspace.json"),JSON.stringify({schema_version:2,layout_version:"agents-v2",installation_id:"00000000-0000-0000-0000-000000000000",path_base:"project-root",roots:DEFAULT_ROOTS}));
   await writeConfig(root);
   return root;
 }
 
 async function controllerFixture(): Promise<string> {
   const root = await fixture();
-  assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: dirname(root) }).status, 0);
+  assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: fixtureProject(root) }).status, 0);
   return root;
 }
 
 async function writeConfig(root: string, maxImplementationAgents = 3, maxIntegrationAttempts = 3): Promise<void> {
-  const configRoot = join(dirname(root), ".speculo", "specdev");
+  const configRoot = join(fixtureProject(root), ".agents/speculo/.speculo/specdev");
   await mkdir(configRoot, { recursive: true });
   await writeFile(join(configRoot, "config.json"), JSON.stringify({
-    schema_version: 6,
+    schema_version: 7,
     github: { include_external_prs: false, labels: {} },
     interaction_language: "zh-CN",
     artifact_language: "zh-CN",
     git: { default_branch: "main" },
     execution: {
-      max_implementation_agents: maxImplementationAgents,
+      max_concurrent_implementations: maxImplementationAgents,
       max_integration_attempts: maxIntegrationAttempts,
       deep_ticket_human_approval: true,
       shared_path_owner: "explicit",
@@ -183,14 +186,14 @@ async function writeImplementationArtifacts(
   const workspacePolicy = options.workspacePolicy ?? "current";
   await writeFile(join(root, "implementation-plan.md"), [
     "---",
-    "schema_version: 1",
+    "schema_version: 2",
     "artifact: implementation-plan",
     `change: ${basename(root)}`,
     `status: ${status}`,
     `source_map_revision: ${options.sourceMapRevision ?? 1}`,
     "orchestration: lead-directed",
     "lead: lead-session",
-    "implementation_agent_limit: 3",
+    "concurrent_implementation_limit: 3",
     "integration_attempt_limit: 3",
     `ticket_workspace_policy: ${workspacePolicy}`,
     `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`,
@@ -376,7 +379,7 @@ async function writeGoalPlan(
   integrationAttemptLimit = 3,
 ): Promise<void> {
   let content = await readFile(
-    join(packageRoot, "template/workflows/specdev/P-goal-plan/goal-plan-template.md"),
+    join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/assets/goal-plan-template.md"),
     "utf8",
   );
   content = content.replace(/\r\n?/g, "\n");
@@ -386,7 +389,7 @@ async function writeGoalPlan(
     .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", "status: ready")
     .replaceAll("<owner-or-session-locator>", "lead-session")
-    .replace("implementation_agent_limit: 3", `implementation_agent_limit: ${implementationAgentLimit}`)
+    .replace("concurrent_implementation_limit: 3", `concurrent_implementation_limit: ${implementationAgentLimit}`)
     .replace("integration_attempt_limit: 3", `integration_attempt_limit: ${integrationAttemptLimit}`)
     .replace("ticket_workspace_policy: current", `ticket_workspace_policy: ${workspacePolicy}`)
     .replace("integration_gate: direct-parent", `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`)
@@ -529,13 +532,13 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       for (const content of [readyGoal, readyGoal.replace("status: ready", "status: draft").replace("ready_for_execution: true", "ready_for_execution: false")]) {
         await writeFile(goalPath, content);
         const before = await readdir(root);
-        const result = runValidator(root, "goal-plan", dirname(root));
+        const result = runValidator(root, "goal-plan", fixtureProject(root));
         assert.equal(result.status, 0, result.stdout + result.stderr);
         assert.deepEqual(await readdir(root), before);
         assert.equal(await readFile(goalPath, "utf8"), content);
         assert.ok(!before.includes("implementation-map.md") && !before.includes("implementation-plan.md"));
       }
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("requires a valid single-change Goal only at the Goal stage", async () => {
@@ -544,13 +547,13 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const goalPath = join(root, "goal-plan.md");
       const readyGoal = await readFile(goalPath, "utf8");
       await rm(goalPath);
-      assert.equal(runValidator(root, "tickets", dirname(root)).status, 0);
-      const missing = runValidator(root, "goal-plan", dirname(root));
+      assert.equal(runValidator(root, "tickets", fixtureProject(root)).status, 0);
+      const missing = runValidator(root, "goal-plan", fixtureProject(root));
       assert.equal(missing.status, 1);
       assert.match(missing.stdout + missing.stderr, /missing Goal Plan/);
       assert.doesNotMatch(missing.stdout + missing.stderr, /implementation-(map|plan)/);
       const invalid = [
-        readyGoal.replace("schema_version: 6", "schema_version: 5"),
+        readyGoal.replace("schema_version: 7", "schema_version: 5"),
         readyGoal.replace("artifact: goal-plan", "artifact: wrong"),
         readyGoal.replace("status: ready", "status: unknown"),
         readyGoal.replace("status: ready", "status: draft"),
@@ -559,12 +562,12 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       ];
       for (const content of invalid) {
         await writeFile(goalPath, content);
-        const result = runValidator(root, "goal-plan", dirname(root));
+        const result = runValidator(root, "goal-plan", fixtureProject(root));
         assert.equal(result.status, 1, content);
         assert.match(result.stdout + result.stderr, /goal-plan\.md:/);
         assert.doesNotMatch(result.stdout + result.stderr, /implementation-(map|plan)/);
       }
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("keeps incomplete parents in the parent branch, including entry-only and plan-only parents", async () => {
@@ -576,7 +579,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       await writeImplementationArtifacts(root, members);
       const legacy = runValidator(root, "goal-plan");
       assert.equal(legacy.status, 0, `legacy parent without entry: ${legacy.stdout}${legacy.stderr}`);
-      const entry = (await readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/references/goal-tickets-map-template.md"), "utf8"))
+      const entry = (await readFile(join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/references/goal-tickets-map-template.md"), "utf8"))
         .replaceAll("<YYYY-MM-DD-goal>", changeName).replaceAll("{change}", changeName);
       await writeFile(join(root, "tickets-map.md"), entry);
       assert.equal(runValidator(root, "goal-plan").status, 0);
@@ -597,7 +600,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
           assert.doesNotMatch(output, /missing Goal Plan|missing Spec|missing Tickets Map|missing Ticket directory/);
         }
       }
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("dispatches a Ready producer while its draft consumer waits for DoR", async () => {
@@ -605,7 +608,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
     try {
       const consumer = await addControllerTicket(root, "T-02", ["T-01"], false);
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
-      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) };
+      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: fixtureProject(root) };
       const before = await readFile(consumer, "utf8");
       let result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
@@ -615,7 +618,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.equal(result.authorization_checked, false);
       assert.equal(result.transaction_gateway_checked, false);
       assert.equal(await readFile(consumer, "utf8"), before);
-      const validation = runValidator(root, "goal-plan", dirname(root));
+      const validation = runValidator(root, "goal-plan", fixtureProject(root));
       assert.equal(validation.status, 0, validation.stdout + validation.stderr);
 
       await writeFile(consumer, before.replace("status: draft", "status: ready").replace("ready: false", "ready: true"));
@@ -627,7 +630,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       result = analyzeMap(input);
       assert.deepEqual(result.frontier, []);
       assert.match(JSON.stringify(result.blocked), /Goal planning gate is not ready/);
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("retains owner, resource and current-writer gates with a draft consumer", async () => {
@@ -641,7 +644,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
         await writeFile(file, (await readFile(file, "utf8")).replace("resource_claims: []", 'resource_claims: ["db:users"]'));
       }
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
-      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) };
+      const input = { mapPath: join(root, "tickets-map.md"), repoRoot: fixtureProject(root) };
       let result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.frontier, ["T-01"]);
@@ -660,7 +663,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.frontier, ["T-03"]);
       assert.match(JSON.stringify(result.blocked), /implementation owner not assigned/);
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("still rejects draft members when creating a multi-change parent", async () => {
@@ -675,7 +678,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const result = runValidator(root, "goal-plan");
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /2026-09-08-ui: T-01: parent creation requires status=ready and ready=true/);
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("reports invalid executable readiness locally and blocks its dependency closure", async () => {
@@ -688,20 +691,20 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       for (const [status, ready] of [["ready", "false"], ["in_progress", "false"], ["review", "false"], ["ready", '"false"']]) {
         await writeFile(firstPath, first.replace("status: ready", `status: ${status}`).replace("ready: true", `ready: ${ready}`));
-        const result = analyzeMap({ mapPath: join(root, "tickets-map.md"), repoRoot: dirname(root) });
+        const result = analyzeMap({ mapPath: join(root, "tickets-map.md"), repoRoot: fixtureProject(root) });
         assert.deepEqual(result.errors, []);
         assert.deepEqual(result.frontier, ["T-03"]);
         assert.ok(result.validation_errors.some((error: any) => error.id === "T-01" && /executable Ticket must keep ready=true/.test(error.message)), JSON.stringify(result));
         assert.ok(result.blocked.some((node: any) => node.id === "T-02"));
       }
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("does not promote a draft consumer when its producer is successfully done", async () => {
     const root = await progressiveGoalFixture();
     try {
       const consumer = await addControllerTicket(root, "T-02", ["T-01"], false);
-      const repo = dirname(root);
+      const repo = fixtureProject(root);
       await writeFile(join(repo, ".git", "info", "exclude"), "*\n");
       const commit = spawnSync("git", ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "--allow-empty", "-m", "fixture"], { cwd: repo, encoding: "utf8" });
       assert.equal(commit.status, 0, commit.stderr);
@@ -714,7 +717,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const firstPath = join(root, "ticket", "01-implementation.md");
       await writeFile(firstPath, (await readFile(firstPath, "utf8")).replace("status: ready", "status: done"));
       await mkdir(join(root, "evidence"));
-      await writeFile(join(root, "evidence", "T-01.md"), await readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"));
+      await writeFile(join(root, "evidence", "T-01.md"), await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"), "utf8"));
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const input = { mapPath: join(root, "tickets-map.md"), repoRoot: repo };
       const before = await readFile(consumer, "utf8");
@@ -730,61 +733,60 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.frontier, ["T-02"]);
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 });
 
 describe("SpecDev local-first contracts", () => {
   it("keeps INDEX passive and loads the root contract only after work activation", async () => {
     const workflowRoot = join(packageRoot, "template/workflows/specdev");
-    const index = await readFile(join(workflowRoot, "INDEX.md"), "utf8");
-    const activation = await readFile(join(workflowRoot, "README.md"), "utf8");
-    const activationRef = "<Path>{roots.workflows}/specdev/README.md</Path>";
+    const index = await readFile(join(workflowRoot, "SKILL.md"), "utf8");
+    const activation = await readFile(join(workflowRoot, "common/rules/domain-runtime.md"), "utf8");
+    const activationRef = "<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>";
 
     for (const marker of [
       "## 永久知识",
       "{roots.state}/specdev/adr/",
       "{roots.state}/specdev/context/",
-      "{roots.state}/specdev/research/",
-      "## Work 激活",
-      activationRef,
+      "## 发现与激活",
+      "common/rules/activation-and-memory.md",
     ]) {
       assert.match(index, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
-    assert.doesNotMatch(index, /## (Work 条目|运行时根|持久化约定|启动协议|状态字段|路径分配|副作用边界)|AUTO-INDEX-(?:START|END)/);
+    assert.doesNotMatch(index, /## (Work 条目|运行时根|持久化约定|启动协议|状态字段|路径分配|副作用边界)/);
     assert.doesNotMatch(index, /specdev\/(?:config|status)\.json|specdev\/changes\/\{change\}/);
 
     for (const section of ["Work 条目", "运行时根", "持久化约定", "启动协议", "状态字段", "路径分配", "副作用边界"]) {
       assert.match(activation, new RegExp(`## ${section}`));
     }
-    assert.equal((activation.match(/AUTO-INDEX-START/g) ?? []).length, 1);
-    assert.equal((activation.match(/AUTO-INDEX-END/g) ?? []).length, 1);
-    assert.match(activation, /A-archive-and-consolidate[\s\S]*W-wayfinder/);
+    assert.equal((index.match(/AUTO-INDEX-START/g) ?? []).length, 1);
+    assert.equal((index.match(/AUTO-INDEX-END/g) ?? []).length, 1);
+    assert.match(index, /specdev\/archive-and-consolidate[\s\S]*specdev\/wayfinder/);
     assert.match(activation, /common\/rules\/workflow-state-and-lifecycle\.md/);
     const stateContract = await readFile(join(workflowRoot,"common/rules/workflow-state-and-lifecycle.md"),"utf8");
     assert.match(stateContract, /全局 schema v5/);
     assert.match(stateContract, /schema_version.*固定为 `5`/);
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name));
+      .filter((entry) => entry.isDirectory() && /^specdev-[a-z]-/.test(entry.name));
     assert.equal(workDirs.length, 15);
     for (const workDir of workDirs) {
-      const entry = await readFile(join(workflowRoot, workDir.name, `${workDir.name}.md`), "utf8");
+      const entry = await readFile(join(workflowRoot, workDir.name, "SKILL.md"), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
   });
 
   it("defines one Lead, bounded implementation agents, and mandatory Ticket integration", async () => {
     const goalPlan = await readFile(
-      join(packageRoot, "template/workflows/specdev/P-goal-plan/goal-plan-template.md"),
+      join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/assets/goal-plan-template.md"),
       "utf8",
     );
     for (const marker of [
       "orchestration: lead-directed",
-      "implementation_agent_limit: 3",
+      "concurrent_implementation_limit: 3",
       "ticket_workspace_policy: current",
       "integration_gate: direct-parent",
-      "Implementation subagents",
+      "Concurrent implementations",
       "Read-only agents",
       "Local direct-parent verification and parent update",
       "source worktree 不运行 E2E",
@@ -803,7 +805,7 @@ describe("SpecDev local-first contracts", () => {
 
     const config = JSON.parse(
       await readFile(
-        join(packageRoot, "template/workflows/specdev/I-init-setup/config-template.json"),
+        join(packageRoot, "template/workflows/specdev/specdev-i-init-setup/assets/config-template.json"),
         "utf8",
       ),
     );
@@ -816,22 +818,22 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
 
-    assert.equal(config.schema_version, 6);
-    assert.equal(config.execution.max_implementation_agents, 3);
+    assert.equal(config.schema_version, 7);
+    assert.equal(config.execution.max_concurrent_implementations, 3);
     assert.equal(config.execution.max_integration_attempts, 3);
     assert.equal(config.planning.ui_design_default_candidates, 3);
     assert.equal(config.planning.ui_design_max_candidates, 4);
     assert.equal(config.execution.shared_path_owner, "explicit");
     assert.equal("max_parallel" in config.execution, false);
     assert.equal("auto_commit" in config.git, false);
-    assert.match(pathOwnership, /implementation subagent 上限取 Goal Plan、config 和平台能力共同约束/);
+    assert.match(pathOwnership, /实现执行者 上限取 Goal Plan、config 和平台能力共同约束/);
     assert.match(pathOwnership, /review\/research\/test-observation agent 不设置 SpecDev 数字上限/);
     assert.match(evidence, /source-worktree/);
   });
 
   it("requires every Ticket to be covered by valid project Skill routing", async () => {
     const root = await fixture();
-    const repo = await mkdtemp(join(tmpdir(), "specdev-project-skills-"));
+    const repo = fixtureProject(root);
     const mapPath = join(root, "tickets-map.md");
     try {
       assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: repo }).status, 0);
@@ -887,7 +889,7 @@ describe("SpecDev local-first contracts", () => {
       assert.match(result.stdout + result.stderr, /missing '### 总体实施背景'/);
       assert.match(result.stdout + result.stderr, /missing '### 项目 Skill 读取矩阵'/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
       await rm(repo, { recursive: true, force: true });
     }
   });
@@ -1025,11 +1027,11 @@ describe("SpecDev local-first contracts", () => {
 
   it("keeps Direct Spec executable and separates planning from dispatch inputs", async () => {
     const implement = await readFile(
-      join(packageRoot, "template/workflows/specdev/I-implement/references/implementation-procedure.md"),
+      join(packageRoot, "template/workflows/specdev/specdev-i-implement/references/implementation-procedure.md"),
       "utf8",
     );
     const delivery = await readFile(
-      join(packageRoot, "template/workflows/specdev/common/skills/subagent-delivery/SKILL.md"),
+      join(packageRoot, "template/references/coordination/task-brief.md"),
       "utf8",
     );
 
@@ -1043,9 +1045,9 @@ describe("SpecDev local-first contracts", () => {
     ]) {
       assert.match(implement, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
-    assert.match(delivery, /operation=plan[\s\S]*Goal Plan 此时可以尚未写入/);
-    assert.match(delivery, /operation=dispatch[\s\S]*provider/);
-    assert.match(delivery, /operation=accept[\s\S]*原 Dispatch Packet/);
+    assert.match(delivery, /规划阶段[\s\S]*尚未产生/);
+    assert.match(delivery, /身份[\s\S]*工作区[\s\S]*调用[\s\S]*边界/);
+    assert.match(delivery, /返回实际修改[\s\S]*result-and-recovery/);
     assert.doesNotMatch(delivery, /达到修正上限后/);
   });
 
@@ -1065,7 +1067,7 @@ describe("SpecDev local-first contracts", () => {
       await writeGoalPlan(root, 5);
       result = runValidator(root);
       assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /exceeds config max_implementation_agents 4/);
+      assert.match(result.stdout + result.stderr, /exceeds config max_concurrent_implementations 4/);
 
       await writeGoalPlan(root, 4, [], "", "current", 4);
       result = runValidator(root);
@@ -1091,7 +1093,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /obsolete Goal Plan addendum/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1207,7 +1209,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /removed worktree T-01 requires passed candidate\/result\/E2E state/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1216,7 +1218,7 @@ describe("SpecDev local-first contracts", () => {
     try {
       await writeStatus(root);
       const spec = (await readFile(
-        join(packageRoot, "template/workflows/specdev/S-spec/spec-template.md"),
+        join(packageRoot, "template/workflows/specdev/specdev-s-spec/assets/spec-template.md"),
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
@@ -1228,7 +1230,7 @@ describe("SpecDev local-first contracts", () => {
       await writeFile(join(root, "spec.md"), spec);
 
       const map = (await readFile(
-        join(packageRoot, "template/workflows/specdev/T-tickets/tickets-map-template.md"),
+        join(packageRoot, "template/workflows/specdev/specdev-t-tickets/assets/tickets-map-template.md"),
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
@@ -1239,7 +1241,7 @@ describe("SpecDev local-first contracts", () => {
 
       await mkdir(join(root, "ticket"));
       const ticket = (await readFile(
-        join(packageRoot, "template/workflows/specdev/T-tickets/ticket-template.md"),
+        join(packageRoot, "template/workflows/specdev/specdev-t-tickets/assets/ticket-template.md"),
         "utf8",
       ))
         .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
@@ -1264,13 +1266,13 @@ describe("SpecDev local-first contracts", () => {
       await mkdir(join(root, "evidence"));
       await writeFile(
         join(root, "evidence", "T-01.md"),
-        await readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"),
+        await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"), "utf8"),
       );
       await writeStatus(root, "active", [completedTicketWorktree("removed")]);
       result = runValidator(root, "implement");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1287,15 +1289,16 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /strictly serial Ticket execution/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
   it("verifies recorded completion SHAs against an actual Git repository", async () => {
     const root = await fixture();
-    const repo = await mkdtemp(join(tmpdir(), "specdev-git-evidence-"));
+    const repo = fixtureProject(root);
     try {
       assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: repo }).status, 0);
+      await writeFile(join(repo, ".gitignore"), ".agents/speculo/.speculo/\n");
       await writeFile(join(repo, "tracked.txt"), "base\n");
       assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "add", "."], { cwd: repo }).status, 0);
       assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "commit", "-m", "base"], { cwd: repo }).status, 0);
@@ -1320,7 +1323,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /base_sha is not a resolvable Git commit/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
       await rm(repo, { recursive: true, force: true });
     }
   });
@@ -1331,7 +1334,7 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
     const conflict = await readFile(
-      join(packageRoot, "template/workflows/specdev/I-implement/merge-conflict-protocol.md"),
+      join(packageRoot, "template/workflows/specdev/specdev-i-implement/references/merge-conflict-protocol.md"),
       "utf8",
     );
     const worktree = await readFile(
@@ -1352,12 +1355,12 @@ describe("SpecDev local-first contracts", () => {
 
   it("returns repeated Ticket failures to the Lead before redispatch", async () => {
     const [implement, evidence, lead, completion, finalize, executionLoop] = await Promise.all([
-      readFile(join(packageRoot, "template/workflows/specdev/I-implement/references/implementation-procedure.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/I-implement/evidence-template.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/lead-orchestration.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/completion-control.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/references/implementation-procedure.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/references/lead-orchestration.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/references/completion-control.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/references/finalize.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan/references/multi-execution-loop.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/references/multi-execution-loop.md"), "utf8"),
     ]);
 
     assert.match(finalize, /已达到上限，不创建或重建 candidate、不增加 attempts/);
@@ -1382,7 +1385,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(obsolete.status, 1);
       assert.match(obsolete.stdout + obsolete.stderr, /source-issue\.md is forbidden/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1400,7 +1403,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(await readFile(join(root, "source.md"), "utf8"), original);
       await writeFile(join(root, "sources/SRC-001.md"), snapshot.replace("/source.md</Path>", "/sources/SRC-099.md</Path>"));
       const invalid = runValidator(root, "triage"); assert.match(invalid.stdout + invalid.stderr, /existing distinct supersedes_source/);
-    } finally { await rm(dirname(root), { recursive: true, force: true }); }
+    } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
   it("rejects hypotheses before diagnosis has red evidence", async () => {
@@ -1441,7 +1444,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /hypotheses must be empty before red evidence/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1514,7 +1517,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(unindexed.status, 1);
       assert.match(unindexed.stdout + unindexed.stderr, /missing entry for '02_unindexed\.md'/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1588,7 +1591,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(prototype.status, 1);
       assert.match(prototype.stdout + prototype.stderr, /obsolete prototype record is forbidden/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1600,7 +1603,7 @@ describe("SpecDev local-first contracts", () => {
       const result = runValidator(root, "prototype");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1615,7 +1618,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(completion.status, 1);
       assert.match(completion.stdout + completion.stderr, /requires at least one ready UI or logic design package/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1629,7 +1632,7 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /app\.js: differs from design-system\.md/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1648,7 +1651,7 @@ describe("SpecDev local-first contracts", () => {
       assert.match(result.stdout + result.stderr, /exactly three paired PROTOTYPE-FILE blocks/);
       assert.match(result.stdout + result.stderr, /requires comparison\/index\.html/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1692,7 +1695,7 @@ describe("SpecDev local-first contracts", () => {
       const closed = runValidator(root, "complete");
       assert.equal(closed.status, 0, closed.stdout + closed.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -1729,7 +1732,7 @@ fs.writeFileSync(path, JSON.stringify(state));
 `,
       );
       await chmod(fakeGh, 0o755);
-      const transport = join(packageRoot, "template/workflows/specdev/T-triage/scripts/github-transport.mjs");
+      const transport = join(packageRoot, "template/workflows/specdev/specdev-t-triage/scripts/github-transport.mjs");
       const args = [
         transport,
         "issue-comment-close",
@@ -1762,7 +1765,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       state = JSON.parse(await readFile(statePath, "utf8"));
       assert.equal(state.comments.length, 1);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
   it("analyzes a single Goal without mutating files or claiming authorization", async () => {
@@ -1784,7 +1787,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       await writeFile(planFile,(await readFile(planFile,"utf8")).replace("status: ready","status: draft").replace("ready_for_execution: true","ready_for_execution: false"));
       const blocked = analyzeMap({mapPath:join(root,"tickets-map.md"),repoRoot:dirname(root)});
       assert.deepEqual(blocked.frontier,[]); assert.match(JSON.stringify(blocked),/not ready for execution/);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("keeps independent multi-change work dispatchable when one Ticket fails its Skill gate", async () => {
@@ -1807,7 +1810,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
       assert.ok(result.blocked.some((node:any) => node.id === `${members[0]}::T-01`));
       assert.ok(result.validation_errors.length);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("honors semantic resources and current workspace serialization", async () => {
@@ -1826,7 +1829,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(result.errors,[]); assert.equal(result.frontier.length,1); assert.match(JSON.stringify(result.deferred),/semantic resource/);
       await writeImplementationArtifacts(root,members,{workspacePolicy:"current"});
       result=analyzeMap(input); assert.equal(result.implementation_limit,1); assert.equal(result.frontier.length,1);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("invalidates only the changed contract and its downstream closure", async () => {
@@ -1850,7 +1853,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       result=analyzeMap({...input,previous});
       assert.deepEqual(result.invalidated,[`${members[0]}::T-01`,`${members[1]}::T-01`]);
       assert.deepEqual(result.frontier,[`${members[2]}::T-01`]);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("does not treat cancelled prerequisites as successful delivery", async () => {
@@ -1866,7 +1869,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:dirname(root)});
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[]);
       assert.match(JSON.stringify(result.blocked),/dependency not successfully satisfied/); assert.equal(result.eligible_for_final_verification,false);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("keeps a running parent active when one Ticket becomes blocked", async () => {
@@ -1886,7 +1889,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.validation_errors,[]);
       assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
       assert.match(JSON.stringify(result.blocked),/not Ready: blocked/);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("never takes over a competing parent and only pauses its overlapping members", async () => {
@@ -1909,7 +1912,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
       assert.match(JSON.stringify(result.blocked),/unfinished parent implementation/);
       assert.deepEqual(await Promise.all(competingFiles.map(file=>readFile(file,"utf8"))),before);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("detects shared Goal gate drift but ignores progress-only projection updates", async () => {
@@ -1929,7 +1932,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       await writeFile(plan,text.replace("### Overall Definition of Done","### Overall Definition of Done\n\nNew approved shared acceptance gate."));
       const result=analyzeMap({...input,previous});
       assert.deepEqual(result.invalidated,["T-01"]);assert.deepEqual(result.frontier,[]);
-    } finally { await rm(dirname(root),{recursive:true,force:true}); }
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
 });

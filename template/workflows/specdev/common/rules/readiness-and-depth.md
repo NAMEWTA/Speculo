@@ -37,7 +37,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 - Deep Ticket 有迁移、兼容、监控、回滚和批准点，或逐项说明不适用；
 - 单个全新上下文可以完成，否则必须拆分。
 
-详细检查位于 `<Path>{roots.workflows}/specdev/T-tickets/ticket-readiness.md</Path>`。
+详细检查位于 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/ticket-readiness.md</Path>`。
 
 ## 3. Spec Readiness
 

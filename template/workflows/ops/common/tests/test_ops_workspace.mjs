@@ -68,10 +68,10 @@ async function authorized(f, req, adapter) {
 
 test("explicit layer routing distinguishes controller, access, server, project and inventory", (t) => {
   const f = fixture(t);
-  assert.equal(route(f.s, { scope: "controller", server_ids: [], project_ids: [] }).work, "I-initialize");
-  assert.equal(route(f.s, { scope: "server", server_ids: ["node-a"], project_ids: [] }).work, "H-host-manage");
-  assert.equal(route(f.s, { scope: "project", server_ids: ["node-b"], project_ids: ["app-a"] }).work, "D-project-deploy");
-  assert.equal(route(f.s, { scope: "inventory", server_ids: [], project_ids: [] }).work, "V-inventory-view");
+  assert.equal(route(f.s, { scope: "controller", server_ids: [], project_ids: [] }).work, "ops-i-initialize");
+  assert.equal(route(f.s, { scope: "server", server_ids: ["node-a"], project_ids: [] }).work, "ops-h-host-manage");
+  assert.equal(route(f.s, { scope: "project", server_ids: ["node-b"], project_ids: ["app-a"] }).work, "ops-d-project-deploy");
+  assert.equal(route(f.s, { scope: "inventory", server_ids: [], project_ids: [] }).work, "ops-v-inventory-view");
   assert.deepEqual(route(f.s, { scope: "access", server_ids: ["new-node"], project_ids: [] }).registration_required, ["new-node"]);
   for (const c of [
     { scope: "controller", server_ids: ["node-a"], project_ids: [] }, { scope: "server", server_ids: ["node-a"], project_ids: ["app-a"] },

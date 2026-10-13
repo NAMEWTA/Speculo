@@ -238,3 +238,9 @@ change 状态至少包含：
 ## 使用方式
 
 选择与任务匹配的一份能力文档，将它作为项目知识或对话指令上传，然后提供真实问题和材料。模型应先创建或恢复 `ai-workspace/` change，再按能力协议推进。每次状态变化都必须留下实际写入文件或完整可保存文件包。
+
+## 仓库维护
+
+当前分发 12 份成品：SpecDev 5、Learning 2、Media 4、Person 1。统一运行 `pnpm generate-canonical`，只在源入口、references、assets 和生成器中维护规则，不直接修改生成文件。
+
+Person 的便携语义稿维护在对应 Work 的 `assets/canonical-body.md`，生成器复制稿件并执行隔离、持久化和源依赖审计。修改原生 Work 的行为时须同步审阅该稿；生成器不声称自动证明两份自然语言的语义等价。其他生成器的源块及便携适配由各自脚本定义。全部生成物须重复生成无差异，并通过 `pnpm validate-assets`。

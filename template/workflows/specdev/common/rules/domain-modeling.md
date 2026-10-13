@@ -1,6 +1,6 @@
 # 领域建模规则
 
-本规则只规范当前 change 内的候选领域知识。G 和 A 的 consolidate-from-code 模式都可以用它整理 change 工件，但它不授权写入永久 namespace；永久知识只能由 `<Path>{roots.workflows}/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md</Path>` 在完成证据、毕业评估和用户确认全部通过后提升。
+本规则只规范当前 change 内的候选领域知识。G 和 A 的 consolidate-from-code 模式都可以用它整理 change 工件，但它不授权写入永久 namespace；永久知识只能由 `<Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>` 在完成证据、毕业评估和用户确认全部通过后提升。
 
 - 当前 change 的 CONTEXT 只保存已确认、供本 change 下游使用的项目规范语言，不保存普通编程概念、代码导航、一次性状态或讨论历史。
 - 每个术语使用规范名称和 1–2 句定义；不推荐的同义词写入 `_Avoid_`。

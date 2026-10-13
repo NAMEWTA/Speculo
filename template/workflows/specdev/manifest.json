@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "specdev",
   "version": "1.0.0",
   "persistent_knowledge": [
@@ -93,5 +93,53 @@
       "risk": "read-only",
       "context_budget": 10000
     }
-  ]
+  ],
+  "entry": "SKILL.md",
+  "works": [
+    "specdev-a-archive-and-consolidate/SKILL.md",
+    "specdev-c-code-review/SKILL.md",
+    "specdev-d-diagnose-bugs/SKILL.md",
+    "specdev-g-grill-with-docs/SKILL.md",
+    "specdev-i-implement/SKILL.md",
+    "specdev-i-init-setup/SKILL.md",
+    "specdev-l-learn-change/SKILL.md",
+    "specdev-p-goal-plan/SKILL.md",
+    "specdev-p-prototype/SKILL.md",
+    "specdev-r-retro/SKILL.md",
+    "specdev-r-review-architecture/SKILL.md",
+    "specdev-s-spec/SKILL.md",
+    "specdev-t-tickets/SKILL.md",
+    "specdev-t-triage/SKILL.md",
+    "specdev-w-wayfinder/SKILL.md"
+  ],
+  "work_stages": {
+    "specdev-c-code-review/SKILL.md": [
+      "review"
+    ],
+    "specdev-i-implement/SKILL.md": [
+      "implementation",
+      "repair",
+      "verification",
+      "integration"
+    ],
+    "specdev-p-goal-plan/SKILL.md": [
+      "plan",
+      "run",
+      "resume",
+      "replan",
+      "verify"
+    ],
+    "specdev-a-archive-and-consolidate/SKILL.md": [],
+    "specdev-d-diagnose-bugs/SKILL.md": [],
+    "specdev-g-grill-with-docs/SKILL.md": [],
+    "specdev-i-init-setup/SKILL.md": [],
+    "specdev-l-learn-change/SKILL.md": [],
+    "specdev-p-prototype/SKILL.md": [],
+    "specdev-r-retro/SKILL.md": [],
+    "specdev-r-review-architecture/SKILL.md": [],
+    "specdev-s-spec/SKILL.md": [],
+    "specdev-t-tickets/SKILL.md": [],
+    "specdev-t-triage/SKILL.md": [],
+    "specdev-w-wayfinder/SKILL.md": []
+  }
 }

@@ -1,1 +1,103 @@
-{"schema_version":1,"id":"learning","version":"1.0.0","persistent_knowledge":["<Path>{roots.state}/learning/context/INDEX.md</Path>","<Path>{roots.state}/learning/context/REVIEW.md</Path>"],"stages":[{"id":"intake","after":[],"inputs":["goal"],"outputs":["course"],"risk":"read-only","context_budget":12000},{"id":"teach","after":["intake"],"inputs":["course"],"outputs":["lesson"],"risk":"read-only","context_budget":18000},{"id":"practice","after":["teach"],"inputs":["lesson"],"outputs":["homework"],"risk":"read-only","context_budget":12000},{"id":"review","after":["practice"],"inputs":["homework"],"outputs":["mastery"],"risk":"read-only","context_budget":12000},{"id":"consolidate","after":["review"],"inputs":["lesson","mastery"],"outputs":["knowledge"],"risk":"local-reversible","context_budget":14000}]}
+{
+  "schema_version": 2,
+  "id": "learning",
+  "version": "1.0.0",
+  "persistent_knowledge": [
+    "<Path>{roots.state}/learning/context/INDEX.md</Path>",
+    "<Path>{roots.state}/learning/context/REVIEW.md</Path>"
+  ],
+  "stages": [
+    {
+      "id": "intake",
+      "after": [],
+      "inputs": [
+        "goal"
+      ],
+      "outputs": [
+        "course"
+      ],
+      "risk": "read-only",
+      "context_budget": 12000
+    },
+    {
+      "id": "teach",
+      "after": [
+        "intake"
+      ],
+      "inputs": [
+        "course"
+      ],
+      "outputs": [
+        "lesson"
+      ],
+      "risk": "read-only",
+      "context_budget": 18000
+    },
+    {
+      "id": "practice",
+      "after": [
+        "teach"
+      ],
+      "inputs": [
+        "lesson"
+      ],
+      "outputs": [
+        "homework"
+      ],
+      "risk": "read-only",
+      "context_budget": 12000
+    },
+    {
+      "id": "review",
+      "after": [
+        "practice"
+      ],
+      "inputs": [
+        "homework"
+      ],
+      "outputs": [
+        "mastery"
+      ],
+      "risk": "read-only",
+      "context_budget": 12000
+    },
+    {
+      "id": "consolidate",
+      "after": [
+        "review"
+      ],
+      "inputs": [
+        "lesson",
+        "mastery"
+      ],
+      "outputs": [
+        "knowledge"
+      ],
+      "risk": "local-reversible",
+      "context_budget": 14000
+    }
+  ],
+  "entry": "SKILL.md",
+  "works": [
+    "learning-a-archive/SKILL.md",
+    "learning-a-assess-and-plan/SKILL.md",
+    "learning-c-consolidate/SKILL.md",
+    "learning-g-goal/SKILL.md",
+    "learning-h-homework/SKILL.md",
+    "learning-i-init-setup/SKILL.md",
+    "learning-l-lesson/SKILL.md",
+    "learning-q-question/SKILL.md",
+    "learning-r-review/SKILL.md"
+  ],
+  "work_stages": {
+    "learning-a-archive/SKILL.md": [],
+    "learning-a-assess-and-plan/SKILL.md": [],
+    "learning-c-consolidate/SKILL.md": [],
+    "learning-g-goal/SKILL.md": [],
+    "learning-h-homework/SKILL.md": [],
+    "learning-i-init-setup/SKILL.md": [],
+    "learning-l-lesson/SKILL.md": [],
+    "learning-q-question/SKILL.md": [],
+    "learning-r-review/SKILL.md": []
+  }
+}

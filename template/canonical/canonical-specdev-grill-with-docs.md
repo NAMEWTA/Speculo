@@ -28,7 +28,7 @@
 
 ## 当前 change 的访谈与共识
 
-进入访谈必须读取 下方 `<ref-g-grill-with-docs-references-interview-procedure>` 标签，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
+进入访谈必须读取 下方 `<ref-specdev-g-grill-with-docs-references-interview-procedure>` 标签，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
 
 - 先查仓库可发现事实，只询问会改变行为、架构、风险、范围、迁移或验收的决定。
 - W 的每个 materialized change 在自己的目录拥有设计树和文档；共享答案以来源指针引用，不能共用一棵可写设计树。
@@ -521,7 +521,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
+- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 任务执行者 都不能自行改写上层合同。
 - 偏差跨越多个成员时，父 Lead 先递增 Implementation Map revision，再重算 Implementation Plan；旧派单和 candidate 全部标记 stale。
 
 </deviation-control>
@@ -585,14 +585,14 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
     "default_branch": null
   },
   "execution": {
-    "max_implementation_agents": 3,
+    "max_concurrent_implementations": 3,
     "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
@@ -624,7 +624,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v6",
+  "$id": "urn:speculo:specdev:config:v7",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": [
@@ -639,7 +639,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
   ],
   "properties": {
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "interaction_language": {
       "type": "string",
@@ -667,13 +667,13 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
     "execution": {
       "type": "object",
       "required": [
-        "max_implementation_agents",
+        "max_concurrent_implementations",
         "max_integration_attempts",
         "deep_ticket_human_approval",
         "shared_path_owner"
       ],
       "properties": {
-        "max_implementation_agents": {
+        "max_concurrent_implementations": {
           "type": "integer",
           "minimum": 1
         },
@@ -1192,7 +1192,7 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 # 面向 Agent 的工具与 Work 体验
 
-修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动子 Agent。
+修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动任务执行者。
 
 普通代码修改不自动触发全库提示词审查。
 
@@ -1222,7 +1222,7 @@ description 写真实触发时机、任务范围和相近但不适用的场景�
 
 </ref-common-rules-agent-experience>
 
-<ref-g-grill-with-docs-references-interview-procedure>
+<ref-specdev-g-grill-with-docs-references-interview-procedure>
 
 # 设计访谈（带文档）
 
@@ -1363,7 +1363,7 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 
 结晶时区分采纳决定与实际落地；ADR 留真实备选、理由、代价、适用范围和验证义务，未确认解释留 LOG。以后路径/命名变化更新当前事实，决定改变则保留取代关系；永久知识仍经 A，不把提案当作已实现。
 
-</ref-g-grill-with-docs-references-interview-procedure>
+</ref-specdev-g-grill-with-docs-references-interview-procedure>
 
 <ref-common-rules-skill-invocation>
 
@@ -1463,7 +1463,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 ## 文档维护与可见行为
 
-纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 下方 `<ref-i-implement-references-documentation-procedure>` 标签；C 可仅审查，不获得写入权。
+纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 下方 `<ref-specdev-i-implement-references-documentation-procedure>` 标签；C 可仅审查，不获得写入权。
 
 没有所需行为层运行能力时报告缺口，并按原 Gate 保持未通过，不能借文档任务绕过。验收回读修改源和派生物，列出检查、未验证项及明确的新增行为；不用字数变化宣称 Token 或费用节省。
 
@@ -1515,7 +1515,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 </ref-common-rules-code-commenting-rule>
 
-<ref-i-implement-references-documentation-procedure>
+<ref-specdev-i-implement-references-documentation-procedure>
 
 # 文档维护执行分支
 
@@ -1539,4 +1539,4 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
 
-</ref-i-implement-references-documentation-procedure>
+</ref-specdev-i-implement-references-documentation-procedure>

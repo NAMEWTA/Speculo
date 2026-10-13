@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v6",
+  "$id": "urn:speculo:specdev:config:v7",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": [
@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "interaction_language": {
       "type": "string",
@@ -43,13 +43,13 @@
     "execution": {
       "type": "object",
       "required": [
-        "max_implementation_agents",
+        "max_concurrent_implementations",
         "max_integration_attempts",
         "deep_ticket_human_approval",
         "shared_path_owner"
       ],
       "properties": {
-        "max_implementation_agents": {
+        "max_concurrent_implementations": {
           "type": "integer",
           "minimum": 1
         },

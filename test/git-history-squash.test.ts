@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
-const script = join(packageRoot, "template", "skills", "git-history-squash", "scripts", "git-history-squash.mjs");
+const script = join(packageRoot, "template", "commands", "git-history-squash", "scripts", "git-history-squash.mjs");
 
 function command(cwd: string, ...args: string[]): string {
   const result = spawnSync(args[0], args.slice(1), { cwd, encoding: "utf8" });
@@ -32,8 +32,8 @@ async function initRepository(prefix = "git-history-squash-") {
   command(root, "git", "init", "-b", "main");
   command(root, "git", "config", "user.name", "Skill Test");
   command(root, "git", "config", "user.email", "skill-test@example.invalid");
-  await writeFile(join(root, ".git", "info", "exclude"), "/request.json\n/speculo/.speculo/\n", "utf8");
-  await mkdir(join(root, "speculo", ".speculo"), { recursive: true });
+  await writeFile(join(root, ".git", "info", "exclude"), "/request.json\n/.agents/speculo/.speculo/\n", "utf8");
+  await mkdir(join(root, ".agents/speculo", ".speculo"), { recursive: true });
   return root;
 }
 
@@ -65,8 +65,8 @@ async function plan(root: string, repositories: unknown[], topic = "history-test
   await writeJson(request, { schema_version: 1, topic, repositories });
   const result = runSkill(
     "plan", "--root", root,
-    "--state-root", join(root, "speculo", ".speculo", "skills", "git-history-squash"),
-    "--evidence-root", join(root, "speculo", ".speculo"),
+    "--state-root", join(root, ".agents/speculo", ".speculo", "skills", "git-history-squash"),
+    "--evidence-root", join(root, ".agents/speculo", ".speculo"),
     "--request", request,
     "--date", "2026-09-02",
   );
@@ -76,7 +76,7 @@ async function plan(root: string, repositories: unknown[], topic = "history-test
 function runChange(root: string, operation: "apply" | "publish" | "status", change: string, digest?: string) {
   const args = [
     operation, "--root", root,
-    "--state-root", join(root, "speculo", ".speculo", "skills", "git-history-squash"),
+    "--state-root", join(root, ".agents/speculo", ".speculo", "skills", "git-history-squash"),
     "--change", change,
   ];
   if (operation === "apply") args.push("--confirm-plan", digest ?? "");
@@ -121,7 +121,7 @@ describe("git-history-squash skill", () => {
 
       const applied = output(runChange(fixture.root, "apply", planned.change, planned.plan_digest));
       assert.equal(applied.phase, "completed-local");
-      const stateRoot = join(fixture.root, "speculo", ".speculo", "skills", "git-history-squash", planned.change);
+      const stateRoot = join(fixture.root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change);
       const state = await readJson(join(stateRoot, "state.json"));
       const repo = state.repositories[0];
       assert.equal(command(fixture.root, "git", "rev-parse", `${repo.new_head}^{tree}`), command(fixture.root, "git", "rev-parse", `${fixture.end}^{tree}`));
@@ -149,11 +149,11 @@ describe("git-history-squash skill", () => {
       const merge = command(root, "git", "rev-parse", "HEAD");
       const end = await commitFile(root, "end.txt", "end\n", "end");
       const planned = output(await plan(root, [requestEntry({ start: merge, end, boundary: "inclusive" })], "merge-start"));
-      const stateBefore = await readJson(join(root, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      const stateBefore = await readJson(join(root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       assert.equal(stateBefore.repositories[0].baseline_sha, command(root, "git", "rev-parse", `${merge}^1`));
       assert.equal(stateBefore.repositories[0].counts.merges, 1);
       output(runChange(root, "apply", planned.change, planned.plan_digest));
-      const stateAfter = await readJson(join(root, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      const stateAfter = await readJson(join(root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       const newHead = stateAfter.repositories[0].new_head;
       assert.equal(command(root, "git", "show", "-s", "--format=%P", newHead), command(root, "git", "rev-parse", `${merge}^1`));
       assert.equal(command(root, "git", "rev-parse", `${newHead}^{tree}`), command(root, "git", "rev-parse", `${end}^{tree}`));
@@ -168,7 +168,7 @@ describe("git-history-squash skill", () => {
     try {
       const planned = output(await plan(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end, boundary: "inclusive" })], "root-range"));
       output(runChange(fixture.root, "apply", planned.change, planned.plan_digest));
-      const state = await readJson(join(fixture.root, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      const state = await readJson(join(fixture.root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       const newHead = state.repositories[0].new_head;
       assert.equal(command(fixture.root, "git", "rev-list", "--count", newHead), "1");
       assert.equal(command(fixture.root, "git", "show", "-s", "--format=%P", newHead), "");
@@ -201,7 +201,7 @@ describe("git-history-squash skill", () => {
   it("blocks SHAs referenced by an active workflow change", async () => {
     const fixture = await createLinearFixture();
     try {
-      const changeRoot = join(fixture.root, "speculo", ".speculo", "specdev", "changes", "2026-09-02-active-change");
+      const changeRoot = join(fixture.root, ".agents/speculo", ".speculo", "specdev", "changes", "2026-09-02-active-change");
       await writeJson(join(changeRoot, ".status.json"), { change_status: "active" });
       await writeFile(join(changeRoot, "spec.md"), `source revision: ${fixture.end}\n`, "utf8");
 
@@ -221,7 +221,7 @@ describe("git-history-squash skill", () => {
     const fixture = await createLinearFixture();
     try {
       const planned = output(await plan(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "state-tamper"));
-      const statePath = join(fixture.root, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json");
+      const statePath = join(fixture.root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json");
       const state = await readJson(statePath);
       state.repositories[0].path = "../outside";
       await writeJson(statePath, state);
@@ -246,7 +246,7 @@ describe("git-history-squash skill", () => {
       const recovered = runChange(fixture.root, "status", planned.change);
       assert.equal(recovered.status, 2);
       assert.match(recovered.stderr, /worktree|blocked/);
-      const runRoot = join(fixture.root, "speculo", ".speculo", "skills", "git-history-squash", planned.change);
+      const runRoot = join(fixture.root, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change);
       const state = await readJson(join(runRoot, "state.json"));
       assert.equal(state.phase, "blocked-partial");
       assert.equal(state.next_action, "blocked");
@@ -319,7 +319,7 @@ describe("git-history-squash skill", () => {
       command(parent, "git", "init", "-b", "main");
       command(parent, "git", "config", "user.name", "Skill Test");
       command(parent, "git", "config", "user.email", "skill-test@example.invalid");
-      await writeFile(join(parent, ".git", "info", "exclude"), "/request.json\n/speculo/.speculo/\n", "utf8");
+      await writeFile(join(parent, ".git", "info", "exclude"), "/request.json\n/.agents/speculo/.speculo/\n", "utf8");
       const parentBase = await commitFile(parent, "parent.txt", "base\n", "parent base");
       command(parent, "git", "-c", "protocol.file.allow=always", "submodule", "add", "-b", "main", childRemote, "child");
       command(join(parent, "child"), "git", "config", "user.name", "Skill Test");
@@ -329,7 +329,7 @@ describe("git-history-squash skill", () => {
       const parentEnd = await commitFile(parent, "parent.txt", "end\n", "parent end");
       command(parent, "git", "remote", "add", "origin", parentRemote);
       command(parent, "git", "push", "-u", "origin", "main");
-      await mkdir(join(parent, "speculo", ".speculo"), { recursive: true });
+      await mkdir(join(parent, ".agents/speculo", ".speculo"), { recursive: true });
 
       const repositories = [
         requestEntry({
@@ -350,14 +350,14 @@ describe("git-history-squash skill", () => {
         }),
       ];
       const planned = output(await plan(parent, repositories, "submodule-graph"));
-      let state = await readJson(join(parent, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      let state = await readJson(join(parent, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       assert.deepEqual(state.local_manifest.map((item: any) => item.repository), ["child"]);
 
       const childApplied = output(runChange(parent, "apply", planned.change, planned.plan_digest));
       assert.equal(childApplied.next_action, "confirm-publish");
       const childPublished = output(runChange(parent, "publish", planned.change, childApplied.publish_digest));
       assert.equal(childPublished.next_action, "confirm-local");
-      state = await readJson(join(parent, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      state = await readJson(join(parent, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       assert.deepEqual(state.local_manifest.map((item: any) => item.repository), ["workspace"]);
       const childNew = state.repositories.find((item: any) => item.id === "child").new_head;
       assert.equal(command(childRemote, "git", "rev-parse", "refs/heads/main"), childNew);
@@ -365,7 +365,7 @@ describe("git-history-squash skill", () => {
       const parentApplied = output(runChange(parent, "apply", planned.change, childPublished.plan_digest));
       const parentPublished = output(runChange(parent, "publish", planned.change, parentApplied.publish_digest));
       assert.equal(parentPublished.phase, "completed-published");
-      state = await readJson(join(parent, "speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
+      state = await readJson(join(parent, ".agents/speculo", ".speculo", "skills", "git-history-squash", planned.change, "state.json"));
       const parentNew = state.repositories.find((item: any) => item.id === "workspace").new_head;
       const gitlink = command(parent, "git", "ls-tree", parentNew, "child").split(/\s+/)[2];
       assert.equal(gitlink, childNew);

@@ -135,9 +135,9 @@ export function validateEngineeringArtifacts(change, requiredKind = null) {
 export function validateEngineeringPackage(root) {
   const errors = [];
   for (const [entry, target] of [
-    ['R-review-architecture/R-review-architecture.md', 'R-review-architecture/references/performance-review.md'],
-    ['I-implement/I-implement.md', 'I-implement/references/documentation-procedure.md'],
-    ['D-diagnose-bugs/D-diagnose-bugs.md', 'D-diagnose-bugs/references/incident-evidence.md'],
+    ['specdev-r-review-architecture/SKILL.md', 'specdev-r-review-architecture/references/performance-review.md'],
+    ['specdev-i-implement/SKILL.md', 'specdev-i-implement/references/documentation-procedure.md'],
+    ['specdev-d-diagnose-bugs/SKILL.md', 'specdev-d-diagnose-bugs/references/incident-evidence.md'],
   ]) {
     if (!existsSync(join(root, target))) errors.push(`engineering/route: missing ${target}`);
     const source = join(root, entry);

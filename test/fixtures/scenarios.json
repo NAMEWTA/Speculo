@@ -5,8 +5,8 @@
     "trigger": "explicit source intake request",
     "expected": "freezes a source-backed change; clear local requests need no triage",
     "instruction_paths": [
-      "template/workflows/specdev/T-triage/T-triage.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-t-triage/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -16,8 +16,8 @@
     "trigger": "reproducible bug",
     "expected": "requires red evidence before repair",
     "instruction_paths": [
-      "template/workflows/specdev/D-diagnose-bugs/D-diagnose-bugs.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -27,8 +27,8 @@
     "trigger": "clear external behavior",
     "expected": "produces a ready specification",
     "instruction_paths": [
-      "template/workflows/specdev/S-spec/S-spec.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-s-spec/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -38,8 +38,8 @@
     "trigger": "ready specification",
     "expected": "produces decision-complete tickets",
     "instruction_paths": [
-      "template/workflows/specdev/T-tickets/T-tickets.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-t-tickets/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -49,8 +49,8 @@
     "trigger": "implementation ticket",
     "expected": "runs test-first verification",
     "instruction_paths": [
-      "template/workflows/specdev/I-implement/I-implement.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-i-implement/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -60,8 +60,8 @@
     "trigger": "fixed diff",
     "expected": "records immutable review input",
     "instruction_paths": [
-      "template/workflows/specdev/C-code-review/C-code-review.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-c-code-review/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -71,8 +71,8 @@
     "trigger": "failed implementation",
     "expected": "resumes from checkpoint",
     "instruction_paths": [
-      "template/workflows/specdev/I-implement/I-implement.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-i-implement/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -82,8 +82,8 @@
     "trigger": "completed change",
     "expected": "archives only after evidence",
     "instruction_paths": [
-      "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md",
-      "template/workflows/specdev/README.md",
+      "template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
     ]
   },
@@ -93,8 +93,8 @@
     "trigger": "new learning goal",
     "expected": "creates an adaptive course plan",
     "instruction_paths": [
-      "template/workflows/learning/A-assess-and-plan/A-assess-and-plan.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-a-assess-and-plan/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -104,8 +104,8 @@
     "trigger": "course plan ready",
     "expected": "writes a complete lesson",
     "instruction_paths": [
-      "template/workflows/learning/L-lesson/L-lesson.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-l-lesson/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -115,8 +115,8 @@
     "trigger": "user explicitly requests homework",
     "expected": "creates explicit homework; lesson completion alone does not trigger it",
     "instruction_paths": [
-      "template/workflows/learning/H-homework/H-homework.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-h-homework/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -126,8 +126,8 @@
     "trigger": "delayed review requested",
     "expected": "requires real retention evidence",
     "instruction_paths": [
-      "template/workflows/learning/R-review/R-review.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-r-review/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -137,8 +137,8 @@
     "trigger": "user selects topic changes",
     "expected": "creates provenance-backed synthesis",
     "instruction_paths": [
-      "template/workflows/learning/C-consolidate/C-consolidate.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-c-consolidate/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -148,8 +148,8 @@
     "trigger": "legacy v1 state",
     "expected": "blocks without migration",
     "instruction_paths": [
-      "template/workflows/learning/I-init-setup/I-init-setup.md",
-      "template/workflows/learning/README.md",
+      "template/workflows/learning/learning-i-init-setup/SKILL.md",
+      "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
     ]
   },
@@ -159,8 +159,8 @@
     "trigger": "explicit deployment planning request",
     "expected": "identifies registered resource target and scope",
     "instruction_paths": [
-      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-d-project-deploy/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -170,8 +170,8 @@
     "trigger": "registered host and deployment facts ready",
     "expected": "creates digest-bound plan",
     "instruction_paths": [
-      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-d-project-deploy/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -181,8 +181,8 @@
     "trigger": "target mutation inside or outside a frozen task",
     "expected": "requires exact plan approval or the existing bounded task authorization; a document saying approved is not authorization",
     "instruction_paths": [
-      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-d-project-deploy/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -192,8 +192,8 @@
     "trigger": "approved plan",
     "expected": "records typed operations",
     "instruction_paths": [
-      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-d-project-deploy/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -203,8 +203,8 @@
     "trigger": "failed gate",
     "expected": "stops forward mutation and preserves recovery",
     "instruction_paths": [
-      "template/workflows/ops/D-project-deploy/D-project-deploy.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-d-project-deploy/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -214,8 +214,8 @@
     "trigger": "verified resource run",
     "expected": "retains immutable Run/Release evidence; does not create a change archive",
     "instruction_paths": [
-      "template/workflows/ops/V-inventory-view/V-inventory-view.md",
-      "template/workflows/ops/README.md",
+      "template/workflows/ops/ops-v-inventory-view/SKILL.md",
+      "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
     ]
   },
@@ -225,8 +225,8 @@
     "trigger": "complex choice",
     "expected": "freezes two-sided dossier",
     "instruction_paths": [
-      "template/workflows/person/S-steelman-deliberation/S-steelman-deliberation.md",
-      "template/workflows/person/INDEX.md",
+      "template/workflows/person/person-s-steelman-deliberation/SKILL.md",
+      "template/workflows/person/SKILL.md",
       "template/workflows/person/common/rules/activation-and-memory.md"
     ]
   },
@@ -236,8 +236,8 @@
     "trigger": "strategy consultation",
     "expected": "uses methodology as a decision lens",
     "instruction_paths": [
-      "template/workflows/person/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md",
-      "template/workflows/person/INDEX.md",
+      "template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md",
+      "template/workflows/person/SKILL.md",
       "template/workflows/person/common/rules/activation-and-memory.md"
     ]
   },

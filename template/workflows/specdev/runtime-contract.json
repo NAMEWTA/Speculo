@@ -3,9 +3,9 @@
   "workflow": "specdev",
   "config": {
     "path": ".speculo/specdev/config.json",
-    "template": "workflows/specdev/I-init-setup/config-template.json",
+    "template": "workflows/specdev/specdev-i-init-setup/assets/config-template.json",
     "baseline": ".speculo/baselines/workflows/specdev/config.json",
-    "schema_version": 6,
+    "schema_version": 7,
     "optional": true,
     "additional_properties": {
       "": false,

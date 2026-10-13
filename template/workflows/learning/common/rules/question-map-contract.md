@@ -1,6 +1,6 @@
 # 问题地图合同
 
-只在 Q 新建或推进批次/探索时读取。地图属于当前 Change 的 `inquiry/`，由 Q 独占写入，不新增全局状态，也不回填旧历史。种子见 `<Path>{roots.workflows}/learning/Q-question/question-map-template.json</Path>`。在当前 Change locator 下解释本文中的相对工件路径。
+只在 Q 新建或推进批次/探索时读取。地图属于当前 Change 的 `inquiry/`，由 Q 独占写入，不新增全局状态，也不回填旧历史。种子见 `<Path>{roots.workflows}/learning/learning-q-question/assets/question-map-template.json</Path>`。在当前 Change locator 下解释本文中的相对工件路径。
 
 <!-- portable:map:start -->
 ## 问题地图与证据状态

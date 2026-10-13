@@ -57,7 +57,7 @@
 
 ## 状态字段
 
-`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 保留各自 schema v3；新 Ticket/Map 使用附加 plan_contract_version: 1，config 使用 schema v6，Goal Plan 使用 schema v6，Implementation Map/Plan 使用 schema v1，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
+`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 保留各自 schema v3；Ticket/Map 必须使用 plan_contract_version: 1，config 使用 schema v7，Goal Plan 使用 schema v7，Implementation Map 使用 schema v1、Implementation Plan 使用 schema v2，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
 
 - `schema_version`（数字）：全局状态 schema 版本，固定为 `5`。
 - `workflow`（字符串）：workflow 标识，固定为 `"specdev"`。
@@ -66,7 +66,7 @@
 
 `active[].change` 必须唯一，且不得同时出现在 `archived`。`current_work`、`works_run` 和 `claimed_investigations` 只存在于 change 自有 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`：开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
 
-`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_implementation_agents`、`max_integration_attempts` 和 planning UI 设计候选字段均为可配置正整数；候选默认值与上限必须落在 2-4 且默认值不大于上限。仅 implementation subagent 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
+`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_concurrent_implementations`、`max_integration_attempts` 和 planning UI 设计候选字段均为可配置正整数；候选默认值与上限必须落在 2-4 且默认值不大于上限。仅 实现执行者 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
 
 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、适用 candidate/result SHA、验证、E2E disposition 与生命周期状态。current 记录使用 `workspace_ref=current` 和 direct-parent；required 记录使用 source/parent-candidate。每个实现 Ticket 都有一条记录；父分支只有在对应策略的验证通过后推进。`removed` 是 required 集成后来源 branch/worktree 完成清理的终态，必须保留全部集成与 E2E 证据。
 
@@ -91,10 +91,10 @@
 
 ## 扩展工件与兼容
 
-W 可写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`：它只拥有候选 change 边界与目标指针，不复制各 child 的状态。父 Goal 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 使用 goal-tickets-map 指针合同，权威仍是父 Implementation Map/Plan。旧 O restore key 不变；旧票继续可读，未完成旧票在新执行前由 Lead 显式补全调用绑定、交付约束并重新过门禁，不自动迁移、重置状态或改写他人事务。
+W 可写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`：它只拥有候选 change 边界与目标指针，不复制各 child 的状态。父 Goal 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 使用 goal-tickets-map 指针合同，权威仍是父 Implementation Map/Plan。父 Goal 通过当前 P 入口恢复；Ticket/Map 必须满足当前调用与交付合同。无效版本停止受影响分支，不迁移、不重置状态或改写他人事务。
 
 ## 专业分支的原位恢复
 
 performance/documentation/evidence-triage 是原 Work 内的模式，不是新的 current_work 或 works_run 值。R 的记录留 architecture-review，I 留原 Evidence，D 留 diagnosis/diagnostics；格式见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。普通旧工件不回填，归档和已完成历史不重写，config/status/change/Goal/Spec/Ticket 版本不变。
 
-恢复时先核对原 owner、Lead epoch、输入/Skill/代码 checkpoint 和未决动作。仅使受影响证据失效；不能把“结果未保存”解释为操作未发生，不能清空 attempts 或转移锁来恢复。执行、远程账本和 A 的网关继续由原 owner 管理；只阻塞受影响的依赖闭包。
+恢复时先核对原 owner、当前 Lead 身份、输入/Skill/代码 checkpoint 和未决动作。仅使受影响证据失效；不能把“结果未保存”解释为操作未发生，不能清空 attempts 或转移锁来恢复。执行、远程账本和 A 的网关继续由原 owner 管理；只阻塞受影响的依赖闭包。

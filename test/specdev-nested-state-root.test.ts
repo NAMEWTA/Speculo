@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 
+import { DEFAULT_ROOTS } from "../src/paths.js";
 const packageRoot = process.cwd();
 const validator = join(
   packageRoot,
@@ -17,13 +18,13 @@ const MACHINE_ABS = /(?:\/Users\/|\/home\/|\/mnt\/|\/tmp\/|\/var\/|\/workspace\/
 
 function specdevConfig(): string {
   return `${JSON.stringify({
-    schema_version: 6,
+    schema_version: 7,
     github: { include_external_prs: false, labels: {} },
     interaction_language: "zh-CN",
     artifact_language: "zh-CN",
     git: { default_branch: "main" },
     execution: {
-      max_implementation_agents: 3,
+      max_concurrent_implementations: 3,
       max_integration_attempts: 3,
       deep_ticket_human_approval: true,
       shared_path_owner: "explicit",
@@ -94,16 +95,15 @@ async function nestedFixture(): Promise<{
   archived: string;
 }> {
   const proj = await mkdtemp(join(tmpdir(), "specdev-nested-root-"));
-  const stateRoot = join(proj, "speculo", ".speculo");
+  const stateRoot = join(proj, ".agents/speculo", ".speculo");
   const specdevRoot = join(stateRoot, "specdev");
   const shadowRoot = join(proj, ".speculo", "specdev");
   await mkdir(join(specdevRoot, "changes"), { recursive: true });
   await mkdir(join(specdevRoot, "archive", "2026-08"), { recursive: true });
   await mkdir(join(shadowRoot, "changes"), { recursive: true });
   await writeFile(join(stateRoot, "workspace.json"), `${JSON.stringify({
-    schema_version: 1,
-    path_base: "project-root",
-    roots: { state: "speculo/.speculo" },
+    schema_version: 2, layout_version: "agents-v2", installation_id: "00000000-0000-0000-0000-000000000000",
+    path_base: "project-root", roots: DEFAULT_ROOTS,
   }, null, 2)}\n`);
   await writeFile(join(specdevRoot, "config.json"), specdevConfig());
   await writeFile(join(shadowRoot, "config.json"), specdevConfig());
@@ -197,18 +197,18 @@ describe("SpecDev nested workspace.json state root", () => {
     }
   });
 
-  it("errors on two self-consistent workspace.json files with different state roots", async () => {
+  it("rejects a changed authoritative workspace root", async () => {
     const fixture = await nestedFixture();
     try {
-      await writeFile(join(fixture.proj, ".speculo", "workspace.json"), `${JSON.stringify({
-        schema_version: 1,
+      await writeFile(join(fixture.proj, ".agents/speculo/.speculo", "workspace.json"), `${JSON.stringify({
+        schema_version: 2, layout_version: "agents-v2", installation_id: "00000000-0000-0000-0000-000000000000",
         path_base: "project-root",
-        roots: { state: ".speculo" },
+        roots: {...DEFAULT_ROOTS, state: ".speculo" },
       }, null, 2)}\n`);
       const result = runValidator(fixture.legal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
       assert.notEqual(result.status, 0, combined(result));
-      assert.match(combined(result), /conflicting workspace\.json/);
-      assert.match(combined(result), /speculo\/\.speculo/);
+      assert.match(combined(result), /invalid-workspace-roots/);
+
       assert.doesNotMatch(combined(result), MACHINE_ABS);
     } finally {
       await rm(fixture.proj, { recursive: true, force: true });
@@ -221,7 +221,7 @@ describe("SpecDev nested workspace.json state root", () => {
       await writeFile(join(fixture.proj, ".speculo", "workspace.json"), `${JSON.stringify({
         schema_version: 1,
         path_base: "project-root",
-        roots: { state: "speculo/.speculo" },
+        roots: { state: ".agents/speculo/.speculo" },
       }, null, 2)}\n`);
       const legal = runValidator(fixture.legal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
       const illegal = runValidator(fixture.illegal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
@@ -233,12 +233,12 @@ describe("SpecDev nested workspace.json state root", () => {
     }
   });
 
-  it("keeps ancestor config lookup when no workspace.json exists", async () => {
+  it("rejects missing workspace instead of inferring a legacy state root", async () => {
     const fixture = await flatLegacyFixture();
     try {
       const result = runValidator(fixture.change, { stage: "grill", cwd: fixture.parent });
-      assert.equal(result.status, 0, combined(result));
-      assert.doesNotMatch(combined(result), /outside workspace roots\.state/);
+      assert.notEqual(result.status, 0, combined(result));
+      assert.match(combined(result), /missing-workspace/);
     } finally {
       await rm(fixture.parent, { recursive: true, force: true });
     }

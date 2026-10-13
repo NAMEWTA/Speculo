@@ -26,10 +26,10 @@ W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill →
 
 | 当前需要 | 按需读取 |
 |---|---|
-| 初次绘制问题空间，或划分多个 change | 下方 `<ref-w-wayfinder-references-initiative-discovery>` 标签 |
-| 领取并解决一个调查问题，或恢复既有地图 | 下方 `<ref-w-wayfinder-references-map-traversal>` 标签 和 下方 `<local-tracker-contract>` 标签 |
+| 初次绘制问题空间，或划分多个 change | 下方 `<ref-specdev-w-wayfinder-references-initiative-discovery>` 标签 |
+| 领取并解决一个调查问题，或恢复既有地图 | 下方 `<ref-specdev-w-wayfinder-references-map-traversal>` 标签 和 下方 `<local-tracker-contract>` 标签 |
 | 生成地图、问题与答案 | 下方 `<wayfinder-map-template>` 标签、下方 `<investigation-ticket-template>` 标签、下方 `<solution-comment-template>` 标签 |
-| 选定清晰 change 交给 Goal | 下方 `<ref-w-wayfinder-references-initiative-discovery>` 标签 的交接门禁 |
+| 选定清晰 change 交给 Goal | 下方 `<ref-specdev-w-wayfinder-references-initiative-discovery>` 标签 的交接门禁 |
 
 ## 调查的决策价值
 
@@ -46,7 +46,7 @@ W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill →
 
 ## 校验与交接
 
-存在多个候选 change 时，由 W 写 `specdev/changes/{change}/initiative.json`；使用 下方 `<ref-w-wayfinder-references-initiative-template>` 标签 和 下方 `<ref-common-schemas-initiative-schema>` 标签。目标 change 只在用户接受边界后创建，不能挪用已属于其他任务的状态。
+存在多个候选 change 时，由 W 写 `specdev/changes/{change}/initiative.json`；使用 下方 `<ref-specdev-w-wayfinder-references-initiative-template>` 标签 和 下方 `<ref-common-schemas-initiative-schema>` 标签。目标 change 只在用户接受边界后创建，不能挪用已属于其他任务的状态。
 
 运行 Speculo Node 校验器 的 `--stage wayfinder` 校验地图、claim、评论和 initiative；选定成员必须分别满足 Grill 共识、Ready Spec 和 Ready Tickets，再转交 “目标规划阶段”。W 不把“地图完成”宣称为产品已经交付。
 
@@ -123,7 +123,7 @@ status: active
 
 ## Change 边界入口
 
-存在多个候选 change 时，W 创建并按需读取 `specdev/changes/{change}/initiative.json`；地图不复制其中的候选或子状态。每个目标 change 的 Grill/Spec/Ticket 独立拥有，交接规则见 下方 `<ref-w-wayfinder-references-initiative-discovery>` 标签。
+存在多个候选 change 时，W 创建并按需读取 `specdev/changes/{change}/initiative.json`；地图不复制其中的候选或子状态。每个目标 change 的 Grill/Spec/Ticket 独立拥有，交接规则见 下方 `<ref-specdev-w-wayfinder-references-initiative-discovery>` 标签。
 
 </wayfinder-map-template>
 
@@ -252,14 +252,14 @@ resolution: answered
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
     "default_branch": null
   },
   "execution": {
-    "max_implementation_agents": 3,
+    "max_concurrent_implementations": 3,
     "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
@@ -291,7 +291,7 @@ resolution: answered
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v6",
+  "$id": "urn:speculo:specdev:config:v7",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": [
@@ -306,7 +306,7 @@ resolution: answered
   ],
   "properties": {
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "interaction_language": {
       "type": "string",
@@ -334,13 +334,13 @@ resolution: answered
     "execution": {
       "type": "object",
       "required": [
-        "max_implementation_agents",
+        "max_concurrent_implementations",
         "max_integration_attempts",
         "deep_ticket_human_approval",
         "shared_path_owner"
       ],
       "properties": {
-        "max_implementation_agents": {
+        "max_concurrent_implementations": {
           "type": "integer",
           "minimum": 1
         },
@@ -794,7 +794,7 @@ resolution: answered
 
 </activation-and-memory>
 
-<ref-w-wayfinder-references-initiative-discovery>
+<ref-specdev-w-wayfinder-references-initiative-discovery>
 
 # Initiative：从大需求到独立 Change
 
@@ -826,9 +826,9 @@ resolution: answered
 
 变更候选边界或依赖时递增 `revision`，在探索 LOG 记录来源和替代关系。原 claim、评论编号和低分辨率地图仍是原协议；不改写其他任务，不把探索载体迁成父实现 change。两者可以关联，但职责和 owner 分开。
 
-</ref-w-wayfinder-references-initiative-discovery>
+</ref-specdev-w-wayfinder-references-initiative-discovery>
 
-<ref-w-wayfinder-references-map-traversal>
+<ref-specdev-w-wayfinder-references-map-traversal>
 
 # 寻路
 
@@ -951,9 +951,9 @@ Ticket label 只能是 `wayfinder:research | wayfinder:prototype | wayfinder:gri
 - 地图模板：下方 `<wayfinder-map-template>` 标签
 - Ticket schema：下方 `<wayfinder-ticket-schema>` 标签
 
-</ref-w-wayfinder-references-map-traversal>
+</ref-specdev-w-wayfinder-references-map-traversal>
 
-<ref-w-wayfinder-references-initiative-template>
+<ref-specdev-w-wayfinder-references-initiative-template>
 
 ```json
 {
@@ -966,7 +966,7 @@ Ticket label 只能是 `wayfinder:research | wayfinder:prototype | wayfinder:gri
 }
 ```
 
-</ref-w-wayfinder-references-initiative-template>
+</ref-specdev-w-wayfinder-references-initiative-template>
 
 <ref-common-schemas-initiative-schema>
 

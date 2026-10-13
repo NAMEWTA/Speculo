@@ -3,7 +3,8 @@
   "runtime_root": ".speculo",
   "managed_roots": [
     "commands",
-    "skills",
+    "references",
+    "lib",
     "workflows"
   ],
   "managed_metadata": [
@@ -11,8 +12,7 @@
     ".speculo/workspace.json",
     ".speculo/refresh-contract.json",
     ".speculo/kernel.json",
-    ".speculo/AGENTS.md",
-    ".speculo/catalog.md"
+    ".speculo/AGENTS.md"
   ],
   "reserved_runtime": [
     "README.md",
@@ -22,11 +22,9 @@
     "kernel",
     "install.json",
     "managed.json",
-    "migration.json",
     "baselines",
     "back",
-    "AGENTS.md",
-    "catalog.md"
+    "AGENTS.md"
   ],
   "project_config": {
     "path": "config.json",

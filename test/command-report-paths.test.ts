@@ -12,15 +12,15 @@ function read(relative: string): string {
 
 function commandFiles(): string[] {
   return readdirSync(commandsDir)
-    .filter((name) => name.endsWith(".md") && statSync(join(commandsDir, name)).isFile())
+    .filter((name) => name !== "references" && statSync(join(commandsDir, name)).isDirectory()).map(name=>name+"/COMMAND.md")
     .sort();
 }
 
 describe("command report roots", () => {
   it("declares a state-root report path for every command", () => {
     const files = commandFiles();
-    assert.ok(files.includes("git-history-squash.md"));
-    assert.equal(files.length, 7);
+    assert.ok(files.includes("git-history-squash/COMMAND.md"));
+    assert.equal(files.length, 10);
     for (const name of files) {
       const content = readFileSync(join(commandsDir, name), "utf8");
       const id = content.match(/^id:\s*(\S+)/m)?.[1];
@@ -30,16 +30,16 @@ describe("command report roots", () => {
   });
 
   it("blocks archive-and-consolidate reports under {roots.commands}", () => {
-    const command = read("template/commands/archive-and-consolidate.md");
-    const skill = read("template/skills/archive-and-consolidate/SKILL.md");
-    const procedure = read("template/skills/archive-and-consolidate/SKILL.md");
+    const command = read("template/commands/archive-and-consolidate/COMMAND.md");
+    const skill = read("template/commands/archive-and-consolidate/references/operation-contract.md");
+    const procedure = read("template/commands/archive-and-consolidate/references/operation-contract.md");
 
     assert.match(command, /<Path>\{roots\.state\}\/commands\/archive-and-consolidate\//);
     assert.match(command, /\{roots\.commands\}\/archive-and-consolidate\//);
     assert.match(command, /\*\*blocked，不写文件\*\*/);
     assert.match(command, /commands_root.*\{roots\.state\}\/commands/);
     assert.match(command, /不是报告根/);
-    assert.match(command, /<Path>\{roots\.skills\}\/archive-and-consolidate\/SKILL\.md<\/Path>/);
+    assert.match(command, /<Path>\{roots\.commands\}\/archive-and-consolidate\/references\/operation-contract\.md<\/Path>/);
 
     assert.match(skill, /commands_root.*\{roots\.state\}\/commands/);
 
@@ -54,22 +54,22 @@ describe("command report roots", () => {
     );
   });
 
-  it("routes git-history-squash through confirmation gates and split namespaces", () => {
-    const command = read("template/commands/git-history-squash.md");
-    const skill = read("template/skills/git-history-squash/SKILL.md");
-    const procedure = read("template/skills/git-history-squash/SKILL.md");
+  it("routes git-history-squash through confirmation gates and its own command namespace", () => {
+    const command = read("template/commands/git-history-squash/COMMAND.md");
+    const skill = read("template/commands/git-history-squash/references/operation-contract.md");
+    const procedure = read("template/commands/git-history-squash/references/operation-contract.md");
 
-    assert.match(command, /disable-model-invocation: true/);
+    assert.match(command, /^id: git-history-squash$/m);
     assert.match(command, /<Path>\{roots\.state\}\/commands\/git-history-squash\//);
-    assert.match(command, /<Path>\{roots\.state\}\/skills\/git-history-squash\//);
-    assert.match(command, /<Path>\{roots\.skills\}\/git-history-squash\/SKILL\.md<\/Path>/);
+    assert.match(command, /<Path>\{roots\.state\}\/commands\/git-history-squash\//);
+    assert.match(command, /<Path>\{roots\.commands\}\/git-history-squash\/references\/operation-contract\.md<\/Path>/);
     assert.match(command, /plan_digest/);
     assert.match(command, /publish_digest/);
     assert.match(command, /--force-with-lease=<ref>:<old-sha>/);
     assert.match(command, /普通 `--force`/);
     assert.match(command, /不创建 `state\.json`/);
 
-    assert.match(skill, /<Path>\{roots\.commands\}\/git-history-squash\.md<\/Path>/);
+    assert.match(skill, /<Path>\{roots\.commands\}\/git-history-squash\/COMMAND\.md<\/Path>/);
     assert.match(procedure, /<Path>\{roots\.state\}\/commands\/git-history-squash\//);
   });
 });

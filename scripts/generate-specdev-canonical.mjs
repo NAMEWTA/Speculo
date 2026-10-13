@@ -92,24 +92,23 @@ const sharedSources = {
     tag: "dev-worktree-finalize",
   },
   mergeConflictProtocol: {
-    source: `${workflowRoot}/I-implement/merge-conflict-protocol.md`,
+    source: `${workflowRoot}/specdev-i-implement/references/merge-conflict-protocol.md`,
     tag: "merge-conflict-protocol",
   },
   subagentDeliverySkill: {
-    source: `${commonRoot}/skills/subagent-delivery/SKILL.md`,
+    source: `template/references/coordination/coordination-contract.md`,
     tag: "subagent-delivery",
-    discardFrontmatter: true,
   },
   subagentDeliveryNative: {
-    source: `${commonRoot}/skills/subagent-delivery/references/native-subagent.md`,
+    source: `template/references/coordination/result-and-recovery.md`,
     tag: "subagent-delivery-native",
   },
   subagentDeliveryExternalWeb: {
-    source: `${commonRoot}/skills/subagent-delivery/references/external-web-subagent.md`,
+    source: `template/references/coordination/exchange/external-web.md`,
     tag: "subagent-delivery-external-web",
   },
   subagentDeliverySourcePackage: {
-    source: `${commonRoot}/skills/subagent-delivery/references/source-package.md`,
+    source: `template/references/coordination/exchange/source-package.md`,
     tag: "subagent-delivery-source-package",
   },
   configSchema: {
@@ -118,7 +117,7 @@ const sharedSources = {
     format: "json",
   },
   configTemplate: {
-    source: `${workflowRoot}/I-init-setup/config-template.json`,
+    source: `${workflowRoot}/specdev-i-init-setup/assets/config-template.json`,
     tag: "config-template",
     format: "json",
   },
@@ -128,7 +127,7 @@ const sharedSources = {
     format: "json",
   },
   statusTemplate: {
-    source: `${workflowRoot}/I-init-setup/status-template.json`,
+    source: `${workflowRoot}/specdev-i-init-setup/assets/status-template.json`,
     tag: "status-template",
     format: "json",
   },
@@ -178,7 +177,7 @@ const sharedSources = {
     format: "json",
   },
   changeStatusTemplate: {
-    source: `${workflowRoot}/I-init-setup/change-status-template.json`,
+    source: `${workflowRoot}/specdev-i-init-setup/assets/change-status-template.json`,
     tag: "change-status-template",
     format: "json",
   },
@@ -196,17 +195,17 @@ const persistenceReferences = [
 const canonicalDocuments = [
   {
     output: "template/canonical/canonical-specdev-grill-with-docs.md",
-    entry: `${workflowRoot}/G-grill-with-docs/G-grill-with-docs.md`,
+    entry: `${workflowRoot}/specdev-g-grill-with-docs/SKILL.md`,
     references: [
-      reference("G-grill-with-docs/grilling-protocol.md"),
-      reference("G-grill-with-docs/design-tree-template.json", {
+      reference("specdev-g-grill-with-docs/references/grilling-protocol.md"),
+      reference("specdev-g-grill-with-docs/assets/design-tree-template.json", {
         format: "json",
       }),
       reference("common/rules/domain-modeling.md"),
       reference("common/rules/adr-format.md"),
       reference("common/rules/context-format.md"),
-      reference("G-grill-with-docs/log-format.md"),
-      reference("G-grill-with-docs/stakeholder-questionnaire.md"),
+      reference("specdev-g-grill-with-docs/references/log-format.md"),
+      reference("specdev-g-grill-with-docs/references/stakeholder-questionnaire.md"),
       sharedSources.artifactContract,
       sharedSources.planningPrinciples,
       sharedSources.readinessAndDepth,
@@ -218,10 +217,10 @@ const canonicalDocuments = [
   },
   {
     output: "template/canonical/canonical-specdev-spec.md",
-    entry: `${workflowRoot}/S-spec/S-spec.md`,
+    entry: `${workflowRoot}/specdev-s-spec/SKILL.md`,
     references: [
-      reference("S-spec/spec-readiness.md"),
-      reference("S-spec/spec-template.md", { preserveArtifactHeader: true }),
+      reference("specdev-s-spec/references/spec-readiness.md"),
+      reference("specdev-s-spec/assets/spec-template.md", { preserveArtifactHeader: true }),
       sharedSources.planningPrinciples,
       sharedSources.artifactContract,
       sharedSources.readinessAndDepth,
@@ -234,14 +233,14 @@ const canonicalDocuments = [
   },
   {
     output: "template/canonical/canonical-specdev-tickets.md",
-    entry: `${workflowRoot}/T-tickets/T-tickets.md`,
+    entry: `${workflowRoot}/specdev-t-tickets/SKILL.md`,
     references: [
-      reference("T-tickets/decomposition-rules.md"),
-      reference("T-tickets/ticket-readiness.md"),
-      reference("T-tickets/ticket-template.md", {
+      reference("specdev-t-tickets/references/decomposition-rules.md"),
+      reference("specdev-t-tickets/references/ticket-readiness.md"),
+      reference("specdev-t-tickets/assets/ticket-template.md", {
         preserveArtifactHeader: true,
       }),
-      reference("T-tickets/tickets-map-template.md", {
+      reference("specdev-t-tickets/assets/tickets-map-template.md", {
         preserveArtifactHeader: true,
       }),
       sharedSources.planningPrinciples,
@@ -263,13 +262,13 @@ const canonicalDocuments = [
   },
   {
     output: "template/canonical/canonical-specdev-goal-plan.md",
-    entry: `${workflowRoot}/P-goal-plan/P-goal-plan.md`,
+    entry: `${workflowRoot}/specdev-p-goal-plan/SKILL.md`,
     references: [
-      reference("P-goal-plan/planning-modes.md"),
-      reference("P-goal-plan/orchestration-protocol.md"),
-      reference("P-goal-plan/lead-orchestration.md"),
-      reference("P-goal-plan/completion-control.md"),
-      reference("P-goal-plan/goal-plan-template.md", {
+      reference("specdev-p-goal-plan/references/planning-modes.md"),
+      reference("specdev-p-goal-plan/references/orchestration-protocol.md"),
+      reference("specdev-p-goal-plan/references/lead-orchestration.md"),
+      reference("specdev-p-goal-plan/references/completion-control.md"),
+      reference("specdev-p-goal-plan/assets/goal-plan-template.md", {
         preserveArtifactHeader: true,
       }),
       sharedSources.artifactContract,
@@ -293,16 +292,16 @@ const canonicalDocuments = [
   },
   {
     output: "template/canonical/canonical-specdev-wayfinder.md",
-    entry: `${workflowRoot}/W-wayfinder/W-wayfinder.md`,
+    entry: `${workflowRoot}/specdev-w-wayfinder/SKILL.md`,
     references: [
-      reference("W-wayfinder/investigation-ticket-template.md", {
+      reference("specdev-w-wayfinder/assets/investigation-ticket-template.md", {
         preserveArtifactHeader: true,
       }),
-      reference("W-wayfinder/wayfinder-map-template.md", {
+      reference("specdev-w-wayfinder/assets/wayfinder-map-template.md", {
         preserveArtifactHeader: true,
       }),
-      reference("W-wayfinder/local-tracker-contract.md"),
-      reference("W-wayfinder/solution-comment-template.md", {
+      reference("specdev-w-wayfinder/references/local-tracker-contract.md"),
+      reference("specdev-w-wayfinder/assets/solution-comment-template.md", {
         preserveArtifactHeader: true,
       }),
       sharedSources.researchSkill,
@@ -318,28 +317,28 @@ for (const doc of canonicalDocuments) {
 }
 
 const capabilityNames = new Map([
-  ["A-archive-and-consolidate/A-archive-and-consolidate.md", "归档与沉淀阶段"],
-  ["C-code-review/C-code-review.md", "独立代码审查阶段"],
-  ["D-diagnose-bugs/D-diagnose-bugs.md", "Bug 诊断阶段"],
-  ["G-grill-with-docs/G-grill-with-docs.md", "设计访谈能力"],
-  ["I-implement/I-implement.md", "实现阶段"],
-  ["I-init-setup/I-init-setup.md", "初始化设置阶段"],
-  ["P-goal-plan/P-goal-plan.md", "目标规划阶段"],
-  ["P-prototype/P-prototype.md", "原型阶段"],
+  ["specdev-a-archive-and-consolidate/SKILL.md", "归档与沉淀阶段"],
+  ["specdev-c-code-review/SKILL.md", "独立代码审查阶段"],
+  ["specdev-d-diagnose-bugs/SKILL.md", "Bug 诊断阶段"],
+  ["specdev-g-grill-with-docs/SKILL.md", "设计访谈能力"],
+  ["specdev-i-implement/SKILL.md", "实现阶段"],
+  ["specdev-i-init-setup/SKILL.md", "初始化设置阶段"],
+  ["specdev-p-goal-plan/SKILL.md", "目标规划阶段"],
+  ["specdev-p-prototype/SKILL.md", "原型阶段"],
   [
-    "P-goal-plan/orchestration-protocol.md",
+    "specdev-p-goal-plan/references/orchestration-protocol.md",
     "目标规划阶段的核心编排规则",
   ],
-  ["R-review-architecture/R-review-architecture.md", "架构审查阶段"],
-  ["S-spec/S-spec.md", "编写 Spec 阶段"],
-  ["T-tickets/T-tickets.md", "拆分 Tickets 阶段"],
-  ["T-triage/T-triage.md", "请求分诊阶段"],
-  ["G-grill-with-docs/log-format.md", "设计访谈阶段的全局 LOG 条目格式"],
+  ["specdev-r-review-architecture/SKILL.md", "架构审查阶段"],
+  ["specdev-s-spec/SKILL.md", "编写 Spec 阶段"],
+  ["specdev-t-tickets/SKILL.md", "拆分 Tickets 阶段"],
+  ["specdev-t-triage/SKILL.md", "请求分诊阶段"],
+  ["specdev-g-grill-with-docs/references/log-format.md", "设计访谈阶段的全局 LOG 条目格式"],
   [
-    "T-tickets/ticket-readiness.md",
+    "specdev-t-tickets/references/ticket-readiness.md",
     "拆分 Tickets 阶段的 Ticket Ready 检查",
   ],
-  ["W-wayfinder/W-wayfinder.md", "寻路阶段"],
+  ["specdev-w-wayfinder/SKILL.md", "寻路阶段"],
 ]);
 
 const webRuntimeConvention = `## 网页平台运行约定
@@ -439,7 +438,7 @@ function workflowPathToCanonical(value, tagsBySource) {
     return "本文的网页平台运行约定";
   }
 
-  if (relative === "README.md") {
+  if (relative === "common/rules/domain-runtime.md") {
     return "SpecDev 的激活合同";
   }
 
@@ -468,12 +467,18 @@ function replacePaths(content, tagsBySource) {
       if (value.startsWith("{roots.workflows}/specdev/")) {
         return workflowPathToCanonical(value, tagsBySource);
       }
+      if (value.startsWith("{roots.references}/")) {
+        const tag=tagsBySource.get(value.replace("{roots.references}","template/references"));
+        if(!tag)throw new Error(`Unmapped shared reference: ${value}`);
+        return `下方 \`<${tag}>\` 标签`;
+      }
 
       if (value.startsWith("{roots.skills}/")) {
         const relative = value.replace(/^\{roots\.skills\}\//, "skills/");
         return codeDelimiter ? `\`${relative}\`` : `\`${relative}\``;
       }
 
+      if(value.startsWith("{roots.commands}/source-code-zip/"))return "用户所选源码 ZIP 工具（本网页快照不内置脚本；不可执行时报告阻塞）";
       return codeDelimiter ? `\`${value}\`` : value;
     },
   );
@@ -584,7 +589,7 @@ function assertCanonical(content, documentDefinition) {
   );
 
   if (content.includes("<Path")) failures.push("contains <Path>");
-  if (content.includes("{roots.")) failures.push("contains unresolved root alias");
+  if (content.includes("{roots.")) failures.push("contains unresolved root alias: "+content.split("\n").filter(line=>line.includes("{roots.")).join(" | "));
   if (/^---\n(?:id|type|schema_version|artifact):/m.test(content)) {
     failures.push("contains YAML frontmatter");
   }
@@ -644,10 +649,15 @@ async function expandNamedReferences(documentDefinition) {
     if (visited.has(source)) continue;
     visited.add(source);
     const content = await readFile(path.join(repositoryRoot, source), "utf8");
+    for(const match of content.matchAll(/<Path>\{roots\.references\}\/([^<>]+)<\/Path>/g)) {
+      const target=`template/references/${match[1]}`;
+      if(!/\.(md|json)$/.test(target)||target.includes('{'))continue;
+      if(!bySource.has(target)) {const item={source:target,tag:`shared-${match[1].replace(/\.(md|json)$/,'').replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase()}`,format:target.endsWith('.json')?'json':undefined};bySource.set(target,item);queue.push(target);}
+    }
     for (const match of content.matchAll(/<Path>\{roots\.workflows\}\/specdev\/([^<>]+)<\/Path>/g)) {
       const relative = match[1];
       const target = `${workflowRoot}/${relative}`;
-      if (target === documentDefinition.entry || relative === "README.md" || relative === "common/tools/README.md" || relative === "common/rules/path-reference-contract.md") continue;
+      if (target === documentDefinition.entry || relative === "common/rules/domain-runtime.md" || relative === "common/tools/README.md" || relative === "common/rules/path-reference-contract.md") continue;
       if (!/\.(md|json)$/.test(relative) || relative.includes("{")) continue;
       // A routed next Work is a different capability; explicitly included Work entries remain inlined.
       if (capabilityNames.has(relative) && !bySource.has(target)) continue;

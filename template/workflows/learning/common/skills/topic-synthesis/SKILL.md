@@ -13,6 +13,8 @@ compatibility: Requires the owning Speculo workflow and its workspace path resol
 
 ## 引用模板
 
+生成 claim 条目时读取 [claim 模板](claim-template.md)，填写来源、当前位置、证据状态、冲突与下一次验证；下表用于摘要展示。
+
 | claim_id | 陈述 | evidence_status | source_change_id | artifact anchor | external source | verified_at |
 | --- | --- | --- | --- | --- | --- | --- |
 | CLM-001 | `<claim>` | supported | `<change-id>` | `L-001#heading` | `S-001` | `<ISO-8601>` |

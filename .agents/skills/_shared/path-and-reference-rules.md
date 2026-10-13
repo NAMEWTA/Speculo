@@ -9,7 +9,7 @@
 安装时需要跨文件定位的引用使用：
 
 ```markdown
-<Path>{roots.workflows}/specdev/S-spec/spec-template.md</Path>
+<Path>{roots.workflows}/specdev/specdev-s-spec/assets/spec-template.md</Path>
 ```
 
 允许的公共 alias 来自 `template/.speculo/workspace.json`：
@@ -20,6 +20,7 @@
 - `{roots.commands}`
 - `{roots.skills}`
 - `{roots.workflows}`
+- `{roots.references}`
 
 不要发明 `{roots.agents}` 或其他未声明 alias。
 
@@ -32,8 +33,9 @@
 {roots.speculo}   -> template/
 {roots.state}     -> template/.speculo/
 {roots.commands}  -> template/commands/
-{roots.skills}    -> template/skills/
+{roots.skills}    -> 项目 .agents/skills/（运行时 Skill）
 {roots.workflows} -> template/workflows/
+{roots.references} -> template/references/
 ```
 
 包含 `{change}`、`{workflow}`、`{ticket}` 等运行时变量的路径，验证静态前缀、namespace 所有权和变量定义；不要求运行时实例存在。
@@ -49,17 +51,17 @@
 指向 `{roots.state}/...`。它可以在仓库快照中尚不存在，但必须满足：
 
 - namespace 有明确所有者；
-- 生成者和时机在 command、INDEX 或 work 中说明；
+- 生成者和时机在 command、领域 Skill 或 Work 中说明；
 - 变量在当前入口中定义；
 - 路径不会穿越到其他 workflow 或 command 的私有 namespace。
 
 标准 owner namespace 为：
 
 - command：`{roots.state}/commands/<command>/`；
-- 独立 skill：`{roots.state}/skills/<skill>/`；
+- 共享方法：使用调用方现有 namespace；不新增独立 skill 状态；
 - workflow：`{roots.state}/<workflow>/`。
 
-模板 instructions 中的持久化路径必须写成完整 `<Path>{roots.state}/...</Path>`，不得写死 `speculo/.speculo/...`。Command/skill/workflow 的静态跨包引用同样使用对应 root alias；同一 skill 包内的渐进披露链接仍使用相对 Markdown 链接。
+模板 instructions 中的持久化路径必须写成完整 `<Path>{roots.state}/...</Path>`，不得写死 `.agents/speculo/.speculo/...`。Command/skill/workflow 的静态跨包引用同样使用对应 root alias；同一 skill 包内的渐进披露链接仍使用相对 Markdown 链接。
 
 ### 项目路径
 
@@ -72,7 +74,7 @@
 ## Markdown 链接与 `<Path>`
 
 - `.agents/skills` 的作者参考使用 Markdown 链接。
-- `template/skills` 内部同一 skill 的渐进披露可以使用相对 Markdown 链接，前提是安装后目录关系保持不变。
+- 单个领域/Work Skill 包 内部同一 skill 的渐进披露可以使用相对 Markdown 链接，前提是安装后目录关系保持不变。
 - Workflow 的入口、work、common rules 与跨包能力引用统一使用 `<Path>`，以便 root 重映射。
 - Command 调用 skill 时优先使用 `<Path>{roots.skills}/.../SKILL.md</Path>`，不要依赖 `../skills` 的位置偶然性。
 - Canonical 生成时递归解析两种引用。
@@ -85,7 +87,7 @@
 | `..` 穿越到其他包 | 公共 root alias |
 | 裸文件名或裸 work id | 完整 `<Path>` 或明确逻辑 id 字段 |
 | `{roots.workflows}/<wf>/_state/...` 运行时写入 | `{roots.state}/<wf>/...` |
-| `speculo/.speculo/commands/...` 或 `speculo/.speculo/skills/...` | `<Path>{roots.state}/commands/...</Path>` 或 `<Path>{roots.state}/skills/...</Path>` |
+| `.agents/speculo/.speculo/commands/...` | `<Path>{roots.state}/commands/...</Path>` |
 | `../skills/<skill>/SKILL.md` 等跨包穿越 | `<Path>{roots.skills}/{skill}/SKILL.md</Path>` |
 | `docs/*-authoring.md` 等不存在的契约 | 本技能包中的直接 reference |
 | 指向生成 canonical 作为源 | 指向原始 skill/command/workflow 源 |

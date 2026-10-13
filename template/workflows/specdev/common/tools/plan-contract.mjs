@@ -107,10 +107,7 @@ export function readEvidenceRecords(text, heading) {
 export function validateTicketPlan(artifact, { repoRoot = null, requirePlan = false, checkEvidence = true } = {}) {
   const { meta, body, path } = artifact;
   const errors = [];
-  if (meta.plan_contract_version === undefined) {
-    if (requirePlan && !['done','cancelled'].includes(meta.status)) errors.push('legacy Ticket must be upgraded to plan_contract_version: 1 before implementation');
-    return errors;
-  }
+  if (meta.plan_contract_version === undefined) return ['Ticket requires plan_contract_version: 1'];
   if (meta.plan_contract_version !== 1) errors.push('unsupported plan_contract_version');
   errors.push(...validateBindings(meta, repoRoot));
   if (!strings(meta.resource_claims) || new Set(meta.resource_claims).size !== meta.resource_claims.length) errors.push('resource_claims must be a unique string array');
@@ -135,7 +132,7 @@ export function validateTicketPlan(artifact, { repoRoot = null, requirePlan = fa
 
 export function validatePlanMap(artifact, changeDirectory = null) {
   const { meta, body } = artifact;
-  if (meta.plan_contract_version === undefined) return [];
+  if (meta.plan_contract_version === undefined) return ['Tickets Map requires plan_contract_version: 1'];
   const errors = [];
   if (meta.plan_contract_version !== 1) errors.push('unsupported plan_contract_version');
   if (!Number.isInteger(meta.plan_revision) || meta.plan_revision < 1) errors.push('plan_revision must be a positive integer');

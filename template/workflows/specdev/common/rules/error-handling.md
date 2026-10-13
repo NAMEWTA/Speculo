@@ -21,7 +21,7 @@
 
 使用现有 config/Plan 的预算，不在下游偷偷扩大次数。只读操作也可能依赖已变化输入，仍需核实范围。
 
-同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 <Path>{roots.workflows}/specdev/T-triage/T-triage.md</Path> 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
+同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
 
 取消只说明发出了取消请求，不保证远端副作用或子进程已经停止。传播 signal 后仍需等待属于本操作的完成信号；清理失败和业务失败分别报告，不能用后者隐藏前者。
 

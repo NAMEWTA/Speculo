@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { digest, exact, identifier, noSymlinks, OpsError, readJson } from "./core.mjs";
 
 export const WORKS = Object.freeze({
-  controller: "I-initialize", access: "S-server-connect", server: "H-host-manage",
-  project: "D-project-deploy", inventory: "V-inventory-view",
+  controller: "ops-i-initialize", access: "ops-s-server-connect", server: "ops-h-host-manage",
+  project: "ops-d-project-deploy", inventory: "ops-v-inventory-view",
 });
 const WORKFLOW = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 export const MAX_JSON_BYTES = 16 * 1024 * 1024;

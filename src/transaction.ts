@@ -1,157 +1,64 @@
+import { INSTALL_ROOT, containedPath, assertSupportedProject } from "./paths.js";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
-import { lstat, mkdir, readFile, readdir, readlink, rename, rm, symlink, writeFile } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { lstat, mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
+import { dirname, relative, join, resolve } from "node:path";
 import { fingerprintTree, isTreeFingerprint, TREE_FINGERPRINT_PREFIX } from "./manifest.js";
-import { EXTERNAL_NAMES, assertImage, imageDigest, readImage, replaceImage, syncDirectory, writeDurableJson, type ExternalEdit } from "./external-files.js";
+import { EXTERNAL_NAMES, image, assertImage, imageDigest, readImage, replaceImage, syncDirectory, writeDurableJson, type ExternalEdit } from "./external-files.js";
 
-export const LOCK_NAME = ".speculo-init.lock";
+export const LOCK_NAME = ".agents/.speculo-install.lock";
+export const TRANSACTIONS_ROOT = ".agents/.speculo-transactions";
 export type TransactionPhase = "prepared" | "old-renamed" | "installed" | "skills-applying" | "skills-projected" | "external-finalized" | "committed" | "rolled-back";
 export type TransactionHook = (phase: TransactionPhase) => Promise<void>;
-export type SkillNode =
-  | { kind: "absent" }
-  | { kind: "file"; content: string; mode: number }
-  | { kind: "symlink"; target: string }
-  | { kind: "directory"; file: "SKILL.md"; content: string; mode: number };
-export type SkillRecord = { name: string; before: SkillNode; after: SkillNode };
-type Journal = {
-  schema_version: 1 | 2; id: string; host: string; pid: number; target: string;
-  stage: string; backup: string; before: string; after: string;
-  phase: TransactionPhase; external: ExternalEdit[]; skills?: SkillRecord[];
-};
-const BASE_PHASES = ["prepared", "old-renamed", "installed", "external-finalized", "committed", "rolled-back"] as const;
-const SKILL_PHASES = ["skills-applying", "skills-projected"] as const;
-
-async function exists(path: string): Promise<boolean> {
-  try { await lstat(path); return true; }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return false; throw error; }
-}
-async function directory(path: string): Promise<void> {
-  if (!(await exists(path))) return;
-  const stat = await lstat(path);
-  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`unsafe-transaction-directory: ${path}`);
-}
-export async function assertInstallDirectory(target: string): Promise<void> {
-  await directory(join(target, "speculo"));
-}
-function journalPath(target: string): string { return join(target, LOCK_NAME, "transaction.json"); }
-
-function validNode(node: unknown): node is SkillNode {
-  if (!node || typeof node !== "object" || Array.isArray(node)) return false;
-  const value = node as SkillNode;
-  if (value.kind === "absent") return Object.keys(value).length === 1;
-  if (value.kind === "symlink") return typeof value.target === "string" && value.target.length > 0 && !value.target.includes("\0") && !value.target.startsWith("/") && Object.keys(value).length === 2;
-  if ((value.kind === "file" || value.kind === "directory") && typeof value.content === "string" && Number.isInteger(value.mode) && value.mode >= 0 && value.mode <= 0o777 &&
-      Buffer.from(value.content, "base64").toString("base64") === value.content && Object.keys(value).length === (value.kind === "file" ? 3 : 4)) {
-    return value.kind === "file" || value.file === "SKILL.md";
+export type SkillNode = {kind:"absent"} | {kind:"file";content:string;mode:number};
+export type SkillRecord = {name:string;before:SkillNode;after:SkillNode};
+type Journal = {schema_version:3;id:string;host:string;pid:number;target:string;stage:string;backup:string;before:string;after:string;phase:TransactionPhase;external:ExternalEdit[];skills?:SkillRecord[]};
+const BASE_PHASES = ["prepared","old-renamed","installed","external-finalized","committed","rolled-back"] as const;
+const SKILL_PHASES = ["skills-applying","skills-projected"] as const;
+async function exists(path:string):Promise<boolean>{try{await lstat(path);return true;}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return false;throw e;}}
+async function directory(path:string):Promise<void>{if(!(await exists(path)))return;const st=await lstat(path);if(!st.isDirectory()||st.isSymbolicLink())throw new Error('unsafe-transaction-directory: '+path);}
+async function syncInstallParents(target: string): Promise<void> {
+  for (const path of [target, join(target, '.agents'), join(target, TRANSACTIONS_ROOT)]) {
+    if (await exists(path)) { await directory(path); await syncDirectory(path); }
   }
-  return false;
 }
-function validSkills(skills: SkillRecord[] | undefined): skills is SkillRecord[] {
-  if (!Array.isArray(skills) || skills.length === 0 || skills.length > 64) return false;
-  const names = new Set<string>();
-  return skills.every((record) => record && typeof record.name === "string" &&
-    (record.name === ".speculo-managed.json" || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(record.name)) &&
-    !names.has(record.name) && names.add(record.name) && validNode(record.before) && validNode(record.after));
+export async function assertInstallDirectory(target:string):Promise<void>{await assertSupportedProject(target);await directory(join(target,'.agents'));await directory(join(target,INSTALL_ROOT));await containedPath(target,LOCK_NAME);await containedPath(target,TRANSACTIONS_ROOT);}
+function journalPath(target:string):string{return join(target,LOCK_NAME,'transaction.json');}
+function validNode(value:SkillNode):boolean{return !!value&&(value.kind==='absent'?Object.keys(value).length===1:value.kind==='file'&&Object.keys(value).length===3&&typeof value.content==='string'&&Buffer.from(value.content,'base64').toString('base64')===value.content&&Number.isInteger(value.mode)&&value.mode>=0&&value.mode<=0o777);}
+function validSkills(records:SkillRecord[]):boolean{return Array.isArray(records)&&records.length>0&&records.length<=10000&&JSON.stringify(records).length<=64*1024*1024&&new Set(records.map(r=>r.name)).size===records.length&&records.every(r=>/^\.(agents|claude)\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/(SKILL\.md|agents\/openai\.yaml)$/.test(r.name)&&validNode(r.before)&&validNode(r.after));}
+function journalShapeValid(j:Journal):boolean{return j.skills===undefined?(BASE_PHASES as readonly string[]).includes(j.phase):validSkills(j.skills)&&[...BASE_PHASES,...SKILL_PHASES].includes(j.phase);}
+function imageOf(node:SkillNode){return node.kind==='absent'?null:image(Buffer.from(node.content,'base64'),node.mode);}
+function sameImage(a:Awaited<ReturnType<typeof readImage>>,node:SkillNode){return imageDigest(a)===imageDigest(imageOf(node));}
+async function applySkillProjection(j:Journal):Promise<void>{
+ for(const r of j.skills??[])await assertImage(await containedPath(j.target,r.name),imageOf(r.before));
+ for(const r of j.skills??[]){const file=await containedPath(j.target,r.name);await mkdir(dirname(file),{recursive:true});await replaceImage(file,imageOf(r.before),imageOf(r.after));}
 }
-function journalShapeValid(j: Journal): boolean {
-  if (j.schema_version === 1) return j.skills === undefined && (BASE_PHASES as readonly string[]).includes(j.phase);
-  if (j.skills === undefined) return (BASE_PHASES as readonly string[]).includes(j.phase);
-  return validSkills(j.skills) && [...BASE_PHASES, ...SKILL_PHASES].includes(j.phase);
+async function restoreSkillProjection(j:Journal):Promise<void>{
+ for(const r of j.skills??[]){const current=await readImage(await containedPath(j.target,r.name));if(!sameImage(current,r.before)&&!sameImage(current,r.after))throw new Error('recovery-drift: '+r.name);}
+ for(const r of [...j.skills??[]].reverse()){
+  const file=await containedPath(j.target,r.name),current=await readImage(file);if(sameImage(current,r.before))continue;
+  await mkdir(dirname(file),{recursive:true});await replaceImage(file,current,imageOf(r.before));
+ }
 }
-function sameNode(left: SkillNode, right: SkillNode): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
-}
-async function readSkillNode(dir: string, name: string): Promise<SkillNode> {
-  const path = join(dir, name);
-  let stat;
-  try { stat = await lstat(path); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return { kind: "absent" }; throw error; }
-  if (stat.isSymbolicLink()) return { kind: "symlink", target: await readlink(path) };
-  if (stat.isDirectory()) {
-    const entries = await readdir(path);
-    if (entries.length !== 1 || entries[0] !== "SKILL.md") throw new Error(`agent-skill-drift: ${name}`);
-    const file = join(path, "SKILL.md");
-    const fileStat = await lstat(file);
-    if (fileStat.isSymbolicLink() || !fileStat.isFile()) throw new Error(`agent-skill-drift: ${name}`);
-    return { kind: "directory", file: "SKILL.md", content: (await readFile(file)).toString("base64"), mode: 0o644 };
-  }
-  if (!stat.isFile()) throw new Error(`agent-skill-drift: ${name}`);
-  return { kind: "file", content: (await readFile(path)).toString("base64"), mode: 0o644 };
-}
-async function writeSkillNode(dir: string, name: string, node: SkillNode): Promise<void> {
-  const path = join(dir, name);
-  await rm(path, { recursive: true, force: true });
-  if (node.kind === "absent") return;
-  if (node.kind === "symlink") { await symlink(node.target, path, process.platform === "win32" ? "dir" : undefined); return; }
-  if (node.kind === "file") { await writeFile(path, Buffer.from(node.content, "base64"), { mode: node.mode }); return; }
-  await mkdir(path, { mode: 0o755 });
-  await writeFile(join(path, node.file), Buffer.from(node.content, "base64"), { mode: node.mode });
-}
-async function ensureSkillDir(target: string): Promise<string> {
-  const parent = join(target, ".agents");
-  const dir = join(parent, "skills");
-  for (const path of [parent, dir]) {
-    try {
-      const stat = await lstat(path);
-      if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`agent-skill-parent: ${path}`);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-      await mkdir(path, { mode: 0o755 });
-    }
-  }
-  return dir;
-}
-async function applySkillProjection(j: Journal): Promise<void> {
-  const records = j.skills ?? [];
-  const dir = await ensureSkillDir(j.target);
-  for (const record of records) {
-    const current = await readSkillNode(dir, record.name);
-    if (!sameNode(current, record.before)) throw new Error(`agent-skill-drift: ${record.name}`);
-  }
-  for (let index = 0; index < records.length; index++) {
-    const record = records[index];
-    if (sameNode(record.before, record.after)) continue;
-    const temp = `.speculo-skill-${j.id}-${index}`;
-    const aside = `.speculo-skill-old-${j.id}-${index}`;
-    if (record.after.kind !== "absent") await writeSkillNode(dir, temp, record.after);
-    if (record.before.kind !== "absent") await rename(join(dir, record.name), join(dir, aside));
-    if (record.after.kind !== "absent") await rename(join(dir, temp), join(dir, record.name));
-    if (record.before.kind !== "absent") await rm(join(dir, aside), { recursive: true, force: true });
-  }
-  await syncDirectory(dir);
-}
-async function restoreSkillProjection(j: Journal): Promise<void> {
-  const records = j.skills ?? [];
-  const dir = join(j.target, ".agents", "skills");
-  if (!(await exists(dir))) return;
-  for (let index = 0; index < records.length; index++) {
-    const record = records[index];
-    const live = join(dir, record.name);
-    const aside = join(dir, `.speculo-skill-old-${j.id}-${index}`);
-    const temp = join(dir, `.speculo-skill-${j.id}-${index}`);
-    if (await exists(aside) && !(await exists(live))) await rename(aside, live);
-    await rm(temp, { recursive: true, force: true });
-    await rm(aside, { recursive: true, force: true });
-    const current = await readSkillNode(dir, record.name);
-    if (sameNode(current, record.before)) continue;
-    if (current.kind !== "absent" && !sameNode(current, record.after)) throw new Error(`recovery-drift: .agents/skills/${record.name}`);
-    await writeSkillNode(dir, record.name, record.before);
-  }
-  await syncDirectory(dir);
+async function cleanEmptyProjectionDirectories(j:Journal, side:'before'|'after'):Promise<void>{
+ for(const r of j.skills??[])if(r[side].kind==='absent'){
+  let dir=dirname(await containedPath(j.target,r.name));
+  const boundary=join(j.target,r.name.startsWith('.agents/')?'.agents/skills':'.claude/skills');
+  while(dir!==boundary){try{await rmdir(dir);}catch(e){if(!['ENOENT','ENOTEMPTY','EEXIST'].includes((e as NodeJS.ErrnoException).code??''))throw e;break;}dir=dirname(dir);}
+ }
 }
 
 export async function readTransaction(target: string): Promise<Journal> {
+  await assertInstallDirectory(target);
+  await containedPath(target, `${LOCK_NAME}/transaction.json`);
   await directory(join(target, LOCK_NAME));
   const raw = await readImage(journalPath(target));
   if (!raw) throw new Error("unidentified-lock: no durable transaction; inspect owner.json and preserve all residues");
   const j = JSON.parse(Buffer.from(raw.content, "base64").toString("utf8")) as Journal;
-  if (!j || typeof j !== "object" || ![1, 2].includes(j.schema_version) || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
+  if (!j || typeof j !== "object" || j.schema_version !== 3 || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
       typeof j.host !== "string" || !Number.isSafeInteger(j.pid) || j.pid < 1 ||
-      !/^\.speculo-init-stage-[A-Za-z0-9]+$/.test(j.stage) || j.backup !== j.stage + "-backup" ||
-      !(j.schema_version === 1
-        ? typeof j.before === "string" && /^(absent|[a-f0-9]{64})$/.test(j.before) && typeof j.after === "string" && /^[a-f0-9]{64}$/.test(j.after)
-        : isTreeFingerprint(j.before) && isTreeFingerprint(j.after, false)) ||
+      !/^\.agents\/\.speculo-transactions\/stage-[A-Za-z0-9]+$/.test(j.stage) || j.backup !== j.stage + "-backup" ||
+      !(isTreeFingerprint(j.before) && isTreeFingerprint(j.after, false)) ||
       !journalShapeValid(j) ||
       !Array.isArray(j.external) || j.external.length !== EXTERNAL_NAMES.length ||
       new Set(j.external.map((e) => e?.name)).size !== EXTERNAL_NAMES.length) throw new Error("invalid-transaction-journal");
@@ -162,14 +69,13 @@ export async function readTransaction(target: string): Promise<Journal> {
           Buffer.from(value.content, "base64").toString("base64") !== value.content)) throw new Error("invalid-transaction-file-image");
     }
   }
+  for(const path of [j.stage,j.backup])await containedPath(target,path);
   return j;
 }
 
-/** Legacy content-only journals remain readable, but cannot prove safe cleanup. */
+/** Only current snapshots on their original platform may be recovered. */
 function assertCurrentSnapshot(j: Journal): void {
-  if (j.schema_version !== 2) {
-    throw new Error("legacy-transaction-snapshot: v1 omitted modes and directories; preserve journal, lock, stage and backup; manual recovery requires an independently verified snapshot; do not relabel or delete the journal");
-  }
+  if (j.schema_version !== 3) throw new Error("invalid-transaction-version");
   if ((j.before !== "absent" && !j.before.startsWith(TREE_FINGERPRINT_PREFIX)) || !j.after.startsWith(TREE_FINGERPRINT_PREFIX)) {
     throw new Error("snapshot-platform-mismatch: recover on the original snapshot platform; preserve all evidence");
   }
@@ -184,10 +90,8 @@ async function save(j: Journal, phase: TransactionPhase): Promise<void> {
 /** Validate every source before moving any directory or restoring any external file. */
 async function rollback(j: Journal): Promise<void> {
   assertCurrentSnapshot(j);
-  if (j.skills && (["skills-applying", "skills-projected", "external-finalized"] as const).includes(j.phase as "skills-applying" | "skills-projected" | "external-finalized")) {
-    await restoreSkillProjection(j);
-  }
-  const root = join(j.target, "speculo"), stage = join(j.target, j.stage), backup = join(j.target, j.backup);
+  const root = join(j.target, INSTALL_ROOT), stage = join(j.target, j.stage), backup = join(j.target, j.backup);
+  for(const path of [INSTALL_ROOT,j.stage,j.backup])await containedPath(j.target,path);
   for (const path of [root, stage, backup]) await directory(path);
   const r = await fingerprintTree(root), s = await fingerprintTree(stage), b = await fingerprintTree(backup);
   const untouched = r === j.before && b === "absent" && (s === j.after || s === "absent");
@@ -199,6 +103,7 @@ async function rollback(j: Journal): Promise<void> {
     const digest = imageDigest(await readImage(join(j.target, e.name)));
     if (![imageDigest(e.before), imageDigest(e.after)].includes(digest)) throw new Error(`recovery-drift: ${e.name}; concurrent content preserved`);
   }
+  if (j.skills && ["skills-applying", "skills-projected", "external-finalized"].includes(j.phase)) await restoreSkillProjection(j);
   for (const e of [...j.external].reverse()) {
     const current = await readImage(join(j.target, e.name));
     await replaceImage(join(j.target, e.name), current, e.before);
@@ -206,32 +111,36 @@ async function rollback(j: Journal): Promise<void> {
   if (!untouched) {
     if (r === j.after) await rename(root, stage);
     if (j.before !== "absent") await rename(backup, root);
-    await syncDirectory(j.target);
+    await syncInstallParents(j.target);
   }
   await save(j, "rolled-back");
   if (await fingerprintTree(stage) !== "absent" && await fingerprintTree(stage) !== j.after) throw new Error("recovery-drift: staged directory changed");
   await rm(stage, { recursive: true, force: true });
+  await cleanEmptyProjectionDirectories(j,'before');
 }
 
 async function finish(j: Journal): Promise<void> {
   assertCurrentSnapshot(j);
-  const root = join(j.target, "speculo"), backup = join(j.target, j.backup);
+  const root = join(j.target, INSTALL_ROOT), backup = join(j.target, j.backup);
+  for(const path of [INSTALL_ROOT,j.backup])await containedPath(j.target,path);
   await directory(root); await directory(backup);
   if (await fingerprintTree(root) !== j.after) throw new Error("recovery-drift: committed installation changed");
   for (const e of j.external) await assertImage(join(j.target, e.name), e.after);
+  for (const r of j.skills??[]) await assertImage(await containedPath(j.target,r.name),imageOf(r.after));
   const fingerprint = await fingerprintTree(backup);
   if (fingerprint !== "absent" && fingerprint !== j.before) throw new Error("recovery-drift: backup changed; preserve it");
   await rm(backup, { recursive: true, force: true });
-  await syncDirectory(j.target);
+  await syncInstallParents(j.target);
+  await cleanEmptyProjectionDirectories(j,'after');
 }
 
 export async function commitInstall(target: string, stagedRoot: string, before: string, external: ExternalEdit[], hook?: TransactionHook, skills?: SkillRecord[] | null): Promise<void> {
   if (!isTreeFingerprint(before) || (before !== "absent" && !before.startsWith(TREE_FINGERPRINT_PREFIX))) throw new Error("invalid-current-tree-snapshot");
   const projecting = Array.isArray(skills) && skills.length > 0;
-  const j: Journal = { schema_version: 2, id: randomUUID(), host: hostname(), pid: process.pid, target,
-    stage: basename(stagedRoot), backup: basename(stagedRoot) + "-backup", before,
+  const j: Journal = { schema_version: 3, id: randomUUID(), host: hostname(), pid: process.pid, target,
+    stage: relative(target, stagedRoot).split("\\").join("/"), backup: relative(target, stagedRoot).split("\\").join("/") + "-backup", before,
     after: await fingerprintTree(stagedRoot), phase: "prepared", external, ...(projecting ? { skills } : {}) };
-  const root = join(target, "speculo");
+  const root = join(target, INSTALL_ROOT);
   if (await fingerprintTree(root) !== before) throw new Error("concurrent-drift: installation changed before commit");
   for (const e of external) await assertImage(join(target, e.name), e.before);
   await save(j, "prepared");
@@ -240,10 +149,10 @@ export async function commitInstall(target: string, stagedRoot: string, before: 
     // Recheck after the durable checkpoint, before moving any user directory.
     if (await fingerprintTree(root) !== before || await fingerprintTree(stagedRoot) !== j.after) throw new Error("concurrent-drift: prepared snapshot changed");
     if (before !== "absent") await rename(root, join(target, j.backup));
-    await syncDirectory(target);
+    await syncInstallParents(target);
     await save(j, "old-renamed"); await hook?.("old-renamed");
     if (await fingerprintTree(root) !== "absent" || await fingerprintTree(join(target, j.backup)) !== before || await fingerprintTree(stagedRoot) !== j.after) throw new Error("concurrent-drift: renamed snapshot changed");
-    await rename(stagedRoot, root); await syncDirectory(target);
+    await rename(stagedRoot, root); await syncInstallParents(target);
     await save(j, "installed"); await hook?.("installed");
     if (await fingerprintTree(root) !== j.after || await fingerprintTree(join(target, j.backup)) !== before) throw new Error("post-install validation failed: snapshot drift");
     if (projecting) {
@@ -255,6 +164,7 @@ export async function commitInstall(target: string, stagedRoot: string, before: 
     await save(j, "external-finalized"); await hook?.("external-finalized");
     if (await fingerprintTree(root) !== j.after || await fingerprintTree(join(target, j.backup)) !== before) throw new Error("concurrent-drift: final snapshot changed");
     for (const e of external) await assertImage(join(target, e.name), e.after);
+    for (const r of j.skills??[]) await assertImage(await containedPath(target,r.name),imageOf(r.after));
     await save(j, "committed"); await hook?.("committed");
     await finish(j);
   } catch (error) {
@@ -285,7 +195,7 @@ export async function recoverInstall(targetArg: string, id: string): Promise<{ i
     return { id, outcome: j.phase === "committed" ? "completed-cleanup" : "rolled-back" };
   } finally {
     await rm(guard, { recursive: true, force: true });
-    if (success) { await rm(join(target, LOCK_NAME), { recursive: true }); await syncDirectory(target); }
+    if (success) { await rm(join(target, LOCK_NAME), { recursive: true }); await syncInstallParents(target); }
   }
 }
 

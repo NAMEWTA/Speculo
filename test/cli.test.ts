@@ -31,7 +31,7 @@ async function hash(path: string): Promise<string> {
   return createHash("sha256").update(await readFile(path)).digest("hex");
 }
 
-async function packageFixture(version = "1.0.0"): Promise<string> {
+async function packageFixture(version = "2.0.0"): Promise<string> {
   const root = await tempProject("speculo-package-");
   await cp(join(packageRoot, "template"), join(root, "template"), { recursive: true });
   await writeJson(join(root, "package.json"), { version });
@@ -39,7 +39,10 @@ async function packageFixture(version = "1.0.0"): Promise<string> {
 }
 
 async function residue(target: string): Promise<string[]> {
-  return (await readdir(target)).filter((name) => name.startsWith(".speculo-init-stage-") || name === ".speculo-init.lock");
+  const result: string[] = [];
+  if (await pathExists(join(target, ".agents/.speculo-install.lock"))) result.push(".agents/.speculo-install.lock");
+  if (await pathExists(join(target, ".agents/.speculo-transactions"))) result.push(...await readdir(join(target, ".agents/.speculo-transactions")));
+  return result;
 }
 
 function expectBlocked(error: unknown, code: string): boolean {
@@ -52,11 +55,11 @@ describe("Speculo init refresh", () => {
   it("excludes template Gradle caches on init and refresh while preserving fixtures and runtime bytes", async () => {
     const target = await tempProject();
     const pkg = await packageFixture();
-    const fixture = "skills/engineering-standards-builder/examples/fallback/kotlin-gradle";
+    const fixture = "commands/engineering-standards-builder/examples/fallback/kotlin-gradle";
     try {
       await mkdir(join(pkg, "template", fixture, ".gradle"), { recursive: true });
       await writeFile(join(pkg, "template", fixture, ".gradle/cache.bin"), "template cache");
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const runtime = join(root, ".speculo/skills/example/.gradle/cache.bin");
       for (const mode of ["init", "refresh"]) {
         await initSpeculo(target, { packageRoot: pkg, selection: { workflowIds: ["specdev"] } });
@@ -78,16 +81,16 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       assert.equal(result.mode, "init");
       assert.equal(result.refresh.status, "initialized");
-      assert.equal((await readJson(join(root, ".speculo", "install.json"))).schema_version, 3);
+      assert.equal((await readJson(join(root, ".speculo", "install.json"))).schema_version, 4);
       const managed = await readJson(join(root, ".speculo", "managed.json"));
       assert.equal(managed.schema_version, 2);
-      assert.ok(managed.files.some((entry: any) => entry.path === "commands/status.md" && entry.owner === "core/commands"));
-      assert.ok(managed.files.some((entry: any) => entry.path === "commands/git-history-squash.md" && entry.owner === "core/commands"));
-      assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/SKILL.md" && entry.owner === "core/skills"));
-      assert.ok(managed.files.some((entry: any) => entry.path === "skills/git-history-squash/scripts/git-history-squash.mjs" && entry.owner === "core/skills"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "commands/status/COMMAND.md" && entry.owner === "core/commands"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "commands/git-history-squash/COMMAND.md" && entry.owner === "core/commands"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "commands/git-history-squash/references/operation-contract.md" && entry.owner === "core/commands"));
+      assert.ok(managed.files.some((entry: any) => entry.path === "commands/git-history-squash/scripts/git-history-squash.mjs" && entry.owner === "core/commands"));
       assert.ok(managed.files.some((entry: any) => entry.path === "workflows/specdev/runtime-contract.json" && entry.kind === "contract"));
       assert.deepEqual(
         await readJson(join(root, ".speculo", "baselines", "config.json")),
@@ -96,7 +99,7 @@ describe("Speculo init refresh", () => {
       assert.equal(await pathExists(join(root, "commands", "migrate-runtime-state.md")), false);
       assert.equal(await pathExists(join(root, "skills", "migrate-runtime-state")), false);
       assert.equal(await pathExists(join(root, ".speculo", "migration.json")), false);
-      assert.equal(await pathExists(join(root, "workflows", "specdev", "README.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "specdev", "SKILL.md")), true);
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
       assert.match(agents, /SPECULO-PERSISTENT-KNOWLEDGE:START/);
       assert.match(agents, /<Path>\{roots\.state\}\/specdev\/adr\/<\/Path>/);
@@ -113,12 +116,12 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const opaque = join(root, ".speculo", "skills", "upstream-fork-sync", "state.json");
       await mkdir(dirname(opaque), { recursive: true });
       await writeFile(opaque, Buffer.from([0, 255, 10, 123, 0, 1]));
       const before = await hash(opaque);
-      await writeFile(join(root, "commands", "status.md"), "local static edit\n");
+      await writeFile(join(root, "commands", "status", "COMMAND.md"), "local static edit\n");
       await writeFile(join(root, "workflows", "specdev", "local-only.md"), "remove me\n");
       const config = await readJson(join(root, "config.json"));
       config.custom = { keep: true };
@@ -128,8 +131,8 @@ describe("Speculo init refresh", () => {
       assert.equal(result.refresh.status, "updated");
       assert.equal(await hash(opaque), before);
       assert.ok(result.refresh.preservedFiles >= 1);
-      assert.notEqual(await readFile(join(root, "commands", "status.md"), "utf8"), "local static edit\n");
-      assert.equal(await pathExists(join(root, "workflows", "specdev", "local-only.md")), false);
+      assert.notEqual(await readFile(join(root, "commands", "status", "COMMAND.md"), "utf8"), "local static edit\n");
+      assert.equal(await pathExists(join(root, "workflows", "specdev", "local-only.md")), true);
       assert.deepEqual((await readJson(join(root, "config.json"))).custom, { keep: true });
       assert.equal(result.refresh.backupPath, null);
       assert.deepEqual(await residue(target), []);
@@ -143,7 +146,7 @@ describe("Speculo init refresh", () => {
     const nextPackage = await packageFixture();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const local = await readJson(join(root, "config.json"));
       local.defaults.report_language = "en-US";
       await writeJson(join(root, "config.json"), local);
@@ -163,12 +166,16 @@ describe("Speculo init refresh", () => {
       assert.equal(result.refresh.config.removed, 1);
       assert.ok(result.refresh.config.updated >= 1);
       assert.ok(result.refresh.config.preserved >= 1);
-      assert.equal(result.refresh.backupPath, "speculo/.speculo/back");
-      const backup = await readJson(join(root, ".speculo", "back", "config.json"));
+      assert.match(result.refresh.backupPath!, /^\.agents\/speculo\/\.speculo\/back\/[a-f0-9-]+$/);
+      const backupRoot = join(target, result.refresh.backupPath!);
+      const backup = await readJson(join(backupRoot, "config.json"));
       assert.ok(backup.persistence);
-      const backupManifest = await readJson(join(root, ".speculo", "back", "manifest.json"));
+      const backupManifest = await readJson(join(backupRoot, "manifest.json"));
       assert.equal(backupManifest.scope, "targeted-refresh-backup");
       assert.deepEqual(backupManifest.files.map((entry: any) => entry.source_path), ["config.json"]);
+      const backupBefore = await readFile(join(backupRoot, "config.json"));
+      await initSpeculo(target, { packageRoot: nextPackage, selection: { workflowIds: ["specdev"] } });
+      assert.deepEqual(await readFile(join(backupRoot, "config.json")), backupBefore);
     } finally {
       await rm(target, { recursive: true, force: true });
       await rm(nextPackage, { recursive: true, force: true });
@@ -179,9 +186,9 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       await writeJson(join(root, ".speculo", "install.json"), { schema_version: 1, package_version: "0.7.0", workflows: ["specdev"] });
-      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "unsupported-installation-version"));
       assert.equal((await readJson(join(root, ".speculo", "install.json"))).package_version, "0.7.0");
     } finally {
       await rm(target, { recursive: true, force: true });
@@ -192,7 +199,7 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const state = join(root, ".speculo", "specdev");
       const change = "2026-08-23-refresh-state";
       await writeJson(join(state, "status.json"), {
@@ -216,10 +223,10 @@ describe("Speculo init refresh", () => {
         deviations: [],
         worktrees: [],
       });
-      await writeFile(join(state, "changes", change, "goal-plan.md"), "---\nschema_version: 5\nimplementation_agent_limit: 3\n---\n\n# Plan\n", "utf8");
+      await writeFile(join(state, "changes", change, "goal-plan.md"), "---\nschema_version: 5\nconcurrent_implementation_limit: 3\n---\n\n# Plan\n", "utf8");
 
       await writeJson(join(root, ".speculo", "install.json"), { schema_version: 2, package_version: "0.8.13", workflows: ["specdev"] });
-      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "unsupported-installation-version"));
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -229,7 +236,7 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const state = join(root, ".speculo", "specdev");
       const change = "2026-08-24-strict-global-index";
       await writeJson(join(state, "status.json"), {
@@ -260,7 +267,7 @@ describe("Speculo init refresh", () => {
       });
 
       await writeJson(join(root, ".speculo", "install.json"), { schema_version: 2, package_version: "0.8.13", workflows: ["specdev"] });
-      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-installation"));
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "unsupported-installation-version"));
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -270,8 +277,8 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
-      const sentinel = join(root, "commands", "status.md");
+      const root = join(target, ".agents/speculo");
+      const sentinel = join(root, "commands", "status", "COMMAND.md");
       await writeFile(sentinel, "active stays\n", "utf8");
       await writeFile(join(root, "config.json"), "{ invalid\n", "utf8");
       await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "invalid-json"));
@@ -287,11 +294,11 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       await writeJson(join(root, ".speculo", "migration.json"), { schema_version: 1, status: "pending" });
       await writeFile(join(root, "commands", "migrate-runtime-state.md"), "legacy repair\n", "utf8");
       const marker = await readFile(join(root, ".speculo", "migration.json"), "utf8");
-      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "legacy-pending-migration"));
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), /unsupported-installation-version/);
       assert.equal(await readFile(join(root, ".speculo", "migration.json"), "utf8"), marker);
       assert.equal(await readFile(join(root, "commands", "migrate-runtime-state.md"), "utf8"), "legacy repair\n");
     } finally {
@@ -303,8 +310,8 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const root = join(target, "speculo");
-      const sentinel = join(root, "commands", "status.md");
+      const root = join(target, ".agents/speculo");
+      const sentinel = join(root, "commands", "status", "COMMAND.md");
       await writeFile(sentinel, "active stays\n", "utf8");
       await symlink("status.json", join(root, ".speculo", "specdev", "status-link.json"));
       await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "runtime-symlink"));
@@ -318,7 +325,7 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const command = join(target, "speculo", "commands", "status.md");
+      const command = join(target, ".agents/speculo", "commands", "status", "COMMAND.md");
       await rm(command);
       await symlink("../config.json", command);
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
@@ -329,11 +336,11 @@ describe("Speculo init refresh", () => {
     }
   });
 
-  it("keeps supported unselected workflows untouched and removes unknown ones", async () => {
+  it("keeps supported unselected workflows untouched and preserves unknown files", async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["person", "specdev"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       await writeFile(join(root, "workflows", "person", "local.md"), "keep\n", "utf8");
       await writeFile(join(root, "workflows", "specdev", "local.md"), "remove\n", "utf8");
       await writeFile(join(root, ".speculo", "person", "custom.bin"), Buffer.from([1, 2, 3]));
@@ -341,8 +348,8 @@ describe("Speculo init refresh", () => {
       await writeFile(join(root, "workflows", "removed", "INDEX.md"), "legacy\n");
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       assert.equal(await readFile(join(root, "workflows", "person", "local.md"), "utf8"), "keep\n");
-      assert.equal(await pathExists(join(root, "workflows", "specdev", "local.md")), false);
-      assert.equal(await pathExists(join(root, "workflows", "removed")), false);
+      assert.equal(await pathExists(join(root, "workflows", "specdev", "local.md")), true);
+      assert.equal(await pathExists(join(root, "workflows", "removed")), true);
       assert.deepEqual(await readFile(join(root, ".speculo", "person", "custom.bin")), Buffer.from([1, 2, 3]));
       const managed = await readJson(join(root, ".speculo", "managed.json"));
       assert.equal(managed.files.some((entry: any) => entry.path === "workflows/person/local.md"), false);
@@ -355,7 +362,7 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const sentinel = join(target, "speculo", "commands", "status.md");
+      const sentinel = join(target, ".agents/speculo", "commands", "status", "COMMAND.md");
       await assert.rejects(initSpeculo(target, {
         packageRoot,
         selection: { workflowIds: ["specdev"] },
@@ -371,9 +378,9 @@ describe("Speculo init refresh", () => {
   it("uses an exclusive project lock", async () => {
     const target = await tempProject();
     try {
-      await mkdir(join(target, ".speculo-init.lock"));
+      await mkdir(join(target, ".agents/.speculo-install.lock"),{recursive:true});
       await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "refresh-locked"));
-      assert.equal(await pathExists(join(target, "speculo")), false);
+      assert.equal(await pathExists(join(target, ".agents/speculo")), false);
     } finally {
       await rm(target, { recursive: true, force: true });
     }
@@ -384,7 +391,7 @@ describe("Speculo init refresh", () => {
     const brokenPackage = await packageFixture();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      const sentinel = join(target, "speculo", "commands", "status.md");
+      const sentinel = join(target, ".agents/speculo", "commands", "status", "COMMAND.md");
       await writeFile(sentinel, "active stays\n", "utf8");
       await rm(join(brokenPackage, "template", "workflows", "specdev", "_state"), { recursive: true, force: true });
       await assert.rejects(initSpeculo(target, { packageRoot: brokenPackage, selection: { workflowIds: ["specdev"] } }), /missing _state/);
@@ -400,8 +407,8 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
-      const root = join(target, "speculo");
-      const knowledge = join(root, ".speculo", "learning", "context", "domains", "speculo", "concepts", "indexes.md");
+      const root = join(target, ".agents/speculo");
+      const knowledge = join(root, ".speculo", "learning", "context", "domains", ".agents/speculo", "concepts", "indexes.md");
       const content = Buffer.from("# Indexes\n\ncustom \u0000 knowledge bytes\n", "utf8");
       await mkdir(dirname(knowledge), { recursive: true });
       await writeFile(knowledge, content);
@@ -481,7 +488,7 @@ describe("Speculo init refresh", () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
-      const root = join(target, "speculo");
+      const root = join(target, ".agents/speculo");
       const sentinel = join(root, "workflows", "learning", "INDEX.md");
       await writeFile(sentinel, "active stays\n", "utf8");
       await writeJson(join(root, ".speculo", "learning", "status.json"), {
@@ -575,7 +582,7 @@ describe("CLI surface", () => {
     }
   });
 
-  it("retains installed knowledge references and removes legacy forced blocks", async () => {
+  it("retains installed knowledge references and preserves unrelated handbook bytes", async () => {
     const target = await tempProject();
     try {
       await writeFile(join(target, "AGENTS.md"), "# Project rules\n\n<SPECULO>\nlegacy forced workflow\n</SPECULO>\n", "utf8");
@@ -583,7 +590,7 @@ describe("CLI surface", () => {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
       assert.match(agents, /# Project rules/);
-      assert.doesNotMatch(agents, /legacy forced workflow|<SPECULO>/);
+      assert.match(agents, /<SPECULO>\nlegacy forced workflow\n<\/SPECULO>/);
       assert.match(agents, /specdev\/adr/);
       assert.match(agents, /learning\/context/);
     } finally {

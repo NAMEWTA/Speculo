@@ -1,12 +1,15 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "layout_version": "agents-v2",
+  "installation_id": "00000000-0000-0000-0000-000000000000",
   "path_base": "project-root",
   "roots": {
-    "config": "speculo/config.json",
-    "speculo": "speculo",
-    "state": "speculo/.speculo",
-    "commands": "speculo/commands",
-    "skills": "speculo/skills",
-    "workflows": "speculo/workflows"
+    "config": ".agents/speculo/config.json",
+    "speculo": ".agents/speculo",
+    "state": ".agents/speculo/.speculo",
+    "commands": ".agents/speculo/commands",
+    "skills": ".agents/skills",
+    "workflows": ".agents/speculo/workflows",
+    "references": ".agents/speculo/references"
   }
 }

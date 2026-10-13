@@ -14,12 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    name: Full check / Node ${{ matrix.node }}
+  check:
+    runs-on: ${{ matrix.os }}
+    name: Full check / ${{ matrix.os }} / Node ${{ matrix.node }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         node: ['22.22.3', '24']
     steps:
       - uses: actions/checkout@v7
@@ -30,28 +31,11 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Test and validate all source assets
         run: pnpm check
-      - name: Verify CLI entry
-        run: pnpm verify-bin
-      - name: Check generated output is reproducible
+      - name: Verify CLI entry and isolated tarball
         run: |
-          pnpm generate-canonical
-          git diff --exit-code -- template/canonical
-          pnpm generate-canonical
-          git diff --exit-code -- template/canonical
-
-  windows-installation:
-    runs-on: windows-latest
-    name: Windows installation and OPS smoke / Node 22.22.3
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm build
-      - name: Validate installation and read-only tooling
-        run: node --test dist/test/review-installation.test.js dist/test/review-evaluation.test.js dist/test/media-workflow.test.js
-      - name: Validate Windows OPS controller contracts
-        run: node --test template/workflows/ops/common/tests/test_ops_bootstrap.mjs template/workflows/ops/common/tests/test_ops_workspace.mjs
-      - name: Verify link rejection and native deployment secret protection
-        run: node --test --test-name-pattern="^symlink rejected$|new controllers keep secrets" template/workflows/ops/common/tests/test_ops.mjs
-      - run: pnpm verify-bin
+          pnpm verify-bin
+          pnpm verify-package
+      - name: Check all generated output is reproducible
+        run: |
+          pnpm verify-generated
+          git diff --exit-code -- template

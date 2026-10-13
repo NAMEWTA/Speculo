@@ -22,9 +22,12 @@ const performance = () => ({ version: 1, kind: 'performance', checkpoint: 'basel
 const documentation = () => ({ version: 1, kind: 'documentation', checkpoint: 'documentation-revision', evidence: ['observed command output'], owner_paths: ['README owner'], outcome: 'verified', visible_behavior_changed: false, behavior_verification: 'not-applicable', claims: [{ subject: 'example runs', method: 'command', state: 'verified', evidence: ['example stdout'], command: 'node example.mjs', executed: true, exit_code: 0, output: ['actual expected output'] }] });
 const incident = () => ({ version: 1, kind: 'incident', checkpoint: 'incident-revision', evidence: ['sanitized incident log'], facts: ['request timed out'], unknowns: ['remote effect unknown'], next_checks: ['read remote marker'], feedback_loop_ready: false, root_cause_confirmed: false });
 function change(t) {
-  const root = join(temporary(t), '2026-10-11-engineering');
-  mkdirSync(root);
-  const status = JSON.parse(readFileSync(join(workflow, 'I-init-setup/change-status-template.json'), 'utf8'));
+  const project=temporary(t), state=join(project,'.agents/speculo/.speculo');
+  const root = join(state,'specdev/changes/2026-10-11-engineering');
+  mkdirSync(root,{recursive:true});
+  writeFileSync(join(state,'workspace.json'),readFileSync(join(workflow,'../../.speculo/workspace.json')));
+  writeFileSync(join(state,'specdev/config.json'),readFileSync(join(workflow,'specdev-i-init-setup/assets/config-template.json')));
+  const status = JSON.parse(readFileSync(join(workflow, 'specdev-i-init-setup/assets/change-status-template.json'), 'utf8'));
   status.change = '2026-10-11-engineering';
   status.created_at = status.updated_at = status.leadership.assigned_at = '2026-10-11T00:00:00Z';
   status.leadership.current = 'test-owner';
@@ -171,7 +174,7 @@ test('real documentation validation does not accept an unexecuted command', t =>
 });
 test('incident stage cannot advance a diagnosis without its actual red feedback contract', t => {
   const root = change(t), file = join(root, 'diagnosis.md');
-  let body = readFileSync(join(workflow, 'D-diagnose-bugs/diagnosis-template.md'), 'utf8')
+  let body = readFileSync(join(workflow, 'specdev-d-diagnose-bugs/assets/diagnosis-template.md'), 'utf8')
     .replace('change: <YYYY-MM-DD-topic>', 'change: 2026-10-11-engineering')
     .replace('status: reproducing', 'status: blocked').replace('cleanup_status: pending', 'cleanup_status: clean')
     .replace('updated_at: <ISO-8601>', 'updated_at: 2026-10-11T00:00:00Z')
@@ -225,10 +228,10 @@ test('range comparison and merge-base comparison have distinct semantics', t => 
   assert.deepEqual(baseline.changed_paths, ['side.txt']); assert.deepEqual(range.changed_paths, ['b.txt', 'c.txt', 'side.txt']);
 });
 test('fifteen Work IDs and persisted schema versions remain unchanged', () => {
-  const entries = readdirSync(workflow).filter(name => /^[A-Z]-/.test(name)); assert.equal(entries.length, 15);
-  const ids = entries.map(name => /^id: (.+)$/m.exec(readFileSync(join(workflow, name, `${name}.md`), 'utf8'))?.[1]);
+  const entries = readdirSync(workflow).filter(name => /^specdev-[a-z]-/.test(name)); assert.equal(entries.length, 15);
+  const ids = entries.map(name => /speculo-id: (.+)$/m.exec(readFileSync(join(workflow, name, 'SKILL.md'), 'utf8'))?.[1]);
   assert.deepEqual(ids.sort(), ['archive-and-consolidate','code-review','diagnose-bugs','goal-plan','grill-with-docs','implement','init-setup','learn-change','prototype','retro','review-architecture','spec','tickets','triage','wayfinder'].map(id => 'specdev/' + id).sort());
-  for (const [file, version] of [['config', 6], ['status', 5], ['change-status', 6], ['goal-plan', 6]]) {
+  for (const [file, version] of [['config', 7], ['status', 5], ['change-status', 6], ['goal-plan', 7]]) {
     const schema = JSON.parse(readFileSync(join(workflow, 'common/schemas', `${file}.schema.json`), 'utf8'));
     assert.equal(schema.properties.schema_version.const, version);
   }

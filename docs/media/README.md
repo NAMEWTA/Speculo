@@ -1,6 +1,6 @@
-# Media workflow — issue #81 implementation
+# Media 创作领域
 
-本包把创作者初始化、研究简报、对标拆解、手绘提示词、代码视频、本地草稿和复盘做成可安装工作流。实现依据是实际 issue #81 与仓库基线 `335b39424ddead5d5699f7ba8ae5fcf701ddbbd6`，不是上一版未读到 issue 的泛化草案。本期不实现真实发布，不登录、上传、保存Cookie或绑定计费模型。
+本包把创作者初始化、研究简报、对标拆解、手绘提示词、代码视频、本地草稿和复盘做成可安装工作流。本期不实现真实发布，不登录、上传、保存Cookie或绑定计费模型。
 
 ## 安装与七个 Work
 
@@ -8,7 +8,7 @@
 speculo init . --workflows media
 ```
 
-安装不是激活。Agent先被动读取INDEX，用户明确选择后才读README和Work。交互式安装可选择将Media投影为七个pointer Skills；它们引用真实Work，不复制方法。静态资产在speculo/workflows/media，运行数据在speculo/.speculo/media，实际工具使用项目roots解析。
+安装不是激活。Agent 按需定位领域 SKILL 或直接进入用户指定的 Work Skill。投影可按业务 ID 选择，原样复制 YAML 并强制读取源入口。静态资产在 `.agents/speculo/workflows/media`，运行数据在 `.agents/speculo/.speculo/media`，工具按 workspace roots 解析。
 
 | Work | 交付 | 必要门禁 |
 |---|---|---|

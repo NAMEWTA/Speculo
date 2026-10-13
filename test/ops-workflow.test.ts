@@ -24,9 +24,9 @@ async function resourceState(){const s=await seed();s.hosts["node-a"]=host();s.p
 describe("OPS five-entry resource workspace",()=>{
  it("discovers the five explicitly scoped Works",async()=>{
   const entries=(await readdir(workflowRoot,{withFileTypes:true})).filter(e=>e.isDirectory()&&!["common","_state"].includes(e.name)).map(e=>e.name).sort();
-  assert.deepEqual(entries,["D-project-deploy","H-host-manage","I-initialize","S-server-connect","V-inventory-view"]);
+  assert.deepEqual(entries,["ops-d-project-deploy","ops-h-host-manage","ops-i-initialize","ops-s-server-connect","ops-v-inventory-view"]);
   const catalog=await discoverWorkflowCatalog(packageRoot);assert.ok(catalog.has("ops"));
-  const readme=await readFile(join(workflowRoot,"README.md"),"utf8");for(const name of entries)assert.ok(readme.includes("**"+name+"**"));
+  const readme=await readFile(join(workflowRoot,"SKILL.md"),"utf8");for(const name of entries)assert.ok(readme.includes("/"+name+"/SKILL.md"));
  });
  it("runs static/package self-check without target mutation",()=>{
   const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--self-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
@@ -92,14 +92,14 @@ describe("OPS five-entry resource workspace",()=>{
  });
  it("installs v3 state and never creates old OPS changes directory",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-install-"));try{
-   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const s=await json(join(root,".speculo/ops/status.json"));assert.equal(s.schema_version,3);
-   const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("D-project-deploy"));assert.ok(installed.includes("S-server-connect"));assert.ok(installed.includes("V-inventory-view"));assert.ok(!installed.includes("I-intake-and-assess"));
+   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const s=await json(join(root,".speculo/ops/status.json"));assert.equal(s.schema_version,3);
+   const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("ops-d-project-deploy"));assert.ok(installed.includes("ops-s-server-connect"));assert.ok(installed.includes("ops-v-inventory-view"));assert.ok(!installed.includes("I-intake-and-assess"));
    const stateFiles=await readdir(join(root,".speculo/ops"));assert.ok(!stateFiles.includes("changes"));
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("refresh preserves private and centralized record bytes and POSIX modes",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-refresh-"));try{
-   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
+   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
    const record=join(root,".speculo/ops/records/tasks/example/result.json");const recordBytes=Buffer.from('{"synthetic":"preserve-record-byte-for-byte"}\n');await mkdir(dirname(record),{recursive:true,mode:0o700});await writeFile(record,recordBytes,{mode:0o600});
    const statePath=join(root,".speculo/ops/status.json"),legacy=await resourceState();await writeJson(statePath,legacy);
    const stateBytes=await readFile(statePath);
@@ -116,18 +116,18 @@ describe("OPS five-entry resource workspace",()=>{
    for(const [name,bytes] of preserved)assert.deepEqual(await readFile(join(root,".speculo/ops",name)),bytes,name);
   }finally{await rm(target,{recursive:true,force:true});}
  });
- it("preserves legacy empty v2 seed without manufacturing v3 approvals",async()=>{
+ it("rejects old OPS state without rewriting bytes or manufacturing approvals",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-legacy-"));try{
-   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");const p=join(root,".speculo/ops/status.json");await writeJson(p,{schema_version:2,workflow:"ops",active:[],archived:[]});await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});assert.equal((await json(p)).schema_version,2);
+   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const p=join(root,".speculo/ops/status.json");await writeJson(p,{schema_version:2,workflow:"ops",active:[],archived:[]});const before=await readFile(p);await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}}),/blocked/);assert.deepEqual(await readFile(p),before);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("structured runtime validates v3 with the shipped schema",async()=>{
   const target=await mkdtemp(join(tmpdir(),"ops-structured-"));try{
-   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,"speculo");await writeJson(join(root,".speculo/ops/status.json"),await resourceState());await validateStructuredRuntime(root,["ops"]);
+   await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");await writeJson(join(root,".speculo/ops/status.json"),await resourceState());await validateStructuredRuntime(root,["ops"]);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("status and archive routing no longer treat OPS as change folders",async()=>{
-  const status=await readFile(join(packageRoot,"template/commands/status.md"),"utf8");assert.match(status,/Ops schema v3/);assert.doesNotMatch(status,/ops\/projects\/\{project_id\}\/changes/);
-  const archive=await readFile(join(packageRoot,"template/commands/archive-and-consolidate.md"),"utf8");assert.match(archive,/OPS 资源运行记录/);
+  const status=await readFile(join(packageRoot,"template/commands/status/COMMAND.md"),"utf8");assert.match(status,/Ops schema v3/);assert.doesNotMatch(status,/ops\/projects\/\{project_id\}\/changes/);
+  const archive=await readFile(join(packageRoot,"template/commands/archive-and-consolidate/COMMAND.md"),"utf8");assert.match(archive,/OPS 资源运行记录/);
  });
 });

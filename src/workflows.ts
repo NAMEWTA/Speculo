@@ -1,131 +1,32 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-
-export type WorkflowPackage = {
-  id: string;
-  name: string;
-  displayName: string;
-  description: string;
-};
-
-export type WorkflowCatalog = Map<string, WorkflowPackage>;
-
-export type WorkflowSelection = {
-  workflowIds: string[];
-};
-
-const FRONTMATTER_RE = /^---\s*\n([\s\S]*?)\n---/;
-const FIELD_RE = /^(\w+):\s*(.+)$/;
-const WORKFLOW_ENTRY = "INDEX.md";
-
-function parseFrontmatter(content: string): Record<string, string> {
-  const match = content.match(FRONTMATTER_RE);
-  if (!match) return {};
-
-  const fields: Record<string, string> = {};
-  for (const line of match[1].split("\n")) {
-    const field = line.match(FIELD_RE);
-    if (field) fields[field[1]] = field[2].trim();
-  }
-  return fields;
+import { parseFrontmatter, validateSkill } from "./assets.js";
+import { pathExists } from "./utils.js";
+export type WorkflowPackage = { id:string; name:string; displayName:string; description:string };
+export type WorkflowCatalog = Map<string,WorkflowPackage>;
+export type WorkflowSelection = {workflowIds:string[]};
+async function discover(root:string):Promise<WorkflowCatalog>{
+ const catalog:WorkflowCatalog=new Map();
+ const entries=await readdir(join(root,'workflows'),{withFileTypes:true}).catch((e:NodeJS.ErrnoException)=>{if(e.code==='ENOENT')return [];throw e;});
+ for(const entry of entries){
+  if(!entry.isDirectory()||entry.name.startsWith('_'))continue;
+  const folder=join(root,'workflows',entry.name);
+  if(!await pathExists(join(folder,'SKILL.md'))&&!await pathExists(join(folder,'manifest.json')))continue;
+  const content=await readFile(join(folder,'SKILL.md'));
+  const errors=validateSkill(content,entry.name);if(errors.length)throw new Error(`${folder}: ${errors.join('; ')}`);
+  const {fields}=parseFrontmatter(content), metadata=fields.metadata as Record<string,string>;
+  const manifest=JSON.parse(await readFile(join(folder,'manifest.json'),'utf8'));
+  if(metadata?.['speculo-id']!==`domain/${entry.name}`||manifest.schema_version!==2||manifest.id!==entry.name)throw new Error(`invalid-domain-manifest: ${entry.name}`);
+  catalog.set(entry.name,{id:entry.name,name:entry.name,displayName:entry.name,description:fields.description as string});
+ }
+ return catalog;
 }
-
-export async function discoverWorkflowCatalog(
-  packageRoot: string
-): Promise<WorkflowCatalog> {
-  const catalog: WorkflowCatalog = new Map();
-  const workflowsRoot = join(packageRoot, "template", "workflows");
-  const entries = await readdir(workflowsRoot, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
-
-    const entryPath = join(workflowsRoot, entry.name, WORKFLOW_ENTRY);
-    try {
-      const content = await readFile(entryPath, "utf8");
-      const frontmatter = parseFrontmatter(content);
-      const id = frontmatter.workflow ?? frontmatter.id ?? entry.name;
-      if (id !== entry.name) {
-        throw new Error(
-          "Workflow directory " + entry.name + " declares workflow id " + id +
-          "; ids must match directory names"
-        );
-      }
-
-      catalog.set(id, {
-        id,
-        name: entry.name,
-        displayName: frontmatter.name ?? entry.name,
-        description: frontmatter.description ?? "",
-      });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-      // Only a missing INDEX.md means this is not an installable workflow package.
-    }
-  }
-
-  return catalog;
+export async function discoverWorkflowCatalog(packageRoot:string):Promise<WorkflowCatalog>{return discover(join(packageRoot,'template'));}
+export async function scanInstalledWorkflows(installRoot:string):Promise<string[]>{return [...(await discover(installRoot)).keys()].sort();}
+export function isInteractive():boolean{return process.stdin.isTTY===true;}
+export async function promptWorkflowSelection(catalog:WorkflowCatalog,options?:{preSelectedWorkflowIds?:Set<string>}):Promise<WorkflowSelection>{
+ if(!isInteractive())return {workflowIds:[...(options?.preSelectedWorkflowIds??[])].filter(id=>catalog.has(id)).sort()};
+ const {checkbox}=await import('@inquirer/prompts');
+ return {workflowIds:await checkbox({message:'选择安装或刷新的领域（空选仅核心能力）：',choices:[...catalog.values()].sort((a,b)=>a.id.localeCompare(b.id)).map(w=>({name:w.displayName,value:w.id,description:w.description,checked:options?.preSelectedWorkflowIds?.has(w.id)??false}))})};
 }
-
-export async function scanInstalledWorkflows(
-  installRoot: string
-): Promise<string[]> {
-  const installed: string[] = [];
-  const workflowsRoot = join(installRoot, "workflows");
-
-  try {
-    const entries = await readdir(workflowsRoot, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
-      try {
-        await readFile(join(workflowsRoot, entry.name, WORKFLOW_ENTRY), "utf8");
-        installed.push(entry.name);
-      } catch {
-        // Ignore legacy or local directories that are not v3 workflow packages.
-      }
-    }
-  } catch {
-    return [];
-  }
-
-  return installed.sort();
-}
-
-export function isInteractive(): boolean {
-  return process.stdin.isTTY === true;
-}
-
-export async function promptWorkflowSelection(
-  catalog: WorkflowCatalog,
-  options?: { preSelectedWorkflowIds?: Set<string> }
-): Promise<WorkflowSelection> {
-  if (!isInteractive()) return { workflowIds: [...(options?.preSelectedWorkflowIds ?? [])].filter((id) => catalog.has(id)).sort() };
-
-  const choices = [...catalog.values()]
-    .sort((left, right) => left.id.localeCompare(right.id))
-    .map((workflow) => ({
-      name: workflow.displayName,
-      value: workflow.id,
-      description: workflow.description,
-      checked: options?.preSelectedWorkflowIds?.has(workflow.id) ?? false,
-    }));
-
-  const { checkbox } = await import("@inquirer/prompts");
-  const workflowIds = await checkbox({
-    message: "Select workflow packages to install (space to toggle, enter to confirm):",
-    choices,
-    pageSize: 10,
-  });
-
-  if (workflowIds.length === 0) {
-    console.log("No workflows selected. Only core commands and skills will be installed.\n");
-  }
-
-  return { workflowIds };
-}
-
-export function selectAllFromCatalog(
-  catalog: WorkflowCatalog
-): WorkflowSelection {
-  return { workflowIds: [...catalog.keys()].sort() };
-}
+export function selectAllFromCatalog(catalog:WorkflowCatalog):WorkflowSelection{return {workflowIds:[...catalog.keys()].sort()};}

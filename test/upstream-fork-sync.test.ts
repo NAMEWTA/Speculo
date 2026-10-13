@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 
 const packageRoot = process.cwd();
 const isWindows = process.platform === "win32";
-const script = join(packageRoot, "template", "skills", "upstream-fork-sync", "scripts", "upstream-sync.mjs");
+const script = join(packageRoot, "template", "commands", "upstream-fork-sync", "scripts", "upstream-sync.mjs");
 
 function command(cwd: string, ...args: string[]): string {
   const result = spawnSync(args[0], args.slice(1), { cwd, encoding: "utf8" });
@@ -58,7 +58,7 @@ async function createFixture() {
   command(root, "git", "switch", "main");
   command(root, "git", "update-ref", "refs/remotes/origin/main", firstMerge);
 
-  const stateRoot = join(root, "speculo", ".speculo", "skills", "upstream-fork-sync");
+  const stateRoot = join(root, ".agents/speculo", ".speculo", "skills", "upstream-fork-sync");
   const repositoryMap = join(stateRoot, "repository-map.json");
   await writeJson(repositoryMap, {
     schema_version: 1,
@@ -231,7 +231,7 @@ describe("upstream-fork-sync skill", () => {
       assert.match(escaped.stderr, /must stay under project root/);
 
       const linkRoot = join(fixture.root, "linked-state");
-      await symlink(join(fixture.root, "speculo", ".speculo"), linkRoot);
+      await symlink(join(fixture.root, ".agents/speculo", ".speculo"), linkRoot);
       const linked = runSkill(
         "assess", "--root", fixture.root, "--state-root", join(linkRoot, "skills", "upstream-fork-sync"),
         "--repository-map", fixture.repositoryMap, "--topic", "linked",

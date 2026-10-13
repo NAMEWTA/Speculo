@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-const tool = join(process.cwd(), 'template/workflows/learning/Q-question/tools/validate-inquiry.mjs');
+const tool = join(process.cwd(), 'template/workflows/learning/learning-q-question/scripts/validate-inquiry.mjs');
 const load = (): Promise<any> => import(pathToFileURL(tool).href);
 function batch(n: number, response = 'pending') {
   return `---\ninquiry_id: IQ-001\nquestion_count: ${n}\n---\n# 批次\n\n## Questions\n\n` +

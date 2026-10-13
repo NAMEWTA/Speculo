@@ -26,7 +26,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 ## 文档维护与可见行为
 
-纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 <Path>{roots.workflows}/specdev/I-implement/references/documentation-procedure.md</Path>；C 可仅审查，不获得写入权。
+纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 <Path>{roots.workflows}/specdev/specdev-i-implement/references/documentation-procedure.md</Path>；C 可仅审查，不获得写入权。
 
 没有所需行为层运行能力时报告缺口，并按原 Gate 保持未通过，不能借文档任务绕过。验收回读修改源和派生物，列出检查、未验证项及明确的新增行为；不用字数变化宣称 Token 或费用节省。
 

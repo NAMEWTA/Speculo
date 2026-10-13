@@ -26,6 +26,7 @@ const ALLOWED_ALIASES = new Set([
   "commands",
   "skills",
   "workflows",
+  "references",
 ]);
 
 function stripNonProse(content) {
@@ -40,7 +41,7 @@ function walk(dir) {
     const p = join(dir, name);
     const st = statSync(p);
     if (st.isDirectory()) {
-      if (name === "books" && p.includes("M-mao-zedong-cognitive-os")) continue;
+      if (name === "books" && p.includes("person-m-mao-zedong-cognitive-os")) continue;
       out.push(...walk(p));
     } else if (/\.md$/i.test(name)) {
       out.push(p);
@@ -75,7 +76,7 @@ function loadWorkspaceRoots() {
 /**
  * Resolve a Path tag to a filesystem path under template/.
  * roots.workflows → template/workflows
- * roots.skills → template/skills
+ * roots.skills → project .agents/skills (runtime)
  * roots.commands → template/commands
  * roots.config → template (config.json lives at template/config.json conceptually; skip existence for runtime-only)
  * roots.speculo → template
@@ -91,14 +92,14 @@ function resolvePathTag(alias, rest, roots) {
   }
 
   // Runtime state paths are not present in template (created at init)
-  if (alias === "state" || alias === "config") {
+  if (alias === "state" || alias === "config" || alias === "skills") {
     return { skip: true, reason: "runtime root" };
   }
 
-  // Map project-relative root (e.g. "speculo/workflows") to template/
-  // workspace roots typically: workflows=speculo/workflows, skills=speculo/skills, etc.
+  // Map project-relative root (e.g. ".agents/speculo/workflows") to template/
+  // workspace roots typically: workflows=.agents/speculo/workflows; skills=.agents/skills.
   const mapped = base
-    .replace(/^speculo\/?/, "")
+    .replace(/^\.agents\/speculo\/?/, "")
     .replace(/\/$/, "");
   const rel = `${mapped}${rest}`.replace(/^\//, "");
   // Directory pointers (trailing /) — check dir exists

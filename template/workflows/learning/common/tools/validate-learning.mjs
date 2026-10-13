@@ -4,13 +4,14 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseFrontmatter } from "../../../../lib/speculo-runtime.mjs";
 
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DOMAIN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const WORK_ID = /^learning\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const LOCATOR = /^(?:changes\/.+|archive\/[0-9]{4}-[0-9]{2}\/.+)$/;
-const EXPECTED_WORKS = new Set(["A-archive", "A-assess-and-plan", "C-consolidate", "G-goal", "H-homework", "I-init-setup", "L-lesson", "Q-question", "R-review"]);
-const OLD_WORKS = new Set(["A-archive-and-consolidate", "E-eli5", "P-practice", "Q-quiz"]);
+const EXPECTED_WORKS = new Set(["learning-a-archive", "learning-a-assess-and-plan", "learning-c-consolidate", "learning-g-goal", "learning-h-homework", "learning-i-init-setup", "learning-l-lesson", "learning-q-question", "learning-r-review"]);
+const OLD_WORKS = new Set(["specdev-a-archive-and-consolidate", "E-eli5", "P-practice", "Q-quiz"]);
 const PHASE = new Set(["planning", "teaching", "homework", "review", "consolidating", "closed", "archived"]);
 const LIFECYCLE = new Set(["active", "blocked", "closed", "archived"]);
 const EVIDENCE = new Set(["not_attempted", "passed", "needs_review"]);
@@ -61,37 +62,24 @@ function duplicates(values) {
   return values.filter((value) => seen.has(value) || !seen.add(value));
 }
 function validDate(value) { return typeof value === "string" && !Number.isNaN(Date.parse(value)); }
-function frontmatter(text) {
-  const match = /^---\s*\n([\s\S]*?)\n---\s*/.exec(text);
-  const result = {};
-  if (!match) return result;
-  for (const line of match[1].split(/\r?\n/)) {
-    const field = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line);
-    if (!field) continue;
-    const value = field[2].trim();
-    if (/^\[.*\]$/.test(value)) result[field[1]] = value.slice(1, -1).split(",").map((item) => item.trim()).filter(Boolean);
-    else if (/^\d+$/.test(value)) result[field[1]] = Number(value);
-    else result[field[1]] = value.replace(/^['"]|['"]$/g, "");
-  }
-  return result;
-}
+function frontmatter(text) {return parseFrontmatter(text).fields;}
 
 function validateWorkflowRoot(root, errors) {
-  const required = ["INDEX.md", "README.md", "_state/status.json", "runtime-contract.json"];
+  const required = ["SKILL.md", "common/rules/domain-runtime.md", "_state/status.json", "runtime-contract.json"];
   for (const file of required) if (!isFile(join(root, file))) errors.push(`${file}: required workflow file is missing`);
-  if (!isFile(join(root, "README.md"))) return;
-  const index = readFileSync(join(root, "INDEX.md"), "utf8");
-  const readme = readFileSync(join(root, "README.md"), "utf8");
-  if (!/^id: learning$/m.test(index) || !/^type: workflow$/m.test(index) || !/^workflow: learning$/m.test(index)) errors.push("INDEX.md: invalid identity");
-  if (!(index.includes("## 主题知识") || index.includes("## 永久知识")) || !index.includes("## Work 激活") || !index.includes("<Path>{roots.workflows}/learning/README.md</Path>")) errors.push("INDEX.md: missing passive/activation sections");
-  if ((readme.match(/AUTO-INDEX-START/g) ?? []).length !== 1 || (readme.match(/AUTO-INDEX-END/g) ?? []).length !== 1) errors.push("README.md: requires one AUTO-INDEX marker pair");
-  const works = new Set(readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory() && /^[A-Z]-/.test(entry.name) && isFile(join(root, entry.name, `${entry.name}.md`))).map((entry) => entry.name));
+  if (!isFile(join(root, "common/rules/domain-runtime.md"))) return;
+  const index = readFileSync(join(root, "SKILL.md"), "utf8");
+  const readme = readFileSync(join(root, "common/rules/domain-runtime.md"), "utf8");
+  if (frontmatter(index).metadata?.["speculo-id"] !== "domain/learning") errors.push("SKILL.md: invalid identity");
+  if (!(index.includes("## 主题知识") || index.includes("## 永久知识")) || !index.includes("## 发现与激活") || !index.includes("<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>")) errors.push("SKILL.md: missing passive/activation sections");
+  if ((index.match(/AUTO-INDEX-START/g) ?? []).length !== 1 || (index.match(/AUTO-INDEX-END/g) ?? []).length !== 1) errors.push("SKILL.md: requires one AUTO-INDEX marker pair");
+  const works = new Set(readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory() && /^learning-[a-z]-/.test(entry.name) && isFile(join(root, entry.name, "SKILL.md"))).map((entry) => entry.name));
   if (works.size !== EXPECTED_WORKS.size || [...EXPECTED_WORKS].some((work) => !works.has(work))) errors.push(`workflow works mismatch: expected ${[...EXPECTED_WORKS].sort().join(", ")}; found ${[...works].sort().join(", ")}`);
   for (const old of OLD_WORKS) if (isDir(join(root, old)) && files(join(root, old)).length) errors.push(`${old}: obsolete v1 work is still shipped`);
   for (const work of works) {
-    const text = readFileSync(join(root, work, `${work}.md`), "utf8");
-    if (!text.includes("<Path>{roots.workflows}/learning/README.md</Path>")) errors.push(`${work}: missing activation contract reference`);
-    if (!/^workflow: learning$/m.test(text) || !/^type: workflow-entry$/m.test(text)) errors.push(`${work}: invalid frontmatter identity`);
+    const text = readFileSync(join(root, work, "SKILL.md"), "utf8");
+    if (!text.includes("<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>")) errors.push(`${work}: missing activation contract reference`);
+    if (frontmatter(text).metadata?.["speculo-kind"] !== "work-skill") errors.push(`${work}: invalid frontmatter identity`);
   }
   const seed = readJson(join(root, "_state/status.json"), "_state/status.json", errors);
   if (seed && (seed.schema_version !== 2 || seed.workflow !== "learning" || !Array.isArray(seed.active) || !Array.isArray(seed.archived))) errors.push("_state/status.json: expected empty learning schema v2 status");
@@ -99,25 +87,25 @@ function validateWorkflowRoot(root, errors) {
   if (runtime && (runtime.schema_version !== 1 || runtime.workflow !== "learning" || runtime.config !== null || runtime.opaque_default !== "preserve-byte-for-byte" || !runtime.structured_state.includes(".speculo/learning/changes/**/.status.json"))) errors.push("runtime-contract.json: missing recursive v2 paths");
   for (const schema of ["status.schema.json", "change-status.schema.json"]) readJson(join(root, "common", "schemas", schema), `common/schemas/${schema}`, errors);
   const contracts = [
-    ["L-lesson/L-lesson.md", ["30–40", "estimated_minutes", "time_budget", "ELI5"]],
-    ["L-lesson/lesson-template.md", ["lesson_id", "source_ids", "反例与边界", "文字等价物"]],
-    ["H-homework/H-homework.md", ["Submission: ready", "Explain (English)"]],
-    ["H-homework/homework-template.md", ["Q1", "A1", "Submission: pending"]],
-    ["Q-question/Q-question.md", ["Response: pending", "Inquiry Lesson", "inquiry/"]],
-    ["Q-question/inquiry-template.md", ["Response: pending", "Q1", "A1"]],
-    ["G-goal/G-goal.md", ["ready_for_execution", "goal/goal-plan.md", "covered-by-parent", "mine unit", "mine_unit_cap"]],
-    ["G-goal/goal-plan-template.md", ["ready_for_execution: false", "covered-by-parent", "goal/probes", "mine_unit: project", "mine_unit_cap: 15", "learning_agent_limit: 4", "split-lesson", "teach-then-mine"]],
-    ["G-goal/chain-template.md", ["Units", "mined", "split_proposed", "split"]],
-    ["G-goal/probe-template.md", ["b01", "b02", "question_budget_used", "split-proposal", "split-lesson"]],
-    ["G-goal/progress-template.md", ["mine_unit", "question_budget_used", "active_subagents"]],
-    ["G-goal/orchestration-protocol.md", ["lead-orchestration.md", "mine-unit.md", "audience=mine"]],
-    ["G-goal/planning-modes.md", ["mine unit", "T（写完全部课）"]],
-    ["G-goal/references/external-goal-runner.md", ["audience=mine", "Q-quiz", "inquiry/", "socratic-questioning/SKILL.md", "mine unit"]],
-    ["G-goal/references/lead-orchestration.md", ["learning_agent_limit", "写集", "只有 Lead 可写", SOCRATIC_SKILL_PATH]],
-    ["G-goal/references/mine-unit.md", ["mine_unit_cap", "不是配额", "15"]],
-    ["G-goal/references/split-rules.md", ["split-lesson", "question_budget", "C-consolidate", "relocate-learning.mjs"]],
-    ["G-goal/references/stop-rules.md", ["第 11 问", "交错 L/mine", "15 节"]],
-    ["G-goal/references/coverage-bar.md", ["mine_unit_cap=15", "不是必须凑满"]],
+    ["learning-l-lesson/SKILL.md", ["30–40", "estimated_minutes", "time_budget", "ELI5"]],
+    ["learning-l-lesson/assets/lesson-template.md", ["lesson_id", "source_ids", "反例与边界", "文字等价物"]],
+    ["learning-h-homework/SKILL.md", ["Submission: ready", "Explain (English)"]],
+    ["learning-h-homework/assets/homework-template.md", ["Q1", "A1", "Submission: pending"]],
+    ["learning-q-question/SKILL.md", ["Response: pending", "Inquiry Lesson", "inquiry/"]],
+    ["learning-q-question/assets/inquiry-template.md", ["Response: pending", "Q1", "A1"]],
+    ["learning-g-goal/SKILL.md", ["ready_for_execution", "goal/goal-plan.md", "covered-by-parent", "mine unit", "mine_unit_cap"]],
+    ["learning-g-goal/assets/goal-plan-template.md", ["ready_for_execution: false", "covered-by-parent", "goal/probes", "mine_unit: project", "mine_unit_cap: 15", "learning_agent_limit: 4", "split-lesson", "teach-then-mine"]],
+    ["learning-g-goal/assets/chain-template.md", ["Units", "mined", "split_proposed", "split"]],
+    ["learning-g-goal/assets/probe-template.md", ["b01", "b02", "question_budget_used", "split-proposal", "split-lesson"]],
+    ["learning-g-goal/assets/progress-template.md", ["mine_unit", "question_budget_used", "active_executors"]],
+    ["learning-g-goal/references/orchestration-protocol.md", ["lead-orchestration.md", "mine-unit.md", "audience=mine"]],
+    ["learning-g-goal/references/planning-modes.md", ["mine unit", "T（写完全部课）"]],
+    ["learning-g-goal/references/external-goal-runner.md", ["audience=mine", "Q-quiz", "inquiry/", "socratic-questioning/SKILL.md", "mine unit"]],
+    ["learning-g-goal/references/lead-orchestration.md", ["learning_agent_limit", "写集", "只有 Lead 可写", SOCRATIC_SKILL_PATH]],
+    ["learning-g-goal/references/mine-unit.md", ["mine_unit_cap", "不是配额", "15"]],
+    ["learning-g-goal/references/split-rules.md", ["split-lesson", "question_budget", "C-consolidate", "relocate-learning.mjs"]],
+    ["learning-g-goal/references/stop-rules.md", ["第 11 问", "交错 L/mine", "15 节"]],
+    ["learning-g-goal/references/coverage-bar.md", ["mine_unit_cap=15", "不是必须凑满"]],
     ["common/rules/teaching-policy.md", ["coverage_depth", "不以字符数"]],
     ["common/rules/questioning-policy.md", ["audience=mine", "goal/probes", "最多两批 10 问"]],
     ["common/skills/socratic-questioning/SKILL.md", ["audience=mine", "b02", "split-proposal"]],
@@ -128,13 +116,13 @@ function validateWorkflowRoot(root, errors) {
     const text = readFileSync(path, "utf8");
     for (const marker of markers) if (!text.includes(marker)) errors.push(`${file}: missing '${marker}'`);
   }
-  const goalPlan = readFileSync(join(root, "G-goal/goal-plan-template.md"), "utf8");
+  const goalPlan = readFileSync(join(root, "learning-g-goal/assets/goal-plan-template.md"), "utf8");
   if (OLD_INTERLEAVE.test(goalPlan) && !goalPlan.includes("禁止 L → mine → L → mine")) {
-    errors.push("G-goal/goal-plan-template.md: old interleave iteration policy remains");
+    errors.push("learning-g-goal/assets/goal-plan-template.md: old interleave iteration policy remains");
   }
-  const orch = readFileSync(join(root, "G-goal/orchestration-protocol.md"), "utf8");
+  const orch = readFileSync(join(root, "learning-g-goal/references/orchestration-protocol.md"), "utf8");
   if (orch.includes("默认 current、严格串行") || (orch.includes("同一时间只推进一个 chain 节点") && !orch.includes("禁止"))) {
-    errors.push("G-goal/orchestration-protocol.md: old serial one-node recipe remains");
+    errors.push("learning-g-goal/references/orchestration-protocol.md: old serial one-node recipe remains");
   }
 }
 

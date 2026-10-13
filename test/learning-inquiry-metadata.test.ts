@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
-const tool = join(process.cwd(), 'template/workflows/learning/Q-question/tools/validate-exploration.mjs');
+const tool = join(process.cwd(), 'template/workflows/learning/learning-q-question/scripts/validate-exploration.mjs');
 const load = (): Promise<any> => import(pathToFileURL(tool).href);
 function fixture(): any {
   return { schema_version: 1, questions: [{

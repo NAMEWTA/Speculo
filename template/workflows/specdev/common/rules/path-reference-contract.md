@@ -12,8 +12,8 @@
 
 正确示例：
 
-- `<Path>{roots.workflows}/specdev/I-init-setup/config-template.json</Path>`
-- `<Path>{roots.workflows}/specdev/P-goal-plan/orchestration-protocol.md</Path>`
+- `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/config-template.json</Path>`
+- `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/orchestration-protocol.md</Path>`
 - `<Path>{roots.workflows}/specdev/common/schemas/ticket.schema.json</Path>`
 - `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`
 - `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`

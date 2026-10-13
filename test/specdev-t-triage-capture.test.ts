@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
+import {changeFixture as seedChange, fixtureProject} from "./workspace-fixture.js";
 const packageRoot = process.cwd();
 const recordId = "2026-09-17-login-timeout";
 const changeName = "2026-09-17-unrelated-change";
@@ -14,13 +15,12 @@ const validator = join(
 );
 const statusTool = join(
   packageRoot,
-  "template/workflows/specdev/T-triage/tools/capture-status.mjs",
+  "template/workflows/specdev/specdev-t-triage/scripts/capture-status.mjs",
 );
 
 async function changeFixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-t-triage-capture-"));
-  const root = join(parent, changeName);
-  await mkdir(root);
+  const root = await seedChange(parent,changeName);
   await writeFile(
     join(root, ".status.json"),
     JSON.stringify({
@@ -180,7 +180,7 @@ describe("SpecDev T-triage capture inbox", () => {
       assert.equal(summary.inbox_intaken, 0);
       assert.equal(summary.published_issues, undefined);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -264,7 +264,7 @@ describe("SpecDev T-triage capture inbox", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /workspace-owned/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -308,7 +308,7 @@ describe("SpecDev T-triage capture inbox", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /invalid mode capture/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -362,11 +362,11 @@ describe("SpecDev T-triage capture inbox", () => {
 
   it("keeps capture contracts in T-triage assets", async () => {
     const [entry, protocol, map, projection, intake] = await Promise.all([
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/T-triage.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/capture-protocol.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/classification-map.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/public-projection.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/intake-protocol.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/SKILL.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/capture-protocol.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/classification-map.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/public-projection.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/intake-protocol.md"), "utf8"),
     ]);
     assert.match(entry, /\| capture \|/);
     assert.match(map, /specdev:captured/);

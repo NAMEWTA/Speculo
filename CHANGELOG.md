@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0] - 2026-10-13
+
+- Install standard domain and Work Skills under `.agents/speculo`; retain 38 business Work identities and organize ten Command packages.
+- Preserve source YAML in independent Agents/Claude projections with per-file ownership and local conflict reporting.
+- Share Lead/Orca/Herdr/headless CLI coordination methods and optional project choices; keep business progress in existing artifacts.
+- Require current layout and schemas, reject old installations without migration, and version installation recovery as transaction v3.
+- Rebuild portable validators, canonical distributions, documentation, authoring skills and regression fixtures together.
+
 All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

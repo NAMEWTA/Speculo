@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 
+import {changeFixture as seedChange, fixtureProject} from "./workspace-fixture.js";
 const packageRoot = process.cwd();
 const changeName = "2026-09-16-publish-projection";
 const validator = join(
@@ -13,13 +14,12 @@ const validator = join(
 );
 const statusTool = join(
   packageRoot,
-  "template/workflows/specdev/T-triage/tools/publish-status.mjs",
+  "template/workflows/specdev/specdev-t-triage/scripts/publish-status.mjs",
 );
 
 async function fixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-t-triage-publish-"));
-  const root = join(parent, changeName);
-  await mkdir(root);
+  const root = await seedChange(parent,changeName);
   await writeFile(
     join(root, ".status.json"),
     JSON.stringify({
@@ -228,7 +228,7 @@ describe("SpecDev T-triage publish projection", () => {
       const result = runValidator(root, "triage");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -248,7 +248,7 @@ describe("SpecDev T-triage publish projection", () => {
       const result = runValidator(root, "triage");
       assert.equal(result.status, 0, result.stdout + result.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -261,7 +261,7 @@ describe("SpecDev T-triage publish projection", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /missing publish\.md ledger/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -282,7 +282,7 @@ describe("SpecDev T-triage publish projection", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /invalid kind/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -303,7 +303,7 @@ describe("SpecDev T-triage publish projection", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /forbidden label needs-triage/);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -356,7 +356,7 @@ describe("SpecDev T-triage publish projection", () => {
       const allowed = runValidator(root, "complete");
       assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
@@ -399,17 +399,17 @@ describe("SpecDev T-triage publish projection", () => {
       assert.equal(summary.publish_skipped, 1);
       assert.equal(summary.publish_failed, 0);
     } finally {
-      await rm(dirname(root), { recursive: true, force: true });
+      await rm(fixtureProject(root), { recursive: true, force: true });
     }
   });
 
   it("keeps protocol contracts in T-triage assets", async () => {
     const [entry, protocol, map, projection, archive] = await Promise.all([
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/T-triage.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/publish-protocol.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/classification-map.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/T-triage/references/public-projection.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/SKILL.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/publish-protocol.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/classification-map.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/public-projection.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md"), "utf8"),
     ]);
     assert.match(entry, /\| publish \|/);
     assert.match(map, /specdev:published/);

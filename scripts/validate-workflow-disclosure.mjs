@@ -39,11 +39,11 @@ function requireText(relative, content, pattern, label) {
 }
 
 for (const workflow of workflows) {
-  const indexPath = `template/workflows/${workflow}/INDEX.md`;
+  const indexPath = `template/workflows/${workflow}/SKILL.md`;
   const index = await read(indexPath);
   const memoryPath = `template/workflows/${workflow}/common/rules/activation-and-memory.md`;
   const memory = await read(memoryPath);
-  requireText(indexPath, index, /激活后读取|用户明确激活|Work 后/, 'passive activation boundary');
+  requireText(indexPath, index, /只读发现不创建状态/, 'passive activation boundary');
   requireText(indexPath, index, new RegExp(`common/rules/activation-and-memory\\.md`), 'memory protocol pointer');
   requireText(memoryPath, memory, /Locate before read|定位.*entry/, 'locate-before-read rule');
   requireText(memoryPath, memory, /pending transaction.*lock.*recovery evidence/, 'memory write gate');
@@ -57,12 +57,9 @@ for (const workflow of workflows) {
   }
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name === 'common' || entry.name === '_state') continue;
-    const relative = `template/workflows/${workflow}/${entry.name}/${entry.name}.md`;
+    const relative = `template/workflows/${workflow}/${entry.name}/SKILL.md`;
     const content = await read(relative);
-    const rootPointer = workflow === 'person'
-      ? /<Path>\{roots\.workflows\}\/person\/INDEX\.md<\/Path>/
-      : new RegExp(`<Path>\\{roots\\.workflows\\}/${workflow}/README\\.md<\\/Path>`);
-    requireText(relative, content, rootPointer, 'activation contract pointer');
+    requireText(relative, content, /common\/rules\/activation-and-memory\.md/, "activation contract pointer");
     // A direct activation/memory pointer carries the shared read contract.
     // Do not require every Work to repeat the same paragraph or heading.
     requireText(relative, content, /common\/rules\/activation-and-memory\.md/, 'memory protocol pointer');
@@ -70,19 +67,19 @@ for (const workflow of workflows) {
 }
 
 const targetedForbidden = [
-  ['template/workflows/ops/D-project-deploy/D-project-deploy.md', /读取所有既有|读取全部/],
-  ['template/workflows/ops/I-initialize/I-initialize.md', /读取所有既有|读取全部/],
-  ['template/workflows/ops/H-host-manage/H-host-manage.md', /读取所有既有|读取全部/],
-  ['template/workflows/learning/L-lesson/L-lesson.md', /读取整个 context|读取全部 context/],
-  ['template/workflows/learning/H-homework/H-homework.md', /读取整个 context|读取全部 context/],
-  ['template/workflows/learning/R-review/R-review.md', /读取整个 context|读取全部 context/],
+  ['template/workflows/ops/ops-d-project-deploy/SKILL.md', /读取所有既有|读取全部/],
+  ['template/workflows/ops/ops-i-initialize/SKILL.md', /读取所有既有|读取全部/],
+  ['template/workflows/ops/ops-h-host-manage/SKILL.md', /读取所有既有|读取全部/],
+  ['template/workflows/learning/learning-l-lesson/SKILL.md', /读取整个 context|读取全部 context/],
+  ['template/workflows/learning/learning-h-homework/SKILL.md', /读取整个 context|读取全部 context/],
+  ['template/workflows/learning/learning-r-review/SKILL.md', /读取整个 context|读取全部 context/],
 ];
 for (const [relative, pattern] of targetedForbidden) {
   const content = await read(relative);
   if (pattern.test(content)) errors.push(`${relative}: broad-read wording remains outside an evidence exception`);
 }
 
-const personRoot = await read('template/workflows/person/M-mao-zedong-cognitive-os/M-mao-zedong-cognitive-os.md');
+const personRoot = await read('template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md');
 if (personRoot.includes('template/workflows/person/README.md') || personRoot.includes('{roots.workflows}/person/README.md')) {
   errors.push('person/M-mao-zedong-cognitive-os: references a nonexistent README');
 }

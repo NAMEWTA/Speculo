@@ -135,7 +135,7 @@ export function validateReview(r, b, p, inputDigest) {
   need(Array.isArray(r.stills) && r.stills.length === p.shots.length * 3 && p.shots.every(s => r.stills.filter(f => asset(f) && f.shot_id === s.id && f.accepted === true).length === 3), 'three-stills');
   need(new Set(r.stills.map(s => s.path)).size === r.stills.length, 'duplicate-still'); return r;
 }
-export const styleMenu = () => readJSON(join(workflow, 'H-hand-drawn/style-catalog.json')).styles;
+export const styleMenu = () => readJSON(join(workflow, 'media-h-hand-drawn/references/style-catalog.json')).styles;
 export function selectStyle(value) {
   need(text(value), 'select-style'); const key = value.trim().toLowerCase();
   const s = styleMenu().find(s => [s.id, s.name, ...s.aliases].some(x => x.toLowerCase() === key)); need(s, 'unknown-style'); return s;

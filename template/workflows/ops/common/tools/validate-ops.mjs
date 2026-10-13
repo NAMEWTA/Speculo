@@ -20,13 +20,13 @@ try {
     if (JSON.stringify(works) !== JSON.stringify(expected)) throw new Error("OPS Work directories differ from explicit scope router");
     const manifest = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
     const stages = manifest.stages.map((s) => s.id).sort();
-    if (new Set(stages).size !== stages.length || JSON.stringify(stages) !== JSON.stringify(works.map((w) => w.slice(2)).sort())) throw new Error("manifest stages differ from Work entries");
+    if (new Set(stages).size !== stages.length || JSON.stringify(stages) !== JSON.stringify(works.map((w) => w.slice(6)).sort())) throw new Error("manifest stages differ from Work entries");
     for (const stage of manifest.stages) for (const id of stage.after) if (!stages.includes(id)) throw new Error("unknown manifest prerequisite " + id);
     for (const id of works) {
-      const text = readFileSync(join(root, id, id + ".md"), "utf8");
-      if (!text.includes("type: workflow-entry") || !text.includes("读取范围") || !text.includes("id: ops/" + id.slice(2))) throw new Error("invalid work " + id);
+      const text = readFileSync(join(root, id, "SKILL.md"), "utf8");
+      if (!text.includes("speculo-kind: work-skill") || !text.includes("读取范围") || !text.includes("speculo-id: ops/" + id.slice(6))) throw new Error("invalid work " + id);
     }
-    for (const file of ["INDEX.md", "README.md", "manifest.json", "runtime-contract.json", "common/USAGE.md", "common/WORKSPACE-USAGE.md", "common/CAPABILITIES.md", "common/templates/FLEET.html", "common/schemas/fleet-view.schema.json", "common/schemas/task-request.schema.json", "common/schemas/server-check.schema.json", "common/tools/opslib/execution.mjs", "common/tools/opslib/tasks.mjs", "common/tools/opslib/fleet.mjs", "common/tools/opslib/onboarding.mjs", "common/tools/server-discover.sh", "common/schemas/server-discovery.schema.json", "common/schemas/root-confirmation.schema.json", "common/rules/host-root-and-onboarding.md"]) {
+    for (const file of ["SKILL.md", "common/rules/domain-runtime.md", "manifest.json", "runtime-contract.json", "common/USAGE.md", "common/WORKSPACE-USAGE.md", "common/CAPABILITIES.md", "common/templates/FLEET.html", "common/schemas/fleet-view.schema.json", "common/schemas/task-request.schema.json", "common/schemas/server-check.schema.json", "common/tools/opslib/execution.mjs", "common/tools/opslib/tasks.mjs", "common/tools/opslib/fleet.mjs", "common/tools/opslib/onboarding.mjs", "common/tools/server-discover.sh", "common/schemas/server-discovery.schema.json", "common/schemas/root-confirmation.schema.json", "common/rules/host-root-and-onboarding.md"]) {
       if (!existsSync(join(root, file))) throw new Error("missing " + file);
     }
     for (const name of readdirSync(join(root, "common/schemas")).filter((x) => x.endsWith(".json"))) {

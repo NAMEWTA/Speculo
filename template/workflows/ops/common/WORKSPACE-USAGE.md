@@ -3,8 +3,8 @@
 本手册是推荐的新入口；原 init/register/enroll/bootstrap-node、plan/approve/apply、inspect-run/resume/docs-sync 的精确参数仍见 USAGE.md。以下变量必须替换为实际绝对路径；示例 ID 不构成生产配置。新增 CLI 不从 cwd 推断 state 或服务器。
 
 ```sh
-OPS=/absolute/ops-console/speculo/workflows/ops/common/tools/ops.mjs
-STATE=/absolute/ops-console/speculo/.speculo/ops
+OPS=/absolute/ops-console/.agents/speculo/workflows/ops/common/tools/ops.mjs
+STATE=/absolute/ops-console/.agents/speculo/.speculo/ops
 node "$OPS" workspace-help
 ```
 

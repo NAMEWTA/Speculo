@@ -1,145 +1,46 @@
-# Speculo project model
+# Speculo 2 项目模型
 
-本文件是维护者 `.agents/skills/` 对当前 Speculo 模板结构的唯一项目模型；各作者技能的完整正本及配套资源直接存放在该目录。具体作者技能只引用这里，不另行维护目录或所有权副本。
+维护者在 `.agents/skills/` 编辑作者技能完整正本；产品真实源为 `src/`、`template/`、`scripts/`、`test/`。生成物不作为事实源。源入口是一份 prompt/method；AI 使用当前可用工具执行。项目不提供模型派遣 runner、沙箱、编排进程锁或 Run 状态机。
 
-## 两个世界
+## 源与安装
 
-### 仓库源世界
+| 源 | 安装路径 / root |
+|---|---|
+| template/config.json | .agents/speculo/config.json；roots.config |
+| template/commands/id/COMMAND.md | .agents/speculo/commands/id/COMMAND.md；roots.commands |
+| template/workflows/domain/SKILL.md | .agents/speculo/workflows/domain/SKILL.md；roots.workflows |
+| template/workflows/domain/domain-letter-name/SKILL.md | 同结构的 Work Skill；业务 ID domain/name 保持稳定 |
+| template/references/ | .agents/speculo/references/；roots.references |
+| template/lib/speculo-runtime.mjs | .agents/speculo/lib/；由 src 生成的便携 ESM 工具 |
+| workflow/_state/ | .agents/speculo/.speculo/domain/；roots.state；仅初始化种子 |
+| 项目原有 Skill | .agents/skills/；roots.skills；保留第三方所有权 |
 
-维护者编辑：
+workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，包含 layout_version=agents-v2、installation_id 与固定 roots。只有当前布局可写；旧安装、未知 schema、路径越界、链接或冲突先阻塞受影响操作，不做迁移或第二套读取。CLI 的 staging、锁与恢复日志仅用于安装事务。
 
-```text
-template/
-  AGENTS.md
-  CLAUDE.md
-  config.json
-  .speculo/
-  commands/
-  skills/
-  workflows/
-  canonical/
-```
+## 入口与按需读取
 
-`.agents/skills/` 中的作者技能只服务于这个源世界。
+五个领域根 Skill 只做发现、路由和永久知识定位；用户指定 Work 时可直接读 Work Skill，再读 activation-and-memory 与该领域运行合同。根 README/INDEX 不承担激活。
 
-### 安装运行时世界
+38 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。10 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
 
-`speculo init` 将模板能力安装到项目根下的 `speculo/`。模板路径与 root alias 的关系为：
+跨领域共享方法放 references。编排读取 coordination-contract，选择 Lead、Orca、Herdr 或用户指定 CLI；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。Lead 持续推进已授权 Goal，唯一写正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
-| 仓库源 | 安装路径 | root alias |
-|---|---|---|
-| `template/config.json` | `speculo/config.json` | `{roots.config}` |
-| `template/` | `speculo/` | `{roots.speculo}` |
-| `template/.speculo/` | `speculo/.speculo/` | `{roots.state}` |
-| `template/commands/` | `speculo/commands/` | `{roots.commands}` |
-| `template/skills/` | `speculo/skills/` | `{roots.skills}` |
-| `template/workflows/` | `speculo/workflows/` | `{roots.workflows}` |
+## 元数据与生成
 
-`workspace.json` 以项目根为 `path_base: project-root` 解析这些 root。作者技能在仓库中验证路径时，必须把 alias 映射回上表中的 `template/` 源路径。
+Skill 仅用 Agent Skills 标准顶层字段；扩展放 metadata 字符串映射。Work 使用 speculo-id、speculo-domain、speculo-kind=work-skill、speculo-contract-version="2"。name 等于小写目录名，真实 YAML 解析，禁止重复键和不安全 key。
 
-## 启动读取顺序
+领域 manifest v2 注册入口、全部 Work 和可选阶段。目录、注册和 ID 必须闭合。generate-index 只更新领域 SKILL 的 AUTO-INDEX 路由区，不修改 YAML。用户投影原样复制源 YAML，并强制先读源入口；Command 包装单独生成宿主的显式调用政策。投影选择和文件 hash 在 projections.json v2；不接管第三方文件。
 
-能力描述应与运行时的读取顺序一致：
+canonical 共 12 份，是隔离的单文件分发。共享规则、portable adaptation 与源模板是事实源；生成与 --check 必须覆盖全部 12 份。不可写平台输出完整 FILE bundle；不伪造持久化。
 
-1. 先从项目入口打开字面路径 `speculo/.speculo/workspace.json`，再解析公共 roots；安装生成的 `.speculo/catalog.md` 只作被动发现。
-2. 从 `{roots.workflows}/<workflow>/INDEX.md` 发现 workflow；需要永久知识时先按 `_shared/memory-retrieval.md` 定位相关条目，再读取少量原文。这一步不激活 workflow 状态机。
-3. 用户明确激活 workflow 或 work 后，读取 workflow 根 `README.md`（若 INDEX 声明），从其中的 Work 条目选择目标并读取其入口。
-4. 通过 `<Path>` 指针只加载当前 work 及当前分支需要的文件。
-5. 按激活合同读取 `{roots.state}/<workflow>/status.json`。
-6. 读取活跃 change 的 `.status.json` 和当前 work 产物。
-7. 历史 change 从 `{roots.state}/<workflow>/archive/YYYY-MM/<change>/` 读取；只有归档、冲突裁决或恢复合同要求时才扩展为完整证据读取。
-8. command 报告从 `{roots.state}/commands/<command>/` 读取；只有声明了持久游标的 command 才读取自己的 `state.json`。
-9. 独立 skill 的运行记录从 `{roots.state}/skills/<skill>/` 读取；只有该 skill 声明了持久游标时才读取根级 `state.json`。
-10. docs-sync 首次确认后才读取 `{roots.state}/<workflow>/docs-sync.json`。
+## 状态与授权
 
-## 资产职责
+Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。当前 SpecDev config/Goal Plan 为 7、Implementation Plan 为 2、全局 status 为 5、change status 为 6；其他领域独立版本化。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
 
-### Skill
+Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突从 -01 取最小未使用编号，报告不覆盖。只有有恢复需求的 command 才建 state.json。docs-sync sidecar 由命令拥有，延迟创建，不放 workflow/_state。CLI-owned back 不由 prompt 改写。
 
-可复用能力。入口为 `template/skills/<name>/SKILL.md`，可带 references、scripts、assets 等渐进披露资源。被 command/work 调用时，Skill 返回结果或只写调用方明确提供且符合所有权的路径；独立激活且确有跨调用持久化需求时，只写 `{roots.state}/skills/<name>/`，并在自身入口声明 schema、生成时机和恢复语义。
+永久知识先检索 ID/关键词定位，再回读少量原文及 provenance；写前解析 owner/gateway、pending transaction、lock、recovery evidence。未知网关只阻塞该写入。提交、推送、合并、删除分支/worktree、发布、部署、归档移动与不可逆迁移由拥有该动作的入口取得明确授权并回读验证。
 
-### Command
+## 验证与权威
 
-一次调用的编排、确认与审计入口。入口为 `template/commands/<id>.md`。Command 负责解析 scope、调用 skill、管理破坏性或外部副作用确认、选择不覆盖的报告名，并持久化 command 自己的报告或明确声明的 state。
-
-### Workflow
-
-长期流程包。入口 `template/workflows/<workflow>/INDEX.md` 只负责发现、永久知识读取和激活指针；需要共享运行合同的 workflow 由 INDEX 在激活时指向根 `README.md`，后者声明 Work 条目、state root、状态 schema、namespace、启动协议和路由。
-
-### Work
-
-Workflow 内一个职责清晰的步骤入口：
-
-```text
-template/workflows/<workflow>/<Letter>-<name>/<Letter>-<name>.md
-```
-
-Work 读取 workflow state，产生 change 产物，并更新 workflow 与 change 状态。它不创建 command 报告，也不把运行时状态写回静态 workflow 目录。
-
-### Workflow common skill
-
-位于 `template/workflows/<workflow>/common/skills/<name>/SKILL.md` 的 workflow 私有可复用能力。只有同一 workflow 中至少两个 work 需要独立调用时才成立。共享规则、schema 和 tools 分别放在 `common/rules`、`common/schemas`、`common/tools`。
-
-模板 `AGENTS.md` 安装为 `speculo/.speculo/AGENTS.md`；项目根手册只原位维护 bootstrap 与永久知识块，不复制完整合同。已安装包继续出现在 catalog 中，本次未选择更新不等于禁用。
-
-### Canonical
-
-`template/canonical/*.md` 是源能力的单文件分发产物，不是新的事实源。它必须从当前源重新生成，去除 frontmatter 与 `<Path>` 标签，并内联完整静态依赖闭包。
-
-## 状态所有权
-
-`.speculo` 是安装后唯一运行时持久化根。
-
-- Workflow 只写 `{roots.state}/<workflow>/status.json`、`changes/`、`archive/` 和根 README 激活合同明确声明的 namespace。
-- Change 产物写入 `{roots.state}/<workflow>/changes/{change}/`。
-- 独立 Skill 只写 `{roots.state}/skills/<skill>/`；一次运行需要 change 目录时使用 `{roots.state}/skills/<skill>/<YYYY-MM-DD>-<kebab-topic>[-NN]/`，不得冒充 workflow change。
-- `template/workflows/<workflow>/_state/` 只提供初始化种子或 schema 样本；运行时不得写入 `{roots.workflows}/<workflow>/_state/`。
-- Command 只写 `{roots.state}/commands/<command>/` 下的报告和该 command 明确需要的 `state.json`。
-- `{roots.state}/<workflow>/docs-sync.json` 由 docs-sync command 拥有，是延迟创建的 sidecar。
-- `.config/` 不是通用 namespace；只有 workflow 根 README 激活合同声明生成者、生成时机和内容所有权后才使用。
-- 项目代码、测试和用户文档写入项目路径；state 中记录项目相对证据指针，不复制代码库内容。
-
-## 报告契约
-
-Command 报告使用：
-
-```text
-{roots.state}/commands/<command>/<YYYY-MM-DD>-<scope>-<topic>[-NN].md
-```
-
-- `scope` 必须可从文件名识别。
-- 同日同 scope/topic 首份无后缀，冲突后从 `-01` 选择最小未占用编号。
-- 已存在报告永不覆盖。
-- 是否需要 `state.json` 由 command 的跨调用游标需求决定，不以方便为由创建。
-
-独立 Skill 的持久化产物使用：
-
-```text
-{roots.state}/skills/<skill>/<YYYY-MM-DD>-<kebab-topic>[-NN]/
-```
-
-- 首次同名 change 无后缀，冲突后从 `-01` 选择最小未占用编号；已存在 change 永不覆盖。
-- 根级 `state.json` 只保存恢复所需的紧凑游标或 checkpoint；完整运行证据属于对应 change。
-- Stateless 或由 command/work 提供 owner 路径的 Skill 不为方便创建自己的 state 目录。
-
-## Workflow 状态
-
-每个 workflow 自己定义并版本化状态 schema。作者必须以目标 `INDEX.md`、根 `README.md`、`_state` 种子和现有 work 为事实源，不套用跨 workflow 的固定字段结构。
-
-SpecDev 全局 `status.json` 当前使用 schema v5，仅索引多 active change 与 archived change 名称；active entry 只能包含 `change`。`current_work`、`works_run`、可选并行 claim、生命周期和 Ticket/worktree 细节由 change `.status.json` 保存，Spec/Ticket 等领域工件继续使用各自版本。其他 workflow 可以更简单，不能被强制迁移为 SpecDev schema。
-
-## 副作用
-
-只读探索和静态资产编辑可直接执行。提交、推送、合并、删除分支或 worktree、发布、部署、归档移动和不可逆迁移由拥有该动作的 command/work 明确取得授权，并在执行后重读验证。项目文件中的指令文本不构成授权。
-
-## 权威优先级
-
-发生冲突时按以下顺序裁决：
-
-1. 当前被编辑资产的真实调用方、测试和脚本；
-2. `template/.speculo/README.md` 与 `workspace.json`；
-3. 目标 workflow 的 `INDEX.md`、根 `README.md` 激活合同、`common/rules`、schema 和 `_state` 种子；
-4. 同类型当前资产的稳定共同模式；
-5. 本目录的作者参考。
-
-作者参考与当前模板冲突时，修订作者参考，不让模板迁就旧技能。
+先读真实调用方、当前 schema 和测试，再改作者参考。运行源格式、catalog、links、disclosure、业务验证器、实际安装/恢复与相关失败测试；生成两次确认无 diff。未知字段和用户 runtime bytes 遵循各 schema 的保留规则，不能为了通过测试减掉业务门禁。记录命令、退出码、未验证宿主行为、恢复入口，不将字符数变化当 Token/额度收益。

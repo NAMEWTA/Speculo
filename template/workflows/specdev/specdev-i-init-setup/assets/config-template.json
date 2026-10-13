@@ -1,0 +1,31 @@
+{
+  "schema_version": 7,
+  "interaction_language": "zh-CN",
+  "artifact_language": "zh-CN",
+  "git": {
+    "default_branch": null
+  },
+  "execution": {
+    "max_concurrent_implementations": 3,
+    "max_integration_attempts": 3,
+    "deep_ticket_human_approval": true,
+    "shared_path_owner": "explicit"
+  },
+  "verification": {
+    "test": null,
+    "typecheck": null,
+    "lint": null,
+    "build": null
+  },
+  "planning": {
+    "default_depth": "standard",
+    "require_ready_gate": true,
+    "require_evidence": true,
+    "ui_design_default_candidates": 3,
+    "ui_design_max_candidates": 4
+  },
+  "github": {
+    "include_external_prs": false,
+    "labels": {}
+  }
+}

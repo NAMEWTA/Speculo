@@ -5,12 +5,6 @@ import { pathExists } from "./utils.js";
 import { validateOpsResources } from "./ops-resources.js";
 import { validateMediaState } from "./media-state.js";
 
-export type StructuredChange = {
-  path: string;
-  before: Buffer;
-  reason: string;
-};
-
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 async function readObject(path: string, label: string): Promise<JsonObject> {
@@ -30,20 +24,13 @@ function object(value: unknown): JsonObject {
     : {};
 }
 
-export function readSpecdevConfig(local: JsonObject): { value: JsonObject; migrated: boolean } {
-  const version = Number(local.schema_version);
-  if (version === 6) return { value: local, migrated: false };
-  if (version === 5) {
-    if ("github" in local) throw new Error("SpecDev v5 config has an undeclared github field; resolve ownership before migration");
-    const value = { ...local, schema_version: 6, github: { include_external_prs: false, labels: {} } };
-    validateSpecdevConfig(value);
-    return { value, migrated: true };
-  }
-  throw new Error("SpecDev config schema v6 is required; only v5 has an explicit migration");
+export function readSpecdevConfig(local: JsonObject): { value: JsonObject } {
+  validateSpecdevConfig(local);
+  return { value: local };
 }
 
 export function validateSpecdevConfig(config: JsonObject): void {
-  if (config.schema_version !== 6) throw new Error("SpecDev config schema_version must be 6");
+  if (config.schema_version !== 7) throw new Error("SpecDev config schema_version must be 7");
   if (typeof config.interaction_language !== "string" || typeof config.artifact_language !== "string") {
     throw new Error("SpecDev config language values must be strings");
   }
@@ -55,7 +42,7 @@ export function validateSpecdevConfig(config: JsonObject): void {
     throw new Error("SpecDev config git.default_branch must be a string or null");
   }
   const execution = object(config.execution);
-  for (const key of ["max_implementation_agents", "max_integration_attempts"]) {
+  for (const key of ["max_concurrent_implementations", "max_integration_attempts"]) {
     if (!Number.isInteger(execution[key]) || Number(execution[key]) < 1) {
       throw new Error("SpecDev config execution." + key + " must be a positive integer");
     }
@@ -65,34 +52,30 @@ export function validateSpecdevConfig(config: JsonObject): void {
   }
 }
 
-function normalizeChangeStatus(previous: JsonObject, globalEntry: JsonObject | null): JsonObject {
-  const version = Number(previous.schema_version);
-  void globalEntry;
-  if (version !== 6) throw new Error("SpecDev change status schema v6 is required; 1.0 does not migrate older state");
+function validateChangeStatus(previous: JsonObject): void {
+  const version = previous.schema_version;
+  if (version !== 6) throw new Error("SpecDev change status schema v6 is required; unsupported versions are not migrated");
   if (previous.artifact !== "change-status" || typeof previous.change !== "string" || !CHANGE_NAME.test(previous.change)) {
     throw new Error("change status has an invalid artifact or change name");
   }
-  return previous;
-
 }
 
-async function validateSpecdevState(stagedRoot: string): Promise<StructuredChange[]> {
-  const changes: StructuredChange[] = [];
+async function validateSpecdevState(stagedRoot: string): Promise<void> {
   const stateRoot = join(stagedRoot, ".speculo", "specdev");
   const statusPath = join(stateRoot, "status.json");
-  if (!(await pathExists(statusPath))) return changes;
+  if (!(await pathExists(statusPath))) return;
   const status = await readObject(statusPath, ".speculo/specdev/status.json");
   if (status.schema_version !== 5 || status.workflow !== "specdev" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
-    throw new Error("SpecDev status schema v5 is required; 1.0 does not migrate older state");
+    throw new Error("SpecDev status schema v5 is required; unsupported versions are not migrated");
   }
   assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "SpecDev status");
-  const legacyActive = status.active.map((entry) => {
+  const activeEntries = status.active.map((entry) => {
     assertJsonObject(entry, "SpecDev active status entry");
-    assertExactKeys(entry, ["change", "current_work", "works_run", "claimed_investigations"], "SpecDev active status entry");
+    assertExactKeys(entry, ["change"], "SpecDev active status entry");
     if (typeof entry.change !== "string" || !CHANGE_NAME.test(entry.change)) throw new Error("SpecDev active change name is invalid");
     return entry;
   });
-  const active = legacyActive.map((entry) => ({ change: entry.change }));
+  const active = activeEntries.map((entry) => ({ change: entry.change }));
   const archived = status.archived.map((entry) => {
     if (typeof entry !== "string" || !CHANGE_NAME.test(entry)) throw new Error("SpecDev archived change name is invalid");
     return entry;
@@ -102,17 +85,15 @@ async function validateSpecdevState(stagedRoot: string): Promise<StructuredChang
     throw new Error("SpecDev status contains duplicate or overlapping change names");
   }
 
-  const indexed: Array<{ path: string; entry: JsonObject | null }> = [
-    ...legacyActive.map((entry) => ({ path: join(stateRoot, "changes", String(entry.change), ".status.json"), entry })),
-    ...archived.map((name) => ({ path: join(stateRoot, "archive", name.slice(0, 7), name, ".status.json"), entry: null })),
+  const indexed = [
+    ...activeEntries.map((entry) => join(stateRoot, "changes", String(entry.change), ".status.json")),
+    ...archived.map((name) => join(stateRoot, "archive", name.slice(0, 7), name, ".status.json")),
   ];
-  for (const item of indexed) {
-    if (!(await pathExists(item.path))) throw new Error("indexed SpecDev change is missing " + item.path);
-    const previous = await readObject(item.path, item.path);
-    const normalized = normalizeChangeStatus(previous, item.entry);
-    void normalized;
+  for (const path of indexed) {
+    if (!(await pathExists(path))) throw new Error("indexed SpecDev change is missing " + path);
+    const previous = await readObject(path, path);
+    validateChangeStatus(previous);
   }
-  return changes;
 }
 
 async function validatePersonState(stagedRoot: string): Promise<void> {
@@ -256,168 +237,6 @@ async function validateLearningState(stagedRoot: string): Promise<void> {
   }
 }
 
-const OPS_WORK_IDS = new Set([
-  "ops/archive-and-learn", "ops/computer-hygiene", "ops/execute-and-stabilize",
-  "ops/intake-and-assess", "ops/plan-and-approve",
-]);
-const OPS_PROJECT_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-type OpsStatusEntry = {
-  scope: "global" | "project";
-  projectId: string | null;
-  change: string;
-};
-
-function assertOpsWork(value: unknown, label: string): void {
-  if (!(value === null || (typeof value === "string" && OPS_WORK_IDS.has(value)))) {
-    throw new Error(label + " must be null or an Ops work id");
-  }
-}
-
-function assertOpsWorks(value: unknown, label: string): void {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !OPS_WORK_IDS.has(item)) || new Set(value).size !== value.length) {
-    throw new Error(label + " must contain unique Ops work ids");
-  }
-}
-
-function parseOpsStatusEntry(value: unknown, label: string): OpsStatusEntry {
-  assertJsonObject(value, label);
-  assertExactKeys(value, ["scope", "project_id", "change"], label);
-  if (!["global", "project"].includes(String(value.scope)) || typeof value.change !== "string" || !CHANGE_NAME.test(value.change)) {
-    throw new Error(label + " has an invalid scope or change");
-  }
-  if (value.scope === "global" ? value.project_id !== null : typeof value.project_id !== "string" || !OPS_PROJECT_ID.test(value.project_id)) {
-    throw new Error(label + " project_id disagrees with scope");
-  }
-  return { scope: value.scope as "global" | "project", projectId: value.project_id as string | null, change: value.change };
-}
-
-function opsEntryKey(entry: OpsStatusEntry): string {
-  return `${entry.scope}:${entry.projectId ?? "-"}:${entry.change}`;
-}
-
-function opsChangeStatusPath(stateRoot: string, entry: OpsStatusEntry, archived: boolean): string {
-  const prefix = entry.scope === "global" ? [] : ["projects", String(entry.projectId)];
-  return archived
-    ? join(stateRoot, ...prefix, "archive", entry.change.slice(0, 7), entry.change, ".status.json")
-    : join(stateRoot, ...prefix, "changes", entry.change, ".status.json");
-}
-
-function opsArchivePath(entry: OpsStatusEntry): string {
-  const prefix = entry.scope === "global" ? "" : `projects/${entry.projectId}/`;
-  return `<Path>{roots.state}/ops/${prefix}archive/${entry.change.slice(0, 7)}/${entry.change}</Path>`;
-}
-
-function validateOpsProject(value: JsonObject, projectId: string): void {
-  assertExactKeys(value, [
-    "schema_version", "artifact", "project_id", "display_name", "aliases", "identities",
-    "source_hints", "created_at", "updated_at",
-  ], "Ops project");
-  if (value.schema_version !== 1 || value.artifact !== "ops-project" || value.project_id !== projectId || !OPS_PROJECT_ID.test(projectId)) {
-    throw new Error("Ops project has an invalid identity or schema");
-  }
-  if (typeof value.display_name !== "string" || !value.display_name.trim()) throw new Error("Ops project display_name is invalid");
-  assertUniqueStrings(value.aliases, "Ops project aliases");
-  assertUniqueStrings(value.source_hints, "Ops project source_hints");
-  if (!Array.isArray(value.identities) || value.identities.length === 0) throw new Error("Ops project identities must be non-empty");
-  for (const identity of value.identities) {
-    assertJsonObject(identity, "Ops project identity");
-    assertExactKeys(identity, ["kind", "value", "source"], "Ops project identity");
-    if (
-      typeof identity.kind !== "string" || typeof identity.source !== "string" || !identity.source ||
-      typeof identity.value !== "string" || !identity.value || /:\/\/[^/]*@/.test(identity.value) || /(?:token|password|secret)=/i.test(identity.value)
-    ) {
-      throw new Error("Ops project identity is empty or may contain credentials");
-    }
-  }
-  if (!isDateTime(value.created_at) || !isDateTime(value.updated_at)) throw new Error("Ops project timestamps are invalid");
-}
-
-function validateOpsChangeStatus(value: JsonObject, entry: OpsStatusEntry, archived: boolean): void {
-  assertExactKeys(value, [
-    "schema_version", "artifact", "scope", "project_id", "change", "change_status", "phase", "current_work", "works_run",
-    "created_at", "updated_at", "completed_at", "archived_at", "archive_path", "source_revision",
-    "target_fingerprint", "plan_path", "plan_digest", "approval_path", "approval_status",
-    "approved_batches", "latest_attempt_id", "outcome", "blockers",
-  ], "Ops change status");
-  if (
-    value.schema_version !== 2 || value.artifact !== "ops-change-status" || value.scope !== entry.scope ||
-    value.project_id !== entry.projectId || value.change !== entry.change
-  ) {
-    throw new Error("Ops change status has an invalid identity or schema");
-  }
-  const changeStatus = String(value.change_status);
-  const phase = String(value.phase);
-  if (!["active", "blocked", "completed", "archived"].includes(changeStatus)) {
-    throw new Error("Ops change status has an invalid lifecycle value");
-  }
-  if (!["intake", "assessment", "planning", "awaiting_approval", "approved", "executing", "diagnosing", "stabilizing", "ready_to_archive", "archived"].includes(phase)) {
-    throw new Error("Ops change status has an invalid phase");
-  }
-  assertOpsWork(value.current_work, "Ops change current_work");
-  assertOpsWorks(value.works_run, "Ops change works_run");
-  if (!isDateTime(value.created_at) || !isDateTime(value.updated_at)) {
-    throw new Error("Ops change timestamps must be date-times");
-  }
-  if (!(value.source_revision === null || (typeof value.source_revision === "string" && value.source_revision.length > 0))) {
-    throw new Error("Ops change source_revision must be null or a string");
-  }
-  if (!(value.target_fingerprint === null || (typeof value.target_fingerprint === "string" && /^[a-f0-9]{64}$/.test(value.target_fingerprint)))) {
-    throw new Error("Ops change target_fingerprint must be null or SHA-256");
-  }
-  if (!(value.plan_path === null || (typeof value.plan_path === "string" && /^plan\/plan-[0-9]{3}\.json$/.test(value.plan_path))) ||
-      !(value.plan_digest === null || (typeof value.plan_digest === "string" && /^[a-f0-9]{64}$/.test(value.plan_digest))) ||
-      ((value.plan_path === null) !== (value.plan_digest === null))) {
-    throw new Error("Ops change plan projection is invalid");
-  }
-  const approvalStatus = String(value.approval_status);
-  if (!["not_requested", "pending", "approved", "invalidated"].includes(approvalStatus) ||
-      !(value.approval_path === null || (typeof value.approval_path === "string" && /^plan\/approval-[0-9]{3}\.json$/.test(value.approval_path)))) {
-    throw new Error("Ops change approval projection is invalid");
-  }
-  assertUniqueStrings(value.approved_batches, "Ops approved_batches");
-  if ((value.approved_batches as string[]).some((item) => !/^B[0-9]{2}$/.test(item))) {
-    throw new Error("Ops approved_batches contains an invalid batch id");
-  }
-  if (["not_requested", "pending"].includes(approvalStatus) && (value.approval_path !== null || (value.approved_batches as string[]).length > 0)) {
-    throw new Error("Ops unapproved state cannot point to approval evidence");
-  }
-  if (approvalStatus === "pending" && value.plan_path === null) {
-    throw new Error("Ops pending approval requires a plan");
-  }
-  if (approvalStatus === "approved" && (value.plan_path === null || value.approval_path === null || (value.approved_batches as string[]).length === 0)) {
-    throw new Error("Ops approved state requires plan, approval, and batches");
-  }
-  if (!(value.latest_attempt_id === null || (typeof value.latest_attempt_id === "string" && /^ATTEMPT-[0-9]{3}$/.test(value.latest_attempt_id)))) {
-    throw new Error("Ops latest_attempt_id is invalid");
-  }
-  if (!["pending", "succeeded", "rolled_back", "abandoned"].includes(String(value.outcome))) {
-    throw new Error("Ops outcome is invalid");
-  }
-  assertUniqueStrings(value.blockers, "Ops blockers");
-  if (["completed", "archived"].includes(changeStatus)) {
-    const allowedTerminalWork = archived
-      ? value.current_work === null
-      : value.current_work === null || value.current_work === "ops/archive-and-learn";
-    if (!isDateTime(value.completed_at) || value.outcome === "pending" || (value.blockers as string[]).length > 0 || !allowedTerminalWork) {
-      throw new Error("Ops terminal change is missing completion evidence");
-    }
-  } else if (value.completed_at !== null) {
-    throw new Error("Ops incomplete change must keep completed_at null");
-  }
-  if (archived) {
-    const expectedPath = opsArchivePath(entry);
-    if (changeStatus !== "archived" || phase !== "archived" || value.archive_path !== expectedPath || !isDateTime(value.archived_at)) {
-      throw new Error("Ops archive fields do not match the indexed location");
-    }
-  } else if (changeStatus === "archived" || value.archive_path !== null || value.archived_at !== null) {
-    throw new Error("Ops active location cannot contain archived fields");
-  }
-  if (!archived && changeStatus === "completed" && phase !== "ready_to_archive") {
-    throw new Error("Ops completed change must be ready_to_archive");
-  }
-}
-
 async function validateOpsState(stagedRoot: string): Promise<void> {
   const stateRoot = join(stagedRoot, ".speculo", "ops");
   const statusPath = join(stateRoot, "status.json");
@@ -428,45 +247,16 @@ async function validateOpsState(stagedRoot: string): Promise<void> {
     validateOpsResources(status, schema);
     return;
   }
-  // Preserve legacy v2 evidence without translating old approvals into resource runs.
-  assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "Ops status");
-  if (status.schema_version !== 2 || status.workflow !== "ops" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
-    throw new Error("Ops status must use schema v2 with active and archived arrays");
-  }
-  const active = status.active.map((entry) => parseOpsStatusEntry(entry, "Ops active status entry"));
-  const archived = status.archived.map((entry) => parseOpsStatusEntry(entry, "Ops archived status entry"));
-  const activeKeys = active.map(opsEntryKey);
-  const archivedKeys = archived.map(opsEntryKey);
-  if (new Set(activeKeys).size !== activeKeys.length || new Set(archivedKeys).size !== archivedKeys.length || archivedKeys.some((key) => activeKeys.includes(key))) {
-    throw new Error("Ops status contains duplicate or overlapping scope/project/change tuples");
-  }
-  const projectIds = new Set([...active, ...archived].filter((entry) => entry.scope === "project").map((entry) => String(entry.projectId)));
-  for (const projectId of projectIds) {
-    const path = join(stateRoot, "projects", projectId, "project.json");
-    if (!(await pathExists(path))) throw new Error("indexed Ops project is missing " + path);
-    validateOpsProject(await readObject(path, path), projectId);
-  }
-  for (const entry of active) {
-    const path = opsChangeStatusPath(stateRoot, entry, false);
-    if (!(await pathExists(path))) throw new Error("indexed Ops change is missing " + path);
-    validateOpsChangeStatus(await readObject(path, path), entry, false);
-  }
-  for (const entry of archived) {
-    const path = opsChangeStatusPath(stateRoot, entry, true);
-    if (!(await pathExists(path))) throw new Error("indexed Ops archive is missing " + path);
-    validateOpsChangeStatus(await readObject(path, path), entry, true);
-  }
+  throw new Error("Ops status must use the current resource schema v3");
 }
 
-export async function validateStructuredRuntime(stagedRoot: string, selectedWorkflowIds: string[]): Promise<StructuredChange[]> {
-  const changes: StructuredChange[] = [];
+export async function validateStructuredRuntime(stagedRoot: string, selectedWorkflowIds: string[]): Promise<void> {
   const handlers: Record<string, () => Promise<void>> = {
     learning: async () => validateLearningState(stagedRoot),
     ops: async () => validateOpsState(stagedRoot),
     person: async () => validatePersonState(stagedRoot),
     media: async () => validateMediaState(stagedRoot),
-    specdev: async () => { changes.push(...await validateSpecdevState(stagedRoot)); },
+    specdev: async () => validateSpecdevState(stagedRoot),
   };
   for (const workflowId of selectedWorkflowIds) await handlers[workflowId]?.();
-  return changes;
 }

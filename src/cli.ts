@@ -21,11 +21,11 @@ function usage(): string {
     "  speculo doctor [target] [--json]",
     "  speculo recover [target] --transaction <id>",
     "  speculo resolve [target] --path <reference>",
-    "  speculo init [target] [--workflows <id,id> | --core-only] [--agent-skills <spec>]",
+    "  speculo init [target] [--workflows <id,id> | --core-only] [--agent-skills <selection>] [--claude-skills <selection>]",
     "",
     "Commands:",
     "  init      Install or directly refresh Speculo assets and selected workflow packages.",
-    "            --agent-skills none|keep|template|template:<id>+<id>|<workflow> writes .agents/skills only.",
+    "            --agent-skills / --claude-skills: none|keep|domains|all|<business-id,id>.",
     "  version   Print the current Speculo version and check for updates.",
     "  doctor    Validate installation integrity and report recovery evidence (read-only).",
     "  recover   Explicitly roll back an interrupted transaction, or finish committed cleanup.",
@@ -114,13 +114,13 @@ async function main(argv: string[]): Promise<number> {
       else console.log(await resolvePathReference(args.target, value));
       return 0;
     }
-    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--agent-skills"]));
+    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--agent-skills", "--claude-skills"]));
     if (args.flags.has("--core-only") && args.values.has("--workflows")) throw new Error("--core-only and --workflows are mutually exclusive");
     const requested = args.values.get("--workflows");
     if (requested !== undefined && !/^[a-z0-9-]+(?:,[a-z0-9-]+)*$/.test(requested)) throw new Error("--workflows requires comma-separated workflow ids");
     const selection = args.flags.has("--core-only") ? { workflowIds: [] } : requested === undefined ? undefined : { workflowIds: requested.split(",") };
     const requestedSkills = args.values.get("--agent-skills");
-    const agentSkills = requestedSkills === undefined ? undefined : parseAgentSkillSpec(requestedSkills, new Set((await discoverWorkflowCatalog(packageRoot)).keys()));
+    const agentSkills = requestedSkills === undefined ? undefined : parseAgentSkillSpec(requestedSkills);
     const targetArg = args.target;
 
     await showVersionWithCheck(packageRoot, packageName);
@@ -129,7 +129,7 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
-    const result = await initSpeculo(targetArg, { packageRoot, selection, agentSkills, promptAgentSkills: catalogIsInteractive() && agentSkills === undefined });
+    const result = await initSpeculo(targetArg, { packageRoot, selection, agentSkills, claudeSkills: args.values.has("--claude-skills") ? parseAgentSkillSpec(args.values.get("--claude-skills")!) : undefined, promptAgentSkills: catalogIsInteractive() && agentSkills === undefined });
     console.log(result.mode === "init" ? "Speculo initialized in " + result.target : "Speculo refreshed in " + result.target);
     console.log("  replaced " + result.refresh.managedFiles + " managed files");
     console.log("  preserved " + result.refresh.preservedFiles + " runtime files");
@@ -138,10 +138,8 @@ async function main(argv: string[]): Promise<number> {
       result.refresh.config.updated + " updated, " + result.refresh.config.preserved + " preserved, " +
       result.refresh.config.removed + " removed",
     );
-    if (result.refresh.structuredUpgrades > 0) console.log("  reconciled " + result.refresh.structuredUpgrades + " structured state files");
-    if (result.agentSkills.works || result.agentSkills.template) {
-      console.log("  agent skills: " + result.agentSkills.works + " work pointers, " + result.agentSkills.template + " template links");
-    }
+    if (result.agentSkills.projected) console.log(`  projected ${result.agentSkills.projected} public entries`);
+    for (const warning of result.warnings) console.log("  warning: " + warning);
     if (result.refresh.backupPath) console.log("  retained targeted backup " + result.refresh.backupPath);
     for (const asset of result.assets.filter((asset) => asset.startsWith(".gitignore") || asset.startsWith("AGENTS") || asset.startsWith("CLAUDE"))) {
       console.log("  updated " + asset);

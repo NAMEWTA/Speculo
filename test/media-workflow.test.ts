@@ -31,13 +31,13 @@ async function installation(target: string): Promise<void> {
 }
 
 async function assertManifest(target: string, workflows = ['media']): Promise<void> {
-  const manifest = JSON.parse(await readFile(join(target, 'speculo/.speculo/install.json'), 'utf8'));
-  assert.equal(manifest.schema_version, 3);
+  const manifest = JSON.parse(await readFile(join(target, '.agents/speculo/.speculo/install.json'), 'utf8'));
+  assert.equal(manifest.schema_version, 4);
   assert.deepEqual(manifest.workflows, workflows);
 }
 
 async function seedRuntime(target: string): Promise<string> {
-  const state = join(target, 'speculo/.speculo/media');
+  const state = join(target, '.agents/speculo/.speculo/media');
   await mkdir(join(state, 'changes', changeName), { recursive: true });
   await writeFile(join(state, 'status.json'), JSON.stringify({ schema_version: 1, workflow: 'media', active: [changeName], completed: [] }));
   await writeFile(join(state, 'changes', changeName, '.status.json'), JSON.stringify({
@@ -59,23 +59,23 @@ test('media: passive discovery does not create a Change', async () => fixture(as
   const before = await fingerprintTree(target);
   const catalog = await discoverWorkflowCatalog(packageRoot);
   assert.ok(catalog.has('media'));
-  const index = await readFile(join(packageRoot, 'template/workflows/media/INDEX.md'), 'utf8');
-  assert.match(index, /被动/);
-  assert.doesNotMatch(index, /AUTO-INDEX-START/);
+  const index = await readFile(join(packageRoot, 'template/workflows/media/SKILL.md'), 'utf8');
+  assert.match(index, /只读发现/);
+  assert.match(index, /能力路由/);
   assert.equal(await fingerprintTree(target), before);
 }));
 
 test('media: isolated install persists its manifest and seven pointer Skills before returning', async () => fixture(async target => {
   const result = await initSpeculo(target, {
     ...mediaOptions,
-    agentSkills: { mode: 'set', workflowIds: ['media'], templateNames: [] },
+    agentSkills: { mode: "set", assetIds: ["media/brief","media/deconstruct","media/hand-drawn","media/init-setup","media/publish-draft","media/retro","media/video"] },
   });
   assert.equal(result.mode, 'init');
-  assert.equal(result.agentSkills.works, 7);
+  assert.equal(result.agentSkills.projected, 7);
   await assertManifest(target);
-  const catalog = await readFile(join(target, 'speculo/.speculo/catalog.md'), 'utf8');
-  assert.match(catalog, /workflows\/media\/INDEX.md/);
-  assert.doesNotMatch(catalog, /workflows\/learning\/INDEX.md/);
+  const catalog = await readFile(join(target, '.agents/speculo/catalog.json'), 'utf8');
+  assert.match(catalog, /workflows\/media\/SKILL.md/);
+  assert.doesNotMatch(catalog, /workflows\/learning\/SKILL.md/);
   assert.deepEqual((await readdir(join(target, '.agents/skills'))).filter(x => x.startsWith('media-')).sort(), [
     'media-b-brief', 'media-d-deconstruct', 'media-h-hand-drawn', 'media-i-init-setup',
     'media-p-publish-draft', 'media-r-retro', 'media-v-video',
@@ -93,7 +93,7 @@ test('media: repeated refresh preserves runtime bytes and durable installation m
     assert.equal(result.refresh.status, 'updated');
     await assertManifest(target);
     assert.equal(await fingerprintTree(state), before);
-    await validateMediaState(join(target, 'speculo'));
+    await validateMediaState(join(target, '.agents/speculo'));
     assert.equal((await doctorSpeculo(target)).healthy, true);
   }
 }));
@@ -123,7 +123,7 @@ for (const [label, invalid] of [
 test('media: installed runtime validator does not require excluded package seeds and stays read-only', async () => fixture(async target => {
   await installation(target);
   const state = await seedRuntime(target);
-  const workflow = join(target, 'speculo/workflows/media');
+  const workflow = join(target, '.agents/speculo/workflows/media');
   assert.ok(!(await readdir(workflow)).includes('_state'));
   const before = await fingerprintTree(target);
   const validator = join(workflow, 'common/tools/validate-media.mjs');
@@ -141,9 +141,9 @@ test('media: installed runtime validator does not require excluded package seeds
 test('media: coexists with Learning without replacing either workflow', async () => fixture(async target => {
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ['learning', 'media'] } });
   await assertManifest(target, ['learning', 'media']);
-  const catalog = await readFile(join(target, 'speculo/.speculo/catalog.md'), 'utf8');
-  assert.match(catalog, /workflows\/learning\/INDEX.md/);
-  assert.match(catalog, /workflows\/media\/INDEX.md/);
+  const catalog = await readFile(join(target, '.agents/speculo/catalog.json'), 'utf8');
+  assert.match(catalog, /workflows\/learning\/SKILL.md/);
+  assert.match(catalog, /workflows\/media\/SKILL.md/);
   await initSpeculo(target, { packageRoot });
   await assertManifest(target, ['learning', 'media']);
   assert.equal((await doctorSpeculo(target)).healthy, true);

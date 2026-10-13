@@ -9,7 +9,7 @@ import { test } from 'node:test';
 
 const repo = process.cwd();
 const workflow = 'template/workflows/learning';
-const validatorPath = join(repo, workflow, 'Q-question/tools/validate-exploration.mjs');
+const validatorPath = join(repo, workflow, 'learning-q-question/scripts/validate-exploration.mjs');
 const generatorPath = join(repo, 'scripts/generate-learning-canonical.mjs');
 const validator = (): Promise<any> => import(pathToFileURL(validatorPath).href);
 const generator = (): Promise<any> => import(pathToFileURL(generatorPath).href);
@@ -266,7 +266,7 @@ test('a broken second capability does not publish the first candidate', async ()
   const { generateLearning, compileLearning } = await generator();
   await sourceFixture(root); await generateLearning({ root });
   const before = await compileLearning(root);
-  const q = join(root, workflow, 'Q-question/Q-question.md');
+  const q = join(root, workflow, 'learning-q-question/SKILL.md');
   await writeFile(q, (await readFile(q, 'utf8')).replace('<!-- portable:question:end -->', ''));
   await assert.rejects(generateLearning({ root }));
   for (const [path, content] of before) assert.equal(await readFile(join(root, path), 'utf8'), content);
@@ -274,13 +274,13 @@ test('a broken second capability does not publish the first candidate', async ()
 
 test('native source contracts preserve mode ownership, lesson boundaries and mine budgets', async () => {
   const get = (path: string) => readFile(join(repo, workflow, path), 'utf8');
-  assert.match(await get('Q-question/Q-question.md'), /mode=tutor\|explore/);
-  const tutor = await get('Q-question/references/tutor-mode.md');
+  assert.match(await get('learning-q-question/SKILL.md'), /mode=tutor\|explore/);
+  const tutor = await get('learning-q-question/references/tutor-mode.md');
   for (const marker of ['Response: pending', 'Response: ready', '--before', 'Explain (English)', '实际 n']) assert.ok(tutor.includes(marker));
   assert.match(await get('common/skills/socratic-questioning/SKILL.md'), /本批实际 n 题/);
   assert.match(await get('common/rules/questioning-policy.md'), /最多两批 10 问/);
-  assert.match(await get('G-goal/references/coverage-bar.md'), /mine_unit_cap=15/);
-  assert.doesNotMatch(await get('L-lesson/lesson-template.md'), /## Learner Answers|Response:/);
+  assert.match(await get('learning-g-goal/references/coverage-bar.md'), /mine_unit_cap=15/);
+  assert.doesNotMatch(await get('learning-l-lesson/assets/lesson-template.md'), /## Learner Answers|Response:/);
   const pkg = JSON.parse(await readFile(join(repo, 'package.json'), 'utf8'));
   assert.ok(pkg.scripts['generate-canonical'].includes('generate-learning-canonical.mjs'));
   assert.ok(pkg.scripts['validate-assets'].includes('generate-learning-canonical.mjs --check'));

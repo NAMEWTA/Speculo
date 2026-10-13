@@ -1,0 +1,25 @@
+# TDD 红绿规则
+
+1. 从 Ready Ticket/Spec 选择下一条最小可观察行为，并写下已确认 seam。
+2. 只为该行为编写一个会因目标能力缺失而失败的测试或验证。
+3. 运行并观察红灯；失败原因必须是目标行为缺失，而不是语法、夹具或环境错误。
+4. 只写使当前测试通过的最小生产代码，不预测后续切片。
+5. 运行定向测试并观察绿灯，记录命令与结果。
+6. 进入下一条窄垂直切片；周期性运行受影响回归。
+
+重构不属于红绿循环。全部目标行为完成并经过双轴 review 后，才进入独立修正/重构阶段，并重跑受影响 review 轴与验证。
+
+## 完成门
+
+- 每个切片有对应 red 和 green 证据；
+- 一个循环只有一个 seam、一个测试和一个最小实现；
+- 测试没有通过删除、跳过、吞错或放宽断言制造绿色；
+- review 前没有以“顺手重构”扩大切片。
+
+## 强制变异验证
+
+使用强制变异时，先保存基线 hash/diff，修改后核对实际执行文件的 diff 与测试选择。只有预期行为断言 red 才有效；编译错误、错测或变异未落地均不计。恢复原内容、复跑基线并核对 diff，把全过程记入 Evidence。诊断协议见 <Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/SKILL.md</Path>。
+
+## 纯说明与测试承接
+
+纯文档按 <Path>{roots.workflows}/specdev/specdev-i-implement/references/documentation-procedure.md</Path> 执行适用验证，不伪造代码红绿；prompt/tool/output 改动仍属行为。旧测试删除必须覆盖其行为、错误、兼容和回归义务，具体按 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。

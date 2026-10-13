@@ -26,8 +26,8 @@
 
 1. **输入与范围**：确认目标、非目标、用户指定数量、验收合同和未知项。高影响未决问题回到 G；无 Ready Spec 时，只有用户材料已等价覆盖全部合同才可规划。
 2. **地形与绑定**：定位真实可维护源、调用方、测试接缝和 Skill 根。按 下方 `<ref-common-rules-skill-invocation>` 标签 为每票解析实际 Skill ID、入口摘要、调用阶段、输入、产出与失败动作；没有适用项目 Skill 时记录扫描证据，不造名称。
-3. **垂直切片**：需要具体拆分时读取 下方 `<ref-t-tickets-references-planning-procedure>` 标签 与 下方 `<decomposition-rules>` 标签。保留 Prefactor、Expand → Migrate → Contract 和真实 DAG，不按技术层制造空价值任务。
-4. **写 Plan**：使用 下方 `<ticket-template>` 标签。Lite 仅减少不适用说明，不删用户数量、权限、验收或停止条件。所有新增票使用 `plan_contract_version: 1`，旧票按迁移协议补齐后再执行。
+3. **垂直切片**：需要具体拆分时读取 下方 `<ref-specdev-t-tickets-references-planning-procedure>` 标签 与 下方 `<decomposition-rules>` 标签。保留 Prefactor、Expand → Migrate → Contract 和真实 DAG，不按技术层制造空价值任务。
+4. **写 Plan**：使用 下方 `<ticket-template>` 标签。Lite 仅减少不适用说明，不删用户数量、权限、验收或停止条件。所有票必须使用 `plan_contract_version: 1`；旧格式不进入执行。
 5. **写总控**：使用 下方 `<tickets-map-template>` 标签，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；状态仍从票投影。按 AC 反查至少一个负责验证的 Ticket，暴露未覆盖和重复所有权；依赖环、路径重叠与语义共享资源分别检查，不能用“可并行”文字替代实际 DAG/写集。
 6. **Definition of Ready**：读取 下方 `<ticket-readiness>` 标签，并调用 下方 `<ref-common-skills-plan-quality-review-skill>` 标签。缺失引用、必需 Skill、可运行验收或权限边界，当前票不可 ready。
 7. **与用户核对**：展示全部票、可观察产物、依赖、深度、风险、Skill 和未决问题。保留用户要求的交付数量；已授权自主规划且无关键未知时不重复请求形式确认。
@@ -132,7 +132,7 @@ node 本地只读 Goal 控制器（不含于网页快照） --map specdev/change
 - [ ] frontmatter 字段完整，Ticket ID、文件名和 `specdev/changes/{change}/tickets-map.md` 一致。
 - [ ] Tickets Map 包含总体实施背景与项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 Ticket ID 覆盖。
 - [ ] 矩阵中的项目 Skill 均使用真实存在的项目根相对 `.../SKILL.md`，并声明 Trigger / Scope、读取时机和用途；没有适用项时记录实际扫描范围而不生成虚假路径。
-- [ ] Ticket 明确要求 Lead 与 implementation subagent 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
+- [ ] Ticket 明确要求 Lead 与 实现执行者 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
 - [ ] 可观察产出单一、明确且可验证。
 - [ ] 来源和验收合同映射存在。
 - [ ] IN、REUSE、OUT 无冲突。
@@ -219,7 +219,7 @@ shared_path_owners: []
 - **上游 Spec：** `specdev/changes/{change}/spec.md`
 - **完成 Evidence：** `specdev/changes/{change}/evidence/T-01.md`
 
-实现本 Ticket 时，Lead 与 implementation subagent 必须按顺序完整读取总体 Map，读取项目 Skill 的 frontmatter 与入口并只展开适用于 `ALL`/`T-01` 的匹配项，再读取本 Ticket 与相关上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
+实现本 Ticket 时，Lead 与 实现执行者 必须按顺序完整读取总体 Map，读取项目 Skill 的 frontmatter 与入口并只展开适用于 `ALL`/`T-01` 的匹配项，再读取本 Ticket 与相关上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
 
 ## 1. 战略与来源
 
@@ -379,7 +379,7 @@ status: draft
 
 ### 项目 Skill 读取矩阵
 
-每个 Ticket 的 Lead 或 implementation subagent 都必须先完整读取本 Map，再读取候选项目 Skill 的 frontmatter 与入口；只有适用于 `ALL` 或当前 Ticket ID、且 scope/路径/技术域/验证条件命中的 Skill 才完整读取，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先定位并读取其入口，由 Lead 更新本 Map、重新校验后继续。
+每个 Ticket 的 Lead 或 实现执行者 都必须先完整读取本 Map，再读取候选项目 Skill 的 frontmatter 与入口；只有适用于 `ALL` 或当前 Ticket ID、且 scope/路径/技术域/验证条件命中的 Skill 才完整读取，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先定位并读取其入口，由 Lead 更新本 Map、重新校验后继续。
 
 项目 Skill 使用项目根相对 Path，例如 `.agents/skills/{skill-name}/SKILL.md`；不得写机器绝对路径。若没有适用项目 Skill，保留一行 `无（已扫描项目 Skill 入口，未发现适用项）`，并在 Trigger / Scope 中记录实际扫描范围。
 
@@ -416,7 +416,7 @@ T-01 [READY]
 
 ## 5. 并行与路径所有权
 
-- implementation subagent 上限来自 `specdev/config.json`，Goal Plan 可进一步降低且不含 Lead。
+- 实现执行者 上限来自 `specdev/config.json`，Goal Plan 可进一步降低且不含 Lead。
 - review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
 - shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
 - 项目路径契约以 Ticket frontmatter 为准。
@@ -445,7 +445,7 @@ T-tickets 可以标注候选 Wave、E2E disposition 和行为里程碑。需要�
 
 ## 9. 总控与恢复
 
-从本 Map 进入 “目标规划阶段” 的 plan/run/resume/replan/verify。先运行 本地只读 Goal 控制器（不含于网页快照） 的 `--map` 只读检查，再按 下方 `<ref-p-goal-plan-references-map-control>` 标签 调用 I 和真实 Skill、验收、更新状态直到完成或明确阻塞；此工具本身不执行代码。
+从本 Map 进入 “目标规划阶段” 的 plan/run/resume/replan/verify。先运行 本地只读 Goal 控制器（不含于网页快照） 的 `--map` 只读检查，再按 下方 `<ref-specdev-p-goal-plan-references-map-control>` 标签 调用 I 和真实 Skill、验收、更新状态直到完成或明确阻塞；此工具本身不执行代码。
 
 - frontmatter 中 requested_deliverables 用 JSON 对象数组记录用户明确要求的名称与正整数 count；没有额外数量要求时用空数组，并在 deliverable_policy 记录依据，不能保留 unreviewed。
 - requested_deliverables 属于用户交付合同；done 之前按实际产物核对，不从 Ticket 数量推断交付数量。
@@ -700,22 +700,22 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 1. 可能并行的 Ticket，其 writable paths 不得相交；glob 按覆盖关系判断。
 2. shared path 只由专用 owner Ticket 修改；消费者 Ticket 只读。Lead 负责集成，不以冲突解决替代 shared owner。
-3. implementation subagent 只写其 Packet 与 Ticket 授权路径；Lead 自行实现也受同一边界约束。
+3. 实现执行者 只写其 Packet 与 Ticket 授权路径；Lead 自行实现也受同一边界约束。
 4. review/research/test-observation agent 只读项目与 SpecDev 工件。
 5. 越界前停止并按 deviation control 提出 ownership change；不得先改后报。
 6. 上游 Ticket 改变目录/合同后，下游基于已集成父分支重新解析路径和 preflight。
 
 ## 3. Ticket workspace strategy
 
-Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 implementation subagent 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
+Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 实现执行者 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
 
-workspace/implementation owner 可以是 Lead 或动态 implementation subagent；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 下方 `<dev-worktree>` 标签 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
+workspace/implementation owner 可以是 Lead 或动态 实现执行者；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 下方 `<dev-worktree>` 标签 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
 
 ## 4. 并发
 
-required 模式 implementation subagent 上限取 Goal Plan、config 和平台能力共同约束，Lead 不计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+required 模式 实现执行者 上限取 Goal Plan、config 和平台能力共同约束，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
-子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 implementation subagent 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
+子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 实现执行者 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
 
 **完成标准**：每个项目写入映射到唯一 change、Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
 
@@ -759,7 +759,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 ## 3. Agent 声明
 
-subagent 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
+任务执行者 只返回候选命令与结果，不写 Evidence。Lead 重读 workspace/Git、必要时复跑或核对输出后落盘；外部 provider 自报、截图、模拟和推断在此之前标记 `unverified`。review/research/test-observation agent 不拥有 E2E Gate。
 
 ## 4. 失败分类与完整性
 
@@ -842,7 +842,7 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 - 未批准的 ticket、spec、architecture 或 release 偏差不得继续实现。
 - 不得通过扩大 `writable_paths`、删除测试、降低断言或把风险改写成“已知限制”来绕过停止。
-- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 subagent 都不能自行改写上层合同。
+- 偏差影响并行执行、source checkpoint 或 candidate 集成时，Lead 必须暂停受影响 Wave，重新计算路径所有权、依赖、Gate 与父分支顺序；任何 任务执行者 都不能自行改写上层合同。
 - 偏差跨越多个成员时，父 Lead 先递增 Implementation Map revision，再重算 Implementation Plan；旧派单和 candidate 全部标记 stale。
 
 </deviation-control>
@@ -1149,14 +1149,14 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "interaction_language": "zh-CN",
   "artifact_language": "zh-CN",
   "git": {
     "default_branch": null
   },
   "execution": {
-    "max_implementation_agents": 3,
+    "max_concurrent_implementations": 3,
     "max_integration_attempts": 3,
     "deep_ticket_human_approval": true,
     "shared_path_owner": "explicit"
@@ -1188,7 +1188,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:config:v6",
+  "$id": "urn:speculo:specdev:config:v7",
   "title": "SpecDev Configuration",
   "type": "object",
   "required": [
@@ -1203,7 +1203,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
   ],
   "properties": {
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "interaction_language": {
       "type": "string",
@@ -1231,13 +1231,13 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
     "execution": {
       "type": "object",
       "required": [
-        "max_implementation_agents",
+        "max_concurrent_implementations",
         "max_integration_attempts",
         "deep_ticket_human_approval",
         "shared_path_owner"
       ],
       "properties": {
-        "max_implementation_agents": {
+        "max_concurrent_implementations": {
           "type": "integer",
           "minimum": 1
         },
@@ -2102,7 +2102,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 </ref-common-rules-skill-invocation>
 
-<ref-t-tickets-references-planning-procedure>
+<ref-specdev-t-tickets-references-planning-procedure>
 
 # 拆分 Tickets
 
@@ -2338,7 +2338,7 @@ node Speculo Node 校验器 \
 
 满足任一情况时建议运行 “目标规划阶段”：Ticket 数量达到或超过 10、存在多个 implementation owner 的并行写入协调、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。只读 review/research 并行本身不触发 Goal Plan；少量线性 Ready Ticket 可直接进入 “实现阶段”。
 
-</ref-t-tickets-references-planning-procedure>
+</ref-specdev-t-tickets-references-planning-procedure>
 
 <ref-common-skills-plan-quality-review-skill>
 
@@ -2399,7 +2399,7 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 # 面向 Agent 的工具与 Work 体验
 
-修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动子 Agent。
+修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动任务执行者。
 
 普通代码修改不自动触发全库提示词审查。
 
@@ -2429,7 +2429,7 @@ description 写真实触发时机、任务范围和相近但不适用的场景�
 
 </ref-common-rules-agent-experience>
 
-<ref-p-goal-plan-references-map-control>
+<ref-specdev-p-goal-plan-references-map-control>
 
 # 从 tickets-map 控制整个 Goal
 
@@ -2460,7 +2460,7 @@ Lead 将输出保存到调用方自己的既有 Evidence 位置；不创建独�
 
 单票 blocked/deviated 不强制将父 Plan 的全局执行门关闭。只有全局合同失败或合法 frontier 为空时暂停父循环。检查点摘要覆盖 Spec、票合同、实际 Skill/参考版本、依赖、相关 serialization 与共享 Goal 门禁；普通 owner/status 和进度投影不是合同变更。摘要是漂移检测，不替代授权和实证验收。
 
-</ref-p-goal-plan-references-map-control>
+</ref-specdev-p-goal-plan-references-map-control>
 
 <ref-common-rules-engineering-evidence>
 
@@ -2528,7 +2528,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 ## 文档维护与可见行为
 
-纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 下方 `<ref-i-implement-references-documentation-procedure>` 标签；C 可仅审查，不获得写入权。
+纯文档可以使用链接、示例、类型片段、生成一致性和事实核对，不伪造 TDD 或 E2E。涉及工具说明、prompt、错误消息或 CLI/UI 输出时按行为变更处理，追加实际模型/用户可见证据或明确未验证。执行入口见 下方 `<ref-specdev-i-implement-references-documentation-procedure>` 标签；C 可仅审查，不获得写入权。
 
 没有所需行为层运行能力时报告缺口，并按原 Gate 保持未通过，不能借文档任务绕过。验收回读修改源和派生物，列出检查、未验证项及明确的新增行为；不用字数变化宣称 Token 或费用节省。
 
@@ -2640,7 +2640,7 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 </ref-common-rules-code-commenting-rule>
 
-<ref-i-implement-references-documentation-procedure>
+<ref-specdev-i-implement-references-documentation-procedure>
 
 # 文档维护执行分支
 
@@ -2664,4 +2664,4 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
 
-</ref-i-implement-references-documentation-procedure>
+</ref-specdev-i-implement-references-documentation-procedure>

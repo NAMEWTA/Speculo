@@ -1,124 +1,46 @@
-# @namewta/speculo
+# Speculo
 
-> Provider-neutral, resumable AI collaboration workflows with state-safe refresh tooling.
+Domain methods, standard Agent Skills and explicit Commands for AI-assisted work. Version 2.0.0.
 
-Speculo packages AI coding workflows as installable assets — commands, skills, workflow packages — delivered into any project via a unified CLI.
-
-## Quick Start
-
-```bash
-# Initialize Speculo in a target project
-npx @namewta/speculo init
-
-# Global install
-npm install -g @namewta/speculo
-speculo init [target]
-```
-
-After initialization, the target project's `speculo/` directory contains all core assets and selected workflow packages.
+[中文说明](README-ZH.md) · [Architecture](docs/architecture.md) · [All capabilities](docs/capabilities.md) · [Recovery](docs/transaction-recovery.md)
 
 ## Install
 
-```bash
+Requires Node.js >=22.22.3 <25. Repository package manager: pnpm 11.1.3.
+
+~~~bash
 npm install -g @namewta/speculo
-```
+speculo init . --workflows specdev,learning --agent-skills domains
+speculo init . --workflows all --agent-skills all --claude-skills all
+speculo doctor .
+~~~
 
-Requires: Node.js ≥ 22.22.3 and < 25
+The source installation lives in .agents/speculo/. Runtime state lives in .agents/speculo/.speculo/. The project AGENTS file receives only managed discovery and knowledge blocks. Existing CLAUDE instructions remain user owned.
 
-## Commands
+A fresh non-interactive init installs the core. Select domains with --workflows; --core-only refreshes core assets. Previously installed unselected domains remain available. Exposure to each host is separate: --agent-skills and --claude-skills accept none, keep, domains, all, or comma-separated business IDs such as specdev/implement,command/status. Fresh installs expose nothing by default; refresh keeps existing selections.
 
-| Command | Description |
-|---|---|
-| `speculo` / `speculo init [target]` | Initialize or refresh a Speculo 1.0 runtime. 0.x installations are intentionally incompatible and must be removed or renamed first. |
-| `speculo version` | Print the installed version and check npm for the latest release. |
-| `speculo doctor [target] [--json]` | Read-only installation integrity and recovery diagnostics. |
-| `speculo resolve [target] --path <reference>` | Read-only pointer resolution; does not execute a shell. |
-| `speculo recover [target] --transaction <id>` | Explicit recovery of an identified interrupted refresh. |
+Domain and Work pointers preserve source YAML verbatim and require reading the authoritative source entry first. Command wrappers carry host-specific explicit invocation policies. Conflicting third-party directories and edited files are preserved, with per-asset warnings.
 
-Legacy CLI commands and 0.x migration paths remain removed. The CLI also offers read-only `resolve` and explicit transaction-ID `recover`; doctor reports its installation-only scope.
+## Capabilities
 
-Initialization updates controlled passive-bootstrap and persistent-knowledge blocks in project `AGENTS.md` for all installed workflows. The block contains references to promoted knowledge paths and explicitly remains lazy: it does not activate a workflow, create a Change, or execute a Work. A missing `CLAUDE.md` is created as a fixed redirect to `AGENTS.md`; existing handbook content is preserved.
+Five domains contain 38 Works: SpecDev (15), Learning (9), OPS (5), Person (2), Media (7). Ten Commands cover documentation sync, archive/consolidation, history squash, repository audit, handoff, retrospective, status, source ZIP, upstream sync and engineering standards. Shared references own coordination, retrospective and writing methods. Twelve canonical documents provide isolated single-file use.
 
-## Installed Runtime Assets
+AI agents follow these methods using current tools. Coordination supports Lead, Orca, Herdr and a user-selected headless CLI. Read the selected tool's current guide before using it. Speculo provides no model runner, orchestration service, sandbox or Run state machine. Optional project choices are stored in state/coordination/project.json; without them, Lead is the default. Lead verifies candidate evidence and continues the authorized Goal through implementation, repair, integration and completion.
 
-After initialization, the target project gains the following AI agent-callable assets:
+Discovery and configuration grant no authority for commits, pushes, publishing, deployment or other effects. Existing authorization and each action's owning entry determine what may run.
 
-### 7 Commands
+## Version boundary
 
-| Command | Purpose |
-|---|---|
-| `docs-sync` | Audit (default), update, or explicitly commit documentation from reproducible Git ranges |
-| `archive-and-consolidate` | Knowledge lifecycle governance: archive stale content, consolidate scattered knowledge, clean up outdated assets |
-| `git-history-squash` | Confirmed first-parent history convergence with recoverable refs and exact remote leases |
-| `git-repository-audit` | Read-only, reproducible audit of one or more local Git repositories |
-| `handoff` | Persist a compact, resumable context handoff for another agent |
-| `retro` | Retrospective analysis with `gh issue` creation |
-| `status` | Summary of installed workflows, active changes, and anomalies |
+Only agents-v2 layout and current schemas are writable. Old installations or transactions are rejected without moving or deleting user data. There is no automatic migration or second reader for old paths. Installation staging, transaction recovery and business coordination are separate responsibilities.
 
-### 8 Skills
+## Develop
 
-| Skill | Purpose |
-|---|---|
-| `archive-and-consolidate` | Archive stale content, consolidate scattered knowledge, and clean up outdated assets |
-| `docs-sync` | Documentation audit plus incremental or full AGENTS.md / CLAUDE.md handbook synchronization |
-| `git-history-squash` | Controlled first-parent history convergence with recoverable local ref transactions and exact remote leases |
-| `source-code-zip` | Create a dependency-free, code-only ZIP for isolated source delivery |
-| `retrospective` | Retrospective analysis |
-| `upstream-fork-sync` | Assess fork/upstream deltas from proven integration checkpoints and persist reproducible diff and conflict reports |
-| `engineering-standards-builder` | Interview-driven generator that produces a project-specific TypeScript/JS/React/Node standards skill |
-| `writing-for-agents` | Authoring guidance for agent skills |
+~~~bash
+pnpm install --frozen-lockfile
+pnpm generate-assets
+pnpm check
+pnpm verify-bin
+pnpm verify-generated
+~~~
 
-### 5 Workflow Packages
-
-| Workflow | Work Entries | Description |
-|---|---:|---|
-| **learning** | 9 | Evidence-aware learning for projects, products, subjects, languages, and skills: complete 30–40 minute plain-language lessons, Socratic inquiry lessons, Goal-Plan compilation for later external /goal execution (teach a mine-unit of ≤15 lessons, then fan out miners), single-file homework review, optional retention review, and provenance-preserving topic synthesis |
-| **specdev** | 15 | Local-first specification-driven development: archive, code review, diagnosis, grilling, implementation, setup, learning, goal planning, prototyping, architecture review, specs, tickets, development retrospectives, GitHub/PR/release triage, and wayfinding |
-| **ops** | 5 | Host inventory and project deployment: initialize, host manage, and APP/shared-service deploy with dual documentation |
-| **person** | 2 | Persona-methodology and rigorous deliberation workflows (Mao Zedong Cognitive OS; Bidirectional Steelman Deliberation) |
-| **media** | 7 | Evidence-led content briefs, reference deconstruction, fixed-style prompts, deterministic code video, local distribution drafts and manual-feedback retrospectives; no real publication |
-
-Every workflow ships an `INDEX.md` discovery entry. SpecDev/Learning/Ops/Media keep their generated Work catalog in the README activation contract; Person lists Works directly in INDEX. Work entries follow `<Letter>-<work_name>/<Letter>-<work_name>.md` naming with progressive-disclosure sub-files, and resolve runtime paths via `<Path>{roots.xxx}/...</Path>` pointers in `workspace.json`.
-
-SpecDev T-triage owns ten modes: queue, intake, reconcile, publish, capture, pr-delivery, ci-security, release-preflight, release, and recover. **publish** projects completed Tickets to Issues; **release** publishes packages/GitHub Releases. Its remote protocol can be reused without activating a Work or creating a change. PR delivery uses per-change records; independent CI/release operations use their own recoverable ledger. R-retro reviews development activities through the shared retrospective Skill. See the [upgrade report](docs/specdev-upgrade/implementation-report.md) for migration and verification details.
-
-See [Media workflow and the 18-second example](docs/media/README.md) for local-only production, web prompts, skill licensing and acceptance evidence.
-
-## Documentation
-
-- [AGENTS.md](./AGENTS.md) — AI agent handbook (authoritative)
-- [CHANGELOG.md](./CHANGELOG.md) — Release history
-- [.agents/skills/](./.agents/skills/) — Complete authoring skills for Speculo maintainers (shared contracts under `_shared/`, with each skill's `references/` and `scripts/` stored alongside its entry)
-- [README-ZH.md](./README-ZH.md) — 中文镜像
-
-## Acknowledgments — Honoring Open Source Heritage
-
-Speculo stands on the shoulders of pioneers — including our own failures. With deep gratitude, we honor:
-
-- **[SpecForge](https://github.com/NAMEWTA/specforge)** — the author's own previous project. A CLI-driven SDD tool whose failure taught us the most important lesson: in the AI era, documents are the interface, not CLI commands. Making humans learn commands to manage AI documents gets the relationship backwards.
-- **[Matt Pocock Skills](https://github.com/mattpocock/skills)** — the groundbreaking work that defined AI-assisted development workflows and inspired the very concept of packageable agent skills.
-- **[Khazix Skills](https://github.com/KKKKhazix/khazix-skills)** — a rich ecosystem of practical agent skills that demonstrated the power of community-driven workflow sharing.
-- **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** — a lightweight spec-driven development framework whose changes/ directory structure and archive mechanism deeply influenced Speculo's persistence contract design.
-- **[Superpowers](https://github.com/obra/superpowers)** — a complete agentic development methodology whose skill orchestration and subagent dispatch provided key reference for workflow package design.
-
-Speculo synthesizes lessons from all: from failure we learned "documents are the interface"; from Matt we inherited skill methodology; from OpenSpec we adopted engineering management; from Superpowers we studied orchestration. Together they form package-based workflow management, persistence contracts, and a state-safe refresh lifecycle. We carry their spirit forward.
-
-## License
-
-MIT — see [LICENSE](./LICENSE)
-
-## SpecDev Goal migration
-
-The unified P Goal entry, O compatibility route, Initiative exploration and Plan Ticket contracts are documented in [the migration guide](docs/specdev-goal-migration.md). Existing runtime state is not silently rewritten.
-
-## Agent contract hardening
-
-Unattended first installation now installs core only. Select packages explicitly with `speculo init [target] --workflows specdev,learning`; unattended refresh selects already-installed supported packages. `--core-only` refreshes core without removing existing supported workflows. Installed and selected-for-update are separate; no automatic activation or uninstall is implied.
-
-Agent Skills projection is a separate opt-in. Interactive init asks which selected workflows should expose each Work as a pointer skill, and which built-in template skills should be linked. The only directory written is the target project's `.agents/skills/`. Open Agents and type `/skills` to see them. A work pointer contains no copied references: its first instruction is to read the real Work entry. Template skills are relative symlinks to `speculo/skills/<name>`. Omitting `--agent-skills` leaves an existing clean projection in place and creates nothing on a fresh install. `speculo init --agent-skills none` removes only Speculo-managed names. Unmanaged directories in `.agents/skills/` are left alone. `validate-skills` checks the emitted profile; it does not certify that a host will invoke the skill.
-
-The project AGENTS bootstrap points to `speculo/.speculo/workspace.json`, a generated read-only capability catalog and the runtime guide. Agents that do not read project instructions need an explicit user-provided entry. Public Skill metadata follows the emitted standard profile; workflow-private Skills declare their resolver requirement. `INDEX.md` is a discovery entry: SpecDev/Learning/Ops/Media list Works in README activation contracts, while Person lists them directly in INDEX.
-
-`speculo doctor [target] --json` checks installation integrity (not live services or agent behavior). `speculo resolve [target] --path <reference>` resolves one contained pointer without executing it. Interrupted refreshes retain transaction evidence; after verifying that the original process has stopped, `speculo recover [target] --transaction <id>` performs evidence-checked rollback or committed cleanup. Unknown locks, links and drift are never silently discarded. This is process-interruption recovery, not a universal power-loss or adversarial-filesystem guarantee.
-
-Docs Sync defaults to read-only audit; update and commit require their corresponding user requests. New Ops controllers export credential references by default; plaintext documentation requires an explicitly approved plan. Existing active bindings, historical evidence and legacy plaintext policies are not silently migrated. See [migration and verification notes](docs/agent-contracts-upgrade.md).
+Generators must be reproducible. Tests use disposable fixtures. Static format checks do not certify host invocation or live model behavior. See LICENSE and THIRD-PARTY-NOTICES.md for provenance and licensing. Version tags trigger release CI; publishing requires explicit authorization.

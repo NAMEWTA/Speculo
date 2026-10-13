@@ -1,6 +1,6 @@
 # Authoring quality
 
-本模型将 `template/skills/writing-for-agents/SKILL.md` 的方法用于 Speculo 资产。目标是让 Agent 每次遵循同一可检查过程，而不是追求字面相同的输出。
+本模型将 `template/references/writing-for-agents/writing-contract.md` 的方法用于 Speculo 资产。目标是让 Agent 每次遵循同一可检查过程，而不是追求字面相同的输出。
 
 ## 预测性
 

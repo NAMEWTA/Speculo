@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "ops",
   "version": "2.3.0",
   "persistent_knowledge": [
@@ -99,5 +99,20 @@
       "risk": "local-reversible",
       "context_budget": 16000
     }
-  ]
+  ],
+  "entry": "SKILL.md",
+  "works": [
+    "ops-d-project-deploy/SKILL.md",
+    "ops-h-host-manage/SKILL.md",
+    "ops-i-initialize/SKILL.md",
+    "ops-s-server-connect/SKILL.md",
+    "ops-v-inventory-view/SKILL.md"
+  ],
+  "work_stages": {
+    "ops-d-project-deploy/SKILL.md": [],
+    "ops-h-host-manage/SKILL.md": [],
+    "ops-i-initialize/SKILL.md": [],
+    "ops-s-server-connect/SKILL.md": [],
+    "ops-v-inventory-view/SKILL.md": []
+  }
 }

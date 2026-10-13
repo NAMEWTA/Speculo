@@ -3,7 +3,7 @@
 ## 包形态
 
 ```text
-template/skills/<skill-name>/
+template/workflows/<domain>/<domain>-<letter>-<name>/
   SKILL.md
   references/        # 可选：分支专属规则
   scripts/           # 可选：确定性机械操作
@@ -26,7 +26,7 @@ description: <一句模型或人类可用的摘要>
 
 - `name` 与目录名一致。
 - Model-invoked：description 覆盖真实触发分支。
-- User-invoked：Codex 使用 agents/openai.yaml 的 policy.allow_implicit_invocation: false；Claude 使用 disable-model-invocation: true。metadata 仅描述，不承担权限。Speculo 路径不是宿主自动发现目录。
+- 源 Skill 只用标准字段；宿主扩展只由 Command 投影器生成。metadata 为字符串映射，不承担权限。领域/Work YAML 原样投影，不掺入宿主字段。一次显式调用使用 COMMAND.md，跨领域纯共享方法使用 references。
 - 只有当前 Agent skill 运行时已实际支持且项目已有先例的字段才加入；不凭想象扩展 schema。
 
 ## Description
@@ -85,9 +85,9 @@ Skill 可以：
 - 返回文本、计划或结构化结果；
 - 修改 `template/` 中属于自身维护任务的静态资产；
 - 在运行时写调用方明确提供且已获授权的目标。
-- 独立激活且确有恢复需求时，写入自身明确声明的 `{roots.state}/skills/<skill>/` namespace。
+- Work 激活使用该领域既有 change/状态；私有方法使用调用方传入的 owner 路径。
 
-独立 Skill state 必须声明 schema、生成时机、更新原子性和恢复语义；一次运行的 change 使用 `<YYYY-MM-DD>-<kebab-topic>[-NN]` 且不得覆盖。Skill 不可以自行决定 command 报告路径、workflow state namespace 或外部副作用授权。这些由 command/workflow 所有者传入。
+领域 state 必须声明 schema、生成时机、更新原子性和恢复语义；一次运行的 change 使用 `<YYYY-MM-DD>-<kebab-topic>[-NN]` 且不得覆盖。Skill 不可以自行决定 command 报告路径、workflow state namespace 或外部副作用授权。这些由 command/workflow 所有者传入。
 
 ## 合并与拆分
 
@@ -105,7 +105,7 @@ Skill 可以：
 
 - `template/commands` 调用；
 - `template/workflows` 的 `<Path>`；
-- 其他 `template/skills` 的 Markdown 链接或路径；
+- 其他领域/Work Skill 和共享 reference 的 Markdown 链接或路径；
 - canonical 源映射；
 - scripts/tests/package 命令；
 - 文档中的公开 id。

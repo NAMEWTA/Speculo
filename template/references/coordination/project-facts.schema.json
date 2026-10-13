@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:coordination:project:v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "defaults",
+    "rules"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "defaults": {
+      "$ref": "#/$defs/choice"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "work_id",
+          "choice"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "work_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+/[a-z0-9-]+$"
+          },
+          "stage": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "$ref": "#/$defs/choice"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "choice": {
+      "type": "object",
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "lead",
+            "orca",
+            "herdr",
+            "cli"
+          ]
+        },
+        "selection": {
+          "enum": [
+            "required",
+            "preferred"
+          ]
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "guide": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fallback": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "lead",
+              "orca",
+              "herdr",
+              "cli"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "selection"
+            ],
+            "properties": {
+              "selection": {
+                "const": "required"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fallback": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

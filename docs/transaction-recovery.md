@@ -1,48 +1,13 @@
-# Versioned refresh snapshots and recovery
+# Installation transactions and recovery
 
-Applies to the CLI-owned init/refresh journal, not to OPS execution approvals or
-workflow state schemas. See also [the audit fix record](audit-fixes-2026-10-07.md).
+Only the CLI installation is transactional. This journal does not execute models or own workflow business state.
 
-## New transactions
+The active root is .agents/speculo/. The exclusive installation lock is .agents/.speculo-install.lock/, and staging/backup trees live under .agents/.speculo-transactions/. Journal schema 3 records the installation identity, before/after tree fingerprints, external file images, and individual owned Skill projection files for both hosts.
 
-New journals use `schema_version: 2`. `before` is `absent` or a tagged snapshot;
-`after` is a tagged snapshot. Tags are `tree-v2-posix:<sha256>` and
-`tree-v2-windows:<sha256>`. They are not interchangeable with v1 bare hashes.
+Tree fingerprints include directory existence, file bytes, node type and link text. POSIX includes permission bits; Windows does not claim ACL/ownership equivalence. Recovery requires the original snapshot platform. File checks and rename boundaries assume cooperating writers, not a hostile filesystem.
 
-The hash covers root and directory existence (including empty directories),
-node type, file bytes, and symlink target text without following links. POSIX
-snapshots additionally include permission and special bits (`mode & 07777`).
-Windows snapshots do not claim to capture POSIX permissions, ACLs, ownership or
-extended attributes. Existing Windows credential-refresh restrictions remain.
-The managed-file manifest and domain/runtime schemas are unchanged.
+Run speculo doctor <project> first. Preserve the reported transaction ID, owner, journal, staging and backup. Then use speculo recover <project> --transaction <exact-id> only after the owning process has stopped on the original host. Unknown schema, foreign host/platform, a live owner, escaped/symlink paths or drift block recovery and preserve evidence. Never remove a lock to bypass the checks.
 
-The same snapshot algorithm gates staging drift, commit checkpoints, rollback,
-and committed cleanup. A drift failure preserves the active data and any durable
-transaction, stage and backup needed for diagnosis. External handbook images
-retain their separate byte/mode checks. These checks operate in a trusted project
-directory with cooperating writers; they are not an atomic filesystem snapshot
-or a substitute for OS-level isolation against an adversarial concurrent writer.
+Before rollback, the CLI validates all affected trees and external images. It restores only images matching the recorded before/after values. Committed transactions only finish verified cleanup. Edited or third-party Skill files and additional user files remain untouched; removal cleans only proven empty managed directories.
 
-For v2 recovery, run read-only `speculo doctor` first. Verify the transaction ID,
-original host and stopped owner. `speculo recover <project> --transaction <id>`
-refuses an active owner, foreign host, foreign snapshot profile, invalid journal,
-or any before/after mismatch. Do not remove a lock to make a failed check pass.
-
-## Existing v1 journals
-
-v1 journals remain recognizable by `readTransaction` and read-only doctor. They
-cannot prove that modes or directories stayed unchanged. The new executor
-therefore returns `legacy-transaction-snapshot` **before writing any recovery
-marker, moving directories, rewriting the journal or cleaning residues**. This
-applies to all phases, including `committed` and `rolled-back`.
-
-Do not relabel a v1 journal as v2, fabricate a replacement fingerprint, erase its
-lock, or blindly retry with an older binary. First stop the original writer on
-the original host; preserve a separate complete copy of the journal, owner,
-active tree, stage, backup and external handbooks, including metadata. Compare
-those copies with independently verified pre-operation backup/permission and
-directory evidence. An operator must approve a recovery plan for the proven
-layout; when that evidence is absent, keep recovery blocked. This patch does not
-supply an automatic legacy migration because the omitted information cannot be
-recovered from a bare content hash. Existing files and historical bytes remain
-untouched. Finish in-flight v1 transactions before upgrading where practical.
+Old installations and journals are not converted. Preserve them and use their owning version plus independently verified backups to determine a separate recovery procedure. Do not relabel journals or fabricate hashes. Refresh of a current installation preserves opaque runtime data, unowned static files and existing source identity; incompatible structured data stops replacement.

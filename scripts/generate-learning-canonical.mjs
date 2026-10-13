@@ -12,17 +12,17 @@ const core = [shared('inquiry-depth-policy', 'depth'), shared('production-inquir
 export const documents = [
   {
     capability: 'lesson', title: '完整课程与主动盲区发现',
-    entry: `${workflow}/L-lesson/L-lesson.md`,
+    entry: `${workflow}/learning-l-lesson/SKILL.md`,
     output: 'template/canonical/canonical-learning-lesson.md',
     sources: [runtime('runtime'), shared('lesson-contract', 'lesson'), ...core, runtime('lesson-runtime')],
   },
   {
     capability: 'question', title: '主动探究与苏格拉底问答',
-    entry: `${workflow}/Q-question/Q-question.md`,
+    entry: `${workflow}/learning-q-question/SKILL.md`,
     output: 'template/canonical/canonical-learning-question.md',
-    sources: [runtime('runtime'), { path: `${workflow}/Q-question/Q-question.md`, block: 'question' }, ...core,
+    sources: [runtime('runtime'), { path: `${workflow}/learning-q-question/SKILL.md`, block: 'question' }, ...core,
       shared('questioning-policy', 'recipes'), shared('questioning-policy', 'teaching'),
-      { path: `${workflow}/Q-question/references/exploration-mode.md`, block: 'explore' },
+      { path: `${workflow}/learning-q-question/references/exploration-mode.md`, block: 'explore' },
       shared('question-map-contract', 'map'), runtime('question-runtime')],
   },
 ];

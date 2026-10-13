@@ -2,10 +2,10 @@
 
 ## 文件与 frontmatter
 
-Command 是单文件：
+Command 的唯一入口与同目录资源包：
 
 ```text
-template/commands/<id>.md
+template/commands/<id>/COMMAND.md
 ```
 
 最低 frontmatter：
@@ -13,14 +13,11 @@ template/commands/<id>.md
 ```yaml
 ---
 id: <kebab-case>
-type: command
-name: <显示名>
 description: <一次调用的行为与结果>
-keywords: [<真实触发词>]
 ---
 ```
 
-当前运行时已有先例时可使用 `argument-hint`、`disable-model-invocation`。字段加入后必须有实际消费者。
+源只要求 id、description；资源置于同目录 references/scripts/assets。宿主显式调用字段由投影器生成；入口格式不冒充标准 Skill。
 
 ## Command、skill、workflow
 
@@ -36,10 +33,10 @@ keywords: [<真实触发词>]
 
 Command 需要路径时：
 
-1. 从当前目录向上寻找 `speculo/.speculo/workspace.json`；
+1. 从当前目录向上寻找 `.agents/speculo/.speculo/workspace.json`；
 2. 读取并验证 `path_base` 与 roots；
-3. 读取 `speculo/config.json`；
-4. 需要 workflow 时读取该 workflow `INDEX.md` 与 status。
+3. 读取 `{roots.config}`；
+4. 需要 workflow 时读取该 workflow 领域 `SKILL.md` 与 status。
 
 是否允许缺失配置后使用默认值由当前 command 明确决定。需要初始化的 command 应阻塞并提示 `speculo init`；可只读降级的 command 可采用模板默认值并在报告记录。
 
@@ -77,7 +74,7 @@ Command 需要路径时：
 
 ## Workflow sidecar
 
-Command 写 workflow 范围 sidecar 时，必须由 workflow INDEX 或 command contract 声明。当前 `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar；它不能被其他 command 当作通用写权限。
+Command 写 workflow 范围 sidecar 时，必须由 领域合同 或 command contract 声明。当前 `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar；它不能被其他 command 当作通用写权限。
 
 ## 确认
 

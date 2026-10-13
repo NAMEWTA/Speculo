@@ -15,7 +15,7 @@ P performed a real local export, copied final.mp4 and repeated export idempotent
 Requires Python 3.10+, Python Playwright, preinstalled Chromium, Node, FFmpeg and FFprobe. Install/download only after separate authorization; this tool does neither. Review scene.html before running: network blocking is not a hostile-code sandbox.
 
 ```bash
-python3 template/workflows/media/V-video/render_preview.py \
+python3 template/workflows/media/media-v-video/scripts/render_preview.py \
   --brief docs/media/example/brief.json \
   --plan docs/media/example/shot-plan.json \
   --html docs/media/example/scene.html \

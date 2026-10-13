@@ -1,10 +1,11 @@
-import { createHash } from "node:crypto";
-import { chmod, cp, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { chmod, cp, lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { assertJsonObject, reconcileConfig, type ConfigMergeStats, type JsonObject } from "./config.js";
 import { collectFiles, toPosix, type ManagedFileRecord } from "./manifest.js";
-import { readSpecdevConfig, validateStructuredRuntime, validateSpecdevConfig, type StructuredChange } from "./structured.js";
+import { readSpecdevConfig, validateStructuredRuntime, validateSpecdevConfig } from "./structured.js";
 import { pathExists } from "./utils.js";
+import { containedPath } from "./paths.js";
 
 export type RefreshBlocker = {
   code: string;
@@ -29,7 +30,6 @@ export type RefreshSummary = {
   managedFiles: number;
   preservedFiles: number;
   config: ConfigMergeStats;
-  structuredUpgrades: number;
   backupPath: string | null;
 };
 
@@ -111,25 +111,24 @@ async function sourceVersion(previousRoot: string): Promise<string> {
   const path = join(previousRoot, ".speculo", "install.json");
   if (!(await pathExists(path))) {
     throw new RefreshBlockedError([{
-      code: "legacy-installation",
+      code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "Speculo 1.0 requires a schema v3 install manifest; remove or rename the existing speculo/ directory before initializing",
+      message: "Speculo 2 requires a schema v4 install manifest; existing data is preserved",
     }]);
   }
   const install = await readJson(path, ".speculo/install.json");
-  if (Number(install.schema_version) !== 3 || typeof install.package_version !== "string") {
+  if (install.schema_version !== 4 || typeof install.package_version !== "string") {
     throw new RefreshBlockedError([{
-      code: "legacy-installation",
+      code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "Speculo 1.0 does not read or migrate 0.x installations; remove or rename the old speculo/ directory before initializing",
+      message: "Speculo 2 does not read or migrate earlier installations; existing data is preserved",
     }]);
   }
-  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(install.package_version);
-  if (!match || Number(match[1]) !== 1) {
+  if (!/^2\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(install.package_version)) {
     throw new RefreshBlockedError([{
-      code: "legacy-installation",
+      code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "refresh requires a Speculo 1.x installation; 0.x state is intentionally incompatible",
+      message: "refresh requires a Speculo 2.x installation",
     }]);
   }
   return install.package_version;
@@ -286,7 +285,7 @@ async function copyPreviousRuntime(
     throw new Error("OPS plaintext ledger requires ACL-preserving static-only installer on Windows; runtime refresh is blocked");
   }
   for (const entry of await readdir(previousState, { withFileTypes: true })) {
-    if (reserved.has(entry.name)) continue;
+    if (reserved.has(entry.name) && entry.name !== "back") continue;
     await cp(join(previousState, entry.name), join(stagedState, entry.name), {
       recursive: entry.isDirectory(),
       force: true,
@@ -405,8 +404,8 @@ async function reconcileWorkflowConfig(
     throw new RefreshBlockedError([{ code: "config-conflict", path: contract.config.path, message: String(error) }]);
   }
   addStats(stats, merged.stats);
-  if (localConfig.migrated || merged.removedPaths.length > 0) {
-    const reasons = [localConfig.migrated ? "schema reconciliation" : "", merged.removedPaths.length > 0 ? "removed fields: " + merged.removedPaths.join(", ") : ""].filter(Boolean);
+  if (merged.removedPaths.length > 0) {
+    const reasons = [merged.removedPaths.length > 0 ? "removed fields: " + merged.removedPaths.join(", ") : ""].filter(Boolean);
     backups.push({ sourcePath: contract.config.path, before, reason: reasons.join("; ") });
   }
   const stagedPath = join(stagedRoot, contract.config.path);
@@ -419,9 +418,9 @@ function backupDestination(sourcePath: string): string {
 }
 
 async function writeTargetedBackup(stagedRoot: string, items: BackupItem[], source: string, target: string): Promise<string | null> {
-  const root = join(stagedRoot, ".speculo", "back");
-  await rm(root, { recursive: true, force: true });
   if (items.length === 0) return null;
+  const backupId = randomUUID();
+  const root = join(stagedRoot, ".speculo", "back", backupId);
   const unique = new Map<string, BackupItem>();
   for (const item of items) if (!unique.has(item.sourcePath)) unique.set(item.sourcePath, item);
   const files = [];
@@ -447,7 +446,7 @@ async function writeTargetedBackup(stagedRoot: string, items: BackupItem[], sour
     created_at: new Date().toISOString(),
     files: files.sort((left, right) => left.source_path.localeCompare(right.source_path)),
   }, null, 2) + "\n", "utf8");
-  return "speculo/.speculo/back";
+  return ".agents/speculo/.speculo/back/" + backupId;
 }
 
 async function writeMetadata(
@@ -473,12 +472,15 @@ async function writeMetadata(
   }
   const managed: ManagedFileRecord[] = [];
   for (const file of all) {
+    // A preserved third-party file never becomes CLI-owned merely because of its directory.
+    if (!file.path.startsWith('.speculo/') && file.path !== 'catalog.json' &&
+        !priorManaged.has(file.path) && !await pathExists(join(packageRoot,'template',file.path))) continue;
     let owner: string | null = null;
     let kind: ManagedFileRecord["kind"] = "static";
     if (contract.managed_metadata.includes(file.path)) owner = "core";
     else if (file.path === ".speculo/commands/.gitkeep") owner = "core/runtime-seed";
     else if (file.path.startsWith("commands/")) owner = "core/commands";
-    else if (file.path.startsWith("skills/")) owner = "core/skills";
+    else if (file.path.startsWith("references/") || file.path.startsWith("lib/") || file.path === "catalog.json") owner = "core/assets";
     else if (file.path.startsWith(".speculo/baselines/")) {
       const match = /^\.speculo\/baselines\/workflows\/([^/]+)\//.exec(file.path);
       owner = match ? "workflow/" + match[1] : "core/config";
@@ -508,7 +510,7 @@ async function writeMetadata(
     files: managed,
   }, null, 2) + "\n", "utf8");
   await writeFile(join(stateRoot, "install.json"), JSON.stringify({
-    schema_version: 3,
+    schema_version: 4,
     package_version: targetVersion,
     workflows: [...installedWorkflowIds].sort(),
     managed_manifest: ".speculo/managed.json",
@@ -517,51 +519,27 @@ async function writeMetadata(
   return managed;
 }
 
-function structuredBackups(changes: StructuredChange[], stagedRoot: string): BackupItem[] {
-  return changes.map((change) => ({
-    sourcePath: toPosix(relative(stagedRoot, change.path)),
-    before: change.before,
-    reason: change.reason,
-  }));
-}
-
-/** Retired public assets may disappear only when the previous manifest proves ownership. */
-async function validateRetiredSkills(previousRoot: string): Promise<void> {
-  const retired = ["github-npm-ops", "speculo-retro", "writing-great-skills"];
-  const manifest = await readJson(join(previousRoot, ".speculo", "managed.json"), ".speculo/managed.json");
-  const records = Array.isArray(manifest.files) ? manifest.files as JsonObject[] : [];
-  const owned = new Map(records.map(record => [record.path, record]));
-  const blockers: RefreshBlocker[] = [];
-  async function visit(path: string): Promise<void> {
-    const stats = await lstat(path), key = toPosix(relative(previousRoot, path));
-    if (stats.isSymbolicLink() || (!stats.isDirectory() && !stats.isFile())) {
-      blockers.push({ code: "retired-asset-conflict", path: key, message: "retired asset has an unowned node type" });
-    } else if (stats.isDirectory()) {
-      for (const name of await readdir(path)) await visit(join(path, name));
-    } else {
-      const record = owned.get(key);
-      const digest = createHash("sha256").update(await readFile(path)).digest("hex");
-      if (record?.owner !== "core/skills" || record.sha256 !== digest) {
-        blockers.push({ code: "retired-asset-conflict", path: key, message: "preserve locally modified or unowned retired asset; reconcile it explicitly before refresh" });
+async function preserveUnmanagedStatic(previousRoot:string, stagedRoot:string):Promise<void>{
+  const manifest=await readJson(join(previousRoot,'.speculo/managed.json'),'managed files');
+  if(manifest.schema_version!==2||!Array.isArray(manifest.files))throw new RefreshBlockedError([{code:'invalid-managed-manifest',path:'.speculo/managed.json',message:'cannot establish static ownership'}]);
+  const owned=new Set(manifest.files.map(item=>(item as JsonObject).path));
+  async function visit(dir:string){
+    for(const entry of await readdir(dir,{withFileTypes:true})){
+      const source=join(dir,entry.name),p=toPosix(relative(previousRoot,source));
+      if(p==='.speculo'||p==='config.json')continue;
+      if(entry.isDirectory()){await visit(source);continue;}
+      if(owned.has(p))continue;
+      const target=await containedPath(stagedRoot,p);
+      if(await pathExists(target)){
+        const a=await lstat(source),b=await lstat(target);
+        if(a.isFile()&&b.isFile()&&(await readFile(source)).equals(await readFile(target)))continue;
+        throw new RefreshBlockedError([{code:'unmanaged-asset-conflict',path:p,message:'a new packaged asset conflicts with an unowned file; existing file preserved'}]);
       }
+      if(entry.isSymbolicLink())throw new RefreshBlockedError([{code:'unmanaged-asset-conflict',path:p,message:'preserve unowned symlink; resolve its ownership before refresh'}]);
+      await mkdir(dirname(target),{recursive:true});await cp(source,target,{preserveTimestamps:true});
     }
   }
-  for (const id of retired) {
-    const path = join(previousRoot, "skills", id);
-    try { await lstat(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; throw error; }
-    await visit(path);
-  }
-  if (blockers.length) throw new RefreshBlockedError(blockers);
-}
-
-export async function assertNoLegacyPending(previousRoot: string): Promise<void> {
-  const marker = join(previousRoot, ".speculo", "migration.json");
-  if (!(await pathExists(marker))) return;
-  throw new RefreshBlockedError([{
-    code: "legacy-pending-migration",
-    path: ".speculo/migration.json",
-    message: "complete the installed migrate-runtime-state Agent command before refreshing this legacy installation",
-  }]);
+  await visit(previousRoot);
 }
 
 export async function prepareRefresh(options: PrepareRefreshOptions): Promise<RefreshSummary> {
@@ -577,7 +555,7 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   const stagedState = join(options.stagedRoot, ".speculo");
 
   if (options.existed) {
-    await validateRetiredSkills(options.previousRoot);
+    await preserveUnmanagedStatic(options.previousRoot,options.stagedRoot);
     await assertNoSymlinks(previousState);
     const opaqueBefore = await opaqueFiles(previousState, reserved, workflowContracts);
     await copyPreviousRuntime(options.previousRoot, options.stagedRoot, reserved);
@@ -585,9 +563,8 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     for (const workflowContract of workflowContracts) {
       await reconcileWorkflowConfig(options.previousRoot, options.stagedRoot, workflowContract, true, stats, backups);
     }
-    let structured: StructuredChange[];
     try {
-      structured = await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
+      await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
     } catch (error) {
       const message = String(error);
       throw new RefreshBlockedError([{
@@ -596,7 +573,6 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
         message,
       }]);
     }
-    backups.push(...structuredBackups(structured, options.stagedRoot));
     verifyOpaqueFiles(opaqueBefore, await opaqueFiles(stagedState, reserved, workflowContracts));
     const backupPath = await writeTargetedBackup(options.stagedRoot, backups, source ?? "unknown", targetVersion);
     const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, source, selected, options.installedWorkflowIds);
@@ -608,7 +584,6 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
       managedFiles: managed.length,
       preservedFiles: opaqueBefore.size,
       config: stats,
-      structuredUpgrades: structured.length,
       backupPath,
     };
   }
@@ -626,7 +601,6 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     managedFiles: managed.length,
     preservedFiles: 0,
     config: stats,
-    structuredUpgrades: 0,
     backupPath: null,
   };
 }

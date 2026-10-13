@@ -19,7 +19,7 @@
 1. 使用 branch `speculo/integration/<change>/<ticket-id>` 和 locator `specdev-worktree/.integration/<ticket-id>`，从最新 `parent_before_sha` 建立 Lead-owned integration worktree；
 2. 如果父 SHA 是 source checkpoint 的祖先，在 candidate checkout 执行 `git merge --ff-only <source_checkpoint>`，`method=fast-forward`；
 3. 否则执行 `git merge --no-ff --no-commit <source_checkpoint>`；
-4. 冲突按 `<Path>{roots.workflows}/specdev/I-implement/merge-conflict-protocol.md</Path>` 处理。需要新产品决定时执行 `git merge --abort`，记录 blocker 并返回来源 worktree；
+4. 冲突按 `<Path>{roots.workflows}/specdev/specdev-i-implement/references/merge-conflict-protocol.md</Path>` 处理。需要新产品决定时执行 `git merge --abort`，记录 blocker 并返回来源 worktree；
 5. 对分叉结果创建一次 Lead-owned candidate merge commit，`method=merge-commit`；
 6. 记录 candidate branch/locator、`candidate_sha`、`source_sha`、冲突路径与 attempts，worktree 状态改为 `integrating`、integration 状态改为 `candidate`。
 

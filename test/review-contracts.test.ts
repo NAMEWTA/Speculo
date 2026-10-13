@@ -11,26 +11,26 @@ const root = process.cwd();
 const read = (path: string) => readFile(join(root, path), "utf8");
 
 test("Learning conditional contracts remain directly reachable without unrelated full sections", async () => {
-  const readme = await read("template/workflows/learning/README.md");
+  const readme = await read("template/workflows/learning/common/rules/domain-runtime.md");
   for (const [work, rule, required] of [
-    ["L-lesson", "lesson-contract", "estimated_minutes"],
-    ["H-homework", "homework-contract", "Submission: ready"],
-    ["C-consolidate", "consolidation-contract", "source_change_id"],
-    ["A-archive", "consolidation-contract", "archive/YYYY-MM"],
-    ["A-assess-and-plan", "artifact-layouts", "background/foundation.md"],
+    ["learning-l-lesson", "lesson-contract", "estimated_minutes"],
+    ["learning-h-homework", "homework-contract", "Submission: ready"],
+    ["learning-c-consolidate", "consolidation-contract", "source_change_id"],
+    ["learning-a-archive", "consolidation-contract", "archive/YYYY-MM"],
+    ["learning-a-assess-and-plan", "artifact-layouts", "background/foundation.md"],
   ]) {
     assert.ok(readme.includes(`/common/rules/${rule}.md`));
-    assert.ok((await read(`template/workflows/learning/${work}/${work}.md`)).includes(`/common/rules/${rule}.md`));
+    assert.ok((await read(`template/workflows/learning/${work}/SKILL.md`)).includes(`/common/rules/${rule}.md`));
     assert.ok((await read(`template/workflows/learning/common/rules/${rule}.md`)).includes(required));
   }
   assert.ok(!readme.includes("Submission: pending"));
-  assert.match(await read("template/workflows/learning/G-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
+  assert.match(await read("template/workflows/learning/learning-g-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
 });
 
 test("Docs Sync routes effects before per-mode Git contracts and preserves cursor semantics", async () => {
-  const skill = await read("template/skills/docs-sync/SKILL.md");
-  const command = await read("template/commands/docs-sync.md");
-  const modes = await read("template/skills/docs-sync/references/mode-contract.md");
+  const skill = await read("template/commands/docs-sync/references/operation-contract.md");
+  const command = await read("template/commands/docs-sync/COMMAND.md");
+  const modes = await read("template/commands/docs-sync/references/mode-contract.md");
   assert.ok(!skill.includes("references/entry-procedure.md"), "no unconditional intermediate wrapper");
   for (const mode of ["audit", "update", "commit"]) assert.ok(skill.includes(mode) && command.includes(mode));
   assert.match(modes, /No cursor, synchronization counter or workflow sidecar advances/);

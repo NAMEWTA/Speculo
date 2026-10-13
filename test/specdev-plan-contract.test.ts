@@ -36,7 +36,7 @@ describe("SpecDev Plan contracts", () => {
   it("rejects duplicate and prototype frontmatter keys, and malformed object arrays", async () => {
     const f = await fixture();
     try {
-      for (const frontmatter of ["id: T-01\nid: T-02", "__proto__: bad", "constructor: bad", 'skill_bindings: [{"id": broken}]']) {
+      for (const frontmatter of ["id: T-01\nid: T-02", "__proto__: bad", "constructor: bad", 'skill_bindings: [{"id": broken]']) {
         await writeFile(f.artifact.path, `---\n${frontmatter}\n---\nbody`);
         assert.throws(() => validator.parseFrontmatter(f.artifact.path));
       }
@@ -108,12 +108,12 @@ describe("SpecDev Plan contracts", () => {
       assert.deepEqual(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }), []);
     } finally { await rm(f.root, { recursive: true, force: true }); }
   });
-  it("keeps legacy artifacts readable but requires upgrade before new implementation", () => {
+  it("rejects missing plan contracts even on recorded completed artifacts", () => {
     const legacy = { meta: { status: "ready" }, body: "", path: "ticket.md" };
-    assert.deepEqual(contract.validateTicketPlan(legacy), []);
-    assert.match(contract.validateTicketPlan(legacy, { requirePlan: true }).join("\n"), /upgraded/);
+    assert.match(contract.validateTicketPlan(legacy).join("\n"), /plan_contract_version/);
+    assert.match(contract.validateTicketPlan(legacy, { requirePlan: true }).join("\n"), /plan_contract_version/);
     legacy.meta.status = "done";
-    assert.deepEqual(contract.validateTicketPlan(legacy, { requirePlan: true }), []);
+    assert.match(contract.validateTicketPlan(legacy, { requirePlan: true }).join("\n"), /plan_contract_version/);
   });
   it("checks the invocation matrix in both directions", () => {
     const skill = ".agents/skills/check/SKILL.md";
@@ -170,9 +170,10 @@ describe("progressive command references", () => {
   async function commandFixture() {
     const root = await mkdtemp(join(tmpdir(), "speculo-command-references-"));
     await mkdir(join(root, ".agents", "skills"), { recursive: true });
-    await mkdir(join(root, "template", "commands", "references"), { recursive: true });
-    await writeFile(join(root, "template", "commands", "audit.md"), "---\nid: audit\ntype: command\nname: Audit\ndescription: Audit selected files.\n---\nRead <Path>{roots.commands}/references/audit.md</Path>.\n");
-    await writeFile(join(root, "template", "commands", "references", "audit.md"), "# Required detailed procedure\nKeep the original quality gates.\n");
+    await mkdir(join(root, "template", "commands", "audit", "references"), { recursive: true });
+    await writeFile(join(root, "template", "commands", "manifest.json"), JSON.stringify({schema_version:1,commands:["audit/COMMAND.md"]}));
+    await writeFile(join(root, "template", "commands", "audit", "COMMAND.md"), "---\nid: audit\ntype: command\nname: Audit\ndescription: Audit selected files.\n---\nRead <Path>{roots.commands}/audit/references/audit.md</Path>.\n");
+    await writeFile(join(root, "template", "commands", "audit", "references", "audit.md"), "# Required detailed procedure\nKeep the original quality gates.\n");
     return root;
   }
   function check(root: string) {
@@ -180,21 +181,21 @@ describe("progressive command references", () => {
     assert.equal(result.error, undefined);
     return { status: result.status, report: JSON.parse(result.stdout) };
   }
-  it("does not classify prose in commands/references as a command, but still checks its paths", async () => {
+  it("does not classify prose in command references as an entry, but still checks its paths", async () => {
     const root = await commandFixture();
     try {
       assert.equal(check(root).status, 0);
-      await writeFile(join(root, "template", "commands", "references", "audit.md"), "Missing <Path>{roots.commands}/references/missing.md</Path>.\n");
+      await writeFile(join(root, "template", "commands", "audit", "references", "audit.md"), "Missing <Path>{roots.commands}/audit/references/missing.md</Path>.\n");
       const failed = check(root); assert.equal(failed.status, 1);
-      assert.ok(failed.report.errors.some((error: { message: string }) => error.message.includes("static Path target does not exist")));
+      assert.match(JSON.stringify(failed.report.errors), /missing reference.*missing\.md/);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
   it("still rejects a real command without mandatory frontmatter", async () => {
     const root = await commandFixture();
     try {
-      await writeFile(join(root, "template", "commands", "broken.md"), "# Not a valid command\n");
+      await writeFile(join(root, "template", "commands", "audit", "COMMAND.md"), "# Not a valid command\n");
       const failed = check(root); assert.equal(failed.status, 1);
-      assert.ok(failed.report.errors.some((error: { message: string }) => error.message.includes("command requires valid frontmatter")));
+      assert.match(JSON.stringify(failed.report.errors), /invalid-frontmatter/);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 });
