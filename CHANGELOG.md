@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Stable change-relative DESIGN approval locators and updated portable handoff bundles; existing immutable approval/revision bytes remain unchanged.
 
 ### Fixed
+- Run release verification with both JavaScript and native pnpm entry points, including PATH-resolved executables used by CI.
 - Protect active Markdown SpecDev evidence during history squash planning and recheck the frozen evidence root before local or remote writes; unsealed archives remain blocked and old plans without that root require a new plan.
 - Read SpecDev README and actual owning artifacts in handoff and retrospective Commands; verify canonical files at their packaged location and normalize temporary fixture roots on macOS.
 - Reject malformed UTF-8 before planning a Markdown conversion; preserve valid Unicode, BOM, line endings and file modes through interruption and recovery.

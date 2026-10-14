@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pnpmCommand } from './pnpm-command.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),manager=process.env.npm_execpath;
 if(!manager?.toLowerCase().includes('pnpm'))throw Error('Run with pnpm verify-generated');
 async function snapshot(directory,prefix=''){
@@ -19,7 +20,7 @@ async function snapshot(directory,prefix=''){
 }
 const before=await snapshot(join(root,'template'));
 for(let pass=1;pass<=2;pass++){
- execFileSync(process.execPath,[manager,'generate-assets'],{cwd:root,stdio:'pipe',timeout:300000});
+ execFileSync(...pnpmCommand(['generate-assets']),{cwd:root,stdio:'pipe',timeout:300000});
  assert.deepEqual(await snapshot(join(root,'template')),before,`generation ${pass} changed template content; rebuild before verification`);
 }
 console.log(`verify-generated: two generations unchanged across ${before.length} template files (routing, runtime library and all 12 canonical files)`);
