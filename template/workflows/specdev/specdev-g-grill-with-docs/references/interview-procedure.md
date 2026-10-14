@@ -36,7 +36,7 @@
 
 ### 1. 启动或恢复 change
 
-创建或恢复 `<Path>{roots.state}/specdev/changes/{change}/</Path>`。首次启动时创建 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`，并以 `<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/assets/design-tree-template.json</Path>` 为模板创建 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`。
+创建或恢复 `<Path>{roots.state}/specdev/changes/{change}/</Path>`。首次真实任务创建 <Path>{roots.state}/specdev/changes/{change}/README.md</Path> 的 Outcome active、范围与接续；ADR/LOG/CONTEXT 在有实际决定/语义时创建，使用设计树时以 `<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/assets/design-tree-template.json</Path>` 为模板创建 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`。
 
 分别使用：
 
@@ -45,9 +45,9 @@
 - `<Path>{roots.workflows}/specdev/common/rules/context-format.md</Path>`
 - `<Path>{roots.workflows}/specdev/common/schemas/design-tree.schema.json</Path>`
 
-恢复时先读取四份工件，按 design tree 的节点状态恢复，避免重复询问已关闭问题。
+恢复时读取 README 接续与 design tree，再按当前节点及其引用读取实际存在的 LOG、CONTEXT、ADR；没有对应决定或领域语义时允许文件不存在。已关闭节点的决定和 LOG 引用必须可回读，避免重复询问已关闭问题。
 
-**完成标准**：四份工件均可读取；节点依赖无环，所有 LOG 指针存在，当前 frontier 可确定。
+**完成标准**：当前分支必要工件可读取；节点依赖无环，所有实际 LOG 指针可解析，当前 frontier 可确定。未产生内容的可选工件不创建空文件；已引用工件缺失时阻塞依赖该证据的恢复。
 
 ### 2. 查找事实
 
@@ -90,11 +90,11 @@
 
 ### 5. 同步 change-local 领域模型
 
-加载 `<Path>{roots.workflows}/specdev/common/rules/domain-modeling.md</Path>`。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把同时满足三个准入条件、已成为本 change 合同的架构决定写入 change ADR。
+加载 `<Path>{roots.workflows}/specdev/common/rules/domain-modeling.md</Path>`。每轮先写 LOG，再把已确认且本 change 下游必须使用的项目规范术语同步到 change CONTEXT，最后把有持续决策价值、已有真实依据且成为本 change 合同的架构决定写入 change ADR。
 
 历史轨迹只留在 LOG；未确认选项不写成已接受 ADR；已有 change ADR 被替代时建立 supersedes 链。同步只更新本 change 工件，不创建、合并或改写永久 `context/`、`adr/`；它记录共识生长过程，不授权产品实现。
 
-**完成标准**：LOG、CONTEXT、ADR 和 design tree 无冲突；每个同步结论都有用户回答或事实来源；永久 namespace 未被修改。
+**完成标准**：实际形成的 LOG、CONTEXT、ADR 与 design tree 无冲突；每个同步结论都有用户回答或事实来源，没有相应结论的可选工件保持缺省；永久 namespace 未被修改。
 
 ### 6. 共识确认与路由
 
@@ -109,7 +109,7 @@ frontier 为空时，向用户确认设计树的每个分支均已走过且已�
 - 获批的极小局部工作可进入 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`；
 - 路径或关键事实仍未知时进入 `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>`。
 
-同步 workflow/change 状态，返回四份权威工件和下一 work 的完整路径。不自动执行下一 work。
+回读实际已形成的决定/领域/日志/设计树工件，将接续导航留 README，返回真实工件和下一 Work 完整路径；无内容不为数量预建空文件。不自动执行下一 work。
 
 ## 完成标准
 

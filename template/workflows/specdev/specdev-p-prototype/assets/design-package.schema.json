@@ -1,9 +1,232 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:ui-design-system:v2",
-  "title": "SpecDev UI design system frontmatter",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "artifact": {
+      "const": "ui-prototype"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "design_id": {
+      "type": "string",
+      "pattern": "^UI-\\d{3,}$"
+    },
+    "status": {
+      "enum": [
+        "detecting",
+        "selecting",
+        "awaiting-confirmation",
+        "ready",
+        "blocked"
+      ]
+    },
+    "project_kind": {
+      "enum": [
+        "existing",
+        "new"
+      ]
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "desktop",
+          "web",
+          "mobile"
+        ]
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "template_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "primary_reference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "auxiliaries": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "reference_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "dimension": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "reference_id",
+                "dimension"
+              ]
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "structural_difference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entry": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "template_id",
+          "primary_reference",
+          "auxiliaries",
+          "rationale",
+          "structural_difference",
+          "task_id",
+          "entry"
+        ]
+      }
+    },
+    "candidate_count_override": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "request": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "count",
+            "request"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "selected_candidate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "license": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "locator"
+        ]
+      }
+    },
+    "prototype_files": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "final/index.html"
+          }
+        },
+        {
+          "contains": {
+            "const": "final/styles.css"
+          }
+        },
+        {
+          "contains": {
+            "const": "final/app.js"
+          }
+        }
+      ]
+    },
+    "browser_evidence": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
   "required": [
     "schema_version",
     "artifact",
@@ -12,59 +235,14 @@
     "status",
     "project_kind",
     "platforms",
-    "style_candidates",
-    "research_snapshot",
+    "candidates",
+    "candidate_count_override",
+    "selected_candidate",
+    "sources",
     "prototype_files",
+    "browser_evidence",
     "updated_at"
   ],
-  "properties": {
-    "schema_version": { "const": 2 },
-    "artifact": { "const": "ui-design-system" },
-    "change": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "design_id": { "type": "string", "pattern": "^UI-\\d{3,}$" },
-    "status": { "enum": ["detecting", "selecting", "ready", "blocked"] },
-    "project_kind": { "enum": ["existing", "new"] },
-    "platforms": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": { "enum": ["desktop", "web", "mobile"] }
-    },
-    "detected_style": { "type": ["string", "null"] },
-    "style_candidates": {
-      "type": "array",
-      "minItems": 2,
-      "maxItems": 4,
-      "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
-    },
-    "selected_style": { "type": ["string", "null"] },
-    "density": { "enum": ["compact", "default", "comfortable", "touch", null] },
-    "color_mode": { "enum": ["light", "dark", "system", "both", null] },
-    "research_snapshot": { "const": "49b5659" },
-    "prototype_files": {
-      "type": "array",
-      "uniqueItems": true,
-      "allOf": [
-        { "contains": { "const": "final/index.html" } },
-        { "contains": { "const": "final/styles.css" } },
-        { "contains": { "const": "final/app.js" } }
-      ],
-      "items": { "type": "string" }
-    },
-    "updated_at": { "type": "string", "format": "date-time" }
-  },
-  "allOf": [
-    {
-      "if": { "properties": { "status": { "const": "ready" } } },
-      "then": {
-        "required": ["selected_style", "density", "color_mode"],
-        "properties": {
-          "selected_style": { "type": "string", "minLength": 1 },
-          "density": { "type": "string" },
-          "color_mode": { "type": "string" }
-        }
-      }
-    }
-  ]
+  "$id": "urn:speculo:specdev:ui-prototype:v3",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

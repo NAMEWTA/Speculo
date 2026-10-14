@@ -15,7 +15,7 @@
 
 required 模式的 Wave 内 Ticket 必须 Ready、依赖 Evidence 完整、项目写路径不相交、shared owner 已稳定、适用 Gate 已打开且基线一致。current 模式即使 DAG 存在可并行节点，也强制一次只执行一个 Ticket。
 
-Lead 根据当前事实决定自行实现或派单。required 模式同时活跃的 实现执行者 不得超过 Goal Plan、config 与平台能力的共同上限；current 模式保持单 writer 串行安全不变量。Lead 参与实现时计入。Wave 是可并发性，不是必须填满的目标。只读 review/research/test-observation agent 不写固定数字上限，但不得写项目或 SpecDev 状态，也不得争用同一可变测试环境。
+Lead 根据当前事实决定自行实现或派单。required 模式同时活跃的 实现执行者 不得超过 Goal Plan、实际存在的 config 与平台能力的共同上限；current 模式保持单 writer 串行安全不变量。Lead 参与实现时计入。Wave 是可并发性，不是必须填满的目标。只读 review/research/test-observation agent 不写固定数字上限，但不得写项目或 SpecDev 状态，也不得争用同一可变测试环境。
 
 ## 3. Gate
 

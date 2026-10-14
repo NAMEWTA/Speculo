@@ -29,7 +29,7 @@ description: Analyze confirmed Speculo usage friction and propose or create GitH
 3. 创建 command 专属目录 `<Path>{roots.state}/commands/retro/</Path>`，把复盘结论写入带 scope 的 Markdown 报告。
 4. **去重**：调用 `T-triage 远程操作协议` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
 5. 本命令把分析类型映射为 bug→bug、friction/ergonomics→enhancement、missing-capability→feature-request、doc-gap→documentation；优先级映射 priority:<level>，可选 area:<area>。先只读确认远程标签，缺失时列为待处理，不擅自创建。展示精确标题、标签、正文、目标 `NAMEWTA/Speculo` 与去重结果，取得或沿用覆盖这些内容的明确授权；否则只保留报告。
-6. 按优先级调用 issue-create --apply，每项保存稳定 marker=retro:<报告文件名>:<序号>、正文摘要与授权。正文包含该 HTML marker 和 AI 协助说明；请求超时先查原 marker，不制造第二条。任一失败停止后续创建，在本报告记录已建/未建与恢复条件。此操作不激活 T、不创建 change、不占用 current_work。
+6. 按优先级调用 issue-create --apply，每项保存稳定 marker=retro:<报告文件名>:<序号>、正文摘要与授权。正文包含该 HTML marker 和 AI 协助说明；请求超时先查原 marker，不制造第二条。任一失败停止后续创建，在本报告记录已建/未建与恢复条件。此操作不激活 T、不创建 change、不改变原任务归属。
 7. 把每条提案的最终 issue 编号/URL 回写进本次报告的「提交结果」小节；返回报告路径、3-5 条复盘摘要和已创建 issue 链接清单。
 
 ## 产物模板
@@ -53,7 +53,7 @@ generated_at: [TODO: ISO-8601]
 [TODO: 本次复盘覆盖的 command / workflow 与时间/会话范围。]
 
 ## 信号来源
-[TODO: 列出采集到的证据出处：对话节点、`<Path>{roots.state}/...</Path>` 产物路径、`.status.json` 字段、LESSONS。]
+[TODO: 列出采集到的证据出处：对话节点、`<Path>{roots.state}/...</Path>` 产物路径、SpecDev README 与当前 owning 工件、其他领域仍有效的状态字段、LESSONS。]
 
 ## 改进提案
 [TODO: 按优先级倒序列出每条提案：标题 / 类型 / 优先级 / 根因 / remediation_axis / 建议改动 / 正反回归样本 / 验收标准 / 受影响资产 / 去重结论。]

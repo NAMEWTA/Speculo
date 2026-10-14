@@ -1,6 +1,7 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -16,6 +17,34 @@ function normalizeLineEndings(content) {
 }
 
 const sharedSources = {
+  designContract: {
+    source: `${commonRoot}/rules/design-contract.md`,
+    tag: "design-contract",
+  },
+  designPortability: {
+    source: `${commonRoot}/rules/design-portability.md`,
+    tag: "design-portability",
+  },
+  projectDesignSchema: {
+    source: `${commonRoot}/schemas/project-design.schema.json`,
+    tag: "project-design-schema",
+    format: "json",
+  },
+  changeDesignSchema: {
+    source: `${commonRoot}/schemas/change-design.schema.json`,
+    tag: "change-design-schema",
+    format: "json",
+  },
+  designPackageSchema: {
+    source: `${workflowRoot}/specdev-p-prototype/assets/design-package.schema.json`,
+    tag: "design-package-schema",
+    format: "json",
+  },
+  browserEvidenceSchema: {
+    source: `${commonRoot}/schemas/prototype-browser-evidence.schema.json`,
+    tag: "prototype-browser-evidence-schema",
+    format: "json",
+  },
   artifactContract: {
     source: `${commonRoot}/rules/artifact-contract.md`,
     tag: "artifact-contract",
@@ -186,10 +215,8 @@ const sharedSources = {
 const persistenceReferences = [
   sharedSources.configTemplate,
   sharedSources.configSchema,
-  sharedSources.statusTemplate,
-  sharedSources.statusSchema,
-  sharedSources.changeStatusTemplate,
-  sharedSources.changeStatusSchema,
+  reference("common/rules/workflow-state-and-lifecycle.md"),
+  reference("common/rules/domain-runtime.md"),
 ];
 
 const canonicalDocuments = [
@@ -314,7 +341,26 @@ const canonicalDocuments = [
 // Canonical files are intentionally self-contained snapshots.
 for (const doc of canonicalDocuments) {
   doc.references.push(reference("common/rules/activation-and-memory.md"));
+  doc.references.push(
+    sharedSources.designContract,
+    sharedSources.designPortability,
+    sharedSources.projectDesignSchema,
+    sharedSources.changeDesignSchema,
+    sharedSources.designPackageSchema,
+    sharedSources.browserEvidenceSchema,
+  );
 }
+
+// Preserve the gateway's behavior in isolated hosts without pulling the local
+// archive implementation and executable-only dependencies into every consumer.
+// The replacement is a full runtime/owner/recovery contract, not a tool alias.
+const portableDesignReferences = new Set([
+  "common/tools/design-artifacts.mjs",
+  "common/tools/publish-design.mjs",
+  "specdev-p-prototype/scripts/validate-design-package.mjs",
+  "specdev-p-prototype/scripts/materialize-prototype.mjs",
+  "specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md",
+]);
 
 const capabilityNames = new Map([
   ["specdev-a-archive-and-consolidate/SKILL.md", "归档与沉淀阶段"],
@@ -345,12 +391,13 @@ const webRuntimeConvention = `## 网页平台运行约定
 
 本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
 
-- 项目根下的 \`specdev/\` 是状态区；全局配置与状态分别为 \`specdev/config.json\` 和 \`specdev/status.json\`。
-- 当前 change 位于 \`specdev/changes/{change}/\`，其中 \`{change}\` 使用 \`YYYY-MM-DD-<kebab-topic>\`。
-- 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 \`specdev/adr/\`、\`specdev/context/\` 和 \`specdev/research/\`。
-- \`specdev/config.json\` 或 \`specdev/status.json\` 不存在时，分别按下方 \`<config-template>\` 和 \`<status-template>\` 标签创建；新建 change 时按下方 \`<change-status-template>\` 标签创建 \`.status.json\`。对应 schema 用于结构核对。
+- 项目根下的 \`specdev/\` 是业务工件区。普通 Work 的直接使用不要求安装元数据；先明确项目、可读方法资源和获批写入根，不按 cwd 猜测另一个项目。
+- 当前 change 位于 \`specdev/changes/{change}/\`，其中 \`{change}\` 使用真实日期 \`YYYY-MM-DD-<kebab-topic>\`。新归档位于 \`specdev/changes/archive/{change}/\`；旧月份归档原位只读，同名跨位置冲突必须先解决。
+- 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 \`specdev/adr/\`、\`specdev/context/\` 和 \`specdev/research/\`。永久设计位于 \`specdev/design/\`，消费、确认、离线导出和原 owner 恢复遵守下方 \`<design-portability>\` 标签。
+- 整体结论只在 \`specdev/changes/{change}/README.md\` 的唯一正文行 \`Outcome: active|completed|cancelled\` 中表达。新 change 不创建重复业务状态 JSON，也不默认创建 config；实际工具配置只在使用该分支时读取。正文、真实验收与 owner 证据共同决定能否完成或取消，Outcome 本身不授权。任务进度由 README、Goal 或 Ticket 择一负责。
+- 轻量 README 保留 scope、acceptance、verification 明确锚点、真实 AC 和证据；复杂 Goal/Ticket、并行隔离、Git 集成与 UI 专用合同仍按内联规则执行。当前工程 docs 位于 \`docs/\` 或引用项目原有负责文档；只在明确请求时建立基线。
 - 项目代码与测试始终使用项目根相对路径；不写机器绝对路径。工件之间使用上述逻辑路径，不使用 Speculo 的运行时路径标签。
-- 如果网页平台不能直接写项目文件，则按目标文件名输出完整内容，并在答复中明确应保存的位置；不得把“无法写文件”伪装成已经持久化。
+- 如果网页平台不能直接写项目文件，则以 \`### FILE: specdev/changes/{change}/README.md\` 等完整路径输出所有本次修改文件的完整内容，标明需要保存，随后列实际所需的 Spec/Goal/Ticket、源码资源、确认/浏览器证据与 pending 网关请求；不输出重复旧业务状态。下一会话先读用户保存后重新提供的完整工件；不得把无法写文件伪装成已经持久化。
 - 若本地项目提供 Speculo Node 校验器，可运行它补充结构校验；纯网页环境按本文内联的 schema、Ready 清单和完成标准逐项核对，并明确记录未运行的自动校验。
 - 本地只读 Goal 控制器和 Plan 合同校验库不随网页快照提供，不能把其名称当作可执行命令。网页执行者按内联 map-control/调用合同逐项计算依赖与门禁；缺少真实项目 Skill 源或执行能力时阻塞对应任务，不声称自动验证通过。
 - 提交、推送、合并、部署、发布、归档移动和不可逆迁移仍需用户明确授权。`;
@@ -394,6 +441,9 @@ function insertRuntimeConvention(body) {
 
 function replaceValidatorCommands(content) {
   return content.replace(
+    /```(?:bash|sh|text)\n(?:(?!```)[\s\S])*?<Path>\{roots\.workflows\}\/specdev\/(?:common\/tools\/(?:design-artifacts|publish-design)\.mjs|specdev-p-prototype\/scripts\/(?:validate-design-package|materialize-prototype)\.mjs)<\/Path>(?:(?!```)[\s\S])*?```/g,
+    "> **设计门与发布：** 按下方 `<design-portability>` 标签执行摘要、预览与 approved 检查；不能调用原 owner 网关时输出完整 pending 文件包，保留确认与恢复证据，不宣称发布成功。",
+  ).replace(
     /```bash\nnode `?<Path>\{roots\.workflows\}\/specdev\/common\/tools\/validate-specdev\.mjs<\/Path>`? \\\n\s*`?<Path>\{roots\.state\}\/specdev\/changes\/\{change\}<\/Path>`?\n```/g,
     [
       "> **结构校验：** 本地项目若已安装 Speculo，使用其 Node 校验器检查当前 change；",
@@ -412,6 +462,9 @@ function statePathToCanonical(value) {
 
 function workflowPathToCanonical(value, tagsBySource) {
   const relative = value.replace(/^\{roots\.workflows\}\/specdev\//, "");
+  if (portableDesignReferences.has(relative)) {
+    return "下方 `<design-portability>` 标签的设计检查、发布与恢复协议";
+  }
   const source = `${workflowRoot}/${relative}`;
   const tag = tagsBySource.get(source);
   if (tag) {
@@ -429,6 +482,7 @@ function workflowPathToCanonical(value, tagsBySource) {
 
   if (relative === "common/tools/ticket-control.mjs") return "本地只读 Goal 控制器（不含于网页快照）";
   if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
+  if (relative === "common/tools/change-artifacts.mjs") return "本地只读工件与完成证据检查（缺工具时按内联合同核对并明确未执行自动检查）";
 
   if (relative === "common/tools/README.md") {
     return "Speculo Node 校验器说明";
@@ -454,7 +508,7 @@ function workflowPathToCanonical(value, tagsBySource) {
 }
 
 function replacePaths(content, tagsBySource) {
-  const withoutCommands = replaceValidatorCommands(content);
+  const withoutCommands = replaceValidatorCommands(content).replaceAll('`{roots.commands}/handoff/COMMAND.md`', '交接能力（提供完整工件、已完成/未完成及下一 owner；不可用时输出完整交接包）');
 
   return withoutCommands.replace(
     /(`?)<Path>(.*?)<\/Path>\1/g,
@@ -479,6 +533,7 @@ function replacePaths(content, tagsBySource) {
       }
 
       if(value.startsWith("{roots.commands}/source-code-zip/"))return "用户所选源码 ZIP 工具（本网页快照不内置脚本；不可执行时报告阻塞）";
+      if(value === "{roots.commands}/handoff/COMMAND.md")return "交接能力（完整保存原工件、检查点、余项与下一 owner；不可用时输出完整交接包）";
       return codeDelimiter ? `\`${value}\`` : value;
     },
   );
@@ -532,7 +587,14 @@ function adaptSchema(content, tag) {
   return content;
 }
 
-function transformContent(content, tagsBySource) {
+function transformContent(content, tagsBySource, source) {
+  if (source) content = content.replace(/\[([^\]\n]+)\]\(([^)\n]+\.(?:md|json))(#[^)]*)?\)/g, (match, label, target, anchor) => {
+    if (/^(?:https?:|#|\/)/.test(target)) return match;
+    const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(source), target));
+    const tag = tagsBySource.get(resolved);
+    if (tag) return `${label.trim()}（下方 \`<${tag}>\` 标签${anchor ? '对应章节' : ''}）`;
+    return match;
+  });
   const withoutLocalActivationContract = content.replace(
     /^> 激活本 Work 后，先读取 `<Path>\{roots\.workflows\}\/specdev\/README\.md<\/Path>`，再执行本入口。\r?\n\r?\n/m,
     "",
@@ -548,15 +610,15 @@ async function renderReference(referenceDefinition, tagsBySource) {
 
   if (referenceDefinition.format === "json") {
     content = adaptSchema(content.trim(), referenceDefinition.tag);
-    content = transformContent(content, tagsBySource);
+    content = transformContent(content, tagsBySource, referenceDefinition.source);
     JSON.parse(content);
     content = `\`\`\`json\n${content}\n\`\`\``;
   } else {
     const { frontmatter, body } = splitFrontmatter(content);
-    const transformedBody = transformContent(body, tagsBySource);
+    const transformedBody = transformContent(body, tagsBySource, referenceDefinition.source);
 
     if (frontmatter && referenceDefinition.preserveArtifactHeader) {
-      const transformedHeader = transformContent(frontmatter, tagsBySource);
+      const transformedHeader = transformContent(frontmatter, tagsBySource, referenceDefinition.source);
       content = [
         "## 产物 YAML 头部",
         "",
@@ -594,7 +656,7 @@ function assertCanonical(content, documentDefinition) {
     failures.push("contains YAML frontmatter");
   }
   if (/\]\([^)\n]+\.md(?:#[^)]*)?\)/.test(content)) {
-    failures.push("contains an external Markdown file link");
+    failures.push("contains an external Markdown file link: " + content.split('\n').filter(line => /\]\([^)\n]+\.md(?:#[^)]*)?\)/.test(line)).join(' | '));
   }
   if (content.includes("<canonical") || content.includes("<source-file")) {
     failures.push("contains a forbidden wrapper");
@@ -649,6 +711,15 @@ async function expandNamedReferences(documentDefinition) {
     if (visited.has(source)) continue;
     visited.add(source);
     const content = await readFile(path.join(repositoryRoot, source), "utf8");
+    for (const match of content.matchAll(/\[[^\]\n]+\]\(([^)\n]+\.(?:md|json))(?:#[^)]*)?\)/g)) {
+      if (/^(?:https?:|#|\/)/.test(match[1])) continue;
+      const target = path.posix.normalize(path.posix.join(path.posix.dirname(source), match[1]));
+      if (!target.startsWith('template/') || !existsSync(path.join(repositoryRoot, target))) continue;
+      if (!bySource.has(target)) {
+        const item = {source: target, tag: `local-${target.replace(/^template\//,'').replace(/\.(md|json)$/,'').replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase()}`, format: target.endsWith('.json') ? 'json' : undefined};
+        bySource.set(target,item); queue.push(target);
+      }
+    }
     for(const match of content.matchAll(/<Path>\{roots\.references\}\/([^<>]+)<\/Path>/g)) {
       const target=`template/references/${match[1]}`;
       if(!/\.(md|json)$/.test(target)||target.includes('{'))continue;
@@ -657,6 +728,7 @@ async function expandNamedReferences(documentDefinition) {
     for (const match of content.matchAll(/<Path>\{roots\.workflows\}\/specdev\/([^<>]+)<\/Path>/g)) {
       const relative = match[1];
       const target = `${workflowRoot}/${relative}`;
+      if (portableDesignReferences.has(relative)) continue;
       if (target === documentDefinition.entry || relative === "common/rules/domain-runtime.md" || relative === "common/tools/README.md" || relative === "common/rules/path-reference-contract.md") continue;
       if (!/\.(md|json)$/.test(relative) || relative.includes("{")) continue;
       // A routed next Work is a different capability; explicitly included Work entries remain inlined.
@@ -724,7 +796,7 @@ async function generateCanonical(documentDefinition) {
   ));
   const { body } = splitFrontmatter(entryContent);
   const transformedEntry = insertRuntimeConvention(
-    transformContent(body, tagsBySource),
+    transformContent(body, tagsBySource, documentDefinition.entry),
   );
   const renderedReferences = [];
 

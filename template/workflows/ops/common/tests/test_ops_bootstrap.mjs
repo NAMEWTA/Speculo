@@ -1,7 +1,7 @@
 /** Node-less Linux SSH bootstrap/enroll contracts. SSH/scp are simulated; no public network. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { realpathSync, copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,7 +141,7 @@ function writeConn(dir, host) {
 }
 
 test("posix ssh uses the same host-key contract", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-posix-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-posix-"));
   const kh = join(d, "known_hosts");
   writeFileSync(kh, "fixture pinned key\n");
   const captured = {};
@@ -164,7 +164,7 @@ test("posix ssh uses the same host-key contract", () => {
 });
 
 test("scp uses the same host-key contract", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-scp-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-scp-"));
   const kh = join(d, "known_hosts");
   writeFileSync(kh, "fixture pinned key\n");
   const local = join(d, "a.tar.gz");
@@ -188,7 +188,7 @@ test("scp uses the same host-key contract", () => {
 });
 
 test("scp rejects controller paths and unsafe Linux paths before spawning", (t) => {
-  const d = mkdtempSync(join(tmpdir(), "ops-scp-path-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-scp-path-"));
   t.after(() => rmSync(d, { recursive: true, force: true }));
   const kh = join(d, "known_hosts"), local = join(d, "archive.tar.gz");
   writeFileSync(kh, "fixture pinned key\n"); writeFileSync(local, "reviewed archive");
@@ -201,7 +201,7 @@ test("scp rejects controller paths and unsafe Linux paths before spawning", (t) 
 });
 
 test("bootstrap-volta apply installs wrapper and does not touch profile", linuxExecution, () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-vol-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-vol-"));
   const home = join(d, "home");
   mkdirSync(home);
   const bashrc = join(home, ".bashrc");
@@ -224,7 +224,7 @@ test("bootstrap-volta apply installs wrapper and does not touch profile", linuxE
 });
 
 test("bootstrap-volta apply without ack blocked", linuxExecution, () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-ack-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-ack-"));
   const archives = makeArchives(d);
   const p = spawnSync("/bin/sh", [scriptPath, "--apply", archives.voltaTar, archives.voltaSha, archives.nodeTar, archives.nodeSha, join(d, "volta"), "24.21.0", "nope"], { encoding: "utf8" });
   assert.equal(p.error, undefined);
@@ -234,7 +234,7 @@ test("bootstrap-volta apply without ack blocked", linuxExecution, () => {
 });
 
 test("bootstrap-volta sha mismatch blocked", linuxExecution, () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-sha-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-sha-"));
   const archives = makeArchives(d);
   const p = spawnSync("/bin/sh", [scriptPath, "--apply", archives.voltaTar, "0".repeat(64), archives.nodeTar, archives.nodeSha, join(d, "volta"), "24.21.0", ACK], { encoding: "utf8" });
   assert.equal(p.error, undefined);
@@ -245,7 +245,7 @@ test("bootstrap-volta sha mismatch blocked", linuxExecution, () => {
 });
 
 function cliFixture({ executeLinux = false } = {}) {
-  const tmp = mkdtempSync(join(tmpdir(), "ops-bootcli-"));
+  const tmp = mkdtempSync(join(realpathSync(tmpdir()), "ops-bootcli-"));
   const state = join(tmp, "controller");
   // A simulated Linux SSH target is not a path on the controller filesystem.
   const target = executeLinux ? join(tmp, "server") : "/srv/speculo-bootstrap-test";
@@ -535,7 +535,7 @@ test("probe --connection-file still does not imply register", () => {
 });
 
 test("environmentSpec uses managed volta path", () => {
-  const tmp = mkdtempSync(join(tmpdir(), "ops-env-"));
+  const tmp = mkdtempSync(join(realpathSync(tmpdir()), "ops-env-"));
   const state = join(tmp, "controller");
   const target = join(tmp, "server");
   const prevProbe = cliHooks.probeLocal;
@@ -571,7 +571,7 @@ test("environmentSpec uses managed volta path", () => {
 });
 
 test("environmentSpec still throws when volta truly absent", () => {
-  const tmp = mkdtempSync(join(tmpdir(), "ops-envmiss-"));
+  const tmp = mkdtempSync(join(realpathSync(tmpdir()), "ops-envmiss-"));
   const state = join(tmp, "controller");
   const target = join(tmp, "server");
   const prevProbe = cliHooks.probeLocal;

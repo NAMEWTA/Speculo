@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "id": "dense-ide",
+      "title": "高密度 IDE",
+      "tasks": [
+        "代码编辑",
+        "数据库与API",
+        "日志诊断"
+      ],
+      "platforms": [
+        "desktop",
+        "web"
+      ],
+      "density": "compact",
+      "preview": "research-snapshot/ui-gallery/01-dense-ide.html",
+      "reference_ids": [
+        "linear",
+        "vercel"
+      ],
+      "avoid": [
+        "低频消费者表单",
+        "以摄影叙事为主的页面"
+      ],
+      "guide": "templates/dense-ide.md"
+    },
+    {
+      "id": "monochrome-console",
+      "title": "单色运行控制台",
+      "tasks": [
+        "运行监控",
+        "Agent管理",
+        "本地工具"
+      ],
+      "platforms": [
+        "desktop",
+        "web"
+      ],
+      "density": "compact",
+      "preview": "research-snapshot/ui-gallery/02-monochrome-console.html",
+      "reference_ids": [
+        "vercel",
+        "linear"
+      ],
+      "avoid": [
+        "品牌叙事",
+        "图片购物目录"
+      ],
+      "guide": "templates/monochrome-console.md"
+    },
+    {
+      "id": "soft-personal-ai",
+      "title": "柔和个人 AI",
+      "tasks": [
+        "对话",
+        "个人助手",
+        "上下文整理"
+      ],
+      "platforms": [
+        "desktop",
+        "web"
+      ],
+      "density": "comfortable",
+      "preview": "research-snapshot/ui-gallery/03-soft-personal-ai.html",
+      "reference_ids": [
+        "notion"
+      ],
+      "avoid": [
+        "高密度财务表格"
+      ],
+      "guide": "templates/soft-personal-ai.md"
+    },
+    {
+      "id": "responsive-web",
+      "title": "响应式 Web 工作台",
+      "tasks": [
+        "多设备访问",
+        "自托管应用",
+        "会话与预览"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "default",
+      "preview": "research-snapshot/ui-gallery/04-responsive-web.html",
+      "reference_ids": [
+        "vercel",
+        "linear"
+      ],
+      "avoid": [
+        "原生手势为核心的移动工具"
+      ],
+      "guide": "templates/responsive-web.md"
+    },
+    {
+      "id": "mobile-supervisor",
+      "title": "移动监督与审批",
+      "tasks": [
+        "审批",
+        "通知",
+        "远程监督"
+      ],
+      "platforms": [
+        "mobile",
+        "web"
+      ],
+      "density": "touch",
+      "preview": "research-snapshot/ui-gallery/05-mobile-supervisor.html",
+      "reference_ids": [
+        "airbnb"
+      ],
+      "avoid": [
+        "手机完整复刻IDE"
+      ],
+      "guide": "templates/mobile-supervisor.md"
+    },
+    {
+      "id": "cross-platform-workspace",
+      "title": "跨端 Agent 工作区",
+      "tasks": [
+        "多工作区",
+        "会话切换",
+        "多端任务"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "default",
+      "preview": "research-snapshot/ui-gallery/06-cross-platform-workspace.html",
+      "reference_ids": [
+        "vercel",
+        "ibm"
+      ],
+      "avoid": [
+        "单页面品牌展示"
+      ],
+      "guide": "templates/cross-platform-workspace.md"
+    },
+    {
+      "id": "local-first-content",
+      "title": "Local-first 内容编辑器",
+      "tasks": [
+        "知识库",
+        "长文阅读",
+        "笔记编辑"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "comfortable",
+      "preview": "research-snapshot/ui-gallery/07-local-first-content.html",
+      "reference_ids": [
+        "mintlify"
+      ],
+      "avoid": [
+        "监控大盘"
+      ],
+      "guide": "templates/local-first-content.md"
+    },
+    {
+      "id": "media-first",
+      "title": "媒体优先应用",
+      "tasks": [
+        "媒体浏览",
+        "资产选择",
+        "内容库"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "default",
+      "preview": "research-snapshot/ui-gallery/08-media-first.html",
+      "reference_ids": [
+        "spotify"
+      ],
+      "avoid": [
+        "长表单",
+        "纯代码编辑"
+      ],
+      "guide": "templates/media-first.md"
+    },
+    {
+      "id": "enterprise-data",
+      "title": "企业数据与审批",
+      "tasks": [
+        "记录筛选",
+        "表格决策",
+        "批量审批"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "compact",
+      "preview": "templates/enterprise-data.html",
+      "reference_ids": [
+        "ibm",
+        "vercel"
+      ],
+      "avoid": [
+        "完整电子表格",
+        "低密度品牌叙事"
+      ],
+      "guide": "templates/enterprise-data.md"
+    },
+    {
+      "id": "marketing-conversion",
+      "title": "SaaS 营销与转化",
+      "tasks": [
+        "产品说明",
+        "方案比较",
+        "联系转化"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "comfortable",
+      "preview": "templates/marketing-conversion.html",
+      "reference_ids": [
+        "stripe",
+        "vercel",
+        "notion"
+      ],
+      "avoid": [
+        "已登录高密度工作台"
+      ],
+      "guide": "templates/marketing-conversion.md"
+    },
+    {
+      "id": "commerce-service",
+      "title": "消费者交易与服务",
+      "tasks": [
+        "服务详情",
+        "日期与人数选择",
+        "预约确认"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "touch",
+      "preview": "templates/commerce-service.html",
+      "reference_ids": [
+        "airbnb",
+        "stripe"
+      ],
+      "avoid": [
+        "专业IDE",
+        "未经授权真实付款"
+      ],
+      "guide": "templates/commerce-service.md"
+    },
+    {
+      "id": "brand-editorial",
+      "title": "品牌与编辑叙事",
+      "tasks": [
+        "品牌介绍",
+        "作品探索",
+        "合作咨询"
+      ],
+      "platforms": [
+        "desktop",
+        "web",
+        "mobile"
+      ],
+      "density": "comfortable",
+      "preview": "templates/brand-editorial.html",
+      "reference_ids": [
+        "apple",
+        "figma"
+      ],
+      "avoid": [
+        "实时监控",
+        "密集数据处理"
+      ],
+      "guide": "templates/brand-editorial.md"
+    }
+  ],
+  "references": [
+    {
+      "id": "linear",
+      "title": "Linear",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/linear.app/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/linear/DESIGN.md",
+      "guide": "visual-references/linear.md"
+    },
+    {
+      "id": "vercel",
+      "title": "Vercel",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/vercel/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/vercel/DESIGN.md",
+      "guide": "visual-references/vercel.md"
+    },
+    {
+      "id": "stripe",
+      "title": "Stripe-inspired",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/stripe/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/stripe/DESIGN.md",
+      "guide": "visual-references/stripe.md"
+    },
+    {
+      "id": "airbnb",
+      "title": "Airbnb",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/airbnb/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/airbnb/DESIGN.md",
+      "guide": "visual-references/airbnb.md"
+    },
+    {
+      "id": "spotify",
+      "title": "Spotify",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/spotify/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/spotify/DESIGN.md",
+      "guide": "visual-references/spotify.md"
+    },
+    {
+      "id": "apple",
+      "title": "Apple-inspired",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/apple/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/apple/DESIGN.md",
+      "guide": "visual-references/apple.md"
+    },
+    {
+      "id": "figma",
+      "title": "Figma",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/figma/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/figma/DESIGN.md",
+      "guide": "visual-references/figma.md"
+    },
+    {
+      "id": "mintlify",
+      "title": "Mintlify",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/mintlify/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/mintlify/DESIGN.md",
+      "guide": "visual-references/mintlify.md"
+    },
+    {
+      "id": "notion",
+      "title": "Notion",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/notion/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/notion/DESIGN.md",
+      "guide": "visual-references/notion.md"
+    },
+    {
+      "id": "ibm",
+      "title": "IBM / Carbon-inspired",
+      "source": "https://github.com/VoltAgent/awesome-design-md/blob/c7c1bada4eda972236d124e06ee58df129a9266b/design-md/ibm/DESIGN.md",
+      "revision": "c7c1bada4eda972236d124e06ee58df129a9266b",
+      "license": "MIT",
+      "document": "upstream/awesome-design-md/ibm/DESIGN.md",
+      "guide": "visual-references/ibm.md"
+    }
+  ]
+}

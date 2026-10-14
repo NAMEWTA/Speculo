@@ -1,6 +1,6 @@
 # Spec Readiness
 
-本检查适用于 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`。
+本检查适用于独立 Spec 或合同允许的 README 等价范围/AC/验证；轻量不机械要求 Spec YAML，但行为、可观察 AC、风险与 Ready 判断不变。独立 Spec 存在则读取它，不能双权威。
 
 - [ ] 问题、目标用户和成功标准从用户或调用者视角可理解。
 - [ ] 主要、边界、错误、角色和状态场景足以生成垂直切片。
@@ -9,8 +9,9 @@
 - [ ] IN、REUSE、OUT 无冲突。
 - [ ] 公共接口、数据、兼容、安全、迁移和发布影响已决定或明确不适用。
 - [ ] 已锁定实现约束有来源，没有把偏好伪装成事实。
+- [ ] UI 范围已实际读取并引用批准有效的 change DESIGN、基线 revision/digest 与 UI 原型，页面/状态对应 AC；没有 UI 影响时明确不适用。
 - [ ] 高影响未决问题为零。
 - [ ] 低影响假设可逆且有验证方式。
 - [ ] 项目路径引用使用项目相对 Path 标签，内部工件使用完整根变量 Path 标签。
 - [ ] Spec 不包含逐文件施工清单或容易过时的行号承诺。
-- [ ] `ready_for_tickets: true` 与实际内容一致。
+- [ ] 独立 Spec 的 `ready_for_tickets: true` 与实际内容一致；轻量在原 README 明确同等就绪/缺口，不为免拆票创造 Map。

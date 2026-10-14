@@ -4,16 +4,18 @@
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn-change|retro|pr-delivery|review|prototype|wayfinder|complete> \
+  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn-change|retro|pr-delivery|review|prototype|wayfinder|complete|archive-ready|archived> \
   --repo <project-root> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
-`--stage` 只要求该阶段已经拥有的工件；所有已经存在的工件仍会验证。单 change 的 `goal-plan` 要求自己的 Goal Plan，允许合法的 `draft / ready_for_execution: false`；Tickets 阶段可尚无 Goal。Goal 的就绪字段必须是布尔值并与状态对应。
+无安装直接 Work 显式传 `--repo <project-root> --method-root <method-package-root> --state-root <shared-state-root>`；state-root 是 SpecDev 根的上级。已有安装仍核验 workspace，显式根不能覆盖其身份。省略 stage 时只验证当前实际工件。
+
+`--stage` 只要求该阶段已经拥有的工件；所有已经存在的工件仍会验证。无独立 Spec/计划的轻量任务读取 README 稳定 scope/acceptance/verification 章节。显式 `lightweight-goal-plan` 由原 Goal 的 Tasks 负责进度；完整 Goal 使用既有 schema，允许合法的 `draft / ready_for_execution: false`，不自动降级轻量。Tickets 阶段可尚无 Goal。完整 Goal 的就绪字段必须是布尔值并与状态对应。
 
 存在 Implementation Map、Implementation Plan 或 goal-tickets-map 入口中的任一项即走父编排校验；缺少另一父工件会报错，不回退单 change，也不额外要求单 change Goal。父编排读取 sibling 成员，创建时要求每个成员已有 Ready Spec/Tickets，继续校验组合 Ticket DAG、唯一父归属、serialization、跨 Ticket 写路径、全局 workspace/实现配额和完成门。已有父 Map/Plan 尚未补建无状态入口时仍可验证。
 
-省略 stage 时验证当前存在的工件，不会因未来 Work 尚未运行而报错。`--repo` 可选；提供后会把状态中的 SHA、祖先关系、当前分支和完成时 clean 状态与真实 Git 仓库交叉验证。
+解析出项目根后，把 Ticket Evidence 中实际 Workspace Execution Record 的 SHA、祖先关系、当前分支和完成时 clean 状态与真实 Git 仓库交叉验证。没有实际 Git 执行记录时不制造 worktree/领导权骨架；结构通过不等于取得并行排他或写入授权。
 
 校验 workspace 捕获账本（文件必须已存在；缺失时不要为了校验去创建）：
 
@@ -28,7 +30,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
 
-工件结构校验只依赖 Speculo 已要求的 Node.js 运行时，不使用第三方包。真实 Git 检查、review-scope 和包 self-check 中的隔离回归另需 Git；self-check 会在系统临时目录创建并清理测试仓库，不修改用户项目或 workflow 状态。返回码 `0` 表示没有阻塞性结构错误；warning 仍需人工判断。工具不替代项目测试、事实核验、设计审查或用户批准。
+工件结构校验只依赖 Speculo 已要求的 Node.js 运行时；YAML、设计 schema 和冻结历史 schema 所需代码随包分发，无需项目另装校验依赖。真实 Git 检查、Git review-scope 模式和包 self-check 中的隔离回归另需 Git；source-files 模式不依赖 Git。self-check 会在系统临时目录创建并清理测试仓库，不修改用户项目或 workflow 状态。返回码 `0` 表示没有阻塞性结构错误；warning 仍需人工判断。工具不替代项目测试、事实核验、设计审查或用户批准。
 
 ## 从 tickets-map 分析下一轮
 
@@ -52,4 +54,18 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 输出包含固定 SHA、实际 diff argv、内容摘要、路径和 changes/no-diff；无差异退出 0，但不是审查 approved。无效引用、歧义 merge-base、缺参数、重复参数或外部工具失败返回非零。差异不执行外部 diff/textconv，受限输出不会泄漏全日志。
 
+`--review-scope --repo <project-root> --mode source-files --file <relative-path>` 可重复 `--file`，仅冻结指定实际文件的原始内容摘要和字面路径；不创建 change、不初始化 workspace、不假造 commit/base。越界、链接、重复路径、未知参数和混入 Git 比较参数均拒绝。source snapshot 仍须由 C 执行规范与质量审查，不能当作自动批准。
+
 包级 self-check 同时执行内置工程合同回归测试；测试用临时目录和真实 Git fixture，既验证合法输入，也从本顶层入口证明非法记录被拒绝。测试不调用远程、不接管状态、不认证真实模型遵从。
+
+## 设计工件与归档
+
+UI 原型阶段用 --stage prototype --prototype-id UI-NNN；逻辑原型可指定 LOGIC-NNN。多个包并存不能以旧 ready 替代本次对象。下游按 change DESIGN 的 prototype_ref 定位当前包，其余历史包保持原字节。
+
+<Path>{roots.workflows}/specdev/common/tools/design-artifacts.mjs</Path> 提供 --project、--change、--handoff、--archived 只读校验，以及 --digest 和 --prototype-digest 摘要计算。规范摘要排除确认回执和工作流时间戳，运行资源必须位于当前包的 final/comparison 内。浏览器证据必须覆盖每个候选和最终入口的 390px/1440px 实际运行；结构测试不会认证截图来源或审美质量。
+
+永久写入只通过 <Path>{roots.workflows}/specdev/common/tools/publish-design.mjs</Path> 及 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md</Path>：先形成具体 dry-run 计划，绑定明确批准与当前摘要，再 apply 并回读；失败按返回检查点恢复。
+
+本地完成使用 `--stage complete`；移动前使用 `--stage archive-ready`，额外核验本次实际请求的外部交付。A 完成现役维护后最后无覆盖移动，再以 `--stage archived` 核验唯一目标与原回执；`moved` 结果明确尚未封存，原 A8 回执完成后用 `--stage archived --sealed` 验证。回执导航与完整移动清单依 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md</Path>，不能创建第二份报告。
+
+历史已完成/已归档包不自动重写；旧 v6 归档只读解析原完整 schema、身份和位置，不凭 archived 枚举批准新的 implemented 晋升。旧活动 UI 包应保留为证据，按 v3 新建 UI 编号、生成新 HTML/浏览器证据并重新确认。不能只把旧 schema 数字或 ready 标记改成新版。

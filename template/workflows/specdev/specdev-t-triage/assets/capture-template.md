@@ -15,7 +15,7 @@ updated_at: <ISO-8601>
 - **排除 id：** 无 / `<YYYY-MM-DD-slug>`
 - **确认记录：** 无 / 本次授权时间与操作员
 
-capture 不创建 Change，不写 `current_work`，不关闭 Issue。GitHub 是 inbox，不是开发权威。
+capture 不创建 Change，不创建工作调用镜像，不关闭 Issue。GitHub 是 inbox，不是开发权威。
 
 ## 账本
 

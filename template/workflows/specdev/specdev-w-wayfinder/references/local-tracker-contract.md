@@ -8,7 +8,7 @@
 | 子 issue | `<Path>{roots.state}/specdev/changes/{change}/investigation/{investigation-id}.md</Path>` |
 | label | Ticket frontmatter 的 `wayfinder:research|prototype|grilling|task` |
 | 阻塞关系 | Ticket frontmatter 的 `blocked_by` |
-| assignment | `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `claimed_investigations` |
+| assignment | 原 investigation Ticket 的 `## Assignment` 实际领取记录 |
 | solution comment | `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md</Path>` |
 | 关闭 issue | Ticket frontmatter 的 `status: closed` 与 `resolution` |
 
@@ -18,15 +18,13 @@
 
 1. `status: open`；
 2. `blocked_by` 中的每个 Ticket 都是 `status: closed`；
-3. `claimed_investigations` 中没有相同 `id`。
+3. 该 Ticket 没有仍有效的实际 Assignment。
 
 按文件名中的数字 ID 升序返回。地图正文不缓存开放 Ticket 列表；每次选择前沿都从 Ticket 与 claim 事实重新查询。
 
 ## 原子领取
 
-开始任何工作前，重读当前 change 状态并原子写入 `id`、`owner`、可选 `session` 和 `claimed_at`。已领取则选择下一前沿 Ticket。写回结果前再次重读；完成、释放或取消时删除 claim。
-
-Ticket 文件不重复保存 assignee，地图不重复保存 claim。change assignment registry 是领取的单一事实源。
+实际领取时在该 Ticket 的 `## Assignment` 写 Owner、Session、Claimed-At 与依据，缺省单 writer；并发必须由真实单写入者协调或有可证明隔离，普通文件 rename 不证明互斥。重读确认未被他人领取，冲突选下一前沿。完成/释放时记录真实处置，不因超时删除他人领取。未领取不建空槽，地图只导航，不建中央 claim registry。
 
 ## 解决方案评论
 

@@ -18,4 +18,4 @@
 - 新产品决定没有藏在冲突解决中；
 - 验证记录命令、运行环境、退出码和摘要；
 - Git 副作用来自明确的 candidate integration 或其他逐动作授权；
-- 完成/暂停可以从 Git、change status 和 Evidence 恢复。
+- 完成/暂停可以从 Git、原计划/README 与 Evidence 恢复。

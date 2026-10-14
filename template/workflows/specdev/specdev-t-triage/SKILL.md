@@ -35,9 +35,9 @@ metadata:
 
 从 workspace 解析 roots。intake 可创建/恢复 change；reconcile/publish 只选择满足 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 的现有 change。多个候选先消歧；冻结来源不覆盖。
 
-capture 不创建也不选择 change，不写 current_work，只使用 <Path>{roots.state}/specdev/capture.md</Path>。queue 只返回候选。CI/发布独立记录写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>；T 在首次具体操作时选最小未用 ID，按 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-run-template.md</Path> 原子写入并重读，不占用 change 状态。recover 使用原账本 owner。
+capture 不创建也不选择 change，不创建工作调用镜像，只使用 <Path>{roots.state}/specdev/capture.md</Path>。queue 只返回候选。CI/发布独立记录写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>；T 在首次具体操作时选最小未用 ID，按 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-run-template.md</Path> 原子写入并重读，不占用 change 状态。recover 使用原账本 owner。
 
-尚未完成 change 的 intake 在 current_work 为空时登记 specdev/triage，他项占用先恢复或 handoff；成功去重追加 works_run 并清空 current_work，可恢复失败保留。已完成 change 的 reconcile/publish 和 PR 交付只更新各自账本，不占用 current_work，不重开实现状态。PR 不能修改来源关闭、Ticket publish 或 capture 状态。远程失败不能把已完成代码状态改回未完成。
+intake 使用实际 change README 和来源/分诊工件；有重叠写入者先由原 owner 恢复或交接，失败在原账本保留检查点。已结束 change 的 reconcile/publish 和 PR 交付只更新各自账本，不重开整体 Outcome。PR 不能修改来源关闭、Ticket publish 或 capture 状态。远程失败不能把已完成代码状态改回未完成。
 
 ## 远程结果与检查有效期
 

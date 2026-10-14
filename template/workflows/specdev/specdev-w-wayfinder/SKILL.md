@@ -36,9 +36,11 @@ W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill →
 - 目的地约束所有调查；能精确陈述的问题成为调查票，尚不能陈述的留在战争迷雾，目标外内容不自动升级。
 - 默认每个会话最多解决一个调查 Ticket；绘图会话不关闭调查票。这个限制约束 W，不限制 P 的长期 Goal 调度；不静默减少用户明确要求的交付数量。
 - 四类保持 `wayfinder:research`、`wayfinder:prototype`、`wayfinder:grilling`、`wayfinder:task`。HITL 必须真人参与，Agent 不代答；Task 仅解除调查阻塞，不偷做目的地实现。
-- `claimed_investigations` 仍由探索载体的 change 状态唯一拥有。先领取后执行；他人已领取的问题跳过，不接管；只暂停有归属冲突的部分。
-- 每个 materialized change 拥有自己的 design-tree、LOG、CONTEXT、ADR、Spec 与 tickets-map。共享探索答案通过 solution comment 引用，不复制成多个可写事实源。
+- 调查认领保存在各 investigation Ticket 的实际 Assignment；不建中央镜像。先领取后执行；他人已领取的问题跳过，不接管；只暂停有归属冲突的部分。
+- 每个 materialized change 拥有自己的 design-tree、LOG、CONTEXT、ADR、Spec 与 tickets-map；涉及 UI 时也拥有经批准的 DESIGN。共享探索答案通过 solution comment 引用，不复制成多个可写事实源。
 - 缺失关键决定或必需证据时保持该 change 未就绪；其他独立清晰 change 可以交接，不要求整个大需求一次揭完迷雾。
+
+UI 调查调用 P 时按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 继承永久基线并在 HTML 后集中确认。solution comment 只保存设计合同/版本、指定原型与实际证据；探索包复用到 child change 必须核对新范围，不复制出多个永久写入 owner，也不把父探索批准自动视作 child 批准。
 
 ## 校验与交接
 

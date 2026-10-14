@@ -10,6 +10,8 @@
 - [ ] Ticket 明确要求 Lead 与 实现执行者 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
 - [ ] 可观察产出单一、明确且可验证。
 - [ ] 来源和验收合同映射存在。
+- [ ] UI Ticket 的 ui_change/design_ref 固定批准 DESIGN 的 revision、digest、pages 与 acceptance；实际 UI 文件范围不能靠省略标记绕过，非 UI 票无此门禁。
+- [ ] UI 实施的 Design Conformance 证据责任、页面/状态验收与真实浏览器路径明确；设计漂移返回 P。
 - [ ] IN、REUSE、OUT 无冲突。
 - [ ] 高影响未决问题为零。
 - [ ] `blocked_by` 指向存在的 Ticket，DAG 无环。

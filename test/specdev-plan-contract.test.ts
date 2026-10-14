@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -10,6 +10,7 @@ const isWindows = process.platform === "win32";
 const toolRoot = join(process.cwd(), "template/workflows/specdev/common/tools");
 const contract = await import(pathToFileURL(join(toolRoot, "plan-contract.mjs")).href);
 const validator = await import(pathToFileURL(join(toolRoot, "validate-specdev.mjs")).href);
+const controller = await import(pathToFileURL(join(toolRoot, "ticket-control.mjs")).href);
 const change = "2026-09-08-plan-contract";
 const body = "## 11. SKILL 调用计划\nExplicit implementation invocation.\n## 12. 停止、检查点与交付\nBlock affected Ticket; preserve unrelated work.\n";
 async function fixture() {
@@ -158,10 +159,105 @@ describe("SpecDev Plan contracts", () => {
       await save(); assert.match(contract.validateInitiative(directory).join("\n"), /cycle/);
       data.changes[0].depends_on = []; data.changes[1].target = child;
       await save(); assert.match(contract.validateInitiative(directory).join("\n"), /missing/);
-      await mkdir(join(f.root, child)); await writeFile(join(f.root, child, ".status.json"), JSON.stringify({ schema_version: 6, artifact: "change-status", change: child }));
+      await mkdir(join(f.root, child)); await writeFile(join(f.root, child, "README.md"), "# Child\n\nOutcome: active\n");
       await save(); assert.deepEqual(contract.validateInitiative(directory), []);
       data.changes[1].target = change; await save(); assert.match(contract.validateInitiative(directory).join("\n"), /self target/);
     } finally { await rm(f.root, { recursive: true, force: true }); }
+  });
+});
+
+describe("Ticket authority and execution policy without config", () => {
+  async function controllerFixture(policy: "current" | "required" = "current") {
+    const repo = await realpath(await mkdtemp(join(tmpdir(), "speculo-ticket-authority-")));
+    const name = "2026-10-14-ticket-authority";
+    const root = join(repo, "facts/specdev/changes", name);
+    await mkdir(join(root, "ticket"), { recursive: true });
+    const git = spawnSync("git", ["init", "-b", "main"], { cwd: repo, encoding: "utf8" });
+    assert.equal(git.status, 0, git.stdout + git.stderr);
+    const templateRoot = join(process.cwd(), "template/workflows/specdev");
+    const materialize = async (path: string) => (await readFile(join(templateRoot, path), "utf8"))
+      .replace("change: <YYYY-MM-DD-topic>", `change: ${name}`)
+      .replace("status: draft", "status: ready")
+      .replace("skill_scan: unreviewed", "skill_scan: inspected the fixture project; no applicable Skills")
+      .replace("deliverable_policy: unreviewed", "deliverable_policy: no additional quantified outputs requested");
+    await writeFile(join(root, "README.md"), `# Goal\n\nOutcome: active\n\n## Ownership\nOwner: lead-session\nWork: specdev/goal-plan\nEvidence: ownership.md\n`);
+    await writeFile(join(root, "ownership.md"), "Owner: lead-session\nWork: specdev/goal-plan\nSource: isolated controller fixture assignment\n");
+    const spec = (await materialize("specdev-s-spec/assets/spec-template.md"))
+      .replace("ready_for_tickets: false", "ready_for_tickets: true")
+      .replace("\n存在高影响未决问题时，`ready_for_tickets` 必须为 `false`。", "");
+    await writeFile(join(root, "spec.md"), spec);
+    let map = await materialize("specdev-t-tickets/assets/tickets-map-template.md");
+    const tickets = [];
+    for (const id of ["T-01", "T-02", "T-03"]) {
+      const ticketPath = join(root, "ticket", `${id.slice(2)}-implementation.md`);
+      const ticket = (await materialize("specdev-t-tickets/assets/ticket-template.md"))
+        .replaceAll("T-01", id)
+        .replace("ready: false", "ready: true")
+        .replace("owner: unassigned", `owner: ${id === "T-01" ? "lead-session" : `worker-${id}`}`)
+        .replace('expected_changes: ["<Path>src/example.ts</Path>"]', `expected_changes: ["<Path>src/${id}.ts</Path>"]`)
+        .replace('writable_paths: ["<Path>src/example/**</Path>"]', `writable_paths: ["<Path>src/${id}.ts</Path>"]`)
+        .replace("\n存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。", "");
+      await writeFile(ticketPath, ticket);
+      tickets.push(ticketPath);
+      if (id !== "T-01") map += `\n${id}: <Path>{roots.state}/specdev/changes/${name}/ticket/${id.slice(2)}-implementation.md</Path>\n`;
+    }
+    await writeFile(join(root, "tickets-map.md"), map);
+    const plan = (await materialize("specdev-p-goal-plan/assets/goal-plan-template.md"))
+      .replaceAll("<owner-or-session-locator>", "lead-session")
+      .replace("concurrent_implementation_limit: 3", "concurrent_implementation_limit: 2")
+      .replace("ticket_workspace_policy: current", `ticket_workspace_policy: ${policy}`)
+      .replace("integration_gate: direct-parent", `integration_gate: ${policy === "current" ? "direct-parent" : "candidate-merge"}`)
+      .replace("ready_for_execution: false", "ready_for_execution: true")
+      .replace(/## Execution Policy Source[\s\S]*$/, "## Execution Policy Source\n\nFixture request allows two simultaneous implementations including the Lead and three integration attempts; current workspace remains serial.\n");
+    await writeFile(join(root, "goal-plan.md"), plan);
+    const input = { mapPath: join(root, "tickets-map.md"), repoRoot: repo, methodRoot: join(process.cwd(), "template"), stateRoot: "facts" };
+    return { repo, root, tickets, input, map, plan };
+  }
+
+  it("reads and resumes Ticket progress without rewriting Map or Goal and defaults current to one writer", async () => {
+    const f = await controllerFixture();
+    try {
+      const executionTable = f.map.split("## 2. 执行清单")[1].split("## 3.")[0];
+      assert.doesNotMatch(executionTable.split("\n").filter(line => line.startsWith("|")).join("\n"), /\b(?:Status|Ready|Owner)\b/);
+      let result = controller.analyzeMap(f.input);
+      assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
+      assert.equal(result.workspace_policy, "current"); assert.equal(result.implementation_limit, 1);
+      assert.deepEqual(result.frontier, ["T-01"]);
+      const previous = result;
+      const original = await readFile(f.tickets[0], "utf8");
+      await writeFile(f.tickets[0], original.replace("status: ready", "status: in_progress"));
+      result = controller.analyzeMap({ ...f.input, previous });
+      assert.deepEqual(result.invalidated, []);
+      assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
+      assert.deepEqual(result.frontier, []);
+      await writeFile(f.tickets[0], original);
+      result = controller.analyzeMap({ ...f.input, previous });
+      assert.deepEqual(result.errors, []); assert.deepEqual(result.invalidated, []);
+      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.equal(await readFile(f.input.mapPath, "utf8"), f.map);
+      assert.equal(await readFile(join(f.root, "goal-plan.md"), "utf8"), f.plan);
+      await assert.rejects(readFile(join(f.repo, "facts/specdev/config.json")), /ENOENT/);
+    } finally { await rm(f.repo, { recursive: true, force: true }); }
+  });
+
+  it("counts an implementing Lead against required concurrency from the declared policy source", async () => {
+    const f = await controllerFixture("required");
+    try {
+      let result = controller.analyzeMap(f.input);
+      assert.deepEqual(result.errors, []); assert.deepEqual(result.frontier, ["T-01", "T-02"]);
+      await writeFile(f.tickets[0], (await readFile(f.tickets[0], "utf8")).replace("status: ready", "status: in_progress"));
+      result = controller.analyzeMap(f.input);
+      assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
+      assert.equal(result.implementation_limit, 2);
+      assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
+      assert.deepEqual(result.frontier, ["T-02"]);
+      assert.ok(result.deferred.some((node: any) => node.id === "T-03" && /concurrency limit/.test(node.reason)));
+      await writeFile(join(f.root, "goal-plan.md"), f.plan.replace(/## Execution Policy Source[\s\S]*$/, ""));
+      const missingSource = controller.analyzeMap(f.input);
+      assert.deepEqual(missingSource.frontier, []);
+      assert.match(missingSource.errors.join("\n"), /Execution Policy Source/);
+      await assert.rejects(readFile(join(f.repo, "facts/specdev/config.json")), /ENOENT/);
+    } finally { await rm(f.repo, { recursive: true, force: true }); }
   });
 });
 

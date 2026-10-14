@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "workflow": "specdev",
+  "state_seed": "optional",
   "config": {
     "path": ".speculo/specdev/config.json",
     "template": "workflows/specdev/specdev-i-init-setup/assets/config-template.json",
@@ -18,11 +19,10 @@
     }
   },
   "structured_state": [
-    ".speculo/specdev/status.json",
-    ".speculo/specdev/changes/*/.status.json",
-    ".speculo/specdev/archive/*/*/.status.json",
+    ".speculo/specdev/changes/*/README.md",
+    ".speculo/specdev/changes/archive/*/README.md",
     ".speculo/specdev/changes/*/goal-plan.md",
-    ".speculo/specdev/archive/*/*/goal-plan.md"
+    ".speculo/specdev/changes/archive/*/goal-plan.md"
   ],
   "opaque_default": "preserve-byte-for-byte"
 }

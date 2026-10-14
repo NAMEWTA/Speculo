@@ -27,11 +27,7 @@ function change(t) {
   mkdirSync(root,{recursive:true});
   writeFileSync(join(state,'workspace.json'),readFileSync(join(workflow,'../../.speculo/workspace.json')));
   writeFileSync(join(state,'specdev/config.json'),readFileSync(join(workflow,'specdev-i-init-setup/assets/config-template.json')));
-  const status = JSON.parse(readFileSync(join(workflow, 'specdev-i-init-setup/assets/change-status-template.json'), 'utf8'));
-  status.change = '2026-10-11-engineering';
-  status.created_at = status.updated_at = status.leadership.assigned_at = '2026-10-11T00:00:00Z';
-  status.leadership.current = 'test-owner';
-  writeFileSync(join(root, '.status.json'), JSON.stringify(status, null, 2) + '\n');
+  writeFileSync(join(root, 'README.md'), '# Engineering investigation\nOutcome: active\n');
   return root;
 }
 function run(args) {
@@ -145,13 +141,13 @@ test('all specialized branches are discoverable from their unchanged owner entri
   assert.deepEqual(validateEngineeringPackage(workflow), []);
 });
 test('real validator accepts measurements and rejects the controlled regression', t => {
-  const root = change(t), status = readFileSync(join(root, '.status.json'));
+  const root = change(t), status = readFileSync(join(root, 'README.md'));
   const file = join(root, 'architecture-review.md'), record = performance();
   writeFileSync(file, '# Measurement\n' + fence(record));
   const good = run(['--engineering', 'performance', root]); assert.equal(good.status, 0, good.output);
   record.baseline.samples = []; writeFileSync(file, '# Measurement\n' + fence(record));
   const bad = run(['--engineering', 'performance', root]); assert.equal(bad.status, 1, bad.output); assert.match(bad.output, /samples/);
-  assert.deepEqual(readFileSync(join(root, '.status.json')), status);
+  assert.deepEqual(readFileSync(join(root, 'README.md')), status);
 });
 test('ordinary real validation also rejects malformed marked observations', t => {
   const root = change(t); writeFileSync(join(root, 'architecture-review.md'), '```json specdev-engineering-evidence\n{\n```');
@@ -162,7 +158,7 @@ test('specialist CLI admission requires its existing artifact and exclusive flag
   for (const args of [ ['--engineering', 'performance', root], ['--engineering', 'wrong', root], ['--engineering', 'performance', '--self-check'], ['--engineering', 'performance', '--engineering', 'performance', root] ]) {
     const r = run(args); assert.notEqual(r.status, 0, JSON.stringify(args));
   }
-  assert.deepEqual(readdirSync(root), ['.status.json']);
+  assert.deepEqual(readdirSync(root), ['README.md']);
 });
 test('real documentation validation does not accept an unexecuted command', t => {
   const root = change(t); mkdirSync(join(root, 'evidence'));
@@ -246,12 +242,11 @@ test('review scope ignores configured external diff and forced color', t => {
   assert.equal(scope.diff_sha256, plain.diff_sha256); assert.equal(existsSync(sentinel), false);
 });
 test('specialist validation errors do not create remote ledgers or reopen completed states', t => {
-  const root = change(t), statusPath = join(root, '.status.json');
-  const status = JSON.parse(readFileSync(statusPath, 'utf8'));
-  status.change_status = 'completed'; status.completed_at = '2026-10-11T00:00:00Z';
-  writeFileSync(statusPath, JSON.stringify(status)); const before = readFileSync(statusPath);
+  const root = change(t), statusPath = join(root, 'README.md');
+  const status = readFileSync(statusPath, 'utf8').replace('Outcome: active', 'Outcome: completed');
+  writeFileSync(statusPath, status); const before = readFileSync(statusPath);
   const r = run(['--engineering', 'performance', root]); assert.notEqual(r.status, 0);
-  assert.deepEqual(readFileSync(statusPath), before); assert.deepEqual(readdirSync(root), ['.status.json']);
+  assert.deepEqual(readFileSync(statusPath), before); assert.deepEqual(readdirSync(root), ['README.md']);
 });
 test('correcting a candidate preserves historical incident observation bytes', t => {
   const root = change(t), original = fence(incident()), file = join(root, 'diagnosis.md');

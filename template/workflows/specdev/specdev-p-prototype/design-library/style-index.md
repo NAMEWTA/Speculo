@@ -1,4 +1,19 @@
-# 八种可运行 UI 风格
+# 十二种功能模板与视觉参考
+
+以 [catalog](catalog.json) 为机器清单，[离线 gallery](gallery.html) 为选择入口。下面原有 8 个样板保留原路径和字节，新增 4 个补齐不同任务。每个模板的 guide 明确任务、交互与组合边界；[组合协议](composition.md) 拥有选择方法。视觉 reference 提供表达机制，不替代功能模板和项目 DESIGN。
+
+## 新增四种任务模板
+
+| ID | 功能与离线入口 | 任务完整性 | 可选视觉参考 |
+|---|---|---|---|
+| enterprise-data | [企业数据与审批](templates/enterprise-data.html) · [规则](templates/enterprise-data.md) | 搜索、筛选、排序、详情、批量审批、空结果、失败保留选择 | IBM / Vercel |
+| marketing-conversion | [SaaS 营销与转化](templates/marketing-conversion.html) · [规则](templates/marketing-conversion.md) | 产品证明、价格周期切换、FAQ、表单验证、失败与本地确认 | Stripe / Vercel / Notion |
+| commerce-service | [交易与服务](templates/commerce-service.html) · [规则](templates/commerce-service.md) | 详情、日期/时段/人数、费用总额、收藏、不可用状态与本地预约 | Airbnb / Stripe |
+| brand-editorial | [品牌编辑叙事](templates/brand-editorial.html) · [规则](templates/brand-editorial.md) | 作品分类、详情、焦点返回、品牌叙事与本地咨询确认 | Apple 或 Figma 为主表达 |
+
+四个新样板均为原创虚构内容，CSS/JS 本地共享，操作只改变本页内存；图片来自原有已归属样例。浏览器打开只是起点，仍须按生成 change 的真实任务独立验证。
+
+## 原有八种样板
 
 八个页面都是独立静态 HTML，使用 `<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/ui-gallery/styles/</Path>` 的共享样式、`<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/ui-gallery/scripts/gallery.js</Path>` 和本地 Lucide。先按任务与平台选风格，不按颜色选；页面是原型起点，不是生产组件库。
 

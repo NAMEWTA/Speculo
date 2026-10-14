@@ -276,6 +276,46 @@
         "minLength": 1
       },
       "uniqueItems": true
+    },
+    "ui_change": {
+      "type": "boolean"
+    },
+    "design_ref": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "acceptance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "revision",
+        "digest",
+        "pages",
+        "acceptance"
+      ],
+      "additionalProperties": false
     }
   },
   "$defs": {

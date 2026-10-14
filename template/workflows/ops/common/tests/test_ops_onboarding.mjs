@@ -1,7 +1,7 @@
 /** Root-consent contracts, simulated SSH and real disposable local initialization. */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+import { realpathSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -17,7 +17,7 @@ import { fileState } from "../tools/opslib/agent.mjs";
 import { generateFleet } from "../tools/opslib/fleet.mjs";
 
 function fixture(t, local = false) {
-  const dir = mkdtempSync(join(tmpdir(), "ops-onboard-")), state = join(dir, "state");
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "ops-onboard-")), state = join(dir, "state");
   mkdirSync(state); mkdirSync(join(state, "private"));
   const registry = emptyStatus();
   registry.controller = { controller_id: "fixture", state_root: state, created_at: "2026-01-01T00:00:00Z" };

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { realpath, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
@@ -16,7 +16,7 @@ describe("work upgrade: evaluation levels and independent observation trust", ()
   const events = () => [{ schema_version: 1, sequence: 1, scenario_id: "case-a", kind: "tool", payload: { name: "verify", exit_code: 0, effect: "read-only" } }];
 
   async function fixture(run: (f: any) => Promise<void>) {
-    const dir = await mkdtemp(join(tmpdir(), "speculo-observer-test-"));
+    const dir = await mkdtemp(join(await realpath(tmpdir()), "speculo-observer-test-"));
     const repo = join(dir, "repo"), bundle = join(dir, "bundle"), artifacts = join(bundle, "artifacts"), trust = join(dir, "trust.json");
     const { canonicalJSON, sha256, fileInventory } = await load("scripts/lib/evaluation-evidence.mjs");
     try {

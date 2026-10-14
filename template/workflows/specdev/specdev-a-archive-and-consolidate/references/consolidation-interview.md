@@ -18,7 +18,7 @@
 1. 领域边界与限界上下文：系统由哪些领域构成，各自职责与边界；
 2. 规范术语与语义：代码中的类型/模块名对应什么业务概念，别名与禁用词；
 3. Context Map：多个 bounded context 之间需要明确的关系；
-4. 已固化的架构决策：现有代码体现了哪些难逆转、令人意外且来自真实权衡的决定；
+4. 已固化的架构决策：哪些有持续决策价值的决定可由真实历史依据确认；难逆转、令人意外和真实权衡是线索，不从代码编造历史动机；
 5. 历史缘由：为什么当前这样，哪些是有意决策、哪些只是可从代码即时发现的实现事实。
 
 ## 3. 每轮只关闭一个关键结论
@@ -56,9 +56,9 @@ change 内三份文档复用 grill 的既有格式，避免重复发明：
 
 ## Consolidate-from-code 模式
 
-1. 创建 `<Path>{roots.state}/specdev/changes/{change}/</Path>`、change 状态、LOG、CONTEXT 和 ADR，并登记 `current_work`。
+1. 创建实际知识任务的 <Path>{roots.state}/specdev/changes/{change}/README.md</Path>，写 Outcome active、范围与验收；LOG、CONTEXT、ADR 只在有真实内容时形成，恢复依据留原载体。
 2. 按上述访谈过程，每轮先探索代码/配置/测试并陈述证据，再一次只问一个真正影响长期理解的问题。
-3. 按 LOG → CONTEXT → ADR 顺序写入：CONTEXT 只保存项目规范术语；ADR 只有同时满足难逆转、令人意外和真实权衡时才创建。
+3. 按 LOG → CONTEXT → ADR 顺序写入：CONTEXT 只保存项目规范术语；ADR 只在有持续决策价值时创建，保留真实取舍；难逆转、令人意外和权衡不要求同时满足。
 4. 用户结论必须由当前代码或实际行为验证；未验证内容留在 LOG，不提升。
 5. 按 change completion 规则由本 Work 关闭该非实现型 change，再进入 Archive 模式的 dry-run/确认流程。
 

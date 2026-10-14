@@ -1,5 +1,36 @@
 # Changelog
 
+All notable changes to Speculo are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+## [2.0.1] - 2026-10-14
+
+### Changed
+- Use explicit project/method/data roots and Markdown Outcome for new SpecDev changes; retain full Ticket, Goal, Git integration and DESIGN evidence gates without duplicate business status files.
+- Separate local completion, whole-change cancellation and archive readiness; close related docs and knowledge work before moving a change to `changes/archive/`.
+- Share current-fact documentation methods across Init, Implement, Archive and manual docs-sync while retaining command-only Git/state ownership.
+- Make the SpecDev installation seed optional. Existing active v5/v6 status data requires an explicitly reviewed conversion; historical archives and the other four workflows retain their own persistence contracts.
+
+### Added
+- Project and change DESIGN artifacts, standalone validators, and a design catalog with 12 templates and 10 reference designs.
+- Explicit source-file review scopes for changes that have not yet been committed.
+- Read-only Markdown identity, Outcome, owner and closure readers, plus an explicit conversion maintenance tool with fixed input digests, before-images, pending protection and recovery.
+- Stable change-relative DESIGN approval locators and updated portable handoff bundles; existing immutable approval/revision bytes remain unchanged.
+
+### Fixed
+- Protect active Markdown SpecDev evidence during history squash planning and recheck the frozen evidence root before local or remote writes; unsealed archives remain blocked and old plans without that root require a new plan.
+- Read SpecDev README and actual owning artifacts in handoff and retrospective Commands; verify canonical files at their packaged location and normalize temporary fixture roots on macOS.
+- Reject malformed UTF-8 before planning a Markdown conversion; preserve valid Unicode, BOM, line endings and file modes through interruption and recovery.
+- Keep Ticket progress in Ticket/Evidence, resolve optional execution policy sources consistently, and count an implementing Lead against concurrency. A blocked Ticket stops only its dependency branch; cancellation does not satisfy a successful prerequisite.
+- Resolve cleanup conflicts by the authority and valid scope of each artifact, preserving active ADR obligations; resume design interviews without creating empty optional knowledge files.
+
+### Upgrade Notes
+- Do not run an old SpecDev writer against converted active data. Read `scripts/references/migrate-specdev-markdown.md` before preparing a conversion; ordinary Work use does not require this maintenance tool.
+- Fixture checks, live host observations and real human design approvals are distinct evidence levels; conversion does not grant publication, remote-write or archive authority.
+
 ## [2.0.0] - 2026-10-13
 
 - Install standard domain and Work Skills under `.agents/speculo`; retain 38 business Work identities and organize ten Command packages.
@@ -7,12 +38,6 @@
 - Share Lead/Orca/Herdr/headless CLI coordination methods and optional project choices; keep business progress in existing artifacts.
 - Require current layout and schemas, reject old installations without migration, and version installation recovery as transaction v3.
 - Rebuild portable validators, canonical distributions, documentation, authoring skills and regression fixtures together.
-
-All notable changes to Speculo are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-
-## [Unreleased]
 
 ## [1.0.24] - 2026-10-11
 
@@ -906,5 +931,6 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v1.0.19...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/NAMEWTA/Speculo/compare/209f927...v2.0.1
 [1.0.19]: https://github.com/NAMEWTA/Speculo/compare/v1.0.18...v1.0.19

@@ -18,7 +18,7 @@ serialization 格式为 `task-a <> task-b`，只表示两个无语义依赖的 T
 
 ## Frontier 与 Wave
 
-节点只有在所有 prerequisite done/cancelled、子 Ticket Ready、无 blocker/deviation、serialization lock 可用、workspace/授权有效且 agent 配额可用时进入 frontier。
+节点只有在所有 prerequisite 为 done 且真实依赖产物与证据有效、子 Ticket Ready、无 blocker/deviation、serialization lock 可用、workspace/授权有效且实现配额可用时进入 frontier。cancelled 是终态但不是成功交付；相关下游保持阻塞，由原 Lead 按真实产物或获批范围调整重规划依赖，不能自动把取消当作 satisfied。取消单票也不改变 README 的整体 Outcome。
 
 current 策略每个 Wave 只能含一个节点。required 策略可以放入多个节点，但任意两节点必须不存在传递依赖、serialization、writable/shared overlap 或同一不可并发资源。
 

@@ -1,100 +1,45 @@
-# 状态、持久化与恢复细则
+# 工件生命周期与恢复
 
-创建、恢复、迁移、关闭或归档 change 时读取；普通路由只读激活合同。
+创建、恢复、结束或归档 change 时读取。安装与业务运行分开；新项目不预造空目录、全局状态或工作调用记录。
 
-## 持久化约定
+## 身份与位置
 
-`speculo init` 创建固定状态骨架：
+change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目录名，日期为创建日期，不随归档重命名。真实首次创建时选择未占用名称；检查 active、新 archive 和旧历史，重名或多位置阻塞。只有需要相应内容时才建目录。
 
-- 全局状态：`<Path>{roots.state}/specdev/status.json</Path>`
-- 活跃 change：`<Path>{roots.state}/specdev/changes/</Path>`
-- 历史归档：`<Path>{roots.state}/specdev/archive/</Path>`
-- 捕获账本（可选，缺失合法）：`<Path>{roots.state}/specdev/capture.md</Path>`
+- 活动/已结束未归档对象：<Path>{roots.state}/specdev/changes/{change}/README.md</Path>。
+- 新封存对象：<Path>{roots.state}/specdev/changes/archive/{change}/README.md</Path>。
+- 既有历史：<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>，原位只读，保留原 schema、许可、模式和字节。
+- 直接 A 无 change 的必要维护回执：<Path>{roots.state}/specdev/maintenance/{date}-{topic}[-NN].md</Path>，只在跨会话/跨对象恢复需要时创建。
+- 工程 docs：<Path>{roots.state}/docs/README.md</Path>，明确请求基线后按需存在；它是跨领域工程事实，不是 SpecDev 独占知识 store。
 
-刷新时 CLI 依据 `<Path>{roots.workflows}/specdev/runtime-contract.json</Path>` 处理持久化数据：配置使用 baseline 三方合并，登记的状态 schema 使用显式 migrator，其他 runtime 文件按字节保留。只有字段删除或结构迁移时才在 `<Path>{roots.state}/back/</Path>` 写入 targeted backup；冲突在替换 active 安装前阻塞。`<Path>{roots.state}/back/</Path>`、`<Path>{roots.state}/install.json</Path>`、`<Path>{roots.state}/managed.json</Path>` 与 `<Path>{roots.state}/baselines/</Path>` 均不属于 SpecDev 写入 namespace。
+归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。新 archive 不嵌套月份。旧历史移动须另有明确计划，验证所有 locator 和 DESIGN 摘要；不可变正文不做路径替换。
 
-初始化设置 work 首次运行时生成配置并创建空的永久 namespace：
+## 唯一整体结论
 
-- 全局配置：`<Path>{roots.state}/specdev/config.json</Path>`
-- 追踪规则：`<Path>{roots.state}/specdev/.config/tracking.md</Path>`
-- 领域布局：`<Path>{roots.state}/specdev/.config/domain-layout.md</Path>`
-- 永久 ADR：`<Path>{roots.state}/specdev/adr/</Path>`
-- 永久领域上下文：`<Path>{roots.state}/specdev/context/</Path>`
-- 永久研究：`<Path>{roots.state}/specdev/research/</Path>`
+每个新 change README 正文恰有一行：
 
-初始化只保证永久目录存在，不写知识内容。只有 A-archive-and-consolidate 在 change 完成、实现证据验证、毕业评估和用户确认后，才能创建、合并或改写这些永久 namespace 中的内容；其他 Works 只读。
+```text
+Outcome: active
+```
 
-单个 change 可以包含：
+合法值只有 `active | completed | cancelled`，ASCII 大小写和格式固定；不从标题、YAML、清单、代码围栏或时间推断。重复/缺失/非法 Outcome、同义 YAML status 或新旧混合权威均拒绝写入。README 保存目的、当前接续和验收导航；完成/取消必须先通过 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>，结论文本本身不是证据。
 
-- `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/diagnostics/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/evidence/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/reviews/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/questionnaires/</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>`
+简单任务清单、范围、AC 和验证在 README；无独立 Ticket 的 Goal 用 goal-plan 清单；有 Ticket 则票和对应 Evidence 负责进度。迁出进度的位置改成导航，不能双写。复杂 Spec、Ticket、Map、Goal、Implementation、DESIGN 与专用工具合同保留真实消费者需要的字段。
 
+## owner 与独有事实
 
+不默认创建 leadership epoch、空批准槽或每 Work 记录。实际交接、并行、worktree/集成发生时，在原计划、Ticket Evidence 或操作回执记录唯一负责者、获批写集、输入、真实交接与下一步。复杂任务 owner 从原 implementation-plan/goal-plan 的 `lead` 读取。无 Goal 且动作确需 owner 时，README 的 `## Ownership` 内保存 `Owner: <session locator>` 与 `Evidence: <对象内相对路径>[#anchor]`，证据指向实际会话/交接；设计 bootstrap 还保存 `Work: specdev/prototype` 且依据正文绑定该 Work。普通只读不预建所有权记录，字段不创造授权。
 
-## 状态字段
+每个实现 Ticket 的 Evidence 在 `## Workspace Execution Record` 下以唯一 JSON object 保留实际执行记录（原 worktree 字段），不创建全局 array 镜像；其中保留 base SHA、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、candidate/result SHA、验证与 E2E disposition。current 使用 current/direct-parent；required 使用 source/parent-candidate，清理后也保留集成证据。父计划只导航，不另复制一套结果。
 
-`<Path>{roots.state}/specdev/status.json</Path>` 使用全局 schema v5；Spec/Ticket/Tickets Map 保留各自 schema v3；Ticket/Map 必须使用 plan_contract_version: 1，config 使用 schema v7，Goal Plan 使用 schema v7，Implementation Map 使用 schema v1、Implementation Plan 使用 schema v2，`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 使用 schema v6：
+语言、用户工具和数量来自当前请求/既有项目说明；实际并发、worktree 与尝试上限由原 Goal/项目约定负责，原 Goal/Implementation Plan 的 `## Execution Policy Source` 说明实际策略来源；已有 config 仍校验相应上限，Lead 自己实现计入并发。旧 config 的真实远程/验证用途可选保留；未知独有字段不能以简化为由丢弃。默认 UI 3 个、配置 2–4、明确用户数量覆盖，均不变。
 
-- `schema_version`（数字）：全局状态 schema 版本，固定为 `5`。
-- `workflow`（字符串）：workflow 标识，固定为 `"specdev"`。
-- `active`（对象数组）：当前活跃 change 的严格索引；每项只能包含 `change`，格式 `"YYYY-MM-DD-<kebab-topic>"`。
-- `archived`（去重字符串数组）：已归档 change 名称。详细归档时间、路径和 promotion 摘要只存在于 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/.status.json</Path>`。
+## 创建、恢复和历史边界
 
-`active[].change` 必须唯一，且不得同时出现在 `archived`。`current_work`、`works_run` 和 `claimed_investigations` 只存在于 change 自有 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`：开始 Work 时设置 `current_work`；暂停或可恢复阻塞时保留；成功完成时加入 `works_run` 并清空；取消时清空但不加入。逐次时间、结果和审计证据由 change 自有状态、Work 主产物、Evidence 或 LOG 承载，不写入全局索引。
+首次真实任务才创建 README 和实际需要的其他工件。简单形态参考 <Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/change-readme-template.md</Path>；实际需要 owner、验证或取消记录时读取 <Path>{roots.workflows}/specdev/specdev-i-init-setup/references/change-record-examples.md</Path>，不预填空槽。默认目录发现只枚举 changes 直接子目录，不递归把 ticket、archive 或临时目录当 change。指定历史再查询新 archive/旧月份 archive；同身份多位置报冲突。
 
-`<Path>{roots.state}/specdev/config.json</Path>` 的 `execution.max_concurrent_implementations`、`max_integration_attempts` 和 planning UI 设计候选字段均为可配置正整数；候选默认值与上限必须落在 2-4 且默认值不大于上限。仅 实现执行者 受前者约束且不含 Lead，current workspace 仍保持单 writer 串行安全不变量；只读 review/research/test-observation agent 不设 SpecDev 数字上限。
+恢复重读原 owner、输入摘要、实际 writer、Git/工具结果与未决动作。结果未保存不等于操作没发生；超时不证明 writer 结束。仅使受影响证据失效，不清零尝试、不抢锁，不改完成历史。review-only、performance、documentation、evidence-triage 留原报告或 Evidence，不能伪造问题已解决。
 
-`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `worktrees` 保存 Ticket 级 `base_sha`、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、适用 candidate/result SHA、验证、E2E disposition 与生命周期状态。current 记录使用 `workspace_ref=current` 和 direct-parent；required 记录使用 source/parent-candidate。每个实现 Ticket 都有一条记录；父分支只有在对应策略的验证通过后推进。`removed` 是 required 集成后来源 branch/worktree 完成清理的终态，必须保留全部集成与 E2E 证据。
+新 writer 不新增或更新旧 status 镜像。发现旧活动 status、未知 schema、混合协议或 <Path>{roots.state}/specdev/.markdown-conversion-pending</Path> 时只读盘点，停止重叠写入并交显式转换 owner；不自动升级、不因 README 存在跳过。pending 不证明互斥，也不能按年龄删除。旧 archive 原位冻结，历史 reader 不产生可写新对象。
 
-领域状态枚举：
-
-- change：`active | blocked | completed | archived`
-- Ticket：`draft | ready | in_progress | blocked | review | done | deviated | cancelled`
-- Investigation status：`open | closed`
-- Investigation resolution：`answered | out-of-scope | superseded | cancelled | null`
-- Planning Depth：`lite | standard | deep`
-- Worktree：`planned | active | review | integrating | integrated | removed | blocked`
-
-
-
-## 路径分配
-
-1. workflow 运行状态写入 `<Path>{roots.state}/specdev/</Path>`。
-2. change 产物写入 `<Path>{roots.state}/specdev/changes/{change}/</Path>`。
-3. 项目代码、测试和用户要求的项目文档写入项目路径；Evidence 仅保存项目相对指针。
-4. 长期知识候选先在 change 内形成；只有 A 在完成证据、毕业评估和用户确认全部通过后，才提升到对应永久 namespace。
-
-
-## 扩展工件与兼容
-
-W 可写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`：它只拥有候选 change 边界与目标指针，不复制各 child 的状态。父 Goal 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 使用 goal-tickets-map 指针合同，权威仍是父 Implementation Map/Plan。父 Goal 通过当前 P 入口恢复；Ticket/Map 必须满足当前调用与交付合同。无效版本停止受影响分支，不迁移、不重置状态或改写他人事务。
-
-## 专业分支的原位恢复
-
-performance/documentation/evidence-triage 是原 Work 内的模式，不是新的 current_work 或 works_run 值。R 的记录留 architecture-review，I 留原 Evidence，D 留 diagnosis/diagnostics；格式见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。普通旧工件不回填，归档和已完成历史不重写，config/status/change/Goal/Spec/Ticket 版本不变。
-
-恢复时先核对原 owner、当前 Lead 身份、输入/Skill/代码 checkpoint 和未决动作。仅使受影响证据失效；不能把“结果未保存”解释为操作未发生，不能清空 attempts 或转移锁来恢复。执行、远程账本和 A 的网关继续由原 owner 管理；只阻塞受影响的依赖闭包。
+CLI 刷新先 staging/验证再原子替换并保全未知 runtime；Work 不修改 <Path>{roots.state}/back/</Path>、安装元数据或命令 sidecar。安装故障只在与本次路径冲突时阻塞相关动作。

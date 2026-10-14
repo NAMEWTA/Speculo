@@ -20,4 +20,6 @@
 
 ## 校验
 
-校验 manifest/目录/ID 闭合、标准 YAML、静态指针、state 路径、schema 与 seed、owner、行为保真、正常与失败场景、canonical 闭包。用 generate-index 重建领域路由，再 --check；全量生成二次无 diff。当前实现只接受新 schema，不添加旧 reader 或迁移分支。
+按 [验证选择](../../_shared/validation-gates.md) 检查受影响的 manifest/目录/ID、YAML、指针、state、schema、owner 与行为。领域路由变化时用 generate-index 重建；canonical 依赖变化时重建其闭包，二次生成无 diff。各领域活动 writer 只接受当前协议；SpecDev 的旧历史使用独立只读 reader，旧活动必须显式转换，不能混合写或让安装刷新隐式转换。
+
+SpecDev runtime-contract 明确 state_seed optional，无独有数据不打包空 _state；其他领域保持 required。新对象按目录/README 验证，不能以缺 status 跳过非法材料。docs 为跨领域当前事实，不注册 SpecDev 独占 store；保护旧归档、config 独有字段、DESIGN 专用事务和 CLI staging/recover。

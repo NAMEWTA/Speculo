@@ -17,11 +17,11 @@ Lead 在 Ticket 可以独立执行、写路径不冲突、上下文足够且平�
 
 ## 3. 并发
 
-required 模式 实现执行者 上限取 Goal Plan、config 与平台能力的最小值；current 模式保持单 writer 串行安全不变量；Lead 参与实现时计入。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免测试资源冲突、重复工作和上下文失控。
+required 模式 实现执行者 上限取 Goal Plan、实际存在的 config 与平台能力的最小值；current 模式保持单 writer 串行安全不变量；Lead 参与实现时计入。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免测试资源冲突、重复工作和上下文失控。
 
 ## 4. 写入边界
 
-实现执行者 只写分配的 current workspace 或 worktree 中的项目路径和其 Git commit，不写 Ticket、Map、Goal Plan、Evidence、change status 或父分支。current 模式 commit 直接落在 parent branch；required 模式 commit 落在 source branch。其他 任务执行者 全部只读。Lead 接收返回后独立核对，再写所有 SpecDev 状态。
+实现执行者 只写分配的 current workspace 或 worktree 中的项目路径和其 Git commit，不写 Ticket、Map、Goal Plan、Evidence、README Outcome 或父分支。current 模式 commit 直接落在 parent branch；required 模式 commit 落在 source branch。其他 任务执行者 全部只读。Lead 接收返回后独立核对，再写本次负责工件的独有事实。
 
 ## 5. 动态 Dispatch Packet
 

@@ -19,13 +19,16 @@ import {
 import { execFileSync } from "node:child_process";
 import { dirname, basename, extname, join, relative, resolve, sep, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseFrontmatter as parseYaml, workspaceForPathSync, validateSkill } from "../../../../lib/speculo-runtime.mjs";
+import { parseFrontmatter as parseYaml, validateSkill } from "../../../../lib/speculo-runtime.mjs";
+
+import * as runtime from "../../../../lib/speculo-runtime.mjs";
 
 import {
   validateTicketPlan, validatePlanMap, validateInvocationCoverage,
-  validateGoalMap, validateInitiative, resolveProjectSource,
+  validateGoalMap, validateInitiative, resolveProjectSource, readChangeExecution, readSpecification, resolveToolContext, validateExecutionPolicy, canonicalToolPath, resolveSnapshotContext, readLightweightGoal, validateAcceptanceEvidence,
 } from "./plan-contract.mjs";
 
+import { validateChangeClosure } from "./change-artifacts.mjs";
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
 import { reviewScopeCLI } from "./review-scope.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
@@ -176,6 +179,8 @@ const VALID_STAGES = new Set([
   "prototype",
   "wayfinder",
   "complete",
+  "archive-ready",
+  "archived",
 ]);
 const REQUIRED_TICKET_KEYS = new Set([
   "schema_version",
@@ -271,7 +276,7 @@ function toPosix(value) {
 }
 
 function readText(path) {
-  return readFileSync(path, "utf8");
+  return runtime.readUtf8ArtifactSync(path);
 }
 
 function isFile(path) {
@@ -293,28 +298,17 @@ function walk(root) {
   return paths;
 }
 
-function isLegalChangeLocation(changeAbs, stateRoot) {
-  const name = basename(changeAbs);
-  if (resolve(stateRoot, "specdev", "changes", name) === changeAbs) return true;
-  const monthDir = dirname(changeAbs);
-  const archiveRoot = dirname(monthDir);
-  return (
-    /^\d{4}-\d{2}$/.test(basename(monthDir)) &&
-    resolve(stateRoot, "specdev", "archive") === archiveRoot &&
-    basename(changeAbs) === name
-  );
-}
-
-function resolveWorkspaceContract(repoRoot, change) {
+function resolveWorkspaceContract(repoRoot, change, options = {}) {
   try {
-    const {projectRoot,workspace}=workspaceForPathSync(repoRoot??change);
-    const stateRoot=resolve(projectRoot,workspace.roots.state),specdevRoot=join(stateRoot,"specdev");
-    const errors=isLegalChangeLocation(resolve(change),stateRoot)?[]:["change is outside workspace roots.state (.agents/speculo/.speculo/specdev); project-root .speculo/specdev is illegal"];
-    let config=null; try {config=JSON.parse(readText(join(specdevRoot,"config.json")));}catch{}
-    return {mode:"strict",errors,config,specdevRoot,stateDeclared:workspace.roots.state};
-  } catch(error) {return {mode:"strict",errors:[String(error)],config:null,specdevRoot:null,stateDeclared:null};}
+    const context = options.readOnlySnapshot ? resolveSnapshotContext(options.readOnlySnapshot) : resolveToolContext(change, { ...options, repoRoot });
+    const location = runtime.resolveChangeSync(context, basename(change), { includeArchived: true });
+    const errors = canonicalToolPath(context, change) === location.root ? [] : ["change is outside the declared state root"];
+    const configPath = join(context.specdevRoot, "config.json");
+    const config = existsSync(configPath) ? JSON.parse(readText(runtime.safeWorkPathSync(context.specdevRoot, 'config.json', {mustExist:true,type:'file'}))) : null;
+    return { context, errors, config, specdevRoot:context.specdevRoot, stateDeclared:relative(context.projectRoot,context.stateRoot) };
+  } catch(error) { return {errors:[String(error)],config:null,specdevRoot:null}; }
 }
-function findSpecdevConfig(change,repoRoot=null) {return resolveWorkspaceContract(repoRoot,change).config;}
+function findSpecdevConfig(change,repoRoot=null,options={}) {return resolveWorkspaceContract(repoRoot,change,options).config;}
 
 function positiveConfigLimit(config, key, fallback) {
   const value = config?.execution?.[key];
@@ -509,8 +503,9 @@ function validateDocumentReferences(root) {
     "design-library",
     "research-snapshot",
   );
+  const upstreamRoot = join(root, "specdev-p-prototype", "design-library", "upstream");
   const governedEntries = entries.filter(
-    (path) => path !== frozenResearchRoot && !path.startsWith(`${frozenResearchRoot}${sep}`),
+    (path) => ![frozenResearchRoot, upstreamRoot].some(frozen => path === frozen || path.startsWith(`${frozen}${sep}`)),
   );
   const knownFiles = new Set(governedEntries.filter(isFile).map((path) => basename(path)));
   const knownDirectories = new Set(governedEntries.filter(isDirectory).map((path) => basename(path)));
@@ -578,15 +573,29 @@ function validateDocumentReferences(root) {
       }
     }
 
+    const workSegment = toPosix(relative(root, path)).split("/")[0];
+    const skillRoot = EXPECTED_WORKS.has(workSegment) ? join(root, workSegment) : null;
+    const acceptedLinks = [];
     for (const match of text.matchAll(RELATIVE_MD_LINK_RE)) {
-      errors.push(
-        `${label}:${lineNumber(text, match.index)}: relative Markdown link is forbidden: ${match[1]}`,
-      );
+      const target = resolve(dirname(path), match[1].split("#")[0]);
+      if (skillRoot && target.startsWith(`${skillRoot}${sep}`) && existsSync(target)) acceptedLinks.push(match[0]);
+      else errors.push(`${label}:${lineNumber(text, match.index)}: relative Markdown link crosses its Skill package or is missing: ${match[1]}`);
+    }
+    // Browser assets need executable relative href/src values, not agent Path
+    // tags. Accept only existing targets inside the same Work package.
+    if (extname(path).toLowerCase() === ".html" && skillRoot) {
+      for (const match of text.matchAll(/(?:href|src)=["']([^"'#]+)(?:#[^"']*)?["']/g)) {
+        if (/^[a-z]+:|^\/\//i.test(match[1])) continue;
+        const target = resolve(dirname(path), match[1]);
+        if (target.startsWith(`${skillRoot}${sep}`) && existsSync(target)) acceptedLinks.push(match[0]);
+        else errors.push(`${label}: browser asset link crosses its Skill package or is missing: ${match[1]}`);
+      }
     }
 
     let withoutTags = text
       .replace(/`?\s*<Path>.*?<\/Path>\s*`?/gs, "")
       .replace(/`?\s*<Url>.*?<\/Url>\s*`?/gs, "");
+    for (const link of acceptedLinks) withoutTags = withoutTags.replaceAll(link, "");
 
     for (const match of withoutTags.matchAll(/\{roots\.(?:workflows|state)\}/g)) {
       errors.push(
@@ -659,29 +668,8 @@ function validateJsonFiles(root) {
 
 function validateGlobalStatusAssets(root) {
   const errors = [];
-  const paths = [join(root, "specdev-i-init-setup", "assets/status-template.json")];
-  if (isDirectory(join(root, "_state"))) {
-    paths.unshift(join(root, "_state", "status.json"));
-  }
-  for (const path of paths) {
-    if (!isFile(path)) {
-      errors.push(`missing global status seed ${toPosix(relative(root, path))}`);
-      continue;
-    }
-    const data = JSON.parse(readText(path));
-    const keys = Object.keys(data).sort();
-    const expected = ["active", "archived", "schema_version", "workflow"];
-    if (JSON.stringify(keys) !== JSON.stringify(expected)) {
-      errors.push(`${toPosix(relative(root, path))}: global status must contain only ${expected.join(", ")}`);
-    }
-    if (
-      data.schema_version !== GLOBAL_STATUS_SCHEMA_VERSION ||
-      data.workflow !== "specdev" ||
-      !Array.isArray(data.active) ||
-      !Array.isArray(data.archived)
-    ) {
-      errors.push(`${toPosix(relative(root, path))}: invalid SpecDev global status v5 seed`);
-    }
+  for (const path of [join(root,"_state/status.json"),join(root,"specdev-i-init-setup/assets/status-template.json"),join(root,"specdev-i-init-setup/assets/change-status-template.json")]) {
+    if (existsSync(path)) errors.push(`retired business status must not be distributed as a new seed: ${toPosix(relative(root,path))}`);
   }
 
   const schemaPath = join(root, "common", "schemas", "status.schema.json");
@@ -708,7 +696,6 @@ function validateGlobalStatusAssets(root) {
 function validateExecutionContractAssets(root) {
   const errors = [];
   const configTemplatePath = join(root, "specdev-i-init-setup", "assets/config-template.json");
-  const changeTemplatePath = join(root, "specdev-i-init-setup", "assets/change-status-template.json");
   const configSchemaPath = join(root, "common", "schemas", "config.schema.json");
   const goalPlanSchemaPath = join(root, "common", "schemas", "goal-plan.schema.json");
   const changeSchemaPath = join(root, "common", "schemas", "change-status.schema.json");
@@ -717,7 +704,6 @@ function validateExecutionContractAssets(root) {
 
   for (const path of [
     configTemplatePath,
-    changeTemplatePath,
     configSchemaPath,
     goalPlanSchemaPath,
     changeSchemaPath,
@@ -775,15 +761,6 @@ function validateExecutionContractAssets(root) {
     errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v7 workspace strategy contract");
   }
 
-  const changeTemplate = JSON.parse(readText(changeTemplatePath));
-  if (
-    changeTemplate.schema_version !== CHANGE_STATUS_SCHEMA_VERSION ||
-    changeTemplate.artifact !== "change-status" ||
-    !Array.isArray(changeTemplate.worktrees)
-  ) {
-    errors.push("change-status-template.json must define the SpecDev change-status v6 seed");
-  }
-
   const changeSchema = JSON.parse(readText(changeSchemaPath));
   const worktreeRequired = new Set(changeSchema.$defs?.worktree?.required ?? []);
   const integrationRequired = new Set(changeSchema.$defs?.integration?.required ?? []);
@@ -828,10 +805,10 @@ function capabilityChecks(root) {
       [
         join(root, "specdev-i-init-setup", "SKILL.md"),
         [
-          "tracking-template",
-          "domain-layout-template",
-          "config-template",
-          "change-status-template",
+          "first-setup.md",
+          "current-facts-docs.md",
+          "必要偏好",
+          "README",
           "specdev-worktree/",
         ],
       ],
@@ -907,7 +884,7 @@ function capabilityChecks(root) {
       "wayfinder",
       [
         join(root, "specdev-w-wayfinder", "SKILL.md"),
-        ["共享地图", "claimed_investigations", "wayfinder:prototype", "wayfinder:grilling", "solution comment", "每个会话"],
+        ["共享地图", "调查认领", "wayfinder:prototype", "wayfinder:grilling", "solution comment", "每个会话"],
       ],
     ],
     [
@@ -1510,10 +1487,12 @@ function validateReviews(change, required, errors) {
   return paths;
 }
 
-function validatePrototypes(change, required, errors) {
+function validatePrototypes(change, required, errors, prototypeId = null, consumingDesign = false, context = null) {
   const root = join(change, "prototypes");
+  const changeDesign = isFile(join(change, "DESIGN.md")) ? parseFrontmatter(join(change, "DESIGN.md")).meta : null;
+  const boundId = changeDesign?.prototype_ref?.id;
   if (!isDirectory(root)) {
-    if (required) errors.push("prototype stage requires a prototypes/UI-NNN/design-system.md artifact");
+    if (required || boundId) errors.push("prototype stage requires a prototypes/UI-NNN/design-system.md artifact");
     return [];
   }
 
@@ -1527,10 +1506,15 @@ function validatePrototypes(change, required, errors) {
   );
   const paths = [];
   let readyCount = 0;
+  const candidates = readdirSync(root).filter(name => /^(?:UI|LOGIC)-\d{3,}$/.test(name));
+  if (required && !prototypeId && candidates.length !== 1) errors.push("prototype stage requires --prototype-id when multiple packages exist");
+  const selectedId = prototypeId ?? (required && candidates.length === 1 ? candidates[0] : !required ? boundId : null);
+  if (selectedId && !candidates.includes(selectedId)) errors.push(`prototype not found: ${selectedId}`);
 
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     const entryPath = join(root, entry.name);
     const label = toPosix(relative(change, entryPath));
+    if (selectedId && entry.name !== selectedId) continue;
     if (entry.isSymbolicLink()) {
       errors.push(`${label}: prototype design directories and files must not be symlinks`);
       continue;
@@ -1558,9 +1542,10 @@ function validatePrototypes(change, required, errors) {
     }
     paths.push(designPath);
     const { meta } = parseFrontmatter(designPath);
+    if (consumingDesign && entry.name === boundId && meta.status !== "ready") errors.push(`${label}: bound UI prototype must be ready before downstream consumption`);
     if (meta.status === "ready") readyCount += 1;
     try {
-      execFileSync(process.execPath, [validator, designPath], {
+      execFileSync(process.execPath, [validator, ...contextArguments(context), ...(consumingDesign && entry.name === boundId ? ["--check-ready"] : []), designPath], {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       });
@@ -1574,13 +1559,14 @@ function validatePrototypes(change, required, errors) {
     }
   }
 
-  const obsoleteRecords = walk(root).filter(
+  const scanRoot = selectedId && isDirectory(join(root, selectedId)) ? join(root, selectedId) : root;
+  const obsoleteRecords = walk(scanRoot).filter(
     (path) => isFile(path) && basename(path) === "record.md",
   );
   for (const path of obsoleteRecords) {
     errors.push(`${toPosix(relative(change, path))}: obsolete prototype record is forbidden; use UI-NNN/design-system.md`);
   }
-  const discoveredDesigns = walk(root).filter(
+  const discoveredDesigns = walk(scanRoot).filter(
     (path) => isFile(path) && basename(path) === "design-system.md",
   );
   for (const path of discoveredDesigns) {
@@ -1589,7 +1575,7 @@ function validatePrototypes(change, required, errors) {
     }
   }
   if (required && readyCount === 0) {
-    errors.push("prototype stage requires at least one ready UI or logic design package");
+    errors.push("prototype stage requires the selected ready UI or logic design package");
   }
   return paths;
 }
@@ -1954,25 +1940,9 @@ function validateGoalPlan(path, errors) {
   return { path, meta, body };
 }
 
-function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot = null) {
+function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot = null, options = {}) {
   if (!goalPlan) return;
-  const config = findSpecdevConfig(change, repoRoot);
-  if (!config) {
-    errors.push(`${basename(path)}: SpecDev config.json is required to validate execution limits`);
-    return;
-  }
-  const configuredAgents = positiveConfigLimit(config, "max_concurrent_implementations", 0);
-  const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
-  if (config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
-    errors.push(`${basename(path)}: SpecDev config.json must use schema v${CONFIG_SCHEMA_VERSION} with positive execution limits`);
-    return;
-  }
-  if (goalPlan.meta.concurrent_implementation_limit > configuredAgents) {
-    errors.push(`${basename(path)}: concurrent_implementation_limit ${goalPlan.meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${configuredAgents}`);
-  }
-  if (goalPlan.meta.integration_attempt_limit > configuredAttempts) {
-    errors.push(`${basename(path)}: integration_attempt_limit ${goalPlan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
-  }
+  errors.push(...validateExecutionPolicy(goalPlan, findSpecdevConfig(change, repoRoot, options)).map(error => `${basename(path)}: ${error}`));
 }
 
 function validateDesignTree(path, change, errors) {
@@ -2239,53 +2209,14 @@ function validateTicket(path, errors) {
   return { path, meta, body };
 }
 
-function validateChangeStatus(path, expectedChange, errors) {
-  if (!isFile(path)) {
-    errors.push("missing change status artifact");
-    return null;
-  }
+function validateChangeExecution(change, errors, context) {
+  const path = join(change, "evidence"), expectedChange = basename(change);
   let data;
   try {
-    data = JSON.parse(readText(path));
-  } catch (error) {
-    errors.push(`${basename(path)}: invalid JSON: ${error.message}`);
-    return null;
-  }
-  const required = [
-    "schema_version",
-    "artifact",
-    "change",
-    "change_status",
-    "current_work",
-    "works_run",
-    "claimed_investigations",
-    "execution_authorization",
-    "leadership",
-    "created_at",
-    "updated_at",
-    "completed_at",
-    "archived",
-    "archive_path",
-    "blockers",
-    "deviations",
-    "worktrees",
-  ];
-  const missing = required.filter((key) => !(key in data));
-  if (missing.length) errors.push(`${basename(path)}: missing keys ${JSON.stringify(missing.sort())}`);
-  const unexpected = Object.keys(data).filter((key) => !required.includes(key));
-  if (unexpected.length) errors.push(`${basename(path)}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
-  if (data.schema_version !== CHANGE_STATUS_SCHEMA_VERSION || data.artifact !== "change-status") {
-    errors.push(`${basename(path)}: artifact/schema_version must be change-status/${CHANGE_STATUS_SCHEMA_VERSION}`);
-  }
-  if (data.change !== expectedChange) {
-    errors.push(`${basename(path)}: change must equal directory name ${expectedChange}`);
-  }
-  if (!new Set(["active", "blocked", "completed", "archived"]).has(data.change_status)) {
-    errors.push(`${basename(path)}: invalid change_status ${data.change_status}`);
-  }
-  if (!Array.isArray(data.blockers) || !Array.isArray(data.deviations) || !Array.isArray(data.worktrees)) {
-    errors.push(`${basename(path)}: blockers, deviations, and worktrees must be arrays`);
-  }
+    const facts = runtime.readChangeFactsSync(context, basename(change));
+    if (facts.location.root !== resolve(change)) throw new Error('change identity does not match requested location');
+    data = { ...facts, worktrees:readChangeExecution(change) };
+  } catch (error) { errors.push(`${change}: ${error.message}`); return null; }
   const seenWorktreeTickets = new Set();
   for (const worktree of Array.isArray(data.worktrees) ? data.worktrees : []) {
     if (!worktree || typeof worktree !== "object" || Array.isArray(worktree)) {
@@ -2556,15 +2487,6 @@ function validateChangeStatus(path, expectedChange, errors) {
       }
     }
   }
-  if (data.change_status === "archived") {
-    if (data.archived !== true) errors.push(`${basename(path)}: archived status requires archived=true`);
-    const inner = typeof data.archive_path === "string" ? stripPathTag(data.archive_path) : null;
-    if (inner === null || !inner.startsWith(`${STATE_PREFIX}archive/`)) {
-      errors.push(`${basename(path)}: archived status requires a rooted archive_path`);
-    }
-  } else if (data.archived === true) {
-    errors.push(`${basename(path)}: archived=true conflicts with change_status=${data.change_status}`);
-  }
   return data;
 }
 
@@ -2619,7 +2541,7 @@ function gitSucceeds(repoRoot, args) {
 }
 
 function validateGitEvidence(repoRoot, changeStatus, errors) {
-  if (!repoRoot) return;
+  if (!repoRoot || !changeStatus?.worktrees?.length) return;
   const resolvedRoot = resolve(repoRoot);
   if (gitOutput(resolvedRoot, ["rev-parse", "--is-inside-work-tree"]) !== "true") {
     errors.push(`--repo is not a Git worktree: ${resolvedRoot}`);
@@ -2651,13 +2573,26 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
     } else if (worktree.integration?.source_sha && worktree.base_sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.integration.source_sha])) {
       errors.push(`${label}: source_sha must descend from base_sha`);
     }
+    if (worktree.workspace_ref !== "current" && new Set(["active","review","integrating","blocked"]).has(worktree.status)) {
+      try {
+        const source = runtime.safeWorkPathSync(resolvedRoot,worktree.workspace_ref,{mustExist:true,type:"directory"});
+        const common = gitOutput(resolvedRoot,["rev-parse","--path-format=absolute","--git-common-dir"]);
+        if (gitOutput(source,["rev-parse","--path-format=absolute","--git-common-dir"]) !== common || gitOutput(source,["branch","--show-current"]) !== worktree.branch) errors.push(`${label}: source workspace must be a real isolated worktree of the recorded repository and branch`);
+      } catch(error) { errors.push(`${label}: actual source isolation is missing: ${error.message}`); }
+    }
+    if (worktree.status === "integrating" && worktree.workspace_ref !== "current") {
+      try {
+        const candidate = runtime.safeWorkPathSync(resolvedRoot,worktree.integration.candidate_workspace_ref,{mustExist:true,type:"directory"});
+        if (gitOutput(candidate,["rev-parse","HEAD"]) !== worktree.integration.candidate_sha || gitOutput(candidate,["rev-parse","HEAD^{tree}"]) !== worktree.integration.candidate_tree_sha) errors.push(`${label}: actual candidate workspace differs from the recorded checkpoint/tree`);
+      } catch(error) { errors.push(`${label}: actual candidate isolation is missing: ${error.message}`); }
+    }
     if (new Set(["integrated", "removed"]).has(worktree.status) && gitOutput(resolvedRoot, ["status", "--porcelain"])) {
       errors.push(`${label}: repository is dirty while Ticket is recorded as ${worktree.status}`);
     }
   }
 }
 
-function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null) {
+function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null, options = {}) {
   const mapPath = join(change, "implementation-map.md");
   const planPath = join(change, "implementation-plan.md");
   if (!isFile(mapPath)) errors.push("parent implementation requires implementation-map.md");
@@ -2765,7 +2700,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       errors.push(`implementation-map.md: invalid member change name ${member}`);
       continue;
     }
-    const memberRoot = join(changesRoot, member);
+    let memberRoot;
+    try { memberRoot = runtime.resolveChangeSync(options.context,member,{includeArchived:parentStatus?.location.kind === "archive"}).root; } catch(error) { errors.push(`member change does not exist or has invalid identity: ${member}: ${error.message}`); continue; }
     if (!isDirectory(memberRoot)) {
       errors.push(`implementation-map.md: member change does not exist: ${member}`);
       continue;
@@ -2776,13 +2712,11 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
 
     const memberErrors = [];
     const memberWarnings = [];
-    const status = validateChangeStatus(join(memberRoot, ".status.json"), member, memberErrors);
+    const status = validateChangeExecution(memberRoot, memberErrors, options.context);
     if (status) {
       memberStatuses.set(member, status);
-      if (status.change_status === "archived") memberErrors.push("archived change cannot be an implementation member");
-      if (status.current_work !== null && status.current_work !== "specdev/implement") {
-        memberErrors.push(`current_work=${status.current_work} conflicts with parent implementation ownership`);
-      }
+      if (parentStatus?.outcome === "completed") validateGitEvidence(options.context.projectRoot,status,memberErrors);
+      if (parentStatus?.location.kind !== "archive" && status.location.kind !== "active") memberErrors.push("archived change cannot be an implementation member");
       for (const worktree of Array.isArray(status.worktrees) ? status.worktrees : []) {
         if (worktree?.status === "active") {
           activeImplementations += 1;
@@ -2892,7 +2826,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       const uncovered = [...declared].filter((id) => !covered.has(id) && !(childMap && new RegExp(`${escapeRegExp(id)}.*\\bdeferred\\b`, "i").test(childMap.body)));
       if (uncovered.length) memberErrors.push(`Spec acceptance contracts are not covered by Tickets: ${JSON.stringify(uncovered.sort())}`);
     }
-    if (status?.change_status === "completed") {
+    if (status?.outcome === "completed") {
       const unfinished = [...childTickets].filter(([, artifact]) => !new Set(["done", "cancelled"]).has(artifact.meta.status)).map(([id]) => id);
       if (unfinished.length) memberErrors.push(`completed member has unfinished Tickets: ${JSON.stringify(unfinished)}`);
     }
@@ -3007,28 +2941,16 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (!Array.isArray(otherMap.members)) continue;
     let otherStatus = null;
     try {
-      otherStatus = JSON.parse(readText(join(changesRoot, entry.name, ".status.json"))).change_status;
+      otherStatus = runtime.readChangeFactsSync(options.context, entry.name).outcome;
     } catch {
       // Invalid competing parents still own their members conservatively.
     }
-    if (new Set(["completed", "archived"]).has(otherStatus)) continue;
+    if (new Set(["completed", "cancelled"]).has(otherStatus)) continue;
     const overlap = otherMap.members.map(String).filter((member) => memberSet.has(member));
     if (overlap.length) errors.push(`member changes already belong to unfinished parent implementation ${entry.name}: ${JSON.stringify(overlap)}`);
   }
 
-  const config = findSpecdevConfig(change, repoRoot);
-  const configuredAgents = positiveConfigLimit(config, "max_concurrent_implementations", 0);
-  const configuredAttempts = positiveConfigLimit(config, "max_integration_attempts", 0);
-  if (!config || config.schema_version !== CONFIG_SCHEMA_VERSION || configuredAgents === 0 || configuredAttempts === 0) {
-    errors.push("implementation-plan.md: SpecDev config v7 with positive execution limits is required");
-  } else {
-    if (plan.meta.concurrent_implementation_limit > configuredAgents) {
-      errors.push(`implementation-plan.md: concurrent_implementation_limit ${plan.meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${configuredAgents}`);
-    }
-    if (plan.meta.integration_attempt_limit > configuredAttempts) {
-      errors.push(`implementation-plan.md: integration_attempt_limit ${plan.meta.integration_attempt_limit} exceeds config max_integration_attempts ${configuredAttempts}`);
-    }
-  }
+  errors.push(...validateExecutionPolicy(plan, findSpecdevConfig(change, repoRoot, options)).map(error => `implementation-plan.md: ${error}`));
   if (activeImplementations > plan.meta.concurrent_implementation_limit) {
     errors.push(`parent implementation agent limit exceeded: ${activeImplementations} active for limit ${plan.meta.concurrent_implementation_limit}`);
   }
@@ -3039,23 +2961,13 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
   }
 
-  if (stage === "goal-plan" && parentStatus && new Set(["active", "blocked"]).has(parentStatus.change_status) && !new Set(["specdev/goal-plan"]).has(parentStatus.current_work)) {
-    errors.push("parent active/blocked status must keep current_work=specdev/goal-plan");
-  }
-  if (parentStatus?.change_status === "completed") {
-    const incomplete = members.filter((member) => memberStatuses.get(member)?.change_status !== "completed");
+  if (parentStatus?.outcome === "completed") {
+    const incomplete = members.filter((member) => memberStatuses.get(member)?.outcome !== "completed");
     if (incomplete.length) errors.push(`parent implementation is completed while members remain incomplete: ${JSON.stringify(incomplete)}`);
     const unfinished = [...ticketByTask].filter(([, value]) => !new Set(["done", "cancelled"]).has(value.artifact.meta.status)).map(([task]) => task);
     if (unfinished.length) errors.push(`completed parent implementation has unfinished composite tasks: ${JSON.stringify(unfinished)}`);
     if (map.meta.status !== "completed" || plan.meta.status !== "completed") {
       errors.push("completed parent requires completed Implementation Map and Implementation Plan");
-    }
-    if (
-      parentStatus.current_work !== null ||
-      !Array.isArray(parentStatus.blockers) || parentStatus.blockers.length > 0 ||
-      !Array.isArray(parentStatus.deviations) || parentStatus.deviations.length > 0
-    ) {
-      errors.push("completed parent requires null current_work and no blockers or deviations");
     }
     const activeMemberWork = [...memberStatuses]
       .flatMap(([member, status]) => (status.worktrees ?? []).map((worktree) => ({ member, worktree })))
@@ -3100,23 +3012,47 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   return { map, plan, members, tasks, memberStatuses, ticketByTask };
 }
 
-function validateChange(change, stage = null, repoRoot = null, engineeringKind = null) {
+function validateChange(change, stage = null, repoRoot = null, engineeringKind = null, prototypeId = null, options = {}) {
   const errors = [];
   const warnings = [];
+  const archiveReady = stage === "archive-ready";
+  if (archiveReady) stage = "complete";
   if (!isDirectory(change)) {
     return { errors: [`change directory does not exist: ${change}`], warnings };
   }
 
-  const workspace = resolveWorkspaceContract(repoRoot, change);
+  const workspace = resolveWorkspaceContract(repoRoot, change, options);
   errors.push(...workspace.errors);
+  if (errors.length) return {errors,warnings};
+  options = {...options, context:workspace.context};
+  change = canonicalToolPath(workspace.context, change);
+
+  // Resolve every consumed artifact subtree before individual validators can read it.
+  // Unrelated preserved links are not consumers and remain in the archive manifest.
+  if(stage !== 'archived') try {
+    for(const name of ['README.md','spec.md','goal-plan.md','implementation-map.md','implementation-plan.md','tickets-map.md','DESIGN.md','design-tree.json','source.md','triage.md','publish.md','diagnosis.md','wayfinder-map.md','LOG.md','ticket','evidence','investigation','learning','reviews','prototypes']) {
+      const path=runtime.safeWorkPathSync(change,name);
+      if(isDirectory(path)) for(const child of walk(path)) runtime.safeWorkPathSync(change,toPosix(relative(change,child)));
+    }
+  }catch(error){return {errors:[...errors,error.message],warnings};}
 
   // A partial parent must never fall back to the single-change artifact contract.
   const mapPath = join(change, "tickets-map.md");
   const isParentImplementation = isFile(join(change, "implementation-map.md")) ||
     isFile(join(change, "implementation-plan.md")) ||
     (isFile(mapPath) && parseFrontmatter(mapPath).meta.artifact === "goal-tickets-map");
-  const changeStatus = validateChangeStatus(join(change, ".status.json"), basename(change), errors);
-  if (isParentImplementation) validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot);
+  const changeStatus = stage === "archived" ? null : validateChangeExecution(change, errors, workspace.context);
+  if (errors.length) return {errors,warnings};
+  if (stage === "complete" || changeStatus?.outcome === "completed") errors.push(...validateChangeClosure({context:workspace.context,change:basename(change),forArchive:archiveReady}).errors);
+  if (archiveReady && changeStatus?.outcome === "cancelled") return {errors,warnings};
+  if (stage === "archived") {
+    const output=runDesignCheck("--archived", change, errors, workspace.context,options.sealed ? ['--sealed'] : []);
+    let archive;
+    if(output) {try {archive=JSON.parse(output);}catch {errors.push('archived consumer returned no verified receipt result');}}
+    if(archive?.archive_state === 'moved') warnings.push('archive moved and checked, but is not sealed; finish the original A8 receipt');
+    return { errors, warnings, ...(archive ? {archive} : {}) };
+  }
+  if (isParentImplementation) validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot, options);
   errors.push(...validateInitiative(change));
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
@@ -3145,34 +3081,40 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     validateDiagnosis(diagnosisPath, basename(change), errors);
   }
   validateReviews(change, stage === "review", errors);
-  validatePrototypes(change, stage === "prototype", errors);
+  validatePrototypes(change, stage === "prototype", errors, prototypeId, new Set(["spec", "tickets", "goal-plan", "implement", "review", "complete"]).has(stage), workspace.context);
+  if (new Set(["tickets", "goal-plan", "implement", "review", "complete"]).has(stage)) runDesignCheck("--handoff", change, errors, workspace.context);
   validateChangeLearning(change, stage === "learn-change", errors);
   const retro = validateRecords(change, "retrospective", parseFrontmatter);
   const prs = validateRecords(change, "pull-request", parseFrontmatter);
   errors.push(...retro.errors, ...prs.errors);
   if (stage === "retro" && !retro.records.some(r => r.meta.status === "completed")) errors.push("retro stage requires a completed retrospective");
   if (stage === "pr-delivery" && !prs.records.length) errors.push("pr-delivery stage requires a PR record");
-  if (stage === "complete" && prs.records.some(r => r.meta.requested === true && (["planned", "failed"].includes(r.meta.status) || (r.meta.delivery_target === "ready" && r.meta.status === "draft")))) errors.push("complete stage cannot archive pending PR delivery");
+  if (archiveReady && prs.records.some(r => r.meta.requested === true && (["planned", "failed"].includes(r.meta.status) || (r.meta.delivery_target === "ready" && r.meta.status === "draft")))) errors.push("complete stage cannot archive pending PR delivery");
   const retroOnly = retro.records.length > 0 && retro.errors.length === 0 && retro.records.every(r => r.meta.status === "completed") &&
-    changeStatus?.works_run?.includes("specdev/retro") && changeStatus.works_run.every(w => ["specdev/retro", "specdev/triage"].includes(w)) &&
     !["spec.md", "ticket", "tickets-map.md", "goal-plan.md", "implementation-map.md", "implementation-plan.md", "evidence"].some(p => existsSync(join(change,p))) && !changeStatus.worktrees?.length;
 
+  let simpleGoal = null;
+  try { simpleGoal = readLightweightGoal(change); } catch (error) { errors.push(error.message); }
   const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation && !retroOnly;
   const specPath = join(change, "spec.md");
-  const spec = isFile(specPath) || specRequired
-    ? validateSpec(specPath, errors, warnings)
-    : null;
+  let specification = null;
+  if (!isParentImplementation && !retroOnly && (isFile(specPath) || specRequired)) {
+    try { specification = readSpecification(change, {allowLightweight: stage !== "tickets" && (stage !== "goal-plan" || Boolean(simpleGoal)), requiredArtifact:options.requiredArtifact, depth:options.depth}); }
+    catch(error) { errors.push(error.message); }
+  }
+  const lightweight = specification?.lightweight === true;
+  const spec = isFile(specPath) ? validateSpec(specPath, errors, warnings) : null;
   const ticketMode = isDirectory(join(change, "ticket"));
-  const mapRequired = !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
+  const mapRequired = !simpleGoal && !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
   const ticketsMap = isFile(mapPath) || mapRequired ? validateMap(mapPath, errors, repoRoot) : null;
   const goalPlanPath = join(change, "goal-plan.md");
-  const goalPlan = isFile(goalPlanPath) || (stage === "goal-plan" && !isParentImplementation)
+  const goalPlan = !simpleGoal && (isFile(goalPlanPath) || (stage === "goal-plan" && !isParentImplementation))
     ? validateGoalPlan(goalPlanPath, errors)
     : null;
   validateDesignTree(join(change, "design-tree.json"), change, errors);
   validateWayfinder(change, errors);
   if (stage === "grill") {
-    for (const name of ["design-tree.json", "LOG.md", "CONTEXT.md", "ADR.md"]) {
+    for (const name of ["design-tree.json"]) {
       if (!isFile(join(change, name))) errors.push(`grill stage requires ${name}`);
     }
   }
@@ -3186,7 +3128,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   }
 
   const ticketDir = join(change, "ticket");
-  const ticketsRequired = !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
+  const ticketsRequired = !simpleGoal && !isParentImplementation && (new Set(["tickets", "goal-plan"]).has(stage) || (stage === "implement" && ticketMode));
   const ticketFiles = isDirectory(ticketDir)
     ? readdirSync(ticketDir)
         .filter((name) => name.endsWith(".md"))
@@ -3195,7 +3137,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     : [];
   if (ticketsRequired && !isDirectory(ticketDir)) errors.push("missing Ticket directory");
   if (ticketsRequired && !ticketFiles.length) errors.push("Ticket directory contains no Markdown tickets");
-  if (stage === "implement" && !ticketMode && !isFile(join(change, "evidence", "direct-spec.md"))) {
+  if (stage === "implement" && !ticketMode && !lightweight && !isFile(join(change, "evidence", "direct-spec.md"))) {
     errors.push("Direct Spec implement stage requires evidence/direct-spec.md");
   }
 
@@ -3255,7 +3197,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     }
   }
   if (changeStatus && goalPlan) {
-    validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors, repoRoot);
+    validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors, repoRoot, options);
     const attemptLimit = Number.isInteger(goalPlan.meta.integration_attempt_limit) ? goalPlan.meta.integration_attempt_limit : null;
     if (attemptLimit !== null) {
       for (const worktree of changeStatus.worktrees ?? []) {
@@ -3266,9 +3208,11 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     }
     validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
   }
-  validateGitEvidence(repoRoot, changeStatus, errors);
+  validateGitEvidence(stage === "complete" ? workspace.context.projectRoot : repoRoot, changeStatus, errors);
 
-  if (spec) {
+  if (stage === "complete" && spec && !ticketMode && !isParentImplementation && !retroOnly) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
+
+  if (spec && ticketMode) {
     const declaredContracts = new Set(spec.body.match(/\bAC-\d+\b/g) ?? []);
     const coveredContracts = new Set(
       [...tickets.values()].flatMap((artifact) =>
@@ -3398,44 +3342,44 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
 
   if (changeStatus) {
     if (
-      changeStatus.change_status === "completed" &&
+      changeStatus.outcome === "completed" &&
       [...tickets.values()].some(
         (artifact) => !new Set(["done", "cancelled"]).has(artifact.meta.status),
       )
     ) {
-      errors.push("change_status is completed while planned Tickets remain unfinished");
+      errors.push("Outcome is completed while planned Tickets remain unfinished");
     }
-    if (changeStatus.change_status === "archived") {
+    if (changeStatus.location.kind === "archive") {
       warnings.push("validating an archived change in place; normally it lives under the archive root");
     }
-    if (stage === "complete" && changeStatus.change_status !== "completed") {
-      errors.push("complete stage requires change_status=completed");
+    if (stage === "complete" && changeStatus.outcome !== "completed") {
+      errors.push("complete stage requires Outcome: completed");
     }
   }
   if (
     stage === "complete" &&
-    !ticketFiles.length && !retroOnly &&
+    !ticketFiles.length && !retroOnly && !lightweight &&
     !isFile(join(change, "implementation-map.md")) &&
     !isFile(join(change, "evidence", "direct-spec.md"))
   ) {
     errors.push("complete stage without Tickets requires evidence/direct-spec.md");
   }
   if (
-    stage === "complete" &&
+    archiveReady &&
     triage &&
     new Set(["pending-close", "close-failed"]).has(triage.meta.external_action)
   ) {
     errors.push(`complete stage cannot archive external_action=${triage.meta.external_action}`);
   }
   if (
-    stage === "complete" &&
+    archiveReady &&
     triage &&
     new Set(["pending", "publish-failed"]).has(triage.meta.publish_action)
   ) {
     errors.push(`complete stage cannot archive publish_action=${triage.meta.publish_action}`);
   }
 
-  for (const path of walk(change).filter((item) => isFile(item) && extname(item) === ".md")) {
+  for (const path of walk(change).filter((item) => lstatSync(item).isFile() && extname(item) === ".md")) {
     const text = readText(path);
     if ((text.match(/<Path>/g) ?? []).length !== (text.match(/<\/Path>/g) ?? []).length) {
       errors.push(`${toPosix(relative(change, path))}: unbalanced <Path> tags`);
@@ -3451,7 +3395,18 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   }
 
   errors.push(...validateEngineeringArtifacts(change, engineeringKind));
-  return { errors, warnings };
+  if (simpleGoal && changeStatus?.outcome === "completed" && /^[-*] \[ \]/m.test(simpleGoal.body)) errors.push("completed Goal still has unfinished tasks");
+  return { errors, warnings, ...(options.readOnlySnapshot ? {snapshot:true,preflight:true} : {}) };
+}
+
+function contextArguments(context) {
+  if (!context) return [];
+  const source = context.readOnlySnapshot?.sourceContext ?? context;
+  return ['--repo',source.projectRoot,'--method-root',source.methodRoot,'--state-root',source.specdevRoot,...(context.readOnlySnapshot ? ['--snapshot-specdev',context.specdevRoot] : [])];
+}
+function runDesignCheck(operation, path, errors, context = null, flags = []) {
+  try { return execFileSync(process.execPath, [fileURLToPath(new URL("./design-artifacts.mjs", import.meta.url)), operation, path, ...contextArguments(context),...flags], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }
+  catch (error) { errors.push(String(error.stderr || error.stdout || error.message).trim()); }
 }
 
 function printResults(errors, warnings) {
@@ -3462,22 +3417,30 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr> [comparison options] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--sealed (archived only)] [--prototype-id UI-NNN|LOGIC-NNN] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr|source-files> [comparison options or repeated --file <relative-path>] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
   return 2;
 }
 
 function main(argv) {
   if (argv[0] === "--review-scope") return reviewScopeCLI(argv.slice(1));
   let engineeringKind = null;
+  let prototypeId = null;
   let selfCheckRequested = false;
   let stage = null;
   let repoRoot = null;
+  const contextOptions = {};
   let capturePath = null;
   let triageRunPath = null;
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === "--engineering") {
+    if (arg === "--prototype-id") {
+      if (prototypeId !== null || !/^(?:UI|LOGIC)-\d{3,}$/.test(argv[index + 1] ?? "")) return usage();
+      prototypeId = argv[++index];
+    } else if (arg === "--sealed") {
+      if(contextOptions.sealed) return usage();
+      contextOptions.sealed=true;
+    } else if (arg === "--engineering") {
       if (engineeringKind !== null || !ENGINEERING_KINDS.has(argv[index + 1])) return usage();
       engineeringKind = argv[++index];
     } else if (arg === "--self-check") {
@@ -3487,6 +3450,8 @@ function main(argv) {
       index += 1;
     } else if (arg.startsWith("--stage=")) {
       stage = arg.slice("--stage=".length);
+    } else if (arg === "--method-root" || arg === "--state-root") {
+      contextOptions[arg === "--method-root" ? "methodRoot" : "stateRoot"] = argv[++index];
     } else if (arg === "--repo") {
       repoRoot = argv[index + 1] ?? null;
       index += 1;
@@ -3506,6 +3471,8 @@ function main(argv) {
     }
   }
   if (stage !== null && !VALID_STAGES.has(stage)) return usage();
+  if(contextOptions.sealed && stage !== 'archived') return usage();
+  if (prototypeId && stage !== "prototype") return usage();
   if (engineeringKind !== null && (selfCheckRequested || capturePath || triageRunPath || positional.length !== 1)) return usage();
   if (triageRunPath) {
     if (selfCheckRequested || positional.length || stage !== null || capturePath || repoRoot) return usage();
@@ -3525,7 +3492,7 @@ function main(argv) {
     return printResults(errors, []);
   }
   if (positional.length === 1) {
-    const result = validateChange(resolve(positional[0]), stage, repoRoot, engineeringKind);
+    const result = validateChange(resolve(positional[0]), stage, repoRoot, engineeringKind, prototypeId, contextOptions);
     return printResults(result.errors, result.warnings);
   }
   return usage();

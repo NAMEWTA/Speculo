@@ -7,6 +7,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { safeWorkPathSync } from "../../../../lib/speculo-runtime.mjs";
 
 const OPEN = "open";
 const INTAKEN = "intaken";
@@ -41,7 +42,7 @@ function parseLedgerStates(body) {
 }
 
 function summarize(stateRoot) {
-  const file = join(stateRoot, "capture.md");
+  const file = safeWorkPathSync(stateRoot, "capture.md", { type: "file" });
   if (!existsSync(file)) {
     return {
       inbox_open: 0,

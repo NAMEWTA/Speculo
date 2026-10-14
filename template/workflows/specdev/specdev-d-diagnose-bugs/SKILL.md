@@ -37,7 +37,7 @@ D 拥有：
 
 加载 `<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/feedback-loop.md</Path>`。按其顺序尝试测试、HTTP/CLI、浏览器、追踪回放、夹具、模糊循环、bisect、差分和最终 HITL。保存命令、至少一次真实输出、精确症状断言、运行时间、确定性或复现率，以及 Agent 可运行性。
 
-无法建立回路时使用诊断模板写 `status: blocked`、`feedback_loop_ready: false`、已尝试方式和所需输入；假设表保持为空，保留 `current_work`。不得继续阅读代码来构造根因理论并据此宣称已确认；可以进入下述事件证据分支收集观察与下一安全检查，但不能直接进入正式假设实验或 Ready 修复。
+无法建立回路时使用诊断模板写 `status: blocked`、`feedback_loop_ready: false`、已尝试方式和所需输入；假设表保持为空，在原诊断材料保留接续点。不得继续阅读代码来构造根因理论并据此宣称已确认；可以进入下述事件证据分支收集观察与下一安全检查，但不能直接进入正式假设实验或 Ready 修复。
 
 **完成标准**：一条已运行命令快速、可重复、由 Agent 执行，并能在用户精确症状上变红。
 
@@ -69,7 +69,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
-根因确认后将本 Work 加入 `works_run` 并清空 `current_work`，返回 diagnosis 和下一 Work：局部修复进入 Tickets/I，公共行为或高风险进入 S/Tickets，缺 seam 进入 R，仍无根因则保持 blocked 或进入 W。
+根因确认且证据通过后回读诊断结论，返回 diagnosis 和下一 Work：局部修复进入 Tickets/I，公共行为或高风险进入 S/Tickets，缺 seam 进入 R，仍无根因则保持 blocked 或进入 W。
 
 ## 一次性事件与 CI flake
 

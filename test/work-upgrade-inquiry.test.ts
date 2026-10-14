@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { realpath, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -41,7 +41,7 @@ test('inquiry ignores headings in fenced examples but requires real ordered sect
   assert.equal(validateInquiry(batch(1) + '\nResponse: ready\n').valid, false);
 });
 test('inquiry CLI is read-only and rejects escape, symlink and ambiguous flags', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'speculo-inquiry-'));
+  const root = await mkdtemp(join(await realpath(tmpdir()), 'speculo-inquiry-'));
   try {
     const source = batch(7); await writeFile(join(root, 'batch.md'), source);
     const run = (...args: string[]) => spawnSync(process.execPath, [tool, '--change-dir', root, ...args], { encoding: 'utf8' });

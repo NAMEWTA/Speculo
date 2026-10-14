@@ -14,7 +14,7 @@ CHANGELOG 面向评估升级风险的人类读者。优先服从项目既有发�
 
 ## 从 Git 区间提炼
 
-1. 使用 state 的 `last_range.from_sha/to_sha` 读取完整 diff，而不是把 `git log` 逐条倾倒。
+1. 使用调用方本次固定的 FROM_SHA/INPUT_HEAD 读取完整 diff（audit/update 不依赖写回 state；bootstrap 盘点当前事实），而不是把 `git log` 逐条倾倒。
 2. 按用户可感知的能力、行为、兼容性、修复和安全影响聚合主题；测试、格式化和纯内部重构默认不写。
 3. 每条回答“用户之前会遇到什么，现在发生了什么”；实现细节只在解释影响所必需时出现。
 4. 删除 `[Unreleased]` 中已被撤销、被替代、重复或已进入正式版本的内容。

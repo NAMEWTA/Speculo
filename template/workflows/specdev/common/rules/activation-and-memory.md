@@ -4,10 +4,14 @@
 
 ## Locate before read
 
-1. 先打开 `<Path>{roots.state}/workspace.json</Path>`，从中解析当前 workflow 的 roots、状态索引和稳定 ID；roots 必须来自该文件，不得凭字面猜测。不存在时静默跳过，不能凭旧路径猜测。
+1. 复用当前入口已经明确的项目、方法和数据根。已安装时验证 workspace roots；未安装时使用明确根参数与 Skill 内相对资源，不猜旧路径。根不明只阻塞依赖它的写入；按稳定名称定位所需对象。
 2. 根据当前请求、Work 分支、关键词、稳定 ID、状态和 provenance，先搜索相关索引行或目录项，再定位最小相关 entry；不把索引全文默认装入上下文。
 3. 只回读命中的 entry 和直接 provenance；需要恢复、冲突裁决、归档、迁移或执行安全证明时，才读取该阶段声明的完整证据集合。
 4. 没有匹配证据时返回缺失证据并停止依赖该结论的分支，不补造事实。
+
+## Design retrieval
+
+UI 工作先按 <Path>{roots.state}/specdev/design/</Path> 的索引条目或 scope/规则 ID 定位，再读取命中的 DESIGN revision 和来源。已有 change DESIGN 按它固定的 baseline revision/digest 回读，不静默换成最新版本。永久设计的唯一 owner 是 A，网关为 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md</Path>；首次批准和归档提升遵守 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path>。
 
 ## Memory writes
 

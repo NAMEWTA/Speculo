@@ -1,52 +1,32 @@
-# Workflow 范围契约
+# Workflow 文档范围与所有权
 
-docs-sync 必须遵循每个 workflow 的 领域 `SKILL.md`。`docs-sync.json` 是 command 拥有的标准延迟 sidecar，不属于 workflow `_state` 固定骨架。
+仅在全局盘点涉及 workflow 管理的项目文档、运行记录或知识时读取。发现入口为 `<Path>{roots.workflows}/{workflow}/SKILL.md</Path>` 与 manifest；需要确认写入 owner 时读取入口指向的相关运行合同，不激活整个 workflow。
 
-模式边界：audit 只报告候选；update 只使用本次明确批准的目标且不写 sidecar；以下所有 sidecar 创建、迁移和确认持久化仅用于 commit。
+## 发现与边界
 
-## 发现
+包存在但 runtime 尚未初始化，或 state 孤立存在时，报告事实；只阻塞需要该状态的操作，继续项目文档整理。全局盘点不要求每个已安装 workflow 都有状态根或 sidecar。
 
-1. 从 `<Path>{roots.workflows}/{workflow}/SKILL.md</Path>` 发现已安装 workflow。
-2. 每个包必须有匹配的 `<Path>{roots.state}/{workflow}/</Path>` 状态根；包或状态根单边缺失时阻塞，不猜测归属。
-3. 读取 领域 `SKILL.md` 的发现声明；仅需解析合同或写入 owner 时，再按该入口显式指向的 domain-runtime 合同 读取对应部分，不假设每个领域入口 都包含运行合同。
-4. 状态根存在但没有已安装 package 时只报告 orphan，不创建 sidecar。
+项目文档可归全局或一个 workflow；路径重叠、父子目录交叉或 owner 冲突只阻塞重叠目标。范围从本次请求、实际文档归属与原网关确定，不依赖假定存在的 consumers 字段。
 
-## Sidecar v1
+状态、changes 与 archive 保持原 workflow owner。历史归档只作证据，按主题/ID 定位相关产物；不重写归档或把当前事实反写历史。永久 RULES/policy、ADR、CONTEXT、DESIGN、research、synthesis 及其删除/冲突进入 propose-only，由原 workflow 网关取得相应批准并执行；docs-sync 不因发现路径就取得知识写权限。明确 existing-only 的 store 始终只读。
 
-每个已安装 workflow 首次获准的 commit 同步才创建：
+OPS 资源运行记录按 OPS 文档交付合同处理；本命令不调用同名 OPS 恢复操作、不连接服务器或重跑业务，远端文档补交交给原 owning 入口。
 
-```json
-{
-  "schema_version": 1,
-  "workflow": "example",
-  "manifest_path": "<Path>{roots.state}/example/docs-sync.json</Path>",
-  "project_targets": [],
-  "state_targets": [],
-  "scope_revision": 1,
-  "scope_confirmed_at": "ISO-8601"
-}
-```
+## 跨领域当前 docs
 
-目标使用 `{ "path": "...", "kind": "file | directory" }`：
+<Path>{roots.state}/docs/</Path> 是面向 Agent 的当前工程事实，按实际主题归属维护，不注册为 SpecDev 永久知识 store。命令全局盘点包含其正文/导航与有独立历史价值的 archive（后者只读）；实际获批写入作为 project_targets 的项目相对精确路径管理，不为它创建虚假 workflow 或 sidecar。A/I 的局部维护与基线说明不写本命令游标。
 
-- `project_targets` 使用项目相对路径，记录该 workflow 负责维护的项目文档。
-- `state_targets` 使用 workflow 状态根相对路径，只能位于 `consumers` 包含 `docs-sync` 的已声明 store。
-- Directory 目标递归覆盖其中已跟踪的 Markdown、MDX、reStructuredText 和 AsciiDoc；其他格式必须作为 file 明确列出。
-- 禁止绝对路径、反斜杠、`..`、项目根目录、无界 glob、`.git`、固定 `status.json/changes/archive` 和 sidecar 自身。
+## 可纳管目标
 
-## 首次确认与修订
+- project_targets：已确认由该 workflow 管理的项目相对文档路径。
+- state_targets：仅原 workflow 明确允许 docs-sync 维护的非知识文档，使用 workflow state 根相对路径；没有明确网关时只提建议。
+- 每项为 `{ "path": "...", "kind": "file | directory" }`。directory 递归覆盖已跟踪的 Markdown/MDX/reStructuredText/AsciiDoc；其他格式或未跟踪文件单独列 file。
+- 路径须规范化、真实包含于已解析根；拒绝绝对路径、反斜杠、`..`、无界 glob、项目根、`.git`、固定 status/changes/archive、sidecar 自身及 CLI-owned 状态。
 
-1. Bootstrap 同时展示全局候选，以及每个 workflow 的 project/state 候选、来源和风险。
-2. 用户一次确认后写入全局 state 与全部 sidecar；没有候选的 workflow 也写空清单。
-3. 一个目标只能归属全局或一个 workflow；重叠、父子目录交叉或同一路径多 owner 必须先消歧。
-4. 后续新增、扩大、移除或转移目标必须再次展示完整新范围；确认后增加 `scope_revision` 并更新时间。
-5. 首次确认只授予范围内常规创建和改写，不授权整文件/目录删除或受保护知识写入。
+## 延迟 sidecar v1
 
-## Archive 与知识
+仅 commit 且确有已纳管目标时，按 [sidecar 模板](../assets/workflow-scope-template.json) 创建 `<Path>{roots.state}/{workflow}/docs-sync.json</Path>`。audit/update 不创建或更新。没有目标的 workflow 不为凑齐清单创建空文件；既有空 sidecar 原样保留，移除最后一个目标时允许将原文件清单清空，不自动删文件。
 
-- 固定 archive 始终可作为只读证据；优先读取本次区间新增或变更、且与受影响模块或术语相关的高信号产物。
-- 归档中的稳定决策、术语、经验和文档漂移信号只提炼结论并保留来源路径，不复制大段正文。
-- `existing-only` store 永远只读。RULES/policy、ADR、CONTEXT、语义冲突和任何知识文件删除均进入 `propose-only`，按目标 workflow 规则取得逐次确认。
-- 不跨 workflow 搬运知识；共享结论必须先确认唯一归属。
+全局目标保存在 `<Path>{roots.state}/commands/docs-sync/state.json</Path>`。新增、扩大或转移目标时展示实际范围变化并核对现有授权；只有未覆盖的范围或副作用补充确认，不逐次重新确认相同清单。合法变更增加 scope_revision 和 scope_confirmed_at；整个同步完成并提交后才生效。
 
-完成标准：commit 模式所有已安装 workflow 都有有效 sidecar；audit/update 不产生 sidecar；每个有效目标都有唯一 owner、声明边界和确认记录；所有受保护动作均未越权。
+完成标准：每个目标有唯一 owner 与合法写入边界；只有实际管理的 workflow 使用 sidecar；受保护候选已交回网关；局部缺失不阻塞无关整理。

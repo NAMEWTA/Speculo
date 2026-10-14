@@ -3,9 +3,10 @@
  * Aggregate published-issue counts from active + archive publish.md ledgers.
  * Local files are authoritative; this tool does not query GitHub.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { discoverChangesSync, readChangeFactsSync, readLegacyChangeEvidenceSync, safeWorkPathSync } from "../../../../lib/speculo-runtime.mjs";
 
 const COUNTED = new Set(["closed", "created", "commented"]);
 const SKIPPED = new Set(["skipped:cancelled", "skipped:excluded"]);
@@ -34,26 +35,13 @@ function parseLedgerStates(body) {
 }
 
 function collectLedgers(stateRoot) {
-  const roots = [
-    join(stateRoot, "changes"),
-    join(stateRoot, "archive"),
-  ];
   const files = [];
-  function walk(dir, depth = 0) {
-    if (!existsSync(dir) || depth > 6) return;
-    for (const name of readdirSync(dir)) {
-      const p = join(dir, name);
-      let st;
-      try {
-        st = statSync(p);
-      } catch {
-        continue;
-      }
-      if (st.isDirectory()) walk(p, depth + 1);
-      else if (name === "publish.md") files.push(p);
-    }
+  for (const location of discoverChangesSync(stateRoot, { includeArchived: true, includeLegacy: true })) {
+    if (location.kind === 'legacy-archive') readLegacyChangeEvidenceSync(stateRoot, location);
+    else readChangeFactsSync(stateRoot, location);
+    const file = safeWorkPathSync(location.root, 'publish.md', { type: 'file' });
+    if (existsSync(file)) files.push({ file, change: location.name });
   }
-  for (const root of roots) walk(root);
   return files;
 }
 
@@ -66,9 +54,10 @@ function summarize(stateRoot) {
   let originIntake = 0;
   const byChange = [];
 
-  for (const file of files) {
+  for (const {file, change} of files) {
     const text = readFileSync(file, "utf8");
     const meta = parseFrontmatter(text);
+    if (meta.change !== change) throw new Error(`identity-conflict: ${file}: ledger change differs from its owning directory`);
     const body = text.replace(/^---[\s\S]*?---/, "");
     const { states } = parseLedgerStates(body);
     const origin = meta.origin === "intake" ? "intake" : "local";
@@ -90,7 +79,7 @@ function summarize(stateRoot) {
     skipped += changeSkipped;
     failed += changeFailed;
     byChange.push({
-      change: meta.change || file,
+      change,
       origin,
       publish_action: meta.publish_action || "unknown",
       published: changePublished,

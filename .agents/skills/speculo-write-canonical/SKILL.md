@@ -9,7 +9,7 @@ Canonical 是从源能力编译的独立分发物，不是第二份业务事实�
 
 ## 读取
 
-先读 [`../_shared/authoring-protocol.md`](../_shared/authoring-protocol.md)、[`../_shared/project-model.md`](../_shared/project-model.md)、[`../_shared/path-and-reference-rules.md`](../_shared/path-and-reference-rules.md)、[`../_shared/authoring-quality.md`](../_shared/authoring-quality.md) 和 [`references/canonical-contract.md`](references/canonical-contract.md)，再定位唯一源入口及其静态依赖。不要把 canonical 当作源，也不要默认读取无关 workflow。
+先定位本次目标、真实调用方和相关验证。纯文字修正核对局部事实即可；结构或行为变化时使用 [作者协议](../_shared/authoring-protocol.md)，按其中条件选择共享参考，不默认通读整个仓库。静态依赖闭包、隔离分发或持久化语义变化时读 [canonical 合同](references/canonical-contract.md)，定位唯一源与受影响生成器。 已加载且未变化的规则可复用。
 
 ## 路由
 
@@ -20,4 +20,4 @@ Canonical 是从源能力编译的独立分发物，不是第二份业务事实�
 
 ## 停止条件
 
-依赖未闭合、内部路径泄漏、持久化能力缺失、URL/manifest/frontmatter 违反隔离合同、路径穿越或审计失败时停止。
+依赖未闭合、内部路径泄漏、持久化能力缺失、URL/manifest/frontmatter 违反隔离合同、路径穿越或审计失败时停止受影响分支，继续独立且已授权的工作。

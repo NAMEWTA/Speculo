@@ -103,3 +103,7 @@
 5. AUTO-INDEX 和 canonical 的来源映射。
 
 逐项解析。全部静态目标存在、全部动态目标有所有者和生成者时完成。
+
+## SpecDev 直接使用
+
+SpecDev 根来自已验证 workspace 或明确 projectRoot/methodRoot/stateRoot；自包含 Work 的包内静态资源可以相对 Skill 根，持久引用使用项目相对/对象内 locator，不创造新 alias。state/docs 是跨领域工程事实，沿 roots.state 发现，不新增 roots.docs。新 change/archive 稳定名称相同，历史 locator 独立只读，不重写冻结摘要。

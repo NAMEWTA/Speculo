@@ -34,6 +34,8 @@ Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、
 
 **完成标准**：拆分依据、权威顺序、合同范围与未决问题已明确。
 
+UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 与 <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>，核对批准、revision/digest、基线、prototype 和页面/状态。每张 UI 票以 `design_ref` 绑定所负责的 pages/acceptance，不能复制一份可独立修改的视觉规则。设计缺失或漂移先返回 P。
+
 ### 2. 探索代码库与实现地形
 
 如果尚未探索，进行只读探索：
@@ -206,7 +208,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
-更新 `<Path>{roots.state}/specdev/status.json</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`。
+回读 Ticket 的状态、Map 的依赖/导航以及 README 接续点，不另写状态镜像。
 
 ## 完成标准
 

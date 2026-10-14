@@ -27,6 +27,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 - 外部行为和可观察产出明确；
 - IN、REUSE、OUT 无冲突；
 - 高影响决策已锁定；
+- UI 范围按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 硬引用已批准 change DESIGN、基线版本和原型，确认/摘要未失效；
 - 没有会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
 - 依赖存在且无循环；
 - `writable_paths`、`read_only_paths` 和 `shared_paths` 使用项目相对 Path 标签；
@@ -42,6 +43,10 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 ## 3. Spec Readiness
 
 `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` 只有在外部行为、范围、公共接口、数据、安全、兼容、迁移和验收合同不存在高影响未知项时，才可设置 `ready_for_tickets: true`。
+
+UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和页面/状态 AC 映射；纯后端或 LOGIC-only 无此要求。
+
+轻量 README 的 scope/acceptance/verification 使用同样的外部行为、风险与可判定 AC 门；没有独立票不要求 Spec YAML 或 Map。Deep、真实并行、跨 change 或复杂设计依赖必须使用完整工件；用户明确产物要求不因轻量分支降低。
 
 ## 4. 假设规则
 

@@ -14,7 +14,7 @@
 
 获得一条确实命中精确症状的已运行红灯回路后，再按 <Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/feedback-loop.md</Path> 最小化并进入正式假设/探针。编译失败、未选中测试或基础设施失败不是红灯；临时 probe 要证明落在真实路径并恢复。
 
-反馈回路与确认实验齐全前，不设置 root-cause-confirmed，不移交声称已确认的 Ready 修复。收集完事件材料不把 D 记成根因诊断成功；保留 current_work、缺失证据和恢复入口。用户选择终止调查时按原取消/交接协议处理，不伪造 works_run 或重新打开归档来源。
+反馈回路与确认实验齐全前，不设置 root-cause-confirmed，不移交声称已确认的 Ready 修复。收集完事件材料不把 D 记成根因诊断成功；在原报告保留缺失证据、owner 和恢复入口。用户选择终止调查时按原取消/交接协议处理，不伪造已完成诊断或重新打开归档来源。
 
 ## 示例
 

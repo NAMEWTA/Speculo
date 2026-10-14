@@ -37,16 +37,16 @@ status: draft
 
 ## 2. 执行清单
 
-| ID | Ticket | 可观察产出 | Blocked By | Depth | Risk | Ready | Owner | Contract IDs | Wave/Gate | Status |
-|---|---|---|---|---|---|---|---|---|---|---|
-| T-01 | `<Path>{roots.state}/specdev/changes/{change}/ticket/01-<ticket-name>.md</Path>` | ... | — | standard | medium | yes | unassigned | AC-001 | — | ready |
+| ID | Ticket | 跨票 Gate/依赖导航 |
+|---|---|---|
+| T-01 | `<Path>{roots.state}/specdev/changes/{change}/ticket/01-<ticket-name>.md</Path>` | 本 Map 第 3、6 节；正式 Goal 存在时指向原 Gate |
 
-Ticket frontmatter 是状态、依赖、深度和路径访问契约的权威；本表是同步投影，不得独立修改出另一套真相。
+本表只导航实际 Ticket 和跨票合同。状态、Ready、执行 owner、深度、风险及本票写集从 Ticket frontmatter 回读，实际 workspace/集成结果从本票 Evidence 回读；不在 Map 缓存或随进度更新。Map frontmatter 的 status 表示本 Map 的结构/合同就绪与验收，不汇总或代替单票进度。
 
 ## 3. 依赖 DAG
 
 ```text
-T-01 [READY]
+T-01
   ├─→ T-02
   └─→ T-03
         └─→ T-04
@@ -64,7 +64,7 @@ T-01 [READY]
 
 ## 5. 并行与路径所有权
 
-- 实现执行者 上限来自 `<Path>{roots.state}/specdev/config.json</Path>`，Goal Plan 可进一步降低且不含 Lead。
+- 并发与集成尝试策略来自原 Goal 的 `Execution Policy Source` 或实际项目约定；存在有效 `<Path>{roots.state}/specdev/config.json</Path>` 时核对其限制，不为确定上限创建 config。未采用完整并行计划时缺省 current/direct-parent、单 writer；required 模式取计划、现有 config 和宿主能力允许的上限，Lead 实际参与实现时计入。
 - review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
 - shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
 - 项目路径契约以 Ticket frontmatter 为准。
@@ -76,16 +76,16 @@ T-01 [READY]
 
 ## 6. Gate、Wave 与集成点
 
-T-tickets 可以标注候选 Wave、E2E disposition 和行为里程碑。需要正式跨 Ticket 编排时，由 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>` 完成 Gate、Wave、Lead、动态派单边界、candidate 集成顺序、发布与恢复，并把结果投影回本 Map。
+T-tickets 可以标注候选 Wave 和行为里程碑；单票 E2E disposition 在原 Ticket。需要正式跨 Ticket 编排时，由 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>` 完成 Gate、Wave、Lead、动态派单边界、candidate 集成顺序、发布与恢复，本 Map 只导航相应 Goal 章节。
 
 ## 7. 横切契约与风险
 
 只记录跨多个 Ticket 的数据、安全、兼容、共享接口、迁移、发布和恢复规则。单 Ticket 规则留在具体 `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`。
 
-## 8. 同步规则
+## 8. 维护规则
 
-- Ticket 状态变化后同步执行清单；
-- Ticket ID、路径、依赖或 frontmatter 不一致时，以 Ticket 文件为权威并修复本 Map；
+- Ticket 进度改变时只更新原 Ticket/Evidence；查看进度或恢复时重新读取它们，Map 保持不变；
+- Ticket 新增、移除、ID/路径或依赖合同变化时，修复本 Map 的导航、DAG 与覆盖；不从旧 Map 恢复票级状态；
 - 项目 Skill 新增、移动、删除、触发范围变化或实现中发现新的适用 Skill 时，先同步读取矩阵并重新校验；
 - Goal Plan 存在时，Wave、Gate 和 owner 以 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` 为编排权威；
 - 依赖、合同覆盖或路径所有权变化后运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>`；

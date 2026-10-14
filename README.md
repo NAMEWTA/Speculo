@@ -29,9 +29,15 @@ AI agents follow these methods using current tools. Coordination supports Lead, 
 
 Discovery and configuration grant no authority for commits, pushes, publishing, deployment or other effects. Existing authorization and each action's owning entry determine what may run.
 
+Ordinary SpecDev Works can also run directly with an explicit project, method-resource root and approved data root; CLI installation is optional. New changes keep one overall Outcome in README and progress in README, a lightweight Goal, or Ticket/Evidence according to scope. Complex planning, design approval and integration checks remain in their owning artifacts.
+
+A closes out change, ADR, context and current engineering docs, plus DESIGN when relevant. Required current-document maintenance and design publication finish before the change moves to changes/archive under the same stable name. A completed or cancelled Outcome alone does not authorize archiving or prove its evidence.
+
+Current engineering docs are created only on an explicit baseline request and point to existing project owners when available. I/A maintain the relevant scope; docs-sync remains the manual global audit/update/commit command, with its own Git and state contract.
+
 ## Version boundary
 
-Only agents-v2 layout and current schemas are writable. Old installations or transactions are rejected without moving or deleting user data. There is no automatic migration or second reader for old paths. Installation staging, transaction recovery and business coordination are separate responsibilities.
+CLI installations retain the strict agents-v2 layout, staging and transaction recovery. New SpecDev activity uses the Markdown protocol and does not seed global/change status mirrors. Old active data requires an explicit, scoped conversion; mixed or unknown input blocks affected writes. Legacy monthly archives remain frozen in place and are read through a separate historical resolver. Other domains retain their own persistence contracts. See the [conversion guide](scripts/references/migrate-specdev-markdown.md) for the repository maintenance tool; init does not run it automatically.
 
 ## Develop
 

@@ -73,6 +73,7 @@ const workflowPersistentKnowledge = {
   specdev: new Set([
     "<Path>{roots.state}/specdev/adr/</Path>",
     "<Path>{roots.state}/specdev/context/</Path>",
+    "<Path>{roots.state}/specdev/design/</Path>",
   ]),
   learning: new Set([
     "<Path>{roots.state}/learning/context/INDEX.md</Path>",
@@ -251,7 +252,8 @@ function validateWorkflow(workflowId, workspace) {
   for(const section of ["发现与激活","能力路由","永久知识"])if(!entryContent.includes("## "+section))fail(relativeEntry+": missing "+section);
   if(!entryContent.includes("common/rules/activation-and-memory.md"))fail(relativeEntry+": missing activation contract");
   const stateTemplate = join(workflowDir, "_state");
-  const requiredState = workflowId === "ops" ? ["status.json"] : ["status.json", "changes", "archive"];
+  const runtimeContract = readJson(join(workflowDir, "runtime-contract.json"), "workflow runtime contract");
+  const requiredState = runtimeContract?.state_seed === "optional" ? [] : workflowId === "ops" ? ["status.json"] : ["status.json", "changes", "archive"];
   if (workflowId === "ops") {
     const seed = readJson(join(stateTemplate, "status.json"), "OPS resource seed");
     if (seed?.schema_version !== 3 || seed?.workflow !== "ops" || !seed?.hosts || !seed?.deployments) fail("OPS seed must be the v3 resource contract");

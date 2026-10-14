@@ -27,14 +27,14 @@
 | ops/inventory-view | 从现有资源和检查证据生成简单 MD、标准 JSON 与离线 HTML，双向查看服务器与项目，不连接或修改目标。 | [ops-v-inventory-view](../template/workflows/ops/ops-v-inventory-view/SKILL.md) |
 | person/mao-zedong-cognitive-os | 以毛泽东方法论为底座的问题诊断、战略制定与行动规划咨询 | [person-m-mao-zedong-cognitive-os](../template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md) |
 | person/steelman-deliberation | 将尚未厘清的复杂问题经真实问题重述、正反双向钢人化与关键变量识别，在一次关键追问后推进为明确判断和可执行行动 | [person-s-steelman-deliberation](../template/workflows/person/person-s-steelman-deliberation/SKILL.md) |
-| specdev/archive-and-consolidate | 校验本地完成、源 Issue reconcile 门和票级 publish_action 门，复用全局归档能力移动 completed change 并提升当前知识，或从代码访谈形成可归档知识 change。 | [specdev-a-archive-and-consolidate](../template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md) |
+| specdev/archive-and-consolidate | 核对完成/取消证据与四类资产，先维护现役知识/docs及适用 DESIGN再封存；也支持独立知识维护或明确的代码访谈。 | [specdev-a-archive-and-consolidate](../template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md) |
 | specdev/code-review | 按用户指定的 PR、单 commit、区间或基线冻结真实比较范围，执行隔离的标准轴与规范轴审查；有效空差异诚实返回，不实施修复或发布。 | [specdev-c-code-review](../template/workflows/specdev/specdev-c-code-review/SKILL.md) |
 | specdev/diagnose-bugs | 调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。 | [specdev-d-diagnose-bugs](../template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md) |
 | specdev/grill-with-docs | 一个已界定 change 仍有产品、领域或架构决定待确认时进行可恢复访谈；跨 change 边界未清晰时先用 W。 | [specdev-g-grill-with-docs](../template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md) |
 | specdev/implement | 执行已授权的 Ready Ticket 或获批 Direct Spec，覆盖代码实现与文档维护，产生可回读验收证据；不从模糊需求或只读审查直接写入。 | [specdev-i-implement](../template/workflows/specdev/specdev-i-implement/SKILL.md) |
-| specdev/init-setup | 初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。 | [specdev-i-init-setup](../template/workflows/specdev/specdev-i-init-setup/SKILL.md) |
+| specdev/init-setup | 发现项目事实与必要偏好；明确请求才建立工程 docs 基线，不预造业务骨架。 | [specdev-i-init-setup](../template/workflows/specdev/specdev-i-init-setup/SKILL.md) |
 | specdev/learn-change | 在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。 | [specdev-l-learn-change](../template/workflows/specdev/specdev-l-learn-change/SKILL.md) |
-| specdev/goal-plan | 为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。 | [specdev-p-goal-plan](../template/workflows/specdev/specdev-p-goal-plan/SKILL.md) |
+| specdev/goal-plan | 为明确目标规划、执行或恢复 Goal；简单无票计划用清单，完整票据/跨 change 保留 Gate 与集成编排，不代替需求探索。 | [specdev-p-goal-plan](../template/workflows/specdev/specdev-p-goal-plan/SKILL.md) |
 | specdev/prototype | 按需验证离线逻辑模型，或检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。 | [specdev-p-prototype](../template/workflows/specdev/specdev-p-prototype/SKILL.md) |
 | specdev/retro | 对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn-change，Speculo 产品反馈使用 retro 命令。 | [specdev-r-retro](../template/workflows/specdev/specdev-r-retro/SKILL.md) |
 | specdev/review-architecture | 审查指定代码范围的结构与维护成本，或测量真实用户操作的性能并形成候选；只报告或深入用户选定的设计，不直接实施优化。 | [specdev-r-review-architecture](../template/workflows/specdev/specdev-r-review-architecture/SKILL.md) |

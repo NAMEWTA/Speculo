@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, statSync, symlinkSync, rmSync } from "node:fs";
+import { realpathSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, statSync, symlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve, posix } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,7 +14,7 @@ import { projectFleet, renderHtml, renderMarkdown, generateFleet } from "../tool
 import { parseWorkspaceArgs, workspaceCommand } from "../tools/opslib/workspace_cli.mjs";
 
 function fixture(t) {
-  const root = mkdtempSync(join(tmpdir(), "speculo-workspace-"));
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "speculo-workspace-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const state = join(root, "state"); mkdirSync(state);
   const s = emptyStatus(); s.controller = { controller_id: "controller-a", state_root: state, created_at: now() };

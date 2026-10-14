@@ -1,20 +1,22 @@
 # Change Completion
 
-本规则是 change 从 active/blocked 转为 completed 的唯一合同。
+本规则是 change 整体完成或取消的唯一合同。README 的 Outcome 只是结论，必须能沿原工件重建证据；结束不等于已归档。
 
 ## 完成门
 
 一个 change 只有同时满足以下条件才能 completed：
 
 1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收。
-2. required Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；current Ticket 有 implementation commit、passed direct-parent 验证和父分支 result SHA；对应 workspace 记录均为完成状态。
+2. required Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；current Ticket 有 implementation commit、passed direct-parent 验证和父分支 result SHA；对应 Ticket Evidence 的 workspace/集成记录均完整；不要求 JSON 镜像。
 3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
 4. current Ticket 的 current-workspace 检查/回归和适用 E2E，或 required Ticket 的 source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
 5. 迁移、发布、监控、恢复和不可逆批准已完成或明确不适用。
 6. 没有未批准 deviation、blocker、unverified、活动 candidate 或未集成 source checkpoint。
-7. Ticket、Map、Goal Plan、Evidence、change status 与实际 Git 一致。
+7. Ticket、Map 的依赖/导航、Goal Plan、Evidence、README 与实际 Git 一致；不复制单票状态。
 
-Evidence-only Done 和 empty commit 不满足完成门。
+UI 实施还需 Evidence 对照已批准 change DESIGN、固定基线与页面/状态验收；原型截图不代替实现的真实渲染。设计漂移或未确认例外按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 返回 owner，不能以票全 done 消除缺口。
+
+Evidence-only Done 和 empty commit 不满足完成门.
 
 父实现 change 还必须满足 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`：全部成员 completed，Implementation Map 与 Implementation Plan completed 且 revision 一致，跨 change 全套验证通过，`<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` 完整，没有活动派单、candidate、serialization lock 或未裁决冲突。父完成不自动归档或移动任何成员。
 
@@ -25,7 +27,7 @@ Evidence-only Done 和 empty commit 不满足完成门。
 - 非实现型终点：最终验收工件 owner 使用本规则。
 - 父实现 change：Implementation Plan 的唯一 Lead 在全部成员与 aggregate gate 关闭后拥有转换。
 
-Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `change_status`、`completed_at`、`updated_at` 和 `current_work`，然后重读。全局 status 只维护 active/archived 索引。
+Owner 依据来自原 Goal/Implementation Plan、I 的真实会话或非实现验收工件，不由调用方任意声明。门全部通过后，重验 README 旧字节和证据，由同一 owner 原子更新 <Path>{roots.state}/specdev/changes/{change}/README.md</Path> 唯一 `Outcome: completed` 行并链接完成依据，再重读；不连带改票时间戳或复制进度。轻量任务由 README 的范围、逐 AC 实际结果、适用验证和下一步承接等价证据；用户要求的独立工件和复杂实现门不得省略。
 
 ## 远程来源与归档
 
@@ -38,3 +40,20 @@ Owner 原子更新 `<Path>{roots.state}/specdev/changes/{change}/.status.json</P
 仅有 R-retro（可先经 T intake）的 review-only change，以 completed 的 RETRO 报告作为等价验收；不能同时存在 Spec、Ticket、Map、Goal Plan、implementation 工件、Evidence 或 worktree。报告 sources 非空、结果诚实、全部验收完成，owner 按原完成转换规则更新状态；存在实现工件时仍走原实现完成门。insufficient-evidence 仅表示报告完整，不表示问题已解决。
 
 PR requested=true 且 status=planned/failed 时阻塞归档；delivery_target=ready 时 draft 也保持未闭合。draft 目标可由 draft/ready 满足，ready 目标只由 ready 满足；waived 须记录放弃交付的授权与原因。创建成功不等于已授权 merge。独立 TRI 不因关联 change 就参与完成/归档门。
+
+## 整体取消
+
+只有真实用户取消请求发生时，由原完成 owner 核对并记录：决定来源、范围和时间；未交付内容与已落地代码/数据/设计/远程影响；活动 writer 已停止或明确交接的证据；父子依赖、未集成 checkpoint/candidate 的处置；已承诺外部动作的结果或明确放弃/转交依据；后续 owner、保留材料和恢复限制。记录放 README 或原 Goal 决定章节并链接，齐全后重验旧字节，写入唯一 `Outcome: cancelled` 并重读。
+
+A 只验证取消结果，不代替用户取消。单 Ticket cancelled 不推导整体取消；不批量改票为 done/cancelled，不自动回滚、远程关闭或删除 branch/worktree。未知外部结果继续阻塞归档；超时/无响应不能证明 writer 结束。已发布 DESIGN revision 保留，未实现候选随 change 保存；cancelled 不满足 promotion 的 implemented 完成来源门。
+
+
+## 轻量证据与取消的只读语法
+
+轻量 README 使用唯一 scope/acceptance/verification 显式锚点，acceptance 列可观察的 AC-n。完成时 verification 表使用 `AC | Result | Evidence`（可选 SHA256 列），每个 AC 恰一行 `passed` 和可回读实际证据 locator；提供摘要时必须匹配真实字节。证据可用 #anchor 指向同 README 的独立证据段，不能指向 Outcome/Ownership 或该结果声明自身，记录 `Method`、`Source`、`Observed`、`Result: passed`；有 `Command` 时须 `Exit: 0`。实际运行后才形成，不为 active 任务先造空证据；静态字段只供回读，不认证语义真实性或授权。
+
+无 Goal 的 owner 在 README `## Ownership` 写 `Owner` 与 `Evidence`；后者指向实际会话/交接原文或同 README 的独立证据锚点，其 `Owner` 或 `Session` 必须匹配。若动作绑定 `Work`，原证据必须同值；不是每 Work 调用登记。
+
+取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。活动/review/integrating/blocked 的执行记录仍须原 owner 处置，不由取消声明抹掉。
+
+独立 Spec 的无票 Direct Spec 使用原 evidence/direct-spec 的 `## Acceptance Verification` JSON array 逐 AC 回读实际结果：id/result/method/source/observed；command 存在时 exit 为 0，外部 evidence 引用须有匹配 sha256，内联观察无需另建文件。空 Evidence、仅标题或 passed 自评不通过。`--stage complete` 只判本地完成；A 移动前使用 `--stage archive-ready` 同时核对对应 completed/cancelled 门和已承诺远程交付，目标移动后再使用 archived。

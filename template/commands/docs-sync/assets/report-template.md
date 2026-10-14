@@ -1,46 +1,32 @@
 ---
 command: docs-sync
-mode: <bootstrap|incremental|no-op>
-handbook_mode: <incremental|rebuild>
-scope: <workspace|multi-workflow|workflow>
+mode: <audit|update|commit>
+result: <completed|not-committed|no-op|partial|blocked>
+scope: <workspace|explicit-subtree>
 workflows: []
-changes: []
 generated_at: <ISO-8601>
 ---
 
-# Docs Sync Report
+# 文档整理报告
 
-## Git Range
+## 输入与覆盖
 
-- From: `<FROM_SHA|null>`
-- To: `<INPUT_HEAD>`
-- Replay: `git diff <FROM_SHA>..<INPUT_HEAD>` 或 `bootstrap current facts`
+- 项目、固定 HEAD、FROM_SHA 或 bootstrap/non-git：<实际值>
+- 变化线索复现：<git diff FROM_SHA..INPUT_HEAD，或无基线原因>
+- 全局盘点范围、文档总量、排除/只读目录与理由：<清单>
+- 未提交 overlay 及事实限制：<路径和影响，不抄敏感内容>
 
-## Workspace Cleanup
+## 处置与效果
 
-[记录 checkpoint commit、显式文件清单和运行前验证；无需 checkpoint 时写 `none`。]
+| 目标 | Owner | 处置 | 事实证据 | 授权 | 实际结果/恢复 |
+|---|---|---|---|---|---|
 
-## Confirmed Scopes
+<覆盖每个纳入目标和新增缺口。audit 全为候选；propose-only 注明原网关；未完成项不写成已执行。>
 
-[记录全局 project targets、各 workflow project/state targets、scope revision 和本次确认变化。]
+## 验证
 
-## Evidence And Lifecycle
+<实际命令、退出码、相关结果、未验证行为；没有变化时说明 no-op。>
 
-| Target | Action | Evidence | Result |
-|---|---|---|---|
+## 提交与状态（仅 commit）
 
-## Workflow Sources
-
-[按 workflow 记录读取的 WORKFLOW/PERSISTENCE、archive、声明 store 和受保护候选；空集合写 `[]`。]
-
-## Synced Assets
-
-[列出实际新增、修改、合并或删除的文档与知识资产；no-op 写 `[]`。]
-
-## Verification
-
-[记录实际运行的命令、结果与未运行原因。]
-
-## State
-
-[记录全局 state 与 sidecar 的 schema、revision、pending 迁移项和原子写入结果。]
+<批准路径、提交 SHA/父节点、无关 index/工作区保持情况、state v4 与实际 sidecar v1；无提交或失败时说明原因与候选状态恢复位置。audit/update 不推进游标。>

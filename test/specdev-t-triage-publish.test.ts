@@ -20,32 +20,8 @@ const statusTool = join(
 async function fixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-t-triage-publish-"));
   const root = await seedChange(parent,changeName);
-  await writeFile(
-    join(root, ".status.json"),
-    JSON.stringify({
-      schema_version: 6,
-      artifact: "change-status",
-      change: changeName,
-      change_status: "completed",
-      current_work: null,
-      works_run: ["specdev/tickets", "specdev/implement"],
-      claimed_investigations: [],
-      execution_authorization: {
-        implementation_commit: { status: "not-authorized", source: null, granted_at: null, scope: "Ticket source commits" },
-        local_candidate_integration: { status: "not-authorized", source: null, granted_at: null, scope: "Lead-owned local parent candidate integration and parent update" },
-        source_cleanup: { status: "not-authorized", source: null, granted_at: null, scope: "Source worktree and branch cleanup" },
-      },
-      leadership: { current: "lead-session", epoch: 1, assigned_at: "2026-09-16T00:00:00Z", history: [] },
-      created_at: "2026-09-16T00:00:00Z",
-      updated_at: "2026-09-16T00:00:00Z",
-      completed_at: "2026-09-16T01:00:00Z",
-      archived: false,
-      archive_path: null,
-      blockers: [],
-      deviations: [],
-      worktrees: [],
-    }, null, 2) + "\n",
-  );
+  await writeFile(join(root, "README.md"), `# Fixture\nOutcome: active\n\n## Ownership\nOwner: lead-session\nEvidence: owner.md\n`);
+  await writeFile(join(root, "owner.md"), "Owner: lead-session\nSource: synthetic test fixture\n");
   return root;
 }
 
@@ -307,7 +283,7 @@ describe("SpecDev T-triage publish projection", () => {
     }
   });
 
-  it("blocks complete while publish_action is pending or failed", async () => {
+  it("separates local completion from pending publication archive gates", async () => {
     const root = await fixture();
     try {
       await writeSource(root);
@@ -320,40 +296,43 @@ describe("SpecDev T-triage publish projection", () => {
         url: "—",
         state: "planned",
       }], { action: "pending" });
-      await mkdir(join(root, "evidence"));
-      await writeFile(join(root, "evidence", "direct-spec.md"), "# Evidence\n");
-      await writeFile(
-        join(root, "spec.md"),
-        [
-          "---",
-          "schema_version: 3",
-          "artifact: spec",
-          `change: ${changeName}`,
-          "status: ready",
-          "ready_for_tickets: false",
-          "sources: [local-source]",
-          "---",
-          "## 1. 问题与目标",
-          "goal",
-          "## 2. 解决方案与外部行为",
-          "behavior",
-          "### 未决问题",
-          "无",
-          "## 4. 验收合同",
-          "verified behavior",
-          "## 5. 范围",
-          "scope",
-          "## 9. 验证策略",
-          "verify",
-        ].join("\n"),
-      );
-      const blocked = runValidator(root, "complete");
+      await writeFile(join(root, "README.md"), `# Verified local task
+Outcome: completed
+
+<a id="scope"></a>
+## Scope
+One completed local investigation; publication is a separate requested action.
+<a id="acceptance"></a>
+## Acceptance
+- [x] AC-1 records the local finding.
+<a id="verification"></a>
+## Verification
+| AC | Result | Evidence |
+| --- | --- | --- |
+| AC-1 | passed | #local-observation |
+<a id="local-observation"></a>
+## Local observation
+Method: isolated investigation fixture
+Source: local-source
+Observed: expected finding was reproduced
+Result: passed
+
+## Next Steps
+Resolve the separately requested publication before archival.
+
+## Ownership
+Owner: lead-session
+Evidence: owner.md
+`);
+      const completed = runValidator(root, "complete");
+      assert.equal(completed.status, 0, completed.stdout + completed.stderr);
+      const blocked = runValidator(root, "archive-ready");
       assert.equal(blocked.status, 1);
-      assert.match(blocked.stdout + blocked.stderr, /cannot archive publish_action=pending/);
+      assert.match(blocked.stdout + blocked.stderr, /publish delivery is not closed|cannot archive publish_action=pending/);
 
       await writeTriage(root, { publishAction: "not-requested" });
       await rm(join(root, "publish.md"));
-      const allowed = runValidator(root, "complete");
+      const allowed = runValidator(root, "archive-ready");
       assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
     } finally {
       await rm(fixtureProject(root), { recursive: true, force: true });
@@ -383,7 +362,7 @@ describe("SpecDev T-triage publish projection", () => {
           state: "skipped:cancelled",
         },
       ]);
-      const stateRoot = join(root, "..");
+      const stateRoot = join(root, "../..");
       await mkdir(join(stateRoot, "changes", changeName), { recursive: true });
       await writeFile(
         join(stateRoot, "changes", changeName, "publish.md"),

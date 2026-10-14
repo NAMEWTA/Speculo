@@ -1,5 +1,11 @@
 # 研究来源、快照与复用边界
 
+## 新增 DESIGN 文本参考
+
+另有 10 份 VoltAgent/awesome-design-md 原文固定在 `c7c1bada4eda972236d124e06ee58df129a9266b`，保存于 [上游目录](upstream/awesome-design-md/README.md)。[provenance](upstream/awesome-design-md/provenance.json) 记录每份原文的来源、hash、大小和 [MIT 许可](upstream/awesome-design-md/LICENSE)。原字节不作修正，适配写入 catalog 指向的 visual guide。
+
+此来源是独立网站分析，多数是营销表面，Known Gaps 中的缺失交互必须补齐。此固定 Git tree 不含 HTML；在线 preview 不是本次分发资源，也不是运行时依赖。字体、照片与商标不因 Markdown 的 MIT 许可而获得一并分发的授权。该新增文本层不替换下面原研究快照，两个 revision 分别追踪。
+
 ## 固定快照
 
 | 字段 | 值 |

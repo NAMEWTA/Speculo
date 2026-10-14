@@ -313,6 +313,7 @@ describe("Speculo init refresh", () => {
       const root = join(target, ".agents/speculo");
       const sentinel = join(root, "commands", "status", "COMMAND.md");
       await writeFile(sentinel, "active stays\n", "utf8");
+      await mkdir(join(root, ".speculo", "specdev"), { recursive: true });
       await symlink("status.json", join(root, ".speculo", "specdev", "status-link.json"));
       await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "runtime-symlink"));
       assert.equal(await readFile(sentinel, "utf8"), "active stays\n");
@@ -393,8 +394,8 @@ describe("Speculo init refresh", () => {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const sentinel = join(target, ".agents/speculo", "commands", "status", "COMMAND.md");
       await writeFile(sentinel, "active stays\n", "utf8");
-      await rm(join(brokenPackage, "template", "workflows", "specdev", "_state"), { recursive: true, force: true });
-      await assert.rejects(initSpeculo(target, { packageRoot: brokenPackage, selection: { workflowIds: ["specdev"] } }), /missing _state/);
+      await rm(join(brokenPackage, "template", "workflows", "learning", "_state"), { recursive: true, force: true });
+      await assert.rejects(initSpeculo(target, { packageRoot: brokenPackage, selection: { workflowIds: ["learning"] } }), /missing required _state/);
       assert.equal(await readFile(sentinel, "utf8"), "active stays\n");
       assert.deepEqual(await residue(target), []);
     } finally {

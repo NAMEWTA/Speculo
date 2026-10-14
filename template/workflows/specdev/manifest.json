@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "persistent_knowledge": [
     "<Path>{roots.state}/specdev/adr/</Path>",
-    "<Path>{roots.state}/specdev/context/</Path>"
+    "<Path>{roots.state}/specdev/context/</Path>",
+    "<Path>{roots.state}/specdev/design/</Path>"
   ],
   "stages": [
     {

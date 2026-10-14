@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile, realpath, rename, lstat, cp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { DEFAULT_ROOTS } from "../src/paths.js";
 
 const packageRoot = process.cwd();
 const script = join(packageRoot, "template", "commands", "git-history-squash", "scripts", "git-history-squash.mjs");
@@ -28,7 +30,7 @@ async function readJson(path: string): Promise<Record<string, any>> {
 }
 
 async function initRepository(prefix = "git-history-squash-") {
-  const root = await mkdtemp(join(tmpdir(), prefix));
+  const root = await realpath(await mkdtemp(join(tmpdir(), prefix)));
   command(root, "git", "init", "-b", "main");
   command(root, "git", "config", "user.name", "Skill Test");
   command(root, "git", "config", "user.email", "skill-test@example.invalid");
@@ -60,16 +62,16 @@ function requestEntry(overrides: Record<string, unknown> = {}) {
   };
 }
 
-async function plan(root: string, repositories: unknown[], topic = "history-test") {
+async function plan(root: string, repositories: unknown[], topic = "history-test", commandScript = script) {
   const request = join(root, "request.json");
   await writeJson(request, { schema_version: 1, topic, repositories });
-  const result = runSkill(
+  const result = spawnSync(process.execPath, [commandScript,
     "plan", "--root", root,
     "--state-root", join(root, ".agents/speculo", ".speculo", "skills", "git-history-squash"),
     "--evidence-root", join(root, ".agents/speculo", ".speculo"),
     "--request", request,
     "--date", "2026-09-02",
-  );
+  ], { encoding: "utf8" });
   return result;
 }
 
@@ -201,7 +203,7 @@ describe("git-history-squash skill", () => {
   it("blocks SHAs referenced by an active workflow change", async () => {
     const fixture = await createLinearFixture();
     try {
-      const changeRoot = join(fixture.root, ".agents/speculo", ".speculo", "specdev", "changes", "2026-09-02-active-change");
+      const changeRoot = join(fixture.root, ".agents/speculo", ".speculo", "learning", "changes", "2026-09-02-active-change");
       await writeJson(join(changeRoot, ".status.json"), { change_status: "active" });
       await writeFile(join(changeRoot, "spec.md"), `source revision: ${fixture.end}\n`, "utf8");
 
@@ -212,6 +214,115 @@ describe("git-history-squash skill", () => {
       await writeJson(join(changeRoot, ".status.json"), { change_status: "completed" });
       const planned = output(await plan(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "completed-evidence"));
       assert.equal(planned.next_action, "confirm-local");
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("protects Markdown SpecDev evidence and rejects ambiguous or legacy active authority", async () => {
+    const fixture = await createLinearFixture();
+    try {
+      // Exercise the deployed consumer so archive validation has the same installed roots.
+      const methodRoot = join(fixture.root, ".agents/speculo");
+      await cp(join(packageRoot, "template"), methodRoot, { recursive: true });
+      await writeJson(join(methodRoot, ".speculo/workspace.json"), {
+        schema_version: 2, layout_version: "agents-v2", installation_id: "00000000-0000-4000-8000-000000000001",
+        path_base: "project-root", roots: DEFAULT_ROOTS,
+      });
+      await writeFile(join(fixture.root, ".git/info/exclude"), "/request.json\n/.agents/\n");
+      const installedScript = join(methodRoot, "commands/git-history-squash/scripts/git-history-squash.mjs");
+      const planInstalled = (root: string, repositories: unknown[], topic: string) => plan(root, repositories, topic, installedScript);
+      const specdev = join(fixture.root, ".agents/speculo/.speculo/specdev");
+      const changeRoot = join(specdev, "changes/2026-09-02-markdown-change");
+      await mkdir(changeRoot, { recursive: true });
+      await writeFile(join(changeRoot, "evidence.md"), `Source revision: ${fixture.end}\n`);
+      const readme = join(changeRoot, "README.md");
+      const head = command(fixture.root, "git", "rev-parse", "HEAD");
+      const index = await readFile(join(fixture.root, ".git/index"));
+      for (const [label, text, diagnostic] of [
+        ["active", "Outcome: active\n", /active workflow evidence/],
+        ["cancelled", "Outcome: cancelled\n", /active workflow evidence/],
+        ["duplicate", "Outcome: completed\nOutcome: active\n", /outcome-invalid/],
+        ["missing", "# No outcome\n", /outcome-invalid/],
+      ] as const) {
+        await writeFile(readme, text);
+        const blocked = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], `markdown-${label}`);
+        assert.equal(blocked.status, 2, blocked.stderr);
+        assert.match(blocked.stderr, diagnostic);
+        assert.equal(await readFile(readme, "utf8"), text);
+        assert.equal(command(fixture.root, "git", "rev-parse", "HEAD"), head);
+        assert.deepEqual(await readFile(join(fixture.root, ".git/index")), index);
+      }
+      await writeFile(readme, "Outcome: completed\n");
+      for (const marker of [".markdown-conversion-pending", "status.json"]) {
+        await writeFile(join(specdev, marker), "{}");
+        const blocked = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-pending");
+        assert.equal(blocked.status, 2);
+        assert.match(blocked.stderr, /recovery-required|legacy-active-needs-conversion/);
+        await rm(join(specdev, marker));
+      }
+      await writeJson(join(changeRoot, ".status.json"), { change_status: "completed" });
+      const mixed = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-mixed");
+      assert.equal(mixed.status, 2);
+      assert.match(mixed.stderr, /mixed-protocol/);
+      await rm(join(changeRoot, ".status.json"));
+      assert.equal(output(await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-completed")).next_action, "confirm-local");
+      const archive = join(specdev, "changes/archive/2026-09-02-markdown-change");
+      await mkdir(dirname(archive), { recursive: true });
+      await rename(changeRoot, archive);
+      await writeFile(join(archive, 'README.md'), `# Cancelled
+Outcome: cancelled
+
+## Ownership
+Owner: test-owner
+Evidence: #handoff
+
+<a id="handoff"></a>
+## Original session
+Session: test-owner
+Source: isolated fixture assignment
+Observed: original owner continues this fixture
+
+<a id="cancellation"></a>
+## Cancellation
+Source: #request
+Scope: Entire original change
+Time: 2026-10-14T10:00:00Z
+Confirmed-By: test-owner
+Undelivered: Fixture requirement remains unimplemented
+Landed: none: analysis only
+Writers: none: no workers dispatched
+Dependencies: none: independent fixture
+Checkpoints: none: no implementation commits
+External: none: no remote actions requested
+Next: retain evidence; no cleanup authorized
+
+<a id="request"></a>
+## Original request
+Cancel the entire isolated fixture change.
+`);
+      const unsealed = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-unsealed");
+      assert.equal(unsealed.status, 2);
+      assert.match(unsealed.stderr, /not verified as sealed/);
+      const digest = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
+      const approval = 'Archive 2026-09-02-markdown-change with operation ARCHIVE-TEST by test-owner.\n';
+      await writeFile(join(archive, 'archive-approval.md'), approval);
+      const entries = [];
+      for (const path of ['README.md', 'evidence.md', 'archive-approval.md']) entries.push({path,type:'file',mode:(await lstat(join(archive,path))).mode & 0o7777,sha256:digest(await readFile(join(archive,path)))});
+      const manifest = JSON.stringify({entries});
+      await writeFile(join(archive, 'archive-manifest.json'), manifest);
+      const receipt = `<a id="archive-2026-09-02-markdown-change"></a>\n## Archive\nChange: 2026-09-02-markdown-change\nOwner: test-owner\nOperation: ARCHIVE-TEST\nApproval: change:archive-approval.md\nApproval-SHA256: ${digest(approval)}\nSource: changes/2026-09-02-markdown-change\nTarget: changes/archive/2026-09-02-markdown-change\nResult: moved\nIntegrity: change:archive-manifest.json\nIntegrity-SHA256: ${digest(manifest)}\nTime: 2026-10-14T10:00:00Z\n`;
+      await writeFile(join(archive, 'archive-receipt.md'), receipt);
+      const moved = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-moved");
+      assert.equal(moved.status, 2);
+      assert.match(moved.stderr, /not sealed/);
+      await writeFile(join(archive, 'archive-receipt.md'), receipt.replace('Result: moved', 'Result: verified'));
+      assert.equal(output(await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-archived")).next_action, "confirm-local");
+      await mkdir(changeRoot);
+      await writeFile(readme, "Outcome: active\n");
+      const duplicate = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-identity");
+      assert.equal(duplicate.status, 2);
+      assert.match(duplicate.stderr, /identity-conflict/);
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
     }
@@ -231,6 +342,35 @@ describe("git-history-squash skill", () => {
       assert.match(rejected.stderr, /must be a POSIX project-relative path/);
       assert.equal(command(fixture.root, "git", "rev-parse", "refs/heads/main"), fixture.end);
       assert.equal(command(fixture.root, "git", "rev-list", "--all", "--count"), "3");
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("rechecks Markdown evidence after plan approval without changing refs or the index", async () => {
+    const fixture = await createLinearFixture();
+    try {
+      const planned = output(await plan(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "evidence-drift"));
+      const changeRoot = join(fixture.root, ".agents/speculo/.speculo/specdev/changes/2026-09-02-later-task");
+      await mkdir(changeRoot, { recursive: true });
+      await writeFile(join(changeRoot, "README.md"), `Outcome: active\nSource checkpoint: ${fixture.end}\n`);
+      const refs = command(fixture.root, "git", "show-ref");
+      const index = await readFile(join(fixture.root, ".git/index"));
+      const rejected = runChange(fixture.root, "apply", planned.change, planned.plan_digest);
+      assert.equal(rejected.status, 2);
+      assert.match(rejected.stderr, /active workflow evidence/);
+      assert.equal(command(fixture.root, "git", "show-ref"), refs);
+      assert.deepEqual(await readFile(join(fixture.root, ".git/index")), index);
+      const statePath = join(fixture.root, ".agents/speculo/.speculo/skills/git-history-squash", planned.change, "state.json");
+      const state = await readJson(statePath);
+      assert.equal(state.phase, "planned");
+      assert.deepEqual(state.confirmations, []);
+      state.evidence_root = ".agents/speculo/.speculo/specdev";
+      await writeJson(statePath, state);
+      const tampered = runChange(fixture.root, "apply", planned.change, planned.plan_digest);
+      assert.equal(tampered.status, 2);
+      assert.match(tampered.stderr, /manifest|digest/);
+      assert.equal(command(fixture.root, "git", "show-ref"), refs);
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
     }

@@ -36,6 +36,20 @@ Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。
 
 删除当前配置字段时，原文件与清单追加到 CLI-owned `.speculo/back/{uuid}/`；后续刷新保留已有备份。用户附加静态文件不会被自动认领；与新分发文件相撞时停止替换。
 
+## SpecDev 直接 Work 与知识生命周期
+
+安装 API 继续严格验证 workspace；普通 SpecDev Work 使用只读上下文解析器，接受明确 projectRoot、methodRoot 和 stateRoot。后者是各领域共同数据父根，业务写入仍受路径、owner 和相关事务保护。无安装时可从只读方法目录调用，不创建 context 注册文件或依赖业务 CLI。
+
+稳定日期目录名表示 change 身份，README 顶层唯一 Outcome 表示 active/completed/cancelled；实际目录表示归档。简单任务用 README scope/acceptance/verification；无票 Goal 用原计划 Tasks 清单；完整票据保留依赖、写集、Ready、Skill binding 与 Gate，进度归 Ticket/Evidence。票级 workspace/集成独有事实在对应 Evidence 的 Workspace Execution Record，父计划只导航。
+
+原 owner 核验实际证据后才能结束；取消保存用户决定、writer/依赖/checkpoint/外部动作处置，不能自动回滚或改票。A 核对 change、ADR、context、docs 与适用 DESIGN，先完成现役维护/发布，再最后整体无覆盖移到 `specdev/changes/archive/<change>`，从目标验证并完成原回执后冻结。旧 `specdev/archive/YYYY-MM` 原位只读。
+
+DESIGN 的 current、不可变 revision、三类摘要、真实批准、浏览器证据及专用发布锁/恢复继续有效；来源以稳定 change 与 locator 定位，移动不改不可变字节。普通多文件收尾没有全局原子保证。
+
+`state/docs` 按主题保存当前工程事实，已有项目正文只导航，明确基线请求才建立。A/I/init/docs-sync 复用 writing-for-agents 的 current-facts-docs；局部维护不创建命令 state，docs-sync 保持手动全局 audit/update/commit 及其隔离 Git 合同。
+
+新 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。旧活动必须用[显式转换维护工具](../scripts/references/migrate-specdev-markdown.md)，未知/混合协议和转换 pending 阻塞相关写入；CLI 刷新不偷偷转换或清理历史。Learning、OPS、Person、Media 的状态不变。
+
 ## 执行方法
 
 选择优先级：当前明确用户要求、既有 Goal 约束、项目 Work+阶段规则、Work 规则、项目默认、Lead。required 工具不可用时阻塞该分支；preferred 只按已允许 fallback 继续。没有项目选择文件时不自动探测或创建配置。
@@ -54,7 +68,8 @@ Lead 可自行完成实现、修复和验证，也可按任务类型派遣。上
 | install / installation transaction | 4 / 3 |
 | 可选 coordination project | 1 |
 | SpecDev config / Goal Plan / Implementation Plan | 7 / 7 / 2 |
-| SpecDev global status / change status / Ticket、Map | 5 / 6 / 3 |
+| SpecDev 新整体结论 / Ticket、Map | README Outcome / 3 |
+| SpecDev 旧历史 global status / change status | 5 / 6（只读/显式转换） |
 | Learning / OPS / Person / Media state | 2 / 3 / 1 / 1 |
 
 构建与校验以 package.json scripts 为准：`pnpm generate-assets`、`pnpm check`、`pnpm verify-bin`。生成两次须无内容差异。行为回归覆盖正常、失败、冲突、恢复及包隔离；保留来源、许可、真实观察与未验证项，不将机械检查当成业务或模型行为证明。

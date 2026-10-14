@@ -4,6 +4,7 @@ import { assertJsonObject, type JsonObject } from "./config.js";
 import { pathExists } from "./utils.js";
 import { validateOpsResources } from "./ops-resources.js";
 import { validateMediaState } from "./media-state.js";
+import { discoverChangesSync, readChangeFactsSync, safeWorkPathSync } from "./specdev-artifacts.js";
 
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -52,47 +53,16 @@ export function validateSpecdevConfig(config: JsonObject): void {
   }
 }
 
-function validateChangeStatus(previous: JsonObject): void {
-  const version = previous.schema_version;
-  if (version !== 6) throw new Error("SpecDev change status schema v6 is required; unsupported versions are not migrated");
-  if (previous.artifact !== "change-status" || typeof previous.change !== "string" || !CHANGE_NAME.test(previous.change)) {
-    throw new Error("change status has an invalid artifact or change name");
-  }
-}
-
 async function validateSpecdevState(stagedRoot: string): Promise<void> {
   const stateRoot = join(stagedRoot, ".speculo", "specdev");
-  const statusPath = join(stateRoot, "status.json");
-  if (!(await pathExists(statusPath))) return;
-  const status = await readObject(statusPath, ".speculo/specdev/status.json");
-  if (status.schema_version !== 5 || status.workflow !== "specdev" || !Array.isArray(status.active) || !Array.isArray(status.archived)) {
-    throw new Error("SpecDev status schema v5 is required; unsupported versions are not migrated");
+  if (!(await pathExists(stateRoot))) return;
+  safeWorkPathSync(join(stagedRoot, ".speculo"), "specdev", { mustExist: true, type: "directory" });
+  for (const legacy of ["status.json", ".markdown-conversion-pending"]) {
+    if (await pathExists(join(stateRoot, legacy))) throw new Error("SpecDev requires explicit Markdown conversion/recovery before refresh: " + legacy);
   }
-  assertExactKeys(status, ["schema_version", "workflow", "active", "archived"], "SpecDev status");
-  const activeEntries = status.active.map((entry) => {
-    assertJsonObject(entry, "SpecDev active status entry");
-    assertExactKeys(entry, ["change"], "SpecDev active status entry");
-    if (typeof entry.change !== "string" || !CHANGE_NAME.test(entry.change)) throw new Error("SpecDev active change name is invalid");
-    return entry;
-  });
-  const active = activeEntries.map((entry) => ({ change: entry.change }));
-  const archived = status.archived.map((entry) => {
-    if (typeof entry !== "string" || !CHANGE_NAME.test(entry)) throw new Error("SpecDev archived change name is invalid");
-    return entry;
-  });
-  const activeNames = new Set(active.map((entry) => String(entry.change)));
-  if (activeNames.size !== active.length || new Set(archived).size !== archived.length || archived.some((name) => activeNames.has(name))) {
-    throw new Error("SpecDev status contains duplicate or overlapping change names");
-  }
-
-  const indexed = [
-    ...activeEntries.map((entry) => join(stateRoot, "changes", String(entry.change), ".status.json")),
-    ...archived.map((name) => join(stateRoot, "archive", name.slice(0, 7), name, ".status.json")),
-  ];
-  for (const path of indexed) {
-    if (!(await pathExists(path))) throw new Error("indexed SpecDev change is missing " + path);
-    const previous = await readObject(path, path);
-    validateChangeStatus(previous);
+  for (const location of discoverChangesSync(stateRoot, { includeArchived: true, includeLegacy: true })) {
+    // Frozen historical bytes are deliberately neither upgraded nor rewritten.
+    if (location.kind !== "legacy-archive") readChangeFactsSync(stateRoot, location);
   }
 }
 

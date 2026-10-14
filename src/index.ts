@@ -8,7 +8,7 @@ import { readProjectionManifest, planSkillProjection, resolveAgentSkillRequest, 
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
 import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, TRANSACTIONS_ROOT, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
-import { prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
+import { prepareRefresh, loadWorkflowContract, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
@@ -94,8 +94,12 @@ async function copySelectedWorkflow(packageRoot: string, stagedRoot: string, wor
     force: true,
     filter: (path) => basename(path) !== STATE_TEMPLATE_DIR,
   });
+  const contract = await loadWorkflowContract(stagedRoot, workflowId);
   const stateSource = join(source, STATE_TEMPLATE_DIR);
-  if (!(await pathExists(stateSource))) throw new Error("Workflow " + workflowId + " is missing _state/");
+  if (!(await pathExists(stateSource))) {
+    if (contract.state_seed === "optional") return;
+    throw new Error("Workflow " + workflowId + " is missing required _state/");
+  }
   const stagedState = join(stagedRoot, ".speculo", workflowId);
   await cp(stateSource, stagedState, { recursive: true, force: true });
 }
@@ -159,6 +163,9 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   const root = installRoot(target);
   await assertInstallDirectory(target);
   const existed = await pathExists(root);
+  // Reject unsafe handbook nodes before creating installation scaffolding.
+  // The authoritative snapshot is still retaken after acquiring the lock.
+  await snapshotExternalFiles(target);
   await mkdir(target, { recursive: true });
   await mkdir(join(target, ".agents"), { recursive: true });
   const lockRoot = join(target, LOCK_NAME);

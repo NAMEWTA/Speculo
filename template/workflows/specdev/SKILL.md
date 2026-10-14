@@ -14,7 +14,7 @@ metadata:
 
 只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
 
-明确进入本领域后读取 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+明确进入本领域后读取 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，明确项目/方法/数据根；已有安装验证 workspace，直接使用接受明确根与 Skill 资源，仅读取当前 README/原负责工件与所需分支。普通 Work 不依赖 CLI、初始化或业务 status 镜像。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
 
 ## 能力路由
 
@@ -42,5 +42,10 @@ metadata:
 
 - <Path>{roots.state}/specdev/adr/</Path>
 - <Path>{roots.state}/specdev/context/</Path>
+- <Path>{roots.state}/specdev/design/</Path>
+
+UI 工作先按 scope/规则 ID 定位设计基线并读取所需 revision；首次基线和归档提升只经 A 的设计知识网关，见 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path>。
 
 正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+
+当前工程事实按主题查 <Path>{roots.state}/docs/README.md</Path>（存在时）；它是跨领域 docs 导航，不是本域永久知识 store。

@@ -1,6 +1,6 @@
 # Existing Style Detection
 
-在推荐风格前使用。本协议只记录可发现事实；依赖名称、README 宣传语和单张截图都不能单独证明实际 UI。
+在推荐风格前使用。先按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 定位永久设计基线及其适用 scope；项目已经存在的 <Path>DESIGN.md</Path>、组件规范或品牌约束保留原 owner 和 locator。当前包的 `Project Evidence` 记录检测，规则草案写入 change DESIGN。本协议只记录可发现事实；依赖名称、README 宣传语和单张截图都不能单独证明实际 UI。
 
 ## 1. 确定检测面
 

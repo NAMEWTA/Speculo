@@ -8,7 +8,7 @@
 - current 模式的非 cancelled Ticket 都有 implementation commit、通过的 direct-parent 验证和父分支 result SHA；required 模式都有 source commit、通过的 candidate 和父分支 result SHA；
 - shared path、接口、数据、兼容、迁移、调用点与回滚合同闭合；
 - 项目定向检查、受影响回归、类型检查、lint/build 和适用 E2E 无未经批准退化；
-- change 状态、Ticket、Map、Goal Plan、Evidence 与实际 Git 状态一致；
+- README Outcome、Ticket、Map 导航、Goal Plan、Evidence 与实际 Git 状态一致；
 - 没有未集成 implementation/source checkpoint、活动 integration candidate 或未决高影响偏差。
 
 无需改动的 Ticket 必须转为 `cancelled` 并记录来源事实；不得用 Evidence-only Done 或 empty commit 关闭。

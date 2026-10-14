@@ -2,6 +2,12 @@
 
 SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个工件只承担自己的权威边界。
 
+## 轻量输入与唯一事实
+
+整体结论仅在 change README 顶层唯一 `Outcome: active | completed | cancelled` 行；简单任务的范围、可判定 AC、当前清单、真实验证与下一步也由 README 负责。被工具引用的章节使用唯一显式 `<a id="scope"></a>`、`<a id="acceptance"></a>`、`<a id="verification"></a>` 锚点。无 Ticket 的 Goal 只在原计划维护清单；有独立 Ticket 的进度在票及 Evidence，README/Goal/Map 不复制状态。
+
+工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需拆票的轻量任务不制造 Ticket/Map。
+
 ## 1. 工件职责
 
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
@@ -17,7 +23,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Change 架构决策 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理或远程 Issue 编号 |
-| Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Ready 投影、并行候选和路径冲突 | 单 Ticket 的完整实现契约 |
+| Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Gate 导航、并行候选和路径冲突 | 单 Ticket 的完整实现契约、Ready、状态或执行 owner 副本 |
 | Goal Plan | `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
 | Implementation Map | `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
@@ -25,32 +31,33 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
 | Change 学习图解 | `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>` | 面向零专业背景读者解释当前 change 的已验证工件、实现和测试事实；索引按序号持续追加 | 产品决定、架构决定、实现授权或 Learning workflow 知识 |
 | 代码审查 | `<Path>{roots.state}/specdev/changes/{change}/reviews/CR-###.md</Path>` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
-| UI 设计包 | `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>` | 项目 UI 证据、功能风格候选、逐层用户决定、设计 token、交互合同和可运行 HTML/CSS/JS 投影 | 生产 UI 实现或替用户确认高影响偏好 |
+| 项目设计基线 | <Path>{roots.state}/specdev/design/DESIGN.md</Path> | 跨 change 的语义 token、组件/交互规范、版本及来源；A 唯一正式写入 | 单次页面设计或未批准提案 |
+| Change 设计合同 | <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path> | 本 change 已批准的页面、状态、视觉/交互、基线版本和例外；P 拥有 | 改写永久基线或替代 Spec/ADR |
+| UI 设计包 | `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>` | 项目 UI 检测、模板组合、集中批准证据、可运行 HTML/CSS/JS 源码与浏览器证据 | 生产 UI 实现或替用户确认高影响偏好 |
 | Stakeholder 问卷 | `<Path>{roots.state}/specdev/changes/{change}/questionnaires/{slug}.md</Path>` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `<Path>{roots.state}/specdev/changes/{change}/investigation/{investigation-id}.md</Path>` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
 | Wayfinder solution comment | `<Path>{roots.state}/specdev/changes/{change}/investigation/comments/{investigation-id}/NN-solution.md</Path>` | Ticket 的答案、结果事实和资产指针 | 地图索引或产品实现 |
 | 架构审查 | `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>` | 结构性候选、code-judo 机会、证据、选择和访谈状态 | 未经用户选择的执行契约 |
 
-UI 设计包中的 `{design-id}` 由 P-prototype 分配为当前 change 内最小未占用的 `UI-NNN`；设计系统文档是唯一设计权威，comparison 与 final 不建立第二套规则。
+UI 设计包中的 `{design-id}` 由 P-prototype 分配为当前 change 内最小未占用的 `UI-NNN`；design-system.md 保留文件名但只拥有源码与证据，change DESIGN 是当前设计合同；comparison 与 final 不建立第二套规则。UI 分支按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 处理继承、确认、失效与下游硬引用。
 
-Change CONTEXT/ADR 是 active change 内的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `<Path>{roots.state}/specdev/context/</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>`；只有 A 在 change 完成、实现证据验证、毕业评估和用户确认后才能写入永久 namespace。未毕业内容随归档 change 保留，不能从 change 工件消失。
+Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `<Path>{roots.state}/specdev/context/</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>`；ADR/context 的正式写入只有 A 在适用证据、价值评估和具体授权通过后执行；独立维护无需虚构 change，research/非标准 store 仍按实际声明及原 owner 判断，不能自动纳管；design 的首次批准意图发布与归档提升均只经 A 设计网关，按 design-contract 执行。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
 ## 2. 权威顺序
 
-同一事项冲突时按下列顺序裁决：
+先确定问题类型，不以一个万能优先级覆盖全部事实：
 
-1. 用户最新明确决定；
-2. 当前 change 已接受的架构决策：`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`；
-3. 永久 ADR 与领域上下文：`<Path>{roots.state}/specdev/adr/</Path>`、`<Path>{roots.state}/specdev/context/</Path>`；
-4. 当前外部行为权威：`<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`；
-5. 当前 Ticket 契约：`<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`；
-6. 当前跨 Ticket 编排：`<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`；
-7. 若当前 change 属于父实现 change，父 Implementation Map 对组合 Ticket dependency/serialization 具有权威，父 Implementation Plan 拥有全局 workspace、frontier 与 integration queue；
-8. 当前代码与运行事实；
-9. 旧计划、旧日志和未经确认的推断。
+- 原始请求由 source 负责；产品目标和真实授权来自用户决定，当前 Spec/README 负责已确认外部行为。
+- 当前实现是什么，以真实源码、运行与验证为证；代码不静默授权修改已批准目标。
+- 长期取舍由 ADR 负责，领域含义和兼容范围由 context 负责；当前工程用法由负责 docs/源码维护，不复制决策全文。
+- 当前 change 的已接受 ADR 约束本次架构；与永久知识冲突必须显式记录替代范围，未通过 A 网关不改永久版本。
+- Ticket 拥有本票范围/依赖/写集/实现证据；Goal 和父 Implementation Map/Plan 拥有各自的 Gate、组合依赖、workspace 与集成安排，不能覆盖子行为合同。
+- 日志与历史解释出处，未确认推断不能提升为当前事实。
 
-当前 change 决定与永久知识冲突时，必须在 LOG/ADR 中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
+视觉/交互事项先读取已批准 change DESIGN 和其引用的项目设计 revision；它不能覆盖 Spec 的外部行为或 ADR 的架构决定。缺少确认、内容漂移或规则冲突时返回 P，不由下游重新选择设计。
+
+当前 change 决定与永久知识冲突时，必须在 LOG/ADR（设计事项为 DESIGN overrides）中显式说明替代关系；它只约束当前 change，直到 A 决定是否提升并更新永久版本。
 
 `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。GitHub 上由 publish 投影出的 Issue 不是开发权威；发布计数以 `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` 为准。GitHub 上由 capture 记下的 inbox Issue 也不是开发权威；inbox 计数以 `<Path>{roots.state}/specdev/capture.md</Path>` 为准，缺失该文件视为空 inbox。
 

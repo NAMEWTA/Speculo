@@ -143,3 +143,11 @@
 ## 工程检查的选择与失效
 
 记录为什么选择这些定向检查、覆盖哪些消费者与风险；复用时列原 checkpoint/配置/输入/Skill 与有效性，失效时只列受影响项。测试删除列旧风险到新测试的承接；资源清理记录真正完成信号。专业分支按 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path> 在本文件追加标记记录；普通实施不要求空白记录，结构通过不认证真实运行。
+
+## Workspace Execution Record
+
+仅独立实现 Ticket 真正开始时，在本节保存该票原 workspace 执行字段的唯一 JSON object：base_sha、parent_branch、workspace/implementation/integration owner、workspace_ref、branch、source_checkpoint、status、integration 的 candidate/result/验证/E2E/attempts 等。由实际操作生成，不能预填空对象；current/direct-parent 与 required/source/parent-candidate 仍各按原合同验证。其他表格只说明和导航这些事实，不复制第二套可写状态；Direct Spec 不创建该票记录。
+
+## Acceptance Verification
+
+仅独立 Spec 的无票 Direct Spec 完成时填写本节 JSON array，每个 Spec AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。

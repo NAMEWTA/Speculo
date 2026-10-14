@@ -16,7 +16,7 @@
 4. 从 `base_sha` 创建 Git worktree，不复用其他 Ticket 目录；
 5. 在来源 worktree 读取项目 Agent 指令、依赖、构建与路径合同；
 6. 安装实际需要的依赖，运行最小非 E2E 基线；
-7. Lead 写入 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`，状态为 `active`。
+7. Lead 将实际 workspace、owner、checkpoint 和 `status: active` 记录在该票 Evidence 的 `## Workspace Execution Record` 唯一 JSON object 中，保留原执行字段；不创建全局 worktree 镜像。
 
 初始记录：
 

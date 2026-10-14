@@ -84,13 +84,13 @@ test('domain entry renames do not rename runtime knowledge indexes or OPS genera
   assert.doesNotMatch(status,/\{roots\.workflows\}\/\{workflow\}\/(INDEX|README)\.md/);
 });
 
-test('structured change versions are exact numbers and validation never rewrites state',()=>fixture(async root=>{
+test('legacy structured changes require explicit conversion and validation never rewrites state',()=>fixture(async root=>{
  const change='2026-10-13-exact-schema',directory=join(root,'.speculo/specdev'),path=join(directory,'changes',change,'.status.json');
  await mkdir(dirname(path),{recursive:true});
  await writeFile(join(directory,'status.json'),JSON.stringify({schema_version:5,workflow:'specdev',active:[{change}],archived:[]}));
  for(const version of ['6',5,6]){
   await writeFile(path,JSON.stringify({schema_version:version,artifact:'change-status',change}));const before=await fingerprintTree(root);
-  if(version===6)await validateStructuredRuntime(root,['specdev']);else await assert.rejects(validateStructuredRuntime(root,['specdev']),/schema v6/);
+  await assert.rejects(validateStructuredRuntime(root,['specdev']),/explicit Markdown conversion/);
   assert.equal(await fingerprintTree(root),before);
  }
 }));

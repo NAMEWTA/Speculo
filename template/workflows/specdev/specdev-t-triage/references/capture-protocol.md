@@ -16,7 +16,7 @@ capture **不得**：
 
 - 创建 change 目录或 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 下任何工件；
 - 写 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` / `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` / `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>`；
-- 设置任何 change 的 `current_work`；
+- 创建任何 change 的工作调用镜像；
 - 加载 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`；
 - 调用 `issue-comment-close` 或关闭刚创建的 Issue；
 - 在本地复制 inbox 正文副本；
@@ -84,6 +84,6 @@ node <Path>{roots.workflows}/specdev/specdev-t-triage/scripts/capture-status.mjs
 - 每条已捕获 Issue 带且仅带一个 type 标签，以及 `specdev:captured` 与 `origin:local`；
 - 正文是现在时 inbox 记录，不是派工单，也不是完成后投影；
 - marker 使重跑不重复建贴；
-- 未创建 Change，未写 `current_work`，未调用关闭；
+- 未创建 Change，未创建工作调用镜像，未调用关闭；
 - `<Path>{roots.state}/specdev/capture.md</Path>` 与远程重读一致，失败行可恢复；
 - 未授权时远程写入为零。

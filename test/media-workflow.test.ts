@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { realpath, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -17,7 +17,7 @@ const mediaOptions = { packageRoot, selection: { workflowIds: ['media'] } };
 const changeName = '2026-10-10-demo';
 
 async function fixture(fn: (root: string) => Promise<void>): Promise<void> {
-  const root = await mkdtemp(join(tmpdir(), 'speculo-media-'));
+  const root = await mkdtemp(join(await realpath(tmpdir()), 'speculo-media-'));
   try { await fn(root); }
   finally { await rm(root, { recursive: true, force: true }); }
 }

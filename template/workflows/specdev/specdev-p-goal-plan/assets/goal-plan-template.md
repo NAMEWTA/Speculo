@@ -55,11 +55,11 @@ ready_for_execution: false
 
 ### Ticket Quick Reference
 
-未来 draft 票在其未决问题中记录待交付的上游产物、生产者 Ticket、所需证据和 DoR 重审条件；此表投影当前状态，不以 Goal Ready 代替逐票 Ready。
+未来 draft 票在原 Ticket 的未决问题中记录待交付的上游产物、生产者 Ticket、所需证据和 DoR 重审条件。此表只导航原 Ticket/Evidence；状态、Ready、执行 owner 与工作区结果不复制到 Goal，不以 Goal Ready 代替逐票 Ready。
 
-| ID | 可观察产出 | Dependencies | Workspace | Implementation owner | E2E disposition | Evidence |
-|---|---|---|---|---|---|---|
-| T-01 | ... | — | `current`（required 模式为 `specdev-worktree/<change>/T-01`） | Lead / dynamic dispatch | required / not-required: reason | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
+| ID | Ticket | Evidence |
+|---|---|---|
+| T-01 | `<Path>{roots.state}/specdev/changes/{change}/ticket/01-<ticket-name>.md</Path>` | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
 
 ## 3. Gates and Completion Evidence
 
@@ -82,15 +82,14 @@ ready_for_execution: false
 | 项目 | 决定 | 事实依据 |
 |---|---|---|
 | Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与父分支 owner |
-| Concurrent implementations | `<concurrent_implementation_limit>`，Lead 参与实现时计入 | Goal Plan 快照、依赖和平台能力的最小值 |
-| Integration attempts | `<integration_attempt_limit>` | Goal Plan 创建时从 config 快照 |
+| Concurrent implementations | `<concurrent_implementation_limit>`，Lead 实际参与实现时计入；current 始终单 writer | 本计划 Execution Policy Source；核对实际存在的 config、依赖和平台限制 |
+| Integration attempts | `<integration_attempt_limit>` | 本计划 Execution Policy Source；核对实际存在的 config 限制 |
 | Read-only agents | 无 SpecDev 数字上限 | review/research/test-observation，不写状态 |
 | Dispatch | execution-time dynamic | provider/模型/派单按 Ticket 事实选择 |
 
 ### Ticket Workspace and Integration
 
-| Ticket | Parent/base | Workspace/branch | Source checks | Implementation commit | Integration checks/E2E | Parent result |
-|---|---|---|---|---|---|---|
+本节拥有跨票工作区策略和集成安排。每票实际 Parent/base、workspace/branch、implementation/source commit、检查/E2E 和 parent result 只记录在原 Ticket Evidence 的 Workspace Execution Record；通过上表导航回读，不在 Goal 再维护一套结果。
 
 当 `ticket_workspace_policy: current` 时，Ticket 必须严格串行。Lead 每次只允许一个 implementation owner 写入当前 workspace；完成非 E2E 检查并形成 commit 后，Lead 在同一父分支/current workspace 运行适用集成检查和 E2E，验证通过后将该 Ticket 的 `result_sha` 记录为其 implementation commit，再开始下一个 Ticket。不得创建 source/candidate worktree。
 
@@ -133,14 +132,19 @@ ready_for_execution: false
 
 ### Current Status
 
-记录 Wave/Gate、Ticket、implementation/source、适用 candidate 和 result SHA、最近验证和未验证项；不使用主观百分比。
+只记录本 Goal 独有的当前 Wave/Gate、跨票验收、整体阻塞与下一步；相关 Ticket、implementation/source、candidate/result SHA 与逐票验证只导航原 Ticket/Evidence，不复制状态或结果；不使用主观百分比。
 
 ### Pending Decisions and Blockers
 
 ### Resume Protocol
 
-恢复时读取 Goal Plan、当前 Ticket、change workspace 状态和最新 Evidence；从最后通过的父分支 result 或待修正 implementation/source checkpoint 继续。
+恢复时读取 Goal Plan、当前 Ticket 和原 Evidence 的 Workspace Execution Record，并核对实际 Git；从最后通过的父分支 result 或待修正 implementation/source checkpoint 继续。
 
 ## Assumptions
 
 只记录低影响且可验证的假设。存在高影响假设时 `ready_for_execution` 必须为 `false`。
+
+
+## Execution Policy Source
+
+<实际项目/本次约定及可回读出处；填写已有并发和集成尝试字段的真实来源。存在 config 时核对其上限；Lead 自己实现计入，current 严格单 writer。无票轻量 Goal 只使用必要清单/验收，不预造执行记录。>

@@ -1,0 +1,153 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "prototype-browser-evidence"
+    },
+    "prototype_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspected_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 320
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 200
+          },
+          "screenshot": {
+            "type": "string",
+            "minLength": 1
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "rendered": {
+                "const": true
+              },
+              "no_overflow": {
+                "const": true
+              },
+              "keyboard": {
+                "const": true
+              },
+              "focus": {
+                "const": true
+              },
+              "long_text": {
+                "const": true
+              },
+              "zoom": {
+                "const": true
+              },
+              "reduced_motion": {
+                "const": true
+              },
+              "states": {
+                "const": true
+              }
+            },
+            "required": [
+              "rendered",
+              "no_overflow",
+              "keyboard",
+              "focus",
+              "long_text",
+              "zoom",
+              "reduced_motion",
+              "states"
+            ]
+          },
+          "states": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "entry": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "width",
+          "height",
+          "screenshot",
+          "checks",
+          "states",
+          "entry"
+        ]
+      }
+    },
+    "console_errors": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "offline": {
+      "const": true
+    },
+    "design_review": {
+      "type": "string",
+      "minLength": 1
+    },
+    "technical_review": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rechecked": {
+      "const": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact",
+    "prototype_digest",
+    "generated_at",
+    "provider",
+    "inspected_files",
+    "cases",
+    "console_errors",
+    "offline",
+    "design_review",
+    "technical_review",
+    "rechecked"
+  ],
+  "$id": "urn:speculo:specdev:prototype-browser-evidence:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

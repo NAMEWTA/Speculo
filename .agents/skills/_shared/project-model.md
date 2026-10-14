@@ -15,7 +15,7 @@
 | workflow/_state/ | .agents/speculo/.speculo/domain/；roots.state；仅初始化种子 |
 | 项目原有 Skill | .agents/skills/；roots.skills；保留第三方所有权 |
 
-workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，包含 layout_version=agents-v2、installation_id 与固定 roots。只有当前布局可写；旧安装、未知 schema、路径越界、链接或冲突先阻塞受影响操作，不做迁移或第二套读取。CLI 的 staging、锁与恢复日志仅用于安装事务。
+workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，包含 layout_version=agents-v2、installation_id 与固定 roots。CLI 安装只支持合法当前布局；未知 schema、路径越界、链接或冲突阻塞受影响操作。SpecDev 普通 Work 使用明确 projectRoot/methodRoot/stateRoot，无安装也可使用；已安装时不得放宽 workspace 身份检查。旧活动数据仅经显式转换，旧 archive 保留独立只读 reader，不返回新 writer 对象。CLI 的 staging、锁与恢复日志仅用于安装事务。
 
 ## 入口与按需读取
 
@@ -35,7 +35,7 @@ canonical 共 12 份，是隔离的单文件分发。共享规则、portable ada
 
 ## 状态与授权
 
-Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。当前 SpecDev config/Goal Plan 为 7、Implementation Plan 为 2、全局 status 为 5、change status 为 6；其他领域独立版本化。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
+Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。SpecDev 新业务整体结论为 README 唯一 Outcome active/completed/cancelled，归档在 changes/archive/<稳定名称>；普通新流程不读写全局 status/change status/Work 调用镜像。config 仅真实工具需要时保留，复杂 Goal Plan 7、Implementation Plan 2 及 Ticket/Map 等有实际消费者的合同不弱化；旧月份 archive 原位冻结。其他领域独立版本化，不强加此模型。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
 
 Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突从 -01 取最小未使用编号，报告不覆盖。只有有恢复需求的 command 才建 state.json。docs-sync sidecar 由命令拥有，延迟创建，不放 workflow/_state。CLI-owned back 不由 prompt 改写。
 
@@ -43,4 +43,6 @@ Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突�
 
 ## 验证与权威
 
-先读真实调用方、当前 schema 和测试，再改作者参考。运行源格式、catalog、links、disclosure、业务验证器、实际安装/恢复与相关失败测试；生成两次确认无 diff。未知字段和用户 runtime bytes 遵循各 schema 的保留规则，不能为了通过测试减掉业务门禁。记录命令、退出码、未验证宿主行为、恢复入口，不将字符数变化当 Token/额度收益。
+先读真实调用方、当前 schema 和测试，再改作者参考。按 [验证选择](validation-gates.md) 检查受影响的格式、catalog、links、disclosure 与领域行为；安装/恢复变化才增加对应测试，涉及生成物才生成两次确认无 diff。未知字段和用户 runtime bytes 遵循各 schema 的保留规则，不能为了通过测试减掉业务门禁。记录命令、退出码、未验证宿主行为、恢复入口，不将字符数变化当 Token/额度收益。
+
+当前工程 docs 位于 state/docs 或项目已有负责正文，按主题归属；明确请求才建全面基线，A/I 用共享 current-facts-docs 局部维护，docs-sync 才手动全局整理并拥有 Git/state。A 先核对 change/ADR/context/docs 与适用 DESIGN，维护现役资产后最后移动；无 change 知识维护仅需持久化恢复时建 maintenance 回执。

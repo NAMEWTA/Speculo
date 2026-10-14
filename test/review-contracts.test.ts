@@ -27,15 +27,21 @@ test("Learning conditional contracts remain directly reachable without unrelated
   assert.match(await read("template/workflows/learning/learning-g-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
 });
 
-test("Docs Sync routes effects before per-mode Git contracts and preserves cursor semantics", async () => {
-  const skill = await read("template/commands/docs-sync/references/operation-contract.md");
+test("Docs Sync keeps effect modes, global coverage and conditional Git contracts", async () => {
+  const operation = await read("template/commands/docs-sync/references/operation-contract.md");
   const command = await read("template/commands/docs-sync/COMMAND.md");
-  const modes = await read("template/commands/docs-sync/references/mode-contract.md");
-  assert.ok(!skill.includes("references/entry-procedure.md"), "no unconditional intermediate wrapper");
-  for (const mode of ["audit", "update", "commit"]) assert.ok(skill.includes(mode) && command.includes(mode));
-  assert.match(modes, /No cursor, synchronization counter or workflow sidecar advances/);
-  assert.match(modes, /no-op synchronization commit/);
-  assert.ok(!command.includes("调用本命令即授权"));
+  const git = await read("template/commands/docs-sync/references/git-state-contract.md");
+  const modes = operation.split("\n").filter(line => /^\| (audit|update|commit) \|/.test(line));
+  assert.equal(modes.length, 3);
+  assert.ok(modes.find(line => line.startsWith("| commit |"))?.includes("git-state-contract.md"));
+  assert.ok(modes.filter(line => !line.startsWith("| commit |")).every(line => !line.includes("git-state-contract.md")));
+  assert.match(operation, /全局清单/);
+  assert.match(operation, /未提交 overlay/);
+  assert.match(command, /audit.*默认/);
+  assert.match(git, /state v4/);
+  assert.match(git, /没有上述变化时直接返回 no-op/);
+  assert.match(git, /state-file-commit/);
+  assert.match(git, /commit --only/);
 });
 
 test("source inventory distinguishes missing historical sources from verified hashes", async () => {

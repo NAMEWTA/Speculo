@@ -14,9 +14,9 @@
 
 ## 共同事实源
 
-所有技能先读取 `_shared/project-model.md` 和 `_shared/authoring-quality.md`，再读取与当前资产类型对应的 reference。需要长期知识时读取 `_shared/memory-retrieval.md`；维护作者技能时读取 `_shared/authoring-protocol.md`。共享规则只在 `_shared/` 中维护，具体技能不复制它们。
+先定位目标、调用方和验证；结构/行为变化使用 `_shared/authoring-protocol.md` 按条件路由。安装布局/状态查 project-model，写作结构查 authoring-quality，路径变化查 path-and-reference-rules，验证按 validation-gates 选择；需要长期知识才读 memory-retrieval。已加载且未变化的资料不重复读，共享规则不在具体技能复制。
 
-用户提供参考内容时，所有作者技能先应用 `_shared/authoring-quality.md` 中的“参考内容复用”规则：默认尽可能直接复制，只做 Speculo 正确运行所必需的最小适配。
+用户提供参考内容的适配任务应用 `_shared/authoring-quality.md` 中的“参考内容复用”规则：默认尽可能直接复制，只做 Speculo 正确运行所必需的最小适配；用户明确要求的重构按其目标执行并单列行为变化。
 
 ## 仓库与安装路径
 
@@ -27,7 +27,7 @@
 - `template/workflows` → `.agents/speculo/workflows`
 - `template/.speculo` → `.agents/speculo/.speculo`
 
-`template/workflows/<workflow>/_state/` 是初始化种子；运行时状态写入 `{roots.state}/<workflow>/`，不写入 `{roots.workflows}/<workflow>/_state/`。
+`template/workflows/<workflow>/_state/` 是领域按需声明的初始化种子；SpecDev 无独有种子时缺省，其他领域保持自己的要求；运行时状态写入 `{roots.state}/<workflow>/`，不写入 `{roots.workflows}/<workflow>/_state/`。
 
 ## 一次性校验
 

@@ -56,9 +56,10 @@ type RefreshContract = {
   };
 };
 
-type WorkflowRuntimeContract = {
+export type WorkflowRuntimeContract = {
   schema_version: number;
   workflow: string;
+  state_seed?: "required" | "optional";
   config: null | {
     path: string;
     template: string;
@@ -172,7 +173,7 @@ async function loadRefreshContract(stagedRoot: string): Promise<RefreshContract>
   return contract as RefreshContract;
 }
 
-async function loadWorkflowContract(stagedRoot: string, workflowId: string): Promise<WorkflowRuntimeContract> {
+export async function loadWorkflowContract(stagedRoot: string, workflowId: string): Promise<WorkflowRuntimeContract> {
   const path = join(stagedRoot, "workflows", workflowId, "runtime-contract.json");
   const contract = await readJson(path, `workflows/${workflowId}/runtime-contract.json`);
   if (
@@ -180,6 +181,9 @@ async function loadWorkflowContract(stagedRoot: string, workflowId: string): Pro
     !Array.isArray(contract.structured_state) || contract.opaque_default !== "preserve-byte-for-byte"
   ) {
     throw new Error("workflow " + workflowId + " has an invalid runtime contract");
+  }
+  if (contract.state_seed !== undefined && contract.state_seed !== "required" && contract.state_seed !== "optional") {
+    throw new Error("workflow " + workflowId + " state_seed must be required or optional");
   }
   for (const item of contract.structured_state) {
     if (typeof item !== "string") throw new Error("workflow " + workflowId + " has a non-string structured state path");
@@ -264,12 +268,12 @@ function isStructured(path: string, contracts: WorkflowRuntimeContract[]): boole
   );
 }
 
-async function preserveOpsPrivateModes(source: string, target: string): Promise<void> {
+async function preserveRuntimeModes(source: string, target: string): Promise<void> {
   const metadata = await lstat(source);
-  if (metadata.isSymbolicLink()) throw new Error("OPS runtime symlinks require explicit migration before refresh");
-  if (process.platform !== "win32") await chmod(target, metadata.mode & 0o777);
+  if (metadata.isSymbolicLink()) throw new Error("runtime symlinks require explicit migration before refresh");
+  if (process.platform !== "win32") await chmod(target, metadata.mode & 0o7777);
   if (metadata.isDirectory()) {
-    for (const entry of await readdir(source)) await preserveOpsPrivateModes(join(source, entry), join(target, entry));
+    for (const entry of await readdir(source)) await preserveRuntimeModes(join(source, entry), join(target, entry));
   }
 }
 
@@ -290,7 +294,7 @@ async function copyPreviousRuntime(
       recursive: entry.isDirectory(),
       force: true,
     });
-    if (entry.name === "ops") await preserveOpsPrivateModes(join(previousState, entry.name), join(stagedState, entry.name));
+    await preserveRuntimeModes(join(previousState, entry.name), join(stagedState, entry.name));
   }
   const baselines = join(previousState, "baselines");
   if (await pathExists(baselines)) {
@@ -306,7 +310,7 @@ async function opaqueFiles(
   const records = await collectFiles(stateRoot, {
     include: (path) => !isReserved(path, reserved) && !isStructured(path, contracts),
   });
-  return new Map(records.map((record) => [record.path, record.sha256]));
+  return new Map(await Promise.all(records.map(async (record) => [record.path, record.sha256 + ":" + (process.platform === "win32" ? "windows" : (await lstat(join(stateRoot, record.path))).mode & 0o7777)] as [string, string])));
 }
 
 function verifyOpaqueFiles(before: Map<string, string>, after: Map<string, string>): void {
@@ -557,6 +561,9 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   if (options.existed) {
     await preserveUnmanagedStatic(options.previousRoot,options.stagedRoot);
     await assertNoSymlinks(previousState);
+    if (await pathExists(join(previousState, "specdev", ".markdown-conversion-pending"))) {
+      throw new RefreshBlockedError([{ code: "markdown-conversion-pending", path: ".speculo/specdev/.markdown-conversion-pending", message: "the original conversion owner must finish recovery before replacing this installation" }]);
+    }
     const opaqueBefore = await opaqueFiles(previousState, reserved, workflowContracts);
     await copyPreviousRuntime(options.previousRoot, options.stagedRoot, reserved);
     await reconcileProjectConfig(options.previousRoot, options.stagedRoot, true, contract.project_config, stats, backups);
@@ -592,6 +599,7 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   for (const workflowContract of workflowContracts) {
     await reconcileWorkflowConfig(options.previousRoot, options.stagedRoot, workflowContract, false, stats, backups);
   }
+  await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
   const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, null, selected, options.installedWorkflowIds);
   await assertNoSymlinks(options.stagedRoot);
   return {

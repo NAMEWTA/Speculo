@@ -20,7 +20,8 @@ import {
 } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { assertMarkdownProtocolSync, discoverChangesSync, readChangeFactsSync, readLegacyChangeEvidenceSync } from '../../../lib/speculo-runtime.mjs';
 
 export const SCHEMA_VERSION = 1;
 const TERMINAL = new Set(['local-only', 'published']);
@@ -513,7 +514,7 @@ function inspectRepository(projectRoot, request) {
   };
 }
 
-function scanEvidence(evidenceRoot, stateRoot, repositories) {
+function scanEvidence(evidenceRoot, stateRoot, repositories, projectRoot) {
   const shaToRepo = new Map();
   for (const repo of repositories) {
     const repoPath = resolve(repo.__absolute_path);
@@ -540,8 +541,9 @@ function scanEvidence(evidenceRoot, stateRoot, repositories) {
     }
   }
   visit(evidenceRoot);
+  const specdevRoot = join(evidenceRoot, 'specdev');
   const changeRoots = documents
-    .filter((document) => document.name === '.status.json')
+    .filter((document) => document.name === '.status.json' && !document.full.startsWith(`${specdevRoot}${sep}`))
     .map((document) => {
       let active = true;
       try {
@@ -550,8 +552,28 @@ function scanEvidence(evidenceRoot, stateRoot, repositories) {
         active = typeof status !== 'string' || !new Set(['completed', 'archived']).has(status);
       } catch {}
       return { root: dirname(document.full), active };
-    })
-    .sort((left, right) => right.root.length - left.root.length);
+    });
+  if (existsSync(specdevRoot)) {
+    assertMarkdownProtocolSync(specdevRoot);
+    for (const location of discoverChangesSync(specdevRoot, { includeArchived: true, includeLegacy: true })) {
+      if (location.kind === 'legacy-archive') {
+        readLegacyChangeEvidenceSync(specdevRoot, location);
+        changeRoots.push({ root: location.root, active: false });
+      } else {
+        const facts = readChangeFactsSync(specdevRoot, location);
+        if (location.kind === 'archive') {
+          const methodRoot = fileURLToPath(new URL('../../../', import.meta.url));
+          const validator = join(methodRoot, 'workflows/specdev/common/tools/validate-specdev.mjs');
+          if (!existsSync(validator)) throw new SquashError('SpecDev archive verification requires the original method resources; preserve the evidence and restore that capability');
+          const check = spawnSync(process.execPath, [validator, '--repo', projectRoot, '--method-root', methodRoot, '--state-root', evidenceRoot, '--stage', 'archived', '--sealed', location.root], { encoding: 'utf8', timeout: 60_000 });
+          if (check.status !== 0) throw new SquashError(`SpecDev archive is not verified as sealed: ${location.name}; ${check.stderr || check.stdout || check.error?.message || 'validator failed'}`);
+        }
+        // Keep unfinished and unarchived cancellations protected from history rewriting.
+        changeRoots.push({ root: location.root, active: location.kind === 'active' && facts.outcome !== 'completed' });
+      }
+    }
+  }
+  changeRoots.sort((left, right) => right.root.length - left.root.length);
   for (const document of documents) {
     const owner = changeRoots.find((candidate) => document.full === candidate.root || document.full.startsWith(`${candidate.root}${sep}`));
     const active = owner?.active ?? false;
@@ -593,6 +615,7 @@ function manifestForApply(state) {
     .filter((repo) => repo.status === 'planned' && children.get(repo.id).every((child) => child.status === 'published'))
     .map((repo) => ({
       repository: repo.id,
+      ...(state.evidence_root === undefined ? {} : { evidence_root: state.evidence_root }),
       path: repo.path,
       branch: repo.branch,
       start_sha: repo.start_sha,
@@ -613,6 +636,7 @@ function manifestForPublish(state) {
     .filter((repo) => repo.status === 'local-verified' && repo.publish)
     .map((repo) => ({
       repository: repo.id,
+      ...(state.evidence_root === undefined ? {} : { evidence_root: state.evidence_root }),
       path: repo.path,
       local_ref: repo.branch,
       new_sha: repo.new_head,
@@ -722,6 +746,10 @@ function loadRun(projectRoot, stateRootArg, change) {
 }
 
 function validateRunState(projectRoot, state) {
+  if (state.evidence_root !== undefined) {
+    safePath(state.evidence_root, 'evidence_root');
+    ensureDirectory(inside(projectRoot, state.evidence_root, 'evidence root', { allowRoot: false, mustExist: true }), 'evidence root');
+  }
   if (!Array.isArray(state.repositories) || !Array.isArray(state.local_manifest) || !Array.isArray(state.publish_manifest)) {
     throw new SquashError('change state manifest fields must be arrays');
   }
@@ -813,7 +841,7 @@ function plan(values) {
       return inspected;
     });
     validateSubmodules(projectRoot, repositories);
-    scanEvidence(evidenceRoot, stateRoot, repositories);
+    scanEvidence(evidenceRoot, stateRoot, repositories, projectRoot);
     for (const repo of repositories) delete repo.__absolute_path;
     const state = {
       schema_version: SCHEMA_VERSION,
@@ -821,6 +849,7 @@ function plan(values) {
       change,
       run_id: runId,
       topic: request.topic,
+      evidence_root: relative(projectRoot, evidenceRoot).split(sep).join('/'),
       phase: 'planned',
       next_action: null,
       created_at: now(),
@@ -883,6 +912,12 @@ function revalidateLocal(projectRoot, state, repo) {
       && expectedGitlinkDrift(path, allowedGitlinks);
     if (item.prunable || (item.dirty && !allowedTransition) || item.operations.length) throw new SquashError(`${repo.id} worktree precondition drifted: ${item.locator}`);
   }
+}
+
+function revalidateEvidence(projectRoot, stateRoot, state, repositories) {
+  if (!state.evidence_root) throw new SquashError('saved plan has no frozen evidence root; preserve it and create a new plan before rewriting history');
+  const evidenceRoot = inside(projectRoot, state.evidence_root, 'evidence root', { allowRoot: false, mustExist: true });
+  scanEvidence(evidenceRoot, stateRoot, repositories.map(repo => ({ ...repo, __absolute_path: resolve(projectRoot, repo.path) })), projectRoot);
 }
 
 function buildTree(projectRoot, state, repo) {
@@ -1002,6 +1037,7 @@ function apply(values) {
   const confirmation = required(values, 'confirm_plan');
   if (state.next_action !== 'confirm-local' || !state.local_digest || confirmation !== state.local_digest) throw new SquashError('local confirmation digest does not match the current manifest');
   const ids = state.local_manifest.map((item) => item.repository);
+  revalidateEvidence(projectRoot, stateRoot, state, state.repositories.filter(repo => ids.includes(repo.id)));
   state.confirmations.push({ kind: 'local', digest: confirmation, confirmed_at: now(), repositories: ids });
   state.phase = 'local-applying';
   state.updated_at = now();
@@ -1009,6 +1045,7 @@ function apply(values) {
   for (const id of ids) {
     const repo = state.repositories.find((item) => item.id === id);
     try {
+      revalidateEvidence(projectRoot, stateRoot, state, [repo]);
       revalidateLocal(projectRoot, state, repo);
       if (resolveCommit(resolve(projectRoot, repo.path), repo.branch) !== repo.end_sha) throw new SquashError(`${repo.id} branch moved after plan`);
       repo.new_tree = buildTree(projectRoot, state, repo);
@@ -1048,6 +1085,7 @@ function publish(values) {
   const confirmation = required(values, 'confirm_publish');
   if (state.next_action !== 'confirm-publish' || !state.publish_digest || confirmation !== state.publish_digest) throw new SquashError('publish confirmation digest does not match the current manifest');
   const ids = state.publish_manifest.map((item) => item.repository);
+  revalidateEvidence(projectRoot, stateRoot, state, state.repositories.filter(repo => ids.includes(repo.id)));
   state.confirmations.push({ kind: 'publish', digest: confirmation, confirmed_at: now(), repositories: ids });
   state.phase = 'publishing';
   state.updated_at = now();
@@ -1056,6 +1094,7 @@ function publish(values) {
     const repo = state.repositories.find((item) => item.id === id);
     const path = resolve(projectRoot, repo.path);
     try {
+      revalidateEvidence(projectRoot, stateRoot, state, [repo]);
       revalidateLocal(projectRoot, state, repo);
       if (resolveCommit(path, repo.branch) !== repo.new_head || resolveCommit(path, repo.backup_ref) !== repo.end_sha) throw new SquashError(`${repo.id} local rewrite drifted before publish`);
       const remote = inspectRemote(path, { id: repo.id, remote: { name: repo.remote.name, branch: repo.remote.branch }, sign: repo.sign }, repo.end_sha);

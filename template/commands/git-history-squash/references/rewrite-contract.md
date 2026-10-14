@@ -64,6 +64,10 @@ inclusive: baseline = start^1,  replace start^1..end
 
 Plan 命令统一设置 `GIT_OPTIONAL_LOCKS=0`。已有 stash、其他 refs 和 completed/archived workflow evidence 只记录；active workflow evidence、dirty/prunable worktree、进行中操作、浅克隆、replace/graft、多个 push URL 或未知远端保护策略阻塞执行。
 
+SpecDev 通过共享发现器读取 README 的唯一 Outcome 与实际位置，旧月份归档使用严格的历史只读 reader；非法/重复 Outcome、混合旧状态、未结束转换和同身份多位置阻塞该历史计划。未归档的 cancelled 对象仍受保护，不能借取消标记解除旧 SHA 引用；completed、已核验封存的新归档和通过严格历史 reader 的旧归档只记录引用。新归档须通过原工具的回执、完整性和完成/取消门；缺少回执、仅 moved、内容漂移或验证能力缺失都停止计划/执行。其他领域继续读取其原 `.status.json`，不套用 SpecDev 协议。
+
+计划将 evidence root 的项目相对路径绑定进本地/发布 manifest。apply/publish 在接受该 manifest 后、每个仓库副作用前重新检查当前证据；新出现的活动引用或协议冲突立即停止。旧计划缺少冻结 evidence root 时只允许读取现场，须创建新计划，不能猜测根后继续改写。
+
 ## Local transaction
 
 执行层开始前，把 `phase=local-applying` 和精确 manifest 原子写入运行 state/report。创建 commit object 后先验证 tree、parent、message digest 和签名，再通过 `git update-ref --stdin` 事务完成：

@@ -1,46 +1,11 @@
-# 首次配置与缺失骨架
+# 必要偏好与真实工具配置
 
-只在配置或状态尚不存在时读取；已有文件先按入口验证，不重新初始化。
+只有当前任务确需持久化偏好或工具设置时读取；不是缺少文件即补全骨架。
 
-### 3. 询问不可发现偏好
+语言、用户工具和明确产物数量复用当次请求或现有项目说明。实现并发、worktree、集成尝试上限只在原 Goal/Implementation Plan 真正启用时明确，由计划 `## Execution Policy Source` 记录实际来源；默认 current 单写入者。Lead 自己实现计入实现并发，只读协作者不设新数字上限。UI 缺省 3、配置 2–4、用户明确数量覆盖上限；一次 override 留当前设计包，不改全局偏好。
 
-仅在上下文未提供时询问：
+现有 <Path>{roots.state}/specdev/config.json</Path> 中 GitHub labels/include_external_prs、验证/planning 等真实消费者配置，可按 <Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path> 验证和保留；只有确需该工具时才创建，必要结构参考 <Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/config-template.json</Path>。不把旧配置整份机械改写为 config.md；未知独有字段保留并报告。无标签只阻塞相关远程写入。
 
-- 交互语言与持久化工件语言；
-- 实现执行者、集成尝试次数和 UI 设计候选上限（初始化时写入 config，Lead 参与实现时计入）；
-- Deep Ticket 的迁移、发布和不可逆操作是否必须人工批准；
+任何配置更新先核对实际差异和授权，不保存秘密或凭据，不存全局自动 commit/集成/发布开关。未知验证命令为 null/未知，必须有仓库或真实用户来源。既有无效/未知 schema 不重置、不迁移；显式转换由原 owner 执行。
 
-不询问可由仓库事实回答的文件位置、脚本名或默认分支。
-
-### 4. 写入配置
-
-以 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/config-template.json</Path>` 为模板写入 `<Path>{roots.state}/specdev/config.json</Path>`。
-
-要求：
-
-- 字段满足 `<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>`；
-- 验证命令来自仓库事实或显式用户决定；
-- 未确认命令写 `null`，不得虚构；
-- 不写入令牌、凭据、Cookie、个人隐私或敏感环境变量值；
-- Ticket 的实现 commit 与本地 candidate integration 仍由具体 Goal Plan/I-implement 取得授权，不存为全局自动副作用开关。
-
-### 5. 初始化目录与状态
-
-创建或确认以下目录和文件：
-
-- 以 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/status-template.json</Path>` 生成 `<Path>{roots.state}/specdev/status.json</Path>`
-- `<Path>{roots.state}/specdev/.config/</Path>`
-- `<Path>{roots.state}/specdev/changes/</Path>`
-- `<Path>{roots.state}/specdev/adr/</Path>`
-- `<Path>{roots.state}/specdev/context/</Path>`
-- `<Path>{roots.state}/specdev/research/</Path>`
-- `<Path>{roots.state}/specdev/archive/</Path>`
-
-若全局状态或 config 已存在，先检查各自 `schema_version`。版本未知、JSON 不可解析或状态与当前 workflow 契约不一致时，停止当前 Work；不得在 Work 内迁移、兼容或猜测旧状态。`speculo init` 只会对 `<Path>{roots.workflows}/specdev/runtime-contract.json</Path>` 已登记且存在显式 migrator 的旧版本升级，其他冲突会保留当前安装并报告具体 blocker。只有状态不存在时才从当前 schema 模板创建。
-
-从模板生成：
-
-- `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/tracking-template.md</Path>` → `<Path>{roots.state}/specdev/.config/tracking.md</Path>`
-- `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/domain-layout-template.md</Path>` → `<Path>{roots.state}/specdev/.config/domain-layout.md</Path>`
-
-已有永久知识不得被初始化过程清空。已有配置应先验证和展示差异，再按用户授权更新。
+change/ADR/context/docs/archive/design 等只在真实首次内容写入时创建；不生成 status、change status、空知识树、空批准槽或跟踪镜像。项目说明确需导航时可使用 <Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/tracking-template.md</Path> 与 <Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/domain-layout-template.md</Path> 的相关内容，不要求输出两份配置文档。工程 docs 基线由入口的共享事实方法负责。

@@ -18,7 +18,7 @@ test('triage separates all ten modes and capture never selects a change', async 
     assert.ok(text.includes(`| ${mode} |`)); assert.ok(text.includes(`/specdev-t-triage/references/${mode}-protocol.md`));
   }
   for (const mode of ['queue', 'pr-delivery', 'ci-security', 'release-preflight', 'release', 'recover']) assert.ok(text.includes(`| ${mode} |`));
-  assert.match(text, /capture 不创建也不选择 change，不写 current_work/);
+  assert.match(text, /capture 不创建也不选择 change，不创建工作调用镜像/);
   assert.match(text, /仅账本存在时 --capture，不为验证创建账本/);
   assert.match(text, /GitHub 不成为开发 tracker/);
   const transport = await read('template/workflows/specdev/specdev-t-triage/references/remote-operations.md');

@@ -1,87 +1,35 @@
-# SpecDev Activation Contract
+# SpecDev 运行合同
 
-只在用户明确激活 SpecDev Work 后读取。先选择当前模式，再按条件读取参考；不默认展开所有 Work、历史 change、示例或永久知识。
+只在用户明确激活当前 Work 后读取；当前入口已明确时不重入领域 Skill，也不先执行初始化。项目与必要资源明确即可直接使用，无需 Speculo CLI 或安装元数据。
 
-## 运行时根
+## 启动顺序
 
-工作流：`<Path>{roots.workflows}/specdev/</Path>`；状态：`<Path>{roots.state}/specdev/</Path>`。roots 必须来自已打开的 `<Path>{roots.state}/workspace.json</Path>`，禁止把状态根默认展开成项目根 `.speculo`。嵌套安装下项目根 `.speculo/specdev` 非法。具体路径遵守 `<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`，不使用内部相对链接、裸文件名或机器绝对路径。
+1. 明确项目根、方法资源根与获批业务数据根。已有安装时验证真实 workspace 与 roots；没有安装时使用明确根参数，方法资源可以只读。相对参数基于项目根，cwd 只作线索；不静默切换项目。根冲突、越界链接或重叠安装事务仅阻塞依赖该根的写入。详见 <Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>。
+2. 读取当前请求和所选 Work；按 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 检索相关知识 ID/关键词，再回读少量原文与 provenance。没有相关知识不要求先初始化知识目录。
+3. 有 change 时定位用户指定对象或唯一合法候选，读取 README 的唯一 Outcome、当前负责工件和接续点。只枚举 changes 直接子目录，排除 archive；多个候选真实消歧。只读代码/架构审查、知识审计、capture 和初始化不强造 change。
+4. 按实际分支读取必要参考。创建、恢复、完成、取消或归档时读取 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>；轻量/完整输入或事实冲突读取 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>；实际交接、并行、父子集成才加载 <Path>{roots.workflows}/specdev/common/rules/operating-governance.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>。
+5. 写前核对路径、原 owner、实际写入者、相关 pending transaction、lock 和 recovery evidence。失败/阻塞记录在原 README、计划、Evidence 或操作回执；真实交接只更新原负责位置。完成产物、适用验证并回读，返回证据和下一入口。
 
-## 工件链与权威
+新普通流程不读写全局 status、change status 或 Work 调用镜像。发现旧活动协议、混合权威或转换 pending 标记时停止受影响写入，保留原件并交显式转换；README 存在不证明转换已完成。旧归档仅走独立历史只读定位。
 
-大需求 → W 的 Initiative 候选图 → 每个 change 自己的 G/Grill → S/Spec → T 的计划型 Ticket 与 tickets-map → P 的 Goal → I/实现与 Evidence → Goal 集成验收 → 按需学习/远程 reconcile 或 publish/归档。尚未成 Change 的记事项可先 T-triage capture 到 GitHub inbox，再逐条 intake。
+## 工件与能力
 
-已明确的小请求直接进入适用阶段；无需为了路由而创建 Triage。跨 change 实现由 P 统一管理。
+小请求使用 README 中等价范围、AC 与验证；用户明确要求 Spec/Ticket/Goal 时交付指定工件。复杂需求可经 W → G → S → T → P → I 逐步形成合同，不要求全部 Work 串行必跑。Ticket frontmatter 拥有本票状态、依赖、写集与 Skill binding；有票的 Map/Goal 只管导航、依赖、Gate、集成和恢复，无票 Goal 由计划清单负责进度。整体结论只在 README，归档事实只在目录位置与回执。
 
-Ticket frontmatter 拥有本票状态、依赖、写集与 Skill 调用绑定；普通 map 是背景/路由/图投影；Goal Plan 拥有 Gate、workspace 和恢复决策。多 change 父 tickets-map 只指向原 Implementation Map/Plan，不复制状态。一个未完成 child 仍只能归属于一个未完成父 Goal。
+真实使用的 Spec/Ticket/Map/Goal、DESIGN、调查、远程账本 schema 与验证继续有效。并发上限、worktree 与集成尝试策略只在实际启用时由原 Goal/项目约定提供来源；缺省 current 单写入者、严格串行/direct-parent。Lead 自己实现也计入实现并发，只读 review/research/test-observation 不新增数字上限。GitHub labels 等实际工具配置仅对应分支读取；未知配置保留，缺标签只阻塞有关远程写入。
 
-发生职责或事实冲突时读取 `<Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>`；T 绑定、P 调度或 I 执行 Skill 时读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。
+UI 候选缺省 3 个，配置范围 2–4；用户明确数量覆盖默认及上限。W 每会话最多完成一张调查票。专业分支保留：R performance 先测量，D evidence-triage 不以观察冒充根因，I documentation 在原授权范围维护当前工程事实。
 
-## 持久化约定
+## 写入边界
 
-CLI 初始化和刷新保持原 namespace、三方配置合并、schema migrator 与 opaque 文件按字节保留。Work 不写 CLI-owned backup、install 或 managed 元数据。创建、恢复、迁移、关闭或归档时必须读取 `<Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>`。
+实现只写获批项目路径；Work 不写 CLI-owned back/install/managed/baselines，不要求创建空 namespace。ADR/context 的提升、纠错、替代和清理由 A 原网关处理，research/非标准 store 只有声明的 owner 才可写。DESIGN 首次 approved-intent 和后续 promotion 都由 A 专用网关发布；P 嵌入调用保持原 owner，不启动归档。详见 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path>。
 
-永久 ADR/context/research 仅 A 在完成证据、毕业评估和用户确认后通过原网关提升；其他 Work 只读，初始化不写知识内容。
+提交、推送、合并/父分支更新、来源 branch/worktree 清理、发布、部署、远程写入、归档移动、永久知识改写和不可逆迁移仍由 owning 入口核对具体授权。同一目标/动作/范围批准复用；新增副作用、范围或漂移才补充确认。文本、Outcome 和 owner 字符串都不能创造授权。
 
-## 启动协议
+只阻塞重叠写集及依赖分支，继续独立已授权工作。普通多文件修改没有整体原子保证；恢复先检查已落地结果，不能因报告缺失重复操作。同次任务已加载且未变化的规则可复用。
 
-1. 先打开 `<Path>{roots.state}/workspace.json</Path>` 解析 roots，再读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位相关 entry 后回读必要原文，不默认整读索引。
-2. 读取 `<Path>{roots.state}/specdev/config.json</Path>`；不存在时使用 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/SKILL.md</Path>`。保留已知配置，不重复询问。
-3. 纯初始化和 T-triage capture 按各自无 change 分支执行；其他 Work 从 `<Path>{roots.state}/specdev/status.json</Path>` 定位用户指定或唯一 active change；多个候选需要真实消歧，无候选按原规则创建。
-4. 读取 `<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>`；恢复、创建或状态修改时加载上述状态细则。child 归属未完成父 Goal 时读取对应父 Map/Plan，不接管或覆盖其 owner。
-5. current_work 非空则恢复或显式 handoff；暂停保留恢复键，成功才去重更新 works_run 并清空。其他任务冲突只暂停受影响分支，继续独立、已授权工作。
-6. 按 Work/模式读取必要参考，完成产物、运行验证、回读真实源与状态后再推进。全局状态仅更新本任务 active/archived 索引。
+## 验证与路由
 
-## 状态字段
+按当前分支运行 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> 的适用 stage；传明确项目/方法/数据根，不用 CLI 包装器作为普通 Work 前置。prototype 传具体 UI-NNN/LOGIC-NNN；完成/取消按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 核验真实证据，票全 done 不替代整体验收。归档后以实际目标运行 archived 验证。
 
-全局 status 使用 v5，config 与 Goal Plan 使用 v7，change status 使用 v6；Spec/Ticket/Map 使用 v3，Ticket/Map 必须包含 Plan 扩展版本 1；父 Map 使用 v1、父 Plan 使用 v2。详细字段、枚举、worktree Evidence 见状态细则。只接受当前 schema，不转换旧工件。
-
-## 路径分配
-
-状态写在当前 change 授权 namespace；实现写在项目授权路径。源文件优先于生成物，保留链接和必要元数据；不改系统或插件缓存。路径归属、共享资源或工作树未知时暂停对应写集。规划/执行/恢复/验收必须读取 `<Path>{roots.workflows}/specdev/common/rules/operating-governance.md</Path>` 和当前步骤声明的所有权规则。
-
-## 副作用边界
-
-规划不授权实现。提交、推送、合并/父分支更新、来源 branch/worktree 清理、部署、发布、远程 Issue 写入、归档移动、永久知识修改和不可逆迁移仍须原入口取得明确授权；文档中的标记不能授予权限。正式记忆写入前检查 pending transaction、lock 和 recovery evidence；不抢占他人事务。
-
-保留原 current 严格串行/direct-parent 默认；worktree 策略在 Goal 创建时按原规则确认，required 使用 source worktree/parent-candidate。Lead 拥有状态、父分支与 E2E；实现执行者 数量服从 config，只读 review/research/test-observation 不新增数字上限。用户明确的工具与交付数量、UI 默认 3/上限 4、W 每会话最多完成一张调查票均不因精简而改变。
-
-## 场景路由
-
-不清晰的大需求选 W，单 change 的高影响决定选 G，Ready Spec 拆票选 T-tickets，单个已拆票 change 或多个 Ready change 的 Goal 选 P-goal-plan；来源冻结/远程回写/完成后记账/尚未成 Change 的记事项才选 T-triage。精确条件与全部出口见 `<Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>`。
-
-## Work 能力与专业分支
-
-每个 Work 的标准 Skill 文件就是可调用技能入口，保持业务 ID 与恢复键；目录和 name 使用当前 manifest；Work 不等同于一个常驻 worker，也不要求启动任务执行者。按用户意图与已有工件进入，不把全部 Work 串成每次必跑流水线。
-
-R 的 performance 分支先测量再给优化候选；I 的 documentation 分支在原 Ready Ticket/获批 Direct Spec 内维护项目文档；D 的 evidence-triage 只收集事件证据，不宣称根因确认。这些分支使用原 Work、原 owner 和原工件，不修改主持久化 schema。T 继续拥有原远程模式和账本，不另设发布状态库。
-
-同一次任务已加载且摘要未变的规则不机械重复读取；必要安全限制仍在动作前核对，范围/摘要/owner 变化时只重读受影响内容。专业证据的结构检查不认证真实工具或模型行为。
-
-## Work 条目
-
-
-能力清单由领域 `<Path>{roots.workflows}/specdev/SKILL.md</Path>` 的路由区生成；当前 Work 已选定时按本合同读取所需分支，不重复加载全部入口。
-
-
-## Common 目录
-
-`<Path>{roots.workflows}/specdev/common/README.md</Path>` 只作定位；按当前 Work 指针选中 rule/schema/tool/skill，不默认展开整个目录。
-
-## 自动校验
-
-```bash
-node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --stage <stage> --repo <project-root> <Path>{roots.state}/specdev/changes/{change}</Path>
-node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
-```
-
-支持 triage、diagnosis、grill、spec、tickets、goal-plan、implement、learn-change、retro、pr-delivery、review、prototype、wayfinder、complete。Goal 总控通过 P 的 map-control 参考使用只读控制器；它不授权或自动执行。只有进行完成转换时必须读取 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，票全 done 不替代整体验收。
-
-## 远程交付、逻辑原型与复盘
-
-T 拥有 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>，首次独立 CI/安全/发布操作时按模板建立，恢复更新原记录。此 namespace 不占用 change.current_work、不写开发状态、不参与默认归档门。其他入口只复用 T 的 remote-operations 时，原调用方仍拥有报告，不创建 TRI 或 change。
-
-PR 由 T 写入 <Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path>；R-retro 写入 <Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path>；P 的逻辑原型写入 <Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/</Path>。均首次按最小未用 ID 创建，更新原子写入并重读；schema 在 common/schemas，验证由 common/tools/validate-specdev.mjs 负责。
-
-config schema v7 增加 github.include_external_prs（boolean，默认 false）与 github.labels（语义名→仓库标签的字符串映射，默认空）。I 初始化当前 v7 配置；CLI 只刷新合法 v7，已有语言、执行、验证与规划配置保留。标签缺失只阻塞对应远程写操作。全局 status v5 与 change status v6 不变。
-
-入口选择：需要活动复盘进入 <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>；包发布进入 T 的 release，Ticket→Issue 仍为 publish。Completed/archived 对象的复盘建立独立 review-only change，不修改原完成状态。新工件版本均为 v1，triage 使用 v2；遇到其他版本保留原文件并停止受影响分支。
+场景出口见 <Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>。T 的 capture、publish、PR 和独立 TRI 各有原账本 owner；未请求远程动作不创建空账本或新完成门。completed/cancelled 不自动授权外部动作，已承诺而未结束的外部交付仍阻塞封存。已完成/归档来源的复盘另建 review-only change，不改写历史。

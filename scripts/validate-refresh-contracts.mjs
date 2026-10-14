@@ -53,6 +53,9 @@ for (const entry of readdirSync(workflowsRoot, { withFileTypes: true })) {
   if (contract.schema_version !== 1 || contract.workflow !== entry.name || contract.opaque_default !== "preserve-byte-for-byte") {
     failures.push(`${label}: invalid identity or opaque default`);
   }
+  if (contract.state_seed !== undefined && !["required", "optional"].includes(contract.state_seed)) failures.push(`${label}: state_seed must be required or optional`);
+  if (contract.state_seed !== "optional" && !existsSync(join(workflowsRoot, entry.name, "_state"))) failures.push(`${label}: missing required _state/`);
+  if (!Array.isArray(contract.structured_state)) failures.push(`${label}: structured_state must be an array`);
   for (const path of contract.structured_state ?? []) {
     const probe = String(path).replaceAll("**", "segment/segment").replaceAll("*", "segment");
     if (safeRelative(probe, label) && !path.startsWith(`.speculo/${entry.name}/`)) {

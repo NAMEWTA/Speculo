@@ -4,10 +4,12 @@
 
 按顺序查找并记录每一步结论：
 
-1. commit message 中的 Issue/PR 引用，对应本地 `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`；
+1. commit message 中的 Issue/PR 引用，对应本地 `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`；显式 source-files 无 commit 时记 not-applicable，不创建该来源文件；
 2. 调用方显式提供的 Spec、Ticket、ADR、Goal Plan 或其他路径；
 3. 与分支或功能匹配的仓库 `docs/`、`specs/` 或同类规范文件；
 4. 都不存在时询问规范是否确实不存在。确认不存在后规范轴标记 `skipped:no-spec`。
+
+UI 范围按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 找到批准 <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>、对应基线 revision/digest、Ticket design_ref 与 `Design Conformance`。这些是规范轴的必需来源；缺失或漂移报告具体缺口，不因其他 Spec 存在而忽略，不将原型截图等同实现验证。
 
 远程 Issue/PR 必须先由 Triage 冻结，或解析为本地不可变 SHA；review 不把可变远程正文当作唯一权威。
 

@@ -3999,10 +3999,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep2, value } = collItem;
+        const { start, key, sep: sep3, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep2?.[0],
+          next: key ?? sep3?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4016,7 +4016,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep2) {
+          if (!keyProps.anchor && !keyProps.tag && !sep3) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4040,7 +4040,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep2 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep3 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4056,7 +4056,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep2, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep3, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4147,7 +4147,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep2 = "";
+        let sep3 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4161,13 +4161,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep2 + cb;
-              sep2 = "";
+                comment += sep3 + cb;
+              sep3 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep2 += source;
+                sep3 += source;
               hasSpace = true;
               break;
             default:
@@ -4210,18 +4210,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep2, value } = collItem;
+        const { start, key, sep: sep3, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep2?.[0],
+          next: key ?? sep3?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep2 && !value) {
+          if (!props.anchor && !props.tag && !sep3 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4275,8 +4275,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep2 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep2, null, props, onError);
+        if (!isMap && !sep3 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep3, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4288,7 +4288,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep2 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep3 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4299,8 +4299,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep2)
-                for (const st of sep2) {
+              if (sep3)
+                for (const st of sep3) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4317,7 +4317,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep2, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep3, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4497,7 +4497,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep2 = "";
+      let sep3 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4514,24 +4514,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep2 + indent.slice(trimIndent) + content;
-          sep2 = "\n";
+          value += sep3 + indent.slice(trimIndent) + content;
+          sep3 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep2 === " ")
-            sep2 = "\n";
-          else if (!prevMoreIndented && sep2 === "\n")
-            sep2 = "\n\n";
-          value += sep2 + indent.slice(trimIndent) + content;
-          sep2 = "\n";
+          if (sep3 === " ")
+            sep3 = "\n";
+          else if (!prevMoreIndented && sep3 === "\n")
+            sep3 = "\n\n";
+          value += sep3 + indent.slice(trimIndent) + content;
+          sep3 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep2 === "\n")
+          if (sep3 === "\n")
             value += "\n";
           else
-            sep2 = "\n";
+            sep3 = "\n";
         } else {
-          value += sep2 + content;
-          sep2 = " ";
+          value += sep3 + content;
+          sep3 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4714,25 +4714,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match[1].replace(trimEnd, "");
-      let sep2 = " ";
+      let sep3 = " ";
       let pos = line.lastIndex;
       while (match = line.exec(source)) {
         const lm = match[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep2 === "\n")
-            res += sep2;
+          if (sep3 === "\n")
+            res += sep3;
           else
-            sep2 = "\n";
+            sep3 = "\n";
         } else {
-          res += sep2 + lm;
-          sep2 = " ";
+          res += sep3 + lm;
+          sep3 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep2 + (match?.[1] ?? "");
+      return res + sep3 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5542,14 +5542,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep2, value }) {
+    function stringifyItem({ start, key, sep: sep3, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep2)
-        for (const st of sep2)
+      if (sep3)
+        for (const st of sep3)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -6716,18 +6716,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep2;
+          let sep3;
           if (scalar.end) {
-            sep2 = scalar.end;
-            sep2.push(this.sourceToken);
+            sep3 = scalar.end;
+            sep3.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep2 = [this.sourceToken];
+            sep3 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep2 }]
+            items: [{ start, key: scalar, sep: sep3 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6880,15 +6880,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep2 = it.sep;
-                  sep2.push(this.sourceToken);
+                  const sep3 = it.sep;
+                  sep3.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep2 }]
+                    items: [{ start: start2, key, sep: sep3 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7082,13 +7082,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep2 = fc.end.splice(1, fc.end.length);
-            sep2.push(this.sourceToken);
+            const sep3 = fc.end.splice(1, fc.end.length);
+            sep3.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep2 }]
+              items: [{ start, key: fc, sep: sep3 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -7454,7 +7454,7 @@ async function readWorkspace(projectRoot) {
   return value;
 }
 function workspaceForPathSync(start) {
-  const exists2 = (p) => {
+  const exists3 = (p) => {
     try {
       lstatSync(p);
       return true;
@@ -7465,8 +7465,8 @@ function workspaceForPathSync(start) {
   };
   let cursor = resolve(start);
   for (; ; ) {
-    if (basename(cursor) !== ".agents" && exists2(join(cursor, "speculo/.speculo"))) throw new Error("unsupported-installation-version");
-    if (exists2(join(cursor, WORKSPACE_PATH))) {
+    if (basename(cursor) !== ".agents" && exists3(join(cursor, "speculo/.speculo"))) throw new Error("unsupported-installation-version");
+    if (exists3(join(cursor, WORKSPACE_PATH))) {
       const names = readdirSync(cursor);
       if (names.some((n) => n.toLowerCase() === ".agents" && n !== ".agents")) throw new Error("ambiguous-workspace");
       let node = cursor;
@@ -7475,7 +7475,7 @@ function workspaceForPathSync(start) {
         if (lstatSync(node).isSymbolicLink()) throw new Error("path-symlink");
       }
       if (readdirSync(join(cursor, ".agents")).some((n) => ["speculo", "skills"].includes(n.toLowerCase()) && n !== n.toLowerCase())) throw new Error("ambiguous-workspace");
-      if (exists2(join(cursor, ".speculo-init.lock")) || exists2(join(cursor, INSTALL_ROOT, ".speculo/migration.json"))) throw new Error("unsupported-installation-version");
+      if (exists3(join(cursor, ".speculo-init.lock")) || exists3(join(cursor, INSTALL_ROOT, ".speculo/migration.json"))) throw new Error("unsupported-installation-version");
       const workspace = JSON.parse(readFileSync(node, "utf8"));
       validateWorkspace(workspace);
       return { projectRoot: cursor, workspace };
@@ -7638,17 +7638,310 @@ async function readProjectCoordination(stateRoot, catalog) {
   validateProjectCoordination(value, catalog);
   return value;
 }
+
+// src/specdev-artifacts.ts
+import { lstatSync as lstatSync2, readFileSync as readFileSync2, readdirSync as readdirSync2, realpathSync } from "node:fs";
+import { basename as basename3, dirname as dirname3, isAbsolute as isAbsolute2, join as join4, relative as relative2, resolve as resolve2, sep as sep2 } from "node:path";
+import { TextDecoder } from "node:util";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+var ArtifactError = class extends Error {
+  constructor(code, path, message, line) {
+    super(`${code}: ${path}${line ? `:${line}` : ""}: ${message}`);
+    this.code = code;
+    this.path = path;
+    this.line = line;
+    this.name = "ArtifactError";
+  }
+  code;
+  path;
+  line;
+};
+function fail(code, path, message, line) {
+  throw new ArtifactError(code, path, message, line);
+}
+function exists2(path) {
+  try {
+    lstatSync2(path);
+    return true;
+  } catch (e) {
+    if (e.code === "ENOENT") return false;
+    throw e;
+  }
+}
+function safeWorkPathSync(root, portable, options = {}) {
+  const base = resolve2(root);
+  if (isAbsolute2(portable) || /[\\:\x00-\x1f]/.test(portable) || portable.split("/").some((p) => p === ".." || p === "." || !p && portable !== "")) fail("path-unsafe", portable, "expected a contained portable path");
+  if (!portable && !options.allowRoot) fail("path-unsafe", base, "root is not a leaf target");
+  if (exists2(base) && (lstatSync2(base).isSymbolicLink() || !lstatSync2(base).isDirectory())) fail("path-unsafe", base, "root must be a real directory");
+  let cursor = base;
+  const parts = portable ? portable.split("/") : [];
+  for (let i = 0; i < parts.length; i++) {
+    if (exists2(cursor)) {
+      if (!lstatSync2(cursor).isDirectory()) fail("path-unsafe", cursor, "parent is not a directory");
+      const names = readdirSync2(cursor), matches = names.filter((n) => n.toLocaleLowerCase("en-US") === parts[i].toLocaleLowerCase("en-US"));
+      if (matches.length > 1 || matches.length === 1 && matches[0] !== parts[i]) fail("path-unsafe", join4(cursor, parts[i]), "ambiguous or noncanonical case");
+    }
+    cursor = join4(cursor, parts[i]);
+    if (exists2(cursor) && lstatSync2(cursor).isSymbolicLink()) fail("path-unsafe", cursor, "symbolic links are not writable artifact paths");
+  }
+  if (options.mustExist && !exists2(cursor)) fail("path-unsafe", cursor, "required path does not exist");
+  if (exists2(cursor) && options.type && !(options.type === "file" ? lstatSync2(cursor).isFile() : lstatSync2(cursor).isDirectory())) fail("path-unsafe", cursor, `expected ${options.type}`);
+  return cursor;
+}
+function pathWithin(root, target) {
+  const rel = relative2(root, target);
+  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute2(rel)) fail("path-unsafe", target, "business data must remain inside the confirmed project");
+  return safeWorkPathSync(root, rel.split(sep2).join("/"), { allowRoot: true, type: "directory" });
+}
+function resolveWorkContextSync(input) {
+  if (!input?.projectRoot) fail("root-ambiguous", "projectRoot", "an explicit project boundary is required");
+  const projectRoot = resolve2(input.projectRoot);
+  safeWorkPathSync(projectRoot, "", { allowRoot: true, mustExist: true, type: "directory" });
+  const actualProject = realpathSync(projectRoot);
+  const workspacePath = safeWorkPathSync(actualProject, WORKSPACE_PATH, { type: "file" });
+  for (const p of [".agents/.speculo-install.lock", ".speculo-init.lock", ".agents/speculo/.speculo/migration.json", "speculo/.speculo"]) {
+    if (exists2(safeWorkPathSync(actualProject, p))) fail("recovery-required", join4(actualProject, p), "inspect the installation with its original owner before dependent work");
+  }
+  const installed = exists2(workspacePath);
+  if (!installed) {
+    for (let parent = dirname3(actualProject); parent !== dirname3(parent); parent = dirname3(parent)) {
+      if (exists2(join4(parent, WORKSPACE_PATH))) fail("root-ambiguous", actualProject, `installed workspace belongs to ${parent}; specify its actual project root`);
+    }
+    if (exists2(join4(actualProject, DEFAULT_ROOTS.speculo))) fail("recovery-required", join4(actualProject, DEFAULT_ROOTS.speculo), "method installation exists without valid workspace metadata");
+  } else {
+    const value = JSON.parse(readFileSync2(workspacePath, "utf8"));
+    validateWorkspace(value);
+  }
+  if (!installed && (!input.methodRoot || !input.stateRoot)) fail("root-ambiguous", actualProject, "direct Work requires explicit methodRoot and stateRoot");
+  const methodRoot = resolve2(actualProject, input.methodRoot ?? DEFAULT_ROOTS.speculo);
+  const stateRoot = pathWithin(actualProject, resolve2(actualProject, input.stateRoot ?? DEFAULT_ROOTS.state));
+  if (installed && (methodRoot !== join4(actualProject, DEFAULT_ROOTS.speculo) || stateRoot !== join4(actualProject, DEFAULT_ROOTS.state))) fail("root-ambiguous", actualProject, "explicit roots conflict with the validated installed workspace");
+  safeWorkPathSync(methodRoot, "", { allowRoot: true, mustExist: true, type: "directory" });
+  const specdevRoot2 = safeWorkPathSync(stateRoot, "specdev", { type: "directory" });
+  if (exists2(join4(specdevRoot2, ".markdown-conversion-pending"))) fail("recovery-required", specdevRoot2, "resume the original Markdown conversion");
+  return { projectRoot: actualProject, methodRoot: realpathSync(methodRoot), stateRoot, specdevRoot: specdevRoot2, installation: installed ? "present" : "absent" };
+}
+async function resolveWorkContext(input) {
+  return resolveWorkContextSync(input);
+}
+function assertChangeName(name) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*$/.exec(name);
+  if (!m) fail("identity-conflict", name, "expected YYYY-MM-DD-lowercase-topic");
+  const year = Number(m[1]), month = Number(m[2]), day = Number(m[3]);
+  const days = [31, year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) fail("identity-conflict", name, "date is not a real calendar date");
+}
+function markdownBodyLines(text, path = "README.md") {
+  if (text.includes("\0")) fail("outcome-invalid", path, "invalid text encoding");
+  const out = [];
+  let fence, comment = false, commentLine = 0;
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  let firstBody = 0;
+  if (lines[0] === "---") {
+    const end = lines.findIndex((line, index) => index > 0 && /^(?:---|\.\.\.)$/.test(line));
+    if (end < 0) fail("outcome-invalid", path, "unclosed frontmatter", 1);
+    firstBody = end + 1;
+  }
+  for (let i = firstBody; i < lines.length; i++) {
+    const raw = lines[i];
+    if (fence) {
+      if (new RegExp(`^ {0,3}${fence.char}{${fence.length},}[ \\t]*$`).test(raw)) fence = void 0;
+      continue;
+    }
+    let visible = "", offset = 0;
+    while (offset < raw.length) {
+      if (comment) {
+        const end = raw.indexOf("-->", offset);
+        if (end < 0) {
+          offset = raw.length;
+          break;
+        }
+        comment = false;
+        offset = end + 3;
+      } else {
+        const start = raw.indexOf("<!--", offset);
+        if (start < 0) {
+          visible += raw.slice(offset);
+          break;
+        }
+        visible += raw.slice(offset, start);
+        comment = true;
+        commentLine = i + 1;
+        offset = start + 4;
+      }
+    }
+    if (visible !== raw && /^Outcome\b/i.test(visible.trimStart())) fail("outcome-invalid", path, "Outcome must occupy an uncommented independent line", i + 1);
+    const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(visible);
+    if (open) {
+      if (open[1][0] === "`" && open[2].includes("`")) fail("outcome-invalid", path, "ambiguous code fence", i + 1);
+      fence = { char: open[1][0], length: open[1].length, line: i + 1 };
+      continue;
+    }
+    if (/^(?: {4}|\t| {0,3}>)/.test(visible)) continue;
+    out.push({ text: visible, line: i + 1 });
+  }
+  if (fence) fail("outcome-invalid", path, "unclosed code fence", fence.line);
+  if (comment) fail("outcome-invalid", path, "unclosed HTML comment", commentLine);
+  return out;
+}
+function parseOutcome(text, path = "README.md") {
+  const header = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)(?:\r?\n|$)/.exec(text);
+  if (header) {
+    for (const [index, line] of header[1].split(/\r?\n/).entries()) if (/^(?:Outcome|outcome|status|change_status):/.test(line)) fail("outcome-invalid", path, "business Outcome must not be duplicated in frontmatter", index + 2);
+  }
+  const declarations = markdownBodyLines(text, path).filter((l) => /^\s*(?:[-+*]\s+)?Outcome\b/i.test(l.text));
+  if (declarations.length !== 1) fail("outcome-invalid", path, `expected one Outcome declaration; found ${declarations.length}`, declarations[1]?.line ?? declarations[0]?.line);
+  const value = /^Outcome: (active|completed|cancelled)[ \t]*$/.exec(declarations[0].text);
+  if (!value) fail("outcome-invalid", path, "expected Outcome: active|completed|cancelled", declarations[0].line);
+  return { outcome: value[1], line: declarations[0].line };
+}
+function readUtf8ArtifactSync(path) {
+  safeWorkPathSync(dirname3(path), basename3(path), { mustExist: true, type: "file" });
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(readFileSync2(path));
+  } catch (e) {
+    fail("outcome-invalid", path, `cannot read UTF-8: ${String(e)}`);
+  }
+}
+function specdevRoot(context) {
+  return typeof context === "string" ? resolve2(context) : context.specdevRoot;
+}
+function allLocations(root) {
+  const locations = [];
+  function scan(portable, kind) {
+    const dir = safeWorkPathSync(root, portable, { type: "directory" });
+    if (!exists2(dir)) return;
+    for (const entry of readdirSync2(dir, { withFileTypes: true })) {
+      if (kind === "active" && entry.name === "archive") continue;
+      const target = join4(dir, entry.name);
+      if (!/^\d{4}-/.test(entry.name)) continue;
+      assertChangeName(entry.name);
+      safeWorkPathSync(root, relative2(root, target).split(sep2).join("/"), { mustExist: true, type: "directory" });
+      locations.push({ name: entry.name, root: target, kind });
+    }
+  }
+  scan("changes", "active");
+  scan("changes/archive", "archive");
+  const historical = safeWorkPathSync(root, "archive", { type: "directory" });
+  if (exists2(historical)) for (const month of readdirSync2(historical)) {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) continue;
+    scan(`archive/${month}`, "legacy-archive");
+  }
+  const seen = /* @__PURE__ */ new Map();
+  for (const location of locations) {
+    if (location.kind === "legacy-archive" && basename3(dirname3(location.root)) !== location.name.slice(0, 7)) fail("identity-conflict", location.root, "legacy month does not match identity");
+    const previous = seen.get(location.name);
+    if (previous) fail("identity-conflict", location.root, `duplicate identity also at ${previous.root}`);
+    seen.set(location.name, location);
+  }
+  return locations;
+}
+function discoverChangesSync(context, options = {}) {
+  return allLocations(specdevRoot(context)).filter((l) => l.kind === "active" || (l.kind === "archive" ? options.includeArchived : options.includeLegacy));
+}
+async function discoverChanges(context, options = {}) {
+  return discoverChangesSync(context, options);
+}
+function resolveChangeSync(context, name, options = {}) {
+  assertChangeName(name);
+  const found = allLocations(specdevRoot(context)).find((l) => l.name === name);
+  if (!found || !options.includeArchived && found.kind !== "active") fail("identity-conflict", name, "change not found in the requested locations");
+  return found;
+}
+async function resolveChange(context, name, options = {}) {
+  return resolveChangeSync(context, name, options);
+}
+function assertMarkdownProtocolSync(context, location) {
+  const root = specdevRoot(context);
+  for (const marker of [".markdown-conversion-pending", "status.json"]) {
+    const path = safeWorkPathSync(root, marker, { type: "file" });
+    if (exists2(path)) fail(marker === "status.json" ? "legacy-active-needs-conversion" : "recovery-required", path, "use the explicit conversion owner; no automatic fallback");
+  }
+  if (location && exists2(join4(location.root, ".status.json"))) fail("mixed-protocol", join4(location.root, ".status.json"), "active/new archive still contains legacy business authority");
+}
+function readChangeFactsSync(context, nameOrLocation) {
+  const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
+  if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "locator no longer matches actual location");
+  if (location.kind === "legacy-archive") fail("legacy-active-needs-conversion", location.root, "use the separate read-only legacy evidence reader");
+  assertMarkdownProtocolSync(context, location);
+  const readmePath = safeWorkPathSync(location.root, "README.md", { mustExist: true, type: "file" });
+  const parsed = parseOutcome(readUtf8ArtifactSync(readmePath), readmePath);
+  if (location.kind === "archive" && parsed.outcome === "active") fail("closure-evidence-missing", readmePath, "active change cannot be in the sealed archive");
+  return { location, outcome: parsed.outcome, readmePath, outcomeLine: parsed.line };
+}
+async function readChangeFacts(context, target) {
+  return readChangeFactsSync(context, target);
+}
+function readLegacyChangeEvidenceSync(context, nameOrLocation) {
+  const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
+  if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "legacy locator no longer matches actual location");
+  if (location.kind !== "legacy-archive") fail("identity-conflict", location.root, "legacy reader accepts only frozen month archives");
+  const statusPath = safeWorkPathSync(location.root, ".status.json", { mustExist: true, type: "file" });
+  const status = JSON.parse(readUtf8ArtifactSync(statusPath));
+  const validatorPaths = [new URL("./legacy-status-validator.cjs", import.meta.url), new URL("../../template/lib/legacy-status-validator.cjs", import.meta.url)];
+  const validatorPath = validatorPaths.map((url) => fileURLToPath(url)).find(exists2);
+  if (!validatorPath) fail("closure-evidence-missing", statusPath, "frozen legacy schema validator is missing from the method package");
+  const validate = createRequire(import.meta.url)(validatorPath);
+  if (!validate(status)) fail("closure-evidence-missing", statusPath, `invalid frozen v6 schema: ${JSON.stringify(validate.errors)}`);
+  const expectedArchive = `<Path>{roots.state}/specdev/archive/${location.name.slice(0, 7)}/${location.name}</Path>`;
+  const actualArchive = typeof status.archive_path === "string" ? status.archive_path.replace(/\/<\/Path>$/, "</Path>") : status.archive_path;
+  if (status.change !== location.name || status.change_status !== "archived" || status.archived !== true || status.current_work !== null || actualArchive !== expectedArchive) fail("closure-evidence-missing", statusPath, "unsupported or inconsistent frozen legacy evidence; inspect with original owner");
+  return { location, readonly: true, statusPath, status };
+}
+function readArtifactSectionSync(path, anchor) {
+  if (!/^[a-z][a-z0-9-]*$/.test(anchor)) fail("closure-evidence-missing", path, "invalid section anchor");
+  const text = readUtf8ArtifactSync(path), lines = markdownBodyLines(text, path);
+  const matches = lines.filter((l) => l.text === `<a id="${anchor}"></a>`);
+  if (matches.length !== 1) fail("closure-evidence-missing", path, `expected one explicit ${anchor} anchor`);
+  const start = matches[0].line;
+  const after = lines.filter((l) => l.line > start);
+  let end = text.split(/\r?\n/).length + 1, headingSeen = false;
+  for (const l of after) {
+    if (/^<a id="[a-z][a-z0-9-]*"><\/a>$/.test(l.text)) {
+      end = l.line;
+      break;
+    }
+    if (/^#{1,2} /.test(l.text)) {
+      if (headingSeen) {
+        end = l.line;
+        break;
+      }
+      headingSeen = true;
+    }
+  }
+  const body = text.split(/\r?\n/).slice(start, end - 1).join("\n").trim();
+  if (!body.replace(/^#+ .*$/gm, "").trim()) fail("closure-evidence-missing", path, `empty ${anchor} section`, start);
+  return { path, section: anchor, text: body, line: start };
+}
 export {
+  ArtifactError,
   DEFAULT_ROOTS,
   WORKSPACE_PATH,
+  assertChangeName,
+  assertMarkdownProtocolSync,
   containedPath,
+  discoverChanges,
+  discoverChangesSync,
   locateProject,
+  markdownBodyLines,
   parseFrontmatter,
+  parseOutcome,
+  readArtifactSectionSync,
   readAssetCatalog,
+  readChangeFacts,
+  readChangeFactsSync,
+  readLegacyChangeEvidenceSync,
   readProjectCoordination,
+  readUtf8ArtifactSync,
   readWorkspace,
+  resolveChange,
+  resolveChangeSync,
   resolvePathReference,
+  resolveWorkContext,
+  resolveWorkContextSync,
   safeRelativePath,
+  safeWorkPathSync,
   validateProjectCoordination,
   validateSkill,
   validateWorkspace,

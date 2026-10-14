@@ -1,6 +1,6 @@
 # Parent Implementation Orchestration
 
-本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、兼容 P-goal-plan、I-implement 与 A-archive-and-consolidate 读取。
+本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、I-implement 与 A-archive-and-consolidate 读取。
 
 ## 输入边界
 
@@ -16,11 +16,11 @@
 
 ## 唯一所有权
 
-一个 active/blocked 子 change 最多属于一个未完成父实现 change。v1 不支持父实现 change 嵌套。父 Lead 是父工件、全部 SpecDev 状态写入、E2E、repository/ref integration queue 和父分支推进的唯一 owner；implementation agent 只写授权项目 workspace。
+一个 active/blocked 子 change 最多属于一个未完成父实现 change。v1 不支持父实现 change 嵌套。父 Lead 是父工件、父计划及授权 Evidence 写入、E2E、repository/ref integration queue 和父分支推进的唯一 owner；implementation agent 只写授权项目 workspace。
 
 ## I-implement 调用
 
-父 Plan 可以替代缺失的子 Goal Plan 提供 workspace/integration 策略和全局执行边界。子 Goal Plan 存在时继续拥有子 change 内 Gate，但不得与父策略冲突。I-implement 完成或阻塞一个组合 Ticket 后返回父 P Goal（旧 O 入口保留恢复键），不要求用户重新激活 change。
+父 Plan 可以替代缺失的子 Goal Plan 提供 workspace/integration 策略和全局执行边界。子 Goal Plan 存在时继续拥有子 change 内 Gate，但不得与父策略冲突。I-implement 完成或阻塞一个组合 Ticket 后返回父 P Goal，不要求用户重新激活 change。
 
 ## 归档与完成
 

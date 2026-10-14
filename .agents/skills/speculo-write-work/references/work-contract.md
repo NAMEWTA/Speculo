@@ -40,10 +40,10 @@ Work 入口通常包含：
 4. 只对高影响偏好或冲突请求用户决定；
 5. 生成或更新该 work 拥有的工件；
 6. 运行 schema/tool/项目验证；
-7. 更新 workflow 与 change 状态；
+7. 更新本领域唯一负责工件的事实与接续；SpecDev 不维护调用镜像；
 8. 返回结果、证据和下一 work。
 
-不适用步骤可以省略。每步写自己的完成标准，入口末尾再列全局完成条件。
+不适用步骤可以省略。关键步骤写可观察的完成条件，入口给出整体验收；无需为机械小步骤重复同一验收段。
 
 ## 输入权威
 
@@ -65,7 +65,7 @@ Work 入口通常包含：
 {roots.state}/<workflow>/changes/{change}/...
 ```
 
-Work 还可以更新：
+仅领域合同确实声明且存在唯一 owner 时，Work 才可更新下列既有域状态；SpecDev 新协议不使用前两项：
 
 - `{roots.state}/<workflow>/status.json`；
 - change `.status.json`；
@@ -109,6 +109,13 @@ Work 完成时：
 - owned 工件已原子写入并重读；
 - schema 和适用验证通过；
 - 每个验收条件有证据；
-- workflow/change 状态与工件一致；
+- 本域权威工件、实际结果与结论一致，无重复可写镜像；
 - 未决问题没有被伪装成 Ready；
 - 下一路由和完整路径已返回。
+
+
+## SpecDev 的 Markdown 优先协议
+
+普通 Work 项目/必要资源明确即可直接使用，不以 CLI/workspace/config/status 为通用前置；安装故障仍按重叠写集停止。简单 change 使用 README 的唯一 Outcome、scope/acceptance/verification；无票 Goal 用原清单，有票进度归 Ticket/Evidence。用户指定独立产物、DESIGN、Ready、Skill binding、完整 Gate/集成证据都保留。
+
+复杂 owner 归原 Plan lead；只有实际交接/高风险动作才在原负责工件记录 owner/依据/写集，不预建 leadership 或批准槽。整体完成/取消由原 owner 判定，A 验证并先维护现役 change/ADR/context/docs 及适用 DESIGN，再最后无覆盖移动。当前 docs 方法跨领域共享，不隐式 docs-sync、Git 或永久知识写入。

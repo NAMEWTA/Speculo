@@ -1,144 +1,86 @@
 ---
-schema_version: 2
-artifact: ui-design-system
+schema_version: 3
+artifact: ui-prototype
 change: <YYYY-MM-DD-topic>
 design_id: UI-001
 status: detecting
 project_kind: existing
-platforms: [desktop, web]
-detected_style: null
-style_candidates: [dense-ide, responsive-web]
-selected_style: null
-density: null
-color_mode: null
-research_snapshot: 49b5659
+platforms: [web]
+candidates:
+  - id: candidate-a
+    template_id: <catalog-template-id>
+    primary_reference: <source-id>
+    auxiliaries: []
+    rationale: <task-and-project-fit>
+    structural_difference: <task-structure-or-interaction-difference>
+    task_id: <shared-task-id>
+    entry: comparison/variants/candidate-a.html
+candidate_count_override: null
+selected_candidate: null
+sources:
+  - id: <source-id>
+    locator: <verified-source-locator>
 prototype_files: [final/index.html, final/styles.css, final/app.js]
+browser_evidence: null
 updated_at: <ISO-8601>
 ---
 
-# UI Design System UI-001: <产品或功能名称>
+# UI Prototype UI-001: <产品或功能名称>
+
+本文件只保存检测、候选和源码/验证证据。设计规则唯一位于 <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>；永久基线见其 baseline 引用。以下代码是未验证的物化示例，必须按当前任务替换；它不预设项目品牌，也不能直接封板。
 
 ## Project Evidence
 
-### Scope and Tasks
-
-- **Target app:**
-- **Primary users:**
-- **Top tasks:**
-- **Platforms:**
+- **Target app / scope:**
+- **Primary users / shared task:**
+- **Platforms and input methods:**
 - **Evidence mode:** rendered / source-only / new-product
-
-### Existing Stack and Design Facts
+- **Existing design authority and owner:**
+- **Baseline revision and inspected rule IDs:**
 
 | Dimension | Observed fact | Project-relative evidence | Confidence |
 |---|---|---|---|
-| Framework | | | |
-| Styling | | | |
-| Components and icons | | | |
-| Layout | | | |
-| Color and themes | | | |
-| Type and density | | | |
-| Radius and elevation | | | |
-| Interaction and states | | | |
+| Framework, styling, components and icons | | | |
+| Layout, themes, typography and density | | | |
+| Shapes, elevation, interaction and states | | | |
 | Responsive and accessibility | | | |
 
 ### Keep, Adjust, Replace, Add
 
-| Action | Decision | Evidence and reason |
+| Action | Observation and proposed change | Evidence and reason |
 |---|---|---|
 | Keep | | |
 | Adjust | | |
 | Replace | | |
 | Add | | |
 
-## Style Decision
+## Candidate Composition
 
-### Functional Candidates
+frontmatter 的 candidates/sources 是结构化记录；此处解释采用理由及冲突裁决，不重复 token 值。
 
-| Candidate | Product fit | Structural difference | Research references | Migration cost | Decision |
-|---|---|---|---|---|---|
-| dense-ide | | | DBX, DBeaver, cdesktop | | pending |
-| responsive-web | | | CloudCLI | | pending |
-
-### Decision Log
-
-| Layer | Decision | Status | Reason |
-|---|---|---|---|
-| Product and platform | | pending | |
-| Information architecture | | pending | |
-| Density and typography | | pending | |
-| Tone and theme | | pending | |
-| Shape and elevation | | pending | |
-| Interaction and motion | | pending | |
-| Cross-platform reflow | | pending | |
-| Visual convergence | | pending | |
-
-### Selected Direction and Rejections
-
-- **Selected style:** pending
-- **Composition boundary:** none
-- **Rejected candidates and reasons:** pending
-
-## Foundation Tokens
-
-### Design Intent
-
-Describe how the chosen shell, density, tone and hierarchy serve the primary task. Fixed defaults use a 4px spacing base, role-based colors, two or three main radii, borders for persistent regions and shadows only for overlays. Record every justified override.
-
-### Token Contract
-
-| Role | Token | Value | Usage |
-|---|---|---|---|
-| Canvas | `--canvas` | | App background |
-| Surface | `--surface-1` | | Primary work area |
-| Text | `--text-primary` | | Main content |
-| Border | `--border-default` | | Persistent separation |
-| Accent | `--accent` | | Primary action and selection |
-| Focus | `--focus-ring` | | Keyboard focus only |
-| Radius | `--radius-control` | | Input and button |
-| Density | `--control-height` | | Default control |
-
-## Component and State Contract
-
-| Component or pattern | Default | Hover | Pressed | Focus | Disabled/loading/error | Keyboard and touch |
-|---|---|---|---|---|---|---|
-| App shell | | | | | | |
-| Navigation | | | | | | |
-| Button and icon button | | | | | | |
-| Form controls | | | | | | |
-| Primary work surface | | | | | | |
-| Overlay | | | | | | |
-
-Include empty, no-result, loading, error, offline, read-only and permission-denied where applicable. A state color always has a text, icon or shape cue.
-
-## Interaction Contract
-
-| Trigger | Immediate response | Completion response | Failure/recovery | Persistence |
+| Candidate | Primary / auxiliary dimensions | Structural difference | Cost and risk | Feedback |
 |---|---|---|---|---|
-| Navigation | | | | URL / local state |
-| Primary action | | | | |
-| Async action | | | | |
-| Destructive action | | | | |
+| candidate-a | | | | pending |
 
-- Under 100ms: no loading indicator unless state would otherwise be ambiguous.
-- 100ms-1s: local progress or skeleton without whole-page flashing.
-- Over 1s: persistent progress with cancellation or background-task access.
-- Motion defaults to 120-180ms for local state and 200-240ms for sheets; reduced motion removes nonessential transforms.
+- **Candidate count:** config default / explicit user override with request locator.
+- **Recommended final:** pending; recommendation is not approval.
+- **Rejected candidates and reasons:** pending.
+- **Composition boundary and conflicts resolved:**
 
-## Responsive Contract
+## Approval Package
 
-| Desktop structure | Narrow-screen replacement | Breakpoint evidence | Return/recovery path |
-|---|---|---|---|
-| Fixed sidebar | Drawer or single-level navigation | | |
-| Right inspector | Sheet or full-screen detail | | |
-| Wide toolbar | Primary action plus overflow | | |
-| Hover tools | Explicit button or menu | | |
+- **Change design:** <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>
+- **First baseline draft, when needed:** <Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/baseline-draft.md</Path>
+- **User confirmation source:** pending.
+- **Approved designDigest / prototype digest:** pending.
+- **Bootstrap publication receipt, when applicable:** pending / not-applicable.
+- **Bootstrap preview binding:** project-relative path/sha256 for this final HTML, package_path for this source package, and computed prototype_digest covering all final/comparison resources and candidates.
 
-Document desktop, Web and mobile separately when their primary tasks differ. Touch targets are at least 44px; compact desktop controls may look smaller while keeping a usable hit area.
+One user confirmation binds the displayed HTML/interaction, change DESIGN and explicit first-baseline publication scope. It grants no production implementation or archive-move permission. Exact approval fields belong to change DESIGN and the A gateway, not a second authority here.
 
 ## Prototype Sources
 
-The following named blocks are the authoritative runnable prototype. Materialized files must match them exactly.
+Named blocks own runnable source only; their materialized files must match exactly. Replace the illustrative workspace below with the user's complete task, content, states and approved system. Rules and token meaning remain in change DESIGN; CSS contains their executable values.
 
 <!-- PROTOTYPE-FILE: final/index.html -->
 ```html
@@ -339,28 +281,27 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 
 ## Validation and Handoff
 
-### Commands and Evidence
+| Command or observation | Exit code / result | Evidence locator |
+|---|---|---|
+| materialize and materialize --check | pending | |
+| design package --check-preview before confirmation | pending | |
+| design package --check-ready before ready | pending | |
+| prototype gate with UI-NNN | pending | |
+| desktop and narrow browser tasks | unverified | |
+| independent design critique | unverified | |
+| technical audit and recheck | unverified | |
 
-| Command | Exit code | Key result | Evidence path |
-|---|---:|---|---|
-| materialize | | | |
-| materialize --check | | | |
-| design package validator | | | |
-| desktop viewport | | | |
-| mobile viewport | | | |
+Browser evidence follows <Path>{roots.workflows}/specdev/common/schemas/prototype-browser-evidence.schema.json</Path> and is saved under <Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/evidence/browser.json</Path>. Populate only actual observations and real screenshot paths. Source-only inspection cannot pass this gate.
 
-### Acceptance
+- [ ] Every requested candidate has a standalone comparison HTML page.
+- [ ] Final source blocks and materialized files are byte-equivalent and offline.
+- [ ] Keyboard, focus, long text, zoom, reduced motion and applicable states were exercised.
+- [ ] Actual desktop and narrow screenshots show no blank canvas, overlap or unintended overflow.
+- [ ] Design confirmation, prototype digest, baseline revision and source bytes still agree.
+- [ ] No unresolved high-impact design issue remains.
 
-- [ ] Every candidate has a standalone comparison HTML page.
-- [ ] Final source blocks and materialized files are byte-equivalent.
-- [ ] Light/dark, keyboard, focus, long text and reduced motion were checked.
-- [ ] Desktop and mobile screenshots show no blank canvas, overlap or unintended overflow.
-- [ ] No unresolved high-impact design decision remains.
-
-### Handoff
-
-- **Authoritative artifact:** `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`
-- **Comparison:** `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/index.html</Path>`
-- **Runnable final:** `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/index.html</Path>`
-- **Next Work:** G / S / T / I / blocked
-- **Unresolved high-impact questions:** none / ...
+- **Design authority:** <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>
+- **Comparison:** <Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/index.html</Path>
+- **Runnable final:** <Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/index.html</Path>
+- **Next Work:** G / S / T / I / blocked.
+- **Unverified items / recovery point:**

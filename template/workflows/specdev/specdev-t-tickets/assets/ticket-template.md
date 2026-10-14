@@ -5,6 +5,8 @@ skill_scan: unreviewed
 skill_bindings: []
 resource_claims: []
 artifact: ticket
+ui_change: false
+design_ref: null
 change: <YYYY-MM-DD-topic>
 id: T-01
 title: <标题>
@@ -136,7 +138,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 - [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
 - [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
 - [ ] 未发生未批准的范围、契约或发布偏差。
-- [ ] Ticket、Tickets Map 和 Evidence 状态一致。
+- [ ] Ticket 状态有本票 Evidence 支撑；Tickets Map 的导航、依赖和合同覆盖仍有效，不复制本票进度。
 
 ## 11. SKILL 调用计划
 

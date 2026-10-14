@@ -160,9 +160,8 @@ test("retro-only completion needs no implementation and requested PR delivery re
     await mkdir(join(change,"retro"),{recursive:true});
     const cfg=join(temp,".agents/speculo/.speculo/specdev");await mkdir(cfg,{recursive:true});
     await cp(join(wf,"specdev-i-init-setup/assets/config-template.json"),join(cfg,"config.json"));
-    const auth={status:"not-authorized",source:null,granted_at:null,scope:"No implementation requested"};
-    const status={schema_version:6,artifact:"change-status",change:id,change_status:"completed",current_work:null,works_run:["specdev/retro"],claimed_investigations:[],execution_authorization:{implementation_commit:auth,local_candidate_integration:auth,source_cleanup:auth},leadership:{current:"lead",epoch:1,assigned_at:"2026-10-08T00:00:00Z",history:[]},created_at:"2026-10-08T00:00:00Z",updated_at:"2026-10-08T00:00:00Z",completed_at:"2026-10-08T00:00:00Z",archived:false,archive_path:null,blockers:[],deviations:[],worktrees:[]};
-    const sp=join(change,".status.json");await writeFile(sp,JSON.stringify(status));
+    const sp=join(change,"README.md"),readme=`# ${id}\n\nOutcome: completed\n\n## Ownership\nOwner: lead\nWork: specdev/retro\nEvidence: handoff.md\n`;
+    await writeFile(sp,readme);await writeFile(join(change,"handoff.md"),"# Original owner\nOwner: lead\nWork: specdev/retro\nSource: fixture:review-request\n");
     const common={schema_version:1,change:id,updated_at:"2026-10-08T00:00:00Z"};
     await writeFile(join(change,"retro/RETRO-001.md"),markdown({...common,artifact:"retrospective",id:"RETRO-001",status:"completed",outcome:"no-findings",sources:["archive:prior-change"]},["Scope","Evidence","Findings","Acceptance","Routes"]));
     const {validateChange}=await validatorModule();
@@ -170,10 +169,10 @@ test("retro-only completion needs no implementation and requested PR delivery re
     await mkdir(join(change,"pull-requests"));
     const pr={...common,artifact:"pull-request",id:"PR-001",requested:true,delivery_target:"ready",status:"planned",repo:"owner/repo",base_sha:base,head_sha:head,body_sha256:sha(body),verification:"pending",url:null};
     const pp=join(change,"pull-requests/PR-001.md"),hh=["Summary","Evidence","Before / After","Merge Risk","Authorization","Receipt","Recovery"];
-    await writeFile(pp,markdown(pr,hh));assert.match(validateChange(change,"complete").errors.join("\n"),/pending PR delivery/);
-    await writeFile(pp,markdown({...pr,status:"draft",url:"https://github.com/owner/repo/pull/1"},hh));assert.match(validateChange(change,"complete").errors.join("\n"),/pending PR delivery/);
-    await writeFile(pp,markdown({...pr,requested:false},hh));assert.deepEqual(validateChange(change,"complete").errors,[]);
-    assert.equal(await readFile(sp,"utf8"),JSON.stringify(status));
+    await writeFile(pp,markdown(pr,hh));assert.deepEqual(validateChange(change,"complete").errors,[]);assert.match(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
+    await writeFile(pp,markdown({...pr,status:"draft",url:"https://github.com/owner/repo/pull/1"},hh));assert.match(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
+    await writeFile(pp,markdown({...pr,requested:false},hh));assert.deepEqual(validateChange(change,"archive-ready").errors,[]);
+    assert.equal(await readFile(sp,"utf8"),readme);
     await mkdir(join(change,"evidence"));assert.match(validateChange(change,"complete").errors.join("\n"),/spec.md|direct-spec/);
   } finally {await rm(temp,{recursive:true,force:true});}
 });
@@ -220,6 +219,7 @@ test("old config schemas are rejected and opaque runtime bytes are preserved", a
  try {
   await initSpeculo(temp,{packageRoot:root,selection:{workflowIds:["specdev"]}});
   const runtime=join(temp,".agents/speculo/.speculo/specdev"),config=join(runtime,"config.json");
+  await mkdir(runtime,{recursive:true});
   const current=JSON.parse(await readFile(join(wf,"specdev-i-init-setup/assets/config-template.json"),"utf8"));current.schema_version=5;
   const original=JSON.stringify(current);await writeFile(config,original);await writeFile(join(runtime,"opaque.bin"),Buffer.from([0,255,10,0]));
   await assert.rejects(initSpeculo(temp,{packageRoot:root,selection:{workflowIds:["specdev"]}}),/blocked/);

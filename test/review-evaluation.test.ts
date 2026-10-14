@@ -1,7 +1,7 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { realpath, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
@@ -24,7 +24,7 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
   });
   it("requires artifacts and ordered case-bound events; detects fake evidence and forbidden effects", async () => {
     const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
-    const root = await mkdtemp(join(tmpdir(), "speculo-eval-"));
+    const root = await mkdtemp(join(await realpath(tmpdir()), "speculo-eval-"));
     const fixture = [{ id: "case-a", workflow: "test", trigger: "write receipt", expected: "verified receipt", assertions: {
       artifacts: [{ path: "receipt.txt", equals: "verified\n" }], forbidden_effects: ["external-mutation"],
       events: [{ kind: "tool", payload: { name: "verify", exit_code: 0 } }],
@@ -46,7 +46,7 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
   });
   it("accepts native temporary roots but rejects symlink or junction ancestors", async () => {
     const { evidencePath } = await load("scripts/lib/evaluation-evidence.mjs");
-    const root = await mkdtemp(join(tmpdir(), "speculo-eval-path-"));
+    const root = await mkdtemp(join(await realpath(tmpdir()), "speculo-eval-path-"));
     try {
       const target = join(root, "target"), child = join(target, "child"), link = join(root, "linked");
       await mkdir(child, { recursive: true });
@@ -68,7 +68,7 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
 
 describe("review R3: closed instruction coverage and committed sources", () => {
   async function observation(run: (f: any) => Promise<void>) {
-    const dir = await mkdtemp(join(tmpdir(), "speculo-input-coverage-"));
+    const dir = await mkdtemp(join(await realpath(tmpdir()), "speculo-input-coverage-"));
     const repoRoot = join(dir, "repo"), bundleRoot = join(dir, "bundle"), artifactRoot = join(bundleRoot, "artifacts"), trustPath = join(dir, "trust.json");
     const lib = await load("scripts/lib/evaluation-evidence.mjs");
     try {

@@ -8,6 +8,12 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 产物写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
 
+## 简单无票 Goal
+
+用户要求 Goal，但范围只含一个非 Deep、无真实并行/复杂设计依赖的轻量 change 时，使用 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/lightweight-goal-plan-template.md</Path>：frontmatter 为 `artifact: lightweight-goal-plan`、`change`、`lead`，正文 `## Tasks`、`## Integration and Verification`、`## Next Steps`。README 保留 scope/acceptance/verification 的规格/验收，任务进度唯一在 Goal 清单。此分支不创建 Ticket/Map/Implementation，也不调用 analyzeMap；完整 Goal 不能因字段缺失自动降级。实际工作和完成仍走原 I/完成门。
+
+下面的 Ticket 输入与完整 schema 只适用于有票的完整模式。
+
 ## 何时运行
 
 满足任一条件时运行：
@@ -28,7 +34,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 - `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>`
 - `<Path>{roots.state}/specdev/changes/{change}/ticket/</Path>`：先枚举 Ticket 入口的 frontmatter、依赖和状态，按 DAG、路径和风险定位需要完整读取的 Ticket。
-- `<Path>{roots.state}/specdev/config.json</Path>`
+- 实际执行策略来源；存在真实 config 时只读相关限制
 
 按存在情况读取：
 
@@ -53,7 +59,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和待执行 Deep Ticket 完整性；未来 draft 票按规划输入门记录局部缺口；
 2. 只读探索影响调度的代码与项目事实；
 3. 识别 migration、high-assurance、reference-conformance、release-coordination 等适用模式；
-4. 从 config 读取 `max_concurrent_implementations` 与 `max_integration_attempts`，将实际值快照到 `concurrent_implementation_limit` 与 `integration_attempt_limit`；本计划可以降低但不得超过 config 或平台能力，Lead 参与实现时计入；
+4. 从项目/本次约定读取实际并发与尝试上限，在 `Execution Policy Source` 记录来源并填写既有 `concurrent_implementation_limit` 与 `integration_attempt_limit`；存在 config 时不得超过其有效上限或平台能力，Lead 参与实现时计入；
 5. 根据 workspace 策略记录实现 commit 与 direct-parent/candidate integration 授权事实；缺失时仍可完成 plan 文档，但 ready_for_execution 保持 false，并列为 run 的阻塞条件；
 6. 只询问无法发现且会改变 Gate、Wave、owner、迁移、批准或验收的问题。
 
@@ -77,7 +83,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 加载 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>`，并按规划阶段读取 `<Path>{roots.references}/coordination/task-brief.md</Path>`：
 
 1. 固定 Lead 的可恢复 owner/session locator；
-2. 声明 实现执行者 的 config/平台约束上限，Lead 参与实现时计入；
+2. 按 `Execution Policy Source` 声明实现与集成尝试上限，核对实际存在的 config/平台限制，Lead 实际参与实现时计入；
 3. 不为只读 review/research/test-observation agent 写 SpecDev 数字上限；
 4. current 模式固定只有一个 implementation writer 写项目路径，Lead 仍是唯一 SpecDev 工件与状态写入者；required 模式 implementation owner 写自己的 Ticket worktree；
 5. 定义执行期动态 Dispatch Packet、候选返回和 Lead 验收；
@@ -98,12 +104,12 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 **完成标准**：每个完成声明映射到不可变 commit、候选/父分支 SHA、命令、Evidence 或人工批准。
 
-### 5. 写入、同步与验证
+### 5. 写入、导航与验证
 
 使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>` 写入 Goal Plan：
 
 1. 只保留适用 planning modes，不创建条件性 topology addendum；
-2. 将 Wave、Gate 和 owner 投影同步到 Tickets Map；
+2. Tickets Map 只增加原 Goal 的 Wave/Gate 导航，执行 owner 与进度仍从 Ticket/Evidence 回读；
 3. 对照 `<Path>{roots.workflows}/specdev/common/schemas/goal-plan.schema.json</Path>`；
 4. 运行：
 
@@ -113,7 +119,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
-5. 原子更新 Goal Plan、Tickets Map、全局/current change 状态并重新读取；
+5. 写回 Goal Plan 的 Gate/执行事实与 Map 导航，README 只保留目标/接续并重新读取；
 6. 向用户报告 Outcome、关键路径、Wave/Gate、Lead、实现 agent 上限、shared owner、E2E disposition、迁移与主要风险；
 7. 未经用户要求，不自动进入实现。
 
@@ -135,11 +141,11 @@ Goal Plan 不复制 Ticket 的局部施工路线、全部文件预测或逐项�
 - Goal Plan schema v7 且 `ready_for_execution` 与状态一致；
 - 规划完成与执行就绪分别报告；允许交付 `draft / ready_for_execution: false`，单 change 不创建父 Implementation Map/Plan；
 - 等待上游产物的未来票保持 draft，局部缺口只阻塞依赖闭包；进入执行的票必须重新通过 DoR，上游完成不自动提升 Ready；
-- Lead 唯一，实现执行者 上限来自 config/平台能力，review/research agent 不受 SpecDev 数字限制；
+- Lead 唯一，Execution Policy Source 可回读，实际存在的 config/平台限制已核对，Lead 实际参与实现时计入；review/research agent 不受 SpecDev 数字限制；
 - 每个实现 Ticket 都有 workspace、commit、对应 integration gate 和 Evidence 出口；
 - current 模式不创建 source/candidate worktree，适用 E2E 由 Lead 在 current workspace 运行；required 模式保持 source/parent-candidate 边界；
 - 计划只保留当前固定 Lead 与选定 workspace/integration 合同；
-- validator 无 error，Tickets Map 投影同步，用户收到下一步选择。
+- validator 无 error，Tickets Map 导航与合同覆盖正确，用户收到下一步选择。
 
 ## 子文件引用
 

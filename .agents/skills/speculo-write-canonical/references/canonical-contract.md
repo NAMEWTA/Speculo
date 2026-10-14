@@ -63,6 +63,12 @@ https://github.com/NAMEWTA/Speculo
 
 Canonical 文档本身仍不得使用 YAML frontmatter。
 
+## SpecDev 的源协议优先
+
+下面的通用状态示例只适用于源领域仍拥有该状态的能力，不能向 SpecDev 重新引入重复镜像。5 份 SpecDev canonical 必须继承 Markdown 优先协议：稳定名称、README 唯一 Outcome、轻量范围/AC/验证、复杂 Goal/Ticket/执行 Evidence、原 owner 与完成/取消门、新 archive、旧历史只读、先维护现役后移动。普通新产物不导出 status.json、.status.json 或 Work 调用记录。
+
+SpecDev 持久化只写当次确需工件；只读不制造对象，缺能力导出完整 FILE 包并标明待保存/待执行。DESIGN 仍保留 schema、三类摘要、具体批准、浏览器截图原件、原型源码/离线资源与 pending 网关请求；这些运行时证据不是编译 provenance，不得以隔离规则删除。平台无浏览器/摘要/网关时不伪造 Ready 或发布。学习/其他领域保留各自真实状态语义。
+
 ## 4. 统一便携目录
 
 默认持久化根：
@@ -71,7 +77,7 @@ Canonical 文档本身仍不得使用 YAML frontmatter。
 ai-workspace/
 ```
 
-公共结构：
+源领域仍使用双状态时的示例结构（不适用于 SpecDev）：
 
 ```text
 ai-workspace/
@@ -105,7 +111,7 @@ ai-workspace/
 
 ## 5. 最小状态合同
 
-全局状态至少表达：
+仅源领域定义全局状态时至少表达：
 
 ```json
 {
@@ -121,7 +127,7 @@ ai-workspace/
 }
 ```
 
-change 状态至少表达：
+仅源领域定义 change 状态时至少表达：
 
 ```json
 {
@@ -143,18 +149,18 @@ change 状态至少表达：
 固定顺序：
 
 1. 使用用户显式指定的合法 change；
-2. 未指定时，读取全局状态并筛选当前能力的 active change；
+2. 未指定时，按源协议读取全局状态或枚举实际目录/README 选择当前能力的 active change；
 3. 恰好一个候选则恢复；
 4. 多个候选则列出并停止；
 5. 没有候选则创建新 change。
 
-恢复必须先读取 `.status.json` 和该能力的权威工件。对话记忆、模型摘要和用户口头说“继续”都不能替代文件证据。
+恢复必须读取该能力真正拥有的权威工件；SpecDev 是 README/原计划/Evidence，只有源模型需要才读 `.status.json`。对话记忆、模型摘要和用户口头说“继续”都不能替代文件证据。
 
 状态与工件冲突时保持 blocked，列出冲突和恢复动作；不得凭感觉选择新旧版本。
 
 ## 7. 写入与提交顺序
 
-每次状态变化遵守：
+源模型拥有双状态时，变化遵守以下顺序；SpecDev 在候选/验证/写入后仅回读唯一负责工件，不执行两次 JSON 更新：
 
 ```text
 形成完整候选工件
@@ -213,7 +219,7 @@ change 状态至少表达：
 要求：
 
 - 输出完整文件，不只给 diff；
-- 文件顺序稳定：全局状态、change 状态、source、主工件、共享日志、其他工件；
+- 文件顺序稳定：本次实际需要的源模型状态或 README、source、主工件、共享日志、其他工件；SpecDev 不为该示例生成旧 JSON；
 - 明确说明尚未实际写入；
 - 下一轮先读取用户保存后重新提供的文件；
 - 不以“对话里我记住了”继续。
@@ -228,7 +234,7 @@ change 状态至少表达：
 2. 必需输入、可选输入和权威顺序；
 3. 主流程和不可改变顺序；
 4. 产物所有权与目录结构；
-5. 全局状态与 change 状态；
+5. 源领域的唯一业务权威及恢复事实；
 6. 暂停、恢复、重入和提前回答；
 7. 平台可写与不可写模式；
 8. 写入顺序、验证、失败和冲突；
@@ -271,7 +277,7 @@ change 状态至少表达：
 - 源内部路径、root alias、源文件名和内部脚本；
 - manifest、hash、生成元数据和 XML 来源包装；
 - 缺失 `ai-workspace/`；
-- 缺失 `status.json` 或 `.status.json`；
+- 缺失源领域必需的权威工件协议；SpecDev 应检查 README Outcome/轻量与复杂证据，不要求旧 status；
 - 缺失不可写平台的完整 FILE bundle 规则；
 - 便携路径中的 `..`、反斜杠、双斜杠或机器绝对路径；
 - 未完成占位符；

@@ -1,7 +1,7 @@
 ---
 name: code-review
-description: 从不可变固定点对本地 diff 执行隔离的标准轴与规范轴审查，供独立 C Work 和 I Work 最终审查共同调用。
-compatibility: Requires the owning Speculo workflow and its workspace path resolver.
+description: 对固定的本地文件快照或不可变 Git diff 执行隔离的标准轴与规范轴审查，供独立 C Work 和 I Work 最终审查共同调用。
+compatibility: Requires the owning Speculo workflow resources and explicit project roots.
 metadata: {"speculo-source-id": "specdev-code-review"}
 ---
 
@@ -10,6 +10,8 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 本 Skill 返回审查结果，不创建 runtime namespace。调用方分别负责 C review 工件或 I Evidence。
 
 ## 输入
+
+默认 diff 模式使用下列 fixed_point/head/diff/log。C 显式本地文件分支使用 `review_mode: source-files` 与 `source_snapshot`（路径/原始字节 SHA256）；不提供虚假的 Git 字段。两种模式均须提供相同的规范、标准、范围与隔离输入，I 最终审查保留 diff 模式。
 
 - `fixed_point`：已解析的 commit SHA；
 - `head`：已解析的 HEAD/checkpoint SHA；
@@ -22,7 +24,7 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 
 ## 流程
 
-1. 重验 fixed point/head、实际 diff 语义和摘要；无效引用不启动 reviewer。合法空 diff 由调用方返回 no-diff，不伪造 approved 或复用非空报告。显式范围不得回退为默认三点比较。
+1. diff 模式重验 fixed point/head、实际 diff 语义和摘要；无效引用不启动 reviewer。合法空 diff 由调用方返回 no-diff，不伪造 approved 或复用非空报告。显式范围不得回退为默认三点比较。source-files 模式重验固定路径与原字节，不推断历史 diff 或 commit。
 2. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/source-discovery.md</Path>`，穷尽规范和标准来源。
 3. 发现已有审查并拟复用时，先读取 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/result-reuse.md</Path>`，完整核对输入、两轴隔离与原始证据；能证明相同的轴保留原结果，其余轴按下列步骤运行；未能证明相同就正常重审两轴。
 4. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
@@ -31,6 +33,8 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 7. 原顺序返回 `standards` 和 `specification` 两份结果。规范来源不存在时只跳过规范轴并解释，标准轴继续。
 
 ## 输出
+
+source-files 结果以 `review_mode` 和 `source_snapshot` 代替下例 Git 字段，其余两轴、来源和限制结构相同。
 
 ```text
 {
@@ -46,7 +50,7 @@ Finding 必须包含 severity、项目相对 Path/代码块、具体风险、依
 
 ## 完成标准
 
-- fixed point、head、diff 和 commits 固定且可重复；
+- diff 的 fixed point、head、diff、commits 或 source-files 的原字节快照固定且可重复；
 - 仓库标准优先于 Fowler 启发式；
 - 两个 reviewer 上下文没有相互发现污染；
 - 每个发现可定位且说明行为风险；

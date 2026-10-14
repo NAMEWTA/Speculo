@@ -1,6 +1,6 @@
 # GitHub 远程操作合同
 
-本协议及 <Path>{roots.workflows}/specdev/specdev-t-triage/scripts/github-transport.mjs</Path> 由 T 唯一维护。C、command 或其他调用方可直接复用：不激活 T、不创建 change、不改 current_work；原调用方拥有报告、授权与回执。
+本协议及 <Path>{roots.workflows}/specdev/specdev-t-triage/scripts/github-transport.mjs</Path> 由 T 唯一维护。C、command 或其他调用方可直接复用：不激活 T、不创建 change、不创建工作调用镜像；原调用方拥有报告、授权与回执。
 
 ## 输入与操作
 

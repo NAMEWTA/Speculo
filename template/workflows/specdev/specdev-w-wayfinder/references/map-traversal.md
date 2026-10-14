@@ -25,7 +25,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 - 地图：`<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>`
 - 子 Tickets：`<Path>{roots.state}/specdev/changes/{change}/investigation/</Path>`
 - solution comments：`<Path>{roots.state}/specdev/changes/{change}/investigation/comments/</Path>`
-- assignment registry：`<Path>{roots.state}/specdev/changes/{change}/.status.json</Path>` 的 `claimed_investigations`
+- assignment：原 investigation Ticket 的实际领取/交接依据，不建全局镜像
 
 每次绘制或遍历前加载 `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/local-tracker-contract.md</Path>`。Ticket 和地图模板：
 
@@ -38,7 +38,7 @@ Wayfinder 默认进行**规划**：每个 Ticket 解决一个决策，当地图�
 每个 Ticket 要么是 **HITL**，与一个代表自己发言的人类一起工作；要么是 **AFK**，由 Agent 独立驱动。HITL Ticket 只能通过实时交流解决，Agent 绝不代替人类一方发言。
 
 - **Research（AFK）**：阅读文档、第三方 API 或知识库等资源，揭示某个决策等待的事实。调用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。当需要当前工作目录之外的知识时使用。
-- **Prototype（HITL）**：调用 `<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>` 检测项目 UI、比较功能风格候选并逐步确认设计方向，把 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>` 与 comparison locator 链接为 solution comment 资产；`{design-id}` 使用 P 返回的 `UI-NNN`，P 不实现目的地。
+- **Prototype（HITL）**：调用 `<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>` 继承项目基线、组合模板并先生成 HTML，再集中确认设计。把 <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>、其 revision/digest、`<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`、comparison/final 和浏览器证据链接为 solution comment 资产；`{design-id}` 使用 P 返回的 `UI-NNN`，P 不实现目的地。
 - **Grilling（HITL）**：对话。调用 `<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>` 的 grilling 与 domain-modeling 能力，但本会话只关闭当前 Wayfinder Ticket。
 - **Task（HITL 或 AFK）**：在决策做出前必须完成的手动工作。它通过为决策解除阻塞赢得位置，不以交付目的地为目标。Agent 能独立驱动时使用 AFK，否则给人类精确清单。
 

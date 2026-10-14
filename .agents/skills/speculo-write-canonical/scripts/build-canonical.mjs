@@ -321,11 +321,17 @@ function validatePortablePaths(text, filePath) {
     }
   }
 
-  if (!text.includes('ai-workspace/status.json')) {
-    fail(`${filePath}: missing global portable state path ai-workspace/status.json`);
-  }
-  if (!/ai-workspace\/changes\/(?:\{change\}|<change>|YYYY-MM-DD-<topic>)\/\.status\.json/.test(text)) {
-    fail(`${filePath}: missing change status path under ai-workspace/changes/{change}/.status.json`);
+  const markdownLifecycle = /Outcome:\s*(?:active|completed|cancelled)/.test(text);
+  if (markdownLifecycle) {
+    if (!/ai-workspace\/changes\/(?:\{change\}|<change>|YYYY-MM-DD-<topic>)\/README\.md/.test(text)) fail(`${filePath}: Markdown lifecycle requires an authoritative change README path`);
+    if (!text.includes('changes/archive/') || !/验收|acceptance/.test(text) || !/取消|cancel/.test(text)) fail(`${filePath}: Markdown lifecycle requires archive location, acceptance and cancellation contracts`);
+  } else {
+    if (!text.includes('ai-workspace/status.json')) {
+      fail(`${filePath}: missing global portable state path ai-workspace/status.json`);
+    }
+    if (!/ai-workspace\/changes\/(?:\{change\}|<change>|YYYY-MM-DD-<topic>)\/\.status\.json/.test(text)) {
+      fail(`${filePath}: missing change status path under ai-workspace/changes/{change}/.status.json`);
+    }
   }
   if (!/FILE:\s*ai-workspace\//.test(text)) {
     fail(`${filePath}: missing complete FILE bundle format for non-writable platforms`);
@@ -537,6 +543,9 @@ async function runSelfCheck() {
     await expectFailure('missing portable root', () => audit(selfCheckCanonical().replaceAll('ai-workspace/', 'portable-state/')), 'missing portable persistence paths');
     await expectFailure('missing global status', () => audit(selfCheckCanonical().replaceAll('ai-workspace/status.json', 'ai-workspace/index.json')), 'missing global portable state path');
     await expectFailure('missing change status', () => audit(selfCheckCanonical().replaceAll('.status.json', 'phase.json')), 'missing change status path');
+    const markdownExample = selfCheckCanonical().replaceAll('ai-workspace/status.json', 'ai-workspace/changes/archive/').replaceAll('.status.json', 'README.md') + '\nOutcome: active\n验收完成后可 completed；取消须原 owner 核对实际用户请求。\n';
+    await audit(markdownExample);
+    await expectFailure('Markdown missing authoritative README', () => audit(markdownExample.replaceAll('/README.md','/notes.md')), 'authoritative change README');
     await expectFailure('missing file bundle', () => audit(selfCheckCanonical().replaceAll('FILE:', 'OUTPUT:')), 'missing complete FILE bundle');
     await expectFailure('portable traversal', () => audit(selfCheckCanonical('\n额外工件：`ai-workspace/changes/{change}/../secret.md`。\n')), 'path traversal');
     await expectFailure('conversation-only state', () => audit(selfCheckCanonical('\n失败时只在当前对话中维护。\n')), 'conversation-only state');

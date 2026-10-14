@@ -31,4 +31,4 @@ metadata:
 - 当前 change 的 LOG/CONTEXT/ADR 可按 Work 授权写入；永久 namespace 对 G 只读，正式知识只能经 A 的原有写入网关提升。
 - 没有未决的高影响决定且证据可定位才标记共识；无法回答时只暂停相关分支，返回明确问题和恢复入口。
 
-完成后使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage grill`，回读四个真实源工件，再交给 `<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>`；若属于 W 调查票，只关闭本票并返回探索地图。
+完成后使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage grill`，回读实际形成的决定与证据工件；无实际内容不为四份数量预建空文件，再交给 `<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>`；若属于 W 调查票，只关闭本票并返回探索地图。

@@ -6,7 +6,7 @@
 
 用户可指定一个 change、多个 change、单 change tickets-map 或父 tickets-map。先解析真实路径和唯一 owner，不凭名称选择其他任务。无清晰 change 时回 W；单 change 缺 Spec/Ticket 时回 S/T。多个成员创建前全部通过既有输入门，父状态创建仍是 all-or-nothing；创建后运行遇到局部冲突则局部暂停。
 
-单 change：Ticket frontmatter 拥有状态、依赖和路径；tickets-map 是控制入口和投影；需要跨票 Gate 时 goal-plan 拥有该 Gate。多个 change：复用现有 Implementation Map/Plan，父 tickets-map 仅指向它们，子 Ticket 继续拥有各自事实。不得增加第二份可编辑执行状态。
+单 change：Ticket frontmatter 拥有状态、依赖和路径；tickets-map 只保留控制入口、导航、跨票依赖与合同覆盖；需要跨票 Gate 时 goal-plan 拥有该 Gate。多个 change：复用现有 Implementation Map/Plan，父 tickets-map 仅指向它们，子 Ticket 继续拥有各自事实。不得增加第二份可编辑执行状态。
 
 ## plan
 
@@ -19,7 +19,7 @@
 
 1. 验证活动计划与输入摘要；检查执行入口、工作区策略、Git 和具体外部动作授权。
 2. 执行 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/map-control.md</Path>`，调用 I；不直接越过票的 Skill 或验证矩阵。
-3. 每票返回都回读真实状态和 Evidence；保持原有 Lead、config 上限和 required/current 集成协议。
+3. 每票返回都回读原 Ticket 状态和 Evidence；按原计划的 Execution Policy Source、实际存在的 config 与宿主能力核对上限，保持原 Lead 和 required/current 集成协议。
 4. 一轮中没有可运行票就解释阻塞与恢复条件，写检查点；不要空转或声称仍在后台执行。
 
 ## resume
@@ -32,4 +32,4 @@
 
 ## 兼容
 
-P 保留原业务 ID；Ticket/Map 使用 schema v3 与 plan_contract_version: 1，Goal Plan 使用 v7、change 状态使用 v6。只接受当前合同；无效或旧格式停止受影响分支，保留原始文件与证据，不提供迁移或兼容读取。
+P 保留原业务 ID；Ticket/Map 使用 schema v3 与 plan_contract_version: 1，Goal Plan 使用 v7；整体结论使用 README Outcome。只接受当前合同；无效或旧格式停止受影响分支，保留原始文件与证据，不提供迁移或兼容读取。

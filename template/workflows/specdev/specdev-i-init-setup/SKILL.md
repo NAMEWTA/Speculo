@@ -1,6 +1,6 @@
 ---
 name: specdev-i-init-setup
-description: "初始化 SpecDev 的语言、配置、全局状态、本地 change 追踪、领域知识布局、验证命令和并发治理。"
+description: "发现项目事实与必要偏好；仅在明确请求时建立当前工程 docs 基线，不预造业务状态骨架。"
 metadata:
   speculo-kind: work-skill
   speculo-id: specdev/init-setup
@@ -10,41 +10,22 @@ metadata:
 
 # 初始化设置
 
-激活后读取 `<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>`、`<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>` 与 `<Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>`。本 Work 只配置 SpecDev，不修改业务代码或迁移旧状态。
+读取 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，按 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 定位相关条目，明确项目、方法和数据根；直接使用无需 workspace 或 CLI。已有安装验证真实 roots，冲突只阻塞有关写入。普通 Work 不必先经过本入口。
 
-## 定位与探测
+## 流程
 
-创建任何目录前，从 cwd 向上定位并打开 `<Path>{roots.state}/workspace.json</Path>`，验证 `path_base` 与 roots。只写声明的 `<Path>{roots.state}/specdev/</Path>`；不得把状态根默认展开成项目根 `.speculo`，嵌套安装的项目根 `.speculo/specdev` 非法。根目录未解析或未获授权时停止写入；持久化引用使用根变量，不把机器绝对路径写回模板。
+1. 只读探测包管理、workspace、构建/测试/类型/lint/CI、默认父分支、实际 worktree 与项目指令；定位真实入口和共享高冲突资源。未知验证命令保持未知，不凭框架名称编造。
+2. 区分可用、未安装、未配置、未授权、不适用并注明依据。复用用户语言、工具、产物数量及已有配置；只问无法从仓库得到且实际影响当前任务的偏好。探测不自动安装依赖、发布或创建虚假 change。
+3. 实际需要写入偏好或工具配置时读取 <Path>{roots.workflows}/specdev/specdev-i-init-setup/references/first-setup.md</Path>。已有真实 GitHub/验证配置继续使用其 schema，不删除未知独有字段。无需求不创建 config、tracking、domain-layout、空知识目录、全局 status 或 change status。
+4. 仅明确要求工程文档基线/全面理解代码时，直接使用 <Path>{roots.references}/writing-for-agents/references/current-facts-docs.md</Path> 的六步与覆盖表。最小 docs README/architecture 或已有负责正文导航，说明 HEAD/未提交或非 Git 范围、覆盖/未知/排除与实际验证；不改永久知识、不推进 docs-sync 基线。
+5. 回读本次实际写入，报告已确认事实、必要偏好来源、验证命令/退出码和未知。只读调用无文件；有 change 的结果写回原 README/Evidence，不登记 Work 调用镜像。
 
-只读探测包管理、多工作区、构建/测试/类型/lint/CI、默认父分支、worktree、项目 Agent 指令及分支/提交/发布先例；记录根依赖清单、锁文件、共享 schema、迁移索引、全局导出/路由等高冲突资源。能从仓库发现的事实不重复问用户。
+## 停止与保全
 
-确认项目根 `.gitignore` 已含 `specdev-worktree/` 或 `/specdev-worktree/`；该条目由 `speculo init` 唯一维护，缺失时停止并提示重新运行当前版本 CLI，不由 Work 补写。
+未知 schema、旧活动或混合协议保留原件并交显式转换，不从初始化偷偷迁移。CLI 安装元数据与 back 不归本 Work。已有知识、用户配置和历史不覆盖；只读发现不证明方法已安装或业务已验收。
 
-## 能力探测的结果
-
-把每项能力区分为可用、未安装、未配置、未授权或当前不适用，并保留仓库依据；未知验证命令仍为 null。先定位真实项目 Skill 和构建/测试/发布入口，不把 DSH 命令或覆盖率搬进配置。探测不自动安装依赖、不运行发布，不创建虚假 change；再次初始化只补缺失骨架，不覆盖原历史。
-
-## 选择初始化分支
-
-| 当前事实 | 执行 |
-|---|---|
-| 配置或状态不存在 | 读取 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/references/first-setup.md</Path>`，仅在首次创建对应文件时读取 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/config-template.json</Path>`、`<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/tracking-template.md</Path>`、`<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/domain-layout-template.md</Path>`；只创建缺失骨架；语言、并发、UI 数量与人工批准偏好仅补问尚未知项 |
-| 已有有效配置和状态 | 对照 `<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>`、`<Path>{roots.workflows}/specdev/common/schemas/status.schema.json</Path>` 验证并复用；保留 active、历史、永久知识和用户配置 |
-| 用户要求修改既有配置 | 先验证并展示差异，再按授权更新；不存全局自动提交/集成开关 |
-| JSON 无效、版本未知或契约冲突 | 保留原文件并报告 blocker；迁移只由 `speculo init` 使用 `<Path>{roots.workflows}/specdev/runtime-contract.json</Path>` 中登记的显式 migrator 完成 |
-
-## 验收与返回
-
-配置/全局状态必须可解析且满足 schema；状态、changes、永久 ADR/context/research、archive 与配置目录齐全，tracking/domain-layout 两份配置文档有效。验证命令必须有仓库或用户来源，未知值保留 `null`，不保存秘密。
-
-创建 change 前，对照 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/change-status-template.json</Path>` 与 `<Path>{roots.workflows}/specdev/common/schemas/change-status.schema.json</Path>`，真实创建时替换占位符后校验；纯初始化不创建虚假的 change。
-
-```bash
-node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
-```
-
-回读实际配置、状态、目录和忽略项后返回状态根、语言、验证命令、并发/批准策略、未确认配置与检查结果。若由 active change 调用，按原启动/交接合同登记 `current_work`，成功后去重更新 `works_run` 并清空；纯初始化不改已有 active 索引。时间和验证证据留在回复或调用 change 的 Evidence/LOG，不写进全局索引。
+只有确实创建 worktree 时核对 `specdev-worktree/` 的忽略项与 owner：已安装的 CLI-managed 忽略项交 CLI 修复；直接模式按项目 owner 的真实授权维护，不能因没有 CLI 阻塞其他初始化事实发现。
 
 ## 可选项目编排选择
 
-只有用户要求持久化编排偏好时，依据 <Path>{roots.references}/coordination/project-facts.schema.json</Path> 写入 <Path>{roots.state}/coordination/project.json</Path>，先读 <Path>{roots.references}/coordination/coordination-contract.md</Path>。配置缺失默认 Lead；不探测、安装或要求配置外部工具。此文件只保存选择，不是授权凭证。只读调用不生成配置。
+只有用户要求持久化编排偏好时，依据 <Path>{roots.references}/coordination/project-facts.schema.json</Path> 写入 <Path>{roots.state}/coordination/project.json</Path>，先读 <Path>{roots.references}/coordination/coordination-contract.md</Path>。配置缺失默认 Lead；不探测、安装或要求外部工具，选择不是授权凭证。只读调用不生成配置。

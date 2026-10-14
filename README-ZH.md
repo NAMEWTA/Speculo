@@ -34,9 +34,15 @@ speculo resolve . '<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md<
 
 读取、发现和投影不授权提交、推送、发布、部署或其他副作用。动作由拥有该步骤的入口确认已有授权；局部缺少权限只阻塞受影响分支。
 
+普通 SpecDev Work 也可直接使用：明确项目、方法资源根和获批数据根即可，CLI 安装不是前置。新 change 在 README 中只保存一个整体 Outcome，进度按范围由 README、无票 Goal 或 Ticket/Evidence 负责；复杂规划、设计批准与集成门保留。
+
+A 收尾核对 change、ADR、context、当前工程 docs，涉及 UI 时再核对 DESIGN。必要现役维护和设计发布完成后才整体移到 changes/archive，稳定名称不变；completed/cancelled 本身不证明验收或授予归档权限。
+
+当前工程 docs 仅在明确请求基线时创建，已有负责文档则导航。I/A 在本次范围维护；docs-sync 仍是手动全局 audit/update/commit 入口，独立拥有 Git 和同步状态。
+
 ## 新版边界
 
-仅支持 agents-v2 布局和当前 schema。遇到旧安装或旧事务时拒绝写入，保留原文件；不自动迁移、删除 runtime 或并行读取旧根。请在明确选择的干净项目中安装新版。安装事务与显式恢复独立于业务编排。
+CLI 保持 agents-v2 安装身份、staging 和显式恢复。新 SpecDev 活动使用 Markdown 协议，不生成全局/change status 镜像；旧活动数据须显式、定范围转换，混合或未知输入阻塞受影响写入。旧月份归档原位冻结，独立历史 reader 只读定位；其他领域保留各自持久化合同。[转换参考](scripts/references/migrate-specdev-markdown.md)说明仓库维护工具，init 不自动执行转换。
 
 12 份 canonical 可从 template/canonical 单独取用；每份定义持久化与不可写时的完整文件交付。源码及第三方许可见 LICENSE 与 THIRD-PARTY-NOTICES.md。
 

@@ -33,7 +33,7 @@ metadata:
 - `<Path>{roots.state}/specdev/context/</Path>`
 - 当前代码、测试、依赖和 Git 历史。
 
-产物：
+无 change 的明确范围 report 默认在会话返回 Markdown，零文件写入；用户明确要求保存时使用获批项目报告路径，不造 change。已有 change 的产物：
 
 - `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>`
 
@@ -73,7 +73,7 @@ metadata:
 
 ### 2. 生成 Markdown 报告
 
-使用 `<Path>{roots.workflows}/specdev/specdev-r-review-architecture/assets/architecture-review-template.md</Path>` 写入 Markdown 决策记录。
+按 <Path>{roots.workflows}/specdev/specdev-r-review-architecture/assets/architecture-review-template.md</Path> 的适用内容形成 Markdown 决策记录；有 change/获批报告路径才落盘，无 change 的只读请求直接会话返回。
 
 每个候选以高置信 finding 的顺序展示，而不是按文件顺序排列。每个候选包含：
 
@@ -89,7 +89,7 @@ metadata:
 
 报告以“最佳推荐”结束；若没有高置信候选，就明确写 `无高置信候选`。报告阶段**不提出 interface**；返回候选和证据即可，不强制追加选择问题。
 
-**完成标准**：每个候选字段完整、最佳推荐唯一或明确为空，Markdown 已原子写入并重读。
+**完成标准**：每个候选字段完整、最佳推荐唯一或明确为空，会话报告可回读；获批文件报告已原子写入并重读。
 
 ## 分支完成、状态与返回
 
@@ -99,6 +99,6 @@ metadata:
 
 `selected-design` 完成条件：用户选定的一个候选完成参考中的完整 frontier 访谈，或明确 blocked/rejected；只有接受且达成共识的方案才按原 Ticket 治理交接。其他候选保持未选择，不批量要求决定。
 
-按本分支真实结果更新 Work 状态：成功才把本 Work 去重加入 `works_run` 并清空 `current_work`，blocked 保留恢复键和原因。报告完成不是产品交付；只有请求本来以非实现审查为终点且满足 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，该终点 owner 才可关闭 change。
+按本分支真实结果更新原报告，blocked 保留具体原因、owner 与下一核验步骤；无 change 的指定范围审查不创建状态。报告完成不是产品交付；只有请求本来以非实现审查为终点且满足 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>`，该终点 owner 才可关闭 change。
 
 返回分支、报告完整路径、审查范围/排除范围、代码证据、候选结论、实际验证与未验证项；有选择时再返回相应设计树/下一 Work。结构检查不证明设计判断正确，不能把弱候选包装成最佳推荐。

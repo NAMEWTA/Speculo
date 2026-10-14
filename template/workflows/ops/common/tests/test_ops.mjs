@@ -1,6 +1,6 @@
 /** OPS safety/contract tests. Adapter simulations are explicitly separate from real local subprocess tests. */
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, chmodSync, existsSync, symlinkSync, readdirSync, statSync } from "node:fs";
+import { realpathSync, mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, chmodSync, existsSync, symlinkSync, readdirSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,6 +36,8 @@ function deployment(project = "app-a", did = "app-a-prod", root = "/srv/ops", me
 function minimalInventory(host, request) {
   const snapshots = {};
   for (const p of request.paths || []) {
+    // This planner fixture models a Linux host; never inspect the runner's /etc.
+    if (p === "/etc/nginx/conf.d/app.conf") { snapshots[p] = { kind: "absent" }; continue; }
     snapshots[p] = (request.deep_paths || []).includes(p) ? agent.treeState(p) : agent.fileState(p);
   }
   return {
@@ -51,7 +53,7 @@ function minimalInventory(host, request) {
 }
 
 function setupFixture() {
-  const tmp = mkdtempSync(join(tmpdir(), "ops-tests-"));
+  const tmp = mkdtempSync(join(realpathSync(tmpdir()), "ops-tests-"));
   const state = join(tmp, "controller");
   const target = join(tmp, "server");
   const prevProbe = cliHooks.probeLocal;
@@ -154,14 +156,14 @@ test("nonfinite rejected", () => {
   assert.throws(() => canonical(Number.NaN));
 });
 test("duplicate json rejected", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-dup-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-dup-"));
   const p = join(d, "x.json");
   writeFileSync(p, '{"x":1,"x":2}');
   assert.throws(() => readJson(p), OpsError);
   rmSync(d, { recursive: true, force: true });
 });
 test("exclusive artifact", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-ex-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-ex-"));
   const p = join(d, "a.json");
   writeJson(p, { x: 1 }, { exclusive: true });
   assert.throws(() => writeJson(p, { x: 2 }, { exclusive: true }), OpsError);
@@ -169,14 +171,14 @@ test("exclusive artifact", () => {
   rmSync(d, { recursive: true, force: true });
 });
 test("lock is not autobroken", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-lock-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-lock-"));
   withLock(join(d, "lock"), { why: "test" }, () => {
     assert.throws(() => withLock(join(d, "lock"), {}, () => {}), OpsError);
   });
   rmSync(d, { recursive: true, force: true });
 });
 test("symlink rejected", (t) => {
-  const d = mkdtempSync(join(tmpdir(), "ops-link-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-link-"));
   t.after(() => rmSync(d, { recursive: true, force: true }));
   mkdirSync(join(d, "real"));
   symlinkSync(join(d, "real"), join(d, "link"), process.platform === "win32" ? "junction" : "dir");
@@ -184,7 +186,7 @@ test("symlink rejected", (t) => {
   assert.equal(existsSync(join(d, "real", "a.txt")), false);
 });
 test("file permissions", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-perm-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-perm-"));
   const p = join(d, "secret");
   atomicWrite(p, PASSWORD);
   if (process.platform !== "win32") {
@@ -705,7 +707,7 @@ test("quarantine then separate purge", () => runFx((fx) => {
 }));
 
 function agentFixture() {
-  const tmp = mkdtempSync(join(tmpdir(), "ops-agent-test-"));
+  const tmp = mkdtempSync(join(realpathSync(tmpdir()), "ops-agent-test-"));
   const root = join(tmp, "target");
   const req = { action: "lock", root, identity: agent.fingerprint(), host_id: "node-a", run_id: "run-test", controller_id: "control-a", plan_digest: "a".repeat(64), external_files: [] };
   agent.main(req);
@@ -800,7 +802,7 @@ test("analyze does not run repo", () => {
 });
 
 test("ssh contract", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-ssh-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-ssh-"));
   const kh = join(d, "known_hosts");
   writeFileSync(kh, "fixture pinned key\n");
   const h = { host_id: "node-a", platform: "linux", transport: "ssh", identity: "a".repeat(64), connection: { hostname: "host.invalid", username: "ops", known_hosts: kh, node: "node" } };
@@ -824,7 +826,7 @@ test("ssh contract", () => {
 });
 
 test("knownhosts digest drift", () => {
-  const d = mkdtempSync(join(tmpdir(), "ops-kh-"));
+  const d = mkdtempSync(join(realpathSync(tmpdir()), "ops-kh-"));
   const kh = join(d, "known_hosts");
   writeFileSync(kh, "first");
   const h = { transport: "ssh", connection: { known_hosts: kh } };

@@ -9,7 +9,7 @@
 5. 为每个节点形成不可变 Dispatch Packet，task ID 使用组合身份；
 6. 调用 I-implement 完成设计检查、TDD、commit、双轴审查、验证和 Evidence；
 7. Lead 独立验收返回事实并按 repository/ref 串行集成；
-8. 先写子 Ticket/Map/Evidence/change status，再写父 Plan 进度；
+8. 先写子 Ticket/Evidence 的实际结果，再写 Map 导航与父 Plan 集成/Gate；
 9. 重读实际 Git 和全部受影响工件，运行 validator；
 10. 有 frontier 则继续，无 frontier 则完成或持久化 blocker。
 

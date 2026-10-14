@@ -4,26 +4,14 @@ import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, validateChange, pathsOverlap } from './validate-specdev.mjs';
-import { CHANGE_ID, digest, findGraphCycle, resolveProjectSource, validateGoalMap } from './plan-contract.mjs';
+import { CHANGE_ID, digest, findGraphCycle, resolveProjectSource, validateGoalMap, resolveToolContext, validateExecutionPolicy, canonicalToolPath } from './plan-contract.mjs';
+import * as runtime from '../../../../lib/speculo-runtime.mjs';
 
 const terminal = new Set(['done','cancelled']);
 const inFlight = new Set(['in_progress','review']);
 function readArtifact(file) {
   if (!existsSync(file) || lstatSync(file).isSymbolicLink() || !lstatSync(file).isFile()) throw new Error(`missing or noncanonical artifact: ${file}`);
   return { path: file, ...parseFrontmatter(file) };
-}
-function readStatus(root) {
-  const file = join(root,'.status.json');
-  if (!existsSync(file) || lstatSync(file).isSymbolicLink()) throw new Error(`missing real change status: ${file}`);
-  return JSON.parse(readFileSync(file,'utf8'));
-}
-function findConfig(root) {
-  let here = resolve(root);
-  while (true) {
-    const candidate = join(here,'.speculo','specdev','config.json');
-    if (existsSync(candidate)) return JSON.parse(readFileSync(candidate,'utf8'));
-    const parent = dirname(here);if (parent === here) return null;here = parent;
-  }
 }
 function resourceOverlap(left, right) {
   if (left === right) return true;
@@ -58,10 +46,14 @@ function contractHash(node) {
   return digest(JSON.stringify({ meta, body: node.artifact.body, spec: node.specDigest, goal: node.goalDigest, dependencies: node.dependencies, serializations: node.serializations, sources }));
 }
 
-export function analyzeMap({ mapPath, repoRoot, previous = null }) {
+export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: suppliedContext, previous = null }) {
   if (!mapPath || !repoRoot) throw new Error('--map and --repo are required');
   mapPath = resolve(mapPath);repoRoot = resolve(repoRoot);
-  const root = dirname(mapPath);
+  let root = dirname(mapPath);
+  const context = resolveToolContext(root, { repoRoot, methodRoot, stateRoot, context: suppliedContext });
+  root = canonicalToolPath(context, root);
+  mapPath = canonicalToolPath(context, mapPath);
+  runtime.readChangeFactsSync(context, basename(root));
   let entry = readArtifact(mapPath);
   const errors = [], warnings = [], nodes = new Map(), memberRoots = new Map(), serializations = new Set();
   let parent = false;
@@ -79,15 +71,17 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
   const strategy = plan?.meta.ticket_workspace_policy ?? 'current';
   let limit = strategy === 'current' ? 1 : plan?.meta.concurrent_implementation_limit;
   if (!['current','required'].includes(strategy) || !Number.isInteger(limit) || limit < 1) errors.push('invalid workspace strategy or implementation limit');
-  const config = findConfig(root);
-  if (plan && (!config || !Number.isInteger(config.execution?.max_concurrent_implementations) || plan.meta.concurrent_implementation_limit > config.execution.max_concurrent_implementations)) errors.push('plan implementation limit is not backed by existing config');
+  const configPath = join(context.specdevRoot, 'config.json');
+  const config = existsSync(configPath) ? JSON.parse(readFileSync(runtime.safeWorkPathSync(context.specdevRoot, 'config.json', {mustExist:true,type:'file'}), 'utf8')) : null;
+  if (plan) errors.push(...validateExecutionPolicy(plan, config));
 
   for (const member of members) {
     const memberRoot = parent ? join(dirname(root),member) : root;
     if (memberRoot === root && parent) { errors.push('parent cannot include itself'); continue; }
     if (!existsSync(memberRoot) || lstatSync(memberRoot).isSymbolicLink() || !lstatSync(memberRoot).isDirectory()) { errors.push(`member must be a real change directory: ${member}`); continue; }
     memberRoots.set(member,memberRoot);
-    const status = readStatus(memberRoot);
+    const facts = runtime.readChangeFactsSync(context, member);
+    if (facts.location.root !== memberRoot) { errors.push(`member is not an active change: ${member}`); continue; }
     const specFile = join(memberRoot,'spec.md');
     const spec = readArtifact(specFile);
     const specDigest = digest(readFileSync(specFile));
@@ -99,7 +93,7 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
       const id = parent ? `${member}::${artifact.meta.id}` : artifact.meta.id;
       if (nodes.has(id)) { errors.push(`duplicate Ticket ${id}`); continue; }
       if (!Array.isArray(artifact.meta.blocked_by) || artifact.meta.blocked_by.some(value => !/^T-\d{2,}$/.test(value))) { errors.push(`invalid dependencies: ${id}`); continue; }
-      nodes.set(id, { id, member, repoRoot, artifact, specDigest, status, dependencies: artifact.meta.blocked_by.map(value => parent ? `${member}::${value}` : value), reasons: [], validationErrors: [] });
+      nodes.set(id, { id, member, repoRoot, artifact, specDigest, facts, dependencies: artifact.meta.blocked_by.map(value => parent ? `${member}::${value}` : value), reasons: [], validationErrors: [] });
       if (spec.meta.ready_for_tickets !== true) nodes.get(id).reasons.push('source Spec is not Ready');
     }
   }
@@ -123,7 +117,7 @@ export function analyzeMap({ mapPath, repoRoot, previous = null }) {
   const cycle = findGraphCycle(graph);if (cycle) errors.push(`dependency cycle: ${cycle.join(' -> ')}`);
 
   // Reuse existing stage gates. Local diagnostics block their owner, structural ones block dispatch.
-  const validation = validateChange(root,parent ? 'goal-plan' : 'tickets',repoRoot);
+  const validation = validateChange(root,parent ? 'goal-plan' : 'tickets',repoRoot,null,null,{context});
   warnings.push(...validation.warnings);
   for (const error of validation.errors) {
     let assigned = false;
@@ -238,10 +232,10 @@ function main(args) {
   const options = {};
   for (let i=0;i<args.length;i++) {
     const key = args[i];
-    if (!['--map','--repo','--previous'].includes(key) || !args[i+1] || args[i+1].startsWith('--') || key in options) throw new Error('Usage: ticket-control.mjs --map <map-file> --repo <project-root> [--previous <checkpoint-json>]');
+    if (!['--map','--repo','--previous','--method-root','--state-root'].includes(key) || !args[i+1] || args[i+1].startsWith('--') || key in options) throw new Error('Usage: ticket-control.mjs --map <map-file> --repo <project-root> [--previous <checkpoint-json>]');
     options[key]=args[++i];
   }
-  const result = analyzeMap({mapPath:options['--map'],repoRoot:options['--repo'],previous:options['--previous'] ? JSON.parse(readFileSync(options['--previous'],'utf8')) : null});
+  const result = analyzeMap({mapPath:options['--map'],repoRoot:options['--repo'],methodRoot:options['--method-root'],stateRoot:options['--state-root'],previous:options['--previous'] ? JSON.parse(readFileSync(options['--previous'],'utf8')) : null});
   console.log(JSON.stringify(result,null,2));
   return result.errors.length || result.validation_errors.length ? 1 : 0;
 }

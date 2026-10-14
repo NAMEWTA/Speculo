@@ -18,13 +18,15 @@ metadata:
 
 先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；按相关条目定位上游 Spec/ADR/CONTEXT、代码与项目 Agent 指令，再回读当前拆分所需原文。只枚举 Skill 的元数据与触发路由，不默认展开全部技能。
 
+先判断是否确需拆票；单 change、明确范围/AC 且无需 DAG/独立票的任务保留 README 或无票 Goal 清单，不为工具制造 Map。用户明确要求 Ticket 则交付；复杂并行、Deep 或跨 change 使用完整合同。
+
 ## 从合同到可执行票
 
 1. **输入与范围**：确认目标、非目标、用户指定数量、验收合同和未知项。高影响未决问题回到 G；无 Ready Spec 时，只有用户材料已等价覆盖全部合同才可规划。
 2. **地形与绑定**：定位真实可维护源、调用方、测试接缝和 Skill 根。按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 为每票解析实际 Skill ID、入口摘要、调用阶段、输入、产出与失败动作；没有适用项目 Skill 时记录扫描证据，不造名称。
 3. **垂直切片**：需要具体拆分时读取 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/planning-procedure.md</Path>` 与 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/decomposition-rules.md</Path>`。保留 Prefactor、Expand → Migrate → Contract 和真实 DAG，不按技术层制造空价值任务。
 4. **写 Plan**：使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/ticket-template.md</Path>`。Lite 仅减少不适用说明，不删用户数量、权限、验收或停止条件。所有票必须使用 `plan_contract_version: 1`；旧格式不进入执行。
-5. **写总控**：使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/tickets-map-template.md</Path>`，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；状态仍从票投影。按 AC 反查至少一个负责验证的 Ticket，暴露未覆盖和重复所有权；依赖环、路径重叠与语义共享资源分别检查，不能用“可并行”文字替代实际 DAG/写集。
+5. **写总控**：使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/tickets-map-template.md</Path>`，记录共同背景、Skill 最低路由、合同覆盖、依赖和明确控制入口；进度、Ready 与执行 owner 每次从 Ticket/Evidence 回读，不写入 Map。按 AC 反查至少一个负责验证的 Ticket，暴露未覆盖和重复所有权；依赖环、路径重叠与语义共享资源分别检查，不能用“可并行”文字替代实际 DAG/写集。
 6. **Definition of Ready**：读取 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/ticket-readiness.md</Path>`，并调用 `<Path>{roots.workflows}/specdev/common/skills/plan-quality-review/SKILL.md</Path>`。缺失引用、必需 Skill、可运行验收或权限边界，当前票不可 ready。
 7. **与用户核对**：展示全部票、可观察产物、依赖、深度、风险、Skill 和未决问题。保留用户要求的交付数量；已授权自主规划且无关键未知时不重复请求形式确认。
 8. **验证、回读和交付**：按下述命令检查，再回读真实 Ticket/Map，报告修改、验证结果和未完成项。规划完成不自动进入实现。
@@ -42,6 +44,8 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 将有关检查合并进负责该行为的 Ticket，不为每个检查项创建一票。documentation 仍用现有 kind，性能实施引用 R 的测量基线，不增加分类 schema。每票说明 base/head、配置、输入或 Skill 改变后哪些证据需重新验证。
 
-## 原型证据
+## UI 设计绑定与逻辑证据
 
-可以引用已验证 LOGIC/UI 原型中的行为、边界与已确认决定，记录具体 locator 和验证证据；源码片段可承载设计选择，但不自动成为生产实现。未闭合高影响产品决定返回 G，S 综合已确认设计而不重新开启无关访谈。
+UI 拆票必读 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 与已批准 <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>。UI Ticket 使用 `ui_change: true` 和 `design_ref: {revision, digest, pages, acceptance}` 固定本 change 设计版本、designDigest、页面 ID 与验收 ID；Map 给出共同基线与读取位置。expected_changes 明确命中 UI 文件时同样需要绑定，不能以缺字段绕过。纯非 UI 票可省略或设 ui_change=false、design_ref=null，不制造 UI 门禁。
+
+将组件复用、页面/状态、响应式与真实浏览器验收放入相应垂直切片；缺确认或摘要漂移返回 P，不让执行者重新选择。LOGIC 证据保留 locator/hash，模拟原型不能自动成为生产实现。

@@ -29,29 +29,25 @@ describe("command report roots", () => {
     }
   });
 
-  it("blocks archive-and-consolidate reports under {roots.commands}", () => {
+  it("routes archive execution to domain owners and keeps command receipts separate", () => {
     const command = read("template/commands/archive-and-consolidate/COMMAND.md");
-    const skill = read("template/commands/archive-and-consolidate/references/operation-contract.md");
-    const procedure = read("template/commands/archive-and-consolidate/references/operation-contract.md");
-
-    assert.match(command, /<Path>\{roots\.state\}\/commands\/archive-and-consolidate\//);
-    assert.match(command, /\{roots\.commands\}\/archive-and-consolidate\//);
-    assert.match(command, /\*\*blocked，不写文件\*\*/);
-    assert.match(command, /commands_root.*\{roots\.state\}\/commands/);
-    assert.match(command, /不是报告根/);
-    assert.match(command, /<Path>\{roots\.commands\}\/archive-and-consolidate\/references\/operation-contract\.md<\/Path>/);
-
-    assert.match(skill, /commands_root.*\{roots\.state\}\/commands/);
-
-    assert.match(procedure, /`commands_root` 必须解析为 `<Path>\{roots\.state\}\/commands<\/Path>`/);
-    assert.match(procedure, /<Path>\{roots\.state\}\/commands\/archive-and-consolidate\//);
-    assert.match(procedure, /禁止写入 `\{roots\.commands\}\/archive-and-consolidate\//);
-    assert.match(procedure, /commands_root === \{roots\.state\}\/commands, never \{roots\.commands\}/);
-    assert.match(procedure, /不禁止写入 `\{roots\.state\}` 本身/);
-    assert.doesNotMatch(
-      procedure,
-      /`commands_root` 从公共 `<Path>\{roots\.state\}\/commands<\/Path>` 解析，不放进 workflow 私有 state root/,
-    );
+    const owner = "{roots.workflows}/specdev/specdev-a-archive-and-consolidate";
+    const work = read("template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md");
+    const operation = read("template/workflows/specdev/specdev-a-archive-and-consolidate/references/operation-contract.md");
+    const commandPaths = [...command.matchAll(/<Path>([^<]+)<\/Path>/g)].map(match => match[1]);
+    assert.ok(commandPaths.includes(`${owner}/SKILL.md`));
+    assert.ok(commandPaths.includes("{roots.workflows}/learning/learning-a-archive/SKILL.md"));
+    assert.ok(commandPaths.includes("{roots.workflows}/learning/learning-c-consolidate/SKILL.md"));
+    const reportPaths = commandPaths.filter(path => path.includes("{date}"));
+    assert.deepEqual(reportPaths, ["{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md"]);
+    assert.ok(command.includes(".agents/speculo/.speculo/workspace.json"));
+    assert.ok(work.includes(`${owner}/references/operation-contract.md`));
+    assert.ok(operation.includes("{roots.state}/specdev/changes/{change}/archive-receipt.md"));
+    for (const content of [command, work, operation]) {
+      assert.ok(!content.includes("{roots.commands}/archive-and-consolidate/references/"));
+    }
+    assert.match(command, /unsupported/);
+    assert.match(operation, /no-candidates/);
   });
 
   it("routes git-history-squash through confirmation gates and its own command namespace", () => {

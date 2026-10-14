@@ -1,6 +1,6 @@
 # CI 与安全告警
 
-读取 <Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path> 和 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-run-template.md</Path>。独立运行记录由 T 写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>，不创建 change 或占用 current_work。
+读取 <Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path> 和 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-run-template.md</Path>。独立运行记录由 T 写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>，不创建 change 或创建工作调用镜像。
 
 固定 repo、run/alert ID、commit SHA、workflow、时间和可见权限，使用 gh run view / gh api 读取日志与分页结果。先脱敏再持久化。
 

@@ -15,10 +15,10 @@ metadata:
 ## 流程
 
 1. 固定本次会话/活动范围，按来源 ID 定位 change、测试、CI、交接和失败证据，不全读历史。缺失资料列 unknown；范围清楚且证据可定位才开始分析。
-2. 未归档且尚未 completed 的当前 change 使用其 retro 目录。completed 或 archived 来源以及独立复盘建立非实现 review change，引用原 locator；不重开来源状态或改写归档。按 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path> 初始化/恢复；他项占用 current_work 时先 handoff。
+2. 未归档且尚未 completed 的当前 change 使用其 retro 目录。completed 或 archived 来源以及独立复盘建立非实现 review change，引用原 locator；不重开来源状态或改写归档。按 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path> 初始化/恢复；存在重叠实际 writer 时先由原 owner 停止或真实交接。
 3. 调用 <Path>{roots.references}/retrospective/retrospective-contract.md</Path>，检查约束是否缺失、已有检查是否失效或未接入；区分环境事实、机械检查和判断规则。每个发现有因果证据或明确假设，建议有 owner、正反验收与路由。
 4. 按 <Path>{roots.workflows}/specdev/specdev-r-retro/assets/retro-template.md</Path> 创建 <Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path>，选择最小未占用 ID。原子保存并重读，运行 SpecDev --stage retro；修订保留来源与被替代结论。
-5. 验证通过后追加 works_run=specdev/retro 并清空 current_work；证据不足可完成一份 outcome=insufficient-evidence 的诚实报告，不冒充解决问题。只读复盘不创建 Spec/Ticket 或 implementation Evidence。review-only change 按专用完成门关闭。
+5. 验证通过后回读原 RETRO 并在 README 导航接续；证据不足可完成一份 outcome=insufficient-evidence 的诚实报告，不冒充解决问题。只读复盘不创建 Spec/Ticket 或 implementation Evidence。review-only change 按专用完成门关闭。
 
 ## 改进必须能被证伪
 

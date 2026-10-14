@@ -18,8 +18,8 @@
 
 ## 恢复状态
 
-父 change 创建后，Ticket 可以进入 in_progress、review、done、cancelled，或因执行事实进入 blocked/deviated。blocked/deviated 必须让父 Plan 同步为 blocked 并记录恢复 owner；这不是放宽创建前 Ready 门。
+父 change 创建后，Ticket 可以进入 in_progress、review、done、cancelled，或因执行事实进入 blocked/deviated。单票 blocked/deviated 在原 Ticket/Evidence 记录原因与恢复 owner，只阻塞本票及其依赖闭包；父 Plan 可保留有效全局执行门，继续独立且已授权的 frontier。共享全局门失败、计划整体失效或没有合法 frontier 时才暂停父运行；创建前的全员 Ready 门不变。
 
 ## 已完成成员
 
-全部 Ticket 已 done/cancelled 且 change 已 completed 的成员可以作为 satisfied baseline，参与 dependency 判断但不进入 frontier或占用 agent 配额。用户只选择已完成成员且没有待实现 Ticket 时停止，因为不存在实现编排目标。
+全部 Ticket 已 done/cancelled 且 change 已 completed 的成员可以作为已结束基线，不进入 frontier 或占用实现配额。dependency 仍逐票核验：done 且证据有效才表示成功交付；cancelled 不提供依赖产物，原 Lead 须依据真实交付或获批调整重规划相关边。用户只选择已完成成员且没有待实现 Ticket 时停止，因为不存在实现编排目标。

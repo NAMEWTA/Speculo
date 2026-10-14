@@ -1,6 +1,6 @@
 ---
 name: specdev-p-goal-plan
-description: "为单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。"
+description: "为简单目标、单个已拆票 change 或多个 Ready change 规划、执行或恢复 Goal；只在用户要求目标计划、交付编排或已有 map 需推进时使用，不代替需求探索和 Ticket 编写。"
 metadata:
   speculo-kind: work-skill
   speculo-id: specdev/goal-plan
@@ -14,9 +14,13 @@ metadata:
 
 ## 读取范围
 
-先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，定位用户指定的 change 或 map，再读状态、当前 map 和所选模式。每次只展开实际进入 frontier 的 Ticket、直接依赖 Evidence、命中的项目 Skill、当前 Gate 与恢复证据；不默认通读所有 Ticket 或永久索引。
+先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，定位用户指定的 change 或 map，再读 README Outcome、实际存在的计划和所选模式。有票时每次只展开实际进入 frontier 的 Ticket、直接依赖 Evidence、命中的项目 Skill、当前 Gate 与恢复证据；不默认通读所有 Ticket 或永久索引。
+
+用户要求简单 Goal 且无需独立 Ticket 时，按 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/lightweight-goal-plan-template.md</Path> 的显式轻量形态，以原 goal-plan 清单负责进度与整体门，README 保留范围/AC/验证，README 只导航；不制造 Ticket/Map。发生真实并行、Deep 或跨 change 时切入完整模式并将迁出的清单改为导航。
 
 ## 按意图选择模式与权威
+
+轻量 Goal 的 plan/run/resume/verify 直接使用轻量模板规定的原 Tasks、整体验证和接续章节；replan 只调整实际受影响清单，并保留原授权和已完成证据。不得为通过下表完整模式的 map 控制而制造 Ticket/Map；复杂程度已超出轻量限制时先明确升级。下表及票级编排规则仅用于已有独立 Ticket 或跨 change 的完整模式。
 
 | 用户意图 | 模式 | 必须按需读取 |
 |---|---|---|
@@ -26,7 +30,7 @@ metadata:
 | 上游变更使计划失效 | `replan` | `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/replan-and-recovery.md</Path>` |
 | 整体检查与关闭 | `verify` | `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/completion-control.md</Path>` 与 `<Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>` |
 
-单 change 的 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是用户总控入口；Ticket frontmatter 仍是单票状态、依赖、路径的权威，Goal Plan 拥有跨票 Gate、Wave 和授权引用。少量线性票不强制增加厚重计划。
+有独立票的单 change 以 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 为用户总控入口；Ticket frontmatter 仍是单票状态、依赖、路径的权威，Goal Plan 拥有跨票 Gate、Wave 和授权引用。少量线性票不强制增加厚重计划。
 
 单 change 的 Map 结构就绪、Goal 全局执行门与逐票 DoR 分开判断。等待上游真实产物的未来票可保持 draft，并记录缺口和重审条件；独立 Ready 票仍可进入 frontier。具体门禁读取 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/planning-modes.md</Path>`。
 
@@ -35,7 +39,7 @@ metadata:
 ## 执行底线
 
 - 先冻结 Outcome、权威来源、用户指定的交付数量、范围、Definition of Done 和失败停止条件；按风险确定 DAG/Gate/Wave，不用文档长度替代质量。
-- 固定 `lead-directed`。`concurrent_implementation_limit` 不超过现有 config 与宿主能力；只读审查没有新增数字上限。进入派单前读取 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>`。
+- 固定 `lead-directed`。完整 Goal 的 `concurrent_implementation_limit` 由 Execution Policy Source 说明，实际存在 config 时不超过其有效上限与宿主能力；只读审查没有新增数字上限。进入派单前读取 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>`。
 - 保留原 worktree 选择：未明确时询问，默认 current 严格串行；required 才使用独立 worktree 与 candidate-merge。用户已答过不重复问。默认工具、数量、提交与集成权限均不因入口合并改变。
 - `plan` 只形成计划，缺少执行授权是计划中可见的待满足条件，不等于获准执行。运行前逐项核对真实授权；文档中的“已批准”不构成授权。
 - 当前票必须调用所绑定的真实 Skill，不能以“读过入口”替代；先读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。缺失必需 Skill、引用或验收证据时阻塞本票及依赖它的分支。
@@ -50,7 +54,7 @@ metadata:
 
 ## 校验与交付
 
-从 map 运行只读控制检查（它不执行代码或授予写权限）：
+轻量 Goal 以 `--stage goal-plan` 验证显式 `artifact: lightweight-goal-plan`、原 README 规格和轻量章节；完成时逐项回读实际任务、README AC 证据与整体门，按 change-completion 决定 Outcome，不运行不存在的 map。完整模式从 map 运行只读控制检查（它不执行代码或授予写权限）：
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <map-path> --repo <project-root>

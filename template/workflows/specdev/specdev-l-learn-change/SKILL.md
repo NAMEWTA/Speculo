@@ -14,7 +14,7 @@ metadata:
 
 ## 执行
 
-1. **选择现有 change**：使用用户指定或唯一未归档 change；没有时返回缺失输入，不创建空 change。只读归档不追加学习材料。按原交接规则登记 `current_work=specdev/learn-change`，不把 `change_status=completed` 重新打开为开发中。
+1. **选择现有 change**：使用用户指定或唯一未归档 change；没有时返回缺失输入，不创建空 change。只读归档不追加学习材料。恢复依据留原学习索引与当前 README 导航；不把 completed/cancelled 重新打开为开发中。
 2. **确定主题**：使用 `$ARGUMENTS` 调用参数或用户最新问题；缺少时只询问主题。读者是刚入大学、零专业背景的新生，先确定“它是什么、为什么需要、怎样流动或被调用”三个答案。
 3. **定位事实**：按主题读取 Source、Spec、Ticket、Evidence、review、实际代码/测试与可靠来源。区分已验证事实、类比与未知；旧计划和实现冲突时明确差异，以当前代码、测试、Evidence 为实现事实，不让类比代替证据。
 4. **生成与保存**：读取 `<Path>{roots.workflows}/specdev/specdev-l-learn-change/references/lesson-format.md</Path>` 的完整格式和命名合同。先画 ASCII 全图，再按实际关系画短小结构/数据/调用/状态图；用短句解释箭头，术语先日常解释再给专业名字。验证零背景读者能复述三个答案；不能时拆图或换词，不灌长文。
@@ -30,4 +30,4 @@ metadata:
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --stage learn-change <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
 
-图解符合格式参考的四节、至少一个 ASCII 图和连续编号；索引指向真实新文件且主题/简介一致，箭头方向与事实相符。验证通过才去重更新 `works_run`、清空 `current_work`，返回新图解和索引完整路径。失败保留恢复位置与原因，不改变 change 原有开发完成状态。
+图解符合格式参考的四节、至少一个 ASCII 图和连续编号；索引指向真实新文件且主题/简介一致，箭头方向与事实相符。验证通过后回读并返回新图解和索引完整路径，必要接续留原学习载体。失败保留恢复位置与原因，不改变 change 原有开发完成状态。

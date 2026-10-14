@@ -1,7 +1,8 @@
 /** Strict, additive Plan contracts. Read-only; no authorization or state writes. */
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, realpathSync, readdirSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import * as runtime from '../../../../lib/speculo-runtime.mjs';
 
 export const CHANGE_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DIGEST = /^[a-f0-9]{64}$/;
@@ -93,13 +94,24 @@ export function validateBindings(meta, repoRoot) {
   return errors;
 }
 
+function readEvidenceValue(text, heading) {
+  const bodyLines = runtime.markdownBodyLines(text), starts = bodyLines.filter(line=>line.text === heading);
+  if (starts.length !== 1) throw new Error(`expected one '${heading}'`);
+  const start = starts[0].line, end=bodyLines.find(line=>line.line > start && /^#{1,2} /.test(line.text))?.line;
+  const tail = text.replaceAll('\r\n','\n').split('\n').slice(start,end ? end-1 : undefined).join('\n');
+  const blocks=[];let fence=null,buffer=[];
+  for(const line of tail.split('\n')) {
+    const marker=/^ {0,3}(`{3,}|~{3,})([^\r\n]*)$/.exec(line);
+    if(!fence && marker){fence={char:marker[1][0],length:marker[1].length,json:marker[2].trim() === 'json'};buffer=[];continue;}
+    if(fence && marker && marker[1][0] === fence.char && marker[1].length >= fence.length && !marker[2].trim()){if(fence.json)blocks.push(buffer.join('\n'));fence=null;continue;}
+    if(fence)buffer.push(line);
+  }
+  if(fence || blocks.length !== 1) throw new Error(`${heading} requires one complete JSON code block`);
+  return JSON.parse(blocks[0]);
+}
+
 export function readEvidenceRecords(text, heading) {
-  const start = text.indexOf(`${heading}\n`);
-  if (start < 0) throw new Error(`missing '${heading}'`);
-  const tail = text.slice(start + heading.length + 1).split(/^## /m)[0];
-  const match = /```json\s*\n([\s\S]*?)\n```/.exec(tail);
-  if (!match) throw new Error(`${heading} requires a JSON array code block`);
-  const value = JSON.parse(match[1]);
+  const value=readEvidenceValue(text,heading);
   if (!Array.isArray(value)) throw new Error(`${heading} must contain an array`);
   return value;
 }
@@ -238,16 +250,150 @@ export function validateInitiative(directory) {
       else if (existsSync(join(target,'implementation-map.md'))) errors.push(`${label}: target must not be a parent implementation change`);
       else {
         try {
-          const statusFile = join(target,'.status.json');
-          if (lstatSync(statusFile).isSymbolicLink() || !lstatSync(statusFile).isFile()) throw new Error('status must be a real file');
-          const status = JSON.parse(readFileSync(statusFile,'utf8'));
-          if (status.schema_version !== 6 || status.artifact !== 'change-status' || status.change !== item.target) throw new Error('status identity does not match target change');
-        } catch (error) { errors.push(`${label}: target has no valid owned change status: ${error.message}`); }
+          if (existsSync(join(target, '.status.json'))) throw new Error('legacy-active-needs-conversion');
+          runtime.parseOutcome(readFileSync(join(target, 'README.md'), 'utf8'), join(target, 'README.md'));
+        } catch (error) { errors.push(`${label}: target has no valid Markdown change facts: ${error.message}`); }
       }
     }
   }
   for (const [id,dependencies] of graph) for (const dependency of dependencies) if (!graph.has(dependency)) errors.push(`initiative.json: ${id} references missing ${dependency}`);
   const cycle = findGraphCycle(graph);
   if (cycle) errors.push(`initiative.json: candidate dependency cycle: ${cycle.join(' -> ')}`);
+  return errors;
+}
+
+/** Read actual per-Ticket integration records; never creates empty execution slots. */
+export function readChangeExecution(changeRoot) {
+  const root = join(changeRoot, 'evidence');
+  if (!existsSync(root)) return [];
+  if (lstatSync(root).isSymbolicLink() || !lstatSync(root).isDirectory()) throw new Error('Evidence must be a real directory');
+  const records = [];
+  for (const file of readdirSync(root).filter(name => /^T-\d{2,}\.md$/.test(name)).sort()) {
+    const path = join(root, file);
+    if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isFile()) throw new Error(`${path}: Evidence must be a regular file`);
+    const text = readFileSync(path, 'utf8').replaceAll('\r\n', '\n');
+    const sections = runtime.markdownBodyLines(text,path).filter(line=>line.text === '## Workspace Execution Record');
+    if (!sections.length) continue;
+    if (sections.length !== 1) throw new Error(`${path}: duplicate Workspace Execution Record`);
+    const record = readEvidenceValue(text,'## Workspace Execution Record');
+    if (!plainObject(record) || record.ticket_id !== file.slice(0, -3)) throw new Error(`${path}: execution record identity differs from Evidence Ticket`);
+    records.push(record);
+  }
+  return records;
+}
+
+/** A single Spec authority, with explicit lightweight fallback and stable sections. */
+export function readSpecification(changeRoot, { allowLightweight = false, requiredArtifact = null, depth = null } = {}) {
+  const spec = join(changeRoot, 'spec.md'), readme = join(changeRoot, 'README.md');
+  const sections = {};
+  let anchors = false;
+  if (existsSync(readme)) {
+    const text = readFileSync(readme, 'utf8');
+    anchors = runtime.markdownBodyLines(text, readme).some(line => /^<a id="(?:scope|acceptance|verification)"><\/a>$/.test(line.text));
+  }
+  if (existsSync(spec)) {
+    if (lstatSync(spec).isSymbolicLink() || !lstatSync(spec).isFile()) throw new Error('Spec must be a real file');
+    if (anchors) throw new Error('two specification authorities: migrate README scope/acceptance/verification to navigation');
+    return { path: spec, lightweight: false, text: readFileSync(spec, 'utf8') };
+  }
+  const goal = readLightweightGoal(changeRoot);
+  if (!allowLightweight || requiredArtifact || /^deep$/i.test(depth ?? '') || ['ticket','tickets-map.md','implementation-map.md','implementation-plan.md'].some(name => existsSync(join(changeRoot, name))) || (!goal && existsSync(join(changeRoot,'goal-plan.md')))) throw new Error('independent Spec is required for explicit, Deep, Ticket, Goal or parallel work');
+  for (const anchor of ['scope','acceptance','verification']) {
+    sections[anchor] = runtime.readArtifactSectionSync(readme, anchor);
+    if (placeholder(sections[anchor].text) || !sections[anchor].text.trim()) throw new Error(`README ${anchor} must contain substantive facts`);
+  }
+  const acceptance = [...sections.acceptance.text.matchAll(/\bAC-\d+\b/g)].map(match => match[0]);
+  if (!acceptance.length || new Set(acceptance).size !== acceptance.length) throw new Error('README acceptance requires unique AC identifiers and observable criteria');
+  const text = readFileSync(readme, 'utf8');
+  if ((!goal && !/^[-*] \[[ xX]\] \S/m.test(text)) || !/^## (?:下一步|Next Steps?)\s*$/mi.test(text)) throw new Error('lightweight README requires a current checklist and next step');
+  return { path: readme, lightweight: true, text, sections, acceptance };
+}
+
+export function validateExecutionPolicy(plan, config = null) {
+  const errors = [];
+  const meta = plan.meta;
+  if (!Number.isInteger(meta.concurrent_implementation_limit) || meta.concurrent_implementation_limit < 1 || !Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) return ['plan must declare positive execution limits'];
+  if (config) {
+    if (config.schema_version !== 7 || !Number.isInteger(config.execution?.max_concurrent_implementations) || !Number.isInteger(config.execution?.max_integration_attempts)) return ['existing tool config requires schema v7 and explicit execution limits'];
+    if (meta.concurrent_implementation_limit > config.execution.max_concurrent_implementations) errors.push(`concurrent_implementation_limit ${meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${config.execution.max_concurrent_implementations}`);
+    if (meta.integration_attempt_limit > config.execution.max_integration_attempts) errors.push(`integration_attempt_limit ${meta.integration_attempt_limit} exceeds config max_integration_attempts ${config.execution.max_integration_attempts}`);
+  } else {
+    const section = plan.body.split(/^## Execution Policy Source\s*$/m)[1]?.split(/^## /m)[0]?.trim();
+    if (placeholder(section)) errors.push('plan without tool config requires an explicit Execution Policy Source');
+  }
+  return errors;
+}
+
+/** Resolve the same explicit roots for every tool; installed discovery stays strict. */
+export function resolveToolContext(changeRoot, options = {}) {
+  const supplied = options.context ?? options;
+  const projectRoot = supplied.projectRoot ?? supplied.repoRoot ?? runtime.workspaceForPathSync(existsSync(changeRoot) && lstatSync(changeRoot).isFile() ? dirname(changeRoot) : changeRoot).projectRoot;
+  return runtime.resolveWorkContextSync({ projectRoot, methodRoot: supplied.methodRoot, stateRoot: supplied.stateRoot });
+}
+
+/** Canonicalize host ancestor aliases while retaining every project-local link check. */
+export function canonicalToolPath(context, input) {
+  const absolute = resolve(context.projectRoot, input);
+  for (let ancestor = absolute; ; ancestor = dirname(ancestor)) {
+    if (existsSync(ancestor) && realpathSync(ancestor) === context.projectRoot) {
+      if (lstatSync(ancestor).isSymbolicLink()) throw new Error('path-unsafe: linked project boundary');
+      return runtime.safeWorkPathSync(context.projectRoot, relative(ancestor, absolute).split(sep).join('/'), {allowRoot:true});
+    }
+    if (dirname(ancestor) === ancestor) throw new Error(`path-unsafe: artifact escapes confirmed project: ${input}`);
+  }
+}
+
+/** Read-only conversion validation against a contained snapshot, never a write context. */
+export function resolveSnapshotContext(snapshot) {
+  const source = resolveToolContext(snapshot.sourceContext.projectRoot, {context:snapshot.sourceContext});
+  const specdevRoot = canonicalToolPath(source, snapshot.specdevRoot);
+  runtime.safeWorkPathSync(source.projectRoot, relative(source.projectRoot,specdevRoot).split(sep).join('/'), {mustExist:true,type:'directory'});
+  if (specdevRoot === source.specdevRoot) throw new Error('snapshot must be separate from the live SpecDev root');
+  runtime.assertMarkdownProtocolSync(specdevRoot);
+  return {...source,specdevRoot,stateRoot:dirname(specdevRoot),readOnlySnapshot:{sourceContext:source,specdevRoot}};
+}
+
+export function readLightweightGoal(changeRoot) {
+  const path = join(changeRoot, 'goal-plan.md');
+  if (!existsSync(path)) return null;
+  const {fields:meta,body} = runtime.parseFrontmatter(runtime.readUtf8ArtifactSync(path));
+  if (meta.artifact !== 'lightweight-goal-plan') return null;
+  if (Object.keys(meta).some(key => !['artifact','change','lead'].includes(key)) || meta.change !== basename(changeRoot) || placeholder(meta.lead)) throw new Error('lightweight Goal must identify its change and real Lead without duplicate progress fields');
+  if (['ticket','tickets-map.md','implementation-map.md','implementation-plan.md'].some(name=>existsSync(join(changeRoot,name)))) throw new Error('lightweight Goal cannot own Tickets, Maps or multi-change execution');
+  const visible=runtime.markdownBodyLines(body,path);
+  for (const heading of ['Tasks','Integration and Verification','Next Steps']) {
+    const starts=visible.filter(line=>line.text === `## ${heading}`);
+    if (starts.length !== 1) throw new Error(`lightweight Goal requires one substantive ${heading} section`);
+    const end=visible.find(line=>line.line > starts[0].line && /^#{1,2} /.test(line.text))?.line ?? Infinity;
+    const content=visible.filter(line=>line.line > starts[0].line && line.line < end).map(line=>line.text).join('\n').trim();
+    if (placeholder(content)) throw new Error(`lightweight Goal requires one substantive ${heading} section`);
+  }
+  if (!/^[-*] \[\s?[xX]?\] \S/m.test(body)) throw new Error('lightweight Goal requires its own task checklist');
+  const readme = runtime.readUtf8ArtifactSync(join(changeRoot,'README.md'));
+  if (/^[-*] \[[ xX]\] /m.test(readme)) throw new Error('README must navigate to Goal instead of mirroring its task progress');
+  return {path,meta,body};
+}
+
+/** A file's presence is not acceptance. Bind each contract to its actual observation. */
+export function validateAcceptanceEvidence(changeRoot, artifact, contractIds) {
+  const errors = [];
+  try {
+    const path = runtime.safeWorkPathSync(changeRoot, artifact, {mustExist:true,type:'file'});
+    const records = readEvidenceRecords(runtime.readUtf8ArtifactSync(path).replaceAll('\r\n','\n'), '## Acceptance Verification');
+    const allowed = new Set(['id','result','method','source','observed','command','exit','evidence','sha256']);
+    if (!contractIds.length) errors.push(`${artifact}: completion requires explicit AC identifiers`);
+    for (const id of new Set(contractIds)) {
+      const matching = records.filter(record => record?.id === id);
+      if (matching.length !== 1) { errors.push(`${artifact}: ${id} requires exactly one actual acceptance result`); continue; }
+      const record = matching[0];
+      if (!plainObject(record) || Object.keys(record).some(key=>!allowed.has(key)) || record.result !== 'passed' || ['method','source','observed'].some(key=>placeholder(record[key]))) errors.push(`${artifact}: ${id} requires passed Method/Source/Observed evidence`);
+      if (record.command !== undefined && (placeholder(record.command) || record.exit !== 0)) errors.push(`${artifact}: ${id} command must have actual Exit 0`);
+      if (record.evidence !== undefined) {
+        const evidence = runtime.safeWorkPathSync(changeRoot, record.evidence, {mustExist:true,type:'file'});
+        if (evidence === path || !DIGEST.test(record.sha256 ?? '') || digest(readFileSync(evidence)) !== record.sha256) errors.push(`${artifact}: ${id} acceptance evidence digest drift or circular evidence`);
+      } else if (record.sha256 !== undefined) errors.push(`${artifact}: digest without evidence locator`);
+    }
+    for (const record of records) if (!contractIds.includes(record?.id)) errors.push(`${artifact}: unknown acceptance contract ${record?.id}`);
+  } catch(error) { errors.push(`${artifact}: ${error.message}`); }
   return errors;
 }

@@ -21,91 +21,8 @@ const statusTool = join(
 async function changeFixture(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), "specdev-t-triage-capture-"));
   const root = await seedChange(parent,changeName);
-  await writeFile(
-    join(root, ".status.json"),
-    JSON.stringify({
-      schema_version: 6,
-      artifact: "change-status",
-      change: changeName,
-      change_status: "active",
-      current_work: null,
-      works_run: [],
-      claimed_investigations: [],
-      execution_authorization: {
-        implementation_commit: { status: "not-authorized", source: null, granted_at: null, scope: "Ticket source commits" },
-        local_candidate_integration: { status: "not-authorized", source: null, granted_at: null, scope: "Lead-owned local parent candidate integration and parent update" },
-        source_cleanup: { status: "not-authorized", source: null, granted_at: null, scope: "Source worktree and branch cleanup" },
-      },
-      leadership: { current: "lead-session", epoch: 1, assigned_at: "2026-09-17T00:00:00Z", history: [] },
-      created_at: "2026-09-17T00:00:00Z",
-      updated_at: "2026-09-17T00:00:00Z",
-      completed_at: null,
-      archived: false,
-      archive_path: null,
-      blockers: [],
-      deviations: [],
-      worktrees: [],
-    }, null, 2) + "\n",
-  );
-  await writeFile(
-    join(root, "source.md"),
-    [
-      "---",
-      "schema_version: 1",
-      "artifact: source",
-      `change: ${changeName}`,
-      "source_type: conversation",
-      "canonical_locator: null",
-      "captured_at: 2026-09-17T00:00:00Z",
-      `content_sha256: ${"b".repeat(64)}`,
-      "remote_state: not-applicable",
-      "close_capability: not-applicable",
-      "---",
-      "",
-      "# Source",
-      "",
-      "## Capture Metadata",
-      "local",
-      "## Original Content",
-      "body",
-      "## Source Comments",
-      "无",
-      "",
-    ].join("\n"),
-  );
-  await writeFile(
-    join(root, "triage.md"),
-    [
-      "---",
-      "schema_version: 2",
-      "artifact: triage",
-      "disposition: needs-triage",
-      "verification: pending",
-      "remote_actions: []",
-      `change: ${changeName}`,
-      "mode: intake",
-      "source: <Path>{roots.state}/specdev/changes/{change}/source.md</Path>",
-      "classification: bug",
-      "risk: medium",
-      "route: specdev/diagnose-bugs",
-      "ready_for_implementation: false",
-      "external_action: not-applicable",
-      "updated_at: 2026-09-17T00:00:00Z",
-      "---",
-      "",
-      "# Triage",
-      "",
-      "## 当前判定",
-      "observed",
-      "## 未知项",
-      "none",
-      "## 路由",
-      "diagnosis",
-      "## 外部动作",
-      "none",
-      "",
-    ].join("\n"),
-  );
+  await writeFile(join(root, "README.md"), `# Fixture\nOutcome: active\n\n## Ownership\nOwner: lead-session\nEvidence: owner.md\n`);
+  await writeFile(join(root, "owner.md"), "Owner: lead-session\nSource: synthetic test fixture\n");
   return root;
 }
 
@@ -166,10 +83,10 @@ describe("SpecDev T-triage capture inbox", () => {
   it("treats missing capture.md as a legal empty inbox", async () => {
     const root = await changeFixture();
     try {
-      const changeResult = runValidator(["--stage", "triage", root]);
+      const changeResult = runValidator([root]);
       assert.equal(changeResult.status, 0, changeResult.stdout + changeResult.stderr);
 
-      const stateRoot = join(root, "..");
+      const stateRoot = join(root, "../..");
       const status = spawnSync(process.execPath, [statusTool, "--state-root", stateRoot, "--json"], {
         encoding: "utf8",
       });

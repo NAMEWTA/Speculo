@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { DEFAULT_ROOTS } from "../src/paths.js";
+import { readLegacyChangeEvidenceSync } from "../src/specdev-artifacts.js";
 const packageRoot = process.cwd();
 const validator = join(
   packageRoot,
@@ -80,9 +81,10 @@ function designTree(name: string): string {
 async function writeGrillChange(root: string, name: string): Promise<string> {
   const change = join(root, name);
   await mkdir(change, { recursive: true });
-  await writeFile(join(change, ".status.json"), changeStatus(name));
+  const completion = name === archiveName ? '\n<a id="scope"></a>\n## Scope\nResolve the bounded grill question.\n\n<a id="acceptance"></a>\n## Acceptance\n- [x] AC-1: Answer has reviewed evidence.\n\n<a id="verification"></a>\n## Verification\n| AC | Result | Evidence |\n|---|---|---|\n| AC-1 | passed | LOG.md |\n\n## Next Steps\nNo remaining grill work.\n' : '';
+  await writeFile(join(change, "README.md"), `# ${name}\n\nOutcome: ${name === archiveName ? 'completed' : 'active'}\n\n## Ownership\nOwner: lead-session\nWork: specdev/grill\nEvidence: LOG.md\n${completion}`);
   await writeFile(join(change, "design-tree.json"), designTree(name));
-  await writeFile(join(change, "LOG.md"), "# LOG\n");
+  await writeFile(join(change, "LOG.md"), "# LOG\n\nOwner: lead-session\nWork: specdev/grill\nSource: fixture:original-user-request\nMethod: fixture evidence review\nObserved: bounded question has a verified answer\nResult: passed\n");
   await writeFile(join(change, "CONTEXT.md"), "# CONTEXT\n");
   await writeFile(join(change, "ADR.md"), "# ADR\n");
   return change;
@@ -109,7 +111,7 @@ async function nestedFixture(): Promise<{
   await writeFile(join(shadowRoot, "config.json"), specdevConfig());
   const legal = await writeGrillChange(join(specdevRoot, "changes"), legalName);
   const illegal = await writeGrillChange(join(shadowRoot, "changes"), illegalName);
-  const archived = await writeGrillChange(join(specdevRoot, "archive", "2026-08"), archiveName);
+  const archived = await writeGrillChange(join(specdevRoot, "changes", "archive"), archiveName);
   assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: proj }).status, 0);
   return { proj, legal, illegal, archived };
 }
@@ -159,14 +161,12 @@ describe("SpecDev nested workspace.json state root", () => {
       const withRepo = runValidator(fixture.illegal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
       assert.notEqual(withRepo.status, 0, combined(withRepo));
       const text = combined(withRepo);
-      assert.match(text, /outside workspace roots\.state/);
-      assert.match(text, /speculo\/\.speculo/);
-      assert.match(text, /project-root \.speculo\/specdev is illegal/);
+      assert.match(text, /identity-conflict.*change not found in the requested locations/);
       assert.doesNotMatch(text, MACHINE_ABS);
 
       const walked = runValidator(fixture.illegal, { stage: "grill", cwd: fixture.illegal });
       assert.notEqual(walked.status, 0, combined(walked));
-      assert.match(combined(walked), /speculo\/\.speculo/);
+      assert.match(combined(walked), /identity-conflict/);
       assert.doesNotMatch(combined(walked), MACHINE_ABS);
     } finally {
       await rm(fixture.proj, { recursive: true, force: true });
@@ -180,13 +180,13 @@ describe("SpecDev nested workspace.json state root", () => {
       const illegal = runValidator(fixture.illegal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
       assert.equal(legal.status, 0, combined(legal));
       assert.notEqual(illegal.status, 0, combined(illegal));
-      assert.match(combined(illegal), /speculo\/\.speculo/);
+      assert.match(combined(illegal), /identity-conflict/);
     } finally {
       await rm(fixture.proj, { recursive: true, force: true });
     }
   });
 
-  it("accepts an archived change under roots.state/specdev/archive/YYYY-MM", async () => {
+  it("accepts a new Markdown archive under roots.state/specdev/changes/archive", async () => {
     const fixture = await nestedFixture();
     try {
       const result = runValidator(fixture.archived, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
@@ -227,10 +227,24 @@ describe("SpecDev nested workspace.json state root", () => {
       const illegal = runValidator(fixture.illegal, { stage: "grill", repo: fixture.proj, cwd: fixture.proj });
       assert.equal(legal.status, 0, combined(legal));
       assert.notEqual(illegal.status, 0, combined(illegal));
-      assert.match(combined(illegal), /outside workspace roots\.state/);
+      assert.match(combined(illegal), /identity-conflict/);
     } finally {
       await rm(fixture.proj, { recursive: true, force: true });
     }
+  });
+
+  it("reads frozen legacy archive evidence separately and refuses to run new Work gates on it", async () => {
+    const fixture = await nestedFixture();
+    try {
+      const name = '2026-08-02-legacy', root = join(fixture.proj, '.agents/speculo/.speculo/specdev');
+      const legacy = join(root, 'archive/2026-08', name); await mkdir(legacy, { recursive: true });
+      const status = JSON.parse(changeStatus(name)); Object.assign(status, { change_status: 'archived', archived: true, archive_path: `<Path>{roots.state}/specdev/archive/2026-08/${name}</Path>` });
+      const original = JSON.stringify(status, null, 3) + '\r\n'; await writeFile(join(legacy, '.status.json'), original);
+      assert.equal(readLegacyChangeEvidenceSync(root, name).readonly, true);
+      const result = runValidator(legacy, { stage: 'grill', repo: fixture.proj }); assert.notEqual(result.status, 0);
+      assert.match(combined(result), /read-only legacy evidence reader/);
+      assert.equal(await readFile(join(legacy, '.status.json'), 'utf8'), original);
+    } finally { await rm(fixture.proj, { recursive: true, force: true }); }
   });
 
   it("rejects missing workspace instead of inferring a legacy state root", async () => {

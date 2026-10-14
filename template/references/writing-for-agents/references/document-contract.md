@@ -1,23 +1,25 @@
-# Document fidelity and progressive disclosure
+# 文档保真与按需披露
 
-Apply to AGENTS, commands, skills, Work entries, workflow contracts, templates and references. This is an editing contract, not a new auto-triggered capability.
+适用于 AGENTS、Command、Skill、Work、workflow 合同、模板和 references 的结构、行为、迁移或所有权变更。普通文字与事实修正直接核对相关源、链接和格式，不自动启动完整重构流程。
 
-## Before editing
+## 编辑前
 
-Locate the real user-maintained source, callers and generator. Record the source revision, symlinks, file modes, frontmatter, licenses and uncommitted user work. Back up the affected real sources, not just a diff statistic. Never edit an installed system/plugin cache or replace a symlink with a regular file. An out-of-root target needs separate source ownership/authorization.
+定位真实用户维护源、调用方与生成器，核对版本、未提交内容、软链接、文件模式、frontmatter 和许可。重构或迁移保留可恢复的编辑前内容：Git 已保存的版本可作恢复依据，未提交或未跟踪内容需另外保存。纯文字修正不要求独立备份。不要改系统/插件缓存或把软链接替换为普通文件；越出任务源范围时先解析其 owner 与授权。
 
-## Structure
+## 结构与行为
 
-Keep entry triggers narrow: necessary task condition plus a meaningful near-neighbor exclusion. Keep inputs, owner, exact required outputs, permission boundaries, acceptance and stop conditions visible. Move mode-only steps, long examples and full templates to named references with an explicit read condition. Moving content is not deleting it; validate every call path. Required-per-run safety checks remain required. Reference evidence and original research are not candidates for lossy summarization.
+入口明确何时进入、必要输入、owner、准确输出、授权、完成与停止条件。每次必需的短流程留在入口，分支、长示例和模板放在有触发条件的直接引用中；不靠增加无条件中转层缩短入口。
 
-## Behavioral fidelity
+保留能力、用户指定数量、默认工具、格式、必要失败条件和原写入网关。获批行为调整单列说明，不为上下文预算降低质量。独有来源证据、研究与许可不得有损压缩。引用迁移须闭合实际调用路径；不按行数或模型升级一概删规则。
 
-Preserve capabilities, user-specified quantities, default tools, output formats, failure stops and existing write gateways. Missing authorization is not a reason to fabricate completion. Record any behavior changes separately; never trade lower quality, fewer outputs or weaker verification for a context budget. Required evidence can exceed a suggested read budget; explain the expansion.
+## 检索、授权与隔离
 
-## Retrieval and writing
+先按 ID/关键词定位相关条目，再回读原文及 provenance；全局审查按明确任务范围完整盘点，普通任务不默认加载整库。已加载且未变化的合同可复用。
 
-Locate matching IDs/entries using a targeted search or range read, then reread a small relevant original span with provenance. Do not load whole indexes by default. Before formal memory writes check the original gateway, unfinished transactions and ownership. Resume only owned transactions under their original protocol; conflicting other-task resources block only the affected write set and dependent work, never justify takeover.
+同一目标、动作、范围的明确批准持续有效；owner 在执行前核对，扩大范围、新增副作用或发生漂移时补充确认。文档标记和旧 state 不构成授权。记忆写前检查原 gateway、pending transaction、lock 和 recovery evidence；只恢复本任务事务，其他任务冲突仅阻塞受影响写集及依赖工作。
 
-## Acceptance
+## 验收
 
-Validate syntax, metadata, references, positive and negative trigger cases, critical workflows, unchanged quantities/tools and failure stops. Regenerate owned outputs; check a second generation is identical. Reread real sources and links. Deliver modified paths, behavior differences, full before/after character counts including moved references, backup locations, actual commands/results and incomplete items. Distinguish entry size, whole-source size and measured loaded context. Without comparable actual usage, do not claim token, billing or plan-quota savings.
+按变化选择语法、元数据、链接、事实或行为场景验证。路由/权限变化覆盖正常与近邻负例，状态/副作用变化覆盖失败与恢复；文字修正不机械要求业务测试。仅重建受影响生成物并确认二次生成一致。回读真实源、结果与必要状态，报告行为差异、实际命令/结果、未完成项及适用的恢复位置。
+
+评估文档重构时统计入口及完整源的前后字符数，包含搬出的 references；普通编辑不要求统计。测得的读取量与源体积分别报告，没有可比实际用量时不宣称 Token、计费或套餐额度节省。

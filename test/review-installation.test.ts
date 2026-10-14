@@ -138,11 +138,11 @@ describe("review: process-interruption recovery", () => {
     await mkdir(join(target, ".agents", "skills", "custom-skill"), { recursive: true });
     await writeFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "user owned\n");
     const skillPath = join(target, ".agents", "skills", "learning-l-lesson", "SKILL.md");
-    const manifestPath = join(target, ".agents", "skills", ".speculo-managed.json");
+    const manifestPath = join(target, ".agents", "speculo", ".speculo", "projections.json");
     const edited = (await readFile(skillPath, "utf8")).replace("事实源", "事实来源");
     await writeFile(skillPath, edited);
-    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as { works: Array<{ id: string; sha256: string }> };
-    const work = manifest.works.find((item) => item.id === "learning-l-lesson");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as { files: Array<{ path: string; sha256: string }> };
+    const work = manifest.files.find((item) => item.path === ".agents/skills/learning-l-lesson/SKILL.md");
     assert.ok(work);
     work.sha256 = sha256Buffer(edited);
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
