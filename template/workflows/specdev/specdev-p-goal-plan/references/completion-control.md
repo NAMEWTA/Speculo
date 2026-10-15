@@ -2,6 +2,9 @@
 
 ## 1. 整体 Definition of Done
 
+实现型完成必须按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+
+
 至少要求：
 
 - Spec 验收合同全部有通过 Evidence 或明确批准的 deferred；

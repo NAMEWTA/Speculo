@@ -1,3 +1,4 @@
+import {appendReviewFixture} from './helpers/review-fixture.js';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import { execFileSync } from 'node:child_process';
@@ -32,10 +33,16 @@ function fixture(t: TestContext) {
   writeFileSync(join(root, 'spec.md'), spec);
   const file = join(root, 'evidence/direct-spec.md');
   const acceptance = ['AC-001', 'AC-002'].map(id => ({id, result:'passed', method:'disposable fixture', source:'value.txt', observed:'fixture value and compatibility checked'}));
-  const save = (record?: Record<string, any>) => writeFileSync(file, '# Direct Spec Evidence\n' + (record ? fence('Workspace Execution Record', record) : 'Current workspace checkpoint; no integration claimed.\n') + fence('Acceptance Verification', acceptance));
+  let review = '';
+  const save = (record?: Record<string, any>) => writeFileSync(file, '# Direct Spec Evidence\n' + (record ? fence('Workspace Execution Record', record) : 'Current workspace checkpoint; no integration claimed.\n') + fence('Acceptance Verification', acceptance) + review);
   save();
   const validate = (stage = 'implement') => validateChange(root, stage, repo, null, null, {methodRoot, stateRoot:'data'}).errors as string[];
-  const complete = () => writeFileSync(join(root, 'README.md'), readme.replace('Outcome: active', 'Outcome: completed'));
+  const complete = () => {
+    writeFileSync(join(root, 'README.md'), readme.replace('Outcome: active', 'Outcome: completed'));
+    if (readFileSync(join(repo,'value.txt'),'utf8') === 'before\n') writeFileSync(join(repo,'value.txt'),'after\n');
+    const result = appendReviewFixture({repo,root,base,spec:join(root,'spec.md')});
+    review = '\n<!-- synthetic-independent-review -->' + result.text.split('\n<!-- synthetic-independent-review -->')[1];
+  };
   const record = (current = false): Record<string, any> => ({
     purpose:'direct-spec', change, integration_attempt_limit:3,
     owner:'fixture-lead', implementation_owner:'fixture-worker', integration_owner:'fixture-lead', provider:'git',
@@ -80,6 +87,26 @@ test('full multi-behavior Direct Spec runs without Ticket, Map, Goal or installe
   assert.deepEqual(readChangeExecution(f.root), []); // Historical current Evidence remains readable.
   writeFileSync(join(f.root, 'spec.md'), f.spec.replace('ready_for_tickets: true', 'ready_for_tickets: false'));
   assert.match(f.validate().join('\n'), /Direct Spec.*ready/);
+});
+test('final Direct Spec gate rejects dirty code behind a previously approved commit',t=>{
+  const f=fixture(t);f.complete();f.git('add','value.txt');f.git('commit','-m','reviewed implementation');
+  appendReviewFixture({repo:f.repo,root:f.root,base:f.base,head:f.git('rev-parse','HEAD'),spec:join(f.root,'spec.md')});
+  assert.deepEqual(f.validate('complete'),[]);
+  writeFileSync(join(f.repo,'value.txt'),'unreviewed repair\n');
+  assert.match(f.validate('complete').join('\n'),/unreviewed working-tree delivery/);
+});
+test('formal C report cannot approve findings that its original reviewer rejected',t=>{
+  const f=fixture(t);writeFileSync(join(f.repo,'value.txt'),'after\n');f.git('add','value.txt');f.git('commit','-m','review input');
+  const head=f.git('rev-parse','HEAD'),artifact='reviews/CR-001.md';mkdirSync(join(f.root,'reviews'));
+  writeFileSync(join(f.root,artifact),`---\nschema_version: 1\nartifact: code-review\nchange: ${change}\nreview_id: CR-001\nfixed_point: ${f.base}\nhead: ${head}\nstatus: approved\nstandards_result: pass\nspecification_result: pass\n---\n## Fixed Input\nActual commits.\n## 标准\nSee original output.\n## 规范\nSee original output.\n## Summary\nApproved.\n`);
+  const r=appendReviewFixture({repo:f.repo,root:f.root,artifact,base:f.base,head,spec:join(f.root,'spec.md')});
+  assert.deepEqual(f.validate('review'),[]);
+  const rejected=r.text.replace('Axis: standards\nResult: pass','Axis: standards\nResult: request-changes').replace('| standards | native:reviewer | pass |','| standards | native:reviewer | request-changes |');
+  writeFileSync(r.path,rejected);assert.match(f.validate('review').join('\n'),/standards has not passed/);
+  writeFileSync(r.path,rejected.replace('status: approved','status: request-changes'));
+  assert.match(f.validate('review').join('\n'),/differs from the owning report/);
+  writeFileSync(r.path,rejected.replace('status: approved','status: request-changes').replace('standards_result: pass','standards_result: request-changes'));
+  assert.deepEqual(f.validate('review'),[]);
 });
 
 test('Direct Spec current execution is independent of native or Herdr selection and reads without mutation', t => {

@@ -37,6 +37,8 @@ Five domains contain 38 Works. Each guide explains every Work's purpose, use cas
 
 Enter the Work you need; there is no mandatory end-to-end sequence. Complete approved Specs and Ready Tickets can enter implementation directly. Execution method and current/worktree selection remain independent. See the [workflow comparison](docs/workflows/README.md).
 
+External CLI, Herdr and Orca tasks use compact Markdown inputs and reports, with focused summaries and searchable session references. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
+
 ## Commands by category
 
 The ten Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.

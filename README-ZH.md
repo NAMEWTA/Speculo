@@ -36,6 +36,8 @@ speculo doctor .
 
 不必每次跑完整条流程。完整获批 Spec 和 Ready Ticket 都可以直接进入实现；执行方式与 current/worktree 独立选择。见[领域路线对照](docs/workflows/README.md)。
 
+通过 CLI、Herdr、Orca 派遣任务时，以简短 Markdown 保存输入与报告，附聚焦摘要和可检索的历史会话入口。见[外部 Agent 的任务交接](docs/agent-handoffs.md)。
+
 ## 按 Command 类别找工具
 
 10 个 Command 是交给 AI 的明确请求，不是 `speculo xxx` 终端子命令。

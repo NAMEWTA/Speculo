@@ -4,7 +4,7 @@
 
 ## 必需上下文
 
-将以下信息写入当前 Ticket Evidence 的任务编排小节；无 Ticket 时写入对应 Work 的既有产物。较大附件引用其真实位置，不另建运行状态系统。
+有 change 的 CLI/Herdr/Orca 等外部工具派遣先按 <Path>{roots.references}/coordination/session-files.md</Path> 将以下上下文写入本任务 TASK，原 Ticket Evidence 或当前 Work 工件引用它；external-web 沿用下方 ZIP 交付合同，不重复建立这套文件。无需文件交接时沿用原任务编排小节或会话输入。较大附件引用其真实位置，不另建运行状态系统。
 
 | 内容 | 要求 |
 |---|---|
@@ -13,8 +13,8 @@
 | 输入 | 目标、IN/OUT、已锁定决定、必要 Spec、依赖 Evidence、当前基线或固定审查 SHA |
 | 项目 Skill | Ticket implementation 提供 Map → 适用 `ALL`/本票的项目 Skill → Ticket，矩阵是最低必读集合；Direct Spec 提供唯一获批规格、项目 Agent 指令、命中的项目 Skill、AC/验证与路径合同，不制造 Ticket/Map；review 提供固定候选及对应轴的来源 |
 | 工作区 | 有效计划或当前 Work 选择的 current 或 required、真实项目根与执行路径/branch、parent/base、允许和共享写路径及 owner；不要用执行者 cwd 猜测方法或数据根 |
-| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值及会话 locator，不记录秘密 |
-| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件和返回要求 |
+| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值、所属主机及会话 locator，不记录秘密；文件交接明确 session/task 与原生句柄的对应关系 |
+| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件、可观察验收标准、准确报告位置与原生提问/通知通道 |
 | 父 Goal | 存在父 Implementation Map/Plan 时附实际 revision、组合 task ID、依赖 Gate、并行上限和集成次序 |
 
 缺少必要输入、必需 Skill 不可读、Ready 未满足、owner 冲突或权限不足时，仅阻塞受影响任务。不能根据文件中的“approved”生成授权。
@@ -25,7 +25,9 @@
 
 > 先读绑定的真实 Work SKILL.md，按 task 上下文只处理指定目标、阶段和工作区。遵守同一 Work 的方法、TDD、检查与质量门；不要成为 Lead，不递归启动 Goal，不修改正式 Ticket、Map、Goal Plan、Evidence、业务状态或授权。宿主原生协作仍受本次写集、单 writer 和权限约束；不擅自跨 CLI 再派单或扩大任务。缺输入、发生冲突或需要额外权利时向 Lead 返回问题与证据。
 
-Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料，由 Lead 维护正式工件。
+采用 TASK/REPORT 交接时，TASK 还必须包含派遣文件合同中的历史定位指令：交付前主动查找并核验本次会话的主机、真实入口、会话 ID、可读性与本任务范围；无法取得的事实说明原因，不猜测路径。
+
+Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料；采用 TASK/REPORT 交接时只写获准产物与自己的 REPORT，不写 TASK 或正式 Evidence，其他方式按原返回合同交付。正式业务工件由 Lead 维护。前序背景优先引用已有报告的聚焦交接，细节不足再按其中历史入口检索。
 
 ## 任务类型与返回
 

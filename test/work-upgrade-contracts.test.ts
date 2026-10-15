@@ -44,7 +44,7 @@ test('unproven diagnosis relaxation is not enabled by documentation refactoring'
 });
 test('review reuse binds all inputs, requires original evidence, and never bypasses E2E', async () => {
   const text = await read('template/workflows/specdev/common/skills/code-review/references/result-reuse.md');
-  for (const marker of ['fixed_point', 'head', 'diff', '规范', '标准', 'ADR', 'Skill', '工具', '环境', '两轴隔离', '原报告', '不跳过当前 workspace/集成/E2E/授权检查']) assert.ok(text.includes(marker), marker);
+  for (const marker of ['fixed_point', 'head', 'diff', '规范', '标准', 'ADR', 'Skill', '工具', '环境', '实际实现者/reviewer 身份', '派遣/返回与 Lead 核验', '原报告', '不跳过当前 workspace/集成/E2E/授权检查']) assert.ok(text.includes(marker), marker);
   assert.match(text, /request-changes、skipped:no-spec.*不能|不能把 request-changes、skipped:no-spec/);
   assert.match(text, /旧报告\/旧完成证据不覆盖/);
 });

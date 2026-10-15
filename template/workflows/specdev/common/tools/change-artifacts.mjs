@@ -148,6 +148,9 @@ export function validateChangeClosure({context, change, forArchive = false}) {
       const independent = ['spec.md','ticket','tickets-map.md','implementation-plan.md','implementation-map.md','retro',...(!lightweightGoal ? ['goal-plan.md'] : [])].some(name => existsSync(join(root, name)));
       const complex = independent || readChangeExecution(root).length > 0 || ['DESIGN.md','prototypes'].some(name => existsSync(join(root,name)));
       scope = complex ? 'complex-preflight' : 'lightweight';
+      // AC checks are preflight only. The full validator distinguishes actual
+      // implementation from learning/triage using original Work ownership.
+      scope = 'complex-preflight';
       if (!independent && facts.outcome === 'completed') {
         validateLightweightCompletion(root, errors);
         if (lightweightGoal) {

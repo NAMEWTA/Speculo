@@ -25,6 +25,8 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。Lead 持续推进已授权 Goal，唯一写正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
+已有 change 的外部 CLI/Herdr/Orca 派遣使用 change/sessions/<session>/<task>/ 的 TASK.md 与 REPORT.md：Lead 写输入，执行者写报告，原 Evidence 引用并独立验收。session 用中性 UTC 时间标识一轮编排，task 用递增编号加实际主题标识一次派遣，不镜像工具运行状态；原生协作按需采用，Lead 自行执行不创建。交付前主动定位历史入口并核验主机、会话对应关系和可读性，附本任务检索范围；不可取得时说明原因。接收方按需检索，快照按需保存并随 change 归档；无 change 沿用原报告位置。
+
 ## 元数据与生成
 
 Skill 仅用 Agent Skills 标准顶层字段；扩展放 metadata 字符串映射。Work 使用 speculo-id、speculo-domain、speculo-kind=work-skill、speculo-contract-version="2"。name 等于小写目录名，真实 YAML 解析，禁止重复键和不安全 key。

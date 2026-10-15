@@ -1,13 +1,25 @@
-# Isolated Reviewer Contracts
+# 独立双轴审查
+
+## 派遣与身份
+
+默认派遣一位未参与当前审查范围实现的原生 subagent，分别给出标准轴和规范轴结果。实际需要并行时可派遣两位。沿调用方确定的 review 阶段方式执行：明确选择 Herdr/Orca/CLI 时用该工具派遣，并保存真实工具返回的 Agent/会话标识；编排方式与工作区独立。
+
+实现者包括当前范围的代码、配置、模型可见指令及修复/冲突解决的所有 Agent。实现者运行测试和自查是实现活动，不能作为独立审查。改名、切换角色或重置上下文不改变参与过实现这一事实。Reviewer 只读审查对象，返回 findings；参与修复后必须另派独立 reviewer。
+
+无法获得独立 Agent、身份无法核实或指定工具不可用时，报告 blocked/unverified，保持完成门关闭。不得用当前实现者顺序扮演两个角色替代派遣。task 上下文只执行分配的一个或两个轴，不递归编排；Lead 核对工具事实并维护正式 Evidence。
 
 ## 标准轴
 
-输入仅包含固定 diff/log（source-files 为固定文件快照）、标准来源和 Fowler baseline。报告仓库规则违规和判断性 smell，引用来源与代码块，区分 hard violation 与 heuristic，并跳过工具链已强制执行的纯格式项。
+依据固定 diff/log 或完整工作副本/文件快照、仓库标准和 Fowler baseline，检查正确性、可维护性及适用风险。引用来源与代码块，区分 hard violation 和 heuristic，跳过工具链已强制执行的纯格式项。
 
 ## 规范轴
 
-输入仅包含固定 diff/log（source-files 为固定文件快照）与规范来源。报告缺失或不完整需求、超出范围行为和语义/失败/边界错误，并引用具体规范来源。
+依据同一固定代码输入和实际规范，检查缺失或不完整需求、超范围行为、失败与边界语义；引用具体 AC、合同或决定。
 
-## 隔离与结果
+## 结果
 
-平台支持独立 reviewer 时可并行；否则创建两个不共享发现的完整输入包并顺序执行。汇总者只整理格式，不删除、合并或跨轴重排 finding。每轴独立返回 `pass | request-changes | skipped`；一轴通过不抵消另一轴失败。
+同一 reviewer 可以读取两轴依据，但必须分别判断并按 standards、specification 顺序返回，不用一轴结论替代另一轴。两位 reviewer 时分别派发所属轴，汇总前不共享 findings。汇总者只整理格式，不删除或跨轴合并、重排发现，不设置任意字数或 finding 上限。
+
+每轴返回 `pass | request-changes | skipped`。标准轴不可跳过；C 经来源发现确认没有规范时可 `skipped:no-spec`，不能宣称完整双轴通过。I 始终有 Spec/Ticket 或轻量 README 合同，两轴必须 pass。
+
+执行与复用都按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 保存独立性和固定输入证据。

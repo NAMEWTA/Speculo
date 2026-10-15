@@ -9,6 +9,7 @@ import { initSpeculo } from '../src/index.js';
 import { validateStructuredRuntime } from '../src/structured.js';
 import { pathExists } from '../src/utils.js';
 import { writeDesignFixture, designValidator, designTools } from './helpers/design-fixture.js';
+import { attachReviewFixture } from './helpers/review-fixture.js';
 const repository = process.cwd(), name = '2026-10-14-conversion';
 const tools = () => import(pathToFileURL(join(repository, 'scripts/migrate-specdev-markdown.mjs')).href);
 async function fixture(installed = false) {
@@ -174,6 +175,7 @@ test('legacy completed requires actual completed acceptance, never only the old 
     assert.deepEqual(await inventory(f.specdevRoot), before);
     await writeFile(join(f.change, 'README.md'), '# Completed work\n\n<a id="scope"></a>\n## Scope\nOne verified behavior.\n\n<a id="acceptance"></a>\n## Acceptance\n- [x] AC-1: Result is observable.\n\n<a id="verification"></a>\n## Verification\n| AC | Result | Evidence |\n|---|---|---|\n| AC-1 | passed | verification.md |\n\n## Next Steps\nHand over to the authorized archive owner.\n');
     await writeFile(join(f.change, 'verification.md'), '# Observed verification\n\nMethod: isolated fixture\nSource: user:fixture-request\nObserved: expected behavior returned exact result\nResult: passed\n');
+    attachReviewFixture(f.projectRoot,f.change);
     const plan = await planConversion({ ...f, id: 'completed-verified' });
     await approve(plan, f);
     assert.equal((await applyConversion(plan, f.options)).state, 'completed');

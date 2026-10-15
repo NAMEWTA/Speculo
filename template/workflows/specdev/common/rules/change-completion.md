@@ -4,6 +4,9 @@
 
 ## 完成门
 
+实现型完成必须按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+
+
 一个 change 只有同时满足以下条件才能 completed：
 
 1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收；required Direct Spec 的执行记录必须 integrated/removed，父 HEAD 为 result 且包含 source，候选与 required 验证通过。

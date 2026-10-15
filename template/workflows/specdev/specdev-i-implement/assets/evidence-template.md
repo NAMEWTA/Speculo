@@ -20,12 +20,13 @@
 - **执行选择与来源：** 当前宿主正常执行（mode: lead，App/CLI 等）/ 显式 CLI 交互或调用 / Herdr / 其他已选方式；current / required；实际用户选择或有效计划来源，无 Goal 时默认串行、集成尝试上限 3
 - **Implementation owner：** Lead / `<agent/provider>`
 - **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
+- **文件交接（实际外部派遣时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
 - **允许动作：** worktree changes / implementation commit / ...
 - **返回：** commit、dirty 状态、修改路径、非 E2E 命令、未验证项与恢复条件
 - **Lead 独立核对：** pass / fail；实际读取与命令摘要
 - **只读 Agent findings：** 无 / 固定输入、来源、结论、Lead 核对
 
-任务执行者 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。
+任务执行者 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。有文件交接时依 <Path>{roots.references}/coordination/session-files.md</Path> 只保存输入/报告指针和 Lead 独立核验，不复制正文；REPORT 的 completed 不是本 Evidence 的 done。先读报告聚焦交接，细节不足再检索其历史入口。突然中断无报告时记录未知事实与原工具查询结果，不补造成功回报。
 
 ## 3. 修改范围与路径所有权
 
@@ -70,10 +71,10 @@
 ### 规范轴
 
 - **固定输入与来源：** Spec / Ticket / Goal Plan / source
-- **结果：** pass / request-changes / skipped:no-spec
+- **结果：** pass / request-changes / blocked:missing-spec
 - **Findings 与修正：** 无 / ...
 
-两个轴隔离并按上述顺序记录。
+两个轴分别判断并按上述顺序记录；默认同一位未参与实现的 reviewer 完成两轴。
 
 ## 7. Integration Verification
 
@@ -135,7 +136,7 @@
 
 ## 审查证据复用（仅实际发生时填写）
 
-记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、两轴隔离核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
+记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、审查者独立身份与派遣/返回核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
 
 ## OPS 交付（仅用户请求时）
 
@@ -152,3 +153,7 @@
 ## Acceptance Verification
 
 仅独立 Spec 的无票 Direct Spec 完成时填写本节 JSON array，每个 Spec AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
+
+## 独立审查记录的填写
+
+按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在本文实际生成 `Independent Review`、固定输入、原始 reviewer 输出和 Lead 核验段。完成前必须有真实独立身份与两轴结果；不要预填通过或用模板段落替代证据。

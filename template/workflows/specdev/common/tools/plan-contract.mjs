@@ -123,9 +123,8 @@ export function validateTicketPlan(artifact, { repoRoot = null, requirePlan = fa
   if (meta.plan_contract_version !== 1) errors.push('unsupported plan_contract_version');
   errors.push(...validateBindings(meta, repoRoot));
   if (!strings(meta.resource_claims) || new Set(meta.resource_claims).size !== meta.resource_claims.length) errors.push('resource_claims must be a unique string array');
-  if (meta.ready === true || ['in_progress','review','done'].includes(meta.status)) {
-    for (const heading of ['## 11. SKILL 调用计划', '## 12. 停止、检查点与交付']) if (!body.includes(heading)) errors.push(`ready Plan Ticket missing '${heading}'`);
-  }
+  // Skill invocation is enforced by the structured bindings and real completion
+  // records below, not by repeating generic instructions in every Ticket body.
   if (checkEvidence && meta.status === 'done' && meta.skill_bindings?.some(binding => binding?.required === true)) {
     try {
       const evidencePath = join(dirname(dirname(path)), 'evidence', `${meta.id}.md`);

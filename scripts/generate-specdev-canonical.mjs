@@ -295,6 +295,8 @@ const canonicalDocuments = [
       reference("specdev-p-goal-plan/references/orchestration-protocol.md"),
       reference("specdev-p-goal-plan/references/lead-orchestration.md"),
       reference("specdev-p-goal-plan/references/completion-control.md"),
+      reference("specdev-i-implement/SKILL.md", { discardFrontmatter: true }),
+      sharedSources.codeReviewSkill,
       reference("specdev-p-goal-plan/assets/goal-plan-template.md", {
         preserveArtifactHeader: true,
       }),
@@ -589,14 +591,16 @@ function adaptSchema(content, tag) {
 }
 
 function transformContent(content, tagsBySource, source) {
-  if (source === 'template/references/coordination/modes/herdr.md') {
-    // Herdr is an optional host integration, not a static capability dependency.
+  const hostSkill = /^template\/references\/coordination\/modes\/(herdr|orca)\.md$/.exec(source ?? '')?.[1];
+  if (hostSkill) {
+    const title = hostSkill === 'herdr' ? 'Herdr' : 'Orca';
+    // These are optional host integrations, not static capability dependencies.
     // Preserve its exact upstream identity and install checks without an external
     // Markdown dependency or a hard-coded native installation root in the web copy.
     content = content.replace(
-      '[Herdr SKILL.md](https://github.com/NAMEWTA/wta-skills-hub/blob/main/skills/automation/herdr/SKILL.md)',
-      'GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/herdr 目录中的完整 Herdr Skill',
-    ).replaceAll('项目 `.agents/skills/herdr/SKILL.md`', '宿主确认的项目 Herdr Skill 入口')
+      `[${title} SKILL.md](https://github.com/NAMEWTA/wta-skills-hub/blob/main/skills/automation/${hostSkill}/SKILL.md)`,
+      `GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/${hostSkill} 目录中的完整 ${title} Skill`,
+    ).replaceAll(`项目 \x60.agents/skills/${hostSkill}/SKILL.md\x60`, `宿主确认的项目 ${title} Skill 入口`)
       .replaceAll('项目 `.agents/skills/`', '宿主确认的项目 Skill 安装目录');
   }
   if (source) content = content.replace(/\[([^\]\n]+)\]\(([^)\n]+\.(?:md|json))(#[^)]*)?\)/g, (match, label, target, anchor) => {

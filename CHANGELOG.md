@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-10-15
+
+### Added
+- Lightweight Markdown handoffs for external CLI, Herdr and Orca tasks: neutral timestamp session directories with topic-based tasks, separate inputs and worker reports, and focused summaries. Agents must attempt to locate and verify transcript identity, host and readability before delivery, recording task boundaries or why history is unavailable; snapshots remain optional. Lead acceptance stays in the original Evidence; native collaborators opt in as needed.
+- Read-only working-tree review scopes for uncommitted Direct Spec delivery, including untracked additions, deletions, file modes and links. Completion checks bind independent reports to the frozen code and source inputs; archived records remain historical.
+
+### Changed
+- Align Orca and Herdr onboarding around the upstream project Skill: reuse verified existing files or install the complete Skill from a fixed revision without overwriting user assets, then read the actual CLI/runtime guides. Preserve tool-specific dispatch, settlement and history lookup contracts.
+- Persist the Implement entry in Goal/Ticket handoffs. Dual-axis review now defaults to one independently dispatched Agent, inherits the selected orchestration mode, records actual identities and tool evidence, and covers the final integrated delivery.
+- Simplify Spec and Ticket prose around behavior, vertical slices and acceptance. Keep structured ownership and Skill invocation contracts; remove mandatory implementation step counts and irrelevant risk boilerplate. Existing long templates remain readable.
+
 ### Fixed
 - Normalize projected file modes before comparing planned changes, so Windows does not count unchanged Skill entries as updates.
 
@@ -955,6 +966,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.3...HEAD
+[2.0.3]: https://github.com/NAMEWTA/Speculo/compare/v2.0.2...v2.0.3
+[2.0.2]: https://github.com/NAMEWTA/Speculo/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/NAMEWTA/Speculo/compare/209f927...v2.0.1
 [1.0.19]: https://github.com/NAMEWTA/Speculo/compare/v1.0.18...v1.0.19

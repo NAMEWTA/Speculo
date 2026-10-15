@@ -1,3 +1,4 @@
+import {attachReviewFixture} from './helpers/review-fixture.js';
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
@@ -1658,6 +1659,7 @@ describe("SpecDev local-first contracts", () => {
           "verify",
         ].join("\n"),
       );
+      attachReviewFixture(fixtureProject(root),root,"evidence/direct-spec.md");
       const local = runValidator(root,"complete");
       assert.equal(local.status,0,local.stdout+local.stderr);
       const blocked = runValidator(root, "archive-ready");

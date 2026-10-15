@@ -1,3 +1,4 @@
+import {attachReviewFixture} from './helpers/review-fixture.js';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile, rm, rename, readdir, lstat, symlink, readlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -50,6 +51,7 @@ test('direct lightweight Spec validates without installed workspace or duplicate
   const f=await fixture();try{
     assert.deepEqual(validator.validateChange(f.root,'spec',f.repo,null,null,f.options).errors,[]);
     await writeFile(join(f.root,'README.md'),f.readme.replace('Outcome: active','Outcome: completed'));
+    attachReviewFixture(f.repo,f.root);
     assert.deepEqual(validator.validateChange(f.root,'complete',f.repo,null,null,f.options).errors,[]);
     await assert.rejects(readFile(join(f.root,'.status.json')),/ENOENT/);
     await assert.rejects(readFile(join(f.root,'spec.md')),/ENOENT/);
@@ -67,6 +69,20 @@ test('lightweight input rejects incomplete AC, competing Spec, explicit artifact
     assert.throws(()=>plan.readSpecification(f.root,{allowLightweight:true}),/two specification authorities/);
   }finally{await rm(f.repo,{recursive:true,force:true});}
 });
+test('adding learning materials never bypasses an implementation completion review',async()=>{
+  const f=await fixture();try{
+    await writeFile(join(f.root,'README.md'),f.readme.replace('Outcome: active','Outcome: completed'));
+    attachReviewFixture(f.repo,f.root);
+    const withReview=await readFile(join(f.root,'README.md'),'utf8');
+    await writeFile(join(f.root,'README.md'),withReview.split('\n<!-- synthetic-independent-review -->')[0]);
+    await mkdir(join(f.root,'learning'));await writeFile(join(f.root,'learning/index.md'),'# 学习图解索引\n');
+    assert.match(validator.validateChange(f.root,'archive-ready',f.repo,null,null,f.options).errors.join('\n'),/Independent Review/);
+    const {validateChangeClosure}=await import(pathToFileURL(join(tools,'change-artifacts.mjs')).href);
+    const {resolveWorkContextSync}=await import(pathToFileURL(join(process.cwd(),'template/lib/speculo-runtime.mjs')).href);
+    const context=resolveWorkContextSync({projectRoot:f.repo,methodRoot:f.options.methodRoot,stateRoot:'data'});
+    assert.equal(validateChangeClosure({context,change:name,forArchive:true}).complete,false);
+  }finally{await rm(f.repo,{recursive:true,force:true});}
+});
 test('explicit lightweight Goal owns its task progress without manufacturing Map or Ticket',async()=>{
   const f=await fixture();try{
     await writeFile(join(f.root,'README.md'),f.readme.replace('- [x] Implement the accepted response.','See [Goal](goal-plan.md).'));
@@ -74,6 +90,7 @@ test('explicit lightweight Goal owns its task progress without manufacturing Map
     await writeFile(join(f.root,'goal-plan.md'),goal);
     assert.deepEqual(validator.validateChange(f.root,'goal-plan',f.repo,null,null,f.options).errors,[]);
     await writeFile(join(f.root,'README.md'),(await readFile(join(f.root,'README.md'),'utf8')).replace('Outcome: active','Outcome: completed'));
+    attachReviewFixture(f.repo,f.root);
     assert.deepEqual(validator.validateChange(f.root,'complete',f.repo,null,null,f.options).errors,[]);
     await writeFile(join(f.root,'goal-plan.md'),goal.replace('- [x]','- [ ]'));
     assert.match(validator.validateChange(f.root,'complete',f.repo,null,null,f.options).errors.join('\n'),/unfinished|unchecked/);
@@ -94,10 +111,44 @@ test('direct Spec completion rejects empty, duplicate and failed acceptance evid
   }finally{await rm(f.repo,{recursive:true,force:true});}
 });
 
+test('worker reports cannot replace the owning change Outcome or acceptance evidence',async()=>{
+  const f=await fixture();try{
+    const task=join(f.root,'sessions/20261015T083000Z/001-code-review');
+    await mkdir(task,{recursive:true});
+    const input='# Task\nReview the fixed candidate read-only; return findings for Lead acceptance.\n';
+    await writeFile(join(task,'TASK.md'),input);
+    for(const status of ['completed','blocked','failed','cancelled']){
+      const report=`# Task report\nSession: 20261015T083000Z\nTask: 001-code-review\nStatus: ${status}\n`;
+      await writeFile(join(task,'REPORT.md'),report);
+      assert.deepEqual(validator.validateChange(f.root,'spec',f.repo,null,null,f.options).errors,[]);
+      assert.match(validator.validateChange(f.root,'archive-ready',f.repo,null,null,f.options).errors.join('\n'),/change is still active/);
+      assert.equal(await readFile(join(f.root,'README.md'),'utf8'),f.readme);
+      assert.equal(await readFile(join(task,'TASK.md'),'utf8'),input);
+      assert.equal(await readFile(join(task,'REPORT.md'),'utf8'),report);
+    }
+    await rm(join(task,'REPORT.md'));
+    assert.match(validator.validateChange(f.root,'archive-ready',f.repo,null,null,f.options).errors.join('\n'),/change is still active/);
+    await writeFile(join(task,'REPORT.md'),'Status: completed\n');
+    await writeFile(join(f.root,'README.md'),f.readme.replace('Outcome: active','Outcome: completed'));
+    await writeFile(join(f.root,'verified.md'),'Method: not executed\nResult: failed\n');
+    assert.notDeepEqual(validator.validateChange(f.root,'complete',f.repo,null,null,f.options).errors,[]);
+  }finally{await rm(f.repo,{recursive:true,force:true});}
+});
+
 test('new archives require the original receipt and moved bytes before sealed completion',async()=>{
   const f=await fixture();try{
+    const session='sessions/20261015T083000Z';
+    const dispatchFiles=new Map([
+      [`${session}/001-implement-T01/TASK.md`,Buffer.from('# Input\nImplement the assigned change.\r\n')],
+      [`${session}/001-implement-T01/REPORT.md`,Buffer.from('# Report\nStatus: completed\nCandidate awaits Lead acceptance.\n')],
+      [`${session}/001-implement-T01/history-01.jsonl`,Buffer.from('{"id":"message-1","role":"assistant","text":"候选已交付"}\n')],
+      [`${session}/002-review-T01/TASK.md`,Buffer.from(`# Review\nChange: ${name}\nInput: change:${session}/001-implement-T01/REPORT.md\n`)],
+      [`${session}/002-review-T01/REPORT.md`,Buffer.from('# Review report\nStatus: completed\nNo findings; observed checks are in the owning Evidence.\n')],
+    ]);
+    for(const [file,bytes] of dispatchFiles){await mkdir(dirname(join(f.root,file)),{recursive:true});await writeFile(join(f.root,file),bytes);}
     await writeFile(join(f.root,'README.md'),f.readme.replace('Outcome: active','Outcome: completed'));
     const archived=join(dirname(f.root),'archive',name);await mkdir(dirname(archived));await rename(f.root,archived);
+    for(const [file,bytes] of dispatchFiles)assert.deepEqual(await readFile(join(archived,file)),bytes);
     const validate=()=>validator.validateChange(archived,'archived',f.repo,null,null,f.options);
     assert.match(validate().errors.join('\n'),/archive-receipt|required path/);
     const approval=`# Specific archive approval\n\nArchive ${name} in operation ARCHIVE-001 by test-lead.\n`;
@@ -121,6 +172,14 @@ test('new archives require the original receipt and moved bytes before sealed co
     }
     await writeFile(join(archived,'archive-receipt.md'),receipt.replace('Result: moved','Result: verified'));
     const sealed=validator.validateChange(archived,'archived',f.repo,null,null,{...f.options,sealed:true});assert.deepEqual(sealed.errors,[]);assert.equal(sealed.archive.sealed,true);
+    const workerReport=`${session}/001-implement-T01/REPORT.md`,history=`${session}/001-implement-T01/history-01.jsonl`;
+    await writeFile(join(archived,workerReport),'Status: failed\n');
+    assert.match(validate().errors.join('\n'),/integrity byte drift/);
+    await writeFile(join(archived,workerReport),dispatchFiles.get(workerReport)!);
+    await rm(join(archived,history));
+    assert.notDeepEqual(validate().errors,[]);
+    await writeFile(join(archived,history),dispatchFiles.get(history)!);
+    assert.deepEqual(validate().errors,[]);
     const report=join(f.repo,'data/commands/archive-and-consolidate/2026-10-14-single-fixture.md');await mkdir(dirname(report),{recursive:true});
     const navigated=(await readFile(join(archived,'README.md'),'utf8'))+`\n## Archive Receipt\nReceipt: project:${relative(f.repo,report)}#archive-${name}\n`;
     await writeFile(join(archived,'README.md'),navigated);

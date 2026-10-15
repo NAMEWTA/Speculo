@@ -4,12 +4,12 @@
 
 | 必须相同并可回读 | 核对证据 |
 |---|---|
-| review_mode、实际比较或文件范围 | diff 模式的 fixed_point/head、不可变 SHA、diff 摘要与 commit 范围（legacy 默认三点）；source-files 的路径与原字节摘要；不可跨模式复用 |
+| review_mode、实际比较或文件范围 | diff 模式的 fixed_point/head、不可变 SHA、diff 摘要与 commit 范围（legacy 默认三点）；source-files 的路径与原字节摘要；working-tree 的基线、完整范围与实际工作副本快照；不可跨模式复用 |
 | 规范、标准、ADR 和适用项目指令 | 稳定来源路径、原始字节摘要与明确范围 |
 | review Skill 与当前触发的全部参考 | ID、入口/参考字节摘要、风险分支与跳过理由 |
 | 与结论相关的工具、测试环境、配置 | 实际版本/配置摘要与观察证据；未记录不能宣称相同 |
-| 两轴隔离及执行结果 | 原 reviewer 输入、独立 findings、原验证输出及其 locator |
+| 审查独立性及执行结果 | 实际实现者/reviewer 身份、派遣/返回与 Lead 核验、原输入、两轴 findings 和原验证输出 locator |
 
-Lead 必须回读真实原报告和证据；相同文件名、报告“通过”文字、相同 HEAD 或结构校验均不足。任一输入变化、缺失、不可解析或来源不明，重跑受影响轴；无法证明两轴输入独立时重跑两轴。新风险范围必须完整审查，不因复用缩减 finding 数量。
+Lead 必须回读真实原报告和证据；相同文件名、报告“通过”文字、相同 HEAD 或结构校验均不足。任一输入变化、缺失、不可解析或来源不明，重跑受影响轴；无法证明 reviewer 未参与实现时重跑两轴。新风险范围必须完整审查，不因复用缩减 finding 数量。
 
 复用保持原结果与来源，不能把 request-changes、skipped:no-spec 或未测结果改成 passed。有 change 的正式 C 仍创建自己的新 CR 报告并引用原证据；会话文件审查只返回本次结果；I 仍由 Lead 写入本票 Evidence，旧报告/旧完成证据不覆盖。复用报告不跳过当前 workspace/集成/E2E/授权检查，不新增全局缓存、状态树或完成捷径。

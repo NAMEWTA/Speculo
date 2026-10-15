@@ -46,6 +46,22 @@ flowchart LR
 
 图是常见路线，不意味着每个节点必跑。只请求审查、诊断或规划时，相应报告本身就可以是本轮终点。
 
+## 从目标到实现与审查
+
+Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可独立验证的垂直切片。Goal Plan 负责确有需要的跨任务调度和整体交付。获批后，Goal、Map 或 Ticket 都明确进入 Implement，实际调用匹配的项目 Skill，并完成独立双轴审查；仅列出 Skill 名称不代表已经执行。
+
+双轴默认由一位**未参与当前范围实现的 Agent**完成，分别报告标准轴和规范轴；需要并行时可派两位。默认使用宿主原生 subagent；当前任务选择 Herdr、Orca 或 CLI 编排时，审查沿该方式派遣，明确的 review 阶段安排优先。实现者的测试与自查不能充当独立审查；工具不可用或身份不明时保留成果并报告阻塞。
+
+实现者、审查者真实身份、固定输入、原始两轴报告和 Lead 工具核验写入原 Evidence。外部派遣沿用 [会话交接](../agent-handoffs.md)；深查历史只按需读取真实会话 locator。单票审查之外，多单元组合或冲突修正后的实际交付也须覆盖；整体审查保存在原 Evidence 目录的 `final-review.md`，父编排使用原整体 Evidence。
+
+未提交的 Direct Spec 可使用只读 `working-tree` 审查范围，包含新增、修改、删除及模式变化；固定的 HEAD 不代表未提交内容。它不提交代码、不暂存、不改 index，完成前重验范围内字节与规范。指定文件阅读的 `source-files` 模式仍保留原用途。
+
+Spec 的必需正文为目标、行为、AC、范围与验证策略；用户故事、NFR、迁移和风险按需展开。Ticket 只补充本票的行为、验收、验证及必要约束，路径、依赖和 Skill 绑定以 frontmatter 为准。Standard/Deep 不再要求预写固定数量的实现步骤；重要迁移或安全顺序仍须明确。旧长模板可继续读取，旧报告若缺独立审查证据，作为新的完成依据前需要补审；归档历史保持只读。
+
+本次方法对照固定于 Matt Pocock skills 的 `49dd158d1076134a641b33efb035946536778336`：参考 [to-spec](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-spec/SKILL.md)、[to-tickets](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-tickets/SKILL.md) 的行为合同和垂直切片，[implement-spec](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/implement-spec/SKILL.md)、[implement](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/implement/SKILL.md) 的执行衔接，以及 [domain-modeling](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/domain-modeling/SKILL.md)、[code-review](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/code-review/SKILL.md) 的领域语言与两轴审查。保留 Speculo 的状态 owner、路径授权、可恢复证据与永久知识网关；ADR 默认短写决定和理由，重要的可逆决定仍可保留。现有上游引入清单和许可保持原固定版本，本段记录此次比较来源。
+
+精简依据也参考 [Birgitta Böckeler 的工具实践](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html)和 [Marmelab 对过量前置文档的批评](https://marmelab.com/blog/2025/11/12/spec-driven-development-waterfall-strikes-back.html)。这些观察支持减少重复并保留小步反馈，不证明所有项目应采用同一流程。
+
 ## 文件和术语怎么理解
 
 默认安装下，一次开发活动通常位于 `.agents/speculo/.speculo/specdev/changes/<change>/`。文件按需创建：
@@ -363,6 +379,7 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 | 未指定 | 按当前 App/CLI 宿主正常执行 |
 | 明确指定 CLI 交互或调用 | 按用户要求与实际接口选择交互/非交互方式 |
 | 明确指定 Herdr | 按项目 Skill 和当前工具指南编排多个 AI CLI |
+| 明确指定 Orca | 按当前工具指南派遣、接收和查询任务 |
 
 | 工作区 | 说明 |
 |---|---|
@@ -370,6 +387,8 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 | `required` | 每个独立实现单元使用 source worktree，并在 candidate 中验证后集成 |
 
 完整 Spec 不拆票也可以用 worktree，整个 change 是一个实现单元。只读审查不为此创建实现 worktree。使用 worktree 需要核对实现提交和本地集成授权，清理仍是单独动作。
+
+外部派遣的输入与回报位于当前 change 的 `sessions/<session>/<task>/TASK.md` 和 `REPORT.md`，原 Evidence 保存链接与 Leader 验收。报告包含聚焦摘要和按需回查的历史入口，结构与例子见[外部 Agent 的任务交接](../agent-handoffs.md)。任务回报状态不替代 change Outcome，历史记录默认引用，快照按需保存并随 change 归档。
 
 ```text
 按当前 App 正常实施这个 Ready Spec，使用独立 worktree。

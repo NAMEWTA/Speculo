@@ -77,6 +77,8 @@ ready_for_execution: false
 
 ## 4. Execution and Integration Protocol
 
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
+
 ### Lead Orchestration
 
 执行方式独立于下方工作区策略：默认按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 属于宿主能力；明确指定 CLI 交互、Herdr 等方式才按共享编排合同接入。记录本次选择与来源，不逐任务重新询问。

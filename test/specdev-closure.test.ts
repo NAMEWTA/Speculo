@@ -13,10 +13,10 @@ function fixture(t: {after(fn:()=>void):void}) {
 }
 const ownership = `## Ownership\nOwner: session-one\nEvidence: #handoff\n\n<a id="handoff"></a>\n## Original session\nSession: session-one\nSource: actual host request 2026-10-14\nObserved: same owner continues this change\n`;
 const content = `# Small task\nOutcome: completed\n\n<a id="scope"></a>\n## Scope\nRepair the parser for a real date.\n<a id="acceptance"></a>\n## Acceptance\n- [x] AC-1 rejects a non-existent date.\n<a id="verification"></a>\n## Verification\n| AC | Result | Evidence |\n| --- | --- | --- |\n| AC-1 | passed | #observed-test |\n<a id="observed-test"></a>\n## Actual verification\nMethod: disposable parser fixture\nSource: test/date.test.ts at current source\nObserved: invalid date rejected, valid leap day accepted\nCommand: node --test test/date.test.js\nExit: 0\nResult: passed\n\n${ownership}`;
-test('one-file lightweight completion reads actual AC results and handoff, never needs business status', t=>{
+test('one-file lightweight completion reads AC and handoff then defers implementation review to the full gate', t=>{
   const f=fixture(t); writeFileSync(f.file,content); const before=readFileSync(f.file);
   const result=validateChangeClosure({context:f.base,change:name,forArchive:true});
-  assert.deepEqual(result.errors,[]); assert.equal(result.complete,true); assert.equal(result.scope,'lightweight');
+  assert.deepEqual(result.errors,[]); assert.equal(result.complete,false); assert.equal(result.scope,'complex-preflight'); // Implementation also requires the full independent review gate.
   assert.deepEqual(readdirSync(f.root),['README.md']); assert.deepEqual(readFileSync(f.file),before);
 });
 test('Outcome and checked tasks alone cannot bypass real evidence, owner and failed verification',t=>{
@@ -38,7 +38,7 @@ test('whole-change cancellation requires original owner, decision, ended writers
 });
 test('unrequested external actions are absent; requested unresolved delivery blocks only archival',t=>{
   const f=fixture(t); writeFileSync(f.file,content); writeFileSync(join(f.root,'triage.md'),`---\nchange: ${name}\nexternal_action: pending-close\npublish_action: not-requested\n---\n# Ledger\n`);
-  assert.equal(validateChangeClosure({context:f.base,change:name}).complete,true);
+  assert.equal(validateChangeClosure({context:f.base,change:name}).valid,true);
   assert.equal(validateChangeClosure({context:f.base,change:name,forArchive:true}).complete,false);
 });
 test('a cancelled Ticket cannot cancel its active change or replace the whole-change decision', t=>{

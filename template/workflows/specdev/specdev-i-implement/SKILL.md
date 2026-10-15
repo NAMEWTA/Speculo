@@ -46,4 +46,4 @@ UI Ticket 或 Direct Spec 必须读取 <Path>{roots.workflows}/specdev/common/ru
 
 `lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
 
-P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。独立审查 required 时不能以 Lead 自审替代。
+P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。

@@ -49,6 +49,8 @@ Command 对应 `.agents/speculo/commands/<id>/COMMAND.md`。项目没有安装�
 
 项目可以在明确要求后保存编排偏好，但新手不必先填写配置。当前请求优先于已保存偏好；已有有效计划中的约束也要核对。工具不可用时，AI 应说明受影响分支，按已经允许的回退处理，不能假装调用成功。
 
+已有 change 的外部派遣以一轮 session 分组，每次任务保存 `TASK.md` 输入和 `REPORT.md` 回报；原 Evidence 保存 Leader 的验收。报告带聚焦摘要和按需检索的历史会话入口。原生临时协作按需采用，当前宿主自行执行不创建空目录，详见[外部 Agent 的任务交接](agent-handoffs.md)。
+
 ## 从哪里找成果
 
 在默认安装布局中，业务数据根是 `.agents/speculo/.speculo/`：

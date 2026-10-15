@@ -31,6 +31,7 @@ import {
 import { validateChangeClosure, readChangeOwner } from "./change-artifacts.mjs";
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
 import { reviewScopeCLI } from "./review-scope.mjs";
+import { hasIndependentReview, validateIndependentReview } from "./review-evidence.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
@@ -202,15 +203,6 @@ const REQUIRED_TICKET_KEYS = new Set([
   "shared_paths",
   "shared_path_owners",
 ]);
-const REQUIRED_READY_TICKET_SECTIONS = new Set([
-  "## 1. 战略与来源",
-  "## 2. 决策状态",
-  "## 3. 范围边界",
-  "## 4. 要构建什么",
-  "## 7. 路径访问契约",
-  "## 8. 验证矩阵",
-  "## 10. 验收标准",
-]);
 const REQUIRED_GOAL_PLAN_SECTIONS = new Set([
   "## 1. Outcome and Authority",
   "## 2. Execution Graph",
@@ -332,6 +324,20 @@ function sectionBody(body, heading) {
   const tail = body.slice(match.index + match[0].length);
   const next = /^##\s+/m.exec(tail);
   return (next ? tail.slice(0, next.index) : tail).trim();
+}
+
+// Accept the published long templates and the concise headings without making
+// numbering, repeated instructions or a fixed count of implementation steps a gate.
+function semanticSection(body, names) {
+  const lines = runtime.markdownBodyLines(body);
+  const matches = lines.filter(line => {
+    const match = /^(#{2,3})\s+(?:\d+\.\s*)?(.+)$/.exec(line.text);
+    return match && names.includes(match[2]);
+  });
+  if (matches.length !== 1) return "";
+  const start = matches[0], level = /^#+/.exec(start.text)[0].length;
+  const end = lines.find(line => line.line > start.line && /^#{1,3}\s/.test(line.text) && /^#+/.exec(line.text)[0].length <= level);
+  return body.split(/\r?\n/).slice(start.line, end ? end.line-1 : undefined).join("\n").trim();
 }
 
 function stripPathTag(value) {
@@ -1460,12 +1466,13 @@ function validateDiagnosis(path, expectedChange, errors) {
   return { path, meta, body };
 }
 
-function validateReviews(change, required, errors) {
+function validateReviews(change, required, errors, repoRoot = null) {
   const root = join(change, "reviews");
   const paths = isDirectory(root)
     ? readdirSync(root).filter((name) => /^CR-\d{3,}\.md$/.test(name)).sort().map((name) => join(root, name))
     : [];
   if (required && !paths.length) errors.push("review stage requires a CR-###.md report");
+  const latest = [...paths].sort((a,b) => Number(basename(a).match(/\d+/)[0])-Number(basename(b).match(/\d+/)[0])).at(-1);
   for (const path of paths) {
     const { meta, body } = parseFrontmatter(path);
     if (meta.schema_version !== 1 || meta.artifact !== "code-review") {
@@ -1482,6 +1489,12 @@ function validateReviews(change, required, errors) {
     if (!new Set(["pass", "request-changes", "skipped"]).has(meta.specification_result)) errors.push(`${basename(path)}: invalid specification_result`);
     for (const heading of ["## Fixed Input", "## 标准", "## 规范", "## Summary"]) {
       if (!body.includes(heading)) errors.push(`${basename(path)}: missing '${heading}'`);
+    }
+    // Historical CRs remain readable. Only the current review or an explicitly
+    // supplied new record is checked against the independent execution contract.
+    if (required && path === latest || hasIndependentReview(path)) {
+      errors.push(...validateIndependentReview(change, toPosix(relative(change,path)), {repoRoot,requirePassed:meta.status === 'approved',expectedResults:{standards:meta.standards_result,specification:meta.specification_result},expectedHead:meta.head,checkCurrent:required && path === latest}));
+      if (meta.status === 'approved' && (meta.standards_result !== 'pass' || meta.specification_result !== 'pass')) errors.push(`${basename(path)}: approved requires both review axes to pass`);
     }
   }
   return paths;
@@ -1692,18 +1705,12 @@ function validateSpec(path, errors, warnings) {
   const sources = requireList(meta, "sources", label, errors);
   if (!sources.length) errors.push(`${label}: sources must contain at least one source`);
   if (meta.ready_for_tickets === true) {
-    const unresolved = sectionBody(body, "### 未决问题");
+    const unresolved = semanticSection(body, ["未决问题"]);
     if (unresolved && !/^无[。.]?$/.test(unresolved.trim())) {
       errors.push(`${label}: ready Spec has unresolved high-impact questions`);
     }
-    for (const heading of [
-      "## 1. 问题与目标",
-      "## 2. 解决方案与外部行为",
-      "## 4. 验收合同",
-      "## 5. 范围",
-      "## 9. 验证策略",
-    ]) {
-      if (!body.includes(heading)) errors.push(`${label}: ready Spec missing '${heading}'`);
+    for (const heading of ["问题与目标", "解决方案与外部行为", "验收合同", "范围", "验证策略"]) {
+      if (!semanticSection(body,[heading])) errors.push(`${label}: ready Spec missing '${heading}' content`);
     }
   }
   return { path, meta, body };
@@ -2181,32 +2188,22 @@ function validateTicket(path, errors) {
     if (!new Set(["ready", "in_progress", "review", "done"]).has(meta.status)) {
       errors.push(`${basename(path)}: ready=true conflicts with status=${meta.status}`);
     }
-    for (const heading of REQUIRED_READY_TICKET_SECTIONS) {
-      if (!body.includes(heading)) errors.push(`${basename(path)}: Ready Ticket missing '${heading}'`);
+    for (const names of [["目标与来源","战略与来源"],["行为与范围","要构建什么"],["验收标准"],["验证方法","验证矩阵"]]) {
+      if (!semanticSection(body,names)) errors.push(`${basename(path)}: Ready Ticket missing '${names[0]}' content`);
     }
-    const unresolved = sectionBody(body, "### 未决问题");
+    const unresolved = semanticSection(body, ["未决问题"]);
     if (unresolved && !/^无[。.]?$/.test(unresolved.trim())) {
       errors.push(`${basename(path)}: Ready Ticket has unresolved questions`);
     }
     if (!lists.writable_paths.length) errors.push(`${basename(path)}: Ready implementation Ticket requires writable_paths`);
-    if (new Set(["standard", "deep"]).has(meta.planning_depth)) {
-      for (const heading of ["## 5. 实现契约", "## 6. 执行路线"]) {
-        if (!body.includes(heading)) {
-          errors.push(`${basename(path)}: ${meta.planning_depth} Ticket missing '${heading}'`);
-        }
-      }
-    }
-    if (meta.planning_depth === "deep" && !body.includes("## 9. 发布、迁移与恢复")) {
-      errors.push(`${basename(path)}: Deep Ticket missing release/migration/recovery`);
-    }
-    const verification = sectionBody(body, "## 8. 验证矩阵");
+    const verification = semanticSection(body, ["验证方法","验证矩阵"]);
     if (!verification || !verification.includes("|")) {
       errors.push(`${basename(path)}: Ready Ticket has no usable verification matrix`);
     }
     if (!verification.includes("E2E disposition") || !/(current-workspace|source-worktree|parent-candidate|direct-parent)/.test(verification)) {
       errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and an explicit execution environment`);
     }
-    const acceptance = sectionBody(body, "## 10. 验收标准").toLowerCase();
+    const acceptance = semanticSection(body, ["验收标准"]).toLowerCase();
     if (!acceptance.includes("- [ ]") && !acceptance.includes("- [x]")) {
       errors.push(`${basename(path)}: Ready Ticket has no acceptance checklist`);
     }
@@ -3099,7 +3096,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     if(archive?.archive_state === 'moved') warnings.push('archive moved and checked, but is not sealed; finish the original A8 receipt');
     return { errors, warnings, ...(archive ? {archive} : {}) };
   }
-  if (isParentImplementation) validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot, options);
+  const parentImplementation = isParentImplementation ? validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot, options) : null;
   errors.push(...validateInitiative(change));
   if (isFile(join(change, "source-issue.md"))) {
     errors.push("obsolete source-issue.md is forbidden; use source.md without compatibility fallback");
@@ -3127,7 +3124,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   if (isFile(diagnosisPath) || stage === "diagnosis") {
     validateDiagnosis(diagnosisPath, basename(change), errors);
   }
-  validateReviews(change, stage === "review", errors);
+  validateReviews(change, stage === "review", errors, workspace.context.projectRoot);
   validatePrototypes(change, stage === "prototype", errors, prototypeId, new Set(["spec", "tickets", "goal-plan", "implement", "review", "complete"]).has(stage), workspace.context);
   if (new Set(["tickets", "goal-plan", "implement", "review", "complete"]).has(stage)) runDesignCheck("--handoff", change, errors, workspace.context);
   validateChangeLearning(change, stage === "learn", errors);
@@ -3266,6 +3263,43 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
 
   if (stage === "complete" && spec && !ticketMode && !isParentImplementation && !retroOnly) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
 
+  // New completion/archival consumes actual review evidence. Historical records
+  // remain readable outside these gates; archived validation returned earlier.
+  let nonImplementation = false;
+  if (stage === 'complete' && !spec && !ticketMode && !simpleGoal && !goalPlan && !isParentImplementation && !changeStatus?.worktrees?.length && !isDirectory(join(change,'evidence'))) {
+    try {
+      const owner = readChangeOwner(workspace.context,basename(change));
+      if (owner.work === 'specdev/learn' && isFile(join(change,'learning','index.md'))) {
+        validateChangeLearning(change,true,errors);
+        nonImplementation = true;
+      } else if (owner.work === 'specdev/triage' && source && triage?.meta.ready_for_implementation === false) nonImplementation = true;
+    } catch(error) { errors.push(error.message); }
+  }
+  if (stage === 'complete' && changeStatus?.location.kind === 'active' && changeStatus?.outcome !== 'cancelled' && !retroOnly && !nonImplementation) {
+    const units = [...tickets.values()].filter(ticket => ticket.meta.status !== 'cancelled');
+    const finalArtifact = isParentImplementation ? 'evidence/implementation-orchestration.md'
+      : units.length > 1 ? 'evidence/final-review.md'
+      : units.length === 1 ? `evidence/${units[0].meta.id}.md`
+      : lightweight ? 'README.md' : 'evidence/direct-spec.md';
+    try {
+      const head = execFileSync('git',['-C',workspace.context.projectRoot,'rev-parse','--verify','HEAD^{commit}'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+      const executions = [...(changeStatus.worktrees ?? []), ...[...(parentImplementation?.memberStatuses?.values() ?? [])].flatMap(status=>status.worktrees ?? [])];
+      const owners = executions.flatMap(record => [record.implementation_owner, ...(record.integration?.conflict_paths?.length ? [record.integration_owner] : [])]).filter(value => typeof value === 'string' && /^[a-z][a-z0-9-]*:\S+$/i.test(value));
+      const bases = [...new Set(executions.map(record=>record.base_sha).filter(value=>/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value ?? '')))];
+      const expectedBase = bases.length > 1 ? execFileSync('git',['-C',workspace.context.projectRoot,'merge-base','--octopus',...bases],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim() : bases[0] ?? null;
+      const sourceLocator = path => {
+        const snapshot = workspace.context.readOnlySnapshot;
+        const original = snapshot ? join(snapshot.sourceContext.specdevRoot,relative(workspace.context.specdevRoot,path)) : path;
+        return toPosix(relative(workspace.context.projectRoot,original));
+      };
+      const specLocator = sourceLocator(spec ? spec.path : join(change,'README.md'));
+      const requiredSpecifications = isParentImplementation
+        ? [sourceLocator(join(change,'implementation-plan.md')),sourceLocator(join(change,'implementation-map.md')),...new Set([...(parentImplementation?.ticketByTask?.values() ?? [])].map(unit=>sourceLocator(join(unit.memberRoot,'spec.md'))))]
+        : spec ? [specLocator] : [`${specLocator}#scope`,`${specLocator}#acceptance`];
+      errors.push(...validateIndependentReview(change,finalArtifact,{repoRoot:workspace.context.projectRoot,expectedHead:head,expectedBase,requiredImplementers:owners,requiredSpecifications,checkCurrent:true,requireDelivery:true}));
+    } catch(error) { errors.push(`independent-review: final delivery checkpoint unavailable: ${error.message}`); }
+  }
+
   if (spec && ticketMode) {
     const declaredContracts = new Set(spec.body.match(/\bAC-\d+\b/g) ?? []);
     const coveredContracts = new Set(
@@ -3351,6 +3385,14 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       continue;
     }
     const text = readText(evidence);
+    if (stage === 'complete' && changeStatus?.location.kind === 'active' || hasIndependentReview(evidence)) {
+      const execution = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId);
+      errors.push(...validateIndependentReview(change, `evidence/${ticketId}.md`, {
+        repoRoot:workspace.context.projectRoot,
+        expectedHead:execution?.integration?.result_sha ?? execution?.source_checkpoint ?? null,
+        checkCurrent:false,
+      }));
+    }
     const currentWorkspace = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId)?.workspace_ref === "current";
     const requiredHeadings = [
       "## 2. Lead Dispatch And Candidate Return",
@@ -3471,7 +3513,7 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--sealed (archived only)] [--prototype-id UI-NNN|LOGIC-NNN] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr|source-files> [comparison options or repeated --file <relative-path>] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--sealed (archived only)] [--prototype-id UI-NNN|LOGIC-NNN] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr|source-files|working-tree> [comparison options or repeated --file <relative-path>] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
   return 2;
 }
 

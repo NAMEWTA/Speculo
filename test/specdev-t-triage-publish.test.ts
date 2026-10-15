@@ -322,8 +322,10 @@ Resolve the separately requested publication before archival.
 
 ## Ownership
 Owner: lead-session
+Work: specdev/triage
 Evidence: owner.md
 `);
+      await writeFile(join(root,'owner.md'),'Owner: lead-session\nWork: specdev/triage\nSource: synthetic triage-only request\n');
       const completed = runValidator(root, "complete");
       assert.equal(completed.status, 0, completed.stdout + completed.stderr);
       const blocked = runValidator(root, "archive-ready");

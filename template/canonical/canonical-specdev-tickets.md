@@ -151,21 +151,21 @@ UI 拆票必读 下方 `<design-contract>` 标签 与已批准 specdev/changes/{
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
 - [ ] 按有效计划或当前 I 执行合同 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
-- [ ] Ticket 完成合同包含 implementation commit、direct-parent 或 candidate-merge、父分支 result SHA 和 Lead Evidence；仅 required 模式需要独立 worktree。
+- [ ] Ticket 已明确进入 I-implement，由该入口负责 implementation commit、direct-parent 或 candidate-merge、独立双轴审查、父分支 result SHA 和 Lead Evidence；正文不重复通用清单。
 - [ ] Evidence 位置明确为 `specdev/changes/{change}/evidence/T-NN.md`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用本文约定的逻辑路径。
 
 ## Standard 门禁
 
-- [ ] 实现契约包含入口、输入输出、不变量、状态或数据流、失败行为和兼容。
-- [ ] 有 3–7 步有序执行路线。
+- [ ] 适用的接口、不变量、失败与兼容合同可由 Spec 和本票差异定位。
+- [ ] 影响安全或正确性的关键顺序已明确；不要求固定数量的执行步骤。
 - [ ] 路径所有权足以支持并发判断。
 - [ ] 验证矩阵可以证明外部行为，而非只检查内部调用。
 
 ## Deep 门禁
 
-- [ ] 迁移顺序、兼容窗口、监控、回滚或前向恢复、收缩条件和批准点完整。
+- [ ] 实际涉及的迁移、兼容、监控、恢复、收缩条件和批准点完整；无关项省略。
 - [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
 - [ ] 跨 implementation owner 的路径所有权和所选 direct-parent/parent-candidate 集成 Gate 明确。
 - [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。
@@ -223,133 +223,49 @@ shared_path_owners: []
 
 # Ticket T-01: <标题>
 
-- **Ticket 文件：** `specdev/changes/{change}/ticket/01-<ticket-name>.md`
 - **总体 Map：** `specdev/changes/{change}/tickets-map.md`
 - **上游 Spec：** `specdev/changes/{change}/spec.md`
 - **完成 Evidence：** `specdev/changes/{change}/evidence/T-01.md`
+- **执行入口：** 获得实现授权后读取并执行 “实现阶段”；按 Map → 适用项目 Skill → 当前 Ticket 读取输入。项目 Skill 调用不能替代 I 的实现、独立双轴审查及完成流程。
 
-实现本 Ticket 时，Lead 与 实现执行者 必须按顺序完整读取总体 Map，读取项目 Skill 的 frontmatter 与入口并只展开适用于 `ALL`/`T-01` 的匹配项，再读取本 Ticket 与相关上游工件。Map 中的 Skill 是最低必读集合；新的匹配项先由 Lead 同步到 Map 并重新校验。
+## 目标与来源
 
-## 1. 战略与来源
+<本票交付的可观察产出、为何需要，以及上游 AC/用户决定/诊断来源；只补充相关现状与差距。>
 
-- **目标：** 做什么、为什么、基于什么现有能力。
-- **可观察产出：** 完成后用户、调用者或系统外部可以观察到什么。
-- **来源：** `US-###`、`AC-###`、`ADR-###`、`USER-DECISION`、`CODE`、`RESEARCH` 或 `DIAG-###`。
-- **当前事实：** 相关现状与目标差距；项目文件使用项目根相对路径，例如 `src/example.ts`。
-- **Planning Depth 原因：** 说明为什么是 Lite、Standard 或 Deep。
+## 行为与范围
 
-## 2. 决策状态
+<描述入口、动作、结果与适用失败行为组成的完整垂直切片。引用 Spec，明确本票 IN/REUSE/OUT 和必要差异，不复制上游合同。>
 
-### 已锁定决策
+## 验收标准
 
-- ...
+- [ ] `AC-001`：<本票可独立验证的结果>。
 
-### 已采用的低影响假设
+## 验证方法
 
-- 无。
+| 行为或风险 | 验证接缝 | 命令或步骤 | 预期结果 | Evidence |
+|---|---|---|---|---|
+| ... | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
+
+- **E2E disposition：** required / not-required：原因。
+- **运行环境：** 按有效执行合同选择 current-workspace 或 source-worktree；required E2E 由 Lead 在 current-workspace 或 parent-candidate 执行。
+
+覆盖真实正常、失败和回归风险；不为无关风险制造测试或重复验收条目。
+
+## 执行约束
+
+依赖、深度及理由、路径所有权、资源声明和 Skill 调用绑定以 frontmatter 为准；`expected_changes` 仅作导航，实现前核对实际代码。必需项目 Skill 按 下方 `<ref-common-rules-skill-invocation>` 标签 实际调用并保留证据。
+
+仅补充绑定字段未表达的本票约束：公共接口差异、不可交换的迁移/安全顺序、用户明确交付数量与必要批准点。局部实现由 I 决定，不要求固定步数。通用停止、检查点、集成和完成合同由执行入口负责。
+
+## 未决事项与风险
+
+<仅写适用风险、低影响假设及其验证方式；迁移、兼容、恢复、收缩条件和批准按实际风险展开。没有额外风险时写“无”。>
+
+存在改变行为、接口、数据、安全、兼容、范围或验收的高影响问题时保持 `ready: false`；记录解除条件与上游 owner。
 
 ### 未决问题
 
 无。
-
-存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。
-
-## 3. 范围边界
-
-| IN（本 Ticket 构建） | REUSE（复用且不改变契约） | OUT（明确不做） |
-|---|---|---|
-| ... | ... | ... |
-
-## 4. 要构建什么
-
-从用户或调用者视角描述一条完整行为路径：入口、动作、可观察结果、失败行为和边界。不要按数据库、后端、前端、测试等技术层分段罗列。
-
-## 5. 实现契约
-
-<!-- Lite 可压缩为适用条目；Standard 和 Deep 必填。 -->
-
-- **入口或接缝：**
-- **输入与输出：**
-- **公共接口变化：** 无 / ...
-- **不变量：**
-- **状态或数据流：**
-- **错误与失败行为：**
-- **兼容要求：**
-- **安全与隐私要求：** 不适用：原因 / ...
-
-## 6. 执行路线
-
-<!-- Lite 通常 1–3 步；Standard 和 Deep 通常 3–7 步。描述行为顺序、安全落点和验证时机，不写逐行代码。 -->
-
-1. 建立或确认验证接缝，使目标行为或关键风险按预期失败。
-2. ...
-3. 形成保持仓库可验证的安全落点。
-4. 运行定向验证和适用回归。
-
-## 7. 路径访问契约
-
-- **预计修改点：** 与 `expected_changes` 对齐，仅作导航。
-- **可写范围：** 与 `writable_paths` 对齐；越界前必须停止。
-- **只读上下文：** 与 `read_only_paths` 对齐。
-- **共享路径：** 与 `shared_paths` 对齐；每项在 `shared_path_owners` 指定唯一 owner。
-- **保留或不动：** 无 / ...
-
-项目路径必须写成项目根相对路径。SpecDev 工件必须使用本文约定的逻辑路径。
-
-## 8. 验证矩阵
-
-| 行为或风险 | 验证接缝 | 命令或步骤 | 预期结果 | Evidence |
-|---|---|---|---|---|
-| 正常路径 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
-| 失败路径 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
-| 回归 | ... | ... | ... | `specdev/changes/{change}/evidence/T-01.md` |
-
-不适用的关键风险类别必须写“不适用：原因”。
-
-- **Workspace checks：** 按有效计划或当前 I 执行合同 在 current workspace 或 source worktree 运行单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
-- **E2E disposition：** required / not-required：原因。
-- **E2E owner/environment：** Lead / current-workspace 或 parent-candidate；required 时写明场景、接缝与预期。
-- **Integration evidence：** implementation/source commit、parent before、适用 candidate/result SHA 和父分支包含关系。
-
-E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不得在 Ticket source worktree 运行或声明通过。
-
-## 9. 发布、迁移与恢复
-
-<!-- Deep 必填；其他深度仅在适用时保留。 -->
-
-- **迁移顺序：** 不适用：原因 / ...
-- **兼容窗口：** 不适用：原因 / ...
-- **监控信号：** 不适用：原因 / ...
-- **回滚或前向恢复：**
-- **不可逆操作与批准点：** 无 / ...
-- **收缩条件：** 不适用：原因 / 旧调用点、旧数据或旧协议使用量为零并有 Evidence。
-
-## 10. 验收标准
-
-- [ ] `AC-001`：<可判定结果>。
-- [ ] 实现开始前已完整读取 Tickets Map，已读取项目 Skill 入口并完整展开其中适用于 `ALL`/`T-01` 的匹配项；新发现的匹配 Skill 已由 Lead 同步回 Map。
-- [ ] 验证矩阵全部执行并记录到 `specdev/changes/{change}/evidence/T-01.md`。
-- [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
-- [ ] Ticket 已按有效计划或当前 I 执行合同 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
-- [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
-- [ ] 未发生未批准的范围、契约或发布偏差。
-- [ ] Ticket 状态有本票 Evidence 支撑；Tickets Map 的导航、依赖和合同覆盖仍有效，不复制本票进度。
-
-## 11. SKILL 调用计划
-
-依据 下方 `<ref-common-rules-skill-invocation>` 标签 填写 frontmatter 绑定；正文解释每项调用为什么属于本票、具体何时调用、输入定位、输出如何用于下一步。不是仅给出技能名称或阅读列表。没有适用项目 Skill 时写明真实扫描证据；不要保留 unreviewed。
-
-## 12. 停止、检查点与交付
-
-- **用户交付要求与数量：** 与 Map 的 requested_deliverables 对齐；不为压缩而减少。
-- **必需 Skill/引用/测试不可用：** 阻塞本票，报告缺口，不静默替换默认工具。
-- **归属与资源冲突：** 暂停本票和受影响下游，不接管他人状态；独立票由 map 继续。
-- **检查点：** 记录源版本、绑定摘要、已完成步骤、Evidence 和未闭合动作；恢复前回读。
-- **完成出口：** 全部适用验收及实际 Skill 证据通过，再将结果交回 Goal；未完成项明确列出。
-
-## 工程验收补充（适用时）
-
-列明真实消费者/入口、文档和升级说明、错误后的状态保证、恢复责任、旧测试的风险承接，以及代码/输入/配置/Skill 变化时需重验的证据。性能票引用用户操作与基线；documentation 票区分纯说明与模型/用户可见变化。无关项写不适用及理由，不逐项另造 Ticket。
 
 </ticket-template>
 
@@ -379,6 +295,8 @@ status: draft
 - **可选 Goal Plan：** `specdev/changes/{change}/goal-plan.md`
 
 ## 1. 目标与拆分策略
+
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 “实现阶段”，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
 
 引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
 
@@ -517,7 +435,7 @@ Ticket 告诉执行者：做什么、为什么、不能改变什么、按什么�
 ## 7. 分层规划
 
 - Spec 决定外部行为。
-- Ticket 是决策完备的微型执行计划。
+- Ticket 是可独立验收的垂直行为切片；外部合同和必要执行约束完备，局部实现由 I 决定。
 - Tickets Map 决定依赖和覆盖投影。
 - Goal Plan 只在协调复杂度需要时决定跨 Ticket 编排。
 - Implement 在既定契约内完成代码和 Evidence。
@@ -651,19 +569,19 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 
 适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
 
-最低内容：目标、范围、项目路径授权、1–3 条执行路线、验收标准和验证方法。
+最低内容：目标、垂直行为切片、范围、项目路径授权、验收标准和验证方法。局部实现由 I 决定。
 
 ### Standard
 
 适用于大多数跨多个文件或技术层的垂直切片。
 
-额外要求：锁定决策与假设、接口接缝、输入输出、不变量、失败行为、有序执行路线、验证矩阵和路径所有权。
+按适用性补充接口接缝、不变量、失败行为和低影响假设；上游已有合同直接引用。仅在顺序影响安全或正确性时记录执行路线，不要求固定步数。
 
 ### Deep
 
 任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调、多个实质架构方案或高事故半径。
 
-额外要求：数据流或状态转换、兼容窗口、迁移顺序、可观测性、回滚、风险缓解、收缩条件和人工批准点。
+对触发 Deep 的实际风险补充数据/状态、兼容、迁移、恢复、风险缓解、收缩条件或批准点。无关维度省略；Deep 不要求每票填满所有栏目。
 
 ## 2. Ticket Definition of Ready
 
@@ -679,8 +597,8 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 - shared path 有唯一 owner；
 - 验收标准可判定；
 - 验证矩阵覆盖正常、失败和回归风险，或有可信的不适用理由；
-- Standard 或 Deep Ticket 有有序执行路线；
-- Deep Ticket 有迁移、兼容、监控、回滚和批准点，或逐项说明不适用；
+- 迁移或安全操作等不可交换的顺序已明确；普通局部实现不要求预写步骤；
+- Deep Ticket 的实际风险及相应迁移、兼容、恢复或批准要求已闭合；
 - 单个全新上下文可以完成，否则必须拆分。
 
 详细检查位于 下方 `<ticket-readiness>` 标签。
@@ -1126,6 +1044,8 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 
 每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到有效执行合同的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
+候选的代码、规范或相关配置与已审输入不同，尤其发生合并或冲突修正时，按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 在此实际 candidate 上完成独立双轴审查。修正合并冲突的 Lead/Agent 也属于实现者；两轴通过前不得推进。完全相同的输入沿原证据复用门核对，不以 source 检查代替 candidate 审查。
+
 ## 4. 推进父分支
 
 全部 required 检查通过后：
@@ -1405,6 +1325,8 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 - 工程 docs：docs/README.md，明确请求基线后按需存在；它是跨领域工程事实，不是 SpecDev 独占知识 store。
 
 归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。新 archive 不嵌套月份。旧历史移动须另有明确计划，验证所有 locator 和 DESIGN 摘要；不可变正文不做路径替换。
+
+实际外部派遣的输入、报告和按需历史快照按 下方 `<shared-coordination-session-files>` 标签 保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
 ## 唯一整体结论
 
@@ -2948,7 +2870,7 @@ token 引用必须可解析且无循环；页面/规则/来源 ID 唯一。正�
 # 拆分 Tickets
 
 
-Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
+Ticket 是**可独立验收的垂直行为切片**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
 
 本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
 
@@ -3049,27 +2971,13 @@ UI 范围同时读取 下方 `<design-contract>` 标签 与 specdev/changes/{cha
 
 规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
 
-### 5. 写成决策完备 Ticket
+### 5. 写成可交接的垂直切片 Ticket
 
 必须按 下方 `<ref-common-rules-skill-invocation>` 标签 填写本票真实调用绑定；Map 中的读取路由不能代替调用。
 
-使用 下方 `<ticket-template>` 标签 填写：
+使用 下方 `<ticket-template>` 标签：正文只写目标与来源、垂直行为与范围、验收和验证、本票执行约束及适用风险。依赖、路径、资源和项目 Skill 调用以原 frontmatter 为准；不在正文维护镜像。
 
-- 战略目标、可观察产出与来源追踪；
-- 当前代码事实和需求差距；
-- 已锁定决策、低影响假设和未决问题；
-- IN / REUSE / OUT；
-- 用户或调用者视角的端到端行为；
-- Standard/Deep 的接口、输入输出、不变量、数据流、失败与兼容契约；
-- 有序执行路线和安全落点；
-- expected、writable、read-only、shared 路径；
-- 正常、失败和回归验证矩阵；
-- 每个 Ticket 按有效计划或当前 I 执行合同 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
-- 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
-- Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
-- 可判定验收标准。
-
-路径所有权必须遵守 下方 `<path-ownership>` 标签，证据设计必须遵守 下方 `<evidence-and-verification>` 标签。
+引用上游 AC/ADR，只补充本票差异。公共合同、关键安全顺序和验收必须确定；局部实现选择交给 I。Lite/Standard/Deep 决定需要展开的实际风险，不规定执行步数，也不要求无关栏目逐项填“不适用”。通用实现、独立审查、集成、停止与恢复沿 I 入口执行。
 
 ### 6. 构建依赖 DAG、合同覆盖与并发检查
 
@@ -3454,6 +3362,153 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 </ref-common-rules-test-reliability>
 
+<ref-common-skills-code-review-references-review-evidence>
+
+# 独立审查证据
+
+供 C、I 和最终集成审查使用。只在原 CR、I Evidence、轻量 README 或原整体 Evidence 中记录，不创建 Agent 注册表、状态镜像或完整聊天副本。外部派遣复用已有 TASK/REPORT；原生工具可把必要原始输出及 Lead 核验摘录保存在同一 Markdown 的独立锚点。工具提供的真实身份统一写成 `provider:agent-or-session-id`，如原生工具句柄；不得使用任意角色名或 session 目录名代替。
+
+## 冻结输入
+
+在报告中建立独立的 `review-input` 锚点，用一个 JSON 对象保存 `scope`（review-scope 的完整原始返回值）、`sources` 和适用的 `exclusions`。sources 每项为 `kind: standards|specification|instructions`、项目根相对 `locator` 和实际 UTF-8 原文字节的 `sha256`。locator 可带显式锚点；轻量 README 只摘要其 scope/acceptance 等合同段，不能摘要包含审查记录的整份 README。来源必须覆盖本轮实际规范、标准及适用指令。
+
+`Input-SHA256` 为该对象经 JSON.parse 后再 JSON.stringify 的 UTF-8 SHA256，由工具计算，不手写猜测。将同一对象及摘要交给 reviewer。摘要证明输入一致，不证明审查真的发生。
+
+未提交的 Direct Spec 先读取 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签。Git diff 使用实际工具返回的不可变端点；规范/标准和相关指令变化也会使受影响结论失效。
+
+## 最小记录
+
+下列字段和表头置于原 owning 工件；locator 相对当前 change。无 change 时返回相同信息和真实工具输出，沿调用方原报告位置保存，不为审查制造 change。
+
+```markdown
+## Independent Review
+
+Input: evidence/T-01.md#review-input
+Implementers: provider:actual-implementation-session
+Mode: native
+Verified-By: provider:actual-lead-session
+Verification: evidence/T-01.md#review-receipt
+
+| Axis | Reviewer | Result | Report |
+|---|---|---|---|
+| standards | provider:actual-review-session | pass | evidence/T-01.md#standards-output |
+| specification | provider:actual-review-session | pass | evidence/T-01.md#specification-output |
+```
+
+Mode 为 native/herdr/orca/cli。Implementers 包含本范围全部实现及修复者；Lead 参与实现也列入。每轴 Report 指向 reviewer 实际输出的独立段，含 `Reviewer`、`Axis`、`Result`、`Input-SHA256`、`Observed` 字段及具体 findings/依据。不能指回汇总表自证。请求修正或未验证不得改写为 pass；原报告不覆盖。
+
+Verification 指向 Lead 回读真实派遣和返回事实后的独立核验段，含 `Verified-By`、`Mode`、`Reviewers`（逗号分隔真实身份）、`Input-SHA256`、`Result: verified`、`Observed`。Observed 说明工具返回的实际身份、派遣/返回定位、只读范围和核验事实；工具不提供的事实保持未验证。需要深查时沿原历史会话 locator 检索，不以 JSONL 文件存在代替审查。
+
+## 完成与复用
+
+完成前回读输入、原报告和工具核验。实现范围内的 reviewer 不独立；一轴失败或 I 缺规范都阻塞完成。改变角色名或重新开启同一实现者的上下文不能绕过。
+
+单票结果以本票实际 checkpoint 为准。多个实现单元组合或冲突修正后，Lead 对实际最终整体范围调用同一独立审查能力，在 specdev/changes/{change}/evidence/final-review.md 记录；跨 change 父编排使用原 specdev/changes/{change}/evidence/implementation-orchestration.md。单 Direct Spec/单票最终输入完全相同可沿用原 Evidence；候选变化先补审再推进父分支或宣布完成。整体输入以最初实施基线为起点，覆盖所有成员实际交付，不只审最后一票。
+
+C 可以只审明确的不可变 commit；I 完成时还必须确认实际工作副本与该交付一致。存在未提交代码时转入 working-tree 审查，不能沿用旧 commit 的通过结论。原 change 的 Markdown 执行记录可在审查后更新；规范与标准段仍需摘要一致。父编排的输入包含原 Implementation Plan/Map 和各成员 Spec，并纳入成员实际实现/冲突修复者及共同起始基线。纯学习或 triage 调查依据原 Ownership/Work 和非实现产物判定，附加 learning 索引不能豁免实现审查。
+
+旧报告可只读展示；作为本轮完成或复用依据时，缺少独立性与固定输入证据就重新审查。静态校验仅验证记录、原文匹配和版本一致性，真实执行仍由 Lead 核对工具事实；工具不可用不能从格式通过推导完成。
+
+</ref-common-skills-code-review-references-review-evidence>
+
+<shared-coordination-session-files>
+
+# 派遣文件与聚焦交接
+
+在已有 change 中通过 CLI、Herdr、Orca 等外部工具派遣任务时读取。首次实际派遣才创建文件；宿主原生协作按需采用，Lead 自行执行不创建虚构派遣。无 change 时使用当前 Work 已有报告位置，不补造 change。external-web 继续使用原 ZIP 交付合同。
+
+## 目录与身份
+
+SpecDev 任务目录为 specdev/changes/{change}/sessions/{session}/{task}/：
+
+- `{session}` 是一轮编排，使用中性的 UTC `YYYYMMDDTHHMMSSZ`，不带 Work 或任务类型；恢复同一轮继续使用原目录，新轮次另建，同秒冲突追加最小未使用后缀 `-01`、`-02` 等。
+- `{task}` 是一次具体派遣，命名为轮内递增编号加实际主题，如 `001-code-review`、`002-research`、`003-implement` 或 `004-test-observation`。具体 Work、任务类型和 Ticket 写入 TASK。修正交付或重试使用新编号并引用前次报告，不增加 attempt 子目录，不覆盖旧输入与结果。
+- 两种目录标识只使用字母、数字、连字符；由 Lead 分配，不从未经检查的标题直接拼路径。确认目录在当前 change 内、无链接跳转且未被占用。
+- 编排 session/task 与工具的 Run、Dispatch、pane、conversation ID 分开；工具定位信息记录真实返回值和所属主机，不猜句柄。
+
+每个任务通常只有两份文件：Lead 写 specdev/changes/{change}/sessions/{session}/{task}/TASK.md，执行者写 specdev/changes/{change}/sessions/{session}/{task}/REPORT.md。不另建 session 总表、状态 JSON、心跳文件或聊天流水。
+
+原 Evidence 或当前 Work 工件引用这两份文件及 Lead 的验收结论，不复制整份输入、报告或第二套业务状态。持久导航同时绑定稳定 change 身份与 change 根相对 locator，归档后按该 change 的唯一实际位置解析，不能仅依赖旧活动目录。其他领域仅在其 Work 已拥有的产物位置使用同一交接内容，不接管 SpecDev namespace。
+
+## 输入与文件所有权
+
+Lead 将当前交接说明要求的必要上下文写入 `TASK.md`，使用以下五组内容，按需引用原件，不抄整套规格：
+
+| 内容 | 必需事实 |
+|---|---|
+| 身份与目标 | session/task、implementation/review/research/test-observation、change/Ticket（实际存在时）、Lead、执行者和成功定义 |
+| 输入 | 真实 Work/Skill 入口、必要规格和依赖产物、已锁定决定；前序背景引用原报告与其中的历史入口 |
+| 工作区与范围 | current/required、真实执行位置与基线、允许/只读/共享路径及 owner、已获授权的动作、停止条件 |
+| 验收 | 要运行的检查、可观察通过标准、未在执行者环境运行的 Gate 及其 owner |
+| 返回与通信 | 准确报告位置、提问/通知的工具原生通道、实际调用方式与工具句柄；尚未取得的句柄由 Lead 在调用返回后补记 |
+
+TASK 的返回要求必须包含：
+
+> 交付前主动定位本次会话的原始历史记录，核对所属主机、会话 ID 和可读性，在 REPORT 中记录真实路径及本任务检索范围。无法取得时说明原因，不猜测路径。报告正文应能独立说明结果，不要求接收方先读完整聊天。
+
+Lead 在派遣前形成完整输入、检查并写入，再回读确认后投递。输入正文此后保持稳定，只允许补记实际调用句柄/时间；目标、基线或权限实质变化时建立新任务并保留旧任务。普通澄清通过原生通道回答，影响结果的答复写入报告。
+
+派遣前确认执行者能读输入和必要材料，且能交付报告。独立工作区需要明确实际可读输入和可写报告位置；只有工具返回文本时，由 Lead 原样捕获到正式报告，标注 `Captured-by: Lead` 和原始消息 locator，不补造执行者的验证结果。执行者和 Lead 不同时写同一报告。
+
+只读任务仅可写被明确分配的报告及允许的测试产物，业务文件仍只读。报告路径不同允许独立交付，不放宽 current 的单一代码 writer 约束。所有文件先完成候选内容，再使用可用的同目录临时文件与不覆盖目标的原子落盘方式，写前检查目标未被占用、写后回读；已有正式报告不覆盖，发现冲突交 Lead 处理。未完成的临时文件不是报告，也不能作为完成信号。
+
+## 报告与通知
+
+执行者交回任务时一次性写完整 `REPORT.md`，首部用普通 Markdown 字段明确身份和状态，不要求 YAML/JSON。以下是模板，正文占位说明须替换为实际事实：
+
+```markdown
+# 任务回报
+
+Session: 本轮编排标识
+Task: 本次派遣标识
+Status: completed / blocked / failed / cancelled（仅保留实际值）
+
+## 聚焦交接
+用三至五句话说明完成内容、关键决定、当前停点和下一安全动作。
+
+## 产物与验证
+- 修改或成果：真实文件、checkpoint/commit、dirty 状态或其他产物位置。
+- 验证：命令、退出码、执行环境和实际观察；研究列来源，审查列 findings。
+- 未完成或未验证：实际事项；没有则写“无”。
+
+## 问题与下一步
+阻塞/失败/取消的事实、已尝试内容、需要谁提供什么及恢复条件；无问题写“无”。
+
+## 历史会话
+- 工具与主机：实际工具、记录所属主机。
+- 会话 ID：工具提供的真实标识。
+- 原始记录：所属主机上的实际绝对路径，或工具原生历史入口。
+- 核验：由谁、在哪台主机确认了会话对应关系和可读性；未核验项及原因。
+- 本任务范围与检索线索：消息/时间范围、关键函数或错误信息等关键词。
+```
+
+| Status | 表示什么 |
+|---|---|
+| completed | 执行者完成分配范围并交回候选，仍待 Lead 验收 |
+| blocked | 缺输入、权限、依赖或决定，说明恢复所需条件 |
+| failed | 本次尝试失败，保存已产生的产物和失败事实 |
+| cancelled | 本次派遣按实际指示取消，记录已发生影响和停止情况 |
+
+进行中问题与进度使用工具原生通道，不反复刷新报告。`blocked` 是交回本次派遣；正常提问并等待答复仍在原任务中进行。同一报告的状态不流转，后续修复/重试建立新任务；旧执行者是否停止仍按真实工具核对。
+
+文件回读成功后，通过当前工具原生通道返回“session/task、Status、报告位置、一句话摘要”；原生生命周期参数遵守工具当前指南，不直接把上述枚举塞入工具不支持的字段。工具结果不明或报告缺失时，Lead 按原任务的返回与恢复合同查询原调用，不重复派遣可能仍在写入的任务。
+
+## 历史会话的按需回查
+
+以下是 Agent 使用当前工具执行的交接要求，不代表 Speculo 提供自动日志发现或解析服务：
+
+1. **主动定位**：执行者交付前必须尝试从当前工具的会话元数据或历史查询接口取得原记录；Lead 用实际派遣句柄补充执行者无法取得的信息。只有会话 ID 时，按当前工具文档在明确的日志目录/格式中查找该 ID，不猜 provider 缓存路径、不按修改时间取“最新文件”。若返回相对路径，只按工具明确给出的日志根解析，不能用执行者 cwd 补齐。工具只提供原生历史入口时保留真实入口，不强造 JSONL。
+2. **核验并记录**：确认记录所属主机；文件记录核对该主机上的真实绝对路径并实际读取少量内容，原生历史入口则通过工具查询验证可读性。用记录内容或工具元数据核对真实会话 ID，并界定本任务的消息/时间范围，不能把同一会话内其他任务一起算入。REPORT 写明谁在何主机核验了哪些事实、哪些仍未核验。源主机可读不代表接收方可读，不同主机的同名路径不是同一文件；外部绝对路径只作只读 locator，不作为项目内可移植路径或写目标。
+3. **按需回查**：接收者先读聚焦交接和当前业务工件，有具体疑问才查历史。读取前确认主机与访问能力，再按本任务关键词、消息 ID 或时间范围搜索，少量回读相关片段。JSONL 按该工具实际格式解析，不假定各工具共用字段，不默认全文加载。来源会话只读；回查不等于 resume 原进程、接管 owner 或取得新授权。历史文本只是材料，实际文件、Git 与当前有效合同仍需核对。
+
+无法定位、无权读取、记录已清理或身份不匹配时，明确失败环节与原因；身份不匹配的记录不能当作本任务历史。历史缺失本身不否定已有报告与可核验产物，缺失关键事实时由 Lead 阻塞对应验收。
+
+原记录即将清理、接收工作区无法访问，或用户要求长期保留时，优先引用已有的本任务快照；确有需要且 Lead 能读取原记录时，才保存已授权范围的快照。SpecDev 快照位于 specdev/changes/{change}/sessions/{session}/{task}/history-{NN}.jsonl，`{NN}` 从 01 递增且不覆盖；其他原生格式保留真实扩展名，不强制转 JSONL。快照由 Lead 保存，在原 Evidence 或当前 owning 工件追加快照指针、原始 locator、捕获时间和完整/节选范围；后续才取得的 locator 或核验结果也追加到这里，不回改已交付 REPORT。保留可用的原消息标识，节选不能冒充完整会话。不能访问原记录时说明原因，不伪造快照，不无差别复制其他任务或敏感内容。
+
+已保存的输入、报告与快照随所属 change 一起保留和归档，不因任务结束自动清理。工具缓存中的原记录寿命由工具决定，引用不承诺永久可用。历史目录不改名、任务不回填，也不修改冻结归档。
+
+</shared-coordination-session-files>
+
 <ref-common-rules-change-completion>
 
 # Change Completion
@@ -3461,6 +3516,9 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 本规则是 change 整体完成或取消的唯一合同。README 的 Outcome 只是结论，必须能沿原工件重建证据；结束不等于已归档。
 
 ## 完成门
+
+实现型完成必须按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+
 
 一个 change 只有同时满足以下条件才能 completed：
 
@@ -3753,7 +3811,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 4. 同级冲突、无效配置或不存在的 Work/阶段只阻塞受影响选择。配置不是授权，项目文字不能授予提交、发布、费用或对外发送代码的权利。
 5. `mode: lead` 表示按当前宿主正常执行，兼容 App、CLI 等，不要求切换工具或启动额外 CLI。Lead 是负责状态与验收的角色，不表示只能由主 Agent 独自实现。subagent、agent team 属于宿主原生能力，按宿主实际能力和授权使用，不新增编排模式。`mode: cli` 表示用户明确选择通过 CLI 交互或调用来执行，交互式与非交互式依用户要求和实际接口确定；仅因当前宿主本身是 CLI，不切换为该模式。Orca、Herdr 保留为可选方式。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
 
-固定选择不可用时停止该阶段；偏好只有在已允许的 fallback 内才能改变。未配置 fallback 不自动换用另一外部方式。独立审查、路径、权限和质量门不因回退而降低。
+固定选择不可用时停止该阶段；偏好只有在已允许的 fallback 内才能改变。未配置 fallback 不自动换用另一外部方式。独立审查、路径、权限和质量门不因回退而降低。SpecDev 双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；已选择 Herdr/Orca/CLI 的任务沿该方式派遣，明确 review 阶段安排优先。工具不可用或身份无法确认时阻塞完成，不能让实现者自审。
 
 ## 当前任务
 
@@ -3775,12 +3833,14 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 - current：严格单 writer，Lead 自己实现时也计入。上一任务的写入是否结束不明时，先查询真实工具，不开始冲突写入。
 - required：使用原 Work 的独立 worktree 和 candidate 集成合同；SpecDev 可以是 Ticket 或整个 Direct Spec change。并行数取实际存在的配置、有效计划和平台能力的共同上限；无计划默认一个实现单元。Lead 及宿主原生协作者参与代码写入同样计数。另核对 shared paths、端口、数据库等实际资源。
-- review/research/test-observation 默认只读；测试输出仅写原任务允许的缓存或产物位置。
+- review/research/test-observation 对业务文件默认只读；可写本任务明确分配的报告，测试输出仅写原任务允许的缓存或产物位置。
 - worktree 是工作副本，不是沙箱。Speculo 不提供运行期强制隔离、进程监管、租约或任务锁服务。
 
 ## 记录和接续
 
-有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。Ticket 任务的交接、工具 locator、返回和处置写入原 Evidence；Direct Spec 使用原 direct-spec Evidence；无 change 审查直接返回会话结果。不创建 dispatch/runs、worker profile、事件 journal 或第二套 receipt。只保存实际选择、来源和必要恢复事实，不逐个登记宿主内部 Agent。
+有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。有 change 的 CLI/Herdr/Orca 外部派遣按 下方 `<shared-coordination-session-files>` 标签 在一轮 session 下为每次派遣保存 TASK 与 REPORT，附按需回查的历史会话入口。Ticket Evidence、Direct Spec Evidence 或当前 owning 工件只引用输入/报告并保存 Lead 的核验与处置，不复制第二套业务状态。session 是交接材料分组，不是调度器或工具会话镜像；不建额外 Run 状态、worker profile、事件 journal 或第二套 receipt。
+
+宿主原生协作按需采用文件交接，不逐个登记内部 Agent；正式双轴审查仍在原 Evidence 保留实现者/reviewer 的真实身份和工具核验；Lead 自行执行不制造 session。无 change 时沿用当前 Work 已有报告位置或会话结果，不为交接创建 change。external-web 继续使用原 ZIP 合同，远程 CI 不在本文件交接约定的首版适配范围。
 
 返回后读取 下方 `<shared-coordination-result-and-recovery>` 标签。执行者宣称完成、会话空闲和进程退出都不等于业务通过。Lead 核实实际候选与原验收合同后更新正式状态。
 
@@ -3861,6 +3921,26 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 docs-sync state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
 
 </ref-specdev-i-implement-references-documentation-procedure>
+
+<ref-common-skills-code-review-references-working-tree-review>
+
+# 未提交工作副本审查
+
+I 的 Direct Spec current 未获提交授权时使用本分支。它覆盖实际交付差异，不以 HEAD 代替未提交内容；C 的 source-files 仍只承诺指定文件阅读。
+
+1. 停止相关 writer，回读实施前 Git 基线、原有 dirty 改动、当前授权写集与实际变更。确认项目 Git 根；无已存在的基线、冲突 index、不可读取文件或不支持的子模块时保持未验证，不伪造提交。
+2. 调用以下只读工具。`--file` 可重复，使用已核对的完整交付文件清单，包含删除路径；不传时覆盖相对基线的全部实际变化和非忽略未跟踪文件。只读冻结不创建 commit、不暂存、不修改 index。
+3. 保存完整返回值，审查 `working_snapshot` 的新增/修改/删除/类型及权限变化。`tracked_diff_command` 只展示 Git 已跟踪部分；新增文件读取快照对应实际字节，删除读取基线对象，二进制和符号链接分别检查实际格式/链接语义。不得因为 diff 为空忽略未跟踪新增。
+4. 使用显式范围时回读 `excluded_paths`，在输入 exclusions 中说明原有用户改动、报告等排除依据；实现范围不能排除。审查输入、原报告和 Evidence 本身放在范围外，避免自引用。原有改动不自动成为本轮可写内容。
+5. 交给未参与实现的 reviewer，结束及完成声明前重跑相同选择并核对全部范围内字节、模式、基线和 index。显式范围外新增的报告不使代码审查失效，但 Lead 仍须核实没有遗漏实现。发生范围内漂移、规范/标准/指令变化或新实现文件，重建输入并补审。
+
+```bash
+node Speculo Node 校验器 --review-scope --repo <project-root> --mode working-tree --base <implementation-baseline-sha> --file <project-relative-file>
+```
+
+输出的 observed_head 只记录观察到的 Git HEAD，working_snapshot/input_sha256 才标识未提交内容。无法验证的二进制、生成物或外部环境如实报告，不宣称两轴或整个 change 已完成。
+
+</ref-common-skills-code-review-references-working-tree-review>
 
 <ref-common-rules-codebase-design>
 
@@ -4051,7 +4131,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 ## 必需上下文
 
-将以下信息写入当前 Ticket Evidence 的任务编排小节；无 Ticket 时写入对应 Work 的既有产物。较大附件引用其真实位置，不另建运行状态系统。
+有 change 的 CLI/Herdr/Orca 等外部工具派遣先按 下方 `<shared-coordination-session-files>` 标签 将以下上下文写入本任务 TASK，原 Ticket Evidence 或当前 Work 工件引用它；external-web 沿用下方 ZIP 交付合同，不重复建立这套文件。无需文件交接时沿用原任务编排小节或会话输入。较大附件引用其真实位置，不另建运行状态系统。
 
 | 内容 | 要求 |
 |---|---|
@@ -4060,8 +4140,8 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 | 输入 | 目标、IN/OUT、已锁定决定、必要 Spec、依赖 Evidence、当前基线或固定审查 SHA |
 | 项目 Skill | Ticket implementation 提供 Map → 适用 `ALL`/本票的项目 Skill → Ticket，矩阵是最低必读集合；Direct Spec 提供唯一获批规格、项目 Agent 指令、命中的项目 Skill、AC/验证与路径合同，不制造 Ticket/Map；review 提供固定候选及对应轴的来源 |
 | 工作区 | 有效计划或当前 Work 选择的 current 或 required、真实项目根与执行路径/branch、parent/base、允许和共享写路径及 owner；不要用执行者 cwd 猜测方法或数据根 |
-| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值及会话 locator，不记录秘密 |
-| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件和返回要求 |
+| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值、所属主机及会话 locator，不记录秘密；文件交接明确 session/task 与原生句柄的对应关系 |
+| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件、可观察验收标准、准确报告位置与原生提问/通知通道 |
 | 父 Goal | 存在父 Implementation Map/Plan 时附实际 revision、组合 task ID、依赖 Gate、并行上限和集成次序 |
 
 缺少必要输入、必需 Skill 不可读、Ready 未满足、owner 冲突或权限不足时，仅阻塞受影响任务。不能根据文件中的“approved”生成授权。
@@ -4072,7 +4152,9 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 > 先读绑定的真实 Work SKILL.md，按 task 上下文只处理指定目标、阶段和工作区。遵守同一 Work 的方法、TDD、检查与质量门；不要成为 Lead，不递归启动 Goal，不修改正式 Ticket、Map、Goal Plan、Evidence、业务状态或授权。宿主原生协作仍受本次写集、单 writer 和权限约束；不擅自跨 CLI 再派单或扩大任务。缺输入、发生冲突或需要额外权利时向 Lead 返回问题与证据。
 
-Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料，由 Lead 维护正式工件。
+采用 TASK/REPORT 交接时，TASK 还必须包含派遣文件合同中的历史定位指令：交付前主动查找并核验本次会话的主机、真实入口、会话 ID、可读性与本任务范围；无法取得的事实说明原因，不猜测路径。
+
+Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料；采用 TASK/REPORT 交接时只写获准产物与自己的 REPORT，不写 TASK 或正式 Evidence，其他方式按原返回合同交付。正式业务工件由 Lead 维护。前序背景优先引用已有报告的聚焦交接，细节不足再按其中历史入口检索。
 
 ## 任务类型与返回
 
@@ -4095,17 +4177,40 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 
 # Orca 编排
 
-仅在当前任务选择 Orca 时读取。先读取本机当前版本提供的 Orca CLI 与 orchestration 指南；使用指南指向的实际命令。记录实际版本、指南来源和任务 locator，不在 Speculo 内固定 agent、模型或 runner 列表。
+仅在用户为当前任务明确选择 Orca 时读取；选择可来自同范围仍有效的会话授权。plan 只说明接入步骤，不安装、不启动。Orca 选择不隐含 worktree、模型或拓扑选择。
+
+## 按需安装项目 Skill
+
+当前 Lead 负责首次接入，项目根由调用 Work 已验证的 projectRoot 确定，不取终端 cwd、桌面客户端路径或方法安装根。
+
+1. 检查项目 `skills/orca/SKILL.md`（标准布局为宿主确认的项目 Orca Skill 入口）。存在且为有效 `name: orca` 的完整 Skill 时先读取并复用，核对来源和兼容性；不因上游更新静默覆盖。符号链接、同名非 Skill、无效内容或归属冲突时保留原文件，仅阻塞安装分支，说明冲突位置与恢复方式。
+2. 缺失时从指定上游 GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/orca 目录中的完整 Orca Skill 获取 Skill。先解析 main 的实际 revision，再从该 revision 下载 `skills/automation/orca/` 的完整内容；当前上游为单文件，未来若有相对资源依赖须完整获取，不能只保存 GitHub HTML 页面。Skill 指向的 Orca 内置指南由实际 CLI 提供，不是缺失的本地资源。
+3. 使用宿主可用的 Skill 安装器并显式指定宿主确认的项目 Skill 安装目录 为目标；没有安装器时用宿主下载和文件工具完成同一流程。先在临时位置检查 UTF-8 Markdown、YAML frontmatter、`name: orca`、引用闭包及路径，再以不覆盖方式安装。保留上游原文、frontmatter、许可和文件模式，不重写命令或权限参数。下载/校验失败时不留下半成品正式目录；目标期间发生变化时停止，不覆盖重试。
+4. 安装后回读实际 Skill，核对内容摘要与候选一致，在当前 Work 已有 Evidence/报告或会话结果中记录上游 URL、revision、内容 SHA-256、目标和结果。没有报告就不为安装制造 change 或 receipt。此 Skill 是项目第三方资产，不加入 Speculo 的投影清单，也不由 init/refresh 更新或删除。
+
+用户选择并要求使用 Orca 时可完成上述项目本地安装；持久配置本身不是新安装授权。安装 Skill 不等于安装或升级 Orca、登录账户、配对远端或启动服务。缺少网络或写权限时只阻塞 Orca 分支，给出原目标和缺失条件；重试前重新检查目标，不能自动换另一种执行方式。
+
+## 运行与返回
+
+安装或复用后必须读取项目内 Skill，按其规则定位实际 CLI：优先核对 `ORCA_CLI_COMMAND`，开发上下文核对 `ORCA_DEV_REPO_ROOT`；Linux 非托管环境使用指南规定的 `orca-ide` 入口，避免误调用同名屏幕阅读器。不要套用 Herdr 的环境变量要求，也不把环境值交给 eval。固定入口后读取本机 `--help`、`skills get orca-cli`；需要受监督编排时再读 `skills get orchestration` 及当前分支参考。核对版本、来源、执行主机与目标 runtime 能力，不把上游 main 当作本机可用接口。
+
+宿主技能列表是否已刷新不替代读取真实项目文件；安装成功也不证明 CLI 或远端可用。入口、权限或目标能力失败时保留原错误，只阻塞此方式，不静默切换生产/开发版或本地/远端入口，不自行安装升级或重启服务。
 
 1. 确认用户项目、当前工作区以及当前 Lead 的责任。需要保留 Lead 连续推进时使用受监督任务方式；完整 handoff 会转移责任，只有用户明确选择该交接时才使用。
-2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。
-3. 使用 下方 `<shared-coordination-task-brief>` 标签 的真实入口和任务说明。保存工具返回的任务/尝试/session locator；不要以标题猜句柄。
-4. 区分投递已接收、任务开始、任务返回、写入停止和业务验收。工具已有生命周期由工具管理，不再建调度器。
-5. 处理该任务的 question、完成及升级请求；已有权威答案由 Lead 回答，额外权限或产品决定再交用户。确认已处理必要消息后才按工具合同确认收件。
-6. 状态不明时重读任务和收件事实。旧句柄失效时按当前指南查询，不同时向旧、新目标重复发送。
-7. 接收、取消、保留或释放工作区按当前指南及真实授权操作。释放不等于取消，完成消息不等于旧写入者已经停止。
+2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。工具和模型沿用户选择及当前指南确定，不固化 agent/runner 清单；保留用户焦点，不复用 Herdr 参数。
+3. 使用 下方 `<shared-coordination-task-brief>` 标签 的真实入口和任务说明。有 change 时先保存 TASK，提供 REPORT 位置；记录编排 session/task 对应的 Orca Run、Task、Dispatch、终端及 provider 会话中实际存在的 locator 和所属主机，不以标题猜句柄。
+4. 区分投递已接收、任务开始、任务返回、写入停止和业务验收。Run、Task、Dispatch 与终端、工作区分别使用真实返回的身份；已有 Run/Dispatch 按指南恢复，不重复创建。工具已有生命周期由工具管理，不再建调度器，也不用其他 subagent 工具冒充 Orca 派遣。
+5. 处理该任务的 question、完成及升级请求；已有权威答案由 Lead 回答，额外权限或产品决定再交用户。报告保存后按当前原生完成协议发送摘要与报告位置；支持 report-path 时传真实路径。REPORT 的 completed/blocked/failed/cancelled 不直接代替 Orca 的 outcome 参数；按本版 worker 协议提交原 Task/Dispatch 的结果，已结算的不再补写第二次完成。处理必要消息与资源归属后才确认收件，不因超时重建同一问题。
+6. 状态不明时重读原任务、回执和收件事实；只有本版支持同请求重放且原参数可核对时才恢复原操作。旧句柄失效时重新发现目标，不同时向旧、新目标重复发送。idle、无输出、断线或清单缺项均不能证明任务结束。
+7. 接收、取消、保留或释放工作区按当前指南及真实授权操作。结算后复用、保留或释放资源，运行中取消使用精确目标的原生停止流程；不以关闭终端、全局 reset 或删除工作区代替结算。完成消息不等于旧写入者已经停止。
 
-核对返回和候选后按 下方 `<shared-coordination-result-and-recovery>` 标签 接续原 Goal。工具或所需能力不可用时准确报告当前阻塞，不自行安装升级。
+核对返回、实际候选和写入停止事实后，由 Lead 按原验收更新 Evidence，并按 下方 `<shared-coordination-result-and-recovery>` 标签 接续原 Goal。工具或所需能力不可用时准确报告当前阻塞。
+
+## 聚焦交接与历史
+
+按 下方 `<shared-coordination-session-files>` 标签 在报告中保存简短交接和原始会话入口。借鉴 Focused handoff：先读最近摘要与当前工作区，仅在细节不足时检索原会话；这是历史上下文交付，不自动转移 Leader 所有权或 resume 原 provider 会话。
+
+执行者交付前主动从当前版本的会话元数据或历史接口定位 transcript/history locator 与 provider session ID，Lead 用真实派遣句柄补充。按派遣文件合同核验所属主机、真实入口、会话对应关系和可读性，并记录本任务范围；无法核验时说明原因。需要搜索时先按当前指南检查历史索引是否启用，再在正确主机上按实际会话 ID 查找，结合任务关键词、执行路径或时间缩小范围；索引未启用就记录搜索不可用，不自行开启，仍可核验工具已提供的原始入口。SSH 转发 CLI 的搜索主机可能是控制端，路径过滤不等于切换主机。原记录缺失时可保留带来源与范围的终端节选，但必须明确是节选，不能称为完整会话或伪造 JSONL。
 
 </shared-coordination-modes-orca>
 
@@ -4133,8 +4238,8 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
 2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
 3. 使用实际返回的 pane/session 标识，确认对应项目和工作区，等待当前指南定义的就绪条件。不要默认切换用户焦点。
-4. 每个任务使用能明确归属的目标会话，并按 下方 `<shared-coordination-task-brief>` 标签 提供输入。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
-5. 通过工具当前支持的返回读取方式取得结果。遵守其输入/文件交付要求，不为 Speculo 额外强制一份结果文件。
+4. 每个任务使用能明确归属的目标会话，并按 下方 `<shared-coordination-task-brief>` 标签 提供输入。有 change 时提供已保存 TASK 和准确 REPORT 位置，记录编排 session/task 对应的真实 pane/会话与主机；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
+5. 通过工具当前支持的返回读取方式取得结果。有文件交接时按 下方 `<shared-coordination-session-files>` 标签 交回 REPORT 及“任务标识、状态、报告位置、一句话摘要”；只能返回文本时由 Lead 原样捕获并标明来源。交付前主动查询执行 CLI 的实际会话记录，核验主机、真实入口、会话 ID 与可读性，限定本任务范围；不把 pane 标识或终端输出冒充完整 JSONL，无法核验时说明原因。输入、提问和通知仍遵守工具原生接口。
 6. 超时或投递结果不明时先检查原目标，不盲目重发。取消按当前工具说明进行；不要宽泛结束所有 pane 或服务。
 
 任务完成、会话空闲、会话保留是不同事实。只有确认本任务不会继续冲突写入，并由 Lead 完成原验收，才释放业务占用、更新原 Evidence 和继续下一任务。
@@ -4148,9 +4253,9 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 仅在用户明确选择通过 CLI 交互或调用来执行时读取；当前宿主本身是 CLI 不触发本分支。先读取用户指定工具的当前帮助、已安装技能或对应交互方式的官方指南。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
 
 1. 确认工具可用、工作目录、交互方式、输入输出和当前用户已给出的权限。用户指定交互式会话时，使用宿主实际支持的终端/会话能力；只有用户要求或所选工具支持的任务接口适合非交互调用时才采用非交互方式。明确要求的交互方式不可用时停止该分支并报告，不擅自改为无头调用或 Herdr。缺少登录或能力时报告，不自行改变账户、安装工具或添加绕过权限的参数。
-2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；指定真实 Work 入口和必要输入。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
+2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；有 change 时先保存 TASK，指定真实 Work 入口、必要输入、REPORT 位置和提问/通知通道。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
 3. 通过当前宿主可用的执行工具调用该 CLI。优先使用结构化 argv 或可靠的参数传递；任务正文通过工具支持的 stdin、文件或会话输入，不拼接不可信 shell 片段。
-4. 保存实际命令、交互方式、工作区、任务/会话 locator、结果及未验证项到原业务记录；进程退出后记录真实退出码，仍运行或未知时据实记录。工具没有可靠提供的模型、用量或成本写为未知。
+4. 保存实际命令、交互方式、工作区、所属主机与工具任务/会话 locator；有文件交接时由 Lead 补记到 TASK，执行者写 REPORT 并返回任务标识、状态、报告位置和一句话摘要。只有文本返回时由 Lead 按 下方 `<shared-coordination-session-files>` 标签 原样捕获。进程退出后记录真实退出码，仍运行或未知时据实记录；没有可靠提供的模型、用量或成本写为未知。交付前按派遣文件合同主动定位原始历史，核验主机、会话对应关系与可读性，附真实入口和本任务检索范围；无法核验时说明原因，不猜缓存路径。
 5. 交互提示、等待、取消和恢复按该 CLI 当前指南处理。调用结果不明先查询，不把缺日志解释为没有执行，也不重复可能已经发生的外部动作。
 
 CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-result-and-recovery>` 标签 检查真实候选、测试、findings 和完成门。该方式不要求 Speculo 常驻服务或专用 runner。
@@ -4165,11 +4270,13 @@ CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-re
 
 ## 接收
 
-1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
+1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。有文件交接时按 下方 `<shared-coordination-session-files>` 标签 回读 TASK 与 REPORT，核对 session/task、实际工具尝试和候选身份，先看聚焦交接。需要回查历史时先确认记录主机与本端访问能力，再检索本任务片段；执行者的核验声明不等于接收端已能读取。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
 2. 通过当前工具指南核对任务是否确实返回，以及是否仍可能继续写入。已接收、已开始、会话空闲、任务结束、进程退出和业务通过分别记录；结果不明先查询，不重复发起任务。
 3. 检查实际文件和 Git 事实：基线、可达 checkpoint、tip、dirty 状态、tracked/untracked/ignored 变更以及允许路径。返回文本不能替代真实候选。
 4. 按原验收合同核对检查及输出。执行者修改测试、配置或验收脚本时，判断是否改变了通过标准，不接受伪绿色结果。自报、模拟、截图和推断在 Lead 核实前保持未验证。
-5. review/research/test-observation 的 findings、来源及命令观察由 Lead 核对后写入原工件。独立审查 required 时，审查者必须满足原 Gate；同一实现者换名称或清空会话不构成独立。Lead 自审明确标识。
+5. review/research/test-observation 的 findings、来源及命令观察由 Lead 核对后写入原工件。SpecDev 双轴审查必须核对审查者未参与本范围实现及真实派遣/返回证据；同一实现者换名称或清空会话不构成独立。Lead 参与实现时，自查只算实现活动，不满足审查完成门。
+
+REPORT 的 completed 只表示候选已交回；blocked、failed、cancelled 分别按报告事实处理，均不能直接覆盖 Ticket 或 README Outcome。Lead 在原 Evidence 保存报告指针和独立验收；后续查得的历史 locator、核验结果或快照也追加在原 Evidence，不改写执行者的报告。缺身份、状态或可核验产物时只阻塞本次验收。已提交报告的修正/重试创建新派遣目录并引用旧结果，业务上仍属于原 Ticket，不为重试新建业务票。
 
 ## 修复与集成
 
@@ -4180,9 +4287,10 @@ CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-re
 ## 中断恢复
 
 - 按输入分支读取实际存在的 Goal Plan、Ticket/Map 或 Direct Spec、README Outcome、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
-- 使用记录的工具 locator 查询原任务，不根据缺日志推断没有执行。
+- 使用记录的工具 locator 查询原任务，不根据缺日志或 REPORT 推断没有执行。突然中断而无报告时，由 Lead 在原 Evidence 记录已知/未知事实与恢复入口，不伪造执行者成功报告；临时文件不算完成回报。
 - 仍可能写入或副作用结果未知时，不让 Lead 或另一执行者抢写；按当前工具指南检查、等待或在原授权下取消。
 - 当前会话不具备查询能力时，说明缺失事实和恢复入口，不伪造停止证明。
+- 原历史记录不可读时保留其 locator 和缺失说明，使用报告与真实产物核验；只有缺失事实影响验收时才阻塞对应部分。回查历史不隐式恢复旧会话或授权再次执行。
 - 用户改变后续偏好时在下一安全阶段采用；撤销权限立即停止新动作并处理进行中的任务。
 - 独立且已授权的其他 frontier 可以继续；仅阻塞冲突任务及其依赖闭包。
 

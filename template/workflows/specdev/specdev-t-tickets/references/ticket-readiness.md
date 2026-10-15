@@ -21,21 +21,21 @@
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
 - [ ] 按有效计划或当前 I 执行合同 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
-- [ ] Ticket 完成合同包含 implementation commit、direct-parent 或 candidate-merge、父分支 result SHA 和 Lead Evidence；仅 required 模式需要独立 worktree。
+- [ ] Ticket 已明确进入 I-implement，由该入口负责 implementation commit、direct-parent 或 candidate-merge、独立双轴审查、父分支 result SHA 和 Lead Evidence；正文不重复通用清单。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用完整根变量 Path 标签。
 
 ## Standard 门禁
 
-- [ ] 实现契约包含入口、输入输出、不变量、状态或数据流、失败行为和兼容。
-- [ ] 有 3–7 步有序执行路线。
+- [ ] 适用的接口、不变量、失败与兼容合同可由 Spec 和本票差异定位。
+- [ ] 影响安全或正确性的关键顺序已明确；不要求固定数量的执行步骤。
 - [ ] 路径所有权足以支持并发判断。
 - [ ] 验证矩阵可以证明外部行为，而非只检查内部调用。
 
 ## Deep 门禁
 
-- [ ] 迁移顺序、兼容窗口、监控、回滚或前向恢复、收缩条件和批准点完整。
+- [ ] 实际涉及的迁移、兼容、监控、恢复、收缩条件和批准点完整；无关项省略。
 - [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
 - [ ] 跨 implementation owner 的路径所有权和所选 direct-parent/parent-candidate 集成 Gate 明确。
 - [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。

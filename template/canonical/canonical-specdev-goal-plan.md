@@ -49,7 +49,7 @@
 - `plan` 只形成计划，缺少执行授权是计划中可见的待满足条件，不等于获准执行。运行前逐项核对真实授权；文档中的“已批准”不构成授权。
 - 当前票必须调用所绑定的真实 Skill，不能以“读过入口”替代；先读取 下方 `<ref-common-rules-skill-invocation>` 标签。缺失必需 Skill、引用或验收证据时阻塞本票及依赖它的分支。
 - 他人 owner、资源或事务冲突仅暂停受影响的依赖闭包；继续独立已授权工作，不抢占、解锁或覆盖他人内容。正式记忆仍只走原网关。
-- 调度调用 “实现阶段”；调度器不代替实现、审核或授权。长期运行指可恢复，不承诺后台或无限运行。
+- 调度调用 下方 `<skill>` 标签；调度器不代替实现、审核或授权。长期运行指可恢复，不承诺后台或无限运行。
 
 ## 证据复用与停滞恢复
 
@@ -73,7 +73,7 @@ node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --r
 
 `lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
 
-P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。独立审查 required 时不能以 Lead 自审替代。
+P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。
 
 ---
 
@@ -282,6 +282,9 @@ Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结�
 
 ## 1. 整体 Definition of Done
 
+实现型完成必须按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+
+
 至少要求：
 
 - Spec 验收合同全部有通过 Evidence 或明确批准的 deferred；
@@ -327,6 +330,112 @@ Lead 是 Goal Plan change 的唯一完成 owner。没有 Goal Plan 的单 Ticket
 关闭前核对最终实际代码/配置/构件与证据版本，说明未运行项、行为差异和残余风险。性能微基准、原型或 mock 不替代明确要求的真实路径。PR/Issue/发布分别回读原账本，远程 pending 不伪装已交付。
 
 </completion-control>
+
+<skill>
+
+# 实现与验收
+
+> 激活后读取 下方 `<domain-runtime>` 标签。
+
+## 读取范围
+
+先读 下方 `<activation-and-memory>` 标签；从 README/原 Goal 或当前 tickets-map/父 map 定位所需范围、本票、上游约束、项目 Skill 与执行策略。仅展开当前 Ticket 的正文、直接依赖、适用 Skill 和必要恢复证据，不整读知识库。
+
+轻量实现可读取 README 的唯一 scope/acceptance/verification 规格章节，等价于获批轻量 Direct Spec；独立完整 Spec 可按其全部风险门直接实施；保留明确范围、可判定 AC、真实验证及停止条件。存在独立 specdev/changes/{change}/spec.md 时优先读取并拒绝双权威。无需独立票时不造 Ticket/Map；UI 的 DESIGN、批准和真实浏览器门保持。
+
+## 当前票的执行入口
+
+执行先读取 下方 `<ref-common-rules-execution-policy>` 标签，确定 Spec/Ticket、执行方式与工作区三个独立选择；完整获批 Spec 不因范围较大而强制拆票，已有 Ready Ticket 不强制补 Goal。执行必须读取 下方 `<ref-specdev-i-implement-references-implementation-procedure>` 标签 和 下方 `<ref-specdev-i-implement-references-execution-preflight>` 标签；执行过程按当前阶段路由设计、TDD、双轴审查和 Evidence；预检单独拥有 Git、workspace、Ready 与授权检查。两者必读，分支参考只在对应 workspace/风险/阶段进入时加载。
+
+UI Ticket 或 Direct Spec 必须读取 下方 `<design-contract>` 标签 与当前批准 DESIGN，核验 design_ref（revision/digest/pages/acceptance）、原型和基线。页面任务按已批准规则实现，不重新选择模板；实际实现证据写入 `Design Conformance`，原型截图不替代生产页面验证。
+
+1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 下方 `<ref-common-rules-skill-invocation>` 标签 实际调用绑定能力并记录证据。票缺调用契约时先由 Lead 补齐，不猜测。
+2. 保持 codebase-design、design-it-twice 和 TDD 的适用门禁；进入对应实现步骤再读其 reference。派单时调用 共享编排方法；Lead 是唯一 SpecDev 状态写入者。
+3. Ticket 和 Direct Spec 均可在 current 模式串行使用当前 workspace，或在 required 模式使用独立 worktree，E2E 由 Lead 在 current 或 required 的 parent-candidate 完成。实现 commit、父分支推进和集成均需真实授权。
+4. 安全、并发、公共接口、数据迁移或用户要求全面审查时展开 下方 `<ref-common-skills-code-review-references-risk-review>` 标签；不为省上下文删减必要检查或限制发现数量。
+5. 写 Evidence、运行适用校验并回读后才推进状态；必需 Skill 失败、验收失败、越界或归属冲突暂停本票及依赖它的分支。无关工作仍由总控继续，不接管他人事务。
+
+## 专业分支与工程判断
+
+已授权的 documentation Ticket 或获批 Direct Spec，读取 下方 `<ref-specdev-i-implement-references-documentation-procedure>` 标签；它只替换不适用的代码 TDD步骤，不跳过原预检、两轴审查、workspace、授权或完成门。
+
+失败/重试/取消/恢复读取 下方 `<ref-common-rules-error-handling>` 标签；异步资源、CI flake、替换测试读取 下方 `<ref-common-rules-test-reliability>` 标签；工具/prompt/schema/结果变化读取 下方 `<ref-common-rules-agent-experience>` 标签。沿真实调用入口与消费者两端验证，不能用内部函数或 mock 的通过代替产品路径。检查和证据复用只按原证据规范，不默认重跑全仓。
+
+## 返回总控
+
+存在当前 Goal 时，完成、暂停或重规划后返回 “目标规划阶段” 的当前 Goal；恢复先核对 HEAD、Ticket/Skill 摘要、证据和未闭合动作，避免重复提交、迁移、发布或正式记忆写入。没有不可变实现证据时不得宣称完成。
+
+## 编排与执行上下文
+
+进入实现或审查时读取 下方 `<subagent-delivery>` 标签；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
+
+`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
+
+P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。
+
+</skill>
+
+<code-review>
+
+# SpecDev Code Review
+
+本 Skill 返回审查结果，不创建 runtime namespace。调用方分别负责 C review 工件或 I Evidence。
+
+采用调用方按 下方 `<subagent-delivery>` 标签 确定的 review 阶段方式。默认派遣一位未参与当前范围实现的原生 subagent，分别完成两轴；实际需要可拆成两位。已选择 Herdr/Orca/CLI 的任务沿该方式派遣，明确 review 阶段选择优先。能力不足或独立身份不明时阻塞完成，不能由实现者自审替代。task 上下文仅执行已分配轴，不递归派遣。
+
+## 输入
+
+默认 diff 模式使用下列 fixed_point/head/diff/log。C 显式本地文件分支使用 `review_mode: source-files` 与 `source_snapshot`（路径/原始字节 SHA256）；不提供虚假的 Git 字段。各模式均提供规范、标准、范围和独立身份。I 未提交 Direct Spec 使用 `review_mode: working-tree`，按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定完整交付快照。
+
+- `fixed_point`：已解析的 commit SHA；
+- `head`：已解析的 HEAD/checkpoint SHA；
+- `diff_command`：由调用方冻结的实际 argv；legacy 默认三点，显式 range/commit 使用已确认端点，不由 reviewer 换范围；
+- `commit_log`：固定点之后的 commit 列表；
+- `spec_sources`：零个或多个本地权威来源；
+- `standards_sources`：仓库编码标准来源；
+- `review_context`：路径范围、调用 Work 和适用授权；
+- 实现者真实身份、所选 review 方式与实际派遣凭据；默认一位独立 reviewer，需要时分别派遣两轴。
+
+## 流程
+
+1. diff 模式重验 fixed point/head、实际 diff 语义和摘要；无效引用不启动 reviewer。合法空 diff 由调用方返回 no-diff，不伪造 approved 或复用非空报告。显式范围不得回退为默认三点比较。source-files 模式重验固定路径与原字节，不推断历史 diff 或 commit。
+2. 加载 下方 `<ref-common-skills-code-review-references-source-discovery>` 标签，穷尽规范和标准来源。
+3. 发现已有审查并拟复用时，先读取 下方 `<ref-common-skills-code-review-references-result-reuse>` 标签，完整核对输入、审查者独立性与原始证据；能证明相同的轴保留原结果，其余轴按下列步骤运行；未能证明相同就正常重审两轴。
+4. 加载 下方 `<ref-common-skills-code-review-references-fowler-smells>` 标签 作为标准轴最低启发式；仓库明确标准优先。
+5. 用户要求全面审查或触及安全、数据迁移、公共契约、并发和恢复时，先加载 下方 `<ref-common-skills-code-review-references-risk-review>` 标签，覆盖全部适用风险，不限制 finding 数量。
+6. 加载 下方 `<ref-common-skills-code-review-references-reviewer-contracts>` 标签，实际派遣未参与实现的 Agent，分别运行两个轴。
+7. 原顺序返回 `standards` 和 `specification` 两份结果。C 规范来源确实不存在时只跳过规范轴并解释，标准轴继续；I 缺少权威规范则阻塞，不允许跳过后完成。
+
+8. 按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 返回固定输入、原始报告、真实 reviewer 身份和工具凭据，由 Lead 核验并写入原 owning 工件。
+
+## 输出
+
+source-files 结果以 `review_mode` 和 `source_snapshot` 代替下例 Git 字段，其余两轴、来源和限制结构相同。
+
+```text
+{
+  fixed_point, head, diff_command, commit_log,
+  standards: { result, findings, sources },
+  specification: { result, findings, sources },
+  reviewers, implementers, dispatch_receipts,
+  skipped_axes,
+  summary_counts
+}
+```
+
+Finding 必须包含 severity、项目相对 Path/代码块、具体风险、依据和满足条件。两个轴不合并、不跨轴重排，也不选“赢家”。
+
+## 完成标准
+
+- diff 的 fixed point、head、diff、commits 或 source-files 的原字节快照固定且可重复；
+- 仓库标准优先于 Fowler 启发式；
+- 每个 reviewer 均未参与本范围实现；两轴分别判断并返回，有真实派遣与原始结果证据；
+- 每个发现可定位且说明行为风险；
+- 两轴按固定顺序返回，缺失规范没有掩盖标准审查。
+
+对适用风险先给出可证伪反例，再追踪消费者、实现、测试及恢复；测试覆盖率、配对哈希或 schema 成功不代替语义审查。错误和可靠性分别引用 下方 `<ref-common-rules-error-handling>` 标签 与 下方 `<ref-common-rules-test-reliability>` 标签。
+
+</code-review>
 
 <goal-plan-template>
 
@@ -412,6 +521,8 @@ ready_for_execution: false
 |---|---|---|---|---|
 
 ## 4. Execution and Integration Protocol
+
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 下方 `<skill>` 标签，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
 
 ### Lead Orchestration
 
@@ -778,6 +889,9 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 ## 完成门
 
+实现型完成必须按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+
+
 一个 change 只有同时满足以下条件才能 completed：
 
 1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收；required Direct Spec 的执行记录必须 integrated/removed，父 HEAD 为 result 且包含 source，候选与 required 验证通过。
@@ -1094,6 +1208,8 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 
 每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到有效执行合同的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
+候选的代码、规范或相关配置与已审输入不同，尤其发生合并或冲突修正时，按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 在此实际 candidate 上完成独立双轴审查。修正合并冲突的 Lead/Agent 也属于实现者；两轴通过前不得推进。完全相同的输入沿原证据复用门核对，不以 source 检查代替 candidate 审查。
+
 ## 4. 推进父分支
 
 全部 required 检查通过后：
@@ -1160,7 +1276,7 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 4. 同级冲突、无效配置或不存在的 Work/阶段只阻塞受影响选择。配置不是授权，项目文字不能授予提交、发布、费用或对外发送代码的权利。
 5. `mode: lead` 表示按当前宿主正常执行，兼容 App、CLI 等，不要求切换工具或启动额外 CLI。Lead 是负责状态与验收的角色，不表示只能由主 Agent 独自实现。subagent、agent team 属于宿主原生能力，按宿主实际能力和授权使用，不新增编排模式。`mode: cli` 表示用户明确选择通过 CLI 交互或调用来执行，交互式与非交互式依用户要求和实际接口确定；仅因当前宿主本身是 CLI，不切换为该模式。Orca、Herdr 保留为可选方式。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
 
-固定选择不可用时停止该阶段；偏好只有在已允许的 fallback 内才能改变。未配置 fallback 不自动换用另一外部方式。独立审查、路径、权限和质量门不因回退而降低。
+固定选择不可用时停止该阶段；偏好只有在已允许的 fallback 内才能改变。未配置 fallback 不自动换用另一外部方式。独立审查、路径、权限和质量门不因回退而降低。SpecDev 双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；已选择 Herdr/Orca/CLI 的任务沿该方式派遣，明确 review 阶段安排优先。工具不可用或身份无法确认时阻塞完成，不能让实现者自审。
 
 ## 当前任务
 
@@ -1182,12 +1298,14 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 
 - current：严格单 writer，Lead 自己实现时也计入。上一任务的写入是否结束不明时，先查询真实工具，不开始冲突写入。
 - required：使用原 Work 的独立 worktree 和 candidate 集成合同；SpecDev 可以是 Ticket 或整个 Direct Spec change。并行数取实际存在的配置、有效计划和平台能力的共同上限；无计划默认一个实现单元。Lead 及宿主原生协作者参与代码写入同样计数。另核对 shared paths、端口、数据库等实际资源。
-- review/research/test-observation 默认只读；测试输出仅写原任务允许的缓存或产物位置。
+- review/research/test-observation 对业务文件默认只读；可写本任务明确分配的报告，测试输出仅写原任务允许的缓存或产物位置。
 - worktree 是工作副本，不是沙箱。Speculo 不提供运行期强制隔离、进程监管、租约或任务锁服务。
 
 ## 记录和接续
 
-有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。Ticket 任务的交接、工具 locator、返回和处置写入原 Evidence；Direct Spec 使用原 direct-spec Evidence；无 change 审查直接返回会话结果。不创建 dispatch/runs、worker profile、事件 journal 或第二套 receipt。只保存实际选择、来源和必要恢复事实，不逐个登记宿主内部 Agent。
+有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。有 change 的 CLI/Herdr/Orca 外部派遣按 下方 `<shared-coordination-session-files>` 标签 在一轮 session 下为每次派遣保存 TASK 与 REPORT，附按需回查的历史会话入口。Ticket Evidence、Direct Spec Evidence 或当前 owning 工件只引用输入/报告并保存 Lead 的核验与处置，不复制第二套业务状态。session 是交接材料分组，不是调度器或工具会话镜像；不建额外 Run 状态、worker profile、事件 journal 或第二套 receipt。
+
+宿主原生协作按需采用文件交接，不逐个登记内部 Agent；正式双轴审查仍在原 Evidence 保留实现者/reviewer 的真实身份和工具核验；Lead 自行执行不制造 session。无 change 时沿用当前 Work 已有报告位置或会话结果，不为交接创建 change。external-web 继续使用原 ZIP 合同，远程 CI 不在本文件交接约定的首版适配范围。
 
 返回后读取 下方 `<subagent-delivery-native>` 标签。执行者宣称完成、会话空闲和进程退出都不等于业务通过。Lead 核实实际候选与原验收合同后更新正式状态。
 
@@ -1205,11 +1323,13 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 
 ## 接收
 
-1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
+1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。有文件交接时按 下方 `<shared-coordination-session-files>` 标签 回读 TASK 与 REPORT，核对 session/task、实际工具尝试和候选身份，先看聚焦交接。需要回查历史时先确认记录主机与本端访问能力，再检索本任务片段；执行者的核验声明不等于接收端已能读取。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
 2. 通过当前工具指南核对任务是否确实返回，以及是否仍可能继续写入。已接收、已开始、会话空闲、任务结束、进程退出和业务通过分别记录；结果不明先查询，不重复发起任务。
 3. 检查实际文件和 Git 事实：基线、可达 checkpoint、tip、dirty 状态、tracked/untracked/ignored 变更以及允许路径。返回文本不能替代真实候选。
 4. 按原验收合同核对检查及输出。执行者修改测试、配置或验收脚本时，判断是否改变了通过标准，不接受伪绿色结果。自报、模拟、截图和推断在 Lead 核实前保持未验证。
-5. review/research/test-observation 的 findings、来源及命令观察由 Lead 核对后写入原工件。独立审查 required 时，审查者必须满足原 Gate；同一实现者换名称或清空会话不构成独立。Lead 自审明确标识。
+5. review/research/test-observation 的 findings、来源及命令观察由 Lead 核对后写入原工件。SpecDev 双轴审查必须核对审查者未参与本范围实现及真实派遣/返回证据；同一实现者换名称或清空会话不构成独立。Lead 参与实现时，自查只算实现活动，不满足审查完成门。
+
+REPORT 的 completed 只表示候选已交回；blocked、failed、cancelled 分别按报告事实处理，均不能直接覆盖 Ticket 或 README Outcome。Lead 在原 Evidence 保存报告指针和独立验收；后续查得的历史 locator、核验结果或快照也追加在原 Evidence，不改写执行者的报告。缺身份、状态或可核验产物时只阻塞本次验收。已提交报告的修正/重试创建新派遣目录并引用旧结果，业务上仍属于原 Ticket，不为重试新建业务票。
 
 ## 修复与集成
 
@@ -1220,9 +1340,10 @@ Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<chan
 ## 中断恢复
 
 - 按输入分支读取实际存在的 Goal Plan、Ticket/Map 或 Direct Spec、README Outcome、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
-- 使用记录的工具 locator 查询原任务，不根据缺日志推断没有执行。
+- 使用记录的工具 locator 查询原任务，不根据缺日志或 REPORT 推断没有执行。突然中断而无报告时，由 Lead 在原 Evidence 记录已知/未知事实与恢复入口，不伪造执行者成功报告；临时文件不算完成回报。
 - 仍可能写入或副作用结果未知时，不让 Lead 或另一执行者抢写；按当前工具指南检查、等待或在原授权下取消。
 - 当前会话不具备查询能力时，说明缺失事实和恢复入口，不伪造停止证明。
+- 原历史记录不可读时保留其 locator 和缺失说明，使用报告与真实产物核验；只有缺失事实影响验收时才阻塞对应部分。回查历史不隐式恢复旧会话或授权再次执行。
 - 用户改变后续偏好时在下一安全阶段采用；撤销权限立即停止新动作并处理进行中的任务。
 - 独立且已授权的其他 frontier 可以继续；仅阻塞冲突任务及其依赖闭包。
 
@@ -1850,6 +1971,8 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 - 工程 docs：docs/README.md，明确请求基线后按需存在；它是跨领域工程事实，不是 SpecDev 独占知识 store。
 
 归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。新 archive 不嵌套月份。旧历史移动须另有明确计划，验证所有 locator 和 DESIGN 摘要；不可变正文不做路径替换。
+
+实际外部派遣的输入、报告和按需历史快照按 下方 `<shared-coordination-session-files>` 标签 保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
 ## 唯一整体结论
 
@@ -3110,6 +3233,8 @@ lead: <actual-session-locator>
 
 ## Integration and Verification
 
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 下方 `<skill>` 标签，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
+
 <适用集成方式、README AC/verification 导航、实际验证与未验证边界；票或清单全勾不替代整体验收。>
 
 ## Next Steps
@@ -3593,6 +3718,595 @@ Direct Spec 整体取消时，原 owner 先按 change-completion 记录真实取
 
 </ref-common-rules-execution-policy>
 
+<ref-common-skills-code-review-references-review-evidence>
+
+# 独立审查证据
+
+供 C、I 和最终集成审查使用。只在原 CR、I Evidence、轻量 README 或原整体 Evidence 中记录，不创建 Agent 注册表、状态镜像或完整聊天副本。外部派遣复用已有 TASK/REPORT；原生工具可把必要原始输出及 Lead 核验摘录保存在同一 Markdown 的独立锚点。工具提供的真实身份统一写成 `provider:agent-or-session-id`，如原生工具句柄；不得使用任意角色名或 session 目录名代替。
+
+## 冻结输入
+
+在报告中建立独立的 `review-input` 锚点，用一个 JSON 对象保存 `scope`（review-scope 的完整原始返回值）、`sources` 和适用的 `exclusions`。sources 每项为 `kind: standards|specification|instructions`、项目根相对 `locator` 和实际 UTF-8 原文字节的 `sha256`。locator 可带显式锚点；轻量 README 只摘要其 scope/acceptance 等合同段，不能摘要包含审查记录的整份 README。来源必须覆盖本轮实际规范、标准及适用指令。
+
+`Input-SHA256` 为该对象经 JSON.parse 后再 JSON.stringify 的 UTF-8 SHA256，由工具计算，不手写猜测。将同一对象及摘要交给 reviewer。摘要证明输入一致，不证明审查真的发生。
+
+未提交的 Direct Spec 先读取 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签。Git diff 使用实际工具返回的不可变端点；规范/标准和相关指令变化也会使受影响结论失效。
+
+## 最小记录
+
+下列字段和表头置于原 owning 工件；locator 相对当前 change。无 change 时返回相同信息和真实工具输出，沿调用方原报告位置保存，不为审查制造 change。
+
+```markdown
+## Independent Review
+
+Input: evidence/T-01.md#review-input
+Implementers: provider:actual-implementation-session
+Mode: native
+Verified-By: provider:actual-lead-session
+Verification: evidence/T-01.md#review-receipt
+
+| Axis | Reviewer | Result | Report |
+|---|---|---|---|
+| standards | provider:actual-review-session | pass | evidence/T-01.md#standards-output |
+| specification | provider:actual-review-session | pass | evidence/T-01.md#specification-output |
+```
+
+Mode 为 native/herdr/orca/cli。Implementers 包含本范围全部实现及修复者；Lead 参与实现也列入。每轴 Report 指向 reviewer 实际输出的独立段，含 `Reviewer`、`Axis`、`Result`、`Input-SHA256`、`Observed` 字段及具体 findings/依据。不能指回汇总表自证。请求修正或未验证不得改写为 pass；原报告不覆盖。
+
+Verification 指向 Lead 回读真实派遣和返回事实后的独立核验段，含 `Verified-By`、`Mode`、`Reviewers`（逗号分隔真实身份）、`Input-SHA256`、`Result: verified`、`Observed`。Observed 说明工具返回的实际身份、派遣/返回定位、只读范围和核验事实；工具不提供的事实保持未验证。需要深查时沿原历史会话 locator 检索，不以 JSONL 文件存在代替审查。
+
+## 完成与复用
+
+完成前回读输入、原报告和工具核验。实现范围内的 reviewer 不独立；一轴失败或 I 缺规范都阻塞完成。改变角色名或重新开启同一实现者的上下文不能绕过。
+
+单票结果以本票实际 checkpoint 为准。多个实现单元组合或冲突修正后，Lead 对实际最终整体范围调用同一独立审查能力，在 specdev/changes/{change}/evidence/final-review.md 记录；跨 change 父编排使用原 specdev/changes/{change}/evidence/implementation-orchestration.md。单 Direct Spec/单票最终输入完全相同可沿用原 Evidence；候选变化先补审再推进父分支或宣布完成。整体输入以最初实施基线为起点，覆盖所有成员实际交付，不只审最后一票。
+
+C 可以只审明确的不可变 commit；I 完成时还必须确认实际工作副本与该交付一致。存在未提交代码时转入 working-tree 审查，不能沿用旧 commit 的通过结论。原 change 的 Markdown 执行记录可在审查后更新；规范与标准段仍需摘要一致。父编排的输入包含原 Implementation Plan/Map 和各成员 Spec，并纳入成员实际实现/冲突修复者及共同起始基线。纯学习或 triage 调查依据原 Ownership/Work 和非实现产物判定，附加 learning 索引不能豁免实现审查。
+
+旧报告可只读展示；作为本轮完成或复用依据时，缺少独立性与固定输入证据就重新审查。静态校验仅验证记录、原文匹配和版本一致性，真实执行仍由 Lead 核对工具事实；工具不可用不能从格式通过推导完成。
+
+</ref-common-skills-code-review-references-review-evidence>
+
+<ref-specdev-i-implement-references-implementation-procedure>
+
+# 实现
+
+
+本 work 保留模块设计检查、design-it-twice、TDD 红绿循环、双轴审查和证据治理。Ticket 与 Direct Spec 均按 下方 `<ref-common-rules-execution-policy>` 标签 独立选择执行方式和工作区；有有效计划时继承其 workspace/Gate，无 Goal 由 I 在原 Evidence 承接。Lead 默认按当前宿主正常执行；明确指定 CLI 交互、Herdr 等方式时按选择执行。
+
+若当前 change 是未完成父 Implementation Map 的成员，必须读取 下方 `<parent-implementation-orchestration>` 标签、父 Map 与父 Plan。父 Plan 提供跨 change dependency/serialization、全局 workspace 策略、组合派单标识、implementation agent cap 和 integration queue；子 Goal Plan 只能增加子内 Gate，不能放宽或冲突。
+
+
+## 执行模式
+
+### Ticket 模式（默认）
+
+使用下节规定的输入顺序。父 Implementation Plan 存在时采用其 Lead、workspace/integration 与全局 Gate，即使子 Goal Plan 不存在；两者都有时必须一致。没有父计划沿用子计划；两者都没有时当前主会话作为 Lead，使用当前票完整合同及共用执行策略，不降级为轻量 Spec，不要求补 Goal。
+
+### Direct Spec 模式
+
+完整获批 Spec 可以直接实现，包括多个行为或高风险范围；先核对目标、IN/OUT、唯一写入 owner、可写范围、关键不变量、全部 AC、验证及适用批准/恢复门。可以选择 current 或 required，并使用原生能力或 Herdr。独立调度、依赖 DAG、逐票追踪确有需要或用户明确要求时才返回 T-tickets。README 规格替代仍仅适用于轻量任务。
+
+### Documentation 分支
+
+Ready documentation Ticket 或获批 Direct Spec 需要维护项目文档时读取 下方 `<ref-specdev-i-implement-references-documentation-procedure>` 标签。继续执行下方全部适用预检、workspace、commit、双轴审查、Evidence 和完成步骤；仅纯说明变更的代码红绿循环由可运行示例/类型/链接/生成与事实验证替代。prompt/tool/CLI/UI 文案属于可见行为，不能按纯说明豁免。
+
+## 输入
+
+两种模式都必须读取：
+
+- 当前规格：存在独立 Spec 时读取它；合同允许的轻量模式读取 README scope/acceptance/verification 等价章节，拒绝双权威。
+- 实际执行策略及验证依据；存在 config 时只读取当前分支真实使用的设置，不以缺失 config 阻塞本地工作。
+
+Ticket 模式必须按以下顺序读取：
+
+1. `specdev/changes/{change}/tickets-map.md` 的总体实施背景和完整项目 Skill 读取矩阵；
+2. 矩阵中适用于 `ALL` 或当前 Ticket ID 的全部项目 Skill；
+3. 当前 Ticket `specdev/changes/{change}/ticket/NN-<ticket-name>.md`；
+4. 存在的 `specdev/changes/{change}/goal-plan.md`，以及父 Implementation Map 声明当前 change 时的父 Map/Plan。
+
+矩阵是发布时确认的最低必读集合，不是 allowlist。项目 Agent 指令或实际实现范围触发新的项目 Skill 时，先读取该 Skill、停止项目写入，由 Lead 更新 Tickets Map 并重新运行 tickets 校验后恢复。Direct Spec 模式读取同范围直接实现的实际授权、唯一规格与命中的项目 Skill；完整 Spec 的实现不要求补 Ticket/Map/Goal。
+
+按存在情况读取：
+
+- 当前 change 架构决策：`specdev/changes/{change}/ADR.md`
+- 当前 change 领域上下文：`specdev/changes/{change}/CONTEXT.md`
+- 当前 change 设计日志：`specdev/changes/{change}/LOG.md`
+- 当前 change 诊断：`specdev/changes/{change}/diagnosis.md`
+- 永久架构决策：`specdev/adr/`
+- 永久领域上下文：`specdev/context/`
+
+UI 范围必读 下方 `<design-contract>` 标签 和 specdev/changes/{change}/DESIGN.md 的批准版本；Ticket design_ref 与所需页面/AC 一致，Direct Spec 在原规格/Evidence 中保存等价绑定。无 UI 影响时不要求 DESIGN。
+
+永久目录可以为空，静默继续。当前 ADR/CONTEXT 缺失且实施需要对应决定时，返回 “设计访谈能力”；Spec、Ticket 或 Goal Plan 与代码事实冲突时按 下方 `<artifact-contract>` 标签 返回真正 owner，不在实现中覆盖。
+
+Git 已处于 merge/rebase 冲突时，先加载 下方 `<merge-conflict-protocol>` 标签；不把冲突伪装成普通 TDD。
+
+## 流程
+
+### 1. 执行前预检与 workspace
+
+加载 下方 `<ref-specdev-i-implement-references-execution-preflight>` 标签。
+
+预检参考拥有 Ready、依赖证据、真实 Skill、计划版本、owner、权限、Git 状态与 workspace 的完整检查，不在此复写。
+
+通过预检后：`required` 实现以 `purpose=ticket|direct-spec, operation=create|restore` 调用 下方 `<dev-worktree>` 标签；`current` Ticket 确认当前 branch/HEAD/dirty 状态和单 writer。Lead 设置 Ticket 为 `in_progress` 并按策略登记 active worktree 或 current workspace 记录。Direct Spec required 记录真实 change worktree 到原 direct-spec Evidence，不创建 Ticket 状态。
+
+**完成标准**：真实 workspace、基线、唯一 owners 和授权与预检一致；代码使合同失效时停止并返回上游 owner，current Ticket 严格串行。
+
+### 2. Lead 决定自行实现或动态派单
+
+两种输入模式下，Lead 根据独立性、路径冲突、上下文、风险、用户选择和平台能力决定；原生 subagent/team 属于宿主能力。派单时读取 下方 `<shared-coordination-task-brief>` 标签；外部 CLI/Herdr/Orca 派遣按 下方 `<shared-coordination-session-files>` 标签 保存 TASK、交回 REPORT，原 Evidence 只导航与验收。`current` 模式仍可派遣一个 实现执行者 写当前 workspace，但必须等待其返回、Lead 验收并形成 commit 后才进入下一个 Ticket；`required` 模式 实现执行者 绑定独立 Ticket worktree。Direct Spec 同样可以交接实现：提供获批 Spec、项目 Skill、当前工作区、路径和验收，current 只允许一个代码 writer，required 绑定本 change 的唯一 source worktree。
+
+- 实现执行者 同时取适用子 Goal Plan、父 Implementation Plan、实际存在的 config 和平台能力的共同上限；current 模式保持单 writer 串行安全不变量；Lead 参与实现时计入；
+- 父实现编排存在时，派单与返回都使用 `<member-change>::<ticket-id>`，并占用父 Plan 的 task/serialization/integration slot；
+- review/research/test-observation agent 不设置 SpecDev 数字上限，但保持只读；
+- implementation Packet 绑定唯一执行 workspace、checkpoint、路径、非 E2E 检查与已授权 commit 返回；Ticket 提供 Map/项目 Skill/本票，Direct Spec 提供完整规格/项目 Skill/AC，不补造票；
+- 任务执行者 不写 SpecDev 工件、Evidence、父分支或 E2E 结果；
+- Lead 自行实现时仍遵循相同 worktree、commit 与返回事实合同。
+
+**完成标准**：current 模式只有一个 implementation owner 写当前 workspace；required 模式只有一个 owner 写当前 Ticket worktree；Direct Spec 同样只有一个代码 writer；所有 SpecDev 写入仍由 Lead 拥有。
+
+### 3. 设计检查
+
+加载 下方 `<ref-common-rules-codebase-design>` 标签，检查模块、接口、类型、不变量、顺序/错误/性能语义、接缝、适配器、依赖分类、测试观察点和既有公共合同。
+
+存在多个不改变上层契约的局部设计时，可运行 下方 `<ref-common-rules-design-it-twice>` 标签。超出 Ticket 或改变产品/公共合同/数据/兼容/安全时，返回架构审查、Grill、Spec 或 Ticket owner。陌生外部依赖使用 research Skill。
+
+**完成标准**：局部设计与上层契约一致，稳定接缝和依赖策略明确。
+
+UI 的模板、视觉语言、共享组件及交互规则由批准 DESIGN 锁定；局部实现设计不能重新选风格。按页面/状态验收实现并在真实浏览器对照，设计本身无效时返回 P，行为冲突返回 S。
+
+### 4. TDD 红→绿垂直循环
+
+加载 下方 `<ref-specdev-i-implement-references-tdd-rules>` 标签、下方 `<ref-specdev-i-implement-references-tdd-test-design>` 标签 和 下方 `<ref-common-rules-code-commenting-rule>` 标签。纯说明文档按上方 documentation 分支验证；其余对每个验收行为或关键风险：
+
+1. 选择公共接口或稳定接缝；
+2. 编写因目标行为缺失而失败的测试/验证并确认失败原因；
+3. 只写足以通过当前测试的实现；
+4. 运行定向非 E2E 验证；
+5. 保存 red/green 事实并进入下一条窄切片。
+
+涉及外部依赖、隔离策略或已有 Mock 时，先读取 下方 `<ref-specdev-i-implement-references-tdd-mocking>` 标签，再决定是否复用真实接缝或替身。
+
+不得删除测试、放宽断言、吞错、永久跳过或只验证 Mock 调用次数来制造绿色。
+
+新增或修改代码注释时，先判断信息能否由命名、类型或结构表达，并同步维护受行为变化影响的既有注释。
+
+涉及错误、取消、并发或资源释放时，按 下方 `<ref-common-rules-error-handling>` 标签 和 下方 `<ref-common-rules-test-reliability>` 标签 验证实际状态与清理完成。注册、Worker、CLI、配置和发布路径要覆盖真正入口；删除旧测试前核对全部风险承接，不因为新接口测试存在就删除。
+
+### 5. 实现检查、commit 与 Lead 接收
+
+Ticket 模式的 implementation owner 按有效计划或当前 I 执行合同 策略在当前 workspace 或来源 worktree：
+
+- 运行 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查；
+- 审计 writable/shared/read-only 路径和新/既有/环境失败；
+- 在已授权时创建引用 Ticket ID 的实现 commit；current 模式 commit 直接落在父分支，required 模式落在 Ticket branch；
+- 返回 commit、dirty 状态、实际路径、命令/结果、未运行项和恢复条件。
+
+Ticket 模式中，Lead 读取 下方 `<subagent-delivery-native>` 标签，重读 Git 状态、branch tip、commit、diff 和命令事实。无改动时将 Ticket 改为 `cancelled` 并记录原因；不得 empty commit 或 Evidence-only Done。required 模式来源 worktree 不运行 E2E；current 模式适用 E2E 留给 Lead 的 direct-parent 验证。
+
+Direct Spec 的 implementation owner 在所选工作区运行规格要求的非 E2E 检查，审计获批写集，在已授权时创建引用 change 的非空 commit；Lead 按共享返回合同重读候选。required 必须形成 source commit，current 未授权提交则保留真实 checkpoint/dirty 交付事实。无需改动时记录事实并取消直接实现，不创建 empty commit。记录实际路径、命令结果、未运行项和恢复条件。
+
+**完成标准**：required 模式 Ticket worktree clean 且 `source_checkpoint` 精确等于 branch tip；current 模式 workspace clean 且 Ticket `result_sha` 精确等于父分支上的 implementation commit；或 Direct Spec 的所选 workspace、checkpoint、路径和获批规格一致；required 来源必须 clean 且 source checkpoint 等于 branch tip。
+
+### 6. 双轴审查
+
+调用 下方 `<code-review>` 标签。required Ticket 以 `base_sha` 与 `source_checkpoint` 为固定点；current Ticket 以 Ticket 实施前基线与 implementation commit 为固定点；Direct Spec 以实施前基线与所选 workspace 最终 checkpoint 为固定点：
+
+- 标准轴：正确性、模块设计、错误、安全、性能、并发、资源、测试与可维护性；
+- 规范轴：Spec/Ticket IN/OUT、实现合同、路径所有权、验证矩阵与 Goal Gate；UI 还包括已批准 DESIGN、固定基线和页面/状态规则。
+
+标准轴同时复核 下方 `<ref-common-rules-code-commenting-rule>` 标签：公共 API 契约完整，内部注释只保留非显然的 Why、Invariant 和 Risk，且相关注释与当前行为一致。
+
+默认派遣一位未参与本范围实现的原生 subagent，分别判断标准轴、规范轴并按顺序返回 Lead；明确选择 Herdr/Orca/CLI 时沿该方式派遣。保存真实身份、原始报告和 Lead 工具核验，禁止实现者自审。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须通过。
+
+Direct Spec current 未提交时按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定实际交付快照；HEAD 不能代表未提交内容，也不因审查而自动取得 commit 授权。
+
+### 7. 最终集成与适用 E2E
+
+`required` Ticket/Direct Spec 模式中，Lead 以相应 `purpose=ticket|direct-spec, operation=finalize` 调用 dev-worktree，并读取 下方 `<dev-worktree-finalize>` 标签。该参考唯一维护最新父分支 candidate 的组合、检查、失败/漂移、重建、fast-forward、回读与尝试上限过程。验证失败或父 HEAD 漂移，父分支不推进；不能凭来源检查通过标记 Done。
+
+E2E 是否需要由 Ticket/Goal Plan 的实际跨边界风险决定，不限于 UI；不适用必须记录原因。
+
+`current` Ticket 模式跳过 source worktree、candidate merge 和 candidate checkout。Lead 在当前 workspace 运行 Ticket 要求的适用集成/回归与 E2E，记录运行环境、命令、退出码和摘要；E2E 不得派给其他 agent。失败时不声明完成，保留 Ticket commit、父 HEAD 和恢复条件。全部通过后重读父 HEAD/tree 并记录 `result_sha`。Direct Spec current 同样跳过 source/candidate 与父分支推进；Direct Spec required 完整执行上方候选集成流程。无 Goal 时采用原 Evidence 记录的尝试上限。
+
+无论失败发生在 implementation、review、direct-parent 还是 parent-candidate，同一 Ticket 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 上限时，都停止自动退回原 implementation owner。Lead 保留当前 workspace/worktree、implementation/source commit、旧 candidate 和失败命令，在 Ticket Evidence 记录失败历史，并将 Ticket/worktree 标为 `blocked`。当前 change 属于父实现时返回父 O Lead；否则返回 Goal Plan Lead，或无 Goal Plan 时的当前 I Lead。Lead 按 lead-orchestration 完成最小复盘并形成有实质变化的新 Dispatch Packet 后，才可重置 attempts 和重新派发；契约已失效则返回真正 owner。
+
+最终候选与来源审查不同、发生冲突修正或多个单元组合时，Lead 按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 对最终交付范围补充独立审查；原输入完全相同才复用。候选未获两轴通过不能推进父分支或声明完成。
+
+### 8. Evidence、状态与完成
+
+Lead 使用 下方 `<ref-specdev-i-implement-assets-evidence-template>` 标签 写入 Ticket Evidence；Direct Spec 按该模板的 Direct Spec 适配说明写 `specdev/changes/{change}/evidence/direct-spec.md`。Ticket Evidence 按策略记录 implementation/source、适用 candidate/result SHA、派单/返回、两层验证、双轴审查、E2E disposition、路径审计、失败历史与适用 Lead 复盘、偏差和残余风险；Direct Spec Evidence 使用实施前基线与所选 workspace 最终 checkpoint；required 追加真实 Workspace Execution Record 与 source/candidate/result 链，current 未发生集成不伪造这些字段，两者都不填 Ticket ID。
+
+UI Evidence 必须包含 `## Design Conformance`，列出 design_ref 的准确 digest、pages 与 acceptance ID，逐项连接实现位置、真实浏览器任务、桌面/窄屏截图和状态观察。对照批准原型说明允许的实现差异；未知与未通过项保持未验证，不能仅凭原型证据完成实施。
+
+Ticket 正常状态：`ready → in_progress → review → done`。`required` 的 `done` 要求 change worktree 已完成集成（`integrated` 或 `removed`）、父 HEAD=result SHA 且包含 source commit；`current` 的 `done` 要求 current workspace clean、direct-parent 验证通过且父 HEAD=result SHA。阻塞使用 `blocked`，契约偏差使用 `deviated`，无需改动使用 `cancelled`。Direct Spec 由当前 I-implement owner 按 下方 `<change-completion>` 标签 关闭 change。
+
+按实际存在的负责位置更新：Ticket/Evidence 拥有本票进度，Goal 拥有整体 Gate 与集成，Map/README 只导航；轻量输入把当前清单与验证写原 README，Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 或把已完成 Ticket 投影为 GitHub Issue 时返回 T-triage，否则进入 Archive。
+
+当前 change 属于未完成父实现 change 时，单个组合 Ticket 完成、阻塞或触发 Lead 复盘，且子状态与 Evidence 已写入后，必须自动返回 “目标规划阶段”，由父 Lead 重读全部成员并决定重新派发、返回上游或继续下一 frontier；不得要求用户逐个重新激活，不得直接归档子 change，也不得从本 Work 实现另一个成员。
+
+运行：
+
+```bash
+node Speculo Node 校验器 \
+  --stage implement \
+  --repo <project-root> \
+  specdev/changes/{change}
+```
+
+### 9. 返回
+
+Ticket 模式返回 Ticket 状态与 README Outcome、Evidence 完整路径、workspace locator、implementation/source、适用 candidate/result SHA、父分支、E2E disposition、适用 Lead 复盘决定、未验证项和下一路由。Direct Spec 返回 README Outcome、`specdev/changes/{change}/evidence/direct-spec.md`、实际 workspace、实施前/最终 checkpoint、适用 E2E 和下一路由。push、PR、remote merge、deploy、migration、生产动作及来源 branch/worktree cleanup 只在独立授权时执行。
+
+## 计划型票扩展
+
+实施前按 下方 `<ref-common-rules-skill-invocation>` 标签 执行绑定；恢复或上游变化按 下方 `<ref-specdev-p-goal-plan-references-replan-and-recovery>` 标签 核验。不以读取替代调用，不因他人任务冲突暂停独立已授权工作。
+
+</ref-specdev-i-implement-references-implementation-procedure>
+
+<ref-specdev-i-implement-references-execution-preflight>
+
+# Execution Preflight
+
+先按 下方 `<ref-common-rules-execution-policy>` 标签 解析有效执行选择；用户选择 Herdr 时先完成其项目 Skill 接入与环境检查。无 Goal 不构成阻塞，不能用另一个 CLI 或工作区替换用户固定选择。
+
+## Ticket 硬检查
+
+- [ ] Ticket frontmatter 可解析，`ready: true`，`status: ready`。
+- [ ] Tickets Map 已完整读取，包含总体实施背景和项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 ID 覆盖。
+- [ ] 当前 Ticket 映射的项目 Skill 路径均为真实存在的项目根相对入口文件，Lead 已读取入口并完整展开命中的 Skill；实现执行者 Packet 包含 Map 与同一最低必读集合。
+- [ ] 项目 Agent 指令或当前实现范围没有触发矩阵外的未读项目 Skill；发现新匹配项时由 Lead 更新 Map、重新运行 tickets 校验后再恢复项目写入。
+- [ ] 所有 `blocked_by` Ticket 为 done 且 Evidence 存在。
+- [ ] UI Ticket 的 design_ref revision/digest/pages/acceptance 与已批准 change DESIGN 一致，prototype/基线引用未漂移；实际 UI 文件范围不能通过省略 ui_change 绕过。
+- [ ] Spec、ADR、Ticket 与 Goal Plan 无冲突；旧 Goal Plan schema 必须重跑 P-goal-plan。
+- [ ] Goal Plan（若存在）为 `lead-directed`，workspace/integration 策略为 `current/direct-parent` 或 `required/candidate-merge`，Lead 可恢复，implementation/integration 上限有 Execution Policy Source 来源，存在有效 config 时不超过其上限及平台能力。
+- [ ] 当前代码入口、接口、路径和父分支仍与 Ticket 假设一致。
+- [ ] writable/shared paths 有唯一 owner；current 模式的 Ticket 顺序已固定且没有其他 active implementation writer。
+- [ ] implementation commit 与当前策略对应的 direct-parent 或 local candidate integration/父分支更新已授权；push/PR/remote/deploy 等保持独立。
+- [ ] required 模式的 原 Ticket Evidence 的 Workspace Execution Record，`base_sha`、父分支、owners、branch、`workspace_ref`、integration 与 E2E disposition 完整；current 模式的 current workspace 记录使用 `workspace_ref: current`、`branch: parent_branch` 和 direct-parent integration。
+- [ ] 实现执行者 若被派遣，Packet 绑定唯一 Ticket workspace 或 current workspace/checkpoint；任务执行者 不写 SpecDev 状态。
+- [ ] current 模式 source 检查在 current workspace 且不宣称 E2E；required 模式 source 检查明确为非 E2E，required E2E 有 parent-candidate 场景与预期。
+- [ ] 验证命令/环境可用，关键静默失败风险有受控反向验证。
+- [ ] Deep Ticket 批准点已满足。
+- [ ] 若属于父 Implementation Map：父 revision 与 Plan source revision 一致，组合 Ticket 在 tasks/frontier 中，dependency Gate 已满足，serialization lock 可用，派单未重复，workspace 策略一致，全部成员 active implementation 数未超过父上限。
+
+## Direct Spec 硬检查
+
+- [ ] 用户已授权按当前规格实现；独立 Spec 已就绪（ready_for_tickets=true），目标、行为、风险门与验收完整；README 替代规格时仍满足轻量边界。不要求单一行为或低风险，确需独立调度/依赖 DAG 才拆票。
+- [ ] current 工作副本只有一个代码 writer（Lead 或获派执行者）；required 以整个 change 为单元，真实 workspace、Lead/实现/integration owner 及路径唯一。SpecDev 正式工件只由 Lead 写入。
+- [ ] 目标、IN/OUT、可写范围、不变量、验证与验收完整。
+- [ ] Direct Spec 涉及 UI 时读取批准 DESIGN 并冻结版本、页面/状态与原型摘要；无 UI 不要求此项。
+- [ ] 实施前 Git checkpoint、dirty 状态和现有用户改动已记录，不覆盖无关改动。
+- [ ] 已读取命中的项目 Skill；非 E2E、适用回归与 E2E 环境可执行，E2E owner 为 Lead。required 的 source 只运行非 E2E，候选检查在 parent-candidate。
+- [ ] implementation commit 授权状态明确；current 未授权时不提交，在原 Evidence 记录交付状态；required 创建前必须有实现 commit 和 local candidate integration/父分支更新授权。
+
+- [ ] required 的 Direct Spec Execution Record 使用 purpose/change 身份、真实 source/candidate locator 和正整数 integration_attempt_limit；恢复时原记录与 Git 一致，不存在未处置 Ticket 执行。
+
+## 失效分类
+
+- **stale-navigation**：导航过时但契约仍有效；更新导航继续。
+- **local-implementation**：局部实现调整不改变契约；记录后继续。
+- **ticket-invalid**：范围、接口、依赖、验证或路径合同失效；停止并修 Ticket。
+- **map-context-stale**：总体实施背景、项目 Skill 矩阵、Ticket 覆盖或 Skill 路径失效；停止项目写入并返回 T-tickets 更新 Map。
+- **design-invalid / design-drift**：UI 批准缺失、revision/digest/原型/基线不一致或页面合同失效；停止受影响实现并返回 P-prototype，不能由 I 改写 DESIGN 消除偏差。
+- **spec-invalid / adr-conflict**：返回对应上游 owner。
+- **checkpoint-drift**：current/来源/父分支/派单 checkpoint 漂移；由 Lead 重建执行记录或 required 模式的 worktree/candidate。
+- **workspace-contract-invalid**：缺少父分支、owner、locator、implementation/source/适用 result 字段或授权；停止并修状态/计划。
+- **workspace-strategy-invalid**：Goal Plan 的 workspace/integration 组合非法，或 current 模式出现并发 implementation writer；停止并修状态/计划。
+- **delivery-unverified**：候选、provider 声明或附件不能独立核对；保持 unverified。
+- **e2e-owner-invalid**：required 模式 E2E 被安排在 source worktree，或任一模式不是 Lead owner；停止并修 Ticket/Goal Plan。
+- **direct-parent-invalid**：current 模式的 Ticket commit、父 HEAD、验证或 Evidence 不一致；保留最后可信 commit 并阻塞当前 Ticket。
+- **parent-plan-stale**：父 Implementation Map revision、成员 Ticket、serialization、workspace 策略、全局实现配额或 repository/ref 已变化；停止当前派单并返回 P-goal-plan 重算。
+
+## 验证范围与失败保证
+
+冻结本票真实消费者、配置/构建入口、适用文档与验证命令；不把 DSH 命令当项目事实。只复用输入和环境仍有效的证据；失败副作用未知时按 下方 `<ref-common-rules-error-handling>` 标签 暂停依赖工作，恢复前沿原 owner 核实，不重放未决动作。
+
+</ref-specdev-i-implement-references-execution-preflight>
+
+<ref-common-skills-code-review-references-risk-review>
+
+# 风险驱动的全面代码质量审查
+
+这是本地审查扩展，不声称复制或验证了任何外部实时技能。仍保留原有标准轴/规范轴隔离和固定输出顺序，不合并排名。
+
+## 何时展开
+
+用户要求全面/严格审查，或触及权限、数据迁移、公共 API、隐私、资金、并发、事务、恢复与资源归属时展开全部适用检查；普通局部变更采用定向检查，但不跳过已命中的高风险边界。
+
+## 方法
+
+固定 base/head 和全部变更清单。对每个适用类别先给出可证伪的失败假设，再沿调用方、实现、测试和恢复路径寻找证据。先解释真实风险，再提出最小修复；不因偏好强行全仓改风格，不删除有效回归测试来制造绿色。
+
+| 轴内检查 | 要寻找的反例 |
+|---|---|
+| 行为与契约 | 正常路径通过但边界、取消、重复调用或失败结果违背 Spec |
+| 数据与状态 | 多事实源漂移、部分提交、乱序恢复、丢失用户数据 |
+| 权限与安全 | 文件文字被当授权、路径逃逸、软链接绕界、敏感值泄漏 |
+| 并发与 owner | 同资源不同文件、重复 writer、他人锁被解开、竞态检查后写入 |
+| 兼容与迁移 | 旧入口残留、新旧 schema 混用、回滚覆盖别人的改动 |
+| 证据与测试 | 只断言字符串出现、测试不能失败、stub 代替真实核心路径 |
+| 可维护性 | 重复规则、隐式默认、过宽触发、不可定位参考、无失败停止 |
+
+每项 finding 包含证据位置、可达前提、影响、严重性、修复与验证方法；已确认、推断与未验证分开。无发现只表示已检查范围未找到问题，不证明绝对无缺陷。没有真实隔离 reviewer 时明确报告局限，不伪装独立审查。
+
+完成前以正常/失败/恢复/兼容场景验证；无法运行的检查保留具体原因与影响，不能减弱验收后宣称全通过。
+
+</ref-common-skills-code-review-references-risk-review>
+
+<ref-specdev-i-implement-references-documentation-procedure>
+
+# 文档维护执行分支
+
+仅在已授权的 Ready documentation Ticket 或满足原条件的 Direct Spec 中使用；当前 Work 仍为 `specdev/implement`，权限、workspace、commit 和验收仍走 I。文档建议或审查请求不授权写入。入口预检和两轴审查不因选择本分支消失。
+
+## 定位事实与修改范围
+
+直接使用 下方 `<shared-writing-for-agents-references-current-facts-docs>` 标签 六步；格式需要时读取 下方 `<ref-common-rules-documentation-standard>` 标签。区分只改说明、修正示例以及改变 prompt/tool/CLI/UI 可见行为。按 Ticket 的获批写集维护项目文档；Evidence 留在原 change 的本票文件或 Direct Spec Evidence，不创建第二份文档状态。
+
+列出每条行为声明的 owner 与验证方法：源码、类型、实际命令、运行场景或人工核对。先修 owner，再同步相应派生物与项目要求的语言侧；禁止手改生成文件。保存行为、条件、否定、例外、失败与所有权，消除仅本会话可理解的叙述。
+
+## 验证与交付
+
+纯说明修改使用相关链接、类型片段、示例、生成一致性和语义核对，不伪造代码 red/green。写入命令实际运行后才记录对应成功结果；缺网络、平台、凭据或权限时保留未验证和责任人，不替换成 mock 后写“真实入口通过”。
+
+可见行为改变时，补充实际输出或目标项目的行为快照/场景证据，并在需要时读取 下方 `<ref-common-rules-agent-experience>` 标签。默认值、错误、兼容或数据格式变化与代码同改；外部破坏的升级说明在当前改动产生，写清旧新行为、受影响者、迁移验证与真实回退限制。
+
+在原 Evidence 记录 `Engineering Evidence`，kind 为 `documentation`；字段与校验见 下方 `<ref-common-rules-engineering-evidence>` 标签。每项声明为 verified 或 unverified；总体 partial/blocked 不等于 Ticket done。新分支使用 `--engineering documentation` 校验对应原工件，再完成 I 的适用项目验证、两轴审查、状态回读和交付。
+
+## 失败与恢复
+
+以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
+
+实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 docs-sync state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
+
+</ref-specdev-i-implement-references-documentation-procedure>
+
+<ref-common-rules-error-handling>
+
+# 错误、状态保证与恢复
+
+在设计、实现或审查失败、重试、取消、后台任务和恢复时读取。此规则决定失败后的工程判断；既有授权、状态 owner 与远程操作协议仍分别拥有执行权，不在这里创建账本或更换恢复网关。
+
+## 先定义失败后仍成立的事实
+
+预期失败使用可区分的类型或稳定代码，保存必要原因和处理信息；不要解析展示文案来选择恢复分支。无法预期的缺陷可以作为异常报告，但不能被 catch 转成成功。对每个可能改变状态的操作，记录实际处理者、报告者、清理责任及失败后的保证：
+
+| 已知副作用 | 可以作出的判断 | 下一步 |
+|---|---|---|
+| 未开始或确认未发生 | 未产生本次效果 | 仍需核对授权、取消与重试条件 |
+| 已确认全部提交 | 效果已发生 | 回读结果，不能再次创建相同效果 |
+| 已确认部分发生 | 只有已核实部分可信 | 停止依赖完整结果的工作，按 owner 的补偿或继续协议处理 |
+| 结果未知 | 无法保证没发生或已成功 | 保留原操作标识，先对账；不能声称回滚或安全重试 |
+
+捕获异常不撤销已经发生的修改，记录日志不等于完成恢复。只有受影响状态的 owner 能证明后续操作的前置条件仍成立；否则停止依赖该状态的工作、弃用无效实例或升级处理。无关、独立且已授权工作仍可继续。
+
+## 重试、取消与无进展
+
+重试必须说明安全重复的依据、执行 owner、取消途径和预算。只读、可幂等重试和需要先确认副作用的操作分别处理；“发生了超时”本身不能证明可重复。持续监督需要可释放的生命周期和可见降级，不伪装为有限次数操作。
+
+使用现有 config/Plan 的预算，不在下游偷偷扩大次数。只读操作也可能依赖已变化输入，仍需核实范围。
+
+同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 “请求分诊阶段” 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
+
+取消只说明发出了取消请求，不保证远端副作用或子进程已经停止。传播 signal 后仍需等待属于本操作的完成信号；清理失败和业务失败分别报告，不能用后者隐藏前者。
+
+取消必须说明停止接收、停止执行和外部工作终止各自的时点；无法确认终止时保留未知状态和后续核实责任。
+
+## 面向用户的结果
+
+最终说明必须指出受影响操作、已知影响、尚不确定的结果、系统当前处置和下一安全动作。失效状态持续存在时，提示也应持续可见；错误提示组件不能随已关闭的来源界面一起消失。保留有效数据，不为展示瞬时错误清空它。使用目标项目原有语言和诊断机制；敏感内部信息不进入公开文案。主要报告渠道失败时有独立的安全回退。
+
+S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录，D 调查实际失败，C 追踪所有可达路径。验证应观察外部状态、文件、事件、退出或用户可见结果，不只断言异常被捕获。
+
+## 判断示例
+
+请求创建 PR 后超时，应先按稳定 marker 查询原目标；直接重发可能重复创建。读取无副作用的数据遇到临时网络错误，在预算、取消和环境允许时可以重试。这两个场景不能共享无条件 retry。
+
+方法参考：DeepSeek Harness 的错误处理标准，固定参考版本见 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-error-handling/SKILL.md</Url>；这里采用 SpecDev 原有 owner 和持久化，不导入其运行时实现。
+
+</ref-common-rules-error-handling>
+
+<ref-common-rules-test-reliability>
+
+# 可重复的测试与有效反例
+
+新增、修改或调查异步、资源、时钟、并发、进程或 CI 易抖动测试时读取。检查选择和执行证据由 下方 `<evidence-and-verification>` 标签 拥有；本规则只规定测试怎样可靠地观察目标行为。
+
+## 按真实拓扑设计隔离
+
+从实际测试配置与 CI 定义确认同文件用例、不同 worker、不同测试进程和共享主机的 job 是否可能重叠。进程隔离不隔离端口、可预测目录、数据库、外部服务和继承的子进程。
+
+每个资源都有获取者、原子分配动作、可观察就绪、立即登记的清理和清理完成信号。测试服务器绑定 loopback 的系统分配端口后再读取地址，不先扫描“空闲端口”；目录使用独立临时根，数据库/会话使用独立 namespace。稳定录制 ID 与临时地址在 fixture 内映射，不强迫真实资源复用固定地址。仅作解析输入的 URL 或路径不属于已获取资源。
+
+不得为了掩盖一个 fixture 的冲突把整个套件串行化。共享资源修复涉及跨进程隔离时，使用独立并发进程证明隔离，而不只把同一文件中的测试顺序执行。
+
+## 全局变量、时钟与平台
+
+优先注入依赖而不是修改进程全局状态。必须修改 env、cwd、timer、locale、模块 mock 或 fetch 拦截时，保存“缺失/存在及原值”，立即登记恢复，并在最小作用域用 finally 恢复；必要时增加失败兜底。拦截只覆盖本 fixture 的精确请求。
+
+平台拥有的语义从真实读回结果确认。不要假定时间戳精度、环境变量大小写、信号、权限或文件句柄关闭语义跨平台相同；确实不适用的场景明确跳过并说明原因，不削弱所有平台断言。超时预算依据真实 lane 与被等待操作，setup/teardown 一并考虑。用例预算应明显大于被测试的超时。
+
+## 同步与彻底清理
+
+等待 readiness、handshake、状态、promise 或外部可观察条件；sleep 只可作为已经完成状态的展示停留，不作为正确性的依据。竞态使用 barrier/deferred 明确制造重叠，不靠随机重复碰运气。
+
+清理要停止新工作、解除监听、恢复全局修改，并等待子进程 exit、server close、worker termination 或等价信号。仅调用 abort/close/kill 不代表清理完成。测试需能在断言失败后仍清理，并在存在晚到回调时验证它不能污染下一个测试。
+
+清理失败保留原故障及清理故障，不吞掉其中一个。
+
+## 有效 red、负向对照与测试删除
+
+有效 red 必须来自目标行为断言。编译错误、没选中测试、fixture 初始化失败、探针未执行、timeout 杀死子进程都不是目标回归证据。强制变异先证明修改落在真实执行路径，观察预期断言失败，再还原并复跑基线。
+
+新增静态或工件准入规则，要从实际顶层 runner 投入故意无效输入并观察预期拒绝；只单测未接入的辅助函数不算落实。对于普通回归，在实际可行且安全时观察修复前失败。无法重现的部分明确未验证。
+
+删除旧测试前逐项核对它所保护的行为、错误、兼容和历史回归在新测试中的承接位置与有效证据。新的公共接口测试存在，不证明旧测试全部冗余；缺失承接则保留或补齐。不要用 sleep、宽断言、吞错、重试、归一化或跳过来制造绿色。真实外部服务允许的有界重试须由该测试政策明确批准，并报告重试与跳过。
+
+覆盖率和测试数量不能证明等价。结构检查、可执行反例和真实宿主观察分别报告，不把第一层写成第三层。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-ci-test-reliability/SKILL.md</Url>。使用目标项目的框架和真实 CI，不照搬 DSH 的工具、覆盖率或超时常量。
+
+</ref-common-rules-test-reliability>
+
+<ref-common-rules-agent-experience>
+
+# 面向 Agent 的工具与 Work 体验
+
+修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动任务执行者。
+
+普通代码修改不自动触发全库提示词审查。
+
+## 发现、加载与执行分开
+
+description 写真实触发时机、任务范围和相近但不适用的场景，不写“资深专家”式角色自述。先展示用途、可用动作和必要限制，再按模式加载正文或 reference。延后资源必须有可理解的描述、可靠定位和读取条件；不能为减少首轮内容把必要信息藏到不可发现的位置。
+
+已加载同版本正文的同一次任务不重复读取；输入范围、摘要或 owner 变化时重读受影响内容。首次选中只看到摘要时必须读正文，不能从名称推导步骤。实际执行记录继续遵守 下方 `<ref-common-rules-skill-invocation>` 标签；读过入口不是执行完成。
+
+## 工具描述与结果
+
+参数的范围、默认值、配对和使用条件写在参数定义中。工具说明描述行为与返回，避免复制其他工具或系统段已经拥有的规则。权限、破坏性副作用、不可重复操作和必需验证必须在动作之前可见；描述不是底层权限检查的替代。
+
+返回有界的结果摘要以及可回读的 ID、路径或游标，明确截断、遗漏、分页和证据完整性。包含少量当前动作确实需要的邻近上下文，不整页倒出日志，也不因过度裁剪迫使下一步反复搜索。缺少资源、格式无效和加载失败要能辨认，不伪造可用性。
+
+要能区分无结果、读取失败、权限不足和不完整视图。分页未完整不能报告穷尽；有结果句柄不意味着结果已读。
+
+## 作为行为验证
+
+检查模型真正收到的工具 schema、prompt、结果和诊断，覆盖正常、失败、取消、权限不足、重复调用和恢复中的适用分支。用户直接调用已注入的 Work 不应再次重复加载同一正文。仅宿主支持时才依赖自动/显式调用元数据；文字字段本身不是安全控制。
+
+增加空结果、截断后继续读取等真实行为场景。相同请求反复工具调用、换问法但没有进展时，记录已尝试方法与新增证据；使用原 I/P 的停止和恢复规则，不新建无限自动循环。失败后的副作用与安全动作按 下方 `<ref-common-rules-error-handling>` 标签。
+
+比较优化前后实际首轮输入、总读取、重复调用、误触发和任务结果。在没有同模型、同工具、同任务的实际使用记录时，只报告文件字符或字节变化，不能宣称 token、费用或配额节省。已有正反任务观察与结构检查分别报告。
+
+方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/agent-experience/SKILL.md</Url>。SpecDev 不因此获得 DSH 的运行时 Skill 加载器。
+
+</ref-common-rules-agent-experience>
+
+<ref-common-skills-code-review-references-working-tree-review>
+
+# 未提交工作副本审查
+
+I 的 Direct Spec current 未获提交授权时使用本分支。它覆盖实际交付差异，不以 HEAD 代替未提交内容；C 的 source-files 仍只承诺指定文件阅读。
+
+1. 停止相关 writer，回读实施前 Git 基线、原有 dirty 改动、当前授权写集与实际变更。确认项目 Git 根；无已存在的基线、冲突 index、不可读取文件或不支持的子模块时保持未验证，不伪造提交。
+2. 调用以下只读工具。`--file` 可重复，使用已核对的完整交付文件清单，包含删除路径；不传时覆盖相对基线的全部实际变化和非忽略未跟踪文件。只读冻结不创建 commit、不暂存、不修改 index。
+3. 保存完整返回值，审查 `working_snapshot` 的新增/修改/删除/类型及权限变化。`tracked_diff_command` 只展示 Git 已跟踪部分；新增文件读取快照对应实际字节，删除读取基线对象，二进制和符号链接分别检查实际格式/链接语义。不得因为 diff 为空忽略未跟踪新增。
+4. 使用显式范围时回读 `excluded_paths`，在输入 exclusions 中说明原有用户改动、报告等排除依据；实现范围不能排除。审查输入、原报告和 Evidence 本身放在范围外，避免自引用。原有改动不自动成为本轮可写内容。
+5. 交给未参与实现的 reviewer，结束及完成声明前重跑相同选择并核对全部范围内字节、模式、基线和 index。显式范围外新增的报告不使代码审查失效，但 Lead 仍须核实没有遗漏实现。发生范围内漂移、规范/标准/指令变化或新实现文件，重建输入并补审。
+
+```bash
+node Speculo Node 校验器 --review-scope --repo <project-root> --mode working-tree --base <implementation-baseline-sha> --file <project-relative-file>
+```
+
+输出的 observed_head 只记录观察到的 Git HEAD，working_snapshot/input_sha256 才标识未提交内容。无法验证的二进制、生成物或外部环境如实报告，不宣称两轴或整个 change 已完成。
+
+</ref-common-skills-code-review-references-working-tree-review>
+
+<ref-common-skills-code-review-references-source-discovery>
+
+# Review Source Discovery
+
+## 规范来源
+
+按顺序查找并记录每一步结论：
+
+1. commit message 中的 Issue/PR 引用，对应本地 `specdev/changes/{change}/source.md`；显式 source-files 无 commit 时记 not-applicable，不创建该来源文件；
+2. 调用方显式提供的 Spec、Ticket、ADR、Goal Plan 或其他路径；
+3. 与分支或功能匹配的仓库 `docs/`、`specs/` 或同类规范文件；
+4. 都不存在时询问规范是否确实不存在。确认不存在后规范轴标记 `skipped:no-spec`。
+
+UI 范围按 下方 `<design-contract>` 标签 找到批准 specdev/changes/{change}/DESIGN.md、对应基线 revision/digest、Ticket design_ref 与 `Design Conformance`。这些是规范轴的必需来源；缺失或漂移报告具体缺口，不因其他 Spec 存在而忽略，不将原型截图等同实现验证。
+
+远程 Issue/PR 必须先由 Triage 冻结，或解析为本地不可变 SHA；review 不把可变远程正文当作唯一权威。
+
+## 标准来源
+
+穷尽仓库中声明代码写法的文件：适用的 AGENTS/CLAUDE、CONTRIBUTING、编码标准、lint/type/test 配置和项目生成的 standards skill。记录适用范围；工具已经机械执行的格式项不重复生成人工噪声。
+
+## 完成标准
+
+- 每个候选来源有 found/not-found/not-applicable 结论；
+- 来源使用项目相对 Path 或 SpecDev 完整 Path；
+- 不存在的规范被明确确认，不由 reviewer 猜测。
+
+</ref-common-skills-code-review-references-source-discovery>
+
+<ref-common-skills-code-review-references-result-reuse>
+
+# 复用已有审查证据
+
+仅在当前调用发现已有 C 报告或 I Evidence 并拟复用时读取。先完成当前来源发现，再核对以下完整输入；没有完整记录就正常重新审查，不推测相等。
+
+| 必须相同并可回读 | 核对证据 |
+|---|---|
+| review_mode、实际比较或文件范围 | diff 模式的 fixed_point/head、不可变 SHA、diff 摘要与 commit 范围（legacy 默认三点）；source-files 的路径与原字节摘要；working-tree 的基线、完整范围与实际工作副本快照；不可跨模式复用 |
+| 规范、标准、ADR 和适用项目指令 | 稳定来源路径、原始字节摘要与明确范围 |
+| review Skill 与当前触发的全部参考 | ID、入口/参考字节摘要、风险分支与跳过理由 |
+| 与结论相关的工具、测试环境、配置 | 实际版本/配置摘要与观察证据；未记录不能宣称相同 |
+| 审查独立性及执行结果 | 实际实现者/reviewer 身份、派遣/返回与 Lead 核验、原输入、两轴 findings 和原验证输出 locator |
+
+Lead 必须回读真实原报告和证据；相同文件名、报告“通过”文字、相同 HEAD 或结构校验均不足。任一输入变化、缺失、不可解析或来源不明，重跑受影响轴；无法证明 reviewer 未参与实现时重跑两轴。新风险范围必须完整审查，不因复用缩减 finding 数量。
+
+复用保持原结果与来源，不能把 request-changes、skipped:no-spec 或未测结果改成 passed。有 change 的正式 C 仍创建自己的新 CR 报告并引用原证据；会话文件审查只返回本次结果；I 仍由 Lead 写入本票 Evidence，旧报告/旧完成证据不覆盖。复用报告不跳过当前 workspace/集成/E2E/授权检查，不新增全局缓存、状态树或完成捷径。
+
+</ref-common-skills-code-review-references-result-reuse>
+
+<ref-common-skills-code-review-references-fowler-smells>
+
+# Fowler Smell Baseline
+
+以下条目是标准轴最低启发式，不是硬性违规；仓库明确允许时抑制，工具链已覆盖时不重复报告：
+
+- **Mysterious Name**：名称不能揭示职责或数据含义；重命名，无法诚实命名时重新审视设计。
+- **Duplicated Code**：同一知识形态出现在多个代码块；提取单一权威实现。
+- **Feature Envy**：方法主要操作另一个对象的数据；把行为移动到数据 owner。
+- **Data Clumps**：一组字段/参数反复同行；形成有语义的类型。
+- **Primitive Obsession**：基本类型代替领域概念；引入小型领域类型。
+- **Repeated Switches**：同一分类判断重复出现；集中映射或使用多态。
+- **Shotgun Surgery**：一个逻辑变化迫使分散修改多个文件；汇聚共同变化知识。
+- **Divergent Change**：同一模块因多个无关理由变化；按职责拆分。
+- **Speculative Generality**：为规范未要求的未来需求增加抽象；删除并内联到真实需求出现。
+- **Message Chains**：调用者依赖长导航链；由第一个对象隐藏导航。
+- **Middle Man**：模块大部分只做转发；删除无价值中间层。
+- **Refused Bequest**：继承者拒绝大部分合同；使用组合或重建接口。
+
+每个命中写为“可能的 <Smell>”，引用代码块并解释为什么在当前 diff 中构成风险。
+
+</ref-common-skills-code-review-references-fowler-smells>
+
+<ref-common-skills-code-review-references-reviewer-contracts>
+
+# 独立双轴审查
+
+## 派遣与身份
+
+默认派遣一位未参与当前审查范围实现的原生 subagent，分别给出标准轴和规范轴结果。实际需要并行时可派遣两位。沿调用方确定的 review 阶段方式执行：明确选择 Herdr/Orca/CLI 时用该工具派遣，并保存真实工具返回的 Agent/会话标识；编排方式与工作区独立。
+
+实现者包括当前范围的代码、配置、模型可见指令及修复/冲突解决的所有 Agent。实现者运行测试和自查是实现活动，不能作为独立审查。改名、切换角色或重置上下文不改变参与过实现这一事实。Reviewer 只读审查对象，返回 findings；参与修复后必须另派独立 reviewer。
+
+无法获得独立 Agent、身份无法核实或指定工具不可用时，报告 blocked/unverified，保持完成门关闭。不得用当前实现者顺序扮演两个角色替代派遣。task 上下文只执行分配的一个或两个轴，不递归编排；Lead 核对工具事实并维护正式 Evidence。
+
+## 标准轴
+
+依据固定 diff/log 或完整工作副本/文件快照、仓库标准和 Fowler baseline，检查正确性、可维护性及适用风险。引用来源与代码块，区分 hard violation 和 heuristic，跳过工具链已强制执行的纯格式项。
+
+## 规范轴
+
+依据同一固定代码输入和实际规范，检查缺失或不完整需求、超范围行为、失败与边界语义；引用具体 AC、合同或决定。
+
+## 结果
+
+同一 reviewer 可以读取两轴依据，但必须分别判断并按 standards、specification 顺序返回，不用一轴结论替代另一轴。两位 reviewer 时分别派发所属轴，汇总前不共享 findings。汇总者只整理格式，不删除或跨轴合并、重排发现，不设置任意字数或 finding 上限。
+
+每轴返回 `pass | request-changes | skipped`。标准轴不可跳过；C 经来源发现确认没有规范时可 `skipped:no-spec`，不能宣称完整双轴通过。I 始终有 Spec/Ticket 或轻量 README 合同，两轴必须 pass。
+
+执行与复用都按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 保存独立性和固定输入证据。
+
+</ref-common-skills-code-review-references-reviewer-contracts>
+
 <ref-common-rules-engineering-evidence>
 
 # 专业分支的工程证据
@@ -3667,93 +4381,6 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 </ref-common-rules-documentation-standard>
 
-<ref-common-rules-test-reliability>
-
-# 可重复的测试与有效反例
-
-新增、修改或调查异步、资源、时钟、并发、进程或 CI 易抖动测试时读取。检查选择和执行证据由 下方 `<evidence-and-verification>` 标签 拥有；本规则只规定测试怎样可靠地观察目标行为。
-
-## 按真实拓扑设计隔离
-
-从实际测试配置与 CI 定义确认同文件用例、不同 worker、不同测试进程和共享主机的 job 是否可能重叠。进程隔离不隔离端口、可预测目录、数据库、外部服务和继承的子进程。
-
-每个资源都有获取者、原子分配动作、可观察就绪、立即登记的清理和清理完成信号。测试服务器绑定 loopback 的系统分配端口后再读取地址，不先扫描“空闲端口”；目录使用独立临时根，数据库/会话使用独立 namespace。稳定录制 ID 与临时地址在 fixture 内映射，不强迫真实资源复用固定地址。仅作解析输入的 URL 或路径不属于已获取资源。
-
-不得为了掩盖一个 fixture 的冲突把整个套件串行化。共享资源修复涉及跨进程隔离时，使用独立并发进程证明隔离，而不只把同一文件中的测试顺序执行。
-
-## 全局变量、时钟与平台
-
-优先注入依赖而不是修改进程全局状态。必须修改 env、cwd、timer、locale、模块 mock 或 fetch 拦截时，保存“缺失/存在及原值”，立即登记恢复，并在最小作用域用 finally 恢复；必要时增加失败兜底。拦截只覆盖本 fixture 的精确请求。
-
-平台拥有的语义从真实读回结果确认。不要假定时间戳精度、环境变量大小写、信号、权限或文件句柄关闭语义跨平台相同；确实不适用的场景明确跳过并说明原因，不削弱所有平台断言。超时预算依据真实 lane 与被等待操作，setup/teardown 一并考虑。用例预算应明显大于被测试的超时。
-
-## 同步与彻底清理
-
-等待 readiness、handshake、状态、promise 或外部可观察条件；sleep 只可作为已经完成状态的展示停留，不作为正确性的依据。竞态使用 barrier/deferred 明确制造重叠，不靠随机重复碰运气。
-
-清理要停止新工作、解除监听、恢复全局修改，并等待子进程 exit、server close、worker termination 或等价信号。仅调用 abort/close/kill 不代表清理完成。测试需能在断言失败后仍清理，并在存在晚到回调时验证它不能污染下一个测试。
-
-清理失败保留原故障及清理故障，不吞掉其中一个。
-
-## 有效 red、负向对照与测试删除
-
-有效 red 必须来自目标行为断言。编译错误、没选中测试、fixture 初始化失败、探针未执行、timeout 杀死子进程都不是目标回归证据。强制变异先证明修改落在真实执行路径，观察预期断言失败，再还原并复跑基线。
-
-新增静态或工件准入规则，要从实际顶层 runner 投入故意无效输入并观察预期拒绝；只单测未接入的辅助函数不算落实。对于普通回归，在实际可行且安全时观察修复前失败。无法重现的部分明确未验证。
-
-删除旧测试前逐项核对它所保护的行为、错误、兼容和历史回归在新测试中的承接位置与有效证据。新的公共接口测试存在，不证明旧测试全部冗余；缺失承接则保留或补齐。不要用 sleep、宽断言、吞错、重试、归一化或跳过来制造绿色。真实外部服务允许的有界重试须由该测试政策明确批准，并报告重试与跳过。
-
-覆盖率和测试数量不能证明等价。结构检查、可执行反例和真实宿主观察分别报告，不把第一层写成第三层。
-
-方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-ci-test-reliability/SKILL.md</Url>。使用目标项目的框架和真实 CI，不照搬 DSH 的工具、覆盖率或超时常量。
-
-</ref-common-rules-test-reliability>
-
-<ref-common-rules-error-handling>
-
-# 错误、状态保证与恢复
-
-在设计、实现或审查失败、重试、取消、后台任务和恢复时读取。此规则决定失败后的工程判断；既有授权、状态 owner 与远程操作协议仍分别拥有执行权，不在这里创建账本或更换恢复网关。
-
-## 先定义失败后仍成立的事实
-
-预期失败使用可区分的类型或稳定代码，保存必要原因和处理信息；不要解析展示文案来选择恢复分支。无法预期的缺陷可以作为异常报告，但不能被 catch 转成成功。对每个可能改变状态的操作，记录实际处理者、报告者、清理责任及失败后的保证：
-
-| 已知副作用 | 可以作出的判断 | 下一步 |
-|---|---|---|
-| 未开始或确认未发生 | 未产生本次效果 | 仍需核对授权、取消与重试条件 |
-| 已确认全部提交 | 效果已发生 | 回读结果，不能再次创建相同效果 |
-| 已确认部分发生 | 只有已核实部分可信 | 停止依赖完整结果的工作，按 owner 的补偿或继续协议处理 |
-| 结果未知 | 无法保证没发生或已成功 | 保留原操作标识，先对账；不能声称回滚或安全重试 |
-
-捕获异常不撤销已经发生的修改，记录日志不等于完成恢复。只有受影响状态的 owner 能证明后续操作的前置条件仍成立；否则停止依赖该状态的工作、弃用无效实例或升级处理。无关、独立且已授权工作仍可继续。
-
-## 重试、取消与无进展
-
-重试必须说明安全重复的依据、执行 owner、取消途径和预算。只读、可幂等重试和需要先确认副作用的操作分别处理；“发生了超时”本身不能证明可重复。持续监督需要可释放的生命周期和可见降级，不伪装为有限次数操作。
-
-使用现有 config/Plan 的预算，不在下游偷偷扩大次数。只读操作也可能依赖已变化输入，仍需核实范围。
-
-同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 “请求分诊阶段” 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
-
-取消只说明发出了取消请求，不保证远端副作用或子进程已经停止。传播 signal 后仍需等待属于本操作的完成信号；清理失败和业务失败分别报告，不能用后者隐藏前者。
-
-取消必须说明停止接收、停止执行和外部工作终止各自的时点；无法确认终止时保留未知状态和后续核实责任。
-
-## 面向用户的结果
-
-最终说明必须指出受影响操作、已知影响、尚不确定的结果、系统当前处置和下一安全动作。失效状态持续存在时，提示也应持续可见；错误提示组件不能随已关闭的来源界面一起消失。保留有效数据，不为展示瞬时错误清空它。使用目标项目原有语言和诊断机制；敏感内部信息不进入公开文案。主要报告渠道失败时有独立的安全回退。
-
-S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录，D 调查实际失败，C 追踪所有可达路径。验证应观察外部状态、文件、事件、退出或用户可见结果，不只断言异常被捕获。
-
-## 判断示例
-
-请求创建 PR 后超时，应先按稳定 marker 查询原目标；直接重发可能重复创建。读取无副作用的数据遇到临时网络错误，在预算、取消和环境允许时可以重试。这两个场景不能共享无条件 retry。
-
-方法参考：DeepSeek Harness 的错误处理标准，固定参考版本见 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-error-handling/SKILL.md</Url>；这里采用 SpecDev 原有 owner 和持久化，不导入其运行时实现。
-
-</ref-common-rules-error-handling>
-
 <shared-coordination-task-brief>
 
 # 任务交接说明
@@ -3762,7 +4389,7 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 ## 必需上下文
 
-将以下信息写入当前 Ticket Evidence 的任务编排小节；无 Ticket 时写入对应 Work 的既有产物。较大附件引用其真实位置，不另建运行状态系统。
+有 change 的 CLI/Herdr/Orca 等外部工具派遣先按 下方 `<shared-coordination-session-files>` 标签 将以下上下文写入本任务 TASK，原 Ticket Evidence 或当前 Work 工件引用它；external-web 沿用下方 ZIP 交付合同，不重复建立这套文件。无需文件交接时沿用原任务编排小节或会话输入。较大附件引用其真实位置，不另建运行状态系统。
 
 | 内容 | 要求 |
 |---|---|
@@ -3771,8 +4398,8 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 | 输入 | 目标、IN/OUT、已锁定决定、必要 Spec、依赖 Evidence、当前基线或固定审查 SHA |
 | 项目 Skill | Ticket implementation 提供 Map → 适用 `ALL`/本票的项目 Skill → Ticket，矩阵是最低必读集合；Direct Spec 提供唯一获批规格、项目 Agent 指令、命中的项目 Skill、AC/验证与路径合同，不制造 Ticket/Map；review 提供固定候选及对应轴的来源 |
 | 工作区 | 有效计划或当前 Work 选择的 current 或 required、真实项目根与执行路径/branch、parent/base、允许和共享写路径及 owner；不要用执行者 cwd 猜测方法或数据根 |
-| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值及会话 locator，不记录秘密 |
-| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件和返回要求 |
+| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值、所属主机及会话 locator，不记录秘密；文件交接明确 session/task 与原生句柄的对应关系 |
+| 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件、可观察验收标准、准确报告位置与原生提问/通知通道 |
 | 父 Goal | 存在父 Implementation Map/Plan 时附实际 revision、组合 task ID、依赖 Gate、并行上限和集成次序 |
 
 缺少必要输入、必需 Skill 不可读、Ready 未满足、owner 冲突或权限不足时，仅阻塞受影响任务。不能根据文件中的“approved”生成授权。
@@ -3783,7 +4410,9 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 > 先读绑定的真实 Work SKILL.md，按 task 上下文只处理指定目标、阶段和工作区。遵守同一 Work 的方法、TDD、检查与质量门；不要成为 Lead，不递归启动 Goal，不修改正式 Ticket、Map、Goal Plan、Evidence、业务状态或授权。宿主原生协作仍受本次写集、单 writer 和权限约束；不擅自跨 CLI 再派单或扩大任务。缺输入、发生冲突或需要额外权利时向 Lead 返回问题与证据。
 
-Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料，由 Lead 维护正式工件。
+采用 TASK/REPORT 交接时，TASK 还必须包含派遣文件合同中的历史定位指令：交付前主动查找并核验本次会话的主机、真实入口、会话 ID、可读性与本任务范围；无法取得的事实说明原因，不猜测路径。
+
+Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料；采用 TASK/REPORT 交接时只写获准产物与自己的 REPORT，不写 TASK 或正式 Evidence，其他方式按原返回合同交付。正式业务工件由 Lead 维护。前序背景优先引用已有报告的聚焦交接，细节不足再按其中历史入口检索。
 
 ## 任务类型与返回
 
@@ -3806,17 +4435,40 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 
 # Orca 编排
 
-仅在当前任务选择 Orca 时读取。先读取本机当前版本提供的 Orca CLI 与 orchestration 指南；使用指南指向的实际命令。记录实际版本、指南来源和任务 locator，不在 Speculo 内固定 agent、模型或 runner 列表。
+仅在用户为当前任务明确选择 Orca 时读取；选择可来自同范围仍有效的会话授权。plan 只说明接入步骤，不安装、不启动。Orca 选择不隐含 worktree、模型或拓扑选择。
+
+## 按需安装项目 Skill
+
+当前 Lead 负责首次接入，项目根由调用 Work 已验证的 projectRoot 确定，不取终端 cwd、桌面客户端路径或方法安装根。
+
+1. 检查项目 `skills/orca/SKILL.md`（标准布局为宿主确认的项目 Orca Skill 入口）。存在且为有效 `name: orca` 的完整 Skill 时先读取并复用，核对来源和兼容性；不因上游更新静默覆盖。符号链接、同名非 Skill、无效内容或归属冲突时保留原文件，仅阻塞安装分支，说明冲突位置与恢复方式。
+2. 缺失时从指定上游 GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/orca 目录中的完整 Orca Skill 获取 Skill。先解析 main 的实际 revision，再从该 revision 下载 `skills/automation/orca/` 的完整内容；当前上游为单文件，未来若有相对资源依赖须完整获取，不能只保存 GitHub HTML 页面。Skill 指向的 Orca 内置指南由实际 CLI 提供，不是缺失的本地资源。
+3. 使用宿主可用的 Skill 安装器并显式指定宿主确认的项目 Skill 安装目录 为目标；没有安装器时用宿主下载和文件工具完成同一流程。先在临时位置检查 UTF-8 Markdown、YAML frontmatter、`name: orca`、引用闭包及路径，再以不覆盖方式安装。保留上游原文、frontmatter、许可和文件模式，不重写命令或权限参数。下载/校验失败时不留下半成品正式目录；目标期间发生变化时停止，不覆盖重试。
+4. 安装后回读实际 Skill，核对内容摘要与候选一致，在当前 Work 已有 Evidence/报告或会话结果中记录上游 URL、revision、内容 SHA-256、目标和结果。没有报告就不为安装制造 change 或 receipt。此 Skill 是项目第三方资产，不加入 Speculo 的投影清单，也不由 init/refresh 更新或删除。
+
+用户选择并要求使用 Orca 时可完成上述项目本地安装；持久配置本身不是新安装授权。安装 Skill 不等于安装或升级 Orca、登录账户、配对远端或启动服务。缺少网络或写权限时只阻塞 Orca 分支，给出原目标和缺失条件；重试前重新检查目标，不能自动换另一种执行方式。
+
+## 运行与返回
+
+安装或复用后必须读取项目内 Skill，按其规则定位实际 CLI：优先核对 `ORCA_CLI_COMMAND`，开发上下文核对 `ORCA_DEV_REPO_ROOT`；Linux 非托管环境使用指南规定的 `orca-ide` 入口，避免误调用同名屏幕阅读器。不要套用 Herdr 的环境变量要求，也不把环境值交给 eval。固定入口后读取本机 `--help`、`skills get orca-cli`；需要受监督编排时再读 `skills get orchestration` 及当前分支参考。核对版本、来源、执行主机与目标 runtime 能力，不把上游 main 当作本机可用接口。
+
+宿主技能列表是否已刷新不替代读取真实项目文件；安装成功也不证明 CLI 或远端可用。入口、权限或目标能力失败时保留原错误，只阻塞此方式，不静默切换生产/开发版或本地/远端入口，不自行安装升级或重启服务。
 
 1. 确认用户项目、当前工作区以及当前 Lead 的责任。需要保留 Lead 连续推进时使用受监督任务方式；完整 handoff 会转移责任，只有用户明确选择该交接时才使用。
-2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。
-3. 使用 下方 `<shared-coordination-task-brief>` 标签 的真实入口和任务说明。保存工具返回的任务/尝试/session locator；不要以标题猜句柄。
-4. 区分投递已接收、任务开始、任务返回、写入停止和业务验收。工具已有生命周期由工具管理，不再建调度器。
-5. 处理该任务的 question、完成及升级请求；已有权威答案由 Lead 回答，额外权限或产品决定再交用户。确认已处理必要消息后才按工具合同确认收件。
-6. 状态不明时重读任务和收件事实。旧句柄失效时按当前指南查询，不同时向旧、新目标重复发送。
-7. 接收、取消、保留或释放工作区按当前指南及真实授权操作。释放不等于取消，完成消息不等于旧写入者已经停止。
+2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。工具和模型沿用户选择及当前指南确定，不固化 agent/runner 清单；保留用户焦点，不复用 Herdr 参数。
+3. 使用 下方 `<shared-coordination-task-brief>` 标签 的真实入口和任务说明。有 change 时先保存 TASK，提供 REPORT 位置；记录编排 session/task 对应的 Orca Run、Task、Dispatch、终端及 provider 会话中实际存在的 locator 和所属主机，不以标题猜句柄。
+4. 区分投递已接收、任务开始、任务返回、写入停止和业务验收。Run、Task、Dispatch 与终端、工作区分别使用真实返回的身份；已有 Run/Dispatch 按指南恢复，不重复创建。工具已有生命周期由工具管理，不再建调度器，也不用其他 subagent 工具冒充 Orca 派遣。
+5. 处理该任务的 question、完成及升级请求；已有权威答案由 Lead 回答，额外权限或产品决定再交用户。报告保存后按当前原生完成协议发送摘要与报告位置；支持 report-path 时传真实路径。REPORT 的 completed/blocked/failed/cancelled 不直接代替 Orca 的 outcome 参数；按本版 worker 协议提交原 Task/Dispatch 的结果，已结算的不再补写第二次完成。处理必要消息与资源归属后才确认收件，不因超时重建同一问题。
+6. 状态不明时重读原任务、回执和收件事实；只有本版支持同请求重放且原参数可核对时才恢复原操作。旧句柄失效时重新发现目标，不同时向旧、新目标重复发送。idle、无输出、断线或清单缺项均不能证明任务结束。
+7. 接收、取消、保留或释放工作区按当前指南及真实授权操作。结算后复用、保留或释放资源，运行中取消使用精确目标的原生停止流程；不以关闭终端、全局 reset 或删除工作区代替结算。完成消息不等于旧写入者已经停止。
 
-核对返回和候选后按 下方 `<subagent-delivery-native>` 标签 接续原 Goal。工具或所需能力不可用时准确报告当前阻塞，不自行安装升级。
+核对返回、实际候选和写入停止事实后，由 Lead 按原验收更新 Evidence，并按 下方 `<subagent-delivery-native>` 标签 接续原 Goal。工具或所需能力不可用时准确报告当前阻塞。
+
+## 聚焦交接与历史
+
+按 下方 `<shared-coordination-session-files>` 标签 在报告中保存简短交接和原始会话入口。借鉴 Focused handoff：先读最近摘要与当前工作区，仅在细节不足时检索原会话；这是历史上下文交付，不自动转移 Leader 所有权或 resume 原 provider 会话。
+
+执行者交付前主动从当前版本的会话元数据或历史接口定位 transcript/history locator 与 provider session ID，Lead 用真实派遣句柄补充。按派遣文件合同核验所属主机、真实入口、会话对应关系和可读性，并记录本任务范围；无法核验时说明原因。需要搜索时先按当前指南检查历史索引是否启用，再在正确主机上按实际会话 ID 查找，结合任务关键词、执行路径或时间缩小范围；索引未启用就记录搜索不可用，不自行开启，仍可核验工具已提供的原始入口。SSH 转发 CLI 的搜索主机可能是控制端，路径过滤不等于切换主机。原记录缺失时可保留带来源与范围的终端节选，但必须明确是节选，不能称为完整会话或伪造 JSONL。
 
 </shared-coordination-modes-orca>
 
@@ -3844,8 +4496,8 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
 2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
 3. 使用实际返回的 pane/session 标识，确认对应项目和工作区，等待当前指南定义的就绪条件。不要默认切换用户焦点。
-4. 每个任务使用能明确归属的目标会话，并按 下方 `<shared-coordination-task-brief>` 标签 提供输入。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
-5. 通过工具当前支持的返回读取方式取得结果。遵守其输入/文件交付要求，不为 Speculo 额外强制一份结果文件。
+4. 每个任务使用能明确归属的目标会话，并按 下方 `<shared-coordination-task-brief>` 标签 提供输入。有 change 时提供已保存 TASK 和准确 REPORT 位置，记录编排 session/task 对应的真实 pane/会话与主机；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
+5. 通过工具当前支持的返回读取方式取得结果。有文件交接时按 下方 `<shared-coordination-session-files>` 标签 交回 REPORT 及“任务标识、状态、报告位置、一句话摘要”；只能返回文本时由 Lead 原样捕获并标明来源。交付前主动查询执行 CLI 的实际会话记录，核验主机、真实入口、会话 ID 与可读性，限定本任务范围；不把 pane 标识或终端输出冒充完整 JSONL，无法核验时说明原因。输入、提问和通知仍遵守工具原生接口。
 6. 超时或投递结果不明时先检查原目标，不盲目重发。取消按当前工具说明进行；不要宽泛结束所有 pane 或服务。
 
 任务完成、会话空闲、会话保留是不同事实。只有确认本任务不会继续冲突写入，并由 Lead 完成原验收，才释放业务占用、更新原 Evidence 和继续下一任务。
@@ -3859,14 +4511,112 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 仅在用户明确选择通过 CLI 交互或调用来执行时读取；当前宿主本身是 CLI 不触发本分支。先读取用户指定工具的当前帮助、已安装技能或对应交互方式的官方指南。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
 
 1. 确认工具可用、工作目录、交互方式、输入输出和当前用户已给出的权限。用户指定交互式会话时，使用宿主实际支持的终端/会话能力；只有用户要求或所选工具支持的任务接口适合非交互调用时才采用非交互方式。明确要求的交互方式不可用时停止该分支并报告，不擅自改为无头调用或 Herdr。缺少登录或能力时报告，不自行改变账户、安装工具或添加绕过权限的参数。
-2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；指定真实 Work 入口和必要输入。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
+2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；有 change 时先保存 TASK，指定真实 Work 入口、必要输入、REPORT 位置和提问/通知通道。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
 3. 通过当前宿主可用的执行工具调用该 CLI。优先使用结构化 argv 或可靠的参数传递；任务正文通过工具支持的 stdin、文件或会话输入，不拼接不可信 shell 片段。
-4. 保存实际命令、交互方式、工作区、任务/会话 locator、结果及未验证项到原业务记录；进程退出后记录真实退出码，仍运行或未知时据实记录。工具没有可靠提供的模型、用量或成本写为未知。
+4. 保存实际命令、交互方式、工作区、所属主机与工具任务/会话 locator；有文件交接时由 Lead 补记到 TASK，执行者写 REPORT 并返回任务标识、状态、报告位置和一句话摘要。只有文本返回时由 Lead 按 下方 `<shared-coordination-session-files>` 标签 原样捕获。进程退出后记录真实退出码，仍运行或未知时据实记录；没有可靠提供的模型、用量或成本写为未知。交付前按派遣文件合同主动定位原始历史，核验主机、会话对应关系与可读性，附真实入口和本任务检索范围；无法核验时说明原因，不猜缓存路径。
 5. 交互提示、等待、取消和恢复按该 CLI 当前指南处理。调用结果不明先查询，不把缺日志解释为没有执行，也不重复可能已经发生的外部动作。
 
 CLI 退出码只说明调用结果。Lead 仍按 下方 `<subagent-delivery-native>` 标签 检查真实候选、测试、findings 和完成门。该方式不要求 Speculo 常驻服务或专用 runner。
 
 </shared-coordination-modes-cli>
+
+<shared-coordination-session-files>
+
+# 派遣文件与聚焦交接
+
+在已有 change 中通过 CLI、Herdr、Orca 等外部工具派遣任务时读取。首次实际派遣才创建文件；宿主原生协作按需采用，Lead 自行执行不创建虚构派遣。无 change 时使用当前 Work 已有报告位置，不补造 change。external-web 继续使用原 ZIP 交付合同。
+
+## 目录与身份
+
+SpecDev 任务目录为 specdev/changes/{change}/sessions/{session}/{task}/：
+
+- `{session}` 是一轮编排，使用中性的 UTC `YYYYMMDDTHHMMSSZ`，不带 Work 或任务类型；恢复同一轮继续使用原目录，新轮次另建，同秒冲突追加最小未使用后缀 `-01`、`-02` 等。
+- `{task}` 是一次具体派遣，命名为轮内递增编号加实际主题，如 `001-code-review`、`002-research`、`003-implement` 或 `004-test-observation`。具体 Work、任务类型和 Ticket 写入 TASK。修正交付或重试使用新编号并引用前次报告，不增加 attempt 子目录，不覆盖旧输入与结果。
+- 两种目录标识只使用字母、数字、连字符；由 Lead 分配，不从未经检查的标题直接拼路径。确认目录在当前 change 内、无链接跳转且未被占用。
+- 编排 session/task 与工具的 Run、Dispatch、pane、conversation ID 分开；工具定位信息记录真实返回值和所属主机，不猜句柄。
+
+每个任务通常只有两份文件：Lead 写 specdev/changes/{change}/sessions/{session}/{task}/TASK.md，执行者写 specdev/changes/{change}/sessions/{session}/{task}/REPORT.md。不另建 session 总表、状态 JSON、心跳文件或聊天流水。
+
+原 Evidence 或当前 Work 工件引用这两份文件及 Lead 的验收结论，不复制整份输入、报告或第二套业务状态。持久导航同时绑定稳定 change 身份与 change 根相对 locator，归档后按该 change 的唯一实际位置解析，不能仅依赖旧活动目录。其他领域仅在其 Work 已拥有的产物位置使用同一交接内容，不接管 SpecDev namespace。
+
+## 输入与文件所有权
+
+Lead 将当前交接说明要求的必要上下文写入 `TASK.md`，使用以下五组内容，按需引用原件，不抄整套规格：
+
+| 内容 | 必需事实 |
+|---|---|
+| 身份与目标 | session/task、implementation/review/research/test-observation、change/Ticket（实际存在时）、Lead、执行者和成功定义 |
+| 输入 | 真实 Work/Skill 入口、必要规格和依赖产物、已锁定决定；前序背景引用原报告与其中的历史入口 |
+| 工作区与范围 | current/required、真实执行位置与基线、允许/只读/共享路径及 owner、已获授权的动作、停止条件 |
+| 验收 | 要运行的检查、可观察通过标准、未在执行者环境运行的 Gate 及其 owner |
+| 返回与通信 | 准确报告位置、提问/通知的工具原生通道、实际调用方式与工具句柄；尚未取得的句柄由 Lead 在调用返回后补记 |
+
+TASK 的返回要求必须包含：
+
+> 交付前主动定位本次会话的原始历史记录，核对所属主机、会话 ID 和可读性，在 REPORT 中记录真实路径及本任务检索范围。无法取得时说明原因，不猜测路径。报告正文应能独立说明结果，不要求接收方先读完整聊天。
+
+Lead 在派遣前形成完整输入、检查并写入，再回读确认后投递。输入正文此后保持稳定，只允许补记实际调用句柄/时间；目标、基线或权限实质变化时建立新任务并保留旧任务。普通澄清通过原生通道回答，影响结果的答复写入报告。
+
+派遣前确认执行者能读输入和必要材料，且能交付报告。独立工作区需要明确实际可读输入和可写报告位置；只有工具返回文本时，由 Lead 原样捕获到正式报告，标注 `Captured-by: Lead` 和原始消息 locator，不补造执行者的验证结果。执行者和 Lead 不同时写同一报告。
+
+只读任务仅可写被明确分配的报告及允许的测试产物，业务文件仍只读。报告路径不同允许独立交付，不放宽 current 的单一代码 writer 约束。所有文件先完成候选内容，再使用可用的同目录临时文件与不覆盖目标的原子落盘方式，写前检查目标未被占用、写后回读；已有正式报告不覆盖，发现冲突交 Lead 处理。未完成的临时文件不是报告，也不能作为完成信号。
+
+## 报告与通知
+
+执行者交回任务时一次性写完整 `REPORT.md`，首部用普通 Markdown 字段明确身份和状态，不要求 YAML/JSON。以下是模板，正文占位说明须替换为实际事实：
+
+```markdown
+# 任务回报
+
+Session: 本轮编排标识
+Task: 本次派遣标识
+Status: completed / blocked / failed / cancelled（仅保留实际值）
+
+## 聚焦交接
+用三至五句话说明完成内容、关键决定、当前停点和下一安全动作。
+
+## 产物与验证
+- 修改或成果：真实文件、checkpoint/commit、dirty 状态或其他产物位置。
+- 验证：命令、退出码、执行环境和实际观察；研究列来源，审查列 findings。
+- 未完成或未验证：实际事项；没有则写“无”。
+
+## 问题与下一步
+阻塞/失败/取消的事实、已尝试内容、需要谁提供什么及恢复条件；无问题写“无”。
+
+## 历史会话
+- 工具与主机：实际工具、记录所属主机。
+- 会话 ID：工具提供的真实标识。
+- 原始记录：所属主机上的实际绝对路径，或工具原生历史入口。
+- 核验：由谁、在哪台主机确认了会话对应关系和可读性；未核验项及原因。
+- 本任务范围与检索线索：消息/时间范围、关键函数或错误信息等关键词。
+```
+
+| Status | 表示什么 |
+|---|---|
+| completed | 执行者完成分配范围并交回候选，仍待 Lead 验收 |
+| blocked | 缺输入、权限、依赖或决定，说明恢复所需条件 |
+| failed | 本次尝试失败，保存已产生的产物和失败事实 |
+| cancelled | 本次派遣按实际指示取消，记录已发生影响和停止情况 |
+
+进行中问题与进度使用工具原生通道，不反复刷新报告。`blocked` 是交回本次派遣；正常提问并等待答复仍在原任务中进行。同一报告的状态不流转，后续修复/重试建立新任务；旧执行者是否停止仍按真实工具核对。
+
+文件回读成功后，通过当前工具原生通道返回“session/task、Status、报告位置、一句话摘要”；原生生命周期参数遵守工具当前指南，不直接把上述枚举塞入工具不支持的字段。工具结果不明或报告缺失时，Lead 按原任务的返回与恢复合同查询原调用，不重复派遣可能仍在写入的任务。
+
+## 历史会话的按需回查
+
+以下是 Agent 使用当前工具执行的交接要求，不代表 Speculo 提供自动日志发现或解析服务：
+
+1. **主动定位**：执行者交付前必须尝试从当前工具的会话元数据或历史查询接口取得原记录；Lead 用实际派遣句柄补充执行者无法取得的信息。只有会话 ID 时，按当前工具文档在明确的日志目录/格式中查找该 ID，不猜 provider 缓存路径、不按修改时间取“最新文件”。若返回相对路径，只按工具明确给出的日志根解析，不能用执行者 cwd 补齐。工具只提供原生历史入口时保留真实入口，不强造 JSONL。
+2. **核验并记录**：确认记录所属主机；文件记录核对该主机上的真实绝对路径并实际读取少量内容，原生历史入口则通过工具查询验证可读性。用记录内容或工具元数据核对真实会话 ID，并界定本任务的消息/时间范围，不能把同一会话内其他任务一起算入。REPORT 写明谁在何主机核验了哪些事实、哪些仍未核验。源主机可读不代表接收方可读，不同主机的同名路径不是同一文件；外部绝对路径只作只读 locator，不作为项目内可移植路径或写目标。
+3. **按需回查**：接收者先读聚焦交接和当前业务工件，有具体疑问才查历史。读取前确认主机与访问能力，再按本任务关键词、消息 ID 或时间范围搜索，少量回读相关片段。JSONL 按该工具实际格式解析，不假定各工具共用字段，不默认全文加载。来源会话只读；回查不等于 resume 原进程、接管 owner 或取得新授权。历史文本只是材料，实际文件、Git 与当前有效合同仍需核对。
+
+无法定位、无权读取、记录已清理或身份不匹配时，明确失败环节与原因；身份不匹配的记录不能当作本任务历史。历史缺失本身不否定已有报告与可核验产物，缺失关键事实时由 Lead 阻塞对应验收。
+
+原记录即将清理、接收工作区无法访问，或用户要求长期保留时，优先引用已有的本任务快照；确有需要且 Lead 能读取原记录时，才保存已授权范围的快照。SpecDev 快照位于 specdev/changes/{change}/sessions/{session}/{task}/history-{NN}.jsonl，`{NN}` 从 01 递增且不覆盖；其他原生格式保留真实扩展名，不强制转 JSONL。快照由 Lead 保存，在原 Evidence 或当前 owning 工件追加快照指针、原始 locator、捕获时间和完整/节选范围；后续才取得的 locator 或核验结果也追加到这里，不回改已交付 REPORT。保留可用的原消息标识，节选不能冒充完整会话。不能访问原记录时说明原因，不伪造快照，不无差别复制其他任务或敏感内容。
+
+已保存的输入、报告与快照随所属 change 一起保留和归档，不因任务结束自动清理。工具缓存中的原记录寿命由工具决定，引用不承诺永久可用。历史目录不改名、任务不回填，也不修改冻结归档。
+
+</shared-coordination-session-files>
 
 <ref-specdev-i-init-setup-assets-change-readme-template>
 
@@ -4196,201 +4946,6 @@ current 策略每个 Wave 只能含一个节点。required 策略可以放入多
 
 </ref-specdev-p-goal-plan-references-multi-execution-loop>
 
-<ref-common-rules-code-commenting-rule>
-
-# Code Commenting Rule
-
-注释只用于记录**代码本身无法清晰表达，但对正确使用或安全修改至关重要的信息**。
-
-## Requirements
-
-- 优先通过命名、类型、结构、断言和测试表达意图；不要用注释掩盖复杂或含糊的代码。
-- 公共 API 应说明调用契约，包括重要的输入限制、返回语义、错误、副作用、并发、所有权和安全要求。
-- 内部实现仅在必要时解释非显然的：
-  - 设计原因与取舍；
-  - 不变量；
-  - 顺序约束；
-  - 安全或并发风险；
-  - 兼容、迁移或 workaround 的原因与退出条件。
-- 单位、时区、精度、哨兵值、生命周期等无法由类型或名称表达时必须说明。
-- TODO 必须包含可追踪标识、具体动作以及完成或删除条件。
-- 修改代码行为时，必须同步检查并更新相关注释。
-
-## Do Not
-
-- 不要为每个函数或方法机械添加注释。
-- 不要逐行复述代码。
-- 不要解释名称和类型已经表达的信息。
-- 不要保留注释掉的旧代码。
-- 不要记录修改历史或临时开发过程。
-- 不要猜测“为了性能”“为了兼容”等设计原因。
-- 不要使用注释数量或覆盖率衡量质量。
-
-## Decision Rule
-
-添加注释前确认：
-
-1. 这条信息是否无法由代码清晰表达？
-2. 缺少它是否可能导致错误使用或错误修改？
-3. 它是否在正常重构后仍然有效？
-
-只有答案均为“是”时才添加注释。
-
-> 公共接口记录 Contract；内部实现记录非显然的 Why、Invariant 和 Risk。
-
-</ref-common-rules-code-commenting-rule>
-
-<ref-specdev-i-implement-references-documentation-procedure>
-
-# 文档维护执行分支
-
-仅在已授权的 Ready documentation Ticket 或满足原条件的 Direct Spec 中使用；当前 Work 仍为 `specdev/implement`，权限、workspace、commit 和验收仍走 I。文档建议或审查请求不授权写入。入口预检和两轴审查不因选择本分支消失。
-
-## 定位事实与修改范围
-
-直接使用 下方 `<shared-writing-for-agents-references-current-facts-docs>` 标签 六步；格式需要时读取 下方 `<ref-common-rules-documentation-standard>` 标签。区分只改说明、修正示例以及改变 prompt/tool/CLI/UI 可见行为。按 Ticket 的获批写集维护项目文档；Evidence 留在原 change 的本票文件或 Direct Spec Evidence，不创建第二份文档状态。
-
-列出每条行为声明的 owner 与验证方法：源码、类型、实际命令、运行场景或人工核对。先修 owner，再同步相应派生物与项目要求的语言侧；禁止手改生成文件。保存行为、条件、否定、例外、失败与所有权，消除仅本会话可理解的叙述。
-
-## 验证与交付
-
-纯说明修改使用相关链接、类型片段、示例、生成一致性和语义核对，不伪造代码 red/green。写入命令实际运行后才记录对应成功结果；缺网络、平台、凭据或权限时保留未验证和责任人，不替换成 mock 后写“真实入口通过”。
-
-可见行为改变时，补充实际输出或目标项目的行为快照/场景证据，并在需要时读取 下方 `<ref-common-rules-agent-experience>` 标签。默认值、错误、兼容或数据格式变化与代码同改；外部破坏的升级说明在当前改动产生，写清旧新行为、受影响者、迁移验证与真实回退限制。
-
-在原 Evidence 记录 `Engineering Evidence`，kind 为 `documentation`；字段与校验见 下方 `<ref-common-rules-engineering-evidence>` 标签。每项声明为 verified 或 unverified；总体 partial/blocked 不等于 Ticket done。新分支使用 `--engineering documentation` 校验对应原工件，再完成 I 的适用项目验证、两轴审查、状态回读和交付。
-
-## 失败与恢复
-
-以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
-
-实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 docs-sync state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
-
-</ref-specdev-i-implement-references-documentation-procedure>
-
-<ref-common-rules-planning-principles>
-
-# 规划原则
-
-SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”，不是把每个任务写成逐行施工脚本。
-
-## 1. 先探索，后提问
-
-先读取相关入口、配置、schema、类型、测试、相邻实现、当前工件和历史决策。未知项分为：
-
-- **可发现事实**：通过只读探索解决，不询问用户；
-- **高影响偏好或取舍**：无法从仓库推导，且会改变行为、架构、风险、范围、迁移或验收时才询问；
-- **低影响实现细节**：由实现者遵循现有惯例决定。
-
-外部事实研究使用 下方 `<research>` 标签。
-
-## 2. 决策完备
-
-一个 Plan 或 Ticket 达到以下状态才可执行：
-
-- 目标和成功标准明确；
-- IN、REUSE、OUT 与不变量明确；
-- 公共接口、数据和兼容策略已锁定或明确不变化；
-- 失败行为和关键边界有结论；
-- 依赖、路径所有权和批准点明确；
-- 验证方式和 Evidence 位置明确；
-- 不存在会改变上述内容的高影响未决问题。
-
-决策完备不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
-
-## 3. 最小充分细节
-
-- 局部、低风险、沿用现有模式的切片使用 Lite。
-- 多文件或跨层垂直切片使用 Standard。
-- 公共契约、迁移、安全、不可逆操作、共享核心路径或复杂协作使用 Deep。
-
-详细条件位于 下方 `<ref-common-rules-readiness-and-depth>` 标签。
-
-## 4. 计划与执行分离
-
-规划阶段可以读取、搜索、静态分析和执行只读或非修改性验证，不实现产品代码。执行阶段不重新决定已锁定的产品和架构事项。计划与代码事实冲突时，按 下方 `<deviation-control>` 标签 退回修订。
-
-## 5. 以可验证目标委托
-
-每个交付物至少有一种可重复证据：测试、类型检查、lint、构建、API 示例、截图对比、迁移 dry-run、查询结果或手动步骤。验证绑定外部行为或稳定接缝，不把私有实现细节当作唯一证据。
-
-## 6. 委托而非微操
-
-Ticket 告诉执行者：做什么、为什么、不能改变什么、按什么顺序形成安全落点、怎样证明。执行者决定：在现有代码惯例内怎样组织局部实现。只有高风险或非显然的接口、迁移和顺序需要写入执行路线。
-
-## 7. 分层规划
-
-- Spec 决定外部行为。
-- Ticket 是决策完备的微型执行计划。
-- Tickets Map 决定依赖和覆盖投影。
-- Goal Plan 只在协调复杂度需要时决定跨 Ticket 编排。
-- Implement 在既定契约内完成代码和 Evidence。
-
-职责细节见 下方 `<artifact-contract>` 标签。
-
-</ref-common-rules-planning-principles>
-
-<ref-common-rules-readiness-and-depth>
-
-# 规划深度与执行就绪
-
-## 1. Planning Depth
-
-### Lite
-
-适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
-
-最低内容：目标、范围、项目路径授权、1–3 条执行路线、验收标准和验证方法。
-
-### Standard
-
-适用于大多数跨多个文件或技术层的垂直切片。
-
-额外要求：锁定决策与假设、接口接缝、输入输出、不变量、失败行为、有序执行路线、验证矩阵和路径所有权。
-
-### Deep
-
-任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调、多个实质架构方案或高事故半径。
-
-额外要求：数据流或状态转换、兼容窗口、迁移顺序、可观测性、回滚、风险缓解、收缩条件和人工批准点。
-
-## 2. Ticket Definition of Ready
-
-Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
-
-- 外部行为和可观察产出明确；
-- IN、REUSE、OUT 无冲突；
-- 高影响决策已锁定；
-- UI 范围按 下方 `<design-contract>` 标签 硬引用已批准 change DESIGN、基线版本和原型，确认/摘要未失效；
-- 没有会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
-- 依赖存在且无循环；
-- `writable_paths`、`read_only_paths` 和 `shared_paths` 使用项目根相对路径；
-- shared path 有唯一 owner；
-- 验收标准可判定；
-- 验证矩阵覆盖正常、失败和回归风险，或有可信的不适用理由；
-- Standard 或 Deep Ticket 有有序执行路线；
-- Deep Ticket 有迁移、兼容、监控、回滚和批准点，或逐项说明不适用；
-- 单个全新上下文可以完成，否则必须拆分。
-
-详细检查位于 “拆分 Tickets 阶段的 Ticket Ready 检查”。
-
-## 3. Spec Readiness
-
-`specdev/changes/{change}/spec.md` 只有在外部行为、范围、公共接口、数据、安全、兼容、迁移和验收合同不存在高影响未知项时，才可设置 `ready_for_tickets: true`。
-
-UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和页面/状态 AC 映射；纯后端或 LOGIC-only 无此要求。
-
-轻量 README 的 scope/acceptance/verification 使用同样的外部行为、风险与可判定 AC 门；没有独立票不要求 Spec YAML 或 Map。Deep、真实并行、跨 change 或复杂设计依赖必须使用完整工件；用户明确产物要求不因轻量分支降低。
-
-## 4. 假设规则
-
-- 低影响、可逆的默认值可以作为显式假设继续；
-- 高影响假设不得用于强行通过 Ready；
-- 实现者发现假设不成立时，按 下方 `<deviation-control>` 标签 处理；
-- 假设必须有适用范围和验证方式。
-
-</ref-common-rules-readiness-and-depth>
-
 <ref-common-rules-codebase-design>
 
 # 代码仓设计
@@ -4546,6 +5101,522 @@ UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和�
 
 </ref-common-rules-codebase-design>
 
+<ref-common-rules-design-it-twice>
+
+# 设计两次
+
+当用户想要为选定的深化候选探索替代接口时，使用此并行任务执行者 模式。基于 "Design It Twice"（Ousterhout）— 你的第一个想法不太可能是最好的。
+
+使用 下方 `<ref-common-rules-codebase-design>` 标签 中的词汇 — **module**（模块）、**interface**（接口）、**seam**（接缝）、**adapter**（适配器）、**leverage**（杠杆）。
+
+## 流程
+
+### 1. 界定问题空间
+
+在启动任务执行者 之前，为选定候选编写一份面向用户的问题空间说明：
+
+- 任何新接口需要满足的约束条件
+- 它将依赖的依赖项，以及它们属于哪个类别（参见 下方 `<ref-common-rules-codebase-design>` 标签 的“依赖类别”）
+- 一个粗略的示例代码草图来使约束具体化 — 不是提案，只是让约束变得具体的一种方式
+
+将此展示给用户，随后进入第 2 步；有工具派遣时用户可同时阅读和思考。
+
+### 2. 启动任务执行者
+
+按共享编排方法选择执行方式：可派遣时建立至少 3 个独立候选；Lead 模式按相同约束依次完成至少 3 个候选。每个任务执行者 必须为深化后的模块生成一个**截然不同的**接口。
+
+为每个任务执行者 提供一份独立的技术简报（文件路径、耦合细节、来自共享设计规则的依赖类别、接缝背后的内容）。简报独立于第 1 步中面向用户的问题空间说明。给每个 Agent 一个不同的设计约束：
+
+- Agent 1："最小化接口 — 目标 1–3 个入口点。最大化每个入口点的杠杆。"
+- Agent 2："最大化灵活性 — 支持多种用例和扩展。"
+- Agent 3："为最常见的调用方优化 — 让默认情况变得简单。"
+- Agent 4（如适用）："围绕接缝设计端口与适配器，以处理跨接缝依赖。"
+
+在简报中同时包含共享设计规则的词汇和 CONTEXT 词汇，以便每个任务执行者 能使用架构语言和项目的领域语言一致地命名事物。
+
+每个任务执行者 输出：
+
+1. 接口（类型、方法、参数 — 以及不变量、排序、错误模式）
+2. 使用示例，展示调用方如何使用它
+3. 实现在接缝背后隐藏了什么
+4. 依赖策略和适配器
+5. 权衡 — 哪里杠杆高，哪里杠杆薄
+
+### 3. 展示和比较
+
+按顺序展示各个设计，让用户能够消化每一个，然后用文字进行比较。通过 **depth**（深度，接口处的杠杆）、**locality**（局部性，变更集中的位置）和 **seam placement**（接缝位置）来对比。
+
+比较之后，给出你自己的建议：你认为哪个设计最强以及原因。如果不同设计中的元素可以很好地组合，提出一个混合方案。要有主见 — 用户想要的是一个有力的判断，而不是一个菜单。
+
+## SpecDev 门禁
+
+本模式只探索接口，不修改代码。只有 Ticket 允许局部设计自由且候选不改变已锁定契约时可由实现者选择；涉及公共接口、数据、兼容、安全、范围或验收时停止并升级到 Ticket/ADR，暴露更广架构问题时返回 “架构审查阶段”。
+
+</ref-common-rules-design-it-twice>
+
+<ref-specdev-i-implement-references-tdd-rules>
+
+# TDD 红绿规则
+
+1. 从 Ready Ticket/Spec 选择下一条最小可观察行为，并写下已确认 seam。
+2. 只为该行为编写一个会因目标能力缺失而失败的测试或验证。
+3. 运行并观察红灯；失败原因必须是目标行为缺失，而不是语法、夹具或环境错误。
+4. 只写使当前测试通过的最小生产代码，不预测后续切片。
+5. 运行定向测试并观察绿灯，记录命令与结果。
+6. 进入下一条窄垂直切片；周期性运行受影响回归。
+
+重构不属于红绿循环。全部目标行为完成并经过双轴 review 后，才进入独立修正/重构阶段，并重跑受影响 review 轴与验证。
+
+## 完成门
+
+- 每个切片有对应 red 和 green 证据；
+- 一个循环只有一个 seam、一个测试和一个最小实现；
+- 测试没有通过删除、跳过、吞错或放宽断言制造绿色；
+- review 前没有以“顺手重构”扩大切片。
+
+## 强制变异验证
+
+使用强制变异时，先保存基线 hash/diff，修改后核对实际执行文件的 diff 与测试选择。只有预期行为断言 red 才有效；编译错误、错测或变异未落地均不计。恢复原内容、复跑基线并核对 diff，把全过程记入 Evidence。诊断协议见 “Bug 诊断阶段”。
+
+## 纯说明与测试承接
+
+纯文档按 下方 `<ref-specdev-i-implement-references-documentation-procedure>` 标签 执行适用验证，不伪造代码红绿；prompt/tool/output 改动仍属行为。旧测试删除必须覆盖其行为、错误、兼容和回归义务，具体按 下方 `<ref-common-rules-test-reliability>` 标签。
+
+</ref-specdev-i-implement-references-tdd-rules>
+
+<ref-specdev-i-implement-references-tdd-test-design>
+
+# TDD Test Design
+
+## Seam Agreement
+
+测试 seam 必须来自 Ready Ticket/Spec。合同已锁定时直接采用并记录来源；缺失且选择会改变范围、公共接口或事故半径时，先返回上游或请求用户决定。局部且不改变合同的 seam 可按仓库先例选择。
+
+## 行为与独立真相
+
+- 通过公共 API/CLI/HTTP/事件或稳定集成接缝验证调用者可观察行为；
+- 测试名称描述 WHAT，不描述私有 HOW；
+- 预期值来自字面量、手工算例、规范或已知正确夹具，不能用生产实现的同一算法重新计算；
+- 通过被测接口观察结果，不旁路查询内部数据库或私有状态；
+- 一个测试表达一个逻辑行为，但可以包含证明该行为所需的多个断言。
+
+## 垂直切片
+
+一个测试、一个最小实现、一次反馈。不要先批量写出所有测试再批量实现；水平切片会在理解真实实现前锁定想象中的结构。
+
+## 反模式
+
+- Mock 内部协作者或被测对象；
+- 测试私有方法、调用次数或内部顺序；
+- 同义反复地重算预期值；
+- 绕过公共接口验证内部存储；
+- 只覆盖 happy path，遗漏 Ticket 明确的错误与边界行为。
+
+## 测试可靠性
+
+对真实 runner、配置、Worker、子进程和发布构件选择明确入口；运行资源立即登记清理并等待完成。用目标行为失败证明 red，不只断言 mock 次数。并发/时间/全局变量参见 下方 `<ref-common-rules-test-reliability>` 标签，压力重复不是确定性竞态测试。
+
+</ref-specdev-i-implement-references-tdd-test-design>
+
+<ref-common-rules-code-commenting-rule>
+
+# Code Commenting Rule
+
+注释只用于记录**代码本身无法清晰表达，但对正确使用或安全修改至关重要的信息**。
+
+## Requirements
+
+- 优先通过命名、类型、结构、断言和测试表达意图；不要用注释掩盖复杂或含糊的代码。
+- 公共 API 应说明调用契约，包括重要的输入限制、返回语义、错误、副作用、并发、所有权和安全要求。
+- 内部实现仅在必要时解释非显然的：
+  - 设计原因与取舍；
+  - 不变量；
+  - 顺序约束；
+  - 安全或并发风险；
+  - 兼容、迁移或 workaround 的原因与退出条件。
+- 单位、时区、精度、哨兵值、生命周期等无法由类型或名称表达时必须说明。
+- TODO 必须包含可追踪标识、具体动作以及完成或删除条件。
+- 修改代码行为时，必须同步检查并更新相关注释。
+
+## Do Not
+
+- 不要为每个函数或方法机械添加注释。
+- 不要逐行复述代码。
+- 不要解释名称和类型已经表达的信息。
+- 不要保留注释掉的旧代码。
+- 不要记录修改历史或临时开发过程。
+- 不要猜测“为了性能”“为了兼容”等设计原因。
+- 不要使用注释数量或覆盖率衡量质量。
+
+## Decision Rule
+
+添加注释前确认：
+
+1. 这条信息是否无法由代码清晰表达？
+2. 缺少它是否可能导致错误使用或错误修改？
+3. 它是否在正常重构后仍然有效？
+
+只有答案均为“是”时才添加注释。
+
+> 公共接口记录 Contract；内部实现记录非显然的 Why、Invariant 和 Risk。
+
+</ref-common-rules-code-commenting-rule>
+
+<ref-specdev-i-implement-references-tdd-mocking>
+
+# TDD Mocking
+
+Mock 只位于系统边界：外部 API、不可控时间/随机、必要时文件系统，以及无法使用测试实例的数据库。优先真实测试数据库或轻量实现。
+
+不 Mock 自有模块、内部协作者或可在进程内运行的真实逻辑。Mock 调用本身只有在协议明确把该调用定义为外部行为时才可断言。
+
+## Boundary Design
+
+- 通过依赖注入传入外部 client，不在业务函数内部创建；
+- 使用按操作命名的 SDK 风格接口，例如 `getUser`、`createOrder`，避免要求 mock 内再次实现路由条件的通用 `fetch(endpoint)`；
+- 每个 fake/mock 返回具体协议形态并验证错误、超时和资源清理；
+- 适配器负责第三方 wire format，领域代码测试稳定内部接口。
+
+## 完成门
+
+- 每个 mock 对应真实系统边界；
+- 自有业务行为由真实实现参与测试；
+- mock setup 没有复制生产路由逻辑；
+- 协议兼容、错误和非确定性有可观察验证。
+
+## 替身能证明什么
+
+声明替身替换的外部边界与保留的真实产品路径。mock 通过不证明真实 provider、网络或启动入口可用；要求真实验证却缺环境时仍未验证。不能删除原失败路径测试，只因新的 mock 更容易通过。
+
+</ref-specdev-i-implement-references-tdd-mocking>
+
+<ref-specdev-i-implement-assets-evidence-template>
+
+# Evidence: <Ticket ID> — <Ticket title>
+
+本模板按有效计划或当前 I 的 workspace/integration 策略记录实际验证环境；不适用的环境明确写 `not-applicable`，不伪造 source、candidate 或 result 链。Direct Spec 使用本模板时写入 `specdev/changes/{change}/evidence/direct-spec.md`，current 使用实施前基线和最终 checkpoint；required 保存真实 change 工作区集成链，不填 Ticket ID。
+
+- **Change：** `<change>`
+- **Ticket：** `specdev/changes/{change}/ticket/NN-<ticket-name>.md`
+- **Spec：** `specdev/changes/{change}/spec.md`
+- **Goal Plan：** `specdev/changes/{change}/goal-plan.md` / 不适用
+- **Lead：** `<owner-or-session-locator>`
+- **Workspace/branch：** `<workspace_ref>` / `<branch>`
+- **Base/implementation-or-source/candidate/result SHA：** `<sha>` / `<sha>` / `<sha>` / `<sha>`
+- **状态：** review / done / blocked / deviated / cancelled
+
+## 1. 实现摘要
+
+用可观察行为与已锁定合同说明实际完成内容。Cancelled 时说明为何无需实现及其权威来源。
+
+## 2. Lead Dispatch And Candidate Return
+
+- **执行选择与来源：** 当前宿主正常执行（mode: lead，App/CLI 等）/ 显式 CLI 交互或调用 / Herdr / 其他已选方式；current / required；实际用户选择或有效计划来源，无 Goal 时默认串行、集成尝试上限 3
+- **Implementation owner：** Lead / `<agent/provider>`
+- **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
+- **文件交接（实际外部派遣时）：** `specdev/changes/{change}/sessions/{session}/{task}/TASK.md` 与 `specdev/changes/{change}/sessions/{session}/{task}/REPORT.md`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
+- **允许动作：** worktree changes / implementation commit / ...
+- **返回：** commit、dirty 状态、修改路径、非 E2E 命令、未验证项与恢复条件
+- **Lead 独立核对：** pass / fail；实际读取与命令摘要
+- **只读 Agent findings：** 无 / 固定输入、来源、结论、Lead 核对
+
+任务执行者 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。有文件交接时依 下方 `<shared-coordination-session-files>` 标签 只保存输入/报告指针和 Lead 独立核验，不复制正文；REPORT 的 completed 不是本 Evidence 的 done。先读报告聚焦交接，细节不足再检索其历史入口。突然中断无报告时记录未知事实与原工具查询结果，不补造成功回报。
+
+## 3. 修改范围与路径所有权
+
+| 路径 | 所有权 | 改动目的 |
+|---|---|---|
+| `src/example.ts` | writable / shared:<owner> | ... |
+
+- **read-only 修改：** 无
+- **未声明路径：** 无
+- **生成文件/锁文件：** 无 / 来源与 owner
+
+## 4. 验收与合同映射
+
+| Contract / Acceptance ID | 验证接缝 | 证据 | 结果 |
+|---|---|---|---|
+| AC-... | ... | 测试、日志或人工检查摘要 | pass / fail / not-run |
+
+每个 Ticket 验收项或 Direct Spec AC 恰好落到一行。
+
+## 5. Workspace Verification
+
+按有效计划或当前 I 执行合同 记录 current workspace 或 source worktree 检查，并注明运行环境。
+
+| 命令或步骤 | 运行环境 | 结果 | 摘要 |
+|---|---|---|---|
+| ... | current-workspace | pass / fail / not-run | ... |
+
+- **失败后修复与重跑：** 无 / ...
+- **未运行检查：** 无 / 原因与风险
+- **E2E：** 按有效计划或当前 I 执行合同 的 E2E disposition 记录；未在本环境运行时说明 owner 与原因
+
+## 6. 双轴审查
+
+标准轴与规范轴保持独立，分别记录固定输入、结果和修正。
+
+### 标准轴
+
+- **固定输入：** `<base_sha>..<source_checkpoint>`
+- **结果：** pass / request-changes
+- **Findings 与修正：** 无 / ...
+
+### 规范轴
+
+- **固定输入与来源：** Spec / Ticket / Goal Plan / source
+- **结果：** pass / request-changes / blocked:missing-spec
+- **Findings 与修正：** 无 / ...
+
+两个轴分别判断并按上述顺序记录；默认同一位未参与实现的 reviewer 完成两轴。
+
+## 7. Integration Verification
+
+按有效计划或当前 I 执行合同 记录 direct-parent 或 parent-candidate 集成；未采用的字段写 `null` 或 `not-applicable`。
+
+| 项目 | 结果 |
+|---|---|
+| Parent before SHA | `<sha>` |
+| Implementation/source SHA | `<sha>` / `<sha>` |
+| Candidate branch/workspace | current / `<branch>` / `not-applicable` |
+| Method/conflicts | direct-parent / fast-forward / merge-commit；无 / paths |
+| Integration checks | 命令、运行环境 `current-workspace`、结果 |
+| E2E disposition | required / not-required: reason |
+| E2E result | pending / passed / failed / not-required；场景与证据 |
+| Parent result/re-read | `<sha>`；HEAD/tree/ancestor 核对 |
+
+集成失败时明确父 HEAD 是否推进、失败命令、旧 SHA 和恢复条件。
+
+### Failure History And Lead Recovery
+
+| 轮次 | 阶段 | Checkpoint/candidate | 失败事实 | 下一轮变化 |
+|---|---|---|---|---|
+| ... | implementation / review / direct-parent / parent-candidate | `<sha-or-locator>` | blocker、命令与摘要 | 首次失败待定 / Lead 决定 |
+
+- **共同失败模式：** not-applicable / ...
+- **最可能原因：** not-applicable / ...
+- **下一轮具体改变：** not-applicable / ...
+- **下一 owner/路由：** not-applicable / same owner / new owner / Lead / upstream owner
+
+首次失败不要求额外分类；同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限时，Lead 必须填写以上四项。重置 attempts 后仍保留此前轮次，不覆盖失败历史。
+
+## 8. 偏差与决策
+
+- **偏差：** 无 / `<deviation-id>`
+- **记录：** `specdev/changes/{change}/LOG.md` / 不适用
+- **批准来源及影响：** ...
+
+## 9. 残余风险与交付定位
+
+- **残余风险/已知限制：** 无 / ...
+- **后续 Ticket：** 无 / `<ticket-id>`
+- **监控或回滚触发：** 不适用 / ...
+- **Source commit：** `<sha>`
+- **Parent result：** `<sha>`
+- **Source workspace：** `<workspace_ref>`
+- **Evidence：** `specdev/changes/{change}/evidence/T-NN.md`
+
+## Skill Execution Records
+
+按 下方 `<ref-common-rules-skill-invocation>` 标签 从真实执行轨迹填写以下 JSON 数组；每个 required 调用必须唯一匹配 Ticket 的 id、phase、operation 和 sha256，并有 passed 状态及可回读证据。没有绑定时保留空数组。仅阅读入口不能写 passed；失败/未执行保持 blocker，不伪造工具结果。
+
+```json
+[]
+```
+
+## 用户交付与源回读
+
+记录用户要求的实际数量、交付位置、源/链接/必要元数据回读、行为差异、备份和未完成项。Goal 有显式数量时在 `specdev/changes/{change}/evidence/goal-delivery.md` 写 Delivery Records，与 map 合同逐项核对。字符统计包含移动后的参考文件，不等同于 Token 或套餐用量。
+
+## 审查证据复用（仅实际发生时填写）
+
+记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、审查者独立身份与派遣/返回核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
+
+## OPS 交付（仅用户请求时）
+
+交付前读取 下方 `<ref-common-rules-deployment-handoff>` 标签，记录当前 change/Ticket、代码 revision、实际构件 digest、AC/Evidence、目标与部署约束；回传时只追加经核对的 Run/Release/receipt 指针。未请求写“不适用”，不为填表创建 OPS 任务。
+
+## 工程检查的选择与失效
+
+记录为什么选择这些定向检查、覆盖哪些消费者与风险；复用时列原 checkpoint/配置/输入/Skill 与有效性，失效时只列受影响项。测试删除列旧风险到新测试的承接；资源清理记录真正完成信号。专业分支按 下方 `<ref-common-rules-engineering-evidence>` 标签 在本文件追加标记记录；普通实施不要求空白记录，结构通过不认证真实运行。
+
+## Workspace Execution Record
+
+独立 Ticket 或 required Direct Spec 真正开始时，在本节保存本单元 workspace 执行字段的唯一 JSON object：base_sha、parent_branch、workspace/implementation/integration owner、workspace_ref、branch、source_checkpoint、status、integration 的 candidate/result/验证/E2E/attempts 等。由实际操作生成，不能预填空对象；current/direct-parent 与 required/source/parent-candidate 仍各按原合同验证。其他表格只说明和导航这些事实，不复制第二套可写状态；Direct Spec 使用 purpose=direct-spec、change 和 integration_attempt_limit 代替 ticket_id；required 必须记录，current 可保留原 checkpoint 证据不造集成记录。字段和生成步骤见 下方 `<dev-worktree-create>` 标签。无票不创建 Ticket/Map/Goal，历史 current 证据不回填。
+
+## Acceptance Verification
+
+仅独立 Spec 的无票 Direct Spec 完成时填写本节 JSON array，每个 Spec AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
+
+## 独立审查记录的填写
+
+按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 在本文实际生成 `Independent Review`、固定输入、原始 reviewer 输出和 Lead 核验段。完成前必须有真实独立身份与两轴结果；不要预填通过或用模板段落替代证据。
+
+</ref-specdev-i-implement-assets-evidence-template>
+
+<shared-writing-for-agents-references-current-facts-docs>
+
+# 当前工程事实文档
+
+跨领域局部方法，由实际调用方拥有范围、授权与原 Evidence/报告。只在建立或修改当前工程文档时读取；A/I/init/docs-sync 复用同一方法，不触发全局整理或增加常驻状态。
+
+## 六步
+
+1. 确定待回答的问题、主题 owner、唯一负责正文、目标路径和获批写集。已有负责文档时导航并补 Agent 必要边界，不建立镜像；生成文件先定位真实源。
+2. 固定事实依据：Git HEAD 加本次纳入的 staged/unstaged/untracked 内容，明确未提交限制；非 Git 记录实际范围、时间和复现限制。不擅自 stash、提交、清理；风险较大才保存相应摘要/原件，不为每篇文档加版本元数据。
+3. 读取负责源码、直接调用方、既有 docs 与必要验证，区分当前行为、目标、长期取舍和历史事件。文件覆盖不等于语义理解，静态理解不等于运行验证；不能从“代码用了 A”编造“团队为 B 放弃 C”，未知历史标待访谈/推断。
+4. 修正唯一负责正文，保留范围、依据、失败/恢复、兼容与未知。源码说明当前实现，ADR 说明取舍，context 说明领域含义；只导航相互关系，不复制第二份权威。当前参考原地维护，真实退役/事故/旧数据说明有独立价值才保存历史快照。
+5. 按变化验证事实、链接、例子、类型或行为；生成物重建并验证幂等。明确实际层级：源码核对、静态检查、隔离测试、真实运行/浏览器。没有执行不能写通过，未覆盖平台/状态保留具体限制。
+6. 回读正文与入站引用，在调用方原 Evidence/报告中交付变化、命令/退出码、事实核对、未验证项与下一 owner。输入漂移只重验受影响项；未知结果不伪装成功。
+
+本方法不做全局盘点、Git 暂存/commit、同步游标、语言镜像调度、永久知识发布或定时审计；这些继续归原 owning 入口。I/A 不创建 docs-sync state/sidecar，也不推进其 commit 基线。正式知识候选交 ADR/context/DESIGN/research 原网关，不能借 docs 修正越权。
+
+## 明确请求全面基线时
+
+只有用户要求“建立工程文档基线/全面理解当前代码”才扩大覆盖。docs/ 是目标项目面向 Agent 的工程事实，不是方法手册、任务池或项目 docs 镜像；主题 owner 仍按项目确定，不注册为某一 workflow 的永久知识 store。
+
+最小可为 README 与 architecture；已有项目文档负责的主题只导航。无内容不建立 operations/subsystems/archive/AGENTS 空骨架，不引入 policy.json、中央目录注册或新 roots.docs。
+
+在 docs README 或本次已有报告记录每项“已核对/未核对/不适用”及真实依据：
+
+| 覆盖主题 | 核对内容 |
+|---|---|
+| 项目边界与入口 | 用户/API/CLI 入口、真实系统边界 |
+| 模块职责与依赖 | 源目录、直接调用方、装配与构建依赖 |
+| 数据与持久化 | 存储、schema、owner、兼容与迁移 |
+| 关键运行路径 | 输入/处理/输出及失败路径 |
+| 错误与恢复 | 重试、取消、并发、中断的真实保证 |
+| 构建/验证/交付 | package/CI、实际命令和退出码、未验证环境 |
+| 既有知识与 docs | 负责文档、ADR/context 与冲突/出处 |
+| 排除与未知 | vendor/cache/generated/history/敏感材料的边界、理由及后续入口 |
+
+基线说明不新增 baseline 状态枚举。后续源码入口、接口、持久化、默认行为、错误/恢复变化时局部维护相应正文；格式修正不重建全库。
+
+</shared-writing-for-agents-references-current-facts-docs>
+
+<ref-common-rules-planning-principles>
+
+# 规划原则
+
+SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”，不是把每个任务写成逐行施工脚本。
+
+## 1. 先探索，后提问
+
+先读取相关入口、配置、schema、类型、测试、相邻实现、当前工件和历史决策。未知项分为：
+
+- **可发现事实**：通过只读探索解决，不询问用户；
+- **高影响偏好或取舍**：无法从仓库推导，且会改变行为、架构、风险、范围、迁移或验收时才询问；
+- **低影响实现细节**：由实现者遵循现有惯例决定。
+
+外部事实研究使用 下方 `<research>` 标签。
+
+## 2. 决策完备
+
+一个 Plan 或 Ticket 达到以下状态才可执行：
+
+- 目标和成功标准明确；
+- IN、REUSE、OUT 与不变量明确；
+- 公共接口、数据和兼容策略已锁定或明确不变化；
+- 失败行为和关键边界有结论；
+- 依赖、路径所有权和批准点明确；
+- 验证方式和 Evidence 位置明确；
+- 不存在会改变上述内容的高影响未决问题。
+
+决策完备不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
+
+## 3. 最小充分细节
+
+- 局部、低风险、沿用现有模式的切片使用 Lite。
+- 多文件或跨层垂直切片使用 Standard。
+- 公共契约、迁移、安全、不可逆操作、共享核心路径或复杂协作使用 Deep。
+
+详细条件位于 下方 `<ref-common-rules-readiness-and-depth>` 标签。
+
+## 4. 计划与执行分离
+
+规划阶段可以读取、搜索、静态分析和执行只读或非修改性验证，不实现产品代码。执行阶段不重新决定已锁定的产品和架构事项。计划与代码事实冲突时，按 下方 `<deviation-control>` 标签 退回修订。
+
+## 5. 以可验证目标委托
+
+每个交付物至少有一种可重复证据：测试、类型检查、lint、构建、API 示例、截图对比、迁移 dry-run、查询结果或手动步骤。验证绑定外部行为或稳定接缝，不把私有实现细节当作唯一证据。
+
+## 6. 委托而非微操
+
+Ticket 告诉执行者：做什么、为什么、不能改变什么、按什么顺序形成安全落点、怎样证明。执行者决定：在现有代码惯例内怎样组织局部实现。只有高风险或非显然的接口、迁移和顺序需要写入执行路线。
+
+## 7. 分层规划
+
+- Spec 决定外部行为。
+- Ticket 是可独立验收的垂直行为切片；外部合同和必要执行约束完备，局部实现由 I 决定。
+- Tickets Map 决定依赖和覆盖投影。
+- Goal Plan 只在协调复杂度需要时决定跨 Ticket 编排。
+- Implement 在既定契约内完成代码和 Evidence。
+
+职责细节见 下方 `<artifact-contract>` 标签。
+
+</ref-common-rules-planning-principles>
+
+<ref-common-rules-readiness-and-depth>
+
+# 规划深度与执行就绪
+
+## 1. Planning Depth
+
+### Lite
+
+适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
+
+最低内容：目标、垂直行为切片、范围、项目路径授权、验收标准和验证方法。局部实现由 I 决定。
+
+### Standard
+
+适用于大多数跨多个文件或技术层的垂直切片。
+
+按适用性补充接口接缝、不变量、失败行为和低影响假设；上游已有合同直接引用。仅在顺序影响安全或正确性时记录执行路线，不要求固定步数。
+
+### Deep
+
+任一条件触发：公共 API、schema、wire format、数据迁移、认证授权、隐私、资金、不可逆操作、expand-contract、共享核心路径、多个 implementation owner 的跨 Ticket 写入协调、多个实质架构方案或高事故半径。
+
+对触发 Deep 的实际风险补充数据/状态、兼容、迁移、恢复、风险缓解、收缩条件或批准点。无关维度省略；Deep 不要求每票填满所有栏目。
+
+## 2. Ticket Definition of Ready
+
+Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
+
+- 外部行为和可观察产出明确；
+- IN、REUSE、OUT 无冲突；
+- 高影响决策已锁定；
+- UI 范围按 下方 `<design-contract>` 标签 硬引用已批准 change DESIGN、基线版本和原型，确认/摘要未失效；
+- 没有会改变行为、接口、数据、兼容、安全、范围或验收的未决问题；
+- 依赖存在且无循环；
+- `writable_paths`、`read_only_paths` 和 `shared_paths` 使用项目根相对路径；
+- shared path 有唯一 owner；
+- 验收标准可判定；
+- 验证矩阵覆盖正常、失败和回归风险，或有可信的不适用理由；
+- 迁移或安全操作等不可交换的顺序已明确；普通局部实现不要求预写步骤；
+- Deep Ticket 的实际风险及相应迁移、兼容、恢复或批准要求已闭合；
+- 单个全新上下文可以完成，否则必须拆分。
+
+详细检查位于 “拆分 Tickets 阶段的 Ticket Ready 检查”。
+
+## 3. Spec Readiness
+
+`specdev/changes/{change}/spec.md` 只有在外部行为、范围、公共接口、数据、安全、兼容、迁移和验收合同不存在高影响未知项时，才可设置 `ready_for_tickets: true`。
+
+UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和页面/状态 AC 映射；纯后端或 LOGIC-only 无此要求。
+
+轻量 README 的 scope/acceptance/verification 使用同样的外部行为、风险与可判定 AC 门；没有独立票不要求 Spec YAML 或 Map。Deep、真实并行、跨 change 或复杂设计依赖必须使用完整工件；用户明确产物要求不因轻量分支降低。
+
+## 4. 假设规则
+
+- 低影响、可逆的默认值可以作为显式假设继续；
+- 高影响假设不得用于强行通过 Ready；
+- 实现者发现假设不成立时，按 下方 `<deviation-control>` 标签 处理；
+- 假设必须有适用范围和验证方式。
+
+</ref-common-rules-readiness-and-depth>
+
 <ref-specdev-r-retro-skill>
 
 # 开发复盘
@@ -4590,79 +5661,33 @@ UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和�
 
 </ref-common-skills-plan-quality-review-references-checklist>
 
-<shared-writing-for-agents-references-current-facts-docs>
+<ref-common-rules-deployment-handoff>
 
-# 当前工程事实文档
+# SpecDev 与 OPS 的交付引用
 
-跨领域局部方法，由实际调用方拥有范围、授权与原 Evidence/报告。只在建立或修改当前工程文档时读取；A/I/init/docs-sync 复用同一方法，不触发全局整理或增加常驻状态。
+只有用户要求把当前开发成果交给 OPS 部署，或 OPS 收到开发交付时读取。使用既有 Evidence、部署 spec、task Plan 与双边回执，不创建全局交付状态、镜像 Ticket 或自动部署 Work。
 
-## 六步
+## 开发侧：Evidence 中记录事实
 
-1. 确定待回答的问题、主题 owner、唯一负责正文、目标路径和获批写集。已有负责文档时导航并补 Agent 必要边界，不建立镜像；生成文件先定位真实源。
-2. 固定事实依据：Git HEAD 加本次纳入的 staged/unstaged/untracked 内容，明确未提交限制；非 Git 记录实际范围、时间和复现限制。不擅自 stash、提交、清理；风险较大才保存相应摘要/原件，不为每篇文档加版本元数据。
-3. 读取负责源码、直接调用方、既有 docs 与必要验证，区分当前行为、目标、长期取舍和历史事件。文件覆盖不等于语义理解，静态理解不等于运行验证；不能从“代码用了 A”编造“团队为 B 放弃 C”，未知历史标待访谈/推断。
-4. 修正唯一负责正文，保留范围、依据、失败/恢复、兼容与未知。源码说明当前实现，ADR 说明取舍，context 说明领域含义；只导航相互关系，不复制第二份权威。当前参考原地维护，真实退役/事故/旧数据说明有独立价值才保存历史快照。
-5. 按变化验证事实、链接、例子、类型或行为；生成物重建并验证幂等。明确实际层级：源码核对、静态检查、隔离测试、真实运行/浏览器。没有执行不能写通过，未覆盖平台/状态保留具体限制。
-6. 回读正文与入站引用，在调用方原 Evidence/报告中交付变化、命令/退出码、事实核对、未验证项与下一 owner。输入漂移只重验受影响项；未知结果不伪装成功。
+由 SpecDev Lead 在当前 Evidence 的交付小节记录：change/Ticket 稳定 ID、权威 Spec/AC 与验收证据 locator、实际代码 revision、可交付构件 digest、已运行检查/未测项、所需目标/环境及兼容、配置、迁移、备份恢复和发布约束。用户未指定目标或构件不存在时明确缺口，不虚构 OPS Host 或已部署结果。交付数量保持用户要求。
 
-本方法不做全局盘点、Git 暂存/commit、同步游标、语言镜像调度、永久知识发布或定时审计；这些继续归原 owning 入口。I/A 不创建 docs-sync state/sidecar，也不推进其 commit 基线。正式知识候选交 ADR/context/DESIGN/research 原网关，不能借 docs 修正越权。
+对可部署构件使用实际字节或已验证镜像摘要；代码 revision 不能替代构件 digest。必要引用带来源位置、验证时间/摘要；不复制 Spec/Ticket 正文、不输出秘密。变更完成只证明开发合同，不证明部署完成。
 
-## 明确请求全面基线时
+## 运维侧：独立验证目标和授权
 
-只有用户要求“建立工程文档基线/全面理解当前代码”才扩大覆盖。docs/ 是目标项目面向 Agent 的工程事实，不是方法手册、任务池或项目 docs 镜像；主题 owner 仍按项目确定，不注册为某一 workflow 的永久知识 store。
+D 从原 OPS 网关取得真实 Controller、server_ids、project_id、environment/instance 与授权，核对交付源码/构件和当前验收证据。缺失、漂移或不符合部署约束时阻塞部署，不能据此改写开发完成事实。
 
-最小可为 README 与 architecture；已有项目文档负责的主题只导航。无内容不建立 operations/subsystems/archive/AGENTS 空骨架，不引入 policy.json、中央目录注册或新 roots.docs。
+沿用现有 spec 字段：`resource_updates.projects[].source` 保存真实 type/location/revision，`deployments[].notes` 以字符串记录 change/Ticket、Evidence locator 与 digest/验收约束；部署目标、备份和恢复仍使用原字段。不要添加 schema 不支持的顶层 handoff/status 字段。任务中需要执行或引用的本地构件/脚本按原 `input_paths` 冻结；普通文档指针不是执行权限。
 
-在 docs README 或本次已有报告记录每项“已核对/未核对/不适用”及真实依据：
+执行、健康与文档回执由 OPS D 已激活入口中明确指向的任务授权、持久化与恢复合同拥有；由 OPS 执行方读取并验证，不从 SpecDev 路径解析器展开其他工作流的根。没有交付请求时，本分支不增加开发侧必读材料或部署门。
 
-| 覆盖主题 | 核对内容 |
-|---|---|
-| 项目边界与入口 | 用户/API/CLI 入口、真实系统边界 |
-| 模块职责与依赖 | 源目录、直接调用方、装配与构建依赖 |
-| 数据与持久化 | 存储、schema、owner、兼容与迁移 |
-| 关键运行路径 | 输入/处理/输出及失败路径 |
-| 错误与恢复 | 重试、取消、并发、中断的真实保证 |
-| 构建/验证/交付 | package/CI、实际命令和退出码、未验证环境 |
-| 既有知识与 docs | 负责文档、ADR/context 与冲突/出处 |
-| 排除与未知 | vendor/cache/generated/history/敏感材料的边界、理由及后续入口 |
+## 回传而非代写
 
-基线说明不新增 baseline 状态枚举。后续源码入口、接口、持久化、默认行为、错误/恢复变化时局部维护相应正文；格式修正不重建全库。
+OPS 返回原 task/Run/Release/receipt locator、observed revision/version、实际健康与双边文档结果、未验证项。`unknown`、`failed`、`docs_pending` 保持真实状态；V 失败单独报告，不重跑业务。
 
-</shared-writing-for-agents-references-current-facts-docs>
+OPS 不修改 SpecDev Ticket、Map、Goal Plan 或状态。若用户要求回填，由原 SpecDev Lead 核对回执后在已有 Evidence 追加指针；已完成旧 Evidence 与归档只读时创建原流程允许的新记录或 change，不覆盖历史。开发验收与运维部署各自拥有完成结论。
 
-<ref-common-rules-agent-experience>
-
-# 面向 Agent 的工具与 Work 体验
-
-修改工具名称、描述、参数、返回、prompt、Work、Skill 或上下文加载时读取。Work 的具名入口 Markdown 就是本工作流的技能入口；保留原 ID 与文件名，不另建技能注册根，也不要求每个 Work 启动任务执行者。
-
-普通代码修改不自动触发全库提示词审查。
-
-## 发现、加载与执行分开
-
-description 写真实触发时机、任务范围和相近但不适用的场景，不写“资深专家”式角色自述。先展示用途、可用动作和必要限制，再按模式加载正文或 reference。延后资源必须有可理解的描述、可靠定位和读取条件；不能为减少首轮内容把必要信息藏到不可发现的位置。
-
-已加载同版本正文的同一次任务不重复读取；输入范围、摘要或 owner 变化时重读受影响内容。首次选中只看到摘要时必须读正文，不能从名称推导步骤。实际执行记录继续遵守 下方 `<ref-common-rules-skill-invocation>` 标签；读过入口不是执行完成。
-
-## 工具描述与结果
-
-参数的范围、默认值、配对和使用条件写在参数定义中。工具说明描述行为与返回，避免复制其他工具或系统段已经拥有的规则。权限、破坏性副作用、不可重复操作和必需验证必须在动作之前可见；描述不是底层权限检查的替代。
-
-返回有界的结果摘要以及可回读的 ID、路径或游标，明确截断、遗漏、分页和证据完整性。包含少量当前动作确实需要的邻近上下文，不整页倒出日志，也不因过度裁剪迫使下一步反复搜索。缺少资源、格式无效和加载失败要能辨认，不伪造可用性。
-
-要能区分无结果、读取失败、权限不足和不完整视图。分页未完整不能报告穷尽；有结果句柄不意味着结果已读。
-
-## 作为行为验证
-
-检查模型真正收到的工具 schema、prompt、结果和诊断，覆盖正常、失败、取消、权限不足、重复调用和恢复中的适用分支。用户直接调用已注入的 Work 不应再次重复加载同一正文。仅宿主支持时才依赖自动/显式调用元数据；文字字段本身不是安全控制。
-
-增加空结果、截断后继续读取等真实行为场景。相同请求反复工具调用、换问法但没有进展时，记录已尝试方法与新增证据；使用原 I/P 的停止和恢复规则，不新建无限自动循环。失败后的副作用与安全动作按 下方 `<ref-common-rules-error-handling>` 标签。
-
-比较优化前后实际首轮输入、总读取、重复调用、误触发和任务结果。在没有同模型、同工具、同任务的实际使用记录时，只报告文件字符或字节变化，不能宣称 token、费用或配额节省。已有正反任务观察与结构检查分别报告。
-
-方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/agent-experience/SKILL.md</Url>。SpecDev 不因此获得 DSH 的运行时 Skill 加载器。
-
-</ref-common-rules-agent-experience>
+</ref-common-rules-deployment-handoff>
 
 <shared-retrospective-retrospective-contract>
 

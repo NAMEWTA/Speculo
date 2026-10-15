@@ -46,6 +46,8 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 `<Path>{roots.workflows}/specdev/common/tools/plan-contract.mjs</Path>` 是两个工具共用的只读校验库：新 Ticket 的真实 Skill 名称/摘要、必需调用证据、Map 数量合同、父入口与 W 候选图。普通 --repo 仍支持原 Git 事实验证；存在未完成票的真实项目 Skill 绑定时必须提供项目根。Ticket/Map 必须满足当前 Plan 合同；已完成历史证据不要求当前 Skill 包仍与历史版本相同。
 
+`--stage complete` 与移动前的 `--stage archive-ready` 对实现型终点校验独立审查：实际实现者与 reviewer 身份、两轴原报告、Lead 工具核验、固定范围及权威规格来源必须一致。轻量完成预检只核对 AC/owner，代码交付仍进入完整门；学习、复盘和取消使用各自终点。已归档材料按历史读取，不以当前代码重做旧审查。格式校验不能证明真实 Agent 调用。
+
 ## 专业分支与审查固定点
 
 原 change 校验支持 `--engineering performance|documentation|incident`，要求对应原 owner 工件中的标记证据；不传时仍检查已经存在的标记。字段见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。历史无标记工件不强制回填，所有路径只读。
@@ -69,3 +71,9 @@ UI 原型阶段用 --stage prototype --prototype-id UI-NNN；逻辑原型可指�
 本地完成使用 `--stage complete`；移动前使用 `--stage archive-ready`，额外核验本次实际请求的外部交付。A 完成现役维护后最后无覆盖移动，再以 `--stage archived` 核验唯一目标与原回执；`moved` 结果明确尚未封存，原 A8 回执完成后用 `--stage archived --sealed` 验证。回执导航与完整移动清单依 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md</Path>，不能创建第二份报告。
 
 历史已完成/已归档包不自动重写；旧 v6 归档只读解析原完整 schema、身份和位置，不凭 archived 枚举批准新的 implemented 晋升。旧活动 UI 包应保留为证据，按 v3 新建 UI 编号、生成新 HTML/浏览器证据并重新确认。不能只把旧 schema 数字或 ready 标记改成新版。
+
+## 未提交交付的只读审查范围
+
+`--review-scope --repo <project-root> --mode working-tree --base <baseline-sha> [--file <relative-path> ...]` 固定真实 Git 根的工作副本。无 file 参数覆盖全部相对基线的变化和非忽略新增；显式 file 包含删除路径，排除项返回供 Lead 核对。输出保留已暂存/未暂存状态、实际内容摘要、类型、模式、链接、基线和观察到的 HEAD，不写项目文件、commit 或 index。
+
+新增文件必须按 working_snapshot 阅读，不能只看 tracked_diff_command。子模块、冲突 index、越界或目录链接保持未验证。停止 writer 后固定输入，结束与完成前重验；显式范围外新增报告不使代码摘要自引用，遗漏实现仍由 Lead 的完整范围审计阻塞。详见 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 与 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path>。

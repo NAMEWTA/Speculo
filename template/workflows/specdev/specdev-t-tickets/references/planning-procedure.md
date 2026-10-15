@@ -1,7 +1,7 @@
 # 拆分 Tickets
 
 
-Ticket 是**决策完备的微型执行计划**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
+Ticket 是**可独立验收的垂直行为切片**：它消除执行者在目标、范围、公共契约、关键顺序和验收上的关键决策，但不展开逐行代码、局部变量或可从现有惯例自然推导的实现细节。
 
 本 work 保留原有能力：代码库探索、prefactor 识别、曳光弹垂直切片、真实阻塞边、用户粒度核对、宽重构的 expand-contract 排序、Ticket 独立文件和总体 Tickets Map。
 
@@ -102,27 +102,13 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 
 规划深度不是优先级，也不是 Gate。每个 Ticket 必须记录触发该深度的原因。
 
-### 5. 写成决策完备 Ticket
+### 5. 写成可交接的垂直切片 Ticket
 
 必须按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 填写本票真实调用绑定；Map 中的读取路由不能代替调用。
 
-使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/ticket-template.md</Path>` 填写：
+使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/ticket-template.md</Path>`：正文只写目标与来源、垂直行为与范围、验收和验证、本票执行约束及适用风险。依赖、路径、资源和项目 Skill 调用以原 frontmatter 为准；不在正文维护镜像。
 
-- 战略目标、可观察产出与来源追踪；
-- 当前代码事实和需求差距；
-- 已锁定决策、低影响假设和未决问题；
-- IN / REUSE / OUT；
-- 用户或调用者视角的端到端行为；
-- Standard/Deep 的接口、输入输出、不变量、数据流、失败与兼容契约；
-- 有序执行路线和安全落点；
-- expected、writable、read-only、shared 路径；
-- 正常、失败和回归验证矩阵；
-- 每个 Ticket 按有效计划或当前 I 执行合同 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
-- 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
-- Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
-- 可判定验收标准。
-
-路径所有权必须遵守 `<Path>{roots.workflows}/specdev/common/rules/path-ownership.md</Path>`，证据设计必须遵守 `<Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>`。
+引用上游 AC/ADR，只补充本票差异。公共合同、关键安全顺序和验收必须确定；局部实现选择交给 I。Lite/Standard/Deep 决定需要展开的实际风险，不规定执行步数，也不要求无关栏目逐项填“不适用”。通用实现、独立审查、集成、停止与恢复沿 I 入口执行。
 
 ### 6. 构建依赖 DAG、合同覆盖与并发检查
 

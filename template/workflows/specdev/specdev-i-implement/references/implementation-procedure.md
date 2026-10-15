@@ -65,7 +65,7 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 
 ### 2. Lead 决定自行实现或动态派单
 
-两种输入模式下，Lead 根据独立性、路径冲突、上下文、风险、用户选择和平台能力决定；原生 subagent/team 属于宿主能力。派单时读取 `<Path>{roots.references}/coordination/task-brief.md</Path>`。`current` 模式仍可派遣一个 实现执行者 写当前 workspace，但必须等待其返回、Lead 验收并形成 commit 后才进入下一个 Ticket；`required` 模式 实现执行者 绑定独立 Ticket worktree。Direct Spec 同样可以交接实现：提供获批 Spec、项目 Skill、当前工作区、路径和验收，current 只允许一个代码 writer，required 绑定本 change 的唯一 source worktree。
+两种输入模式下，Lead 根据独立性、路径冲突、上下文、风险、用户选择和平台能力决定；原生 subagent/team 属于宿主能力。派单时读取 `<Path>{roots.references}/coordination/task-brief.md</Path>`；外部 CLI/Herdr/Orca 派遣按 `<Path>{roots.references}/coordination/session-files.md</Path>` 保存 TASK、交回 REPORT，原 Evidence 只导航与验收。`current` 模式仍可派遣一个 实现执行者 写当前 workspace，但必须等待其返回、Lead 验收并形成 commit 后才进入下一个 Ticket；`required` 模式 实现执行者 绑定独立 Ticket worktree。Direct Spec 同样可以交接实现：提供获批 Spec、项目 Skill、当前工作区、路径和验收，current 只允许一个代码 writer，required 绑定本 change 的唯一 source worktree。
 
 - 实现执行者 同时取适用子 Goal Plan、父 Implementation Plan、实际存在的 config 和平台能力的共同上限；current 模式保持单 writer 串行安全不变量；Lead 参与实现时计入；
 - 父实现编排存在时，派单与返回都使用 `<member-change>::<ticket-id>`，并占用父 Plan 的 task/serialization/integration slot；
@@ -128,7 +128,9 @@ Direct Spec 的 implementation owner 在所选工作区运行规格要求的非 
 
 标准轴同时复核 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`：公共 API 契约完整，内部注释只保留非显然的 Why、Invariant 和 Risk，且相关注释与当前行为一致。
 
-两个轴隔离并按标准轴、规范轴顺序返回 Lead。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须通过。
+默认派遣一位未参与本范围实现的原生 subagent，分别判断标准轴、规范轴并按顺序返回 Lead；明确选择 Herdr/Orca/CLI 时沿该方式派遣。保存真实身份、原始报告和 Lead 工具核验，禁止实现者自审。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须通过。
+
+Direct Spec current 未提交时按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定实际交付快照；HEAD 不能代表未提交内容，也不因审查而自动取得 commit 授权。
 
 ### 7. 最终集成与适用 E2E
 
@@ -139,6 +141,8 @@ E2E 是否需要由 Ticket/Goal Plan 的实际跨边界风险决定，不限于 
 `current` Ticket 模式跳过 source worktree、candidate merge 和 candidate checkout。Lead 在当前 workspace 运行 Ticket 要求的适用集成/回归与 E2E，记录运行环境、命令、退出码和摘要；E2E 不得派给其他 agent。失败时不声明完成，保留 Ticket commit、父 HEAD 和恢复条件。全部通过后重读父 HEAD/tree 并记录 `result_sha`。Direct Spec current 同样跳过 source/candidate 与父分支推进；Direct Spec required 完整执行上方候选集成流程。无 Goal 时采用原 Evidence 记录的尝试上限。
 
 无论失败发生在 implementation、review、direct-parent 还是 parent-candidate，同一 Ticket 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 上限时，都停止自动退回原 implementation owner。Lead 保留当前 workspace/worktree、implementation/source commit、旧 candidate 和失败命令，在 Ticket Evidence 记录失败历史，并将 Ticket/worktree 标为 `blocked`。当前 change 属于父实现时返回父 O Lead；否则返回 Goal Plan Lead，或无 Goal Plan 时的当前 I Lead。Lead 按 lead-orchestration 完成最小复盘并形成有实质变化的新 Dispatch Packet 后，才可重置 attempts 和重新派发；契约已失效则返回真正 owner。
+
+最终候选与来源审查不同、发生冲突修正或多个单元组合时，Lead 按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 对最终交付范围补充独立审查；原输入完全相同才复用。候选未获两轴通过不能推进父分支或声明完成。
 
 ### 8. Evidence、状态与完成
 

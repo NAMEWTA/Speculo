@@ -35,6 +35,8 @@
 
 每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到有效执行合同的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
+候选的代码、规范或相关配置与已审输入不同，尤其发生合并或冲突修正时，按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在此实际 candidate 上完成独立双轴审查。修正合并冲突的 Lead/Agent 也属于实现者；两轴通过前不得推进。完全相同的输入沿原证据复用门核对，不以 source 检查代替 candidate 审查。
+
 ## 4. 推进父分支
 
 全部 required 检查通过后：

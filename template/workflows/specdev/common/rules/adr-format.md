@@ -17,20 +17,14 @@
 **Source:** LOG-### / user decision / external specification
 **Supersedes:** none / ADR-###
 
-### Context
-<缺少什么背景会让这个决定令人惊讶。>
-
 ### Decision
-<清晰、规范且可验证的结论。>
+<用 1–3 句写清决定及重要理由；保留来源和当前 change 适用范围。>
 
-### Trade-off
-<认真考虑的替代方案，以及为什么接受当前代价。>
+### Context / Trade-off / Consequences（适用时）
+<只有决定与理由不足以解释真实取舍、风险或后果时才展开；没有替代方案不编造。>
 
-### Consequences
-<真正重要的正面、负面和风险。>
-
-### Verification / Migration
-<仅在适用时出现。>
+### Verification / Migration（适用时）
+<实际需要的验证、兼容或迁移约束。>
 ```
 
 `accepted` 只表示用户已接受该决定作为当前 change 的下游合同；它不证明实现已经落地，也不代表永久知识毕业。修改已接受决定时新建 change ADR 并建立 supersedes 链，不重写历史。

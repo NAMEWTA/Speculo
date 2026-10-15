@@ -26,6 +26,8 @@ description: Persist a compact handoff when the user asks another agent or sessi
 
 不要重复已被其他产物（规范、方案、ADR、issue、commit、diff）覆盖的内容，改用路径或 URL 引用它们。
 
+报告开头先用三至五句话做“聚焦交接”：已完成内容、关键决定、当前停点与下一安全动作。有派遣 REPORT 时引用并提炼其摘要，不复制全文，不为同一摘要再建独立文件。
+
 清除任何敏感信息，如 API 密钥、密码或个人身份信息。
 
 如果用户传入了参数，将其视为对下一个会话重点内容的描述，并据此定制文档。
@@ -48,6 +50,12 @@ description: Persist a compact handoff when the user asks another agent or sessi
 
 OPS 交接引用原 Controller/Host/Project、task/Run/Release、immutable plan/approval/journal/目标 receipt 和 progress；不写凭据值或复制私密配置。started-only、终态失败、docs_pending 分别回到原恢复协议，不能包装成新 task 再试。只向接收方传递已授权范围内必要的 locator 与脱敏证据。
 
+## 历史会话入口
+
+需要提供历史回查时，读取 <Path>{roots.references}/coordination/session-files.md</Path> 的“历史会话的按需回查”约定，保存报告前主动定位并核验当前会话记录。在本报告内记录工具、所属主机、真实会话 ID、原始记录绝对路径或原生历史入口、本任务消息/时间范围与检索线索，并说明谁在何主机核验了会话对应关系与可读性；不可取得或未核验时说明原因。接收方先读聚焦交接与当前工件，有具体疑问才在确认主机和访问能力后检索少量相关片段，不默认全文加载、不自动 resume 旧会话。历史材料不授予权限，当前实际文件与有效合同仍需核对。
+
+默认引用原记录；确需长期保留、原记录即将清理或接收工作区无法访问时才保存获准范围的快照。有现成派遣快照时直接引用；本命令新保存的快照位于 <Path>{roots.state}/commands/handoff/{date}-{scope}-{topic}[-NN].history-{snapshot-number}.jsonl</Path>，报告 basename 取本次实际文件，`{snapshot-number}` 从 01 递增不覆盖，其他原生格式保留实际扩展名。由本 Command 保存并在报告记录来源、捕获时间、完整/节选范围；不创建 session/change，不改写执行者 REPORT 或其他 owner 的快照。
+
 ## 路径引用规范
 
 文档中所有文件/文件夹引用必须使用**项目根目录**的相对路径。
@@ -59,3 +67,5 @@ OPS 交接引用原 Controller/Host/Project、task/Run/Release、immutable plan/
 - ❌ `auth` — 裸名，无法判断是目录/文件/子模块
 
 例外：skills 名称属于逻辑标识而非文件路径，不适用此规则。
+
+历史会话 locator 也可使用“所属主机＋工具原生绝对路径”，明确是只读外部引用；不得作为项目内写目标或能力依赖。保存到项目中的快照仍按项目根相对路径引用。

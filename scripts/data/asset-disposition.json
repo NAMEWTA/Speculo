@@ -8488,6 +8488,7 @@
   "original_archive_hash_matches": 1060,
   "added": [
     "docs/README.md",
+    "docs/agent-handoffs.md",
     "docs/architecture.md",
     "docs/canonical.md",
     "docs/capabilities.md",
@@ -8538,6 +8539,7 @@
     "template/references/coordination/modes/orca.md",
     "template/references/coordination/project-facts.example.json",
     "template/references/coordination/project-facts.schema.json",
+    "template/references/coordination/session-files.md",
     "template/references/writing-for-agents/references/current-facts-docs.md",
     "template/workflows/person/person-s-steelman-deliberation/assets/canonical-body.md",
     "template/workflows/specdev/common/rules/design-contract.md",
@@ -8546,10 +8548,16 @@
     "template/workflows/specdev/common/schemas/change-design.schema.json",
     "template/workflows/specdev/common/schemas/project-design.schema.json",
     "template/workflows/specdev/common/schemas/prototype-browser-evidence.schema.json",
+    "template/workflows/specdev/common/skills/code-review/references/review-evidence.md",
+    "template/workflows/specdev/common/skills/code-review/references/working-tree-review.md",
     "template/workflows/specdev/common/tools/change-artifacts.mjs",
     "template/workflows/specdev/common/tools/design-artifacts.mjs",
     "template/workflows/specdev/common/tools/publish-design.mjs",
+    "template/workflows/specdev/common/tools/review-evidence.mjs",
+    "template/workflows/specdev/common/tools/tests/review-evidence.test.mjs",
+    "template/workflows/specdev/common/tools/tests/review-fixture.mjs",
     "template/workflows/specdev/common/tools/tests/review-source-files.test.mjs",
+    "template/workflows/specdev/common/tools/tests/review-working-tree.test.mjs",
     "template/workflows/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md",
     "template/workflows/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md",
     "template/workflows/specdev/specdev-c-code-review/references/source-files-review.md",
@@ -8608,14 +8616,17 @@
     "test/docs-sync-git-contract.test.ts",
     "test/fixtures/specdev-legacy-change-v6.json",
     "test/helpers/design-fixture.ts",
+    "test/helpers/review-fixture.ts",
     "test/install-ui.test.ts",
     "test/pnpm-command.test.ts",
     "test/specdev-closure.test.ts",
+    "test/specdev-concise-planning.test.ts",
     "test/specdev-design-canonical.test.ts",
     "test/specdev-design-knowledge.test.ts",
     "test/specdev-design-library.test.ts",
     "test/specdev-design.test.ts",
     "test/specdev-direct-execution.test.ts",
+    "test/specdev-independent-review.test.ts",
     "test/specdev-learn.test.ts",
     "test/specdev-markdown-consumers.test.ts",
     "test/specdev-markdown-migration.test.ts",
@@ -8636,6 +8647,6 @@
       "moved-and-rewritten": 320,
       "merged": 1
     },
-    "added": 47
+    "added": 140
   }
 }

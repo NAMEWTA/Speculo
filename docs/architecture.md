@@ -62,6 +62,8 @@ DESIGN 的 current、不可变 revision、三类摘要、真实批准、浏览�
 
 Lead 可自行完成实现、修复和验证，也可按任务类型派遣。上下文顺序为当前工件与 Map、项目 Skill/标准、Ticket 和分支所需资料。任务说明绑定输入、写集、checkpoint、工具能力、授权、完成门与返回证据。
 
+已有 change 的外部 CLI/Herdr/Orca 派遣在 `sessions/<session>/<task>/` 保存输入与报告，带聚焦摘要和按需检索的历史入口；文件随 change 归档。session/task 只定位交接材料，工具生命周期仍归工具，正式状态和验收仍归原 Work。见[任务交接指南](agent-handoffs.md)。
+
 实现并发包含 Lead；current workspace 只能有一个写入者。无已验证释放证据时，idle/超时不能证明前一写入者已结束。Lead 独立核对候选，唯一更新正式状态、Evidence、集成结果和整体 E2E。局部阻塞保留证据，继续独立且已授权的任务；持续推进到本次 Goal 的完成边界。
 
 外部网页 ZIP 仍是用户选择时的条件交换方式，保留包清单、hash、唯一尝试与 ZIP-only 返回约束；它不是默认编排模式。

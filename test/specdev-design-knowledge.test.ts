@@ -7,6 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { changeFixture } from './workspace-fixture.js';
 import { writeDesignFixture, document } from './helpers/design-fixture.js';
+import { attachReviewFixture } from './helpers/review-fixture.js';
 
 const load = () => import(pathToFileURL(join(process.cwd(), 'template/workflows/specdev/common/tools/publish-design.mjs')).href);
 const artifacts = () => import(pathToFileURL(join(process.cwd(), 'template/workflows/specdev/common/tools/design-artifacts.mjs')).href);
@@ -74,6 +75,7 @@ async function completeFixture(f: Awaited<ReturnType<typeof fixture>>) {
   // The implementation branch in this gateway fixture is non-UI; its old prototypes remain archived as evidence outside the active package tree.
   await rename(join(f.change,'prototypes'),join(f.change,'prototype-history'));
   await rename(join(f.change,'DESIGN.md'),join(f.change,'draft-design-history.md'));
+  attachReviewFixture(f.repo,f.change);
 }
 const options = (f: Awaited<ReturnType<typeof fixture>>) => ({ repoRoot: f.repo, ...f.contextOptions, candidatePath: f.candidate, approval: f.approval, mode: 'bootstrap', expectedCurrent: null });
 async function scoped(run: (f: Awaited<ReturnType<typeof fixture>>) => Promise<void>) {
