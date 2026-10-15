@@ -33,7 +33,7 @@ Gate 用可验证状态定义，必须写明：工程/业务状态、开启条�
 
 ## 5. 每 Ticket workspace 记录
 
-每个进入 I-implement 的 Ticket 建立唯一记录。current 模式使用 `workspace_ref=current`、`branch=parent_branch`，记录 implementation/source/result SHA 与 direct-parent 验证；required 模式使用唯一 `specdev-worktree/<ticket-id>`，记录 source/candidate/result SHA 与验证状态。Lead 自行实现或派 任务执行者 不改变所选策略。
+每个进入 I-implement 的 Ticket 建立唯一记录。current 模式使用 `workspace_ref=current`、`branch=parent_branch`，记录 implementation/source/result SHA 与 direct-parent 验证；required 模式使用唯一 `specdev-worktree/<change>/<ticket-id>`，记录 source/candidate/result SHA 与验证状态。Lead 自行实现或派 任务执行者 不改变所选策略。
 
 required 模式同一 Ticket 在 candidate 验证失败后保留来源 worktree 并继续修正。新的 source commit 替换当前 `source_checkpoint`，旧 commit 继续由 Git/Evidence 可追溯。成功集成不自动清理 branch/worktree。
 

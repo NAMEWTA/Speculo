@@ -34,7 +34,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 
 回读真实规格与 Ready 结论，返回负责工件完整路径、行为/验收合同、范围、验证接缝、风险、高影响缺口与验证结果；接续写原 README/规格，不维护调用或全局状态镜像。
 
-只有用户请求或工作流已显式串联时才进入 `<Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>`；产出 Ready Spec 本身不授权实施。
+完整 Spec 就绪且已有同范围实现授权时，可直接进入 <Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>，执行方式与 current/worktree 独立确定；未指定时按当前宿主正常执行，明确指定 CLI 交互、Herdr 等方式时按选择执行。需要独立调度、依赖图、逐票追踪或用户要求拆票时进入 <Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>；需要跨任务/跨 change 总控才进入 P。产出 Ready Spec 本身不授权实施，只有规格请求时返回可用路由。
 
 ## UI 设计与逻辑原型
 

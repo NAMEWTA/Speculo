@@ -2,6 +2,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { basename, join } from 'node:path';
+import { readChangeExecution } from './plan-contract.mjs';
 import {
   readChangeFactsSync, readArtifactSectionSync, readUtf8ArtifactSync,
   safeWorkPathSync, markdownBodyLines, parseFrontmatter,
@@ -105,16 +106,9 @@ function validateCancellation(facts, owner, errors) {
     }
   }
   for (const key of ['Dependencies','Checkpoints','External']) if (!/^(?:none|resolved|transferred|waived): \S/.test(data[key] ?? '')) errors.push(`closure-evidence-missing: ${facts.readmePath}: unresolved ${key}`);
-  const tickets = safeWorkPathSync(root, 'evidence', { type: 'directory' });
-  if (existsSync(tickets)) for (const file of readdirSync(tickets).filter(n => /^T-\d+\.md$/.test(n))) {
-    const path = safeWorkPathSync(tickets, file, { type: 'file', mustExist: true }), text = readUtf8ArtifactSync(path);
-    const blocks = [...text.matchAll(/^## Workspace Execution Record\r?\n([\s\S]*?)(?=^## |$(?![\s\S]))/gm)];
-    for (const block of blocks) {
-      const json = /```json\s*\n([\s\S]*?)\n```/.exec(block[1]);
-      if (!json) error('closure-evidence-missing', path, 'invalid workspace execution record');
-      const record = JSON.parse(json[1]);
-      if (['active','review','integrating','blocked'].includes(record.status)) errors.push(`writer-active: ${path}: cancellation does not end an execution owner or candidate`);
-    }
+  for (const record of readChangeExecution(root)) {
+    if (record.purpose === "direct-spec" && record.status === "cancelled" && !/^stopped: \S/.test(data.Writers ?? "")) errors.push(`writer-active: ${root}: cancelled Direct Spec execution requires observed stopped writer evidence`);
+    if (['active','review','integrating','blocked'].includes(record.status)) errors.push(`writer-active: ${root}: ${record.ticket_id ?? 'direct-spec'} cancellation does not end an execution owner or candidate`);
   }
 }
 export function validateArchiveDelivery(changeRoot) {
@@ -152,7 +146,7 @@ export function validateChangeClosure({context, change, forArchive = false}) {
       const goalPath = safeWorkPathSync(root, 'goal-plan.md', {type:'file'});
       const lightweightGoal = existsSync(goalPath) && parseFrontmatter(readUtf8ArtifactSync(goalPath)).fields.artifact === 'lightweight-goal-plan';
       const independent = ['spec.md','ticket','tickets-map.md','implementation-plan.md','implementation-map.md','retro',...(!lightweightGoal ? ['goal-plan.md'] : [])].some(name => existsSync(join(root, name)));
-      const complex = independent || ['DESIGN.md','prototypes'].some(name => existsSync(join(root,name)));
+      const complex = independent || readChangeExecution(root).length > 0 || ['DESIGN.md','prototypes'].some(name => existsSync(join(root,name)));
       scope = complex ? 'complex-preflight' : 'lightweight';
       if (!independent && facts.outcome === 'completed') {
         validateLightweightCompletion(root, errors);

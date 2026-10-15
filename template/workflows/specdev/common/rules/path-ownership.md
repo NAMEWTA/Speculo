@@ -22,14 +22,14 @@
 
 ## 3. Ticket workspace strategy
 
-Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 实现执行者 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
+按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 选择工作区，与当前宿主执行、显式 CLI 交互或 Herdr 等方式正交。默认 current，已有选择直接复用；无 Goal 时 I 在原 Evidence 负责选择与记录。current 严格单代码 writer，前一 Ticket 完成 commit、Lead 验收和 direct-parent 验证后才进入下一票。required 的 Ticket locator 为 `specdev-worktree/<change>/<ticket-id>`，Direct Spec 为 `specdev-worktree/<change>/direct-spec`，两者都走 candidate 集成；只读调查/审查不创建实现 worktree。
 
 workspace/implementation owner 可以是 Lead 或动态 实现执行者；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
 
 ## 4. 并发
 
-required 模式 实现执行者 上限取 Goal Plan、config 和平台能力共同约束，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+required 模式 实现执行者 上限取实际存在的 Goal/父计划、项目约定和平台能力共同约束，无计划默认串行，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
 子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 实现执行者 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
 
-**完成标准**：每个项目写入映射到唯一 change、Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
+**完成标准**：每个项目写入映射到唯一 change、已有 Ticket 或 Direct Spec、owner 和来源 worktree；shared 与父分支写入 owner 唯一。

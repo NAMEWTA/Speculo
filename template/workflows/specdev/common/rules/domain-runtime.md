@@ -16,7 +16,7 @@
 
 小请求使用 README 中等价范围、AC 与验证；用户明确要求 Spec/Ticket/Goal 时交付指定工件。复杂需求可经 W → G → S → T → P → I 逐步形成合同，不要求全部 Work 串行必跑。Ticket frontmatter 拥有本票状态、依赖、写集与 Skill binding；有票的 Map/Goal 只管导航、依赖、Gate、集成和恢复，无票 Goal 由计划清单负责进度。整体结论只在 README，归档事实只在目录位置与回执。
 
-真实使用的 Spec/Ticket/Map/Goal、DESIGN、调查、远程账本 schema 与验证继续有效。并发上限、worktree 与集成尝试策略只在实际启用时由原 Goal/项目约定提供来源；缺省 current 单写入者、严格串行/direct-parent。Lead 自己实现也计入实现并发，只读 review/research/test-observation 不新增数字上限。GitHub labels 等实际工具配置仅对应分支读取；未知配置保留，缺标签只阻塞有关远程写入。
+真实使用的 Spec/Ticket/Map/Goal、DESIGN、调查、远程账本 schema 与验证继续有效。并发上限、worktree 与集成尝试策略按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，由实际存在的 Goal/项目约定或当前 I 原 Evidence 提供来源；缺省 current 单写入者、严格串行/direct-parent。Lead 自己实现也计入实现并发，只读 review/research/test-observation 不新增数字上限。GitHub labels 等实际工具配置仅对应分支读取；未知配置保留，缺标签只阻塞有关远程写入。
 
 UI 候选缺省 3 个，配置范围 2–4；用户明确数量覆盖默认及上限。W 每会话最多完成一张调查票。专业分支保留：R performance 先测量，D evidence-triage 不以观察冒充根因，I documentation 在原授权范围维护当前工程事实。
 

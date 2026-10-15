@@ -28,7 +28,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 ### Direct Spec
 
-获批 Direct Spec 不创建 Ticket worktree 或 candidate。Lead 在 current workspace 记录实施前基线，运行轻量合同要求的定向检查、适用回归与 E2E，并记录最终 checkpoint、dirty 状态、运行环境、命令、退出状态和未运行原因。E2E 仍只由 Lead 执行；不得为套用两层验证而伪造 Ticket、source/candidate/result 或父分支推进证据。
+Direct Spec 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 独立选择工作区。current 记录实施前基线、最终 checkpoint、dirty 状态和实际检查；required 以整个 change 为单元复用上方 source-worktree/parent-candidate 两层验证，记录真实 source/candidate/result。E2E 仍只由 Lead 执行；两种模式均按完整规格覆盖全部 AC，不伪造 Ticket 或未发生的集成。
 
 低层证据不能替代明确要求的外部行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控或恢复演练。
 
@@ -48,7 +48,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 required Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence；current Ticket Done 必须有 implementation commit、通过 direct-parent 验证、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 Ticket commit 或 Evidence 不完整时不得 Done。
 
-Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。
+Direct Spec Evidence 至少包含：用户实际授权与唯一获批规格、执行方式/workspace 选择、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态；required 还包括原 Workspace Execution Record、候选集成与父分支回读。
 
 父实现 change 的 Implementation Orchestration Evidence 不能替代子 Evidence。它至少记录最终 Map revision、全部成员最终状态和子证据指针、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、stale candidate 处理、偏差和残余风险。任何成员未 completed 或整体验证未通过时不得形成父完成证据。
 

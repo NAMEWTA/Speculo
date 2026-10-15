@@ -64,8 +64,8 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 ## 编排与执行上下文
 
-Lead 自行执行或当前阶段需要交接任务时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>，按用户指定的 Lead、Orca、Herdr 或无头 CLI 方式操作。只读取所选工具的当前指南；不固定编程工具或模型。
+进入实现或审查时读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
 
-`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或交接其他任务。未曝光到宿主列表不影响读取真实入口。
+`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
 
 P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。独立审查 required 时不能以 Lead 自审替代。

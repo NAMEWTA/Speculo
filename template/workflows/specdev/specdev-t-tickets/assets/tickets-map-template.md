@@ -68,7 +68,7 @@ T-01
 - review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
 - shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
 - 项目路径契约以 Ticket frontmatter 为准。
-- 每个实现 Ticket 的 workspace 由 Goal Plan 选择；current 模式串行使用当前 workspace，required 模式使用独立 worktree；只读调查不进入 I-implement Ticket。
+- 每个实现 Ticket 的 workspace 由有效 Goal/父计划或无 Goal 时当前 I 的原 Evidence 选择；current 模式串行使用当前 workspace，required 模式使用独立 worktree；只读调查不进入 I-implement Ticket。
 
 | Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
 |---|---|---|---|---|

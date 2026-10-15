@@ -3,7 +3,7 @@
 
 Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、跨 Ticket 顺序与并发、共享所有权、里程碑 Gate、动态派单边界、父分支集成、迁移/发布顺序、偏差升级和恢复。Ticket 继续拥有局部实现合同。
 
-每次 Goal Plan 都采用 `lead-directed`：当前主会话是唯一 Lead，负责计划、SpecDev 状态、Evidence、派单、验收、父分支推进和最终回复。形成 Goal Plan 时，用户尚未明确才询问是否开启 worktree 开发，默认不开启；选择写入当前 Goal Plan，不修改全局配置。不开启时 Ticket 严格串行，允许动态派遣 实现执行者，但同一时间只有一个 implementation owner 可写当前 workspace；开启时沿用每 Ticket 独立 worktree 与 candidate-merge。
+每次 Goal Plan 都采用 `lead-directed`：当前主会话是唯一 Lead，负责计划、SpecDev 状态、Evidence、派单、验收、父分支推进和最终回复。形成 Goal Plan 时按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分别确定执行方式和工作区，复用已有选择；未指定时按当前宿主正常执行，工作区默认 current，选择写入当前 Goal Plan，不修改全局配置。不开启时 Ticket 严格串行，允许动态派遣 实现执行者，但同一时间只有一个 implementation owner 可写当前 workspace；开启时沿用每 Ticket 独立 worktree 与 candidate-merge。
 
 产物写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
@@ -25,7 +25,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 - Ticket DAG 的关键路径、汇合点或恢复策略无法由 Tickets Map 安全表达；
 - 用户明确要求正式跨 Ticket Plan。
 
-少量、线性、低风险的 Ready Tickets 可以不生成厚重编排正文，但执行前仍要有最小 Goal Plan 记录 workspace、Lead、Gate 和授权引用；不得引用不存在的当前 Goal Plan。没有 Ticket 的获批小型 Direct Spec 不受 Ticket workspace 合同约束；一旦需要切片，先运行 T-tickets。
+少量线性 Ready Tickets 可直接进入 I，不要求最小 Goal Plan；workspace、Lead、验证和原授权引用由 I 写原 Evidence。完整获批 Direct Spec 也可以直接执行并独立选择 worktree；需要独立调度或逐票追踪才运行 T-tickets。高风险要求相应 Gate，不以增加工件数量代替风险控制。
 
 ## 输入
 

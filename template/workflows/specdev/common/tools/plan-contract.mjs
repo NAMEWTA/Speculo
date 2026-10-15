@@ -262,13 +262,13 @@ export function validateInitiative(directory) {
   return errors;
 }
 
-/** Read actual per-Ticket integration records; never creates empty execution slots. */
+/** Read actual Ticket or Direct Spec records; never creates empty execution slots. */
 export function readChangeExecution(changeRoot) {
   const root = join(changeRoot, 'evidence');
   if (!existsSync(root)) return [];
   if (lstatSync(root).isSymbolicLink() || !lstatSync(root).isDirectory()) throw new Error('Evidence must be a real directory');
   const records = [];
-  for (const file of readdirSync(root).filter(name => /^T-\d{2,}\.md$/.test(name)).sort()) {
+  for (const file of readdirSync(root).filter(name => /^T-\d{2,}\.md$/.test(name) || name === 'direct-spec.md').sort()) {
     const path = join(root, file);
     if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isFile()) throw new Error(`${path}: Evidence must be a regular file`);
     const text = readFileSync(path, 'utf8').replaceAll('\r\n', '\n');
@@ -276,8 +276,16 @@ export function readChangeExecution(changeRoot) {
     if (!sections.length) continue;
     if (sections.length !== 1) throw new Error(`${path}: duplicate Workspace Execution Record`);
     const record = readEvidenceValue(text,'## Workspace Execution Record');
-    if (!plainObject(record) || record.ticket_id !== file.slice(0, -3)) throw new Error(`${path}: execution record identity differs from Evidence Ticket`);
+    const direct = file === 'direct-spec.md';
+    if (!plainObject(record) || (direct
+      ? record.purpose !== 'direct-spec' || record.change !== basename(changeRoot) || 'ticket_id' in record
+      : record.ticket_id !== file.slice(0, -3) || 'purpose' in record || 'change' in record)) {
+      throw new Error(`${path}: execution record identity differs from Evidence ${direct ? 'Direct Spec/change' : 'Ticket'}`);
+    }
     records.push(record);
+  }
+  if (records.some(record => record.purpose === 'direct-spec') && records.some(record => record.ticket_id)) {
+    throw new Error('Direct Spec and Ticket execution records cannot coexist; reconcile the original execution before changing modes');
   }
   return records;
 }

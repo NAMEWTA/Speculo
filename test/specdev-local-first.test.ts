@@ -766,7 +766,7 @@ describe("SpecDev local-first contracts", () => {
     assert.equal(config.execution.shared_path_owner, "explicit");
     assert.equal("max_parallel" in config.execution, false);
     assert.equal("auto_commit" in config.git, false);
-    assert.match(pathOwnership, /实现执行者 上限取 Goal Plan、config 和平台能力共同约束/);
+    assert.match(pathOwnership, /实现执行者 上限取实际存在的 Goal\/父计划、项目约定和平台能力共同约束/);
     assert.match(pathOwnership, /review\/research\/test-observation agent 不设置 SpecDev 数字上限/);
     assert.match(evidence, /source-worktree/);
   });
@@ -981,8 +981,8 @@ describe("SpecDev local-first contracts", () => {
     );
 
     for (const marker of [
-      "Direct Spec 模式由 Lead 作为 current workspace 唯一写入 owner",
-      "Direct Spec 模式同样跳过 source worktree、candidate merge 和父分支推进",
+      "Direct Spec 同样可以交接实现",
+      "Direct Spec current 同样跳过 source/candidate 与父分支推进",
       "evidence/direct-spec.md",
       "common/rules/code-commenting-rule.md",
       "{roots.state}/specdev/adr/",
@@ -1207,6 +1207,14 @@ describe("SpecDev local-first contracts", () => {
       result = runValidator(root, "implement");
       assert.equal(result.status, 0, result.stdout + result.stderr);
 
+      await rm(join(root, "goal-plan.md"));
+      for (const execution of [currentTicketWorktree("active"), ticketWorktree()]) {
+        await writeStatus(root, "active", [execution]);
+        result = runValidator(root, "implement");
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        await assert.rejects(readFile(join(root, "goal-plan.md")), /ENOENT/);
+      }
+
       await writeFile(join(root, "ticket", "01-ticket.md"), ticket.replace("status: ready", "status: done"));
       await mkdir(join(root, "evidence"), {recursive:true});
       await writeFile(
@@ -1302,12 +1310,12 @@ describe("SpecDev local-first contracts", () => {
       "utf8",
     );
 
-    for (const marker of ["git merge --ff-only", "git merge --no-ff --no-commit", "git merge --abort", "integration_attempt_limit", "specdev-worktree/.integration/<ticket-id>"]) {
+    for (const marker of ["git merge --ff-only", "git merge --no-ff --no-commit", "git merge --abort", "integration_attempt_limit", "specdev-worktree/.integration/<change>/<unit-id>"]) {
       assert.match(finalize, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
     assert.match(conflict, /需要新行为或上层决定时停止/);
-    assert.match(worktree, /Ticket 切片本身决定来源 worktree/);
-    assert.match(worktree, /Ticket E2E 只在 Lead-owned parent-candidate checkout 运行/);
+    assert.match(worktree, /Ticket 或 Direct Spec change 决定工作单元/);
+    assert.match(worktree, /required E2E 只在 Lead-owned parent-candidate checkout 运行/);
     assert.match(worktree, /push、PR、remote merge、deploy、migration/);
     assert.match(finalize, /来源 branch\/worktree 不自动清理/);
     assert.match(finalize, /父分支保持 `parent_before_sha`/);

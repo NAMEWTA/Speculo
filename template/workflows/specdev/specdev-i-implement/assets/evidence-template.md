@@ -1,6 +1,6 @@
 # Evidence: <Ticket ID> — <Ticket title>
 
-本模板按 Goal Plan 的 workspace/integration 策略记录实际验证环境；不适用的环境明确写 `not-applicable`，不伪造 source、candidate 或 result 链。Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`，以实施前基线和最终 checkpoint 代替 Ticket 集成链。
+本模板按有效计划或当前 I 的 workspace/integration 策略记录实际验证环境；不适用的环境明确写 `not-applicable`，不伪造 source、candidate 或 result 链。Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`，current 使用实施前基线和最终 checkpoint；required 保存真实 change 工作区集成链，不填 Ticket ID。
 
 - **Change：** `<change>`
 - **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`
@@ -17,6 +17,7 @@
 
 ## 2. Lead Dispatch And Candidate Return
 
+- **执行选择与来源：** 当前宿主正常执行（mode: lead，App/CLI 等）/ 显式 CLI 交互或调用 / Herdr / 其他已选方式；current / required；实际用户选择或有效计划来源，无 Goal 时默认串行、集成尝试上限 3
 - **Implementation owner：** Lead / `<agent/provider>`
 - **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
 - **允许动作：** worktree changes / implementation commit / ...
@@ -42,11 +43,11 @@
 |---|---|---|---|
 | AC-... | ... | 测试、日志或人工检查摘要 | pass / fail / not-run |
 
-每个 Ticket 验收项恰好落到一行。
+每个 Ticket 验收项或 Direct Spec AC 恰好落到一行。
 
 ## 5. Workspace Verification
 
-按 Goal Plan 记录 current workspace 或 source worktree 检查，并注明运行环境。
+按有效计划或当前 I 执行合同 记录 current workspace 或 source worktree 检查，并注明运行环境。
 
 | 命令或步骤 | 运行环境 | 结果 | 摘要 |
 |---|---|---|---|
@@ -54,7 +55,7 @@
 
 - **失败后修复与重跑：** 无 / ...
 - **未运行检查：** 无 / 原因与风险
-- **E2E：** 按 Goal Plan 的 E2E disposition 记录；未在本环境运行时说明 owner 与原因
+- **E2E：** 按有效计划或当前 I 执行合同 的 E2E disposition 记录；未在本环境运行时说明 owner 与原因
 
 ## 6. 双轴审查
 
@@ -76,7 +77,7 @@
 
 ## 7. Integration Verification
 
-按 Goal Plan 记录 direct-parent 或 parent-candidate 集成；未采用的字段写 `null` 或 `not-applicable`。
+按有效计划或当前 I 执行合同 记录 direct-parent 或 parent-candidate 集成；未采用的字段写 `null` 或 `not-applicable`。
 
 | 项目 | 结果 |
 |---|---|
@@ -146,7 +147,7 @@
 
 ## Workspace Execution Record
 
-仅独立实现 Ticket 真正开始时，在本节保存该票原 workspace 执行字段的唯一 JSON object：base_sha、parent_branch、workspace/implementation/integration owner、workspace_ref、branch、source_checkpoint、status、integration 的 candidate/result/验证/E2E/attempts 等。由实际操作生成，不能预填空对象；current/direct-parent 与 required/source/parent-candidate 仍各按原合同验证。其他表格只说明和导航这些事实，不复制第二套可写状态；Direct Spec 不创建该票记录。
+独立 Ticket 或 required Direct Spec 真正开始时，在本节保存本单元 workspace 执行字段的唯一 JSON object：base_sha、parent_branch、workspace/implementation/integration owner、workspace_ref、branch、source_checkpoint、status、integration 的 candidate/result/验证/E2E/attempts 等。由实际操作生成，不能预填空对象；current/direct-parent 与 required/source/parent-candidate 仍各按原合同验证。其他表格只说明和导航这些事实，不复制第二套可写状态；Direct Spec 使用 purpose=direct-spec、change 和 integration_attempt_limit 代替 ticket_id；required 必须记录，current 可保留原 checkpoint 证据不造集成记录。字段和生成步骤见 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>。无票不创建 Ticket/Map/Goal，历史 current 证据不回填。
 
 ## Acceptance Verification
 

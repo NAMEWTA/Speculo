@@ -23,7 +23,7 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 38 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。10 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
 
-跨领域共享方法放 references。编排读取 coordination-contract，选择 Lead、Orca、Herdr 或用户指定 CLI；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。Lead 持续推进已授权 Goal，唯一写正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
+跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。Lead 持续推进已授权 Goal，唯一写正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
 ## 元数据与生成
 

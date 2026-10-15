@@ -111,7 +111,7 @@ shared_path_owners: []
 
 不适用的关键风险类别必须写“不适用：原因”。
 
-- **Workspace checks：** 按 Goal Plan 在 current workspace 或 source worktree 运行单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
+- **Workspace checks：** 按有效计划或当前 I 执行合同 在 current workspace 或 source worktree 运行单元、组件、静态、类型、lint/build 等适用非 E2E 检查。
 - **E2E disposition：** required / not-required：原因。
 - **E2E owner/environment：** Lead / current-workspace 或 parent-candidate；required 时写明场景、接缝与预期。
 - **Integration evidence：** implementation/source commit、parent before、适用 candidate/result SHA 和父分支包含关系。
@@ -135,7 +135,7 @@ E2E 由实际跨边界行为与风险决定，不限于 UI；required 模式不�
 - [ ] 实现开始前已完整读取 Tickets Map，已读取项目 Skill 入口并完整展开其中适用于 `ALL`/`T-01` 的匹配项；新发现的匹配 Skill 已由 Lead 同步回 Map。
 - [ ] 验证矩阵全部执行并记录到 `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>`。
 - [ ] 实际项目修改未超出 `writable_paths`，shared path 由指定 owner 修改。
-- [ ] Ticket 已按 Goal Plan 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
+- [ ] Ticket 已按有效计划或当前 I 执行合同 策略形成非空 implementation/source commit，direct-parent 或 candidate 验证通过且父分支 result 已记录。
 - [ ] E2E disposition 已执行；required 模式 E2E 在 parent-candidate、current 模式在 current workspace 由 Lead 完成。
 - [ ] 未发生未批准的范围、契约或发布偏差。
 - [ ] Ticket 状态有本票 Evidence 支撑；Tickets Map 的导航、依赖和合同覆盖仍有效，不复制本票进度。

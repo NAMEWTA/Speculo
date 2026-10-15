@@ -6,7 +6,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 整体结论仅在 change README 顶层唯一 `Outcome: active | completed | cancelled` 行；简单任务的范围、可判定 AC、当前清单、真实验证与下一步也由 README 负责。被工具引用的章节使用唯一显式 `<a id="scope"></a>`、`<a id="acceptance"></a>`、`<a id="verification"></a>` 锚点。无 Ticket 的 Goal 只在原计划维护清单；有独立 Ticket 的进度在票及 Evidence，README/Goal/Map 不复制状态。
 
-工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需拆票的轻量任务不制造 Ticket/Map。
+工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。
 
 ## 1. 工件职责
 

@@ -30,7 +30,7 @@ speculo resolve . '<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md<
 - Person：认知方法与双向钢人论证。
 - Media：Brief、拆解、视觉、视频、发布草稿与复盘。
 
-领域和 Work 都使用标准 SKILL.md；共享方法在 references。AI 按当前环境选用 Lead、Orca、Herdr 或用户指定无头 CLI，并在使用时读取工具指南。Speculo 不提供模型运行服务或 Run 状态机。Lead 持续推进已授权 Goal，负责证据核验、正式状态、集成和最终收口。项目协调选择文件可选，不存在时默认 Lead。
+领域和 Work 都使用标准 SKILL.md；共享方法在 references。AI 在未明确指定执行方式时按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 按宿主实际能力和授权使用。明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 current/worktree 独立，并在使用时读取所选工具指南。Speculo 不提供模型运行服务或 Run 状态机。Lead 持续推进已授权 Goal，负责证据核验、正式状态、集成和最终收口。项目协调选择文件可选，未指定方式时无需配置。完整获批 Spec 或 Ready Ticket 均可直接实现，不强制补 Goal；无票也可使用 worktree。选用 Herdr 后按需安装其项目 Skill，再核验受管会话，安装成功不等于运行可用。
 
 读取、发现和投影不授权提交、推送、发布、部署或其他副作用。动作由拥有该步骤的入口确认已有授权；局部缺少权限只阻塞受影响分支。
 

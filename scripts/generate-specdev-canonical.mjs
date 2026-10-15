@@ -588,6 +588,16 @@ function adaptSchema(content, tag) {
 }
 
 function transformContent(content, tagsBySource, source) {
+  if (source === 'template/references/coordination/modes/herdr.md') {
+    // Herdr is an optional host integration, not a static capability dependency.
+    // Preserve its exact upstream identity and install checks without an external
+    // Markdown dependency or a hard-coded native installation root in the web copy.
+    content = content.replace(
+      '[Herdr SKILL.md](https://github.com/NAMEWTA/wta-skills-hub/blob/main/skills/automation/herdr/SKILL.md)',
+      'GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/herdr 目录中的完整 Herdr Skill',
+    ).replaceAll('项目 `.agents/skills/herdr/SKILL.md`', '宿主确认的项目 Herdr Skill 入口')
+      .replaceAll('项目 `.agents/skills/`', '宿主确认的项目 Skill 安装目录');
+  }
   if (source) content = content.replace(/\[([^\]\n]+)\]\(([^)\n]+\.(?:md|json))(#[^)]*)?\)/g, (match, label, target, anchor) => {
     if (/^(?:https?:|#|\/)/.test(target)) return match;
     const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(source), target));

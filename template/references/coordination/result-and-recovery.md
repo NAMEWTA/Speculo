@@ -4,7 +4,7 @@
 
 ## 接收
 
-1. 从原 Goal/Evidence 找到当前任务、实际 Work、输入、工作区、基线、owner 和工具 locator。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
+1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
 2. 通过当前工具指南核对任务是否确实返回，以及是否仍可能继续写入。已接收、已开始、会话空闲、任务结束、进程退出和业务通过分别记录；结果不明先查询，不重复发起任务。
 3. 检查实际文件和 Git 事实：基线、可达 checkpoint、tip、dirty 状态、tracked/untracked/ignored 变更以及允许路径。返回文本不能替代真实候选。
 4. 按原验收合同核对检查及输出。执行者修改测试、配置或验收脚本时，判断是否改变了通过标准，不接受伪绿色结果。自报、模拟、截图和推断在 Lead 核实前保持未验证。
@@ -18,7 +18,7 @@
 
 ## 中断恢复
 
-- 读取 Goal Plan、当前 Ticket、Map、change 状态、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
+- 按输入分支读取实际存在的 Goal Plan、Ticket/Map 或 Direct Spec、README Outcome、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
 - 使用记录的工具 locator 查询原任务，不根据缺日志推断没有执行。
 - 仍可能写入或副作用结果未知时，不让 Lead 或另一执行者抢写；按当前工具指南检查、等待或在原授权下取消。
 - 当前会话不具备查询能力时，说明缺失事实和恢复入口，不伪造停止证明。

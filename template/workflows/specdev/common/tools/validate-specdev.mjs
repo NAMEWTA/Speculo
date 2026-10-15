@@ -28,7 +28,7 @@ import {
   validateGoalMap, validateInitiative, resolveProjectSource, readChangeExecution, readSpecification, resolveToolContext, validateExecutionPolicy, canonicalToolPath, resolveSnapshotContext, readLightweightGoal, validateAcceptanceEvidence,
 } from "./plan-contract.mjs";
 
-import { validateChangeClosure } from "./change-artifacts.mjs";
+import { validateChangeClosure, readChangeOwner } from "./change-artifacts.mjs";
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
 import { reviewScopeCLI } from "./review-scope.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
@@ -2223,8 +2223,10 @@ function validateChangeExecution(change, errors, context) {
       errors.push(`${basename(path)}: invalid worktree entry`);
       continue;
     }
+    const direct = worktree.purpose === "direct-spec";
+    const unit = direct ? "direct-spec" : worktree.ticket_id;
     const requiredWorktreeKeys = [
-      "ticket_id",
+      ...(direct ? ["purpose", "change", "integration_attempt_limit"] : ["ticket_id"]),
       "owner",
       "implementation_owner",
       "integration_owner",
@@ -2245,14 +2247,24 @@ function validateChangeExecution(change, errors, context) {
     }
     const unexpectedWorktreeKeys = Object.keys(worktree).filter((key) => !requiredWorktreeKeys.includes(key));
     if (unexpectedWorktreeKeys.length) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has unexpected keys ${JSON.stringify(unexpectedWorktreeKeys.sort())}`);
+      errors.push(`${basename(path)}: worktree ${unit} has unexpected keys ${JSON.stringify(unexpectedWorktreeKeys.sort())}`);
     }
-    if (!/^T-[0-9]{2,}$/.test(String(worktree.ticket_id))) {
-      errors.push(`${basename(path)}: invalid worktree ticket_id ${worktree.ticket_id}`);
-    } else if (seenWorktreeTickets.has(worktree.ticket_id)) {
-      errors.push(`${basename(path)}: duplicate worktree for ${worktree.ticket_id}`);
+    if (direct) {
+      if (worktree.change !== expectedChange) errors.push("Direct Spec execution belongs to another change");
+      try {
+        if (readChangeOwner(context, expectedChange).owner !== worktree.owner) errors.push("Direct Spec execution owner differs from original Lead");
+      } catch (error) { errors.push(error.message); }
+      if (!Number.isInteger(worktree.integration_attempt_limit) || worktree.integration_attempt_limit < 1) errors.push("Direct Spec requires a positive integration_attempt_limit");
+      if (worktree.integration?.attempts > worktree.integration_attempt_limit) errors.push("Direct Spec integration attempts exceed integration_attempt_limit");
+      if (worktree.integration_owner !== worktree.owner) errors.push("Direct Spec integration owner must be Lead");
+      if (worktree.status === "cancelled" && data.outcome !== "cancelled") errors.push("cancelled Direct Spec execution requires the original whole-change cancellation");
+      if (worktree.workspace_ref !== "current" && worktree.branch !== `speculo/${expectedChange}/direct-spec`) errors.push("Direct Spec source branch must match its change");
+    } else if (!/^T-[0-9]{2,}$/.test(String(unit))) {
+      errors.push(`${basename(path)}: invalid worktree ticket_id ${unit}`);
+    } else if (seenWorktreeTickets.has(unit)) {
+      errors.push(`${basename(path)}: duplicate worktree for ${unit}`);
     }
-    seenWorktreeTickets.add(worktree.ticket_id);
+    seenWorktreeTickets.add(unit);
     const ref = worktree.workspace_ref;
     if (
       typeof ref !== "string" ||
@@ -2262,20 +2274,20 @@ function validateChangeExecution(change, errors, context) {
       errors.push(`${basename(path)}: workspace_ref must be a portable non-absolute locator`);
       continue;
     }
-    if (!VALID_WORKTREE_STATUS.has(worktree.status)) {
+    if (!VALID_WORKTREE_STATUS.has(worktree.status) && !(direct && worktree.status === "cancelled")) {
       errors.push(`${basename(path)}: invalid worktree status ${worktree.status}`);
     }
     const currentWorkspace = ref === "current";
     if (worktree.provider !== "git") {
-      errors.push(`${basename(path)}: Ticket worktree ${worktree.ticket_id} provider must be git`);
+      errors.push(`${basename(path)}: Ticket worktree ${unit} provider must be git`);
     }
-    const expectedRef = `specdev-worktree/${expectedChange}/${worktree.ticket_id}`;
+    const expectedRef = `specdev-worktree/${expectedChange}/${unit}`;
     if (!currentWorkspace && ref !== expectedRef) {
       errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
     }
 
     if ("terminal_action" in worktree) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} obsolete terminal_action is not allowed`);
+      errors.push(`${basename(path)}: worktree ${unit} obsolete terminal_action is not allowed`);
     }
     const requiredIntegrationKeys = [
       "owner",
@@ -2287,35 +2299,35 @@ function validateChangeExecution(change, errors, context) {
     ];
     const missingIntegrationKeys = requiredIntegrationKeys.filter((key) => !(key in worktree));
     if (missingIntegrationKeys.length) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration contract missing ${JSON.stringify(missingIntegrationKeys)}`);
+      errors.push(`${basename(path)}: worktree ${unit} integration contract missing ${JSON.stringify(missingIntegrationKeys)}`);
       continue;
     }
     for (const key of ["owner", "implementation_owner", "integration_owner", "base_sha", "parent_branch", "branch", "updated_at"]) {
       if (typeof worktree[key] !== "string" || !worktree[key].trim()) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${key} is required`);
+        errors.push(`${basename(path)}: worktree ${unit} ${key} is required`);
       }
     }
     if (typeof worktree.parent_branch !== "string" || !worktree.parent_branch.trim()) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch is required`);
+      errors.push(`${basename(path)}: worktree ${unit} parent_branch is required`);
     } else if (currentWorkspace && worktree.parent_branch !== worktree.branch) {
-      errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} branch must equal parent_branch`);
+      errors.push(`${basename(path)}: current workspace ${unit} branch must equal parent_branch`);
     } else if (!currentWorkspace && worktree.parent_branch === worktree.branch) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} parent_branch must differ from branch`);
+      errors.push(`${basename(path)}: worktree ${unit} parent_branch must differ from branch`);
     }
 
     const sourceRequired = new Set(["review", "integrating", "integrated", "removed"]).has(worktree.status);
     if (sourceRequired && (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires source_checkpoint`);
+      errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires source_checkpoint`);
     } else if (
       worktree.source_checkpoint !== null &&
       (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())
     ) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_checkpoint must be null or non-empty`);
+      errors.push(`${basename(path)}: worktree ${unit} source_checkpoint must be null or non-empty`);
     }
 
     const integration = worktree.integration;
     if (!integration || typeof integration !== "object" || Array.isArray(integration)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration must be an object`);
+      errors.push(`${basename(path)}: worktree ${unit} integration must be an object`);
       continue;
     }
     const requiredResultKeys = [
@@ -2339,49 +2351,48 @@ function validateChangeExecution(change, errors, context) {
     ];
     const missingResultKeys = requiredResultKeys.filter((key) => !(key in integration));
     if (missingResultKeys.length) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration missing ${JSON.stringify(missingResultKeys)}`);
+      errors.push(`${basename(path)}: worktree ${unit} integration missing ${JSON.stringify(missingResultKeys)}`);
     }
     const unexpectedResultKeys = Object.keys(integration).filter((key) => !requiredResultKeys.includes(key));
     if (unexpectedResultKeys.length) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration has unexpected keys ${JSON.stringify(unexpectedResultKeys.sort())}`);
+      errors.push(`${basename(path)}: worktree ${unit} integration has unexpected keys ${JSON.stringify(unexpectedResultKeys.sort())}`);
     }
     if (!VALID_INTEGRATION_STATUS.has(integration.status)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration status ${integration.status}`);
+      errors.push(`${basename(path)}: worktree ${unit} has invalid integration status ${integration.status}`);
     }
     if (!VALID_INTEGRATION_METHOD.has(integration.method)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration method ${integration.method}`);
+      errors.push(`${basename(path)}: worktree ${unit} has invalid integration method ${integration.method}`);
     }
     if (!VALID_INTEGRATION_VERIFICATION.has(integration.verification)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid integration verification ${integration.verification}`);
+      errors.push(`${basename(path)}: worktree ${unit} has invalid integration verification ${integration.verification}`);
     }
     if (!Array.isArray(integration.conflict_paths)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} conflict_paths must be an array`);
+      errors.push(`${basename(path)}: worktree ${unit} conflict_paths must be an array`);
     }
     if (!Number.isInteger(integration.attempts) || integration.attempts < 0) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} attempts must be a non-negative integer`);
+      errors.push(`${basename(path)}: worktree ${unit} attempts must be a non-negative integer`);
     }
-    if (
-      typeof integration.evidence !== "string" ||
-      !/^<Path>\{roots\.state\}\/specdev\/changes\/[^<]+\/evidence\/T-[0-9]{2,}\.md<\/Path>$/.test(integration.evidence)
-    ) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration evidence must be a rooted Ticket Evidence path`);
+    const expectedEvidence = `<Path>{roots.state}/specdev/changes/${expectedChange}/evidence/${unit}.md</Path>`;
+    if (direct ? integration.evidence !== expectedEvidence : typeof integration.evidence !== "string" || !/^<Path>\{roots\.state\}\/specdev\/changes\/[^<]+\/evidence\/T-[0-9]{2,}\.md<\/Path>$/.test(integration.evidence)) {
+      errors.push(`${basename(path)}: worktree ${unit} integration evidence must be its rooted Evidence path: ${expectedEvidence}`);
     }
     if (!new Set(["pending", "applying", "applied", "failed", "stale"]).has(integration.promotion_status)) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} has invalid promotion_status ${integration.promotion_status}`);
+      errors.push(`${basename(path)}: worktree ${unit} has invalid promotion_status ${integration.promotion_status}`);
     }
     for (const [name, suite] of [["full_suite", integration.full_suite], ["e2e", integration.e2e]]) {
       if (!suite || typeof suite !== "object" || Array.isArray(suite) || typeof suite.required !== "boolean" || !VALID_E2E_STATUS.has(suite.status)) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${name} contract is invalid`);
+        errors.push(`${basename(path)}: worktree ${unit} ${name} contract is invalid`);
         continue;
       }
       const unexpectedSuiteKeys = Object.keys(suite).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
-      if (unexpectedSuiteKeys.length) errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${name} has unexpected keys ${JSON.stringify(unexpectedSuiteKeys.sort())}`);
+      if (unexpectedSuiteKeys.length) errors.push(`${basename(path)}: worktree ${unit} ${name} has unexpected keys ${JSON.stringify(unexpectedSuiteKeys.sort())}`);
       if (suite.required === false && (suite.status !== "not-required" || typeof suite.reason !== "string" || !suite.reason.trim())) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} non-required ${name} needs not-required status and reason`);
+        errors.push(`${basename(path)}: worktree ${unit} non-required ${name} needs not-required status and reason`);
       }
       if (suite.required === true && suite.status === "not-required") {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} required ${name} cannot be not-required`);
+        errors.push(`${basename(path)}: worktree ${unit} required ${name} cannot be not-required`);
       }
+      if (direct && suite.required === true && suite.status === "passed" && (typeof suite.evidence !== "string" || !suite.evidence.trim())) errors.push(`Direct Spec passed ${name} requires actual evidence`);
     }
     const e2e = integration.e2e;
     if (
@@ -2391,65 +2402,65 @@ function validateChangeExecution(change, errors, context) {
       typeof e2e.required !== "boolean" ||
       !VALID_E2E_STATUS.has(e2e.status)
     ) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration e2e contract is invalid`);
+      errors.push(`${basename(path)}: worktree ${unit} integration e2e contract is invalid`);
     } else {
       const unexpectedE2eKeys = Object.keys(e2e).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
       if (unexpectedE2eKeys.length) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} integration e2e has unexpected keys ${JSON.stringify(unexpectedE2eKeys.sort())}`);
+        errors.push(`${basename(path)}: worktree ${unit} integration e2e has unexpected keys ${JSON.stringify(unexpectedE2eKeys.sort())}`);
       }
       if (e2e.required === false && e2e.status !== "not-required") {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} non-required E2E must use status=not-required`);
+        errors.push(`${basename(path)}: worktree ${unit} non-required E2E must use status=not-required`);
       }
       if (e2e.required === true && e2e.status === "not-required") {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} required E2E cannot be not-required`);
+        errors.push(`${basename(path)}: worktree ${unit} required E2E cannot be not-required`);
       }
       if (
         e2e.required === true &&
         e2e.status === "passed" &&
         (typeof e2e.evidence !== "string" || !e2e.evidence.trim())
       ) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} passed required E2E needs evidence`);
+        errors.push(`${basename(path)}: worktree ${unit} passed required E2E needs evidence`);
       }
     }
     const integrationLifecycleActive = new Set(["integrating", "integrated", "removed"]).has(worktree.status);
     if (integrationLifecycleActive) {
       if (typeof integration.parent_before_sha !== "string" || !integration.parent_before_sha.trim()) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires parent_before_sha`);
+        errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires parent_before_sha`);
       }
       if (typeof integration.source_sha !== "string" || !integration.source_sha.trim()) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires source_sha`);
+        errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires source_sha`);
       } else if (integration.source_sha !== worktree.source_checkpoint) {
-        errors.push(`${basename(path)}: worktree ${worktree.ticket_id} source_sha must equal source_checkpoint`);
+        errors.push(`${basename(path)}: worktree ${unit} source_sha must equal source_checkpoint`);
       }
       if (currentWorkspace) {
         if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
-          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} cannot record candidate workspace fields`);
+          errors.push(`${basename(path)}: current workspace ${unit} cannot record candidate workspace fields`);
         }
         if (integration.method !== "direct-parent") {
-          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} requires integration.method=direct-parent`);
+          errors.push(`${basename(path)}: current workspace ${unit} requires integration.method=direct-parent`);
         }
       } else {
         if (typeof integration.candidate_sha !== "string" || !integration.candidate_sha.trim()) {
-          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires candidate_sha`);
+          errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires candidate_sha`);
         }
-        const expectedCandidateBranch = `speculo/integration/${expectedChange}/${worktree.ticket_id}`;
+        const expectedCandidateBranch = `speculo/integration/${expectedChange}/${unit}`;
         if (integration.candidate_branch !== expectedCandidateBranch) {
-          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_branch must equal ${expectedCandidateBranch}`);
+          errors.push(`${basename(path)}: worktree ${unit} candidate_branch must equal ${expectedCandidateBranch}`);
         }
-        const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${worktree.ticket_id}`;
+        const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${unit}`;
         if (integration.candidate_workspace_ref !== expectedCandidateRef) {
-          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} candidate_workspace_ref must equal ${expectedCandidateRef}`);
+          errors.push(`${basename(path)}: worktree ${unit} candidate_workspace_ref must equal ${expectedCandidateRef}`);
         }
         if (!new Set(["fast-forward", "merge-commit"]).has(integration.method)) {
-          errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires an integration method`);
+          errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires an integration method`);
         }
       }
     if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
-      errors.push(`${basename(path)}: worktree ${worktree.ticket_id} ${worktree.status} requires attempts >= 1`);
+      errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires attempts >= 1`);
     }
     }
     if (worktree.status === "integrating" && integration.status !== "candidate") {
-      errors.push(`${basename(path)}: integrating worktree ${worktree.ticket_id} requires integration.status=candidate`);
+      errors.push(`${basename(path)}: integrating worktree ${unit} requires integration.status=candidate`);
     }
     if (new Set(["integrated", "removed"]).has(worktree.status)) {
       if (
@@ -2459,31 +2470,32 @@ function validateChangeExecution(change, errors, context) {
         typeof integration.result_sha !== "string" ||
         !integration.result_sha.trim() ||
         (currentWorkspace ? integration.result_sha !== worktree.source_checkpoint : integration.result_sha !== integration.candidate_sha) ||
+        (direct && (integration.promotion_status !== "applied" || !new Set(["not-required", "passed"]).has(integration.full_suite?.status))) ||
         !e2e ||
         !new Set(["not-required", "passed"]).has(e2e.status)
       ) {
-        errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} requires passed candidate/result/E2E state`);
+        errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} requires passed candidate/result/E2E state`);
       }
       if (currentWorkspace && integration.method === "direct-parent") {
         if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
-          errors.push(`${basename(path)}: current workspace ${worktree.ticket_id} direct-parent cannot record candidate fields`);
+          errors.push(`${basename(path)}: current workspace ${unit} direct-parent cannot record candidate fields`);
         }
         if (integration.result_sha !== worktree.source_checkpoint) {
-          errors.push(`${basename(path)}: current workspace ${worktree.status} ${worktree.ticket_id} result_sha must equal source_checkpoint`);
+          errors.push(`${basename(path)}: current workspace ${worktree.status} ${unit} result_sha must equal source_checkpoint`);
         }
       } else if (integration.method === "fast-forward") {
         if (integration.candidate_sha !== worktree.source_checkpoint) {
-          errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} fast-forward candidate/result must equal source_checkpoint`);
+          errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} fast-forward candidate/result must equal source_checkpoint`);
         }
         if (Array.isArray(integration.conflict_paths) && integration.conflict_paths.length > 0) {
-          errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} fast-forward cannot record conflict_paths`);
+          errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} fast-forward cannot record conflict_paths`);
         }
       } else if (
         integration.method === "merge-commit" &&
         typeof integration.candidate_sha === "string" &&
         (integration.candidate_sha === worktree.source_checkpoint || integration.candidate_sha === integration.parent_before_sha)
       ) {
-        errors.push(`${basename(path)}: ${worktree.status} worktree ${worktree.ticket_id} merge-commit candidate must be a distinct checkpoint`);
+        errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} merge-commit candidate must be a distinct checkpoint`);
       }
     }
   }
@@ -2491,8 +2503,8 @@ function validateChangeExecution(change, errors, context) {
 }
 
 function validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors) {
-  if (goalPlan?.meta.ticket_workspace_policy !== "current") return;
-  const entries = Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : [];
+  const allEntries = Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : [];
+  const entries = goalPlan?.meta.ticket_workspace_policy === "current" ? allEntries : allEntries.filter(entry => entry.workspace_ref === "current");
   const active = [];
   for (const worktree of entries) {
     if (worktree.workspace_ref !== "current") {
@@ -2502,7 +2514,7 @@ function validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors) {
       errors.push(`${worktree.ticket_id}: current workspace execution must commit directly on parent_branch`);
     }
     if (new Set(["active", "review", "integrating", "blocked"]).has(worktree.status)) {
-      active.push(worktree.ticket_id);
+      active.push(worktree.ticket_id ?? worktree.purpose);
     }
     const integration = worktree.integration;
     if (integration && typeof integration === "object" && !Array.isArray(integration)) {
@@ -2549,7 +2561,7 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
   }
   const currentBranch = gitOutput(resolvedRoot, ["branch", "--show-current"]);
   for (const worktree of Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : []) {
-    const label = String(worktree.ticket_id ?? "worktree");
+    const label = String(worktree.ticket_id ?? worktree.purpose ?? "worktree");
     for (const [name, sha] of [
       ["base_sha", worktree.base_sha],
       ["source_checkpoint", worktree.source_checkpoint],
@@ -2585,6 +2597,36 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
         const candidate = runtime.safeWorkPathSync(resolvedRoot,worktree.integration.candidate_workspace_ref,{mustExist:true,type:"directory"});
         if (gitOutput(candidate,["rev-parse","HEAD"]) !== worktree.integration.candidate_sha || gitOutput(candidate,["rev-parse","HEAD^{tree}"]) !== worktree.integration.candidate_tree_sha) errors.push(`${label}: actual candidate workspace differs from the recorded checkpoint/tree`);
       } catch(error) { errors.push(`${label}: actual candidate isolation is missing: ${error.message}`); }
+    }
+    if (worktree.purpose === "direct-spec") {
+      const integration = worktree.integration;
+      if (worktree.source_checkpoint && gitOutput(resolvedRoot, ["rev-parse", worktree.branch]) !== worktree.source_checkpoint && worktree.status !== "removed") errors.push(`${label}: source branch tip differs from source_checkpoint`);
+      if (worktree.source_checkpoint && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.source_checkpoint])) errors.push(`${label}: source_checkpoint must descend from base_sha`);
+      if (worktree.workspace_ref !== "current" && new Set(["review", "integrating", "integrated"]).has(worktree.status)) {
+        try {
+          const source = runtime.safeWorkPathSync(resolvedRoot, worktree.workspace_ref, {mustExist:true,type:"directory"});
+          if (gitOutput(source, ["status", "--porcelain"])) errors.push(`${label}: source worktree is dirty`);
+        } catch (error) { errors.push(`${label}: source worktree missing before cleanup: ${error.message}`); }
+      }
+      if (integration?.candidate_sha) {
+        if (gitOutput(resolvedRoot, ["rev-parse", `${integration.candidate_sha}^{tree}`]) !== integration.candidate_tree_sha) errors.push(`${label}: candidate tree differs from recorded tree`);
+        for (const sha of [integration.parent_before_sha, worktree.source_checkpoint]) {
+          if (sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", sha, integration.candidate_sha])) errors.push(`${label}: candidate must contain parent and source checkpoints`);
+        }
+      }
+      const parent = gitOutput(resolvedRoot, ["rev-parse", worktree.parent_branch]);
+      if (worktree.status === "integrating" && worktree.workspace_ref !== "current") {
+        try {
+          const candidate = runtime.safeWorkPathSync(resolvedRoot, integration.candidate_workspace_ref, {mustExist:true,type:"directory"});
+          if (gitOutput(candidate, ["rev-parse", "--path-format=absolute", "--git-common-dir"]) !== gitOutput(resolvedRoot, ["rev-parse", "--path-format=absolute", "--git-common-dir"]) || gitOutput(candidate, ["branch", "--show-current"]) !== integration.candidate_branch || gitOutput(candidate, ["status", "--porcelain"])) errors.push(`${label}: candidate must be a clean worktree of the recorded repository and branch`);
+        } catch (error) { errors.push(`${label}: candidate cannot be inspected: ${error.message}`); }
+      }
+      if (worktree.status === "integrating" && parent !== integration?.parent_before_sha) errors.push(`${label}: parent HEAD drifted; candidate must be marked stale and rebuilt`);
+      if (new Set(["failed", "stale"]).has(integration?.status) && parent === integration.candidate_sha && parent !== integration.parent_before_sha) errors.push(`${label}: failed or stale candidate has already advanced the parent; reconcile before continuing`);
+      if (new Set(["integrated", "removed"]).has(worktree.status)) {
+        if (parent !== integration?.result_sha) errors.push(`${label}: parent branch HEAD must equal recorded result_sha`);
+        if (!gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.source_checkpoint, parent])) errors.push(`${label}: parent must contain source_checkpoint`);
+      }
     }
     if (new Set(["integrated", "removed"]).has(worktree.status) && gitOutput(resolvedRoot, ["status", "--porcelain"])) {
       errors.push(`${label}: repository is dirty while Ticket is recorded as ${worktree.status}`);
@@ -3206,9 +3248,16 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
         }
       }
     }
-    validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
   }
+  validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
+  const directExecution = changeStatus?.worktrees?.find(entry => entry.purpose === "direct-spec");
+  if (directExecution && workspace.config) errors.push(...validateExecutionPolicy({meta:{concurrent_implementation_limit:1,integration_attempt_limit:directExecution.integration_attempt_limit}},workspace.config).map(error => `Direct Spec: ${error}`));
+  if (directExecution && (ticketMode || isParentImplementation)) errors.push("Direct Spec execution cannot coexist with Ticket or parent implementation artifacts");
+  if (directExecution && (stage === "complete" || changeStatus.outcome === "completed") && !new Set(["integrated", "removed"]).has(directExecution.status)) errors.push("Direct Spec completion requires integrated or removed execution; active or failed candidates cannot complete");
   validateGitEvidence(stage === "complete" ? workspace.context.projectRoot : repoRoot, changeStatus, errors);
+
+  if (stage === "implement" && spec && !ticketMode && (spec.meta.ready_for_tickets !== true || spec.meta.status !== "ready")) errors.push("Direct Spec implementation requires a ready Spec with ready_for_tickets=true");
+  if (spec?.meta.ready_for_tickets === true && !/\bAC-\d+\b/.test(spec.body)) errors.push("ready Spec must define at least one AC-### acceptance contract");
 
   if (stage === "complete" && spec && !ticketMode && !isParentImplementation && !retroOnly) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
 
@@ -3297,7 +3346,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       continue;
     }
     const text = readText(evidence);
-    const currentWorkspace = goalPlan?.meta.ticket_workspace_policy === "current";
+    const currentWorkspace = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId)?.workspace_ref === "current";
     const requiredHeadings = [
       "## 2. Lead Dispatch And Candidate Return",
       "## 3. 修改范围与路径所有权",

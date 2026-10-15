@@ -28,4 +28,4 @@ metadata:
 
 ## 可选项目编排选择
 
-只有用户要求持久化编排偏好时，依据 <Path>{roots.references}/coordination/project-facts.schema.json</Path> 写入 <Path>{roots.state}/coordination/project.json</Path>，先读 <Path>{roots.references}/coordination/coordination-contract.md</Path>。配置缺失默认 Lead；不探测、安装或要求外部工具，选择不是授权凭证。只读调用不生成配置。
+只有用户要求持久化编排偏好时，依据 <Path>{roots.references}/coordination/project-facts.schema.json</Path> 写入 <Path>{roots.state}/coordination/project.json</Path>，先读 <Path>{roots.references}/coordination/coordination-contract.md</Path>。未明确指定时按当前宿主正常执行（mode: lead），App、CLI 等均可；不探测、安装或要求外部工具，选择不是授权凭证。只读调用不生成配置。

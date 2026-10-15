@@ -36,7 +36,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path> --repo <project-root>
 ```
 
-需要正式 Goal、多 change、迁移或跨票 Gate 时交给 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>`；少量线性票可从 map 按已授权范围调用 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`。不得以“精简”为理由静默更换默认工具或少交付。
+需要正式 Goal、多 change、迁移或跨票 Gate 时交给 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>`；少量线性票无需额外 Goal，可从 map 按已授权范围调用 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`。不得以“精简”为理由静默更换默认工具或少交付。
 
 ## 工程义务与证据失效
 

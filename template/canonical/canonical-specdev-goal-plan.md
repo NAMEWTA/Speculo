@@ -69,9 +69,9 @@ node 本地只读 Goal 控制器（不含于网页快照） --map <map-path> --r
 
 ## 编排与执行上下文
 
-Lead 自行执行或当前阶段需要交接任务时，读取 下方 `<subagent-delivery>` 标签，按用户指定的 Lead、Orca、Herdr 或无头 CLI 方式操作。只读取所选工具的当前指南；不固定编程工具或模型。
+进入实现或审查时读取 下方 `<subagent-delivery>` 标签；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
 
-`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或交接其他任务。未曝光到宿主列表不影响读取真实入口。
+`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
 
 P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。独立审查 required 时不能以 Lead 自审替代。
 
@@ -85,7 +85,7 @@ P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修
 
 # Goal Plan 规划模式与输入门禁
 
-规划模式描述 Goal Plan 需要额外解决的工程问题。Goal Plan 创建时单独询问 Ticket 是否开启 worktree，默认使用当前 workspace；worktree 与 direct-parent/candidate-merge 由该次 Goal Plan 固定。
+规划模式描述 Goal Plan 需要额外解决的工程问题。Goal Plan 按共享执行策略分别记录执行方式与工作区；执行方式默认当前宿主正常执行，工作区默认 current，复用已有选择，current/direct-parent 与 required/candidate-merge 保持配对。
 
 本文件定义单 change 的规划与全局执行门。多 change 父编排创建仍要求成员全员 Ready，遵守 下方 `<parent-implementation-orchestration>` 标签。
 
@@ -119,7 +119,7 @@ P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修
 
 ## 3. Goal Plan 工作区选择
 
-- 创建 Goal Plan 时询问“是否开启 worktree 开发？”，默认 `否`；
+- 创建 Goal Plan 时读取 下方 `<ref-common-rules-execution-policy>` 标签，复用实际工作区选择；未指定默认 current；
 - 用户选择 `否` 时写入 `ticket_workspace_policy: current` 与 `integration_gate: direct-parent`；
 - 用户选择 `是` 时写入 `ticket_workspace_policy: required` 与 `integration_gate: candidate-merge`；
 - 该选择只作用于当前 Goal Plan，不读取或修改全局配置；
@@ -201,7 +201,7 @@ Gate 用可验证状态定义，必须写明：工程/业务状态、开启条�
 
 ## 5. 每 Ticket workspace 记录
 
-每个进入 I-implement 的 Ticket 建立唯一记录。current 模式使用 `workspace_ref=current`、`branch=parent_branch`，记录 implementation/source/result SHA 与 direct-parent 验证；required 模式使用唯一 `specdev-worktree/<ticket-id>`，记录 source/candidate/result SHA 与验证状态。Lead 自行实现或派 任务执行者 不改变所选策略。
+每个进入 I-implement 的 Ticket 建立唯一记录。current 模式使用 `workspace_ref=current`、`branch=parent_branch`，记录 implementation/source/result SHA 与 direct-parent 验证；required 模式使用唯一 `specdev-worktree/<change>/<ticket-id>`，记录 source/candidate/result SHA 与验证状态。Lead 自行实现或派 任务执行者 不改变所选策略。
 
 required 模式同一 Ticket 在 candidate 验证失败后保留来源 worktree 并继续修正。新的 source commit 替换当前 `source_checkpoint`，旧 commit 继续由 Git/Evidence 可追溯。成功集成不自动清理 branch/worktree。
 
@@ -415,6 +415,8 @@ ready_for_execution: false
 
 ### Lead Orchestration
 
+执行方式独立于下方工作区策略：默认按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 属于宿主能力；明确指定 CLI 交互、Herdr 等方式才按共享编排合同接入。记录本次选择与来源，不逐任务重新询问。
+
 | 项目 | 决定 | 事实依据 |
 |---|---|---|
 | Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与父分支 owner |
@@ -497,7 +499,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 整体结论仅在 change README 顶层唯一 `Outcome: active | completed | cancelled` 行；简单任务的范围、可判定 AC、当前清单、真实验证与下一步也由 README 负责。被工具引用的章节使用唯一显式 `<a id="scope"></a>`、`<a id="acceptance"></a>`、`<a id="verification"></a>` 锚点。无 Ticket 的 Goal 只在原计划维护清单；有独立 Ticket 的进度在票及 Evidence，README/Goal/Map 不复制状态。
 
-工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需拆票的轻量任务不制造 Ticket/Map。
+工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 下方 `<ref-common-rules-execution-policy>` 标签。
 
 ## 1. 工件职责
 
@@ -628,17 +630,17 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 
 ## 3. Ticket workspace strategy
 
-Goal Plan 创建时选择 Ticket workspace strategy，默认 `current`。`current` 模式的 Ticket 使用当前分支、当前 workspace 和严格串行执行；允许一个 实现执行者 写入当前 workspace，但前一 Ticket 必须完成 commit、Lead 验收和 direct-parent 验证后才能开始下一个。`required` 模式每个 Ticket 使用唯一来源 worktree `specdev-worktree/<ticket-id>`，并通过 candidate-merge 集成。没有 Ticket 的获批 Direct Spec 继续由 current workspace 唯一 owner 执行；只读调查不创建实现 worktree。
+按 下方 `<ref-common-rules-execution-policy>` 标签 选择工作区，与当前宿主执行、显式 CLI 交互或 Herdr 等方式正交。默认 current，已有选择直接复用；无 Goal 时 I 在原 Evidence 负责选择与记录。current 严格单代码 writer，前一 Ticket 完成 commit、Lead 验收和 direct-parent 验证后才进入下一票。required 的 Ticket locator 为 `specdev-worktree/<change>/<ticket-id>`，Direct Spec 为 `specdev-worktree/<change>/direct-spec`，两者都走 candidate 集成；只读调查/审查不创建实现 worktree。
 
 workspace/implementation owner 可以是 Lead 或动态 实现执行者；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 下方 `<dev-worktree>` 标签 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
 
 ## 4. 并发
 
-required 模式 实现执行者 上限取 Goal Plan、config 和平台能力共同约束，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+required 模式 实现执行者 上限取实际存在的 Goal/父计划、项目约定和平台能力共同约束，无计划默认串行，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
 
 子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 实现执行者 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
 
-**完成标准**：每个项目写入映射到唯一 change、Ticket、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
+**完成标准**：每个项目写入映射到唯一 change、已有 Ticket 或 Direct Spec、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
 
 </path-ownership>
 
@@ -674,7 +676,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 ### Direct Spec
 
-获批 Direct Spec 不创建 Ticket worktree 或 candidate。Lead 在 current workspace 记录实施前基线，运行轻量合同要求的定向检查、适用回归与 E2E，并记录最终 checkpoint、dirty 状态、运行环境、命令、退出状态和未运行原因。E2E 仍只由 Lead 执行；不得为套用两层验证而伪造 Ticket、source/candidate/result 或父分支推进证据。
+Direct Spec 按 下方 `<ref-common-rules-execution-policy>` 标签 独立选择工作区。current 记录实施前基线、最终 checkpoint、dirty 状态和实际检查；required 以整个 change 为单元复用上方 source-worktree/parent-candidate 两层验证，记录真实 source/candidate/result。E2E 仍只由 Lead 执行；两种模式均按完整规格覆盖全部 AC，不伪造 Ticket 或未发生的集成。
 
 低层证据不能替代明确要求的外部行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控或恢复演练。
 
@@ -694,7 +696,7 @@ required 模式下，Lead 在最新父分支与 source commit 的 candidate 状�
 
 required Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence；current Ticket Done 必须有 implementation commit、通过 direct-parent 验证、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 Ticket commit 或 Evidence 不完整时不得 Done。
 
-Direct Spec Evidence 至少包含：用户批准与轻量合同、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态。
+Direct Spec Evidence 至少包含：用户实际授权与唯一获批规格、执行方式/workspace 选择、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态；required 还包括原 Workspace Execution Record、候选集成与父分支回读。
 
 父实现 change 的 Implementation Orchestration Evidence 不能替代子 Evidence。它至少记录最终 Map revision、全部成员最终状态和子证据指针、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、stale candidate 处理、偏差和残余风险。任何成员未 completed 或整体验证未通过时不得形成父完成证据。
 
@@ -778,7 +780,7 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 一个 change 只有同时满足以下条件才能 completed：
 
-1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收。
+1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收；required Direct Spec 的执行记录必须 integrated/removed，父 HEAD 为 result 且包含 source，候选与 required 验证通过。
 2. required Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；current Ticket 有 implementation commit、passed direct-parent 验证和父分支 result SHA；对应 Ticket Evidence 的 workspace/集成记录均完整；不要求 JSON 镜像。
 3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
 4. current Ticket 的 current-workspace 检查/回归和适用 E2E，或 required Ticket 的 source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
@@ -826,7 +828,7 @@ A 只验证取消结果，不代替用户取消。单 Ticket cancelled 不推导
 
 无 Goal 的 owner 在 README `## Ownership` 写 `Owner` 与 `Evidence`；后者指向实际会话/交接原文或同 README 的独立证据锚点，其 `Owner` 或 `Session` 必须匹配。若动作绑定 `Work`，原证据必须同值；不是每 Work 调用登记。
 
-取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。活动/review/integrating/blocked 的执行记录仍须原 owner 处置，不由取消声明抹掉。
+取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。Ticket 或 Direct Spec 的 active/review/integrating/blocked 执行记录仍须原 owner 处置，不由取消声明抹掉。
 
 独立 Spec 的无票 Direct Spec 使用原 evidence/direct-spec 的 `## Acceptance Verification` JSON array 逐 AC 回读实际结果：id/result/method/source/observed；command 存在时 exit 为 0，外部 evidence 引用须有匹配 sha256，内联观察无需另建文件。空 Evidence、仅标题或 passed 自评不通过。`--stage complete` 只判本地完成；A 移动前使用 `--stage archive-ready` 同时核对对应 completed/cancelled 门和已承诺远程交付，目标移动后再使用 archived。
 
@@ -927,27 +929,27 @@ A 只验证取消结果，不代替用户取消。单 Ticket cancelled 不推导
 
 # Dev Worktree
 
-本 Skill 由 T-tickets、P-goal-plan 和 I-implement 复用。仅在 Goal Plan 选择 `required` 时使用完整 source → candidate → parent 状态机；`current` Ticket 不调用本 Skill。
+本 Skill 由 T-tickets、P-goal-plan 和 I-implement 复用。按 下方 `<ref-common-rules-execution-policy>` 标签 选择 `required` 时使用 source → candidate → parent 状态机，无需先建 Goal；`current` 不调用本 Skill。原生执行与 Herdr 使用同一工作区合同。
 
 ## 输入
 
 - `operation=create | restore | finalize | remove`；
-- `purpose=ticket`；
+- `purpose=ticket | direct-spec`；
 - repository、父分支、`base_sha`、branch、portable workspace locator；
 - workspace、implementation 和 integration owner；
 - 允许动作、路径合同、验证合同、调用方状态记录位置。
 
-required Ticket 还必须提供 Ready Ticket、Goal Plan（若存在）、Evidence 路径、implementation commit 与本地 candidate integration/父分支更新授权。缺失时返回 blocked；current Ticket 应按 I-implement 的 direct-parent 规则执行。
+required Ticket 提供 Ready Ticket；Direct Spec 提供获批完整规格及验证合同。两者都提供实际存在的 Goal/父计划、原 Evidence 路径、Lead、尝试上限来源、implementation commit 与 local candidate integration/父分支更新授权。缺失时返回 blocked；不为这些输入补造 Ticket/Goal。
 
 ## 1. 创建或恢复
 
-`operation=create` 时加载 下方 `<dev-worktree-create>` 标签。Ticket 使用 `specdev-worktree/<ticket-id>`；同一 Ticket 只存在一个来源 worktree。`operation=restore` 时重读实际 Git worktree/branch/tip/dirty 状态并与调用方记录核对，漂移时停止。
+`operation=create` 时加载 下方 `<dev-worktree-create>` 标签。Ticket 使用 `specdev-worktree/<change>/<ticket-id>`；Direct Spec 使用 `specdev-worktree/<change>/direct-spec`。每个实现单元只有一个来源 worktree。`operation=restore` 时重读实际 Git worktree/branch/tip/dirty 状态并与调用方记录核对，漂移时停止。
 
 **完成标准**：来源基线、branch、locator、owners 和实际 Git 状态一致；现有用户改动未被覆盖。
 
 ## 2. 来源实现门
 
-implementation owner 只在来源 worktree 修改授权项目路径，运行 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查。进入 `review` 前，worktree 必须 clean，branch tip 必须是已授权的 `source_checkpoint` commit，实际 diff 必须符合路径合同。
+implementation owner 只在来源 worktree 修改授权项目路径，运行规格或 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查。进入 `review` 前，worktree 必须 clean，branch tip 必须是已授权的 `source_checkpoint` commit，实际 diff 必须符合路径合同。
 
 **完成标准**：source checkpoint 不可变且可达；来源 worktree 没有 E2E pass 声明。
 
@@ -957,19 +959,19 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 本地 candidate checkout/branch 的创建、重建和回收属于已授权 local candidate integration；来源 branch/worktree 的删除仍需要独立 cleanup 授权。push、PR、remote merge、deploy、migration 和生产动作不从本 Skill 继承。
 
-**完成标准**：Ticket `integrated` 时父 HEAD 精确等于记录的 result SHA，并包含 source checkpoint；失败或 stale 时父分支未变化。后续 `removed` 只表示来源 branch/worktree 已清理，不撤销该集成事实。
+**完成标准**：执行单元 `integrated` 时父 HEAD 精确等于记录的 result SHA，并包含 source checkpoint；失败或 stale 时父分支未变化。后续 `removed` 只表示来源 branch/worktree 已清理，不撤销该集成事实。
 
 ## 4. 移除
 
-`operation=remove` 先验证 Ticket 已 `integrated`、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
+`operation=remove` 先验证执行单元已 `integrated`、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
 
 **完成标准**：只删除精确授权目标；失败保留现场与恢复命令。
 
 ## 固定规则
 
-- Agent Team 不决定 worktree；Ticket 切片本身决定来源 worktree；
-- Ticket E2E 只在 Lead-owned parent-candidate checkout 运行；
-- 每个 Done Ticket 必须有 source commit 与父分支 result，worktree 状态为 `integrated` 或其清理后终态 `removed`；
+- 执行方式与工作区正交；获批策略决定是否使用 worktree，Ticket 或 Direct Spec change 决定工作单元；
+- required E2E 只在 Lead-owned parent-candidate checkout 运行；
+- 每个 required 实现单元完成前必须有 source commit 与父分支 result，worktree 状态为 `integrated` 或其清理后终态 `removed`；
 - candidate 失败保留来源 worktree 修正，父分支不动；
 - 成功集成不自动清理来源 branch/worktree。
 
@@ -979,23 +981,25 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 # Create Or Restore Worktree
 
-## Ticket 前置条件
+## 前置条件
 
-- Ticket Ready，项目根是有效 Git repository，父分支和 `base_sha` 可解析；
+- Ticket Ready 或完整 Direct Spec 已获批且规格就绪，项目根是有效 Git repository，父分支和 `base_sha` 可解析；
 - implementation commit 与 local candidate integration/父分支更新已授权；
 - workspace、implementation、integration owner 唯一；integration owner 必须为 Lead；
-- `specdev-worktree/` 已由 Speculo init 加入项目 `.gitignore`；
+- 检查 `specdev-worktree/` 已被 Git ignore；未初始化项目由当前 I 在授权写集内补充该忽略规则并记录，不能强制运行 init；
 - 目标 branch/worktree 不覆盖现有用户 workspace，路径合同无冲突。
 
-## 创建 Ticket 来源 worktree
+## 创建来源 worktree
+
+先确定 `unit-id`：Ticket 使用真实 ID（如 T-01），Direct Spec 固定为 `direct-spec`；change 使用已解析的 change 名。下列路径由两者共同限定。
 
 1. 重读父分支 HEAD、工作树、现有 worktrees 与 refs；父 HEAD 与计划基线不一致时由 Lead决定更新 `base_sha` 或阻塞；
-2. 固定 branch `speculo/<change>/<ticket-id>` 与 locator `specdev-worktree/<ticket-id>`；
-3. 确认目标 branch/path 不存在，或其实际记录精确匹配当前 Ticket；
-4. 从 `base_sha` 创建 Git worktree，不复用其他 Ticket 目录；
+2. 固定 branch `speculo/<change>/<unit-id>` 与 locator `specdev-worktree/<change>/<unit-id>`；
+3. 确认目标 branch/path 不存在，或其实际记录精确匹配当前实现单元；
+4. 从 `base_sha` 创建 Git worktree，不复用其他实现单元目录；
 5. 在来源 worktree 读取项目 Agent 指令、依赖、构建与路径合同；
 6. 安装实际需要的依赖，运行最小非 E2E 基线；
-7. Lead 将实际 workspace、owner、checkpoint 和 `status: active` 记录在该票 Evidence 的 `## Workspace Execution Record` 唯一 JSON object 中，保留原执行字段；不创建全局 worktree 镜像。
+7. Lead 将实际 workspace、owner、checkpoint 和 `status: active` 记录在本单元原 Evidence 的 `## Workspace Execution Record` 唯一 JSON object 中，保留原执行字段；不创建全局 worktree 镜像。
 
 初始记录：
 
@@ -1009,29 +1013,35 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
   "base_sha": "<immutable-sha>",
   "parent_branch": "<parent-branch>",
   "branch": "speculo/<change>/T-01",
-  "workspace_ref": "specdev-worktree/T-01",
+  "workspace_ref": "specdev-worktree/<change>/T-01",
   "source_checkpoint": null,
   "integration": {
     "status": "pending",
+    "parent_ref": "<parent-branch>",
     "parent_before_sha": null,
     "source_sha": null,
     "candidate_sha": null,
+    "candidate_tree_sha": null,
     "candidate_branch": null,
     "candidate_workspace_ref": null,
     "result_sha": null,
     "method": null,
     "conflict_paths": [],
     "verification": "pending",
-    "e2e": {"required": false, "status": "not-required", "evidence": null},
+    "full_suite": {"required": true, "status": "pending", "reason": null, "evidence": null},
+    "e2e": {"required": false, "status": "not-required", "reason": "实际范围无端到端风险时填写依据", "evidence": null},
     "evidence": "specdev/changes/<change>/evidence/T-01.md",
-    "attempts": 0
+    "attempts": 0,
+    "promotion_status": "pending"
   },
   "status": "active",
   "updated_at": "<ISO-8601>"
 }
 ```
 
-`e2e.required` 与 Ticket/Goal Plan disposition 一致；required 时初始 status 为 `pending`。
+Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<change>"`、`integration_attempt_limit: <实际正整数上限>`；branch 与 workspace 的单元部分替换为 direct-spec，integration.evidence 指向 specdev/changes/{change}/evidence/direct-spec.md。不额外创建 Ticket。
+
+`full_suite` 与 `e2e` 的 required/reason 依据 Spec/Ticket/有效计划的实际验证合同；required 初始为 pending，not-required 必须给真实理由。未发生操作不预填通过。
 
 ## 恢复
 
@@ -1047,28 +1057,28 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 # Candidate Merge And Parent Integration
 
-仅由 Lead/integration owner 对状态为 `review` 的 Ticket 调用。
+仅由 Lead/integration owner 对处于 review 的 Ticket 或 Direct Spec 执行单元调用。Ticket 状态来自原票；Direct Spec 状态来自原 Evidence 的 Workspace Execution Record。unit-id 为真实 Ticket ID 或 direct-spec。
 
 ## 1. 接收 source checkpoint
 
-1. 核对 Ticket、Goal Plan、Evidence 目标、owner 与本地 integration 授权；
+1. 核对获批 Spec/Ready Ticket、实际存在的计划、Evidence 目标、owner 与本地 integration 授权；
 2. 验证来源 worktree clean，branch tip 精确等于 `source_checkpoint`，commit 从 `base_sha` 可达；
 3. 审计实际 diff 未越过 writable/shared owner 合同；
 4. 确认 source-worktree 必跑非 E2E 检查已执行，且没有把 E2E 自报为通过；
 5. 重读父分支 checkout clean、HEAD 与 remote/本地约定，记录 `parent_before_sha`。
 
-建立新 candidate 前先比较 Ticket `attempts` 与有效 Plan 的 `integration_attempt_limit`。若前一轮尚未通过且当前 attempts 已达到上限，不创建或重建 candidate、不增加 attempts；保留 source workspace、旧 candidate 与失败记录，将 Ticket/worktree 标为 `blocked`，向有效 Lead 返回 `integration-attempt-limit`。
+建立新 candidate 前先比较原记录 `attempts` 与有效 Plan 或无 Goal 执行合同的 `integration_attempt_limit`。若前一轮尚未通过且当前 attempts 已达到上限，不创建或重建 candidate、不增加 attempts；保留 source workspace、旧 candidate 与失败记录，将执行记录及已有 Ticket 标为 `blocked`，向有效 Lead 返回 `integration-attempt-limit`。
 
 其他预检失败时保持 `review`/`blocked`，不开始候选合并。
 
 ## 2. 建立 parent-candidate checkout
 
-1. 使用 branch `speculo/integration/<change>/<ticket-id>` 和 locator `specdev-worktree/.integration/<ticket-id>`，从最新 `parent_before_sha` 建立 Lead-owned integration worktree；
+1. 使用 branch `speculo/integration/<change>/<unit-id>` 和 locator `specdev-worktree/.integration/<change>/<unit-id>`，从最新 `parent_before_sha` 建立 Lead-owned integration worktree；
 2. 如果父 SHA 是 source checkpoint 的祖先，在 candidate checkout 执行 `git merge --ff-only <source_checkpoint>`，`method=fast-forward`；
 3. 否则执行 `git merge --no-ff --no-commit <source_checkpoint>`；
 4. 冲突按 下方 `<merge-conflict-protocol>` 标签 处理。需要新产品决定时执行 `git merge --abort`，记录 blocker 并返回来源 worktree；
 5. 对分叉结果创建一次 Lead-owned candidate merge commit，`method=merge-commit`；
-6. 记录 candidate branch/locator、`candidate_sha`、`source_sha`、冲突路径与 attempts，worktree 状态改为 `integrating`、integration 状态改为 `candidate`。
+6. 记录 candidate branch/locator、`candidate_sha`、实际 Git tree SHA `candidate_tree_sha`、`source_sha`、冲突路径与 attempts，worktree 状态改为 `integrating`、integration 状态改为 `candidate`。
 
 重试前从最新父分支重建 candidate branch/worktree；旧 candidate SHA 保存在 Evidence。候选生命周期的重建/回收包含在 local candidate integration 授权中。
 
@@ -1076,11 +1086,11 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 在 candidate checkout 运行：
 
-- Ticket 受影响集成与回归；
+- 当前实现单元受影响集成与回归；
 - 项目要求的 typecheck/lint/build 或其他父状态检查；
-- 仅当 Ticket/Goal Plan `e2e.required=true` 时运行对应 E2E。
+- 仅当 Spec/Ticket/有效执行合同 `e2e.required=true` 时运行对应 E2E。
 
-每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到 Goal Plan 快照的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
+每条命令记录运行环境 `parent-candidate`、退出码与摘要。E2E required 未运行或失败时 integration `verification=failed`、`status=failed`；父分支保持 `parent_before_sha`。当本轮失败使 attempts 达到有效执行合同的 `integration_attempt_limit` 时，保存本轮失败并返回 Lead 复盘；不得继续机械修正、放宽断言、删除检查或发明行为。上限是 Lead 复盘触发点，不是永久禁止恢复。
 
 ## 4. 推进父分支
 
@@ -1089,13 +1099,13 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 1. 重读父分支 HEAD；不等于 `parent_before_sha` 时将 candidate 标记 `stale`，不推进父分支并从步骤 2 重建；
 2. 在父分支 checkout 执行 `git merge --ff-only <candidate_sha>`；候选 merge commit 本身已以父 SHA 为第一祖先，因此不再创建第二个 merge commit；
 3. 重读父 HEAD、tree 与 ancestor 关系，确认 HEAD 精确等于 candidate SHA 且包含 source checkpoint；
-4. 写入 `result_sha=candidate_sha`、`verification=passed`、E2E 最终状态和 Evidence；
-5. integration/status 改为 `passed`/`integrated`，再由 Lead 标记 Ticket Done。
+4. 写入 `result_sha=candidate_sha`、`verification=passed`、full_suite/E2E 最终状态、`promotion_status=applied` 和 Evidence；
+5. integration/status 改为 `passed`/`integrated`，再由 Lead 标记 Ticket Done 或在 Direct Spec 全部 AC 通过后完成 change。
 
 ## 5. 失败、清理与恢复
 
-- candidate 检查失败：父分支不动，Ticket 回 `in_progress` 或 `blocked`，来源 worktree 保留；
-- 达到 integration attempt 上限：保留全部 source/candidate checkpoint 与失败记录，等待 Lead 在 Ticket Evidence 写明共同失败模式、最可能原因、下一轮改变和下一 owner/路由；只有形成有实质变化的新 Dispatch Packet 后，Lead 才可将当前 Ticket `attempts` 重置为 `0` 并重新进入 finalize；
+- candidate 检查失败：父分支不动，已有 Ticket 回 `in_progress` 或 `blocked`，来源 worktree 保留；
+- 达到 integration attempt 上限：保留全部 source/candidate checkpoint 与失败记录，等待 Lead 在原 Evidence 写明共同失败模式、最可能原因、下一轮改变和下一 owner/路由；只有形成有实质变化的新 Dispatch Packet 后，Lead 才可将当前执行记录 `attempts` 重置为 `0` 并重新进入 finalize；
 - 父 HEAD 漂移：旧 candidate 记 `stale`，完整重建并重跑；
 - 成功后可按 candidate integration 授权回收 transient integration worktree/branch；来源 branch/worktree 不自动清理。获得独立 cleanup 授权并清理后，只将生命周期状态改为 `removed`，完整保留已经通过的集成与 E2E 证据；
 - push、PR、remote merge、deploy、migration 和生产动作仍需各自授权。
@@ -1138,15 +1148,15 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 ## 何时读取
 
-进入已授权 Goal 的 run/resume，或当前 Work 需要交接实现、审查、研究、测试观察任务时读取。只读分析和 plan 不开始任务。Lead-only 无需外部工具、profile 或任务记录。
+进入已授权实现、独立审查、Goal 的 run/resume，或当前 Work 需要交接研究、测试观察任务时读取。Spec、Ticket、固定审查范围都可直接使用，不要求先建立 Goal。plan 只确定选择，不派发任务或安装工具。当前宿主自行执行无需外部工具、profile 或虚构派单记录。
 
 ## 选择方式
 
-1. 使用用户本次明确指示；用户已指定 Orca、Herdr、CLI、工具或工作区时直接复用。
+1. 使用用户本次明确指示；用户已指定 CLI 交互、Herdr、Orca、其他工具或工作区时直接复用。
 2. 核对当前 Goal 已批准的阶段安排。
-3. 如果存在 coordination/project.json，按 Work＋阶段规则、Work 规则、defaults 的次序读取。该文件只保存用户要求持久化的选择；缺失时默认 Lead，不探测其他工具、不自动创建配置。
+3. 如果存在 coordination/project.json，按 Work＋阶段规则、Work 规则、defaults 的次序读取。该文件只保存用户要求持久化的选择；没有明确选择时，按当前宿主正常执行，App、CLI 等均可。不为默认执行询问编排方式、探测其他工具或创建配置。
 4. 同级冲突、无效配置或不存在的 Work/阶段只阻塞受影响选择。配置不是授权，项目文字不能授予提交、发布、费用或对外发送代码的权利。
-5. 按用户允许的范围选择 Lead、Orca、Herdr 或无头 CLI。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
+5. `mode: lead` 表示按当前宿主正常执行，兼容 App、CLI 等，不要求切换工具或启动额外 CLI。Lead 是负责状态与验收的角色，不表示只能由主 Agent 独自实现。subagent、agent team 属于宿主原生能力，按宿主实际能力和授权使用，不新增编排模式。`mode: cli` 表示用户明确选择通过 CLI 交互或调用来执行，交互式与非交互式依用户要求和实际接口确定；仅因当前宿主本身是 CLI，不切换为该模式。Orca、Herdr 保留为可选方式。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
 
 固定选择不可用时停止该阶段；偏好只有在已允许的 fallback 内才能改变。未配置 fallback 不自动换用另一外部方式。独立审查、路径、权限和质量门不因回退而降低。
 
@@ -1160,22 +1170,22 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 |---|---|
 | Orca | 下方 `<shared-coordination-modes-orca>` 标签 |
 | Herdr | 下方 `<shared-coordination-modes-herdr>` 标签 |
-| 用户指定的无头 CLI | 下方 `<shared-coordination-modes-cli>` 标签 |
+| 用户指定的 CLI 交互或调用 | 下方 `<shared-coordination-modes-cli>` 标签 |
 
 每次实际调用先读取当前工具的可用指南或帮助，并使用工具返回的真实句柄。不要把本文示例视为固定参数协议，不实现工具专用适配器。工具不提供的能力不能用提示词宣称已获得。
 
 ## 工作区和并行
 
-工作区归当前 Goal 决定。用户已有选择不重复问；尚未确定时在规划阶段确认一次，默认选项为 current。编排不强制 worktree。
+执行输入、编排方式和工作区是三个独立选择。工作区继承当前有效计划或用户选择，无 Goal 时由当前 Work owner 在原工件记录；未指定默认 current，已有选择不重复问。Herdr 不强制 worktree，原生 agent team 也不隐含开启 worktree。只读审查使用固定候选所在工作区，不为审查本身创建实现 worktree。
 
 - current：严格单 writer，Lead 自己实现时也计入。上一任务的写入是否结束不明时，先查询真实工具，不开始冲突写入。
-- required：使用原独立 Ticket worktree 和 candidate 集成合同。并行数取配置、Goal 和实际可用能力的最小值；Lead 参与实现计入总数。另核对 shared paths、端口、数据库等实际资源。
+- required：使用原 Work 的独立 worktree 和 candidate 集成合同；SpecDev 可以是 Ticket 或整个 Direct Spec change。并行数取实际存在的配置、有效计划和平台能力的共同上限；无计划默认一个实现单元。Lead 及宿主原生协作者参与代码写入同样计数。另核对 shared paths、端口、数据库等实际资源。
 - review/research/test-observation 默认只读；测试输出仅写原任务允许的缓存或产物位置。
 - worktree 是工作副本，不是沙箱。Speculo 不提供运行期强制隔离、进程监管、租约或任务锁服务。
 
 ## 记录和接续
 
-阶段安排写回原 Goal Plan；Ticket 任务的交接、工具 locator、返回和处置写入原 Evidence。无 Ticket 的任务写入对应 Work 的原有产物。不创建 dispatch/runs、worker profile、事件 journal 或第二套 receipt。
+有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。Ticket 任务的交接、工具 locator、返回和处置写入原 Evidence；Direct Spec 使用原 direct-spec Evidence；无 change 审查直接返回会话结果。不创建 dispatch/runs、worker profile、事件 journal 或第二套 receipt。只保存实际选择、来源和必要恢复事实，不逐个登记宿主内部 Agent。
 
 返回后读取 下方 `<subagent-delivery-native>` 标签。执行者宣称完成、会话空闲和进程退出都不等于业务通过。Lead 核实实际候选与原验收合同后更新正式状态。
 
@@ -1193,7 +1203,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 ## 接收
 
-1. 从原 Goal/Evidence 找到当前任务、实际 Work、输入、工作区、基线、owner 和工具 locator。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
+1. 从实际存在的原 Goal、Ticket Evidence、Direct Spec Evidence 或当前审查输入找到任务、实际 Work、工作区、基线、owner 和工具 locator；缺 Goal/Ticket 不要求补造。返回必须对应同一目标；过时结果保留为历史材料，不能覆盖当前决定。
 2. 通过当前工具指南核对任务是否确实返回，以及是否仍可能继续写入。已接收、已开始、会话空闲、任务结束、进程退出和业务通过分别记录；结果不明先查询，不重复发起任务。
 3. 检查实际文件和 Git 事实：基线、可达 checkpoint、tip、dirty 状态、tracked/untracked/ignored 变更以及允许路径。返回文本不能替代真实候选。
 4. 按原验收合同核对检查及输出。执行者修改测试、配置或验收脚本时，判断是否改变了通过标准，不接受伪绿色结果。自报、模拟、截图和推断在 Lead 核实前保持未验证。
@@ -1207,7 +1217,7 @@ implementation owner 只在来源 worktree 修改授权项目路径，运行 Tic
 
 ## 中断恢复
 
-- 读取 Goal Plan、当前 Ticket、Map、change 状态、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
+- 按输入分支读取实际存在的 Goal Plan、Ticket/Map 或 Direct Spec、README Outcome、最近 Evidence 和实际候选，核对当前 HEAD、输入与真实 Work 是否漂移。
 - 使用记录的工具 locator 查询原任务，不根据缺日志推断没有执行。
 - 仍可能写入或副作用结果未知时，不让 Lead 或另一执行者抢写；按当前工具指南检查、等待或在原授权下取消。
 - 当前会话不具备查询能力时，说明缺失事实和恢复入口，不伪造停止证明。
@@ -1891,7 +1901,7 @@ CLI 刷新先 staging/验证再原子替换并保全未知 runtime；Work 不修
 
 小请求使用 README 中等价范围、AC 与验证；用户明确要求 Spec/Ticket/Goal 时交付指定工件。复杂需求可经 W → G → S → T → P → I 逐步形成合同，不要求全部 Work 串行必跑。Ticket frontmatter 拥有本票状态、依赖、写集与 Skill binding；有票的 Map/Goal 只管导航、依赖、Gate、集成和恢复，无票 Goal 由计划清单负责进度。整体结论只在 README，归档事实只在目录位置与回执。
 
-真实使用的 Spec/Ticket/Map/Goal、DESIGN、调查、远程账本 schema 与验证继续有效。并发上限、worktree 与集成尝试策略只在实际启用时由原 Goal/项目约定提供来源；缺省 current 单写入者、严格串行/direct-parent。Lead 自己实现也计入实现并发，只读 review/research/test-observation 不新增数字上限。GitHub labels 等实际工具配置仅对应分支读取；未知配置保留，缺标签只阻塞有关远程写入。
+真实使用的 Spec/Ticket/Map/Goal、DESIGN、调查、远程账本 schema 与验证继续有效。并发上限、worktree 与集成尝试策略按 下方 `<ref-common-rules-execution-policy>` 标签，由实际存在的 Goal/项目约定或当前 I 原 Evidence 提供来源；缺省 current 单写入者、严格串行/direct-parent。Lead 自己实现也计入实现并发，只读 review/research/test-observation 不新增数字上限。GitHub labels 等实际工具配置仅对应分支读取；未知配置保留，缺标签只阻塞有关远程写入。
 
 UI 候选缺省 3 个，配置范围 2–4；用户明确数量覆盖默认及上限。W 每会话最多完成一张调查票。专业分支保留：R performance 先测量，D evidence-triage 不以观察冒充根因，I documentation 在原授权范围维护当前工程事实。
 
@@ -3153,7 +3163,7 @@ P 保留原业务 ID；Ticket/Map 使用 schema v3 与 plan_contract_version: 1�
 
 Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、跨 Ticket 顺序与并发、共享所有权、里程碑 Gate、动态派单边界、父分支集成、迁移/发布顺序、偏差升级和恢复。Ticket 继续拥有局部实现合同。
 
-每次 Goal Plan 都采用 `lead-directed`：当前主会话是唯一 Lead，负责计划、SpecDev 状态、Evidence、派单、验收、父分支推进和最终回复。形成 Goal Plan 时，用户尚未明确才询问是否开启 worktree 开发，默认不开启；选择写入当前 Goal Plan，不修改全局配置。不开启时 Ticket 严格串行，允许动态派遣 实现执行者，但同一时间只有一个 implementation owner 可写当前 workspace；开启时沿用每 Ticket 独立 worktree 与 candidate-merge。
+每次 Goal Plan 都采用 `lead-directed`：当前主会话是唯一 Lead，负责计划、SpecDev 状态、Evidence、派单、验收、父分支推进和最终回复。形成 Goal Plan 时按 下方 `<ref-common-rules-execution-policy>` 标签 分别确定执行方式和工作区，复用已有选择；未指定时按当前宿主正常执行，工作区默认 current，选择写入当前 Goal Plan，不修改全局配置。不开启时 Ticket 严格串行，允许动态派遣 实现执行者，但同一时间只有一个 implementation owner 可写当前 workspace；开启时沿用每 Ticket 独立 worktree 与 candidate-merge。
 
 产物写入 `specdev/changes/{change}/goal-plan.md`。
 
@@ -3175,7 +3185,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 - Ticket DAG 的关键路径、汇合点或恢复策略无法由 Tickets Map 安全表达；
 - 用户明确要求正式跨 Ticket Plan。
 
-少量、线性、低风险的 Ready Tickets 可以不生成厚重编排正文，但执行前仍要有最小 Goal Plan 记录 workspace、Lead、Gate 和授权引用；不得引用不存在的当前 Goal Plan。没有 Ticket 的获批小型 Direct Spec 不受 Ticket workspace 合同约束；一旦需要切片，先运行 T-tickets。
+少量线性 Ready Tickets 可直接进入 I，不要求最小 Goal Plan；workspace、Lead、验证和原授权引用由 I 写原 Evidence。完整获批 Direct Spec 也可以直接执行并独立选择 worktree；需要独立调度或逐票追踪才运行 T-tickets。高风险要求相应 Gate，不以增加工件数量代替风险控制。
 
 ## 输入
 
@@ -3548,6 +3558,39 @@ implementation_plan: "specdev/changes/{change}/implementation-plan.md"
 
 </ref-common-rules-skill-invocation>
 
+<ref-common-rules-execution-policy>
+
+# 执行方式与工作区
+
+I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。规格、执行方式、工作区独立选择；共同的工具选择与交接协议见 下方 `<subagent-delivery>` 标签。
+
+## 输入和选择
+
+- 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 继续表示规格已就绪，不要求真的拆票。多个行为、公共接口、迁移或高风险不单独构成强制拆票理由，相应设计、批准、验证和恢复门必须完整。
+- README 替代独立 Spec 仍限原轻量边界。用户要求独立 Spec/Ticket/Goal 时按要求交付；缺产品决定不能用执行策略补造。
+- 独立调度、依赖 DAG 或逐票追踪确有需要才使用 T；跨任务 Gate、跨 change 或用户要求总控时使用 P。已有 Ticket/父实现不能通过转称 Direct Spec 绕过未完成责任；先由原 owner 处置活动执行和证据，再改路由。
+- 没有明确执行方式时，按当前宿主正常执行，App、CLI 等均可；工作区默认 `current`。明确指定 CLI 交互、Herdr 等方式时按选择执行；复用已有明确选择，不逐层重问。只读 C 冻结原候选，不创建实现工作区。
+- 已有父 Implementation Plan 的 workspace/Gate/上限优先约束子任务；子 Goal 不得放宽。无父计划使用已有 Goal；无 Goal 时由当前 I owner 在原 Evidence 的执行上下文记录方式、workspace 策略、Lead、路径、验证、原授权来源和恢复依据，不创建 Goal。
+- 无 Goal 的实现单元默认串行，集成尝试上限为 3；有明确项目约定时记录其来源并复用更严格上限。有效计划、实际存在的执行限制和平台能力取共同上限。不为这些默认值创建 config。
+
+## 工作区
+
+`current` 在当前工作副本执行；同一时刻只有一个代码 writer，包括 Lead、原生 subagent/team 和 Herdr 执行者。派出实现任务后 Lead 等待写入结束再接收，测试、审查不读正在漂移的候选。只读任务可以并行。Ticket 继续 direct-parent 验收；Direct Spec 保留实施前/最终 checkpoint、dirty 状态与提交授权，未授权不提交，不伪造已集成。
+
+`required` 对每个独立实现单元创建 source worktree；无票时整个 Direct Spec change 就是一个单元。使用 下方 `<dev-worktree>` 标签 的 source → parent-candidate → parent 流程，Lead 拥有集成、适用 E2E 与正式证据。创建前核对实现 commit 和本地集成授权；来源清理仍单独授权。worktree 不构成沙箱或执行锁。
+
+## 记录与恢复
+
+Ticket 沿用原 Evidence；无票使用 specdev/changes/{change}/evidence/direct-spec.md，其中 `Workspace Execution Record` 的 Direct Spec 记录用 `purpose: direct-spec`、`change` 与 `integration_attempt_limit` 代替 `ticket_id`，其余 workspace/integration 字段沿用现有合同。不允许两种执行记录并存。
+
+新建 Direct Spec required 必须记录真实执行对象；current 可以保留原 checkpoint 证据而不制造集成记录，历史无记录 current Evidence 仍可读取。使用结构化 current 记录时必须满足同一 commit/direct-parent 完成门。无论模式，完整 Spec 的完成需要逐 AC 的 Acceptance Verification 与实际双轴审查；未完成或未验证不能标 completed。
+
+恢复先核对原 Evidence、实际 writer、Git、候选和权限；未知结果先查询，失败候选不推进父分支。重复同一 blocker 无新证据或达到尝试上限时暂停，Lead 记录下一轮实质变化后才能重试。取消、归档不能抹掉活动 worktree 或未决 candidate。
+
+Direct Spec 整体取消时，原 owner 先按 change-completion 记录真实取消决定、已停止 writer、依赖及 checkpoint/candidate 的保留或交接；这些条件满足后才把本单元记录 status 改为 cancelled。此状态仅适用于 Direct Spec，不表示集成通过或授予清理权限；不能用于 completed。Ticket 状态格式不变。
+
+</ref-common-rules-execution-policy>
+
 <ref-common-rules-engineering-evidence>
 
 # 专业分支的工程证据
@@ -3724,9 +3767,9 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 | 身份 | Goal、change、Ticket 或固定候选；跨 change 使用 `<change>::<ticket>` 区分同名票 |
 | 能力 | 实际 Work 业务 ID、可读取的 SKILL.md 和本次阶段；原 source/合同摘要可用于发现漂移 |
 | 输入 | 目标、IN/OUT、已锁定决定、必要 Spec、依赖 Evidence、当前基线或固定审查 SHA |
-| 项目 Skill | implementation 必须提供 Tickets Map、适用 `ALL`/本票的项目 Skill 和当前 Ticket；读取顺序为 Map → 项目 Skill → Ticket，矩阵是最低必读集合 |
-| 工作区 | Goal 选择的 current 或 required、真实路径/branch、parent/base、允许和共享写路径及 owner |
-| 调用 | 用户选择的 Orca、Herdr 或 CLI；实际工具、模型已知值及会话 locator，不记录秘密 |
+| 项目 Skill | Ticket implementation 提供 Map → 适用 `ALL`/本票的项目 Skill → Ticket，矩阵是最低必读集合；Direct Spec 提供唯一获批规格、项目 Agent 指令、命中的项目 Skill、AC/验证与路径合同，不制造 Ticket/Map；review 提供固定候选及对应轴的来源 |
+| 工作区 | 有效计划或当前 Work 选择的 current 或 required、真实项目根与执行路径/branch、parent/base、允许和共享写路径及 owner；不要用执行者 cwd 猜测方法或数据根 |
+| 调用 | 当前宿主正常执行，或用户明确选择的 CLI 交互/调用、Herdr、Orca；实际工具、模型已知值及会话 locator，不记录秘密 |
 | 边界 | 本次真实允许的动作、实现 commit 权限、检查、E2E owner、停止条件和返回要求 |
 | 父 Goal | 存在父 Implementation Map/Plan 时附实际 revision、组合 task ID、依赖 Gate、并行上限和集成次序 |
 
@@ -3736,13 +3779,13 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 交给执行者的说明必须明确：
 
-> 先读绑定的真实 Work SKILL.md，按 task 上下文只处理指定目标、阶段和工作区。遵守同一 Work 的方法、TDD、检查与质量门；不要成为 Lead，不递归启动 Goal，不修改正式 Ticket、Map、Goal Plan、Evidence、业务状态或授权。不擅自再交接任务。缺输入、发生冲突或需要额外权利时向 Lead 返回问题与证据。
+> 先读绑定的真实 Work SKILL.md，按 task 上下文只处理指定目标、阶段和工作区。遵守同一 Work 的方法、TDD、检查与质量门；不要成为 Lead，不递归启动 Goal，不修改正式 Ticket、Map、Goal Plan、Evidence、业务状态或授权。宿主原生协作仍受本次写集、单 writer 和权限约束；不擅自跨 CLI 再派单或扩大任务。缺输入、发生冲突或需要额外权利时向 Lead 返回问题与证据。
 
 Lead 自行执行使用同一 Work 的 lead 上下文；不伪造外部任务或独立审查记录。任务执行者返回材料，由 Lead 维护正式工件。
 
 ## 任务类型与返回
 
-- implementation：只改分配路径，按 Goal 执行 current 或 required 流程；返回实际修改、checkpoint/commit（已授权且适用时）、dirty 状态、命令及退出码、非 E2E 检查、未运行项和 blocker。
+- implementation：只改分配路径，按有效计划或当前 Work 合同执行 current 或 required 流程；返回实际修改、checkpoint/commit（已授权且适用时）、dirty 状态、命令及退出码、非 E2E 检查、未运行项和 blocker。
 - review：只读固定候选，返回 findings、位置、依据、影响和未验证项；不直接修改通过标准或正式 Evidence。
 - research：返回来源、观察、结论及不确定性，关键外部 claim 对应具体来源。
 - test-observation：运行或观察原任务允许的检查；遵守缓存/产物路径，只返回事实，不接管 E2E Gate。
@@ -3779,7 +3822,22 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 
 # Herdr 编排
 
-仅在当前任务选择 Herdr 时读取。先读取实际可执行文件提供的当前 skill/help，核对版本、来源、运行上下文与目标会话。不同 fork 或同名工具不推定兼容。
+仅在用户为当前任务明确选择 Herdr 时读取；选择可来自同范围仍有效的会话授权。plan 只说明接入步骤，不安装、不启动。Herdr 选择不隐含 worktree、模型或拓扑选择。
+
+## 按需安装项目 Skill
+
+当前 Lead 负责首次接入，项目根由调用 Work 已验证的 projectRoot 确定，不取 pane cwd 或方法安装根。
+
+1. 检查项目 `skills/herdr/SKILL.md`（标准布局为宿主确认的项目 Herdr Skill 入口）。存在且为有效 `name: herdr` 的完整 Skill 时先读取并复用，核对来源和兼容性；不因上游更新静默覆盖。符号链接、同名非 Skill、无效内容或归属冲突时保留原文件，仅阻塞安装分支，说明冲突位置与恢复方式。
+2. 缺失时从指定上游 GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/herdr 目录中的完整 Herdr Skill 获取 Skill。先解析 main 的实际 revision，再从该 revision 下载 `skills/automation/herdr/` 的完整内容；当前上游为单文件，未来若有相对资源依赖须完整获取，不能只保存 GitHub HTML 页面。
+3. 使用宿主可用的 Skill 安装器并显式指定宿主确认的项目 Skill 安装目录 为目标；没有安装器时用宿主下载和文件工具完成同一流程。先在临时位置检查 UTF-8 Markdown、YAML frontmatter、`name: herdr`、引用闭包及路径，再以不覆盖方式安装。保留上游原文、frontmatter、许可和文件模式，不重写命令或权限参数。下载/校验失败时不留下半成品正式目录；目标期间发生变化时停止，不覆盖重试。
+4. 安装后回读实际 Skill，核对内容摘要与候选一致，在当前 Work 已有 Evidence/报告或会话结果中记录上游 URL、revision、内容 SHA-256、目标和结果。没有报告就不为安装制造 change 或 receipt。此 Skill 是项目第三方资产，不加入 Speculo 的投影清单，也不由 init/refresh 更新或删除。
+
+用户选择并要求使用 Herdr 时可完成上述项目本地安装；持久配置本身不是新安装授权。安装 Skill 不等于安装 Herdr 二进制、登录账户或启动服务。缺少网络或写权限时只阻塞 Herdr 分支，给出原目标和缺失条件；重试前重新检查目标，不能自动换另一种执行方式。
+
+## 运行与返回
+
+安装或复用后必须读取项目内 Skill，再检查 `HERDR_ENV=1`；不满足就停止 Herdr 控制，说明需要从受管会话恢复。检查通过后读取本机 `herdr --help` 和所需命令组帮助，核对版本、来源、运行上下文与目标会话。不同 fork 或同名工具不推定兼容。宿主技能列表是否已刷新不替代读取真实项目文件；也不把安装成功报告成运行可用。
 
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
 2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
@@ -3794,14 +3852,14 @@ current 同时只允许一个实现 writer，包括 Lead。required 保留 sourc
 
 <shared-coordination-modes-cli>
 
-# 无头 CLI 编排
+# CLI 交互与调用
 
-仅在用户选择直接 CLI 时读取。先读取用户指定工具的当前帮助、已安装技能或官方非交互指南。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
+仅在用户明确选择通过 CLI 交互或调用来执行时读取；当前宿主本身是 CLI 不触发本分支。先读取用户指定工具的当前帮助、已安装技能或对应交互方式的官方指南。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
 
-1. 确认工具可用、工作目录、输入方式、输出方式和当前用户已给出的权限。缺少登录或能力时报告，不自行改变账户、安装工具或添加绕过权限的参数。
+1. 确认工具可用、工作目录、交互方式、输入输出和当前用户已给出的权限。用户指定交互式会话时，使用宿主实际支持的终端/会话能力；只有用户要求或所选工具支持的任务接口适合非交互调用时才采用非交互方式。明确要求的交互方式不可用时停止该分支并报告，不擅自改为无头调用或 Herdr。缺少登录或能力时报告，不自行改变账户、安装工具或添加绕过权限的参数。
 2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；指定真实 Work 入口和必要输入。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
-3. 通过当前宿主可用的执行工具调用该 CLI。优先使用结构化 argv 或可靠的参数传递；任务正文通过工具支持的 stdin/文件输入，不拼接不可信 shell 片段。
-4. 保存实际命令、工作区、任务/会话 locator、原始退出码、结果及未验证项到原业务记录。工具没有可靠提供的模型、用量或成本写为未知。
+3. 通过当前宿主可用的执行工具调用该 CLI。优先使用结构化 argv 或可靠的参数传递；任务正文通过工具支持的 stdin、文件或会话输入，不拼接不可信 shell 片段。
+4. 保存实际命令、交互方式、工作区、任务/会话 locator、结果及未验证项到原业务记录；进程退出后记录真实退出码，仍运行或未知时据实记录。工具没有可靠提供的模型、用量或成本写为未知。
 5. 交互提示、等待、取消和恢复按该 CLI 当前指南处理。调用结果不明先查询，不把缺日志解释为没有执行，也不重复可能已经发生的外部动作。
 
 CLI 退出码只说明调用结果。Lead 仍按 下方 `<subagent-delivery-native>` 标签 检查真实候选、测试、findings 和完成门。该方式不要求 Speculo 常驻服务或专用 runner。
@@ -3931,8 +3989,8 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 10. **恢复依赖权威工件**：跨 Work 或 Agent 的实际交接在原 README/计划/Evidence 记录 owner、范围、未决动作和下一步，不维护 Work 调用镜像；返回下一 Work 和权威工件完整路径。
 11. **本地执行权威**：远程 Issue/PR/URL 只作为来源或完成投影；Spec、Ticket、Map、Goal Plan、Evidence 和状态始终以本地工件为准。
 12. **完成与归档分离**：本地完成按 change completion 合同决定；远程 close 失败不回滚完成，但必须 reconcile 或 waive 后才归档。
-13. **Lead 与隔离正交**：Lead 固定拥有原计划、Evidence 与父分支；是否派遣 任务执行者 由 Lead 动态决定。Goal Plan 创建时询问 Ticket 是否开启 worktree，默认不开启；选择只作用于当前 Goal Plan。
-14. **策略化验收**：current 模式使用当前 workspace 严格串行、direct-parent 验证；required 模式使用 source worktree 与 parent-candidate。只有 required 模式创建独立 Ticket worktree。
+13. **Lead 与隔离正交**：Lead 固定拥有原计划、Evidence 与父分支；是否派遣 任务执行者 由 Lead 动态决定。执行方式与工作区按 下方 `<ref-common-rules-execution-policy>` 标签 独立选择，执行方式默认当前宿主正常执行，工作区默认 current；无 Goal 时由 I 在原 Evidence 承接，已有选择不重复询问。
+14. **策略化验收**：current 模式使用当前 workspace 严格串行、direct-parent 验证；required 模式使用 source worktree 与 parent-candidate。只有 required 模式创建独立实现 worktree，单元可以是 Ticket 或整个 Direct Spec change。
 15. **父子权威隔离**：父实现 change 只拥有 Ready 子 change 的组合 Ticket DAG、serialization、全局 workspace/资源和实现进度投影；子 change 继续拥有全部行为与实现合同。一个未完成子 change 只能属于一个未完成父实现 change。
 
 共享规则：

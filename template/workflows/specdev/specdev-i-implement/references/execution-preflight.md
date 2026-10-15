@@ -1,5 +1,7 @@
 # Execution Preflight
 
+先按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 解析有效执行选择；用户选择 Herdr 时先完成其项目 Skill 接入与环境检查。无 Goal 不构成阻塞，不能用另一个 CLI 或工作区替换用户固定选择。
+
 ## Ticket 硬检查
 
 - [ ] Ticket frontmatter 可解析，`ready: true`，`status: ready`。
@@ -22,13 +24,15 @@
 
 ## Direct Spec 硬检查
 
-- [ ] 用户明确批准 Direct Spec；单一行为、局部、低风险、可逆且无需并行/Ticket DAG。
-- [ ] current workspace 只有一个项目与 SpecDev 写入 owner。
+- [ ] 用户已授权按当前规格实现；独立 Spec 已就绪（ready_for_tickets=true），目标、行为、风险门与验收完整；README 替代规格时仍满足轻量边界。不要求单一行为或低风险，确需独立调度/依赖 DAG 才拆票。
+- [ ] current 工作副本只有一个代码 writer（Lead 或获派执行者）；required 以整个 change 为单元，真实 workspace、Lead/实现/integration owner 及路径唯一。SpecDev 正式工件只由 Lead 写入。
 - [ ] 目标、IN/OUT、可写范围、不变量、验证与验收完整。
 - [ ] Direct Spec 涉及 UI 时读取批准 DESIGN 并冻结版本、页面/状态与原型摘要；无 UI 不要求此项。
 - [ ] 实施前 Git checkpoint、dirty 状态和现有用户改动已记录，不覆盖无关改动。
-- [ ] 非 E2E、适用回归与 E2E 验证环境可执行；E2E owner 固定为 Lead。
-- [ ] implementation commit 授权状态明确；未授权时不提交，并在轻量合同与 Evidence 中记录交付状态。
+- [ ] 已读取命中的项目 Skill；非 E2E、适用回归与 E2E 环境可执行，E2E owner 为 Lead。required 的 source 只运行非 E2E，候选检查在 parent-candidate。
+- [ ] implementation commit 授权状态明确；current 未授权时不提交，在原 Evidence 记录交付状态；required 创建前必须有实现 commit 和 local candidate integration/父分支更新授权。
+
+- [ ] required 的 Direct Spec Execution Record 使用 purpose/change 身份、真实 source/candidate locator 和正整数 integration_attempt_limit；恢复时原记录与 Git 一致，不存在未处置 Ticket 执行。
 
 ## 失效分类
 

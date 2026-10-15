@@ -9,6 +9,8 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 
 本 Skill 返回审查结果，不创建 runtime namespace。调用方分别负责 C review 工件或 I Evidence。
 
+采用调用方按 <Path>{roots.references}/coordination/coordination-contract.md</Path> 确定的当前 review 阶段执行方式，复用已有选择和授权；I 的实现方式不能覆盖明确的 review 阶段选择。未明确指定时使用当前宿主实际具备的 reviewer 能力，兼容 App、CLI 等；明确指定 CLI 交互等方式时按选择执行，选择 Herdr 才通过项目内 Herdr Skill 交接。两轴输入隔离、只读范围和独立审查要求在各方式下相同；能力不足时报告未验证或阻塞，不能用自审冒充独立 reviewer。task 上下文只执行所分配的轴，不再启动另一轮编排。
+
 ## 输入
 
 默认 diff 模式使用下列 fixed_point/head/diff/log。C 显式本地文件分支使用 `review_mode: source-files` 与 `source_snapshot`（路径/原始字节 SHA256）；不提供虚假的 Git 字段。两种模式均须提供相同的规范、标准、范围与隔离输入，I 最终审查保留 diff 模式。

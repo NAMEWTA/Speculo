@@ -20,7 +20,7 @@
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
-- [ ] 按 Goal Plan 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
+- [ ] 按有效计划或当前 I 执行合同 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
 - [ ] Ticket 完成合同包含 implementation commit、direct-parent 或 candidate-merge、父分支 result SHA 和 Lead Evidence；仅 required 模式需要独立 worktree。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。

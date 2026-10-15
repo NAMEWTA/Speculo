@@ -117,7 +117,7 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 - 有序执行路线和安全落点；
 - expected、writable、read-only、shared 路径；
 - 正常、失败和回归验证矩阵；
-- 每个 Ticket 按 Goal Plan 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
+- 每个 Ticket 按有效计划或当前 I 执行合同 的 workspace 策略定义 current-workspace/direct-parent 或 source-worktree/parent-candidate 检查，以及按实际跨边界风险判定的 E2E disposition；
 - 每个实现 Ticket 的 implementation commit 与对应父分支完成条件；仅 required 模式创建独立 worktree；
 - Deep 的迁移、兼容窗口、监控、回滚和不可逆批准点；
 - 可判定验收标准。
