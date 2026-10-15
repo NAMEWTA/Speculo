@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, readFile, writeFile, rm, readdir, rename, symlink } from 'node:fs/promises';
-import { join, dirname, relative } from 'node:path';
+import { join, dirname, relative as relativePath } from 'node:path';
 import { tmpdir, hostname } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -12,6 +12,7 @@ import { attachReviewFixture } from './helpers/review-fixture.js';
 const load = () => import(pathToFileURL(join(process.cwd(), 'template/workflows/specdev/common/tools/publish-design.mjs')).href);
 const artifacts = () => import(pathToFileURL(join(process.cwd(), 'template/workflows/specdev/common/tools/design-artifacts.mjs')).href);
 const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
+const relative = (from: string, to: string) => relativePath(from,to).split('\\').join('/');
 const id = '2026-10-14-design-baseline';
 const text = (meta: any, body = '# Project design\n\nUse semantic colors and visible keyboard focus.\n') => `---\n${JSON.stringify(meta, null, 2)}\n---\n${body}`;
 

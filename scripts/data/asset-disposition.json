@@ -8487,6 +8487,7 @@
   "scope": "Repository source disposition audit only; not an installation compatibility map",
   "original_archive_hash_matches": 1060,
   "added": [
+    ".gitattributes",
     "docs/README.md",
     "docs/agent-handoffs.md",
     "docs/architecture.md",

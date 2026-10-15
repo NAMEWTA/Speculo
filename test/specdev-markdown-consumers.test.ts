@@ -156,7 +156,7 @@ test('new archives require the original receipt and moved bytes before sealed co
     await symlink('verified.md',join(archived,'verification-link'));
     const entries:any[]=[];
     async function scan(root:string){for(const filename of await readdir(root)){
-      const path=join(root,filename),stat=await lstat(path),base={path:relative(archived,path),mode:stat.mode & 0o7777};
+      const path=join(root,filename),stat=await lstat(path),base={path:relative(archived,path).split('\\').join('/'),mode:stat.mode & 0o7777};
       if(stat.isDirectory()){entries.push({...base,type:'directory'});await scan(path);}
       else if(stat.isSymbolicLink())entries.push({...base,type:'symlink',target:await readlink(path)});
       else entries.push({...base,type:'file',sha256:plan.digest(await readFile(path))});
@@ -181,7 +181,7 @@ test('new archives require the original receipt and moved bytes before sealed co
     await writeFile(join(archived,history),dispatchFiles.get(history)!);
     assert.deepEqual(validate().errors,[]);
     const report=join(f.repo,'data/commands/archive-and-consolidate/2026-10-14-single-fixture.md');await mkdir(dirname(report),{recursive:true});
-    const navigated=(await readFile(join(archived,'README.md'),'utf8'))+`\n## Archive Receipt\nReceipt: project:${relative(f.repo,report)}#archive-${name}\n`;
+    const navigated=(await readFile(join(archived,'README.md'),'utf8'))+`\n## Archive Receipt\nReceipt: project:${relative(f.repo,report).split('\\').join('/')}#archive-${name}\n`;
     await writeFile(join(archived,'README.md'),navigated);
     entries.find(entry=>entry.path === 'README.md').sha256=plan.digest(navigated);
     const oldManifest=manifest;manifest=JSON.stringify({entries});await writeFile(join(archived,'archive-manifest.json'),manifest);

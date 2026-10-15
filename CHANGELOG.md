@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Resolve Windows short-path and drive-case aliases before enforcing Git repository boundaries. Keep source checkouts in LF for deterministic generated assets and provenance hashes, and make isolated test locators and file names portable.
+
 ## [2.0.3] - 2026-10-15
 
 ### Added

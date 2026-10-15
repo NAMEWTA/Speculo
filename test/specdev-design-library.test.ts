@@ -97,7 +97,7 @@ test("all twelve HTML entrypoints have a complete local resource closure", async
     visited.add(absolute);
     const rel = relative(library, absolute);
     assert(rel && !rel.startsWith(`..${sep}`), `resource escapes library: ${path}`);
-    const source = await readFile(await ownedFile(rel), "utf8");
+    const source = await readFile(await ownedFile(rel.split('\\').join('/')), "utf8");
     if (!/\.(html|css)$/.test(path)) return;
     const resources = path.endsWith(".html")
       ? [...source.matchAll(/<(?:script|img|link)\b[^>]*\b(?:src|href)=["']([^"']+)["']/gi)].map((match) => match[1])
@@ -105,7 +105,7 @@ test("all twelve HTML entrypoints have a complete local resource closure", async
     for (const resource of resources) {
       assert(!/^(?:https?:|\/\/)/i.test(resource), `remote resource: ${path} -> ${resource}`);
       if (/^(?:data:|#)/.test(resource)) continue;
-      const next = relative(library, resolve(dirname(absolute), resource.split(/[?#]/)[0]));
+      const next = relative(library, resolve(dirname(absolute), resource.split(/[?#]/)[0])).split('\\').join('/');
       if (/\.(?:html|css|js)$/.test(next)) await visit(next);
       else await ownedFile(next);
     }

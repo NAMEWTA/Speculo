@@ -1,0 +1,2 @@
+# Preserve source hashes and reproducible generated assets on every checkout.
+* text=auto eol=lf

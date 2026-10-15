@@ -287,11 +287,11 @@ function repositoryRoot(path) {
   if (git(path, ['rev-parse', '--is-inside-work-tree'], { allowed: [0, 128] }).stdout.trim() !== 'true') {
     throw new SquashError('repository path is not a Git worktree');
   }
-  return realpathSync(git(path, ['rev-parse', '--show-toplevel']).stdout.trim());
+  return realpathSync.native(git(path, ['rev-parse', '--show-toplevel']).stdout.trim());
 }
 
 function portable(root, path, externalIndex) {
-  const rel = relative(realpathSync(root), realpathSync(path));
+  const rel = relative(realpathSync.native(root), realpathSync.native(path));
   if (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`)) return rel ? rel.split(sep).join('/') : '.';
   return `<external-worktree:${externalIndex}>`;
 }
@@ -450,7 +450,7 @@ function inspectRemote(repo, request, oldHead) {
 function inspectRepository(projectRoot, request) {
   const repo = inside(projectRoot, request.path, `${request.id}.path`, { allowRoot: true });
   ensureDirectory(repo, `${request.id}.path`);
-  if (repositoryRoot(repo) !== realpathSync(repo)) throw new SquashError(`${request.id}.path must be the repository toplevel`);
+  if (relative(repositoryRoot(repo), realpathSync.native(repo)) !== '') throw new SquashError(`${request.id}.path must be the repository toplevel`);
   validateRef(repo, request.branch, `${request.id}.branch`);
   git(repo, ['update-ref', '--stdin'], { input: 'start\nabort\n', env: { GIT_OPTIONAL_LOCKS: '0' } });
   git(repo, ['var', 'GIT_AUTHOR_IDENT'], { env: { GIT_OPTIONAL_LOCKS: '0' } });
@@ -765,7 +765,7 @@ function validateRunState(projectRoot, state) {
     safePath(repo.path, `${repo.id}.path`);
     const path = inside(projectRoot, repo.path, `${repo.id}.path`, { allowRoot: true, mustExist: true });
     ensureDirectory(path, `${repo.id}.path`);
-    if (repositoryRoot(path) !== realpathSync(path)) throw new SquashError(`${repo.id}.path must remain a repository toplevel`);
+    if (relative(repositoryRoot(path), realpathSync.native(path)) !== '') throw new SquashError(`${repo.id}.path must remain a repository toplevel`);
     validateRef(path, repo.branch, `${repo.id}.branch`);
     validateOid(repo.start_sha, `${repo.id}.start_sha`);
     validateOid(repo.end_sha, `${repo.id}.end_sha`);

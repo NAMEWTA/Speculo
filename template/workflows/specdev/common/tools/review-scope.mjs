@@ -43,8 +43,10 @@ function workingFile(root, path) {
 
 function workingTree(options) {
   if (['head','commit','parent'].some(key => options[key] !== undefined)) throw new Error('review-scope: working-tree accepts base, not head/commit/parent');
-  const root = realpathSync(resolve(options.repo));
-  if (realpathSync(git(root, ['rev-parse','--show-toplevel']).trim()) !== root) throw new Error('review-scope: working-tree requires the actual project Git root');
+  // Native realpath expands Windows short names; relative also handles drive
+  // casing without admitting a nested directory that borrows its parent's Git.
+  const root = realpathSync.native(resolve(options.repo));
+  if (relative(root,realpathSync.native(git(root, ['rev-parse','--show-toplevel']).trim())) !== '') throw new Error('review-scope: working-tree requires the actual project Git root');
   const base = commit(root, options.base, 'base');
   const files = options.files?.map(portableFile);
   if (files && (!files.length || new Set(files).size !== files.length)) throw new Error('review-scope: empty or duplicate working-tree scope');

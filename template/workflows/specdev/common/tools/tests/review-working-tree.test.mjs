@@ -11,6 +11,7 @@ function fixture(t) {
   t.after(()=>rmSync(root,{recursive:true,force:true}));
   const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git('init','-b','main');git('config','user.name','Fixture');git('config','user.email','test@example.invalid');
+  git('config','core.autocrlf','false');
   for(const path of ['one.txt','removed.txt','renamed.txt']) writeFileSync(join(root,path),'original\n');
   writeFileSync(join(root,'.gitignore'),'ignored/\n');git('add','.');git('-c','commit.gpgsign=false','commit','-m','base');
   const base=git('rev-parse','HEAD');
@@ -26,14 +27,14 @@ test('working-tree freezes staged, unstaged, added, deleted, renamed and mode ch
   const scope=f.scope();
   assert.equal(scope.outcome,'changes');assert.equal(scope.observed_head,f.base);assert.equal(scope.head_sha,undefined);
   assert.deepEqual(scope.changed_paths,['new-name.txt','new.bin','one.txt','removed.txt','renamed.txt']);
-  assert.equal(scope.working_snapshot.find(x=>x.path==='one.txt').after.mode,'100755');
+  assert.equal(scope.working_snapshot.find(x=>x.path==='one.txt').after.mode,process.platform === 'win32' ? '100644' : '100755');
   assert.equal(scope.working_snapshot.find(x=>x.path==='removed.txt').after,null);
   assert.equal(scope.working_snapshot.find(x=>x.path==='new.bin').after.bytes,3);
   assert.deepEqual(f.scope(),scope);assert.equal(f.git('status','--porcelain'),status);assert.deepEqual(readFileSync(join(f.root,'.git/index')),before);
   writeFileSync(join(f.root,'new.bin'),Buffer.from([0,255,8]));assert.notEqual(f.scope().input_sha256,scope.input_sha256);
 });
 test('explicit scopes are literal, expose exclusions and retain deleted files',t=>{
-  const f=fixture(t), path='literal [*] $(touch unsafe).txt';
+  const f=fixture(t), path='literal [abc] $(touch unsafe).txt';
   writeFileSync(join(f.root,path),'literal');rmSync(join(f.root,'removed.txt'));writeFileSync(join(f.root,'one.txt'),'changed');
   const scope=f.scope({files:[path,'removed.txt']});
   assert.deepEqual(scope.changed_paths,[path,'removed.txt']);assert.deepEqual(scope.excluded_paths,['one.txt']);
@@ -47,7 +48,7 @@ test('links are read as links and directory links never disclose outside bytes',
   t.after(()=>rmSync(outside,{recursive:true,force:true}));writeFileSync(join(outside,'secret'),'sensitive');
   symlinkSync(join(outside,'secret'),join(f.root,'link'));
   const scope=f.scope({files:['link']});assert.equal(scope.working_snapshot[0].after.kind,'symlink');
-  symlinkSync(outside,join(f.root,'directory'));
+  symlinkSync(outside,join(f.root,'directory'),process.platform === 'win32' ? 'junction' : 'dir');
   assert.throws(()=>f.scope({files:['directory/secret']}),/symlink directory/);
 });
 test('unmerged index and borrowed parent repository are rejected',t=>{

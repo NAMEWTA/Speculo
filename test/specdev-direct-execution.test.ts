@@ -22,6 +22,7 @@ function fixture(t: TestContext) {
   const git = (...args: string[]) => execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   const at = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   git('init', '-b', 'main'); git('config', 'user.email', 'fixture@example.invalid'); git('config', 'user.name', 'Fixture');
+  git('config','core.autocrlf','false');
   writeFileSync(join(repo, '.gitignore'), 'data/\nspecdev-worktree/\n');
   writeFileSync(join(repo, 'value.txt'), 'before\n');
   git('add', '.'); git('commit', '-m', 'fixture baseline');
