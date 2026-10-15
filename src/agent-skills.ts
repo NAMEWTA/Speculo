@@ -5,7 +5,7 @@ import { readAssetCatalog, parseFrontmatter, type Asset, type AssetCatalog } fro
 import { containedPath, INSTALL_ROOT, safeRelativePath } from "./paths.js";
 import { RefreshBlockedError, type RefreshBlocker } from "./refresh.js";
 import type { SkillNode, SkillRecord } from "./transaction.js";
-import { readImage } from "./external-files.js";
+import { image, readImage } from "./external-files.js";
 
 export const MANAGED_MANIFEST = "projections.json";
 export type ProjectionHost = "agents" | "claude";
@@ -71,7 +71,7 @@ export async function readProjectionManifest(target:string):Promise<ManagedManif
  if(new Set(m.files.map(f=>f.path)).size!==m.files.length)throw new Error('invalid-projection-manifest');
  return m;
 }
-function fileNode(content:Buffer|string):SkillNode{return {kind:'file',content:Buffer.from(content).toString('base64'),mode:0o644};}
+function fileNode(content:Buffer|string):SkillNode{return {kind:'file',...image(content)!};}
 async function assertProjectionCasing(target: string, path: string): Promise<void> {
  let parent = target;
  for (const part of path.split('/')) {

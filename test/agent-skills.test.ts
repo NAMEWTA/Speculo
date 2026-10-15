@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmod,link,mkdir,mkdtemp,readFile,readdir,rm,symlink,writeFile } from 'node:fs/promises';
+import { chmod,cp,link,mkdir,mkdtemp,readFile,readdir,rm,symlink,writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname,join,resolve } from 'node:path';
 import { test } from 'node:test';
@@ -70,6 +70,23 @@ test('one saved selection follows target changes and disabled targets are cleane
  const kept=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
  assert.deepEqual(kept.exposure.targets,[]);
  assert.deepEqual(kept.exposure.assetIds,[]);
+}));
+
+test('Windows file-image normalization produces no updates for unchanged owned projections',()=>fixture(async target=>{
+ const assetIds=['command/handoff'];
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skills:{mode:'set',assetIds}});
+ const stagedRoot=join(target,'stage');
+ await cp(join(target,'.agents/speculo'),stagedRoot,{recursive:true});
+ const platform=Object.getOwnPropertyDescriptor(process,'platform')!;
+ try {
+  // Exercise Windows image normalization on every CI OS; this does not emulate Windows filesystem behavior.
+  Object.defineProperty(process,'platform',{value:'win32'});
+  const plan=await planSkillProjection({target,stagedRoot,packageVersion:'2.0.2',exposure:{targets:['agents'],assetIds}});
+  assert.equal(plan.records,null);
+  assert.equal(plan.summaries.agents.updated,0);
+  assert.equal(plan.summaries.agents.ready,1);
+  assert.deepEqual(plan.warnings,[]);
+ } finally { Object.defineProperty(process,'platform',platform); }
 }));
 
 test('disabling a target preserves edited and third-party files and keeps conflict evidence',()=>fixture(async target=>{
