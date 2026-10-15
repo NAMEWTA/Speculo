@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-10-15
+
 ### Fixed
-- Resolve Windows short-path and drive-case aliases before enforcing Git repository boundaries. Keep source checkouts in LF for deterministic generated assets and provenance hashes, and make isolated test locators and file names portable.
+- Resolve Windows short-path and drive-case aliases before enforcing Git repository boundaries in independent review and history squash.
+- Keep source checkouts in LF for deterministic generated assets and provenance hashes.
+- Make isolated test locators, file names and worktree identity checks portable across Windows, macOS and Linux.
 
 ## [2.0.3] - 2026-10-15
 
@@ -969,7 +973,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.3...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.4...HEAD
+[2.0.4]: https://github.com/NAMEWTA/Speculo/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/NAMEWTA/Speculo/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/NAMEWTA/Speculo/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/NAMEWTA/Speculo/compare/209f927...v2.0.1

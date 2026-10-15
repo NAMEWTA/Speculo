@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Standard agent skills, commands and project methods with state-safe installation.",
   "type": "module",
   "bin": {
