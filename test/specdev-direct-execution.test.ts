@@ -4,7 +4,7 @@ import { test, type TestContext } from 'node:test';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const methodRoot = resolve('template');
@@ -130,7 +130,9 @@ test('Direct Spec worktree creates, restores, validates candidate and integrates
   f.git('merge','--ff-only',r.integration.candidate_sha);
   r.integration.result_sha = f.git('rev-parse','HEAD'); r.integration.status='passed';r.integration.promotion_status='applied';r.status='integrated';
   f.save(r);f.complete();assert.deepEqual(f.validate('complete'), []);
-  assert.match(f.git('worktree','list','--porcelain'),new RegExp(source)); // Validation never cleans up.
+  const worktrees = f.git('worktree','list','--porcelain','-z').split('\0')
+    .filter(field => field.startsWith('worktree ')).map(field => realpathSync.native(field.slice(9)));
+  assert.ok(worktrees.some(path => relative(realpathSync.native(source),path) === '')); // Validation never cleans up.
   f.git('worktree','remove',source); f.git('branch','-d',r.branch); r.status='removed';f.save(r);
   assert.deepEqual(f.validate('complete'), []);assert.equal(r.integration.result_sha,r.source_checkpoint);
 });
