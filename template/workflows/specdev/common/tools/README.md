@@ -4,7 +4,7 @@
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn-change|retro|pr-delivery|review|prototype|wayfinder|complete|archive-ready|archived> \
+  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn|retro|pr-delivery|review|prototype|wayfinder|complete|archive-ready|archived> \
   --repo <project-root> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```

@@ -278,7 +278,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Implementation Plan | `specdev/changes/{change}/implementation-plan.md` | 父 Lead、全局 workspace/实现上限、frontier/Wave/locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
 | Implementation Orchestration Evidence | `specdev/changes/{change}/evidence/implementation-orchestration.md` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
-| Change 学习图解 | `specdev/changes/{change}/learning/index.md` 与 `specdev/changes/{change}/learning/{number}_{topic}.md` | 面向零专业背景读者解释当前 change 的已验证工件、实现和测试事实；索引按序号持续追加 | 产品决定、架构决定、实现授权或 Learning workflow 知识 |
+| 学习图解 | `specdev/changes/{change}/learning/index.md` 与 `specdev/changes/{change}/learning/{number}_{topic}.md` | L 负责需求参考、项目代码、已有 change 或外部资料的讲解，区分事实、观点与推断；索引按序号持续追加，未指定 change 时新建学习载体 | 产品决定、架构决定、实现授权、用户掌握结论或 Learning workflow 知识 |
 | 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | 项目设计基线 | specdev/design/DESIGN.md | 跨 change 的语义 token、组件/交互规范、版本及来源；A 唯一正式写入 | 单次页面设计或未批准提案 |
 | Change 设计合同 | specdev/changes/{change}/DESIGN.md | 本 change 已批准的页面、状态、视觉/交互、基线版本和例外；P 拥有 | 改写永久基线或替代 Spec/ADR |
@@ -876,7 +876,7 @@ CLI 刷新先 staging/验证再原子替换并保全未知 runtime；Work 不修
 
 1. 明确项目根、方法资源根与获批业务数据根。已有安装时验证真实 workspace 与 roots；没有安装时使用明确根参数，方法资源可以只读。相对参数基于项目根，cwd 只作线索；不静默切换项目。根冲突、越界链接或重叠安装事务仅阻塞依赖该根的写入。详见 本文的网页平台运行约定。
 2. 读取当前请求和所选 Work；按 下方 `<activation-and-memory>` 标签 检索相关知识 ID/关键词，再回读少量原文与 provenance。没有相关知识不要求先初始化知识目录。
-3. 有 change 时定位用户指定对象或唯一合法候选，读取 README 的唯一 Outcome、当前负责工件和接续点。只枚举 changes 直接子目录，排除 archive；多个候选真实消歧。只读代码/架构审查、知识审计、capture 和初始化不强造 change。
+3. 有 change 时定位用户指定对象或唯一合法候选，读取 README 的唯一 Outcome、当前负责工件和接续点。只枚举 changes 直接子目录，排除 archive；多个候选真实消歧。L 学习按其保存合同使用指定/同轮续学对象，独立请求未指定时新建学习 change，不自动接入其他活动对象。只读代码/架构审查、知识审计、capture 和初始化不强造 change。
 4. 按实际分支读取必要参考。创建、恢复、完成、取消或归档时读取 下方 `<workflow-state-and-lifecycle>` 标签；轻量/完整输入或事实冲突读取 下方 `<artifact-contract>` 标签；实际交接、并行、父子集成才加载 下方 `<ref-common-rules-operating-governance>` 标签 和 下方 `<ref-common-rules-parent-implementation-orchestration>` 标签。
 5. 写前核对路径、原 owner、实际写入者、相关 pending transaction、lock 和 recovery evidence。失败/阻塞记录在原 README、计划、Evidence 或操作回执；真实交接只更新原负责位置。完成产物、适用验证并回读，返回证据和下一入口。
 
@@ -2166,6 +2166,8 @@ UI 实施还需 Evidence 对照已批准 change DESIGN、固定基线与页面/�
 
 Evidence-only Done 和 empty commit 不满足完成门.
 
+L 新建的学习专用 change 属于非实现终点：以 README 的学习 scope、逐 AC 实际验证及 learning 图解/索引完成轻量验收，由 L 原 owner 在本轮交付后结束。已有开发 change 的学习材料不替代其实现完成门；向 completed/cancelled 对象续加学习图解不重开或重新判定原 Outcome。学习的选择与恢复由 “学习与图解阶段” 负责。
+
 父实现 change 还必须满足 下方 `<ref-common-rules-parent-implementation-orchestration>` 标签：全部成员 completed，Implementation Map 与 Implementation Plan completed 且 revision 一致，跨 change 全套验证通过，`specdev/changes/{change}/evidence/implementation-orchestration.md` 完整，没有活动派单、candidate、serialization lock 或未裁决冲突。父完成不自动归档或移动任何成员。
 
 ## 转换 Owner
@@ -2412,7 +2414,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 | 单个已拆票 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
 | 旧 O 调用或恢复键 | P-goal-plan | 统一 P 多 change 模式 |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
-| 开发完成后需要理解当前 change 或追问实现 | L-learn-change | 返回用户 / 继续提问 / Triage / A |
+| 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |
 
 同 change 下一阶段需要当前一手推理且上下文健康时继续；切换 repo/person/harness 或旁路时使用 交接能力（完整保存原工件、检查点、余项与下一 owner；不可用时输出完整交接包）；严格限定且可独立派单时使用 Dispatch Packet；其他长上下文以权威工件路径恢复。平台不支持 clear/compact 时不虚构操作。
@@ -2422,7 +2424,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 ## 复盘与交付路由
 
-开发环境/流程复盘 → 下方 `<ref-specdev-r-retro-skill>` 标签。代码讲解仍为 L；Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → “请求分诊阶段” 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+开发环境/流程复盘 → 下方 `<ref-specdev-r-retro-skill>` 标签。代码与参考资料学习 → “学习与图解阶段”；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → “请求分诊阶段” 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
 
@@ -2435,7 +2437,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 | 一次性事件暂时无法重现 | D / evidence-triage | 不标记 root-cause-confirmed，不创建 Ready 修复 |
 | 已批准的文档维护 | I-implement / documentation | 不新建文档 workflow，不伪造 TDD |
 | 只审查文档或某个 commit | C-code-review | 不写项目、不把单 commit 扩大到 HEAD |
-| 理解已实现 change | L-learn-change | 不改 Learning workflow，不永久晋升 |
+| 理解功能、实现思路、运行机制或文章观点 | L-learn | 不自动规划/实现，不改 Learning workflow，不永久晋升 |
 
 只读调查或审查不是后续修改授权。清晰的小请求继续走原适用阶段，不因增加专业分支强制进入 W/G/Triage；无差异、无候选和证据不足均可诚实返回，不制造工作量。
 

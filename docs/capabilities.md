@@ -1,57 +1,97 @@
-# 公开能力
+# 全部公开能力
 
-5 个领域、38 个 Work、10 个 Command。源目录与业务 ID 分离；业务 ID 用于显式投影选择。
+[手册首页](README.md) · [领域指南](workflows/README.md) · [Command 工具箱](commands/README.md)
 
-| 业务 ID | 职责 | 源入口 |
+当前有 **5 个领域、38 个 Work、10 个 Command**。表中的业务 ID 可用于显式曝光选择；教程用于理解场景，源入口用于核对完整合同。Work 的 Skill name 与业务 ID 的区别见[基本概念](concepts.md)。
+
+## 领域入口
+
+| 领域 | 使用手册 | 源入口 |
 |---|---|---|
-| learning/archive | 用户明确关闭后移动整个 Change 树到日期目录；不做知识综合或掌握判断。 | [learning-a-archive](../template/workflows/learning/learning-a-archive/SKILL.md) |
-| learning/assess-and-plan | 以目标和证据为起点建立课程、背景、基线、来源和可变 Lesson 地图。 | [learning-a-assess-and-plan](../template/workflows/learning/learning-a-assess-and-plan/SKILL.md) |
-| learning/consolidate | 将选定 Change 物理嵌入父 Change，生成带 claim 级 provenance 的可迭代主题综合。 | [learning-c-consolidate](../template/workflows/learning/learning-c-consolidate/SKILL.md) |
-| learning/goal | 为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图并按库存切 ≤15 的 mine unit，但不写 Lesson、不进行教学探针提问、不自动串联 H/R/C。 | [learning-g-goal](../template/workflows/learning/learning-g-goal/SKILL.md) |
-| learning/homework | 以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。 | [learning-h-homework](../template/workflows/learning/learning-h-homework/SKILL.md) |
-| learning/init-setup | 初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。 | [learning-i-init-setup](../template/workflows/learning/learning-i-init-setup/SKILL.md) |
-| learning/lesson | 一次输出 30–40 分钟、通俗但完整的 Lesson；不生成作业、不评分、不宣称掌握。 | [learning-l-lesson](../template/workflows/learning/learning-l-lesson/SKILL.md) |
-| learning/question | tutor 默认约 5 题、作答后讲解；explore 主动发现盲区并深入到处理与验证。无 Change 可创建轻量主题；两种模式不混写，不自动串联 L/H/R。 | [learning-q-question](../template/workflows/learning/learning-q-question/SKILL.md) |
-| learning/review | 用户主动指定后，用真实时间间隔验证回忆、机制和迁移，并更新 retention evidence。 | [learning-r-review](../template/workflows/learning/learning-r-review/SKILL.md) |
-| media/brief | 收齐输入、提出三类 Hook、核验事实并形成共享母稿。 | [media-b-brief](../template/workflows/media/media-b-brief/SKILL.md) |
-| media/deconstruct | 按 Hook、叙事、视觉、节奏拆解实际材料，不复制独特表达。 | [media-d-deconstruct](../template/workflows/media/media-d-deconstruct/SKILL.md) |
-| media/hand-drawn | 从21套菜单选择并原样调用已审查配方，默认不生图。 | [media-h-hand-drawn](../template/workflows/media/media-h-hand-drawn/SKILL.md) |
-| media/init-setup | 建立经确认的档案，只检测依赖，不自动安装。 | [media-i-init-setup](../template/workflows/media/media-i-init-setup/SKILL.md) |
-| media/publish-draft | 绑定版本与人工确认，导出可重复验证的本地媒体包，不发布。 | [media-p-publish-draft](../template/workflows/media/media-p-publish-draft/SKILL.md) |
-| media/retro | 人工导入数据，提出单变量实验，经确认沉淀五类模板。 | [media-r-retro](../template/workflows/media/media-r-retro/SKILL.md) |
-| media/video | 按规格、音频、分镜、静帧、预览与审核顺序形成真实成片。 | [media-v-video](../template/workflows/media/media-v-video/SKILL.md) |
-| ops/project-deploy | 固定一个项目及目标服务器，配置项目容器、依赖、升级与双边文档，不隐式取得整台服务器的维护权限。 | [ops-d-project-deploy](../template/workflows/ops/ops-d-project-deploy/SKILL.md) |
-| ops/host-manage | 只维护一个明确服务器的系统基线、Docker 和主机级入口，不把系统配置误路由到项目。 | [ops-h-host-manage](../template/workflows/ops/ops-h-host-manage/SKILL.md) |
-| ops/initialize | 仅准备发起任务的控制端，建立受限状态根与本机工具证据，不默认登记部署服务器。 | [ops-i-initialize](../template/workflows/ops/ops-i-initialize/SKILL.md) |
-| ops/server-connect | 处理指定服务器的可信 SSH、真实登录主目录探测、用户确认持久化根及接入登记，不部署项目或隐式改写 sshd。 | [ops-s-server-connect](../template/workflows/ops/ops-s-server-connect/SKILL.md) |
-| ops/inventory-view | 从现有资源和检查证据生成简单 MD、标准 JSON 与离线 HTML，双向查看服务器与项目，不连接或修改目标。 | [ops-v-inventory-view](../template/workflows/ops/ops-v-inventory-view/SKILL.md) |
-| person/mao-zedong-cognitive-os | 以毛泽东方法论为底座的问题诊断、战略制定与行动规划咨询 | [person-m-mao-zedong-cognitive-os](../template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md) |
-| person/steelman-deliberation | 将尚未厘清的复杂问题经真实问题重述、正反双向钢人化与关键变量识别，在一次关键追问后推进为明确判断和可执行行动 | [person-s-steelman-deliberation](../template/workflows/person/person-s-steelman-deliberation/SKILL.md) |
-| specdev/archive-and-consolidate | 核对完成/取消证据与四类资产，先维护现役知识/docs及适用 DESIGN再封存；也支持独立知识维护或明确的代码访谈。 | [specdev-a-archive-and-consolidate](../template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md) |
-| specdev/code-review | 按用户指定的 PR、单 commit、区间或基线冻结真实比较范围，执行隔离的标准轴与规范轴审查；有效空差异诚实返回，不实施修复或发布。 | [specdev-c-code-review](../template/workflows/specdev/specdev-c-code-review/SKILL.md) |
-| specdev/diagnose-bugs | 调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。 | [specdev-d-diagnose-bugs](../template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md) |
-| specdev/grill-with-docs | 一个已界定 change 仍有产品、领域或架构决定待确认时进行可恢复访谈；跨 change 边界未清晰时先用 W。 | [specdev-g-grill-with-docs](../template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md) |
-| specdev/implement | 执行已授权的 Ready Ticket 或获批 Direct Spec，覆盖代码实现与文档维护，产生可回读验收证据；不从模糊需求或只读审查直接写入。 | [specdev-i-implement](../template/workflows/specdev/specdev-i-implement/SKILL.md) |
-| specdev/init-setup | 发现项目事实与必要偏好；明确请求才建立工程 docs 基线，不预造业务骨架。 | [specdev-i-init-setup](../template/workflows/specdev/specdev-i-init-setup/SKILL.md) |
-| specdev/learn-change | 在开发完成后围绕当前 SpecDev change 回答问题，并用面向零专业背景读者的 Markdown 与 ASCII 图解持续记录理解。 | [specdev-l-learn-change](../template/workflows/specdev/specdev-l-learn-change/SKILL.md) |
-| specdev/goal-plan | 为明确目标规划、执行或恢复 Goal；简单无票计划用清单，完整票据/跨 change 保留 Gate 与集成编排，不代替需求探索。 | [specdev-p-goal-plan](../template/workflows/specdev/specdev-p-goal-plan/SKILL.md) |
-| specdev/prototype | 按需验证离线逻辑模型，或检测现有项目的 UI 事实，按产品任务推荐并逐步选择设计风格，生成持久化设计系统文档、多风格 HTML 对照和可运行 HTML/CSS/JS 原型。 | [specdev-p-prototype](../template/workflows/specdev/specdev-p-prototype/SKILL.md) |
-| specdev/retro | 对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn-change，Speculo 产品反馈使用 retro 命令。 | [specdev-r-retro](../template/workflows/specdev/specdev-r-retro/SKILL.md) |
-| specdev/review-architecture | 审查指定代码范围的结构与维护成本，或测量真实用户操作的性能并形成候选；只报告或深入用户选定的设计，不直接实施优化。 | [specdev-r-review-architecture](../template/workflows/specdev/specdev-r-review-architecture/SKILL.md) |
-| specdev/spec | 综合已知事实、设计决定、诊断与代码现状，产出以外部行为和验收合同为权威的 Ready Spec。 | [specdev-s-spec](../template/workflows/specdev/specdev-s-spec/SKILL.md) |
-| specdev/tickets | 将已澄清的 Spec 或等价获批计划拆为可验收的实施 Ticket，并绑定真实项目 Skill；不用于探索未知需求或执行代码。 | [specdev-t-tickets](../template/workflows/specdev/specdev-t-tickets/SKILL.md) |
-| specdev/triage | 摄入与核验外部请求、投影本地完成事实、交付 PR，或按明确目标处理 CI、安全告警、npm/GitHub Release 预检、发布和恢复；清晰的本地需求直接进入对应 Work。 | [specdev-t-triage](../template/workflows/specdev/specdev-t-triage/SKILL.md) |
-| specdev/wayfinder | 大需求的 change 边界或实施路线尚不可见时建立探索地图，并分别澄清各 change；已有清晰 Spec 时不触发。 | [specdev-w-wayfinder](../template/workflows/specdev/specdev-w-wayfinder/SKILL.md) |
+| SpecDev · 软件开发 | [specdev 指南](workflows/specdev.md) | [领域 SKILL.md](../template/workflows/specdev/SKILL.md) |
+| Learning · 学习 | [learning 指南](workflows/learning.md) | [领域 SKILL.md](../template/workflows/learning/SKILL.md) |
+| OPS · 运维部署 | [ops 指南](workflows/ops.md) | [领域 SKILL.md](../template/workflows/ops/SKILL.md) |
+| Person · 分析决策 | [person 指南](workflows/person.md) | [领域 SKILL.md](../template/workflows/person/SKILL.md) |
+| Media · 内容创作 | [media 指南](workflows/media.md) | [领域 SKILL.md](../template/workflows/media/SKILL.md) |
 
-## Commands
+## SpecDev · 软件开发
 
-- [command/archive-and-consolidate](../template/commands/archive-and-consolidate/COMMAND.md)
-- [command/docs-sync](../template/commands/docs-sync/COMMAND.md)
-- [command/engineering-standards-builder](../template/commands/engineering-standards-builder/COMMAND.md)
-- [command/git-history-squash](../template/commands/git-history-squash/COMMAND.md)
-- [command/git-repository-audit](../template/commands/git-repository-audit/COMMAND.md)
-- [command/handoff](../template/commands/handoff/COMMAND.md)
-- [command/retro](../template/commands/retro/COMMAND.md)
-- [command/source-code-zip](../template/commands/source-code-zip/COMMAND.md)
-- [command/status](../template/commands/status/COMMAND.md)
-- [command/upstream-fork-sync](../template/commands/upstream-fork-sync/COMMAND.md)
+| 业务 ID | 作用 | 教程 | 源入口 |
+|---|---|---|---|
+| `specdev/archive-and-consolidate` | 归档与沉淀 | [用法](workflows/specdev.md#archive-and-consolidate) | [specdev-a-archive-and-consolidate](../template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md) |
+| `specdev/code-review` | 代码审查 | [用法](workflows/specdev.md#code-review) | [specdev-c-code-review](../template/workflows/specdev/specdev-c-code-review/SKILL.md) |
+| `specdev/diagnose-bugs` | 诊断 Bug | [用法](workflows/specdev.md#diagnose-bugs) | [specdev-d-diagnose-bugs](../template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md) |
+| `specdev/grill-with-docs` | Change 决策访谈 | [用法](workflows/specdev.md#grill-with-docs) | [specdev-g-grill-with-docs](../template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md) |
+| `specdev/implement` | 实现与验收 | [用法](workflows/specdev.md#implement) | [specdev-i-implement](../template/workflows/specdev/specdev-i-implement/SKILL.md) |
+| `specdev/init-setup` | 初始化设置 | [用法](workflows/specdev.md#init-setup) | [specdev-i-init-setup](../template/workflows/specdev/specdev-i-init-setup/SKILL.md) |
+| `specdev/learn` | 学习与图解 | [用法](workflows/specdev.md#learn) | [specdev-l-learn](../template/workflows/specdev/specdev-l-learn/SKILL.md) |
+| `specdev/goal-plan` | Goal 规划与执行 | [用法](workflows/specdev.md#goal-plan) | [specdev-p-goal-plan](../template/workflows/specdev/specdev-p-goal-plan/SKILL.md) |
+| `specdev/prototype` | 逻辑与 UI 原型 | [用法](workflows/specdev.md#prototype) | [specdev-p-prototype](../template/workflows/specdev/specdev-p-prototype/SKILL.md) |
+| `specdev/retro` | 开发复盘 | [用法](workflows/specdev.md#retro) | [specdev-r-retro](../template/workflows/specdev/specdev-r-retro/SKILL.md) |
+| `specdev/review-architecture` | 架构审查 | [用法](workflows/specdev.md#review-architecture) | [specdev-r-review-architecture](../template/workflows/specdev/specdev-r-review-architecture/SKILL.md) |
+| `specdev/spec` | 编写 Spec | [用法](workflows/specdev.md#spec) | [specdev-s-spec](../template/workflows/specdev/specdev-s-spec/SKILL.md) |
+| `specdev/tickets` | 编写计划型 Tickets | [用法](workflows/specdev.md#tickets) | [specdev-t-tickets](../template/workflows/specdev/specdev-t-tickets/SKILL.md) |
+| `specdev/triage` | 请求分诊与 GitHub 交付 | [用法](workflows/specdev.md#triage) | [specdev-t-triage](../template/workflows/specdev/specdev-t-triage/SKILL.md) |
+| `specdev/wayfinder` | 探索大需求与 Change 边界 | [用法](workflows/specdev.md#wayfinder) | [specdev-w-wayfinder](../template/workflows/specdev/specdev-w-wayfinder/SKILL.md) |
+
+## Learning · 学习
+
+| 业务 ID | 作用 | 教程 | 源入口 |
+|---|---|---|---|
+| `learning/archive` | 冷归档 | [用法](workflows/learning.md#archive) | [learning-a-archive](../template/workflows/learning/learning-a-archive/SKILL.md) |
+| `learning/assess-and-plan` | 评估背景并设计课程 | [用法](workflows/learning.md#assess-and-plan) | [learning-a-assess-and-plan](../template/workflows/learning/learning-a-assess-and-plan/SKILL.md) |
+| `learning/consolidate` | 主题整合 | [用法](workflows/learning.md#consolidate) | [learning-c-consolidate](../template/workflows/learning/learning-c-consolidate/SKILL.md) |
+| `learning/goal` | 目标学习（目标模式） | [用法](workflows/learning.md#goal) | [learning-g-goal](../template/workflows/learning/learning-g-goal/SKILL.md) |
+| `learning/homework` | 课程作业与评审 | [用法](workflows/learning.md#homework) | [learning-h-homework](../template/workflows/learning/learning-h-homework/SKILL.md) |
+| `learning/init-setup` | 初始化学习系统 | [用法](workflows/learning.md#init-setup) | [learning-i-init-setup](../template/workflows/learning/learning-i-init-setup/SKILL.md) |
+| `learning/lesson` | 完整课程讲解 | [用法](workflows/learning.md#lesson) | [learning-l-lesson](../template/workflows/learning/learning-l-lesson/SKILL.md) |
+| `learning/question` | 深度探究与苏格拉底问答课 | [用法](workflows/learning.md#question) | [learning-q-question](../template/workflows/learning/learning-q-question/SKILL.md) |
+| `learning/review` | 延迟保持与周期复习 | [用法](workflows/learning.md#review) | [learning-r-review](../template/workflows/learning/learning-r-review/SKILL.md) |
+
+## OPS · 运维部署
+
+| 业务 ID | 作用 | 教程 | 源入口 |
+|---|---|---|---|
+| `ops/project-deploy` | 项目与共享服务部署 | [用法](workflows/ops.md#project-deploy) | [ops-d-project-deploy](../template/workflows/ops/ops-d-project-deploy/SKILL.md) |
+| `ops/host-manage` | 服务器环境与治理 | [用法](workflows/ops.md#host-manage) | [ops-h-host-manage](../template/workflows/ops/ops-h-host-manage/SKILL.md) |
+| `ops/initialize` | 控制端初始化 | [用法](workflows/ops.md#initialize) | [ops-i-initialize](../template/workflows/ops/ops-i-initialize/SKILL.md) |
+| `ops/server-connect` | 服务器接入与登记 | [用法](workflows/ops.md#server-connect) | [ops-s-server-connect](../template/workflows/ops/ops-s-server-connect/SKILL.md) |
+| `ops/inventory-view` | 服务器与部署资产视图 | [用法](workflows/ops.md#inventory-view) | [ops-v-inventory-view](../template/workflows/ops/ops-v-inventory-view/SKILL.md) |
+
+## Person · 分析决策
+
+| 业务 ID | 作用 | 教程 | 源入口 |
+|---|---|---|---|
+| `person/mao-zedong-cognitive-os` | 毛泽东 · 认知操作系统 | [用法](workflows/person.md#mao-zedong-cognitive-os) | [person-m-mao-zedong-cognitive-os](../template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md) |
+| `person/steelman-deliberation` | 双向钢人论证 | [用法](workflows/person.md#steelman-deliberation) | [person-s-steelman-deliberation](../template/workflows/person/person-s-steelman-deliberation/SKILL.md) |
+
+## Media · 内容创作
+
+| 业务 ID | 作用 | 教程 | 源入口 |
+|---|---|---|---|
+| `media/brief` | 选题与母内容简报 | [用法](workflows/media.md#brief) | [media-b-brief](../template/workflows/media/media-b-brief/SKILL.md) |
+| `media/deconstruct` | 对标结构拆解 | [用法](workflows/media.md#deconstruct) | [media-d-deconstruct](../template/workflows/media/media-d-deconstruct/SKILL.md) |
+| `media/hand-drawn` | 固定画风提示词 | [用法](workflows/media.md#hand-drawn) | [media-h-hand-drawn](../template/workflows/media/media-h-hand-drawn/SKILL.md) |
+| `media/init-setup` | 创作者初始化 | [用法](workflows/media.md#init-setup) | [media-i-init-setup](../template/workflows/media/media-i-init-setup/SKILL.md) |
+| `media/publish-draft` | 多渠道本地草稿 | [用法](workflows/media.md#publish-draft) | [media-p-publish-draft](../template/workflows/media/media-p-publish-draft/SKILL.md) |
+| `media/retro` | 数据复盘与模板沉淀 | [用法](workflows/media.md#retro) | [media-r-retro](../template/workflows/media/media-r-retro/SKILL.md) |
+| `media/video` | 可验证代码视频 | [用法](workflows/media.md#video) | [media-v-video](../template/workflows/media/media-v-video/SKILL.md) |
+
+## Command
+
+| 业务 ID | 使用手册 | 源入口 |
+|---|---|---|
+| `command/archive-and-consolidate` | [archive-and-consolidate](commands/archive-and-consolidate.md) | [COMMAND.md](../template/commands/archive-and-consolidate/COMMAND.md) |
+| `command/docs-sync` | [docs-sync](commands/docs-sync.md) | [COMMAND.md](../template/commands/docs-sync/COMMAND.md) |
+| `command/engineering-standards-builder` | [engineering-standards-builder](commands/engineering-standards-builder.md) | [COMMAND.md](../template/commands/engineering-standards-builder/COMMAND.md) |
+| `command/git-history-squash` | [git-history-squash](commands/git-history-squash.md) | [COMMAND.md](../template/commands/git-history-squash/COMMAND.md) |
+| `command/git-repository-audit` | [git-repository-audit](commands/git-repository-audit.md) | [COMMAND.md](../template/commands/git-repository-audit/COMMAND.md) |
+| `command/handoff` | [handoff](commands/handoff.md) | [COMMAND.md](../template/commands/handoff/COMMAND.md) |
+| `command/retro` | [retro](commands/retro.md) | [COMMAND.md](../template/commands/retro/COMMAND.md) |
+| `command/source-code-zip` | [source-code-zip](commands/source-code-zip.md) | [COMMAND.md](../template/commands/source-code-zip/COMMAND.md) |
+| `command/status` | [status](commands/status.md) | [COMMAND.md](../template/commands/status/COMMAND.md) |
+| `command/upstream-fork-sync` | [upstream-fork-sync](commands/upstream-fork-sync.md) | [COMMAND.md](../template/commands/upstream-fork-sync/COMMAND.md) |
+
+## 可移植单文件
+
+12 份 Canonical 的用途、下载入口与保存/恢复方式见 [Canonical 指南](canonical.md)。它们是部分能力的独立分发方式，不是额外的 12 个 Work。

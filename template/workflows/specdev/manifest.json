@@ -82,11 +82,9 @@
     },
     {
       "id": "learn",
-      "after": [
-        "verify"
-      ],
+      "after": [],
       "inputs": [
-        "verification"
+        "learning-request"
       ],
       "outputs": [
         "learning"
@@ -103,7 +101,7 @@
     "specdev-g-grill-with-docs/SKILL.md",
     "specdev-i-implement/SKILL.md",
     "specdev-i-init-setup/SKILL.md",
-    "specdev-l-learn-change/SKILL.md",
+    "specdev-l-learn/SKILL.md",
     "specdev-p-goal-plan/SKILL.md",
     "specdev-p-prototype/SKILL.md",
     "specdev-r-retro/SKILL.md",
@@ -134,7 +132,7 @@
     "specdev-d-diagnose-bugs/SKILL.md": [],
     "specdev-g-grill-with-docs/SKILL.md": [],
     "specdev-i-init-setup/SKILL.md": [],
-    "specdev-l-learn-change/SKILL.md": [],
+    "specdev-l-learn/SKILL.md": [],
     "specdev-p-prototype/SKILL.md": [],
     "specdev-r-retro/SKILL.md": [],
     "specdev-r-review-architecture/SKILL.md": [],

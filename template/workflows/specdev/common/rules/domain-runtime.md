@@ -6,7 +6,7 @@
 
 1. 明确项目根、方法资源根与获批业务数据根。已有安装时验证真实 workspace 与 roots；没有安装时使用明确根参数，方法资源可以只读。相对参数基于项目根，cwd 只作线索；不静默切换项目。根冲突、越界链接或重叠安装事务仅阻塞依赖该根的写入。详见 <Path>{roots.workflows}/specdev/common/rules/path-reference-contract.md</Path>。
 2. 读取当前请求和所选 Work；按 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 检索相关知识 ID/关键词，再回读少量原文与 provenance。没有相关知识不要求先初始化知识目录。
-3. 有 change 时定位用户指定对象或唯一合法候选，读取 README 的唯一 Outcome、当前负责工件和接续点。只枚举 changes 直接子目录，排除 archive；多个候选真实消歧。只读代码/架构审查、知识审计、capture 和初始化不强造 change。
+3. 有 change 时定位用户指定对象或唯一合法候选，读取 README 的唯一 Outcome、当前负责工件和接续点。只枚举 changes 直接子目录，排除 archive；多个候选真实消歧。L 学习按其保存合同使用指定/同轮续学对象，独立请求未指定时新建学习 change，不自动接入其他活动对象。只读代码/架构审查、知识审计、capture 和初始化不强造 change。
 4. 按实际分支读取必要参考。创建、恢复、完成、取消或归档时读取 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>；轻量/完整输入或事实冲突读取 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>；实际交接、并行、父子集成才加载 <Path>{roots.workflows}/specdev/common/rules/operating-governance.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>。
 5. 写前核对路径、原 owner、实际写入者、相关 pending transaction、lock 和 recovery evidence。失败/阻塞记录在原 README、计划、Evidence 或操作回执；真实交接只更新原负责位置。完成产物、适用验证并回读，返回证据和下一入口。
 

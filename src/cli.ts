@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSpeculo } from "./index.js";
-import { parseAgentSkillSpec } from "./agent-skills.js";
+import { parseSkillSpec, parseSkillTargets, validateExposureRequest } from "./agent-skills.js";
 import { discoverWorkflowCatalog, isInteractive as catalogIsInteractive } from "./workflows.js";
 import { RefreshBlockedError } from "./refresh.js";
 import { checkForUpdate, formatVersionBanner, type VersionInfo } from "./version.js";
 import { doctorSpeculo } from "./doctor.js";
 import { recoverInstall } from "./transaction.js";
-import { resolvePathReference } from "./paths.js";
+import { INSTALL_ROOT, resolvePathReference } from "./paths.js";
+import { pathExists } from "./utils.js";
+import { InstallCancelled } from "./interaction.js";
+import type { createInstallUI } from "./install-ui.js";
 
 const REMOVED_COMMANDS = new Set(["migrate", "mirror-skills", "update"]);
 const REMOVED_OPTIONS = new Set(["--all", "--apply", "--dry-run"]);
@@ -21,11 +24,12 @@ function usage(): string {
     "  speculo doctor [target] [--json]",
     "  speculo recover [target] --transaction <id>",
     "  speculo resolve [target] --path <reference>",
-    "  speculo init [target] [--workflows <id,id> | --core-only] [--agent-skills <selection>] [--claude-skills <selection>]",
+    "  speculo init [target] [--workflows <id,id> | --core-only] [--skill-targets <targets>] [--skills <selection>]",
     "",
     "Commands:",
     "  init      Install or directly refresh Speculo assets and selected workflow packages.",
-    "            --agent-skills / --claude-skills: none|keep|domains|all|<business-id,id>.",
+    "            --skill-targets: agents|claude|agents,claude|none. --skills: none|keep|all|<business-id,id>.",
+    "            Interactive: choose targets, then one shared selection: all, groups, custom, keep, or none.",
     "  version   Print the current Speculo version and check for updates.",
     "  doctor    Validate installation integrity and report recovery evidence (read-only).",
     "  recover   Explicitly roll back an interrupted transaction, or finish committed cleanup.",
@@ -34,20 +38,10 @@ function usage(): string {
   ].join("\n");
 }
 
-function isInteractive(): boolean {
-  return process.stdin.isTTY === true;
-}
-
 async function showVersionWithCheck(packageRoot: string, packageName: string): Promise<VersionInfo> {
   const info = await checkForUpdate(packageRoot, packageName);
   console.log(formatVersionBanner(info));
   return info;
-}
-
-async function confirmContinue(): Promise<boolean> {
-  if (!isInteractive()) return true;
-  const { confirm } = await import("@inquirer/prompts");
-  return confirm({ message: "是否继续运行 speculo init？", default: true });
 }
 
 function assertNoRemovedOption(argv: string[]): void {
@@ -85,6 +79,7 @@ async function main(argv: string[]): Promise<number> {
     return 1;
   }
 
+  let ui: ReturnType<typeof createInstallUI> | undefined;
   try {
     assertNoRemovedOption(argv);
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -114,22 +109,30 @@ async function main(argv: string[]): Promise<number> {
       else console.log(await resolvePathReference(args.target, value));
       return 0;
     }
-    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--agent-skills", "--claude-skills"]));
+    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--skill-targets", "--skills"]));
     if (args.flags.has("--core-only") && args.values.has("--workflows")) throw new Error("--core-only and --workflows are mutually exclusive");
     const requested = args.values.get("--workflows");
     if (requested !== undefined && !/^[a-z0-9-]+(?:,[a-z0-9-]+)*$/.test(requested)) throw new Error("--workflows requires comma-separated workflow ids");
-    const selection = args.flags.has("--core-only") ? { workflowIds: [] } : requested === undefined ? undefined : { workflowIds: requested.split(",") };
-    const requestedSkills = args.values.get("--agent-skills");
-    const agentSkills = requestedSkills === undefined ? undefined : parseAgentSkillSpec(requestedSkills);
+    const selection = args.flags.has("--core-only") ? { workflowIds: [] } : requested === undefined ? undefined :
+      { workflowIds: requested === "all" ? [...(await discoverWorkflowCatalog(packageRoot)).keys()].sort() : requested.split(",") };
+    const skills = args.values.has("--skills") ? parseSkillSpec(args.values.get("--skills")!) : undefined;
+    const skillTargets = args.values.has("--skill-targets") ? parseSkillTargets(args.values.get("--skill-targets")!) : undefined;
+    validateExposureRequest(skillTargets, skills);
     const targetArg = args.target;
 
-    await showVersionWithCheck(packageRoot, packageName);
-    if (!(await confirmContinue())) {
-      console.log("已取消。");
-      return 0;
+    if (catalogIsInteractive()) {
+      const { createInstallUI } = await import("./install-ui.js");
+      ui = createInstallUI();
+      ui.start(await checkForUpdate(packageRoot, packageName), resolve(targetArg), await pathExists(join(resolve(targetArg), INSTALL_ROOT)));
+    } else {
+      await showVersionWithCheck(packageRoot, packageName);
     }
 
-    const result = await initSpeculo(targetArg, { packageRoot, selection, agentSkills, claudeSkills: args.values.has("--claude-skills") ? parseAgentSkillSpec(args.values.get("--claude-skills")!) : undefined, promptAgentSkills: catalogIsInteractive() && agentSkills === undefined });
+    const result = await initSpeculo(targetArg, {
+      packageRoot, selection, skillTargets, skills, promptExposure: !!ui,
+      confirmInstall: ui?.confirm, onProgress: ui?.progress,
+    });
+    if (ui) { ui.finish(result); return 0; }
     console.log(result.mode === "init" ? "Speculo initialized in " + result.target : "Speculo refreshed in " + result.target);
     console.log("  replaced " + result.refresh.managedFiles + " managed files");
     console.log("  preserved " + result.refresh.preservedFiles + " runtime files");
@@ -138,7 +141,7 @@ async function main(argv: string[]): Promise<number> {
       result.refresh.config.updated + " updated, " + result.refresh.config.preserved + " preserved, " +
       result.refresh.config.removed + " removed",
     );
-    if (result.agentSkills.projected) console.log(`  projected ${result.agentSkills.projected} public entries`);
+    if (result.exposure.projected) console.log(`  projected ${result.exposure.projected} public entries`);
     for (const warning of result.warnings) console.log("  warning: " + warning);
     if (result.refresh.backupPath) console.log("  retained targeted backup " + result.refresh.backupPath);
     for (const asset of result.assets.filter((asset) => asset.startsWith(".gitignore") || asset.startsWith("AGENTS") || asset.startsWith("CLAUDE"))) {
@@ -146,12 +149,17 @@ async function main(argv: string[]): Promise<number> {
     }
     return 0;
   } catch (error) {
+    if (ui) ui.fail(error);
+    if (error instanceof InstallCancelled) {
+      if (!ui) console.log(error.message);
+      return error.exitCode;
+    }
     if (error instanceof RefreshBlockedError) {
-      console.error(error.message);
+      if (!ui) console.error(error.message);
       for (const blocker of error.blockers) console.error("  " + blocker.code + " " + blocker.path + ": " + blocker.message);
       return 2;
     }
-    console.error(error instanceof Error ? error.message : String(error));
+    if (!ui) console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
 }

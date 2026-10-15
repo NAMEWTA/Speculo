@@ -1,6 +1,6 @@
 ---
 name: specdev-r-retro
-description: "对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn-change，Speculo 产品反馈使用 retro 命令。"
+description: "对指定开发活动、环境或协作流程的已观察摩擦做证据化复盘，形成根因、改进 owner 与可检验提案；代码讲解使用 L-learn，Speculo 产品反馈使用 retro 命令。"
 metadata:
   speculo-kind: work-skill
   speculo-id: specdev/retro

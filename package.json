@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Standard agent skills, commands and project methods with state-safe installation.",
   "type": "module",
   "bin": {
@@ -75,7 +75,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.5.2",
+    "@clack/prompts": "0.9.1",
     "yaml": "^2.9.1"
   }
 }

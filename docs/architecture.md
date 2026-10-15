@@ -1,4 +1,8 @@
-# Speculo 2 架构与维护
+# 架构与数据布局
+
+[手册首页](README.md) · [入门](getting-started.md) · [维护者指南](contributing.md)
+
+本页解释安装、数据、所有权与验证机制。第一次使用先看入门；具体操作按领域和 Command 教程选择。
 
 ## 产品边界
 
@@ -50,7 +54,7 @@ DESIGN 的 current、不可变 revision、三类摘要、真实批准、浏览�
 
 `state/docs` 按主题保存当前工程事实，已有项目正文只导航，明确基线请求才建立。A/I/init/docs-sync 复用 writing-for-agents 的 current-facts-docs；局部维护不创建命令 state，docs-sync 保持手动全局 audit/update/commit 及其隔离 Git 合同。
 
-新 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。旧活动必须用[显式转换维护工具](../scripts/references/migrate-specdev-markdown.md)，未知/混合协议和转换 pending 阻塞相关写入；CLI 刷新不偷偷转换或清理历史。Learning、OPS、Person、Media 的状态不变。
+当前 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。旧活动必须用[显式转换维护工具](../scripts/references/migrate-specdev-markdown.md)，未知/混合协议和转换 pending 阻塞相关写入；CLI 刷新不偷偷转换或清理历史。Learning、OPS、Person、Media 的状态不变。
 
 ## 执行方法
 
@@ -70,7 +74,7 @@ Lead 可自行完成实现、修复和验证，也可按任务类型派遣。上
 | install / installation transaction | 4 / 3 |
 | 可选 coordination project | 1 |
 | SpecDev config / Goal Plan / Implementation Plan | 7 / 7 / 2 |
-| SpecDev 新整体结论 / Ticket、Map | README Outcome / 3 |
+| SpecDev 整体结论 / Ticket、Map | README Outcome / 3 |
 | SpecDev 旧历史 global status / change status | 5 / 6（只读/显式转换） |
 | Learning / OPS / Person / Media state | 2 / 3 / 1 / 1 |
 

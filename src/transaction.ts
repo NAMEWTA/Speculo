@@ -23,6 +23,17 @@ async function syncInstallParents(target: string): Promise<void> {
   }
 }
 export async function assertInstallDirectory(target:string):Promise<void>{await assertSupportedProject(target);await directory(join(target,'.agents'));await directory(join(target,INSTALL_ROOT));await containedPath(target,LOCK_NAME);await containedPath(target,TRANSACTIONS_ROOT);}
+/** Call only while holding this installation/recovery lock, after owned trees are cleaned. */
+export async function cleanEmptyTransactionsDirectory(target: string): Promise<void> {
+  const path = await containedPath(target, TRANSACTIONS_ROOT);
+  await directory(path);
+  try { await rmdir(path); }
+  catch (error) {
+    if (["ENOENT", "ENOTEMPTY", "EEXIST"].includes((error as NodeJS.ErrnoException).code ?? "")) return;
+    throw error;
+  }
+  await syncDirectory(join(target, ".agents"));
+}
 function journalPath(target:string):string{return join(target,LOCK_NAME,'transaction.json');}
 function validNode(value:SkillNode):boolean{return !!value&&(value.kind==='absent'?Object.keys(value).length===1:value.kind==='file'&&Object.keys(value).length===3&&typeof value.content==='string'&&Buffer.from(value.content,'base64').toString('base64')===value.content&&Number.isInteger(value.mode)&&value.mode>=0&&value.mode<=0o777);}
 function validSkills(records:SkillRecord[]):boolean{return Array.isArray(records)&&records.length>0&&records.length<=10000&&JSON.stringify(records).length<=64*1024*1024&&new Set(records.map(r=>r.name)).size===records.length&&records.every(r=>/^\.(agents|claude)\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/(SKILL\.md|agents\/openai\.yaml)$/.test(r.name)&&validNode(r.before)&&validNode(r.after));}
@@ -117,6 +128,7 @@ async function rollback(j: Journal): Promise<void> {
   if (await fingerprintTree(stage) !== "absent" && await fingerprintTree(stage) !== j.after) throw new Error("recovery-drift: staged directory changed");
   await rm(stage, { recursive: true, force: true });
   await cleanEmptyProjectionDirectories(j,'before');
+  await cleanEmptyTransactionsDirectory(j.target);
 }
 
 async function finish(j: Journal): Promise<void> {
@@ -132,6 +144,7 @@ async function finish(j: Journal): Promise<void> {
   await rm(backup, { recursive: true, force: true });
   await syncInstallParents(j.target);
   await cleanEmptyProjectionDirectories(j,'after');
+  await cleanEmptyTransactionsDirectory(j.target);
 }
 
 export async function commitInstall(target: string, stagedRoot: string, before: string, external: ExternalEdit[], hook?: TransactionHook, skills?: SkillRecord[] | null): Promise<void> {

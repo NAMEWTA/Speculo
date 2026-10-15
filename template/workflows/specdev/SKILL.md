@@ -1,6 +1,6 @@
 ---
 name: specdev
-description: "用于需求澄清、规格、任务规划、实现、审查和交付的工程协作；只读发现不启动 Goal。"
+description: "用于需求澄清、规格、任务规划、实现、审查、交付及项目与参考资料学习的工程协作；只读发现不启动 Goal。"
 metadata:
   speculo-kind: domain-skill
   speculo-id: domain/specdev
@@ -26,7 +26,7 @@ metadata:
 - **specdev/grill-with-docs** — Change 决策访谈：<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>
 - **specdev/implement** — 实现与验收：<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>
 - **specdev/init-setup** — 初始化设置：<Path>{roots.workflows}/specdev/specdev-i-init-setup/SKILL.md</Path>
-- **specdev/learn-change** — Change 学习：给零基础新生的图解：<Path>{roots.workflows}/specdev/specdev-l-learn-change/SKILL.md</Path>
+- **specdev/learn** — 学习与图解：<Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>
 - **specdev/goal-plan** — Goal 规划与执行：<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>
 - **specdev/prototype** — 逻辑与 UI 原型：<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>
 - **specdev/retro** — 开发复盘：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>

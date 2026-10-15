@@ -68,10 +68,10 @@ test('media: passive discovery does not create a Change', async () => fixture(as
 test('media: isolated install persists its manifest and seven pointer Skills before returning', async () => fixture(async target => {
   const result = await initSpeculo(target, {
     ...mediaOptions,
-    agentSkills: { mode: "set", assetIds: ["media/brief","media/deconstruct","media/hand-drawn","media/init-setup","media/publish-draft","media/retro","media/video"] },
+    skills: { mode: "set", assetIds: ["media/brief","media/deconstruct","media/hand-drawn","media/init-setup","media/publish-draft","media/retro","media/video"] },
   });
   assert.equal(result.mode, 'init');
-  assert.equal(result.agentSkills.projected, 7);
+  assert.equal(result.exposure.projected, 7);
   await assertManifest(target);
   const catalog = await readFile(join(target, '.agents/speculo/catalog.json'), 'utf8');
   assert.match(catalog, /workflows\/media\/SKILL.md/);

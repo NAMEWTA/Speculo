@@ -18,6 +18,8 @@ UI 实施还需 Evidence 对照已批准 change DESIGN、固定基线与页面/�
 
 Evidence-only Done 和 empty commit 不满足完成门.
 
+L 新建的学习专用 change 属于非实现终点：以 README 的学习 scope、逐 AC 实际验证及 learning 图解/索引完成轻量验收，由 L 原 owner 在本轮交付后结束。已有开发 change 的学习材料不替代其实现完成门；向 completed/cancelled 对象续加学习图解不重开或重新判定原 Outcome。学习的选择与恢复由 <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path> 负责。
+
 父实现 change 还必须满足 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`：全部成员 completed，Implementation Map 与 Implementation Plan completed 且 revision 一致，跨 change 全套验证通过，`<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` 完整，没有活动派单、candidate、serialization lock 或未裁决冲突。父完成不自动归档或移动任何成员。
 
 ## 转换 Owner

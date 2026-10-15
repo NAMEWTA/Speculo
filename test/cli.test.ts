@@ -41,7 +41,7 @@ async function packageFixture(version = "2.0.0"): Promise<string> {
 async function residue(target: string): Promise<string[]> {
   const result: string[] = [];
   if (await pathExists(join(target, ".agents/.speculo-install.lock"))) result.push(".agents/.speculo-install.lock");
-  if (await pathExists(join(target, ".agents/.speculo-transactions"))) result.push(...await readdir(join(target, ".agents/.speculo-transactions")));
+  if (await pathExists(join(target, ".agents/.speculo-transactions"))) result.push(".agents/.speculo-transactions", ...await readdir(join(target, ".agents/.speculo-transactions")));
   return result;
 }
 
@@ -518,6 +518,48 @@ describe("Speculo init refresh", () => {
 });
 
 describe("CLI surface", () => {
+  it("accepts --workflows all without prompts in a non-interactive invocation", async () => {
+    const target = await tempProject();
+    try {
+      const child = spawnSync(process.execPath, [
+        join(packageRoot, "dist/src/cli.js"), "init", target, "--workflows", "all",
+        "--skills", "specdev/implement,specdev/code-review,command/status",
+        "--skill-targets", "agents,claude",
+      ], { encoding: "utf8", timeout: 60000 });
+      assert.equal(child.status, 0, child.stderr);
+      assert.doesNotMatch(child.stdout, /选择曝光方式|确认应用/);
+      const projection = await readJson(join(target, ".agents/speculo/.speculo/projections.json"));
+      assert.deepEqual(projection.targets, ["agents", "claude"]);
+      assert.deepEqual(projection.asset_ids, ["command/status", "specdev/code-review", "specdev/implement"]);
+      assert.equal(projection.schema_version, 3);
+      assert.equal(projection.files.filter((f: { path: string }) => f.path.endsWith("SKILL.md")).length, 6);
+      assert.deepEqual((await readdir(join(target, ".agents/speculo/workflows"))).sort(), ["learning", "media", "ops", "person", "specdev"]);
+      const disabled = spawnSync(process.execPath, [join(packageRoot, "dist/src/cli.js"), "init", target, "--core-only", "--skill-targets", "none"], { encoding: "utf8", timeout: 60000 });
+      assert.equal(disabled.status, 0, disabled.stderr);
+      const stopped = await readJson(join(target, ".agents/speculo/.speculo/projections.json"));
+      assert.deepEqual(stopped.targets, []);
+      assert.deepEqual(stopped.asset_ids, []);
+      for (const host of ["agents", "claude"]) assert.deepEqual(await readdir(join(target, `.${host}/skills`)), []);
+      assert.deepEqual(await residue(target), []);
+    } finally { await rm(target, { recursive: true, force: true }); }
+  });
+
+  it("rejects retired flags, invalid targets and contradictory exposure before creating files", async () => {
+    const target = await tempProject();
+    try {
+      for (const args of [
+        ["--agent-skills", "all"], ["--claude-skills", "all"], ["--skills", "domains"],
+        ["--skill-targets", "elsewhere"], ["--skill-targets", "none,agents"],
+        ["--skill-targets", "none", "--skills", "all"],
+        ["--skill-targets", "none", "--skills", "keep"],
+      ]) {
+        const child = spawnSync(process.execPath, [join(packageRoot, "dist/src/cli.js"), "init", target, ...args], { encoding: "utf8", timeout: 10000 });
+        assert.equal(child.status, 1, child.stderr);
+        assert.deepEqual(await readdir(target), []);
+      }
+    } finally { await rm(target, { recursive: true, force: true }); }
+  });
+
   it("discovers all packaged workflows", async () => {
     const catalog = await discoverWorkflowCatalog(packageRoot);
     assert.deepEqual(selectAllFromCatalog(catalog).workflowIds, ["learning", "media", "ops", "person", "specdev"]);

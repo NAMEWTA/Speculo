@@ -38,7 +38,7 @@ Revision: f3fc5632f401156837ee3872f14fe33ccf1024ea (checked 2026-10-08); prior s
 | grill-me | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Fold interview/clarification into the existing design Work. |
 | grilling | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Merge clarification without a duplicate entry. |
 | handoff | adapted | template/commands/handoff/COMMAND.md | Preserve source pointers, owner, checkpoints and unresolved actions. |
-| teach | excluded |  | Learning owns general teaching; L-learn-change explains actual completed changes. |
+| teach | excluded |  | Learning owns structured courses, practice and review; L-learn explains requirements references, project code, changes and external material. |
 | to-questionnaire | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Reuse durable questionnaires in design clarification. |
 | wait-what | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Clarify only consequential ambiguity and retain current goal. |
 | writing-for-agents | adapted | template/references/writing-for-agents/writing-contract.md | Unified authoring, fidelity and host-specific invocation profiles. |

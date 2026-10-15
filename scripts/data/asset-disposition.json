@@ -349,11 +349,11 @@
     },
     {
       "source": "docs/learning-inquiry-upgrade.md",
-      "target": "docs/learning-inquiry-upgrade.md",
-      "action": "rewritten",
+      "target": "docs/workflows/learning.md",
+      "action": "merged",
       "sha256": "fca86d770da22bc408999952ee14cd36fc954c95ad7c1f22f295619e27997d7e",
       "bytes": 8418,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "现行学习能力并入用户使用手册；一次性升级叙述退出 docs，原始版本保留于 Git。"
     },
     {
       "source": "docs/media/example/brief.json",
@@ -1221,67 +1221,67 @@
     },
     {
       "source": "template/skills/archive-and-consolidate/assets/archive-plan-template.md",
-      "target": "template/commands/archive-and-consolidate/assets/archive-plan-template.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/assets/archive-plan-template.md",
       "action": "moved-and-rewritten",
       "sha256": "67515fac767632ba73c3dc319374e4f41d44ed49ee889d74ec589abe091bcd03",
       "bytes": 1232,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/assets/cleanup-candidate-template.md",
-      "target": "template/commands/archive-and-consolidate/assets/cleanup-candidate-template.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/assets/cleanup-candidate-template.md",
       "action": "moved-and-rewritten",
       "sha256": "945001d89b7209dbd6658ba53582bfda7dadd40e2c82ff31273eebfbb042036c",
       "bytes": 2198,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/assets/consolidation-plan-template.md",
-      "target": "template/commands/archive-and-consolidate/assets/consolidation-plan-template.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/assets/consolidation-plan-template.md",
       "action": "moved-and-rewritten",
       "sha256": "db2bd77ffd36007cabc9afd1add4b067aca16efef046e76c4273f14e9d367841",
       "bytes": 1809,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/references/archive-rules.md",
-      "target": "template/commands/archive-and-consolidate/references/archive-rules.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/references/archive-rules.md",
       "action": "moved-and-rewritten",
       "sha256": "4c3905ed091cb4c9e528fe6de47307783c5a07fb0783856bcd8f86d17996086d",
       "bytes": 2829,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/references/cleanup-rules.md",
-      "target": "template/commands/archive-and-consolidate/references/cleanup-rules.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/references/cleanup-rules.md",
       "action": "moved-and-rewritten",
       "sha256": "fada70dc5424d012b4b76fb280f49325bb9f66cb9616bab542811e97e50af011",
       "bytes": 3701,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/references/consolidation-rules.md",
-      "target": "template/commands/archive-and-consolidate/references/consolidation-rules.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/references/consolidation-rules.md",
       "action": "moved-and-rewritten",
       "sha256": "e19627bfd3b99b649155191e0da66d2097a7c8ead18a9547a6adbbec0bf00a6b",
       "bytes": 3663,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/references/knowledge-graduation.md",
-      "target": "template/commands/archive-and-consolidate/references/knowledge-graduation.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/references/knowledge-graduation.md",
       "action": "moved-and-rewritten",
       "sha256": "d0aab990c7592fdbd2f34ee93855dec867e27f52c0cf1b614b88efe3ecf5dd66",
       "bytes": 3094,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/archive-and-consolidate/SKILL.md",
-      "target": "template/commands/archive-and-consolidate/references/operation-contract.md",
+      "target": "template/workflows/specdev/specdev-a-archive-and-consolidate/references/operation-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "9c29ef76e76a766c6ca3773a92b20b62f881e7ec595ee220dd35d28137e0a24c",
       "bytes": 12965,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Archive operation methods now live with the SpecDev archive Work; the Command delegates through the owning workflow."
     },
     {
       "source": "template/skills/docs-sync/assets/report-template.md",
@@ -1317,107 +1317,107 @@
     },
     {
       "source": "template/skills/docs-sync/references/agents/agent-writing.md",
-      "target": "template/commands/docs-sync/references/agents/agent-writing.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/agents-contract.md",
+      "action": "merged",
       "sha256": "2d388eff1178ea7e2bcc76fb081e84a3bd58c3dac7257280b9c12d12a7d89db7",
       "bytes": 11059,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/claude-redirect.md",
-      "target": "template/commands/docs-sync/references/agents/claude-redirect.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/agents-contract.md",
+      "action": "merged",
       "sha256": "65de9a43a546825dd0fb124a54165e6f62e41109818b05eaa7655343daae3c64",
       "bytes": 1497,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/content-contract.md",
-      "target": "template/commands/docs-sync/references/agents/content-contract.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/agents-contract.md",
+      "action": "merged",
       "sha256": "9a9560b84b6dadcade1b06598d8bbb2e49ada89c9880d77dfa7f2c2f0cdbbfdc",
       "bytes": 6877,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/evidence-collection.md",
-      "target": "template/commands/docs-sync/references/agents/evidence-collection.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/handbook-discovery.md",
+      "action": "merged",
       "sha256": "fdebdbd23bc83a62a3ba00259bb14cc034788f7627032615267f9bd090515821",
       "bytes": 6086,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/manifest-discovery.md",
-      "target": "template/commands/docs-sync/references/agents/manifest-discovery.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/handbook-discovery.md",
+      "action": "merged",
       "sha256": "d32e38bd1a61dbf890b2b837f4ad1351e1c28982e1c190d12d950002bf6e8a17",
       "bytes": 4306,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/role-classification.md",
-      "target": "template/commands/docs-sync/references/agents/role-classification.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/handbook-discovery.md",
+      "action": "merged",
       "sha256": "afab76cdaa1c7b2d4ae511fbe42054c0567a713d12896c6264b2157a8d97c1a8",
       "bytes": 6182,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/aggregator-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/aggregator-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "9475f9a68c5fee12d0f3edd6b8235441c519bb172726eff4afcb67a406da0e1e",
       "bytes": 2022,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/capability-module-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/capability-module-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "434c6ab815f555b23169e1f9cbc437016cd049d25b3ba6af96ab301d7e2f8a01",
       "bytes": 2014,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/contract-module-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/contract-module-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "ea4965082c2bac7a206b2d532e9c05125a43875411b392eedb5e2ea0003ba31e",
       "bytes": 1804,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/repo-root-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/repo-root-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "44d7d973fb5d48c779c623debaa206516cd715fc1d462beb122cb0ddb2b6a8ab",
       "bytes": 2167,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/runnable-app-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/runnable-app-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "1f0d15a94f34b3a2cac33b35b3d6b4b888aaebfec9a0350ab0f869a1930e2a04",
       "bytes": 2006,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/scripts-docs-AGENTS.md",
-      "target": "template/commands/docs-sync/references/agents/templates/scripts-docs-AGENTS.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/assets/agents-template.md",
+      "action": "merged",
       "sha256": "9a726e97f3f601989e1468c60d03b7c4d494d424889b358ef508ac669343c0d8",
       "bytes": 1749,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/agents/writing-style.md",
-      "target": "template/commands/docs-sync/references/agents/writing-style.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/agents-contract.md",
+      "action": "merged",
       "sha256": "207074c747fefc5acf9f949667a9ab739d15cbf2d73cab77d211b0405605eae5",
       "bytes": 5293,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/changelog-contract.md",
@@ -1429,11 +1429,11 @@
     },
     {
       "source": "template/skills/docs-sync/references/document-lifecycle-contract.md",
-      "target": "template/commands/docs-sync/references/document-lifecycle-contract.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/operation-contract.md",
+      "action": "merged",
       "sha256": "5864318cc10a9361f3a22d25864397cc731dd8570fde451020c73a6fa0491f92",
       "bytes": 2765,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/git-state-contract.md",
@@ -1445,11 +1445,11 @@
     },
     {
       "source": "template/skills/docs-sync/references/mode-contract.md",
-      "target": "template/commands/docs-sync/references/mode-contract.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/operation-contract.md",
+      "action": "merged",
       "sha256": "9476fd5bf94545b4cfe140de39b4a5641dd6c8f93779c85520082ac8bfffcab0",
       "bytes": 2621,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/readme-contract.md",
@@ -1461,11 +1461,11 @@
     },
     {
       "source": "template/skills/docs-sync/references/readme-writing-guide.md",
-      "target": "template/commands/docs-sync/references/readme-writing-guide.md",
-      "action": "moved-and-rewritten",
+      "target": "template/commands/docs-sync/references/readme-contract.md",
+      "action": "merged",
       "sha256": "05422ccc0cdc0f0d8c7f06c3c60273da6e499fe8b9e72f33b1f74415fd9e4ecc",
       "bytes": 9604,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
     },
     {
       "source": "template/skills/docs-sync/references/workflow-scope-contract.md",
@@ -6277,27 +6277,27 @@
     },
     {
       "source": "template/workflows/specdev/_state/archive/.gitkeep",
-      "target": "template/workflows/specdev/_state/archive/.gitkeep",
-      "action": "preserved",
+      "target": null,
+      "action": "retired",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "bytes": 0,
-      "reason": "Preserved current business behavior, evidence or repository support file."
+      "reason": "Retired static SpecDev status/seed assets when current activities moved to explicit roots and Markdown Outcome; user runtime and frozen historical records are not deleted."
     },
     {
       "source": "template/workflows/specdev/_state/changes/.gitkeep",
-      "target": "template/workflows/specdev/_state/changes/.gitkeep",
-      "action": "preserved",
+      "target": null,
+      "action": "retired",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "bytes": 0,
-      "reason": "Preserved current business behavior, evidence or repository support file."
+      "reason": "Retired static SpecDev status/seed assets when current activities moved to explicit roots and Markdown Outcome; user runtime and frozen historical records are not deleted."
     },
     {
       "source": "template/workflows/specdev/_state/status.json",
-      "target": "template/workflows/specdev/_state/status.json",
-      "action": "preserved",
+      "target": null,
+      "action": "retired",
       "sha256": "8ab37e8f5a346b65957de72185e059ffc5b1296ef506a52d877166681516b734",
       "bytes": 91,
-      "reason": "Preserved current business behavior, evidence or repository support file."
+      "reason": "Retired static SpecDev status/seed assets when current activities moved to explicit roots and Markdown Outcome; user runtime and frozen historical records are not deleted."
     },
     {
       "source": "template/workflows/specdev/A-archive-and-consolidate/A-archive-and-consolidate.md",
@@ -7101,11 +7101,11 @@
     },
     {
       "source": "template/workflows/specdev/I-init-setup/change-status-template.json",
-      "target": "template/workflows/specdev/specdev-i-init-setup/assets/change-status-template.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "5baecd83a1711a67fb57cd51108865aa88c0e086544d184b002afb51daf5d988",
       "bytes": 1038,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Retired static SpecDev status/seed assets when current activities moved to explicit roots and Markdown Outcome; user runtime and frozen historical records are not deleted."
     },
     {
       "source": "template/workflows/specdev/I-init-setup/config-template.json",
@@ -7141,11 +7141,11 @@
     },
     {
       "source": "template/workflows/specdev/I-init-setup/status-template.json",
-      "target": "template/workflows/specdev/specdev-i-init-setup/assets/status-template.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "8ab37e8f5a346b65957de72185e059ffc5b1296ef506a52d877166681516b734",
       "bytes": 91,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Retired static SpecDev status/seed assets when current activities moved to explicit roots and Markdown Outcome; user runtime and frozen historical records are not deleted."
     },
     {
       "source": "template/workflows/specdev/I-init-setup/tracking-template.md",
@@ -7165,19 +7165,19 @@
     },
     {
       "source": "template/workflows/specdev/L-learn-change/L-learn-change.md",
-      "target": "template/workflows/specdev/specdev-l-learn-change/SKILL.md",
+      "target": "template/workflows/specdev/specdev-l-learn/SKILL.md",
       "action": "moved-and-rewritten",
       "sha256": "25cc9aa9805186aad758a2defa7b62f47475f707c932612c921629ed4f07d1ac",
       "bytes": 3381,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Renamed the learning Work to specdev/learn and expanded its sources and learning-change lifecycle; the source path and hash identify the historical baseline."
     },
     {
       "source": "template/workflows/specdev/L-learn-change/references/lesson-format.md",
-      "target": "template/workflows/specdev/specdev-l-learn-change/references/lesson-format.md",
+      "target": "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "action": "moved-and-rewritten",
       "sha256": "1e4c5e4b711f0d1fe063d829497f760374bdddf8df8ea131a151b5a57d88c599",
       "bytes": 2828,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Renamed the learning Work to specdev/learn and expanded its sources and learning-change lifecycle; the source path and hash identify the historical baseline."
     },
     {
       "source": "template/workflows/specdev/manifest.json",
@@ -8487,27 +8487,142 @@
   "scope": "Repository source disposition audit only; not an installation compatibility map",
   "original_archive_hash_matches": 1060,
   "added": [
+    "docs/README.md",
     "docs/architecture.md",
+    "docs/canonical.md",
     "docs/capabilities.md",
-    "docs/refactor/implementation-report.md",
+    "docs/cli.md",
+    "docs/commands/README.md",
+    "docs/commands/archive-and-consolidate.md",
+    "docs/commands/docs-sync.md",
+    "docs/commands/engineering-standards-builder.md",
+    "docs/commands/git-history-squash.md",
+    "docs/commands/git-repository-audit.md",
+    "docs/commands/handoff.md",
+    "docs/commands/retro.md",
+    "docs/commands/source-code-zip.md",
+    "docs/commands/status.md",
+    "docs/commands/upstream-fork-sync.md",
+    "docs/concepts.md",
+    "docs/contributing.md",
+    "docs/getting-started.md",
+    "docs/troubleshooting.md",
+    "docs/workflows/README.md",
+    "docs/workflows/media.md",
+    "docs/workflows/ops.md",
+    "docs/workflows/person.md",
+    "docs/workflows/specdev.md",
     "pnpm-workspace.yaml",
+    "scripts/generate-design-validators.mjs",
     "scripts/generate-domain-index.mjs",
     "scripts/generate-person-canonical.mjs",
     "scripts/generate-runtime.mjs",
+    "scripts/migrate-specdev-markdown.mjs",
+    "scripts/pnpm-command.mjs",
+    "scripts/references/migrate-specdev-markdown.md",
     "scripts/validate-disposition.mjs",
     "scripts/verify-generated.mjs",
     "scripts/verify-package.mjs",
     "src/assets.ts",
     "src/coordination.ts",
+    "src/install-ui.ts",
+    "src/interaction.ts",
     "src/runtime-entry.ts",
+    "src/specdev-artifacts.ts",
     "template/commands/manifest.json",
+    "template/lib/design-validators.mjs",
+    "template/lib/legacy-status-validator.cjs",
     "template/lib/speculo-runtime.mjs",
     "template/references/coordination/modes/cli.md",
     "template/references/coordination/modes/herdr.md",
     "template/references/coordination/modes/orca.md",
     "template/references/coordination/project-facts.example.json",
     "template/references/coordination/project-facts.schema.json",
+    "template/references/writing-for-agents/references/current-facts-docs.md",
     "template/workflows/person/person-s-steelman-deliberation/assets/canonical-body.md",
+    "template/workflows/specdev/common/rules/design-contract.md",
+    "template/workflows/specdev/common/rules/design-portability.md",
+    "template/workflows/specdev/common/rules/execution-policy.md",
+    "template/workflows/specdev/common/schemas/change-design.schema.json",
+    "template/workflows/specdev/common/schemas/project-design.schema.json",
+    "template/workflows/specdev/common/schemas/prototype-browser-evidence.schema.json",
+    "template/workflows/specdev/common/tools/change-artifacts.mjs",
+    "template/workflows/specdev/common/tools/design-artifacts.mjs",
+    "template/workflows/specdev/common/tools/publish-design.mjs",
+    "template/workflows/specdev/common/tools/tests/review-source-files.test.mjs",
+    "template/workflows/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md",
+    "template/workflows/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md",
+    "template/workflows/specdev/specdev-c-code-review/references/source-files-review.md",
+    "template/workflows/specdev/specdev-i-init-setup/assets/change-readme-template.md",
+    "template/workflows/specdev/specdev-i-init-setup/references/change-record-examples.md",
+    "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+    "template/workflows/specdev/specdev-p-goal-plan/assets/lightweight-goal-plan-template.md",
+    "template/workflows/specdev/specdev-p-prototype/assets/change-design-template.md",
+    "template/workflows/specdev/specdev-p-prototype/assets/project-design-template.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/catalog.json",
+    "template/workflows/specdev/specdev-p-prototype/design-library/catalog.schema.json",
+    "template/workflows/specdev/specdev-p-prototype/design-library/composition.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/gallery.html",
+    "template/workflows/specdev/specdev-p-prototype/design-library/gallery.js",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/assets/prototypes.css",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/assets/prototypes.js",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/brand-editorial.html",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/brand-editorial.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/commerce-service.html",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/commerce-service.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/cross-platform-workspace.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/dense-ide.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/enterprise-data.html",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/enterprise-data.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/local-first-content.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/marketing-conversion.html",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/marketing-conversion.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/media-first.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/mobile-supervisor.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/monochrome-console.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/responsive-web.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/templates/soft-personal-ai.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/LICENSE",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/README.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/airbnb/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/apple/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/figma/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/ibm/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/linear/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/mintlify/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/notion/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/provenance.json",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/spotify/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/stripe/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/vercel/DESIGN.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/airbnb.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/apple.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/figma.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/ibm.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/linear.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/mintlify.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/notion.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/spotify.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/stripe.md",
+    "template/workflows/specdev/specdev-p-prototype/design-library/visual-references/vercel.md",
+    "test/docs-sync-git-contract.test.ts",
+    "test/fixtures/specdev-legacy-change-v6.json",
+    "test/helpers/design-fixture.ts",
+    "test/install-ui.test.ts",
+    "test/pnpm-command.test.ts",
+    "test/specdev-closure.test.ts",
+    "test/specdev-design-canonical.test.ts",
+    "test/specdev-design-knowledge.test.ts",
+    "test/specdev-design-library.test.ts",
+    "test/specdev-design.test.ts",
+    "test/specdev-direct-execution.test.ts",
+    "test/specdev-learn.test.ts",
+    "test/specdev-markdown-consumers.test.ts",
+    "test/specdev-markdown-migration.test.ts",
+    "test/specdev-markdown.test.ts",
+    "test/specdev-review-source-files.test.ts",
+    "test/specdev-root-closure.test.ts",
+    "test/specdev-status-markdown.test.ts",
     "test/v2-contracts.test.ts",
     "test/workspace-fixture.ts"
   ],
@@ -8521,6 +8636,6 @@
       "moved-and-rewritten": 320,
       "merged": 1
     },
-    "added": 23
+    "added": 47
   }
 }

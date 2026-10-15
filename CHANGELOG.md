@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-15
+
+### Changed
+- Redesign the installation wizard with clearer Chinese guidance, workflow groups, a final change preview and consistent cancellation. Select exposure locations first, then configure one shared capability list for `.agents/skills/` and `.claude/skills/`.
+- Support all installed capabilities, whole workflow/Command groups, custom entries, the saved selection and no exposure. Replace `--agent-skills` / `--claude-skills` with `--skill-targets` and `--skills`.
+- Expand `specdev/learn` into an independent learning and diagramming Work for requirements references, project code, existing changes and external material. Preserve prior lessons and existing development Outcomes while allowing lightweight learning-only changes.
+- Reorganize the Chinese user manual around installation, concepts, all five workflows, ten Commands, portable Canonical documents and troubleshooting. Move asset-disposition audit data into `scripts/data/` and remove superseded implementation reports.
+
+### Fixed
+- Clean up an empty `.agents/.speculo-transactions` directory after installation, cancellation and successful recovery, while preserving nonempty recovery evidence.
+- Remove unchanged managed entries from deselected exposure locations, preserve edited and third-party files, and restore both locations and their shared selection on rollback or explicit recovery.
+- Validate learning diagram numbering and indexes without rewriting historical lesson titles or reopening completed changes.
+
+### Upgrade Notes
+- Exposure metadata now uses `projections.json` schema 3 with `targets` and one `asset_ids` list. Previous per-location schemas are rejected without automatic migration; existing files are preserved. The old exposure flags and the `domains` shortcut are removed; select domain entries explicitly, for example `--skill-targets agents --skills domain/specdev`.
+- The `specdev/learn` business ID is unchanged, but its source entry is now `specdev-l-learn/SKILL.md` and its validator stage is `learn`. Update direct references to the previous `specdev-l-learn-change` path or `learn-change` stage.
+- Automated fixtures and terminal checks do not certify live AI host invocation or model behavior.
+
+AI assistance was used for implementation, review, and release preparation.
+
 ## [2.0.1] - 2026-10-14
 
 ### Changed

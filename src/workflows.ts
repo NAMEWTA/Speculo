@@ -26,7 +26,7 @@ export async function scanInstalledWorkflows(installRoot:string):Promise<string[
 export function isInteractive():boolean{return process.stdin.isTTY===true;}
 export async function promptWorkflowSelection(catalog:WorkflowCatalog,options?:{preSelectedWorkflowIds?:Set<string>}):Promise<WorkflowSelection>{
  if(!isInteractive())return {workflowIds:[...(options?.preSelectedWorkflowIds??[])].filter(id=>catalog.has(id)).sort()};
- const {checkbox}=await import('@inquirer/prompts');
- return {workflowIds:await checkbox({message:'选择安装或刷新的领域（空选仅核心能力）：',choices:[...catalog.values()].sort((a,b)=>a.id.localeCompare(b.id)).map(w=>({name:w.displayName,value:w.id,description:w.description,checked:options?.preSelectedWorkflowIds?.has(w.id)??false}))})};
+ const {promptWorkflows}=await import('./install-ui.js');
+ return promptWorkflows(catalog,options?.preSelectedWorkflowIds??new Set());
 }
 export function selectAllFromCatalog(catalog:WorkflowCatalog):WorkflowSelection{return {workflowIds:[...catalog.keys()].sort()};}

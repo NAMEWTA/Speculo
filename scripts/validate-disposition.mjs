@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const path='docs/refactor/asset-disposition.json',ledger=JSON.parse(await readFile(resolve(root,path),'utf8'));
+const path='scripts/data/asset-disposition.json',ledger=JSON.parse(await readFile(resolve(root,path),'utf8'));
 const errors=[],sources=new Set(),targets=new Set([path]);
 const safe=p=>typeof p==='string'&&p.length>0&&!p.startsWith('/')&&!/[\\:]/.test(p)&&!p.split('/').some(s=>s==='..'||s==='.'||!s);
 if(ledger.schema_version!==2||!/^[a-f0-9]{40}$/.test(ledger.baseline))errors.push('invalid audit schema/baseline');

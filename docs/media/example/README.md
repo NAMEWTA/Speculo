@@ -1,18 +1,43 @@
-# B → V → P: 18-second local demonstration
+# 示例：从 Brief 到 18 秒视频和本地草稿
 
-This is an original **silent** example with a fictional account, not a published campaign. There are no copied third-party media, recipes or font binaries.
+[Media 教程](../../workflows/media.md) · [示例与工具](../README.md)
 
-## Actual execution vs simulation
+这是一份原创、静音、使用虚构账号的学习示例。它展示 B → V → P 的材料关系，没有线上发布，也没有复制第三方媒体、配方或字体文件。
 
-The implementation environment executed the checked-in brief, shot plan and deterministic HTML with Python Playwright, preinstalled Chromium and FFmpeg on 2026-10-10: 216 frames, 640×360, 12 fps, 18 seconds, nine stills (three per shot). It rendered a preview, inspected the actual stills and time sequence, passed nonsequential time replay and FFprobe checks, then rendered final.mp4 after recording the current review. No external resources were loaded.
+## 先认识这些文件
 
-The review is **assistant self-evaluation**, not independent human approval or a real-time human playback assessment. Silent mode was deliberately selected; audio_sync checks the silent contract, not spoken-audio alignment. Still inspection and deterministic replay do not prove arbitrary motion quality. Recorded output hashes document this run, not byte-identical encoding across different FFmpeg/browser versions.
+| 文件 | 用途 |
+|---|---|
+| [brief.json](brief.json) | 明确内容与视频规格 |
+| [master.md](master.md) | 共享母稿 |
+| [shot-plan.json](shot-plan.json) | 三个镜头的计划 |
+| [scene.html](scene.html) | 可编辑的确定性画面源 |
+| [draft-request.example.json](draft-request.example.json) | 未批准的草稿请求起点 |
+| [observed-render-report.json](observed-render-report.json) | 一次真实运行的渲染记录 |
+| [observed-self-review.json](observed-self-review.json) | 同次运行的助手自评 |
+| [observed-draft-report.json](observed-draft-report.json) | 同次本地导出的观测记录 |
 
-P performed a real local export, copied final.mp4 and repeated export idempotently, using **SIMULATED TEST FIXTURE approval records**. No user authorization, real account, login, upload, publication or platform metrics are claimed. The fifth gate remains not-authorized. The checked-in draft request has **no approvals**; it cannot be exported without newly recorded, correctly scoped confirmations.
+前三类观测文件是保存的证据，不是可以直接复用的当前批准。大型帧和视频二进制不提交到 Git，需要在自己的环境重新生成。
 
-## Reproduce
+## 哪些是真实执行，哪些是模拟
 
-Requires Python 3.10+, Python Playwright, preinstalled Chromium, Node, FFmpeg and FFprobe. Install/download only after separate authorization; this tool does neither. Review scene.html before running: network blocking is not a hostile-code sandbox.
+保存的观测来自 2026-10-10 使用 Python Playwright、预装 Chromium 和 FFmpeg 的一次本地运行：640×360、12 fps、18 秒、216 帧，三个镜头共九张静帧。该次运行真实生成了预览，观察静帧与时间序列，检查非顺序时间回放和 FFprobe 信息，并在记录审核后生成 final.mp4，没有加载外部资源。
+
+审核是**助手自评**，不是独立人工批准或实时人工播放评估。静音是明确选择，audio_sync 只检查静音合同，不证明旁白同步。静帧与确定性回放也不证明任意运动质量。哈希记录这一次运行，不承诺不同浏览器/编码器版本得到相同二进制。
+
+P 真实执行了本地媒体复制和重复导出，但使用的是**模拟测试批准**。不代表真实用户授权、账号、登录、上传、发布或平台表现；第五项保持 not-authorized。仓库中的 draft 请求没有批准，必须重新取得对应实际输入的确认才可导出。
+
+## 第一步：检查环境和输入
+
+需要 Python 3.10+、Python Playwright、预装 Chromium、Node、FFmpeg 和 FFprobe。脚本不安装或下载依赖。先审查 scene.html；禁止网络访问不意味着可以安全执行任意敌意 HTML。
+
+从 Speculo 仓库根运行：
+
+```bash
+node template/workflows/media/common/tools/media-tools.mjs check-brief docs/media/example/brief.json
+```
+
+## 第二步：生成预览
 
 ```bash
 python3 template/workflows/media/media-v-video/scripts/render_preview.py \
@@ -22,14 +47,20 @@ python3 template/workflows/media/media-v-video/scripts/render_preview.py \
   --output media-preview-run --reviewed-html
 ```
 
-Output must be a new directory. Inspect preview.mp4 and all stills. Copy the workflow review template to that directory, fill its actual input_digest from render-report.json, actual preview/still SHA-256 values, observed checks and scores. Do not reuse observed-self-review.json blindly: it is evidence of one run only.
+输出必须是新目录。打开生成的 preview.mp4 和全部静帧，实际检查画面、时序和内容。
 
-For final mode add `--mode final --review media-preview-run/review.json` and select a new output directory. The gate verifies current inputs, actual preview/still bytes, preview duration, three accepted stills per shot, every check and each score >=8. It never fills scores for you.
+## 第三步：基于本次结果审核
 
-Use draft-request.example.json as an unapproved starting point, selecting real content/target aliases and media paths. Compute fingerprint-draft against the source media directory. After actual direction/platform/title/final confirmations, export-draft creates a local bundle. The fifth field is only not-authorized or external-human-handoff; exporting never publishes.
+从当前 workflow 的审核模板创建 `media-preview-run/review.json`。填写本次 render-report 中的 input_digest、真实预览/静帧 SHA256、观察到的检查和分数。不要直接拿 observed-self-review.json 当作本次审核。
 
-## Retrospective
+最终模式使用同一输入，增加 `--mode final --review media-preview-run/review.json`，并选择一个新的输出目录。门禁会检查当前输入、实际预览与静帧字节、预览时长、每镜三张合格静帧、检查项及每项评分不低于 8；脚本不会替你填分。
 
-The original message remained consistent across three scenes and the local draft. Platform metrics are null with reason “not published.” The next candidate experiment changes only the first scene's Hook; no template is promoted after one example. The 3–5 comparable real-run threshold has not been met.
+## 第四步：导出本地草稿
 
-brief.json, master.md, shot-plan.json and scene.html are editable inputs. observed-render-report.json, observed-self-review.json and observed-draft-report.json distinguish actual execution, self-evaluation and simulated approvals. Large frame/video binaries are not committed; regenerate them with the command above. Their absence in Git is not represented as a fresh render having occurred on the reader's machine.
+用 draft-request.example.json 起草请求，替换为真实内容、目标别名和本次媒体路径。让 `media/publish-draft` 根据实际 source root 执行 fingerprint-draft，展示方向、平台账号、标题、终稿四项确认及绑定摘要。
+
+取得真实确认后才执行 export-draft，输出正文、媒体副本和清单。第五项只有 not-authorized 或 external-human-handoff，导出不会发布。
+
+## 第五步：理解复盘边界
+
+本例没有发布，平台指标是 null，原因是未发布。可以复盘内容一致性和制作过程，并提出“下一轮只改变第一个镜头 Hook”的假设；不能证明增长效果，也不能在一个示例后晋升永久模板。真正模板沉淀还需要 3–5 条可比较的真实运行和用户确认。

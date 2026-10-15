@@ -123,6 +123,7 @@ describe("review: process-interruption recovery", () => {
       assert.equal((await doctorSpeculo(target)).healthy, false);
       await assert.rejects(recoverInstall(target, "wrong-id"), /recovery-transaction-mismatch/);
       const outcome = await recoverInstall(target, j.id);
+      await assert.rejects(readdir(join(target, ".agents/.speculo-transactions")), /ENOENT/);
       if (phase === "committed") {
         assert.equal(outcome.outcome, "completed-cleanup"); assert.equal((await doctorSpeculo(target)).healthy, true);
       } else {
@@ -133,10 +134,11 @@ describe("review: process-interruption recovery", () => {
       assert.deepEqual((await readdir(target)).filter((name) => name.startsWith(".speculo-init-")), []);
     }));
   }
-  it("rolls managed agent skills back and leaves unmanaged skills in place", { skip: process.platform === "win32", timeout: 60000 }, async () => fixture(async (target) => {
-    await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, agentSkills: { mode: "set", assetIds: ["learning/archive","learning/assess-and-plan","learning/consolidate","learning/goal","learning/homework","learning/init-setup","learning/lesson","learning/question","learning/review"] } });
+  it("recovers unified selection and both targets after interrupted removal, preserving unmanaged skills", { skip: process.platform === "win32", timeout: 60000 }, async () => fixture(async (target) => {
+    await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skillTargets: ["agents", "claude"], skills: { mode: "set", assetIds: ["learning/archive","learning/assess-and-plan","learning/consolidate","learning/goal","learning/homework","learning/init-setup","learning/lesson","learning/question","learning/review"] } });
     await mkdir(join(target, ".agents", "skills", "custom-skill"), { recursive: true });
     await writeFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "user owned\n");
+    const claudeBefore = await fingerprintTree(join(target, ".claude/skills"));
     const skillPath = join(target, ".agents", "skills", "learning-l-lesson", "SKILL.md");
     const manifestPath = join(target, ".agents", "speculo", ".speculo", "projections.json");
     const edited = (await readFile(skillPath, "utf8")).replace("事实源", "事实来源");
@@ -148,16 +150,19 @@ describe("review: process-interruption recovery", () => {
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
     await writeFile(join(target, ".agents/speculo/commands/status/COMMAND.md"), "previous static override\n");
     const before = await fingerprintTree(join(target, ".agents/speculo"));
-    const program = `import {initSpeculo} from ${JSON.stringify(pathToFileURL(resolve("dist/src/index.js")).href)}; await initSpeculo(${JSON.stringify(target)}, {packageRoot:${JSON.stringify(packageRoot)},selection:{workflowIds:["learning"]},agentSkills:{mode:"keep"},transactionHook:async phase=>{if(phase==="skills-projected")process.kill(process.pid,"SIGKILL")}});`;
+    const program = `import {initSpeculo} from ${JSON.stringify(pathToFileURL(resolve("dist/src/index.js")).href)}; await initSpeculo(${JSON.stringify(target)}, {packageRoot:${JSON.stringify(packageRoot)},selection:{workflowIds:["learning"]},skillTargets:["agents"],skills:{mode:"keep"},transactionHook:async phase=>{if(phase==="skills-projected")process.kill(process.pid,"SIGKILL")}});`;
     const child = spawnSync(process.execPath, ["--input-type=module", "-e", program], { encoding: "utf8", timeout: 30000 });
     assert.equal(child.signal, "SIGKILL", child.stderr);
     const j = await readTransaction(target);
     assert.equal(j.phase, "skills-projected");
     assert.equal(j.schema_version, 3);
+    await assert.rejects(readFile(join(target, ".claude/skills/learning-l-lesson/SKILL.md")), /ENOENT/);
     const outcome = await recoverInstall(target, j.id);
+    await assert.rejects(readdir(join(target, ".agents/.speculo-transactions")), /ENOENT/);
     assert.equal(outcome.outcome, "rolled-back");
     assert.equal(await fingerprintTree(join(target, ".agents/speculo")), before);
     assert.equal(await readFile(skillPath, "utf8"), edited);
+    assert.equal(await fingerprintTree(join(target, ".claude/skills")), claudeBefore);
     assert.equal(await readFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "utf8"), "user owned\n");
     assert.deepEqual((await readdir(target)).filter((name) => name.startsWith(".speculo-init-")), []);
   }));

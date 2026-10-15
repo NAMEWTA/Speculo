@@ -17,7 +17,7 @@
 | 单个已拆票 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
 | 旧 O 调用或恢复键 | P-goal-plan | 统一 P 多 change 模式 |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
-| 开发完成后需要理解当前 change 或追问实现 | L-learn-change | 返回用户 / 继续提问 / Triage / A |
+| 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |
 
 同 change 下一阶段需要当前一手推理且上下文健康时继续；切换 repo/person/harness 或旁路时使用 `<Path>{roots.commands}/handoff/COMMAND.md</Path>`；严格限定且可独立派单时使用 Dispatch Packet；其他长上下文以权威工件路径恢复。平台不支持 clear/compact 时不虚构操作。
@@ -27,7 +27,7 @@
 
 ## 复盘与交付路由
 
-开发环境/流程复盘 → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码讲解仍为 L；Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+开发环境/流程复盘 → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码与参考资料学习 → <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
 
@@ -40,6 +40,6 @@
 | 一次性事件暂时无法重现 | D / evidence-triage | 不标记 root-cause-confirmed，不创建 Ready 修复 |
 | 已批准的文档维护 | I-implement / documentation | 不新建文档 workflow，不伪造 TDD |
 | 只审查文档或某个 commit | C-code-review | 不写项目、不把单 commit 扩大到 HEAD |
-| 理解已实现 change | L-learn-change | 不改 Learning workflow，不永久晋升 |
+| 理解功能、实现思路、运行机制或文章观点 | L-learn | 不自动规划/实现，不改 Learning workflow，不永久晋升 |
 
 只读调查或审查不是后续修改授权。清晰的小请求继续走原适用阶段，不因增加专业分支强制进入 W/G/Triage；无差异、无候选和证据不足均可诚实返回，不制造工作量。

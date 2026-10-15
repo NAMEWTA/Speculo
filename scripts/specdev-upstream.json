@@ -322,7 +322,7 @@
       "path": "skills/productivity/teach/SKILL.md",
       "classification": "excluded",
       "targets": [],
-      "rationale": "Learning owns general teaching; L-learn-change explains actual completed changes."
+      "rationale": "Learning owns structured courses, practice and review; L-learn explains requirements references, project code, changes and external material."
     },
     {
       "id": "to-questionnaire",

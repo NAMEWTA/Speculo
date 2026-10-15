@@ -55,7 +55,7 @@ const EXPECTED_WORKS = new Set([
   "specdev-g-grill-with-docs",
   "specdev-i-implement",
   "specdev-i-init-setup",
-  "specdev-l-learn-change",
+  "specdev-l-learn",
   "specdev-p-goal-plan",
   "specdev-p-prototype",
   "specdev-r-review-architecture",
@@ -172,7 +172,7 @@ const VALID_STAGES = new Set([
   "tickets",
   "goal-plan",
   "implement",
-  "learn-change",
+  "learn",
   "retro",
   "pr-delivery",
   "review",
@@ -874,10 +874,10 @@ function capabilityChecks(root) {
       ],
     ],
     [
-      "learn-change",
+      "learn",
       [
-        join(root, "specdev-l-learn-change", "SKILL.md"),
-        ["开发完成后", "零专业背景", "$ARGUMENTS", "ASCII", "learning/index.md", "{number}_{topic}.md", "{roots.state}/learning/"],
+        join(root, "specdev-l-learn", "SKILL.md"),
+        ["需求参考", "零专业背景", "$ARGUMENTS", "ASCII", "learning-change.md", "learning/index.md", "{number}_{topic}.md", "{roots.state}/learning/"],
       ],
     ],
     [
@@ -1586,7 +1586,7 @@ function validateChangeLearning(change, required, errors) {
   const diagramName = /^\d{2,}_[\p{L}\p{N}_-]+\.md$/u;
 
   if (!existsSync(learningRoot)) {
-    if (required) errors.push("learn-change stage requires learning/index.md");
+    if (required) errors.push("learn stage requires learning/index.md");
     return null;
   }
   if (lstatSync(learningRoot).isSymbolicLink() || !isDirectory(learningRoot)) {
@@ -1595,22 +1595,27 @@ function validateChangeLearning(change, required, errors) {
   }
 
   const diagramFiles = [];
+  const diagramNumbers = new Set();
   for (const entry of readdirSync(learningRoot, { withFileTypes: true })) {
     if (entry.isSymbolicLink()) {
       errors.push(`learning/${entry.name}: learning artifacts must not be symlinks`);
     } else if (entry.isFile() && diagramName.test(entry.name)) {
       diagramFiles.push(entry.name);
+      const number = Number(entry.name.split("_")[0]);
+      if (diagramNumbers.has(number)) errors.push(`learning/${entry.name}: duplicate diagram number ${number}`);
+      diagramNumbers.add(number);
     }
   }
   diagramFiles.sort();
 
   if (!isFile(indexPath)) {
-    errors.push("learn-change stage requires learning/index.md");
+    errors.push("learn stage requires learning/index.md");
     return null;
   }
 
   const index = readText(indexPath);
-  if (!index.includes("# Change 学习图解索引")) {
+  // Historical titles remain readable without rewriting existing learning records.
+  if (!/^# (?:Change )?学习图解索引\s*$/m.test(index)) {
     errors.push("learning/index.md: missing index heading");
   }
   const entries = Array.from(
@@ -3125,7 +3130,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   validateReviews(change, stage === "review", errors);
   validatePrototypes(change, stage === "prototype", errors, prototypeId, new Set(["spec", "tickets", "goal-plan", "implement", "review", "complete"]).has(stage), workspace.context);
   if (new Set(["tickets", "goal-plan", "implement", "review", "complete"]).has(stage)) runDesignCheck("--handoff", change, errors, workspace.context);
-  validateChangeLearning(change, stage === "learn-change", errors);
+  validateChangeLearning(change, stage === "learn", errors);
   const retro = validateRecords(change, "retrospective", parseFrontmatter);
   const prs = validateRecords(change, "pull-request", parseFrontmatter);
   errors.push(...retro.errors, ...prs.errors);

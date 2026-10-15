@@ -4,9 +4,11 @@ import { basename, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
-import { readProjectionManifest, planSkillProjection, resolveAgentSkillRequest, type AgentSkillRequest } from "./agent-skills.js";
+import { planSkillProjection, resolveExposure, validateExposureRequest, type SkillRequest, type ProjectionHost, type ExposureSummary, type ProjectionSummaries } from "./agent-skills.js";
+import { readAssetCatalog } from "./assets.js";
+import { InstallCancelled } from "./interaction.js";
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
-import { assertInstallDirectory, commitInstall, hasTransaction, LOCK_NAME, TRANSACTIONS_ROOT, type TransactionHook } from "./transaction.js";
+import { assertInstallDirectory, cleanEmptyTransactionsDirectory, commitInstall, hasTransaction, LOCK_NAME, TRANSACTIONS_ROOT, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
 import { prepareRefresh, loadWorkflowContract, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
@@ -24,17 +26,32 @@ export type SpeculoCommandResult = {
   mode: "init" | "refresh";
   assets: string[];
   refresh: RefreshSummary;
-  agentSkills: { projected: number };
+  exposure: ExposureSummary & { projected: number };
+  projections: ProjectionSummaries;
+  warnings: string[];
+};
+
+export type InstallProgress = "staging" | "staged" | "committing" | "committed";
+export type InstallPreview = {
+  target: string;
+  mode: "init" | "refresh";
+  workflowIds: string[];
+  retainedWorkflowIds: string[];
+  exposure: ExposureSummary;
+  projections: ProjectionSummaries;
   warnings: string[];
 };
 
 export type SpeculoOptions = {
   packageRoot?: string;
   selection?: WorkflowSelection;
-  agentSkills?: AgentSkillRequest;
-  claudeSkills?: AgentSkillRequest;
-  /** Interactive CLI asks after workflow selection. Library callers stay non-interactive unless they set this. */
-  promptAgentSkills?: boolean;
+  skillTargets?: ProjectionHost[];
+  skills?: SkillRequest;
+  /** Ask once for missing exposure options after staging; library calls default to non-interactive. */
+  promptExposure?: boolean;
+  /** Called after staging and validation, before any active installation changes. */
+  confirmInstall?: (preview: InstallPreview) => Promise<boolean>;
+  onProgress?: (phase: InstallProgress) => void;
   beforeCommit?: (installRoot: string) => Promise<void>;
   /** Test/integration fault-injection seam; never enabled through environment variables. */
   transactionHook?: TransactionHook;
@@ -158,6 +175,7 @@ async function buildStagedInstall(
 }
 
 export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {}): Promise<SpeculoCommandResult> {
+  validateExposureRequest(options.skillTargets, options.skills);
   const target = resolve(targetArg);
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
@@ -177,6 +195,7 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   }
   let stagedRoot: string | undefined;
   let refresh: RefreshSummary | undefined;
+  let failure: unknown;
   try {
     await writeFile(join(lockRoot, ".gitignore"), "*\n", { mode: 0o600 });
     await writeDurableJson(join(lockRoot, "owner.json"), { schema_version: 1, id: randomUUID(), host: hostname(), pid: process.pid, started_at: new Date().toISOString() });
@@ -185,9 +204,11 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const catalog = await discoverWorkflowCatalog(packageRoot);
     const selection = await resolveSelection(packageRoot, root, options);
     const initialFingerprint = await fingerprintTree(root);
+    options.onProgress?.("staging");
     const staged = await buildStagedInstall(packageRoot, target, root, catalog, selection, existed);
     stagedRoot = staged.stagedRoot;
     refresh = staged.refresh;
+    options.onProgress?.("staged");
     await options.beforeCommit?.(root);
     if (await fingerprintTree(root) !== initialFingerprint) {
       throw new RefreshBlockedError([{
@@ -202,23 +223,39 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const references = await readPersistentKnowledge(stagedRoot, installed);
     const edits = planExternalEdits(externalSnapshot, references, installed.includes("specdev"));
     for (const edit of edits) await assertImage(join(target, edit.name), edit.before);
-    const skillRequest = await resolveAgentSkillRequest({
-      target, packageRoot, catalog, installedWorkflowIds: installed, request: options.agentSkills, prompt: options.promptAgentSkills === true,
+    const assetCatalog = await readAssetCatalog(stagedRoot);
+    const exposure = await resolveExposure({
+      target, catalog: assetCatalog, targets: options.skillTargets, request: options.skills, prompt: options.promptExposure === true,
     });
-    const projection = await planSkillProjection({
-      target, stagedRoot, packageRoot, packageVersion: refresh.targetVersion, installedWorkflowIds: installed, request: skillRequest, claudeRequest: options.claudeSkills,
-    });
+    const projection = await planSkillProjection({ target, stagedRoot, packageVersion: refresh.targetVersion, exposure });
     if (projection.blockers.length) throw new RefreshBlockedError(projection.blockers);
+    const warnings = projection.warnings.map(w => `${w.code} ${w.path}: ${w.message}`);
+    if (options.confirmInstall && !await options.confirmInstall({
+      target, mode: existed ? "refresh" : "init", workflowIds: selection.workflowIds,
+      retainedWorkflowIds: installed.filter(id => !selection.workflowIds.includes(id)),
+      exposure: projection.exposure, projections: projection.summaries, warnings,
+    })) throw new InstallCancelled(0);
+    options.onProgress?.("committing");
     await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook, projection.records);
     assets.push(...edits.map((edit) => edit.name + " (managed discovery/runtime references)"));
     stagedRoot = undefined;
+    options.onProgress?.("committed");
     if (!refresh) throw new Error("Speculo refresh result was not produced");
-    return { target, mode: existed ? "refresh" : "init", assets, refresh, agentSkills: { projected: projection.count }, warnings: projection.warnings.map(w=>`${w.code} ${w.path}: ${w.message}`) };
+    return { target, mode: existed ? "refresh" : "init", assets, refresh, exposure: { ...projection.exposure, projected: projection.count }, projections: projection.summaries, warnings };
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
     // A failed rollback or killed process leaves durable evidence; never delete it in finally.
     if (!(await hasTransaction(target))) {
-      if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
-      await rm(lockRoot, { recursive: true, force: true });
+      try {
+        if (stagedRoot) await rm(stagedRoot, { recursive: true, force: true });
+        await cleanEmptyTransactionsDirectory(target);
+        await rm(lockRoot, { recursive: true, force: true });
+      } catch (cleanupError) {
+        // Preserve the original error as well as the lock/residue for inspection.
+        throw new Error(`installation-cleanup-failed: ${String(cleanupError)}${failure === undefined ? "" : `; original error: ${String(failure)}`}`, { cause: failure ?? cleanupError });
+      }
     }
   }
 }

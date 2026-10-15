@@ -369,6 +369,7 @@ const capabilityNames = new Map([
   ["specdev-g-grill-with-docs/SKILL.md", "设计访谈能力"],
   ["specdev-i-implement/SKILL.md", "实现阶段"],
   ["specdev-i-init-setup/SKILL.md", "初始化设置阶段"],
+  ["specdev-l-learn/SKILL.md", "学习与图解阶段"],
   ["specdev-p-goal-plan/SKILL.md", "目标规划阶段"],
   ["specdev-p-prototype/SKILL.md", "原型阶段"],
   [

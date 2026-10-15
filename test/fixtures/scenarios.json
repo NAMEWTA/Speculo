@@ -258,5 +258,89 @@
     "instruction_paths": [
       "AGENTS.md"
     ]
+  },
+  {
+    "id": "specdev-learn-requirement-reference",
+    "workflow": "specdev",
+    "trigger": "Have an offline-sync requirement and want to understand reference projects before design",
+    "expected": "Explains the references, data flow and applicability with sources; creates and completes a learning-only change after delivery; does not activate implementation.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-project-code",
+    "workflow": "specdev",
+    "trigger": "Ask how a local module works without selecting a change",
+    "expected": "Explains the relevant code and distinguishes static reading from executed tests; creates a learning change instead of attaching to another active change.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-selected-change",
+    "workflow": "specdev",
+    "trigger": "Ask about an explicitly selected development change",
+    "expected": "Appends sourced Markdown/ASCII lessons and index rows to that change; preserves development scope, acceptance, owner and Outcome.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-external-article",
+    "workflow": "specdev",
+    "trigger": "Ask to understand an external project or article with no development task",
+    "expected": "Explains features, implementation ideas and author claims from accessible sources; persists the learning round without inventing a Spec, Ticket or implementation authorization.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-unavailable-source",
+    "workflow": "specdev",
+    "trigger": "The article or repository needed for a learning question cannot be accessed",
+    "expected": "Reports the missing source and pauses dependent conclusions; continues supported parts, does not fabricate content or mark the blocked learning round completed.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-resume",
+    "workflow": "specdev",
+    "trigger": "Continue questions after delivery or resume after a lesson write succeeded but index update failed",
+    "expected": "Reuses the selected change, preserves Outcome and old lessons, and repairs the original missing index row before allocating another number.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "specdev-learn-archived-source",
+    "workflow": "specdev",
+    "trigger": "Select an archived change as the subject of a learning request",
+    "expected": "Reads the archive without modification and saves sourced lessons in a new learning change; does not reopen, move or append to the archived object.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-l-learn/SKILL.md",
+      "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
+      "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
+      "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
   }
 ]

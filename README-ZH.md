@@ -1,59 +1,62 @@
 # Speculo
 
-面向 AI Agent 的领域方法、标准 Skill 与显式 Command。当前版本 2.0.0。
+把软件开发、学习、运维、决策和内容创作的方法，交给你当前使用的 AI App 或 CLI。Speculo 提供可读取的 Skill、显式 Command 和可恢复的项目产物；未指定执行方式时，按当前宿主正常工作，明确指定 CLI 交互或 Herdr 等方式时再按选择执行。
 
-[English](README.md) · [架构](docs/architecture.md) · [完整能力目录](docs/capabilities.md) · [安装恢复](docs/transaction-recovery.md)
+[English](README.md) · **[完整使用手册](docs/README.md)** · [快速入门](docs/getting-started.md) · [全部能力](docs/capabilities.md) · [常见问题](docs/troubleshooting.md)
 
-## 安装
+## 开始使用
 
-需要 Node.js >=22.22.3 <25；仓库使用 pnpm 11.1.3。
+需要 Node.js `>=22.22.3 <25`。在希望使用 Speculo 的项目目录运行：
 
-~~~bash
+```bash
 npm install -g @namewta/speculo
-speculo init . --workflows specdev,learning --agent-skills domains
-speculo init . --workflows all --agent-skills all --claude-skills all
+speculo init . --workflows specdev,learning --skill-targets agents --skills domain/specdev,domain/learning
 speculo doctor .
-speculo resolve . '<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>'
-~~~
+```
 
-真实源安装到 .agents/speculo/，状态位于 .agents/speculo/.speculo/。仓库 template 是分发源，不是用户运行时。项目 AGENTS 只维护带标记的发现与永久知识块，保留其他内容。CLAUDE.md 已有内容保留，新建时引用 AGENTS.md。
+然后对 AI 说：
 
-非交互首次 init 默认仅核心 Command 与共享方法；--workflows 指定领域，--core-only 只刷新核心。未选择刷新但已经安装的领域仍保留。领域选择与宿主曝光是两个独立选项。
+```text
+请读取项目 AGENTS.md，使用 specdev/init-setup，只读了解当前项目的入口和测试方式。
+```
 
---agent-skills 与 --claude-skills 均接受 none、keep、domains、all，或逗号分隔的业务 ID（例如 specdev/implement,command/status）。新安装默认不投影，刷新默认保留选择。Skill YAML 从源原样复制，投影正文要求先读源。Command 包装另行表达宿主显式调用政策。第三方同名目录和人工修改保留，并逐项报告冲突。
+需要所有领域与公开入口时使用 `--workflows all --skills all`；使用 `.claude/skills/` 的宿主可指定 `--skill-targets claude`；`--skill-targets agents,claude` 将同一份能力清单应用到两个位置。安装、曝光和实际执行是不同步骤，见[安装教程](docs/getting-started.md)与 [CLI 参考](docs/cli.md)。
 
-## 领域与方法
+## 按领域查看完整教程
 
-- SpecDev：需求、规格、Ticket、Goal Plan、实现、审查、复盘与交付。
-- Learning：课程、Lesson、提问、作业、复习、目标学习、整合与归档。
-- OPS：主机发现、连接、资源初始化、部署及本地资产视图。
-- Person：认知方法与双向钢人论证。
-- Media：Brief、拆解、视觉、视频、发布草稿与复盘。
+5 个 workflow、38 个 Work。每篇指南解释每个 Work 的用途、适用场景、输入、产物、调用示例和下一步。
 
-领域和 Work 都使用标准 SKILL.md；共享方法在 references。AI 在未明确指定执行方式时按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 按宿主实际能力和授权使用。明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 current/worktree 独立，并在使用时读取所选工具指南。Speculo 不提供模型运行服务或 Run 状态机。Lead 持续推进已授权 Goal，负责证据核验、正式状态、集成和最终收口。项目协调选择文件可选，未指定方式时无需配置。完整获批 Spec 或 Ready Ticket 均可直接实现，不强制补 Goal；无票也可使用 worktree。选用 Herdr 后按需安装其项目 Skill，再核验受管会话，安装成功不等于运行可用。
+| 领域 | Work 数 | 能帮你做什么 |
+|---|---:|---|
+| [SpecDev · 软件开发](docs/workflows/specdev.md) | 15 | 需求探索、规格、原型、Ticket、Goal、实现、审查、诊断与交付 |
+| [Learning · 学习](docs/workflows/learning.md) | 9 | 课程规划、完整讲解、先答后讲、主动探究、作业、复习与整合 |
+| [OPS · 运维部署](docs/workflows/ops.md) | 5 | 控制端准备、可信接入、主机环境、项目部署和离线资产视图 |
+| [Person · 分析决策](docs/workflows/person.md) | 2 | 双向钢人论证，以及特定方法论的诊断、战略与行动咨询 |
+| [Media · 内容创作](docs/workflows/media.md) | 7 | 简报、案例拆解、画风提示词、视频、本地草稿和数据复盘 |
 
-读取、发现和投影不授权提交、推送、发布、部署或其他副作用。动作由拥有该步骤的入口确认已有授权；局部缺少权限只阻塞受影响分支。
+不必每次跑完整条流程。完整获批 Spec 和 Ready Ticket 都可以直接进入实现；执行方式与 current/worktree 独立选择。见[领域路线对照](docs/workflows/README.md)。
 
-普通 SpecDev Work 也可直接使用：明确项目、方法资源根和获批数据根即可，CLI 安装不是前置。新 change 在 README 中只保存一个整体 Outcome，进度按范围由 README、无票 Goal 或 Ticket/Evidence 负责；复杂规划、设计批准与集成门保留。
+## 按 Command 类别找工具
 
-A 收尾核对 change、ADR、context、当前工程 docs，涉及 UI 时再核对 DESIGN。必要现役维护和设计发布完成后才整体移到 changes/archive，稳定名称不变；completed/cancelled 本身不证明验收或授予归档权限。
+10 个 Command 是交给 AI 的明确请求，不是 `speculo xxx` 终端子命令。
 
-当前工程 docs 仅在明确请求基线时创建，已有负责文档则导航。I/A 在本次范围维护；docs-sync 仍是手动全局 audit/update/commit 入口，独立拥有 Git 和同步状态。
+| 类别 | 教程 |
+|---|---|
+| [导航与交接](docs/commands/README.md#navigation) | [status](docs/commands/status.md)、[handoff](docs/commands/handoff.md) |
+| [文档、规范与知识](docs/commands/README.md#documentation) | [docs-sync](docs/commands/docs-sync.md)、[工程规范生成](docs/commands/engineering-standards-builder.md)、[归档与沉淀](docs/commands/archive-and-consolidate.md) |
+| [Git 分析与历史](docs/commands/README.md#git) | [仓库审计](docs/commands/git-repository-audit.md)、[历史压缩](docs/commands/git-history-squash.md)、[上游评估](docs/commands/upstream-fork-sync.md) |
+| [源码交换与反馈](docs/commands/README.md#exchange) | [源码 ZIP](docs/commands/source-code-zip.md)、[Speculo 产品反馈](docs/commands/retro.md) |
 
-## 新版边界
+## 数据、权限与其他使用方式
 
-CLI 保持 agents-v2 安装身份、staging 和显式恢复。新 SpecDev 活动使用 Markdown 协议，不生成全局/change status 镜像；旧活动数据须显式、定范围转换，混合或未知输入阻塞受影响写入。旧月份归档原位冻结，独立历史 reader 只读定位；其他领域保留各自持久化合同。[转换参考](scripts/references/migrate-specdev-markdown.md)说明仓库维护工具，init 不自动执行转换。
+方法正文安装到 `.agents/speculo/`，运行时数据位于 `.agents/speculo/.speculo/`；宿主投影可放在 `.agents/skills/` 和 `.claude/skills/`。现有用户指令、第三方 Skill 和人工修改按所有权保留。[基本概念](docs/concepts.md)说明这些目录与调用方式。
 
-12 份 canonical 可从 template/canonical 单独取用；每份定义持久化与不可写时的完整文件交付。源码及第三方许可见 LICENSE 与 THIRD-PARTY-NOTICES.md。
+读取、发现或安装不授权提交、推送、发布、部署和归档。已有具体授权会复用，新增副作用按其入口核对。Speculo 不提供模型运行服务、沙箱或后台常驻编排器。
 
-## 开发与验收
+普通 SpecDev Work 可以使用明确项目、方法与数据根[直接调用](docs/workflows/specdev.md#不安装-cli-时如何使用)；网页 AI 可以选择 [12 份 Canonical 单文件](docs/canonical.md)。刷新与故障处理见 [CLI](docs/cli.md) 和[事务恢复](docs/transaction-recovery.md)。
 
-~~~bash
-pnpm install --frozen-lockfile
-pnpm generate-assets
-pnpm check
-pnpm verify-bin
-pnpm verify-generated
-~~~
+## 了解项目与参与维护
 
-生成物必须可重建、二次生成无变化。测试使用一次性夹具；格式校验不代表宿主实际调用或真实模型交付已经验证。版本由 package.json 和 CHANGELOG 驱动，发布仍需明确授权。
+[架构与目录](docs/architecture.md) · [维护者指南](docs/contributing.md) · [版本变化](CHANGELOG.md) · [LICENSE](LICENSE) · [第三方声明](THIRD-PARTY-NOTICES.md)
+
+仓库使用 `pnpm@11.1.3`；版本以 [package.json](package.json) 为准。docs 持续描述当前产品与使用方法，不保存一次性开发实施报告。

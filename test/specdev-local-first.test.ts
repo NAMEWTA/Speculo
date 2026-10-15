@@ -1421,9 +1421,9 @@ describe("SpecDev local-first contracts", () => {
     try {
       await writeStatus(root);
 
-      const missing = runValidator(root, "learn-change");
+      const missing = runValidator(root, "learn");
       assert.equal(missing.status, 1);
-      assert.match(missing.stdout + missing.stderr, /learn-change stage requires learning\/index\.md/);
+      assert.match(missing.stdout + missing.stderr, /learn stage requires learning\/index\.md/);
 
       const learningRoot = join(root, "learning");
       await mkdir(learningRoot);
@@ -1462,7 +1462,7 @@ describe("SpecDev local-first contracts", () => {
         ].join("\n"),
       );
 
-      const valid = runValidator(root, "learn-change");
+      const valid = runValidator(root, "learn");
       assert.equal(valid.status, 0, valid.stdout + valid.stderr);
 
       await writeFile(
@@ -1481,7 +1481,7 @@ describe("SpecDev local-first contracts", () => {
           "- 输入会变成输出。",
         ].join("\n"),
       );
-      const unindexed = runValidator(root, "learn-change");
+      const unindexed = runValidator(root, "learn");
       assert.equal(unindexed.status, 1);
       assert.match(unindexed.stdout + unindexed.stderr, /missing entry for '02_unindexed\.md'/);
     } finally {
