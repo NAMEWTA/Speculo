@@ -43,7 +43,7 @@
 
 ## 记录和接续
 
-有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。有 change 的 CLI/Herdr/Orca 外部派遣按 <Path>{roots.references}/coordination/session-files.md</Path> 在一轮 session 下为每次派遣保存 TASK 与 REPORT，附按需回查的历史会话入口。Ticket Evidence、Direct Spec Evidence 或当前 owning 工件只引用输入/报告并保存 Lead 的核验与处置，不复制第二套业务状态。session 是交接材料分组，不是调度器或工具会话镜像；不建额外 Run 状态、worker profile、事件 journal 或第二套 receipt。
+有 Goal 时阶段安排写回原 Goal Plan；无 Goal 时使用当前 Work 的原有产物。有 change 的 CLI/Herdr/Orca 外部派遣按 <Path>{roots.references}/coordination/session-files.md</Path> 在一轮编排 session 下为每次派遣保存冻结 TASK 与正式 REPORT；派遣后准确确认的会话日志绝对路径由 Lead 保存到可选 session-locator.json，仅含 path 字段。Ticket Evidence、Direct Spec Evidence 或当前 owning 工件只引用交接文件并保存 Lead 的核验与处置，不复制第二套业务状态。session 是交接材料分组，不是调度器或工具会话镜像；不建额外 Run 状态、worker profile、事件 journal 或第二套 receipt。
 
 宿主原生协作按需采用文件交接，不逐个登记内部 Agent；正式双轴审查仍在原 Evidence 保留实现者/reviewer 的真实身份和工具核验；Lead 自行执行不制造 session。无 change 时沿用当前 Work 已有报告位置或会话结果，不为交接创建 change。external-web 继续使用原 ZIP 合同，远程 CI 不在本文件交接约定的首版适配范围。
 

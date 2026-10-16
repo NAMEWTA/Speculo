@@ -67,7 +67,7 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 
 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，用户/项目/当前 Work 要求优先，Lead 根据任务事实和宿主能力安排单 Agent、subagent 或团队。同票协作不改变 serial 票据顺序；跨票并行仍须 DAG 与写集/资源无冲突。只读探索不占票据执行槽。
 
-派单读取 <Path>{roots.references}/coordination/task-brief.md</Path>；外部 CLI/Herdr/Orca 按 <Path>{roots.references}/coordination/session-files.md</Path> 保存 TASK/REPORT，原 Evidence 只导航与验收。Packet 绑定同一 change workspace、票据/规格、实际写集、固定输入、验证与停止条件。多个实现者明确细分写集；Git index 操作由 Lead 协调串行，不暂存他人改动。
+派单读取 <Path>{roots.references}/coordination/task-brief.md</Path>；外部 CLI/Herdr/Orca 按 <Path>{roots.references}/coordination/session-files.md</Path> 保存冻结 TASK/正式 REPORT 和派遣后可选 session-locator.json；新派遣在投递前与回收时分别运行交接校验的 dispatch/return 阶段，原 Evidence 只导航与验收。Packet 绑定同一 change workspace、票据/规格、实际写集、固定输入、验证与停止条件。多个实现者明确细分写集；Git index 操作由 Lead 协调串行，不暂存他人改动。
 
 **完成标准**：实现者与路径归属可回读，正式状态仍只由 Lead 写入，派遣不创建额外 worktree。
 

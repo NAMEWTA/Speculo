@@ -20,13 +20,13 @@
 - **执行选择与来源：** ticket_execution=auto/serial/parallel；单 Agent/subagent/team/指定工具的要求来源；README 工作区引用；验证尝试上限缺省 3
 - **Implementation owners：** 实际实现及修复者身份；同票多人时列明各自写集
 - **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
-- **文件交接（实际外部派遣时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
+- **文件交接（实际外部派遣时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`，以及实际存在的 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/session-locator.json</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
 - **允许动作：** 授权路径写入、检查；commit/merge 仅明确授权时
 - **返回：** checkpoint/快照、dirty 状态、实际实现者、修改路径、命令/退出码、未验证项与恢复条件
 - **Lead 独立核对：** pass / fail；实际读取与命令摘要
 - **只读 Agent findings：** 无 / 固定输入、来源、结论、Lead 核对
 
-任务执行者 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。有文件交接时依 <Path>{roots.references}/coordination/session-files.md</Path> 只保存输入/报告指针和 Lead 独立核验，不复制正文；REPORT 的 completed 不是本 Evidence 的 done。先读报告聚焦交接，细节不足再检索其历史入口。突然中断无报告时记录未知事实与原工具查询结果，不补造成功回报。
+任务执行者 不写本 Evidence；以上内容由 Lead 从实际 workspace、Git 和返回事实整理。有文件交接时依 <Path>{roots.references}/coordination/session-files.md</Path> 只保存交接文件指针和 Lead 独立核验，不复制正文；REPORT 的 completed 不是本 Evidence 的 done。先读报告聚焦交接，细节不足再沿对应定位文件的 path，结合 TASK 内容检索；地址不重复写入 Evidence。突然中断无报告时记录未知事实与原工具查询结果，不补造成功回报。
 
 ## 3. 修改范围与路径所有权
 

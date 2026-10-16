@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.6] - 2026-10-16
+
+### Added
+- Read-only handoff validation for frozen TASK inputs, worker REPORTs and optional `session-locator.json` records, including TASK/REPORT identity, task directory boundaries and absolute log path format.
+
+### Changed
+- Keep task identity in YAML frontmatter and freeze TASK after dispatch. Lead records only the confirmed absolute transcript path in a separate task-local locator file; reports and Evidence reference it without duplicating addresses.
+- Treat original conversation logs as optional, tool-owned references: omit unverifiable paths, avoid log copying, and preserve existing handoffs and archived snapshots under their original contracts.
+
+### Fixed
+- Reject inherited object-property names as unknown fields during delivery artifact schema validation.
+
 ## [2.0.5] - 2026-10-15
 
 ### Added
@@ -993,7 +1005,9 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.4...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...HEAD
+[2.0.6]: https://github.com/NAMEWTA/Speculo/compare/v2.0.5...v2.0.6
+[2.0.5]: https://github.com/NAMEWTA/Speculo/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/NAMEWTA/Speculo/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/NAMEWTA/Speculo/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/NAMEWTA/Speculo/compare/v2.0.1...v2.0.2

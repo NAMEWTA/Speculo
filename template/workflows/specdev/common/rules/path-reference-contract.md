@@ -73,7 +73,7 @@ SpecDev 不假定运行时一定提供项目根变量。Ticket、Evidence、诊�
 
 外部 URL 不能伪装成 SpecDev 内部路径；内部文件也不能用 URL 代替完整 Path 标签。
 
-历史会话的只读外部 locator 是限定例外：可记录工具返回的“所属主机＋原生绝对路径/会话标识”，按 <Path>{roots.references}/coordination/session-files.md</Path> 检索。它不使用内部 Path 标签，不是可移植项目路径、静态能力依赖或写入授权；项目内保存的快照仍使用正常工件路径。
+历史会话的只读外部 locator 是限定例外：可记录准确确认的原始会话日志绝对路径，按 <Path>{roots.references}/coordination/session-files.md</Path> 检索。它不使用内部 Path 标签，不是可移植项目路径、静态能力依赖或写入授权；新派遣在任务目录的 session-locator.json 中仅记录 path 字段，不复制原日志；既有项目内历史副本保留正常工件路径。
 
 ## 5. 工件名称与工件引用
 

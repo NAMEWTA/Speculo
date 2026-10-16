@@ -87,3 +87,9 @@ Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial
 ## 独立开发复盘
 
 <Path>{roots.workflows}/specdev/common/tools/validate-retro.mjs</Path> 只读枚举/校验独立 RETRO、升级方案、批准、实际执行与归档完整性；使用 `--help` 查看 report/upgrade 和各 stage。数据根使用 WorkContext 的领域共同父根。协议见 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path>；工具不写 Skill、不执行验证命令、不认证授权或宿主行为。
+
+## 派遣交接与可选会话定位
+
+<Path>{roots.workflows}/specdev/common/tools/validate-handoff.mjs</Path> 在新派遣投递前/回收时只读校验 TASK YAML、REPORT、目录身份与可选 session-locator.json，协议见 <Path>{roots.references}/coordination/session-files.md</Path>。参数：`--repo <project> [--method-root <methods> --state-root <data-parent>] --change <id> --session <round> --task <id> --stage dispatch|return`，无安装时必须给出三个根。
+
+没有准确日志地址就不创建定位文件，缺失时正常通过；已有文件仅含非空绝对路径 path，须符合 <Path>{roots.workflows}/specdev/common/schemas/session-locator.schema.json</Path>。不扫描工具缓存、不读取外部历史，不认证 provider 身份、授权或完成。结构错误退出 1，参数错误退出 2。存量交接按原合同回收，归档用原完整性清单，不强制补新版字段。

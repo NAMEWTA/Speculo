@@ -487,6 +487,7 @@ function workflowPathToCanonical(value, tagsBySource) {
   if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
   if (relative === "common/tools/change-artifacts.mjs") return "本地只读工件与完成证据检查（缺工具时按内联合同核对并明确未执行自动检查）";
   if (relative === "common/tools/validate-retro.mjs") return "本地只读复盘与升级证据检查（缺工具时按内联合同逐项核对并明确未执行自动检查，不伪造批准、写入或封存）";
+  if (relative === "common/tools/validate-handoff.mjs") return "本地只读交接与会话定位检查（缺工具时按内联合同核对并明确未执行自动检查，不扫描外部日志或认证工具身份）";
 
   if (relative === "common/tools/README.md") {
     return "Speculo Node 校验器说明";

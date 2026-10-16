@@ -28,7 +28,7 @@ function check(value, rule, at, errors) {
   } else if (value && typeof value === "object") {
     for (const k of rule.required ?? []) if (!(k in value)) errors.push(at + ": missing " + k);
     for (const [k,v] of Object.entries(value)) {
-      if (rule.properties?.[k]) check(v,rule.properties[k],at+"."+k,errors);
+      if (Object.hasOwn(rule.properties ?? {},k)) check(v,rule.properties[k],at+"."+k,errors);
       else if (rule.additionalProperties === false) errors.push(at + ": unknown " + k);
     }
   }
