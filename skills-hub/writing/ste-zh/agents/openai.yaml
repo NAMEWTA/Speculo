@@ -1,0 +1,6 @@
+interface:
+  display_name: "简化技术中文"
+  short_description: "按 STE 原则做中文结论汇报，或按 strict 与 80% 改写英文"
+  default_prompt: "请使用 $ste-zh：用 STE 规范汇报刚才的结果，并写明验证状态。"
+policy:
+  allow_implicit_invocation: false

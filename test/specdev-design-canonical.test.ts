@@ -68,3 +68,18 @@ test('isolated design canonical generation is deterministic and fails on missing
     assert.match(result.stderr, /change-design\.schema\.json/);
   } finally { await rm(target, { recursive: true, force: true }); }
 });
+
+test('optional orchestration in canonical retains both host targets without native install paths', async () => {
+  for (const name of outputs) {
+    const content = await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8');
+    for (const mode of ['herdr', 'orca']) {
+      const contract = inline(content, `shared-coordination-modes-${mode}`);
+      assert.doesNotMatch(contract, /\.(?:agents|claude)\/skills\/|roots\.skills|<Path>/);
+      assert.match(contract, /通用智能体.*Claude/);
+      assert.match(contract, /guide/);
+      assert.match(contract, /fallback|回退/);
+    }
+    assert.match(content, /selection: preferred/);
+    assert.match(content, /fallback: \[lead\]/);
+  }
+});

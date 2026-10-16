@@ -1,0 +1,4 @@
+interface:
+  display_name: "Linux 磁盘清理"
+  short_description: "审计 Linux 磁盘并具名清理，保护内核、业务数据和活动容器"
+  default_prompt: "请使用 $linux-dev-disk-cleanup：仅审计根分区空间，列出可清理项目让我确认。"

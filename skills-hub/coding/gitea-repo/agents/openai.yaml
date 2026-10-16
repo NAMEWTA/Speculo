@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gitea / Forgejo 仓库"
+  short_description: "管理 Gitea 与 Forgejo 的仓库对象、完整分页和具名变更验收"
+  default_prompt: "请使用 $gitea-repo：列出这台 Forgejo 的 owner/repo 所有关闭 issue，不做修改。"

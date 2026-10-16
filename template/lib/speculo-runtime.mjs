@@ -7593,6 +7593,27 @@ async function readAssetCatalog(root) {
 // src/coordination.ts
 import { readFile as readFile3 } from "node:fs/promises";
 import { join as join3 } from "node:path";
+
+// src/retained-workflows.ts
+function validateRetainedWorkflows(value, installed) {
+  if (value === void 0) return [];
+  if (!Array.isArray(value)) throw new Error("invalid-retained-workflows");
+  const ids = /* @__PURE__ */ new Set(), works = /* @__PURE__ */ new Set();
+  for (const w of value) {
+    if (!w || typeof w.id !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(w.id) || ids.has(w.id) || installed.includes(w.id) || Object.keys(w).some((k) => !["id", "works"].includes(k)) || !Array.isArray(w.works)) throw new Error("invalid-retained-workflow");
+    ids.add(w.id);
+    for (const work of w.works) {
+      if (!work || typeof work.id !== "string" || !work.id.startsWith(w.id + "/") || !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(work.id) || works.has(work.id) || Object.keys(work).some((k) => !["id", "stages"].includes(k)) || !Array.isArray(work.stages) || work.stages.some((s) => typeof s !== "string" || !s.trim()) || new Set(work.stages).size !== work.stages.length) throw new Error("invalid-retained-work");
+      works.add(work.id);
+    }
+  }
+  return value;
+}
+function retainedAssets(registry) {
+  return registry.flatMap((w) => w.works.map((work) => ({ id: work.id, stages: work.stages, kind: "work-skill", domain: w.id, name: work.id.split("/")[1], entry: "", description: "inactive retained runtime registration" })));
+}
+
+// src/coordination.ts
 var ORCHESTRATION_MODES = ["lead", "orca", "herdr", "cli"];
 function object(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -7609,7 +7630,7 @@ function choice(value) {
   if (value.fallback !== void 0 && (!Array.isArray(value.fallback) || new Set(value.fallback).size !== value.fallback.length || value.fallback.some((m) => !ORCHESTRATION_MODES.includes(m)))) throw new Error("coordination-policy-conflict: invalid fallback");
   if (value.selection === "required" && Array.isArray(value.fallback) && value.fallback.length) throw new Error("coordination-policy-conflict: required choice cannot allow fallback");
 }
-function validateProjectCoordination(value, catalog) {
+function validateProjectCoordination(value, catalog, inactive = []) {
   if (!object(value)) throw new Error("coordination-policy-conflict: project facts must be an object");
   exact(value, ["schema_version", "defaults", "rules"]);
   if (value.schema_version !== 1 || !Array.isArray(value.rules)) throw new Error("coordination-policy-conflict: expected schema 1 and rules");
@@ -7619,14 +7640,14 @@ function validateProjectCoordination(value, catalog) {
     if (!object(rule)) throw new Error("coordination-policy-conflict: invalid rule");
     exact(rule, ["work_id", "stage", "choice"]);
     choice(rule.choice);
-    const asset = catalog.assets.find((a) => a.kind === "work-skill" && a.id === rule.work_id);
+    const asset = [...catalog.assets, ...inactive].find((a) => a.kind === "work-skill" && a.id === rule.work_id);
     if (!asset || rule.stage !== void 0 && (typeof rule.stage !== "string" || !asset.stages.includes(rule.stage))) throw new Error("coordination-policy-conflict: unknown Work or stage");
     const key = `${rule.work_id}:${rule.stage ?? "*"}`;
     if (seen.has(key)) throw new Error("coordination-policy-conflict: duplicate rule " + key);
     seen.add(key);
   }
 }
-async function readProjectCoordination(stateRoot, catalog) {
+async function readProjectCoordination(stateRoot, catalog, inactive) {
   let source;
   try {
     source = await readFile3(join3(stateRoot, "coordination", "project.json"), "utf8");
@@ -7634,8 +7655,21 @@ async function readProjectCoordination(stateRoot, catalog) {
     if (e.code === "ENOENT") return null;
     throw e;
   }
+  if (inactive === void 0) {
+    inactive = [];
+    let metadata;
+    try {
+      metadata = JSON.parse(await readFile3(join3(stateRoot, "install.json"), "utf8"));
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
+    if (metadata) {
+      if (metadata.schema_version !== 4) throw new Error("invalid-retained-installation-schema");
+      inactive = retainedAssets(validateRetainedWorkflows(metadata.retained_workflows, catalog.assets.filter((a) => a.kind === "domain-skill").map((a) => a.domain)));
+    }
+  }
   const value = JSON.parse(source);
-  validateProjectCoordination(value, catalog);
+  validateProjectCoordination(value, catalog, inactive);
   return value;
 }
 
@@ -7772,10 +7806,10 @@ function markdownBodyLines(text, path = "README.md") {
       }
     }
     if (visible !== raw && /^Outcome\b/i.test(visible.trimStart())) fail("outcome-invalid", path, "Outcome must occupy an uncommented independent line", i + 1);
-    const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(visible);
-    if (open) {
-      if (open[1][0] === "`" && open[2].includes("`")) fail("outcome-invalid", path, "ambiguous code fence", i + 1);
-      fence = { char: open[1][0], length: open[1].length, line: i + 1 };
+    const open2 = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(visible);
+    if (open2) {
+      if (open2[1][0] === "`" && open2[2].includes("`")) fail("outcome-invalid", path, "ambiguous code fence", i + 1);
+      fence = { char: open2[1][0], length: open2[1].length, line: i + 1 };
       continue;
     }
     if (/^(?: {4}|\t| {0,3}>)/.test(visible)) continue;
@@ -7914,6 +7948,146 @@ function readArtifactSectionSync(path, anchor) {
   if (!body.replace(/^#+ .*$/gm, "").trim()) fail("closure-evidence-missing", path, `empty ${anchor} section`, start);
   return { path, section: anchor, text: body, line: start };
 }
+
+// src/hub-catalog.ts
+import { readFile as readFile4, readdir as readdir4 } from "node:fs/promises";
+import { join as join6, posix } from "node:path";
+
+// src/skill-trees.ts
+import { chmod, lstat as lstat3, mkdir, readdir as readdir3, rmdir } from "node:fs/promises";
+import { dirname as dirname4, join as join5 } from "node:path";
+
+// src/external-files.ts
+import { constants } from "node:fs";
+import { lstat as lstat2, open, rename, rm } from "node:fs/promises";
+function image(content, mode = 420) {
+  return { content: Buffer.from(content).toString("base64"), mode: process.platform === "win32" ? mode & 128 ? 438 : 292 : mode };
+}
+async function readImage(path, options = {}) {
+  let stat;
+  try {
+    stat = await lstat2(path);
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+  if (!stat.isFile() || stat.isSymbolicLink() || !options.allowSourceHardlinks && stat.nlink !== 1) {
+    throw new Error(`unsafe-external-file: ${path}; preserve the link and resolve source ownership before init`);
+  }
+  const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const actual = await handle.stat();
+    if (!actual.isFile() || actual.dev !== stat.dev || actual.ino !== stat.ino || !options.allowSourceHardlinks && actual.nlink !== 1) throw new Error(`external-drift: ${path}`);
+    return image(await handle.readFile(), stat.mode & 511);
+  } finally {
+    await handle.close();
+  }
+}
+
+// src/skill-trees.ts
+var absent = { kind: "absent" };
+function validSkillNode(node, directories = true) {
+  if (!node || typeof node !== "object") return false;
+  if (node.kind === "absent") return Object.keys(node).length === 1;
+  if (!Number.isInteger(node.mode) || node.mode < 0 || node.mode > 511) return false;
+  if (node.kind === "directory") return directories && Object.keys(node).length === 2;
+  return node.kind === "file" && Object.keys(node).length === 3 && typeof node.content === "string" && Buffer.from(node.content, "base64").toString("base64") === node.content;
+}
+async function readSkillNode(path, source = false) {
+  let stat;
+  try {
+    stat = await lstat3(path);
+  } catch (e) {
+    if (e.code === "ENOENT") return absent;
+    throw e;
+  }
+  if (stat.isSymbolicLink()) throw new Error("skill-symlink: " + path);
+  if (stat.mode & 3584) throw new Error("unsafe-skill-mode: " + path);
+  if (stat.isDirectory()) return { kind: "directory", mode: process.platform === "win32" ? 493 : stat.mode & 511 };
+  const value = await readImage(path, { allowSourceHardlinks: source });
+  if (!value) return absent;
+  return { kind: "file", ...value };
+}
+async function snapshotSkillTree(root, options = {}) {
+  const nodes = /* @__PURE__ */ new Map();
+  async function visit(name) {
+    if (name && (!safeRelativePath(name) || name.endsWith("/"))) throw new Error("unsafe-skill-resource: " + name);
+    const node = await readSkillNode(join5(root, name), options.source);
+    if (node.kind === "absent") return;
+    nodes.set(name, node);
+    if (node.kind === "directory") {
+      const names = (await readdir3(join5(root, name))).sort();
+      if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) throw new Error("ambiguous-skill-casing: " + root);
+      for (const child of names) await visit(name ? `${name}/${child}` : child);
+    }
+  }
+  await visit("");
+  return nodes;
+}
+
+// src/hub-catalog.ts
+var SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+async function discoverHubCatalog(packageRoot) {
+  const root = join6(packageRoot, "skills-hub"), catalog = /* @__PURE__ */ new Map();
+  let bundle;
+  try {
+    bundle = JSON.parse(await readFile4(join6(packageRoot, "dist/src/hub-resources.json"), "utf8"));
+  } catch (e) {
+    if (e.code !== "ENOENT") throw e;
+  }
+  if (bundle && (bundle.schema_version !== 1 || !Array.isArray(bundle.packages) || new Set(bundle.packages.map((p) => p.id)).size !== bundle.packages.length)) throw new Error("invalid-hub-bundle");
+  const names = new Set((await readAssetCatalog(join6(packageRoot, "template"))).assets.map((a) => a.name));
+  const categories = await readdir4(root, { withFileTypes: true }).catch((e) => {
+    if (e.code === "ENOENT") return [];
+    throw e;
+  });
+  for (const category of categories.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (category.isSymbolicLink()) throw new Error("hub-source-symlink: " + category.name);
+    if (!category.isDirectory()) continue;
+    if (!SLUG.test(category.name)) throw new Error("invalid-hub-category: " + category.name);
+    for (const entry of (await readdir4(join6(root, category.name), { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.isSymbolicLink()) throw new Error("hub-source-symlink: " + entry.name);
+      if (!entry.isDirectory()) continue;
+      const source = join6(root, category.name, entry.name), content = await readFile4(join6(source, "SKILL.md"));
+      const errors = validateSkill(content, entry.name);
+      if (errors.length) throw new Error(`invalid-hub-skill: ${category.name}/${entry.name}: ${errors.join("; ")}`);
+      if (names.has(entry.name)) throw new Error("duplicate-skill-name: " + entry.name);
+      names.add(entry.name);
+      const id = `${category.name}/${entry.name}`;
+      let tree = await snapshotSkillTree(source, { source: true });
+      if (bundle) {
+        const packaged = bundle.packages.find((p) => p.id === id);
+        if (!packaged || !Array.isArray(packaged.nodes)) throw new Error("missing-hub-bundle-package: " + id);
+        const original = /* @__PURE__ */ new Map();
+        for (const { path, node } of packaged.nodes) {
+          if (typeof path !== "string" || path && (!safeRelativePath(path) || path.endsWith("/")) || original.has(path) || !validSkillNode(node) || node.kind === "absent") throw new Error("invalid-hub-bundle-node");
+          original.set(path, process.platform === "win32" ? { ...node, mode: node.kind === "directory" ? 493 : node.mode & 128 ? 438 : 292 } : node);
+        }
+        if (original.get("")?.kind !== "directory" || original.get("SKILL.md")?.kind !== "file") throw new Error("invalid-hub-bundle-root");
+        for (const [path, node] of original) if (path && original.get(posix.dirname(path) === "." ? "" : posix.dirname(path))?.kind !== "directory") throw new Error("invalid-hub-bundle-parent");
+        for (const [path, node] of tree) {
+          const expected = original.get(path);
+          if (!expected || expected.kind !== node.kind || node.kind === "file" && (expected.kind !== "file" || expected.content !== node.content)) throw new Error(`stale-hub-bundle: ${id}/${path}; rebuild from skills-hub`);
+        }
+        tree = original;
+      }
+      for (const [path, node] of tree) if (node.kind === "file" && path.endsWith(".md")) {
+        const text = Buffer.from(node.content, "base64").toString("utf8").replace(/```[^]*?```/g, "");
+        for (const match of text.matchAll(/\[[^\]]*\]\(([^\s)]+)(?:\s+"[^"]*")?\)/g)) {
+          const link = match[1];
+          if (/^(?:[a-z][a-z0-9+.-]*:|#|\/)/i.test(link) || /[<>${}]/.test(link)) continue;
+          const resource = decodeURIComponent(link.split("#")[0]);
+          if (!resource) continue;
+          const resolved = posix.normalize(posix.join(posix.dirname(path), resource)).replace(/\/$/, "");
+          if (!safeRelativePath(resolved) || !tree.has(resolved)) throw new Error(`hub-resource-link: ${category.name}/${entry.name}/${path}: ${link}`);
+        }
+      }
+      catalog.set(id, { id, name: entry.name, description: String(parseFrontmatter(content).fields.description), root: source, tree });
+    }
+  }
+  if (bundle && bundle.packages.some((p) => !catalog.has(p.id))) throw new Error("hub-bundle-catalog-mismatch");
+  return catalog;
+}
 export {
   ArtifactError,
   DEFAULT_ROOTS,
@@ -7923,6 +8097,7 @@ export {
   containedPath,
   discoverChanges,
   discoverChangesSync,
+  discoverHubCatalog,
   locateProject,
   markdownBodyLines,
   parseFrontmatter,

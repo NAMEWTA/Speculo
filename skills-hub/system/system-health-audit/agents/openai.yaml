@@ -1,0 +1,4 @@
+interface:
+  display_name: "跨平台系统审计"
+  short_description: "只读建立跨平台开发机基线，区分环境并形成有证据的优化计划"
+  default_prompt: "请使用 $system-health-audit：Windows 开发机最近编译慢，先只读定位瓶颈，不删除东西。"

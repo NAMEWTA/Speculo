@@ -48,3 +48,7 @@ Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突�
 先读真实调用方、当前 schema 和测试，再改作者参考。按 [验证选择](validation-gates.md) 检查受影响的格式、catalog、links、disclosure 与领域行为；安装/恢复变化才增加对应测试，涉及生成物才生成两次确认无 diff。未知字段和用户 runtime bytes 遵循各 schema 的保留规则，不能为了通过测试减掉业务门禁。记录命令、退出码、未验证宿主行为、恢复入口，不将字符数变化当 Token/额度收益。
 
 当前工程 docs 位于 state/docs 或项目已有负责正文，按主题归属；明确请求才建全面基线，A/I 用共享 current-facts-docs 局部维护，docs-sync 才手动全局整理并拥有 Git/state。A 先核对 change/ADR/context/docs 与适用 DESIGN，维护现役资产后最后移动；无 change 知识维护仅需持久化恢复时建 maintenance 回执。
+
+## Skills Hub 分发
+
+根目录 `skills-hub/` 与 `template/` 同级，保存随 npm 包分发的完整技能包正本。安装器只枚举 `<category>/<skill>/SKILL.md`，嵌套示例作为资源保留；用户项目仅接收勾选的包。它与 `.agents/skills/` 的维护者 authoring skills 和 template 的领域/Work 投影分别归属。Hub 安装、更新、卸载由 CLI 事务及 `.speculo/hub-skills.json` 管理，Work 不代写。

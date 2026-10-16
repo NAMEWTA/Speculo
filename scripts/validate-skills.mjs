@@ -2,7 +2,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateSkill, readAssetCatalog } from '../template/lib/speculo-runtime.mjs';
+import { validateSkill, readAssetCatalog, discoverHubCatalog } from '../template/lib/speculo-runtime.mjs';
 export { validateSkill };
 export async function validateSkills(root) {
   const errors = []; let checked = 0;
@@ -19,6 +19,7 @@ export async function validateSkills(root) {
   }
   await walk(join(root,'template'));
   try { await readAssetCatalog(join(root,'template')); } catch(error) { errors.push(String(error)); }
+  try { checked += (await discoverHubCatalog(root)).size; } catch(error) { errors.push(String(error)); }
   return {checked,errors};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {

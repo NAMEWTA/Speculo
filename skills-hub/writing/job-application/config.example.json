@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "skill": "job-application",
+  "persist_root": "/absolute/path/to/job-application",
+  "kb_root": "/absolute/path/to/knowledge-base",
+  "locale": "zh",
+  "page_budget": 2,
+  "updated_at": "2026-09-21T00:00:00.000Z"
+}

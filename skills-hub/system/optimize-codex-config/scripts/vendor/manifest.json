@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "packages": {
+    "toml-eslint-parser": "1.0.3",
+    "eslint-visitor-keys": "5.0.0",
+    "jsonc-parser": "3.3.1",
+    "esbuild": "0.25.5"
+  },
+  "sha256": "910fc40ab352d5f5789a9d4aea5d0a2488c9735ae63296cd964755ec50d9eb4d",
+  "runtime_network": false,
+  "runtime_dependencies": [],
+  "toml_version": "1.0.0",
+  "json_policy": "strict; comments and duplicate keys rejected"
+}

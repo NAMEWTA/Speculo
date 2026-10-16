@@ -22,6 +22,8 @@
     "kernel",
     "install.json",
     "managed.json",
+    "projections.json",
+    "hub-skills.json",
     "baselines",
     "back",
     "AGENTS.md"

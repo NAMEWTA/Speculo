@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
 import { planSkillProjection, resolveExposure, validateExposureRequest, type SkillRequest, type ProjectionHost, type ExposureSummary, type ProjectionSummaries } from "./agent-skills.js";
+import { discoverHubCatalog, readHubManifest, resolveHubIds, planHubSkills, type HubSummary } from "./hub-skills.js";
+import { planWorkflowRemoval, writeRemovalMetadata, type WorkflowRemoval } from "./workflow-install.js";
 import { readAssetCatalog } from "./assets.js";
 import { InstallCancelled } from "./interaction.js";
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
@@ -15,9 +17,7 @@ import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
   isInteractive,
-  promptWorkflowSelection,
   scanInstalledWorkflows,
-  type WorkflowCatalog,
   type WorkflowSelection,
 } from "./workflows.js";
 
@@ -29,6 +29,8 @@ export type SpeculoCommandResult = {
   exposure: ExposureSummary & { projected: number };
   projections: ProjectionSummaries;
   warnings: string[];
+  hub: HubSummary;
+  removedWorkflowIds: string[];
 };
 
 export type InstallProgress = "staging" | "staged" | "committing" | "committed";
@@ -37,6 +39,8 @@ export type InstallPreview = {
   mode: "init" | "refresh";
   workflowIds: string[];
   retainedWorkflowIds: string[];
+  removedWorkflowIds?: string[];
+  hub?: HubSummary;
   exposure: ExposureSummary;
   projections: ProjectionSummaries;
   warnings: string[];
@@ -47,6 +51,7 @@ export type SpeculoOptions = {
   selection?: WorkflowSelection;
   skillTargets?: ProjectionHost[];
   skills?: SkillRequest;
+  hubSkills?: SkillRequest;
   /** Ask once for missing exposure options after staging; library calls default to non-interactive. */
   promptExposure?: boolean;
   /** Called after staging and validation, before any active installation changes. */
@@ -89,20 +94,6 @@ async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<
   }
 }
 
-async function resolveSelection(packageRoot: string, currentRoot: string, options: SpeculoOptions): Promise<WorkflowSelection> {
-  const catalog = await discoverWorkflowCatalog(packageRoot);
-  if (options.selection) {
-    const ids = [...new Set(options.selection.workflowIds)].sort();
-    for (const id of ids) if (!catalog.has(id)) throw new Error("Unknown workflow package: " + id);
-    return { workflowIds: ids };
-  }
-  const installed = new Set(await scanInstalledWorkflows(currentRoot));
-  if (!isInteractive()) return { workflowIds: [...installed].filter((id) => catalog.has(id)).sort() };
-  return promptWorkflowSelection(catalog, {
-    preSelectedWorkflowIds: new Set([...installed].filter((workflowId) => catalog.has(workflowId))),
-  });
-}
-
 async function copySelectedWorkflow(packageRoot: string, stagedRoot: string, workflowId: string): Promise<void> {
   const source = join(assetRoot(packageRoot), "workflows", workflowId);
   if (!(await pathExists(join(source, WORKFLOW_ENTRY)))) throw new Error("Unknown workflow package: " + workflowId);
@@ -121,29 +112,11 @@ async function copySelectedWorkflow(packageRoot: string, stagedRoot: string, wor
   await cp(stateSource, stagedState, { recursive: true, force: true });
 }
 
-async function copyUnselectedCurrentWorkflows(catalog: WorkflowCatalog, selection: WorkflowSelection, previousRoot: string, stagedRoot: string): Promise<void> {
-  const selected = new Set(selection.workflowIds);
-  for (const workflowId of catalog.keys()) {
-    if (selected.has(workflowId)) continue;
-    const previousWorkflow = join(previousRoot, "workflows", workflowId);
-    if (await pathExists(previousWorkflow)) await cp(previousWorkflow, join(stagedRoot, "workflows", workflowId), { recursive: true, force: true });
-  }
-}
-
-async function installedUnselectedWorkflowIds(catalog: WorkflowCatalog, selection: WorkflowSelection, previousRoot: string): Promise<string[]> {
-  const selected = new Set(selection.workflowIds);
-  const installed: string[] = [];
-  for (const workflowId of catalog.keys()) {
-    if (!selected.has(workflowId) && await pathExists(join(previousRoot, "workflows", workflowId, WORKFLOW_ENTRY))) installed.push(workflowId);
-  }
-  return installed.sort();
-}
-
 async function buildStagedInstall(
   packageRoot: string,
   target: string,
   previousRoot: string,
-  catalog: WorkflowCatalog,
+  removal: WorkflowRemoval,
   selection: WorkflowSelection,
   existed: boolean,
 ): Promise<{ stagedRoot: string; refresh: RefreshSummary }> {
@@ -152,9 +125,9 @@ async function buildStagedInstall(
   const stagedRoot = await mkdtemp(join(target, TRANSACTIONS_ROOT, "stage-"));
   try {
     await copyCoreAssets(packageRoot, stagedRoot);
-    await copyUnselectedCurrentWorkflows(catalog, selection, previousRoot, stagedRoot);
+    for (const id of removal.retained) await cp(join(previousRoot, "workflows", id), join(stagedRoot, "workflows", id), { recursive: true, preserveTimestamps: true, verbatimSymlinks: true });
     for (const workflowId of selection.workflowIds) await copySelectedWorkflow(packageRoot, stagedRoot, workflowId);
-    const unselectedWorkflowIds = await installedUnselectedWorkflowIds(catalog, selection, previousRoot);
+
     const workspace = { schema_version: 2, layout_version: "agents-v2", installation_id: existed ? (await readWorkspace(target)).installation_id : randomUUID(), path_base: "project-root", roots: DEFAULT_ROOTS };
     validateWorkspace(workspace);
     await writeFile(join(stagedRoot, ".speculo", "workspace.json"), JSON.stringify(workspace, null, 2) + "\n");
@@ -164,9 +137,12 @@ async function buildStagedInstall(
       previousRoot,
       stagedRoot,
       selectedWorkflowIds: selection.workflowIds,
-      installedWorkflowIds: [...new Set([...selection.workflowIds, ...unselectedWorkflowIds])].sort(),
+      retainedWorkflowIds: removal.retained,
+      installedWorkflowIds: [...new Set([...selection.workflowIds, ...removal.retained])].sort(),
       existed,
     });
+    await writeRemovalMetadata(stagedRoot, removal);
+    for (const id of removal.retained) if (await fingerprintTree(join(previousRoot, "workflows", id)) !== await fingerprintTree(join(stagedRoot, "workflows", id))) throw new Error("retained-workflow-drift: " + id);
     return { stagedRoot, refresh };
   } catch (error) {
     await rm(stagedRoot, { recursive: true, force: true });
@@ -180,6 +156,11 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
   const packageRoot = resolve(options.packageRoot ?? process.cwd());
   const root = installRoot(target);
   await assertInstallDirectory(target);
+  if (options.skillTargets?.length === 0) {
+    const currentHub = await readHubManifest(target);
+    const ids = resolveHubIds(options.hubSkills, await discoverHubCatalog(packageRoot), currentHub?.packages.map(p => p.id) ?? []);
+    if (ids.length) throw new Error("--hub-skills requires at least one --skill-targets destination");
+  }
   const existed = await pathExists(root);
   // Reject unsafe handbook nodes before creating installation scaffolding.
   // The authoritative snapshot is still retaken after acquiring the lock.
@@ -200,12 +181,24 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     await writeFile(join(lockRoot, ".gitignore"), "*\n", { mode: 0o600 });
     await writeDurableJson(join(lockRoot, "owner.json"), { schema_version: 1, id: randomUUID(), host: hostname(), pid: process.pid, started_at: new Date().toISOString() });
     const externalSnapshot = await snapshotExternalFiles(target);
+    const initialFingerprint = await fingerprintTree(root);
 
     const catalog = await discoverWorkflowCatalog(packageRoot);
-    const selection = await resolveSelection(packageRoot, root, options);
-    const initialFingerprint = await fingerprintTree(root);
+    const hubCatalog = await discoverHubCatalog(packageRoot), hubManifest = await readHubManifest(target);
+    const installedBefore = await scanInstalledWorkflows(root);
+    let workflowIds = [...new Set(options.selection?.workflowIds ?? installedBefore)].sort();
+    for (const id of workflowIds) if (!catalog.has(id)) throw new Error("Unavailable workflow: " + id + "; explicitly select a new list or none");
+    const priorHubIds = [...new Set(hubManifest?.packages.map(p => p.id) ?? [])];
+    let hubIds = resolveHubIds(options.hubSkills, hubCatalog, priorHubIds);
+    if (isInteractive() && options.promptExposure && (!options.selection || !options.hubSkills)) {
+      const { promptPackages } = await import("./install-ui.js");
+      ({ workflowIds, hubIds } = await promptPackages({ workflows: catalog, hub: hubCatalog, workflowIds, hubIds, chooseWorkflows: !options.selection, chooseHub: !options.hubSkills }));
+    }
+    if (hubIds.length && options.skillTargets?.length === 0) throw new Error("--hub-skills requires at least one --skill-targets destination");
+    const selection = { workflowIds };
+    const removal = await planWorkflowRemoval(target, root, installedBefore, workflowIds);
     options.onProgress?.("staging");
-    const staged = await buildStagedInstall(packageRoot, target, root, catalog, selection, existed);
+    const staged = await buildStagedInstall(packageRoot, target, root, removal, selection, existed);
     stagedRoot = staged.stagedRoot;
     refresh = staged.refresh;
     options.onProgress?.("staged");
@@ -226,22 +219,29 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const assetCatalog = await readAssetCatalog(stagedRoot);
     const exposure = await resolveExposure({
       target, catalog: assetCatalog, targets: options.skillTargets, request: options.skills, prompt: options.promptExposure === true,
+      removedAssetIds: removal.removedAssetIds, hubSelected: hubIds.length > 0, defaultTargets: hubManifest ? [...new Set([...hubManifest.targets, ...hubManifest.packages.filter(p => hubIds.includes(p.id)).map(p => p.host)])] : undefined,
     });
     const projection = await planSkillProjection({ target, stagedRoot, packageVersion: refresh.targetVersion, exposure });
     if (projection.blockers.length) throw new RefreshBlockedError(projection.blockers);
-    const warnings = projection.warnings.map(w => `${w.code} ${w.path}: ${w.message}`);
+    const removalDrift = projection.warnings.filter(w => removal.removedAssetIds.some(id => w.path.endsWith(":" + id)));
+    if (removalDrift.length) throw new RefreshBlockedError(removalDrift);
+    const hub = await planHubSkills({ target, stagedRoot, packageVersion: refresh.targetVersion, catalog: hubCatalog, ids: hubIds, targets: exposure.targets });
+    const warnings = [...removal.warnings, ...projection.warnings.map(w => `${w.code} ${w.path}: ${w.message}`), ...hub.warnings];
     if (options.confirmInstall && !await options.confirmInstall({
       target, mode: existed ? "refresh" : "init", workflowIds: selection.workflowIds,
       retainedWorkflowIds: installed.filter(id => !selection.workflowIds.includes(id)),
-      exposure: projection.exposure, projections: projection.summaries, warnings,
+      exposure: projection.exposure, projections: projection.summaries, warnings, hub: hub.summary, removedWorkflowIds: removal.removed,
     })) throw new InstallCancelled(0);
     options.onProgress?.("committing");
-    await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook, projection.records);
+    const removedProjectionPaths = new Set(removal.projectionRecords.map(r => r.name));
+    await commitInstall(target, stagedRoot, initialFingerprint, edits, options.transactionHook, [
+      ...(projection.records ?? []).filter(r => !removedProjectionPaths.has(r.name)), ...removal.projectionRecords, ...hub.records,
+    ]);
     assets.push(...edits.map((edit) => edit.name + " (managed discovery/runtime references)"));
     stagedRoot = undefined;
     options.onProgress?.("committed");
     if (!refresh) throw new Error("Speculo refresh result was not produced");
-    return { target, mode: existed ? "refresh" : "init", assets, refresh, exposure: { ...projection.exposure, projected: projection.count }, projections: projection.summaries, warnings };
+    return { target, mode: existed ? "refresh" : "init", assets, refresh, exposure: { ...projection.exposure, projected: projection.count }, projections: projection.summaries, warnings, hub: hub.summary, removedWorkflowIds: removal.removed };
   } catch (error) {
     failure = error;
     throw error;

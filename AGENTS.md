@@ -6,7 +6,7 @@
 
 - npm 包：`@namewta/speculo`，运行时 Node.js `>=22.22.3 <25`，包管理器 `pnpm@11.1.3`。
 - CLI：`speculo` → `dist/src/cli.js`；入口支持 `init`、`version`、只读 `doctor`/`resolve` 和必须匹配事务 ID 的显式 `recover`。
-- 真实源：`src/`、`template/`、`scripts/`、`test/`、`.agents/skills/`。`template/canonical/`、`template/lib/` 和领域 AUTO-INDEX 是生成物，不是事实源。
+- 真实源：`src/`、`template/`、`skills-hub/`、`scripts/`、`test/`、`.agents/skills/`。`template/canonical/`、`template/lib/` 和领域 AUTO-INDEX 是生成物，不是事实源。
 - `.agents/skills/` 直接存放维护者 authoring skills 的完整正本及共享规则、references、scripts；不另设根级 `skills/` 或兼容指针。系统或插件缓存不属于本项目源。
 
 ## 常用命令
@@ -26,6 +26,7 @@ pnpm verify-package
 
 ## 资产入口
 
+- `skills-hub/<category>/<skill>/SKILL.md`：随 npm 分发的完整技能包；只发现两层入口，CLI 按选择安装至宿主目录，不执行其中脚本。
 - `template/commands/<id>/COMMAND.md`：一次调用的 scope、确认、报告和 skill 编排。
 - 领域与 Work 的 `SKILL.md`：按需触发的可复用能力；分支规则在 `references/`，机械动作在 `scripts/`。
 - `template/workflows/<workflow>/SKILL.md`：被动发现与永久知识入口；激活后读取`common/rules/activation-and-memory.md` 与所需运行合同，再读取当前 Work。

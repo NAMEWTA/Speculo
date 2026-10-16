@@ -1,0 +1,18 @@
+# Minimal domain baseline, not an exhaustive service allowlist.
+prepend:
+  - "DOMAIN-SUFFIX,anthropic.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,claude.ai,🔰 节点选择"
+  - "DOMAIN-SUFFIX,claude.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,openai.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,chatgpt.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,oaistatic.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,oaiusercontent.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,cursor.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,cursor.sh,🔰 节点选择"
+  - "DOMAIN-SUFFIX,x.ai,🔰 节点选择"
+  - "DOMAIN-SUFFIX,grok.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,gemini.google.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,aistudio.google.com,🔰 节点选择"
+  - "DOMAIN-SUFFIX,generativelanguage.googleapis.com,🔰 节点选择"
+append: []
+delete: []

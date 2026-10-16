@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@clack/core':
+        specifier: 0.4.1
+        version: 0.4.1
       '@clack/prompts':
         specifier: 0.9.1
         version: 0.9.1

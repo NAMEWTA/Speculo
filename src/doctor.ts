@@ -7,6 +7,8 @@ import { join, resolve } from "node:path";
 import { sha256File } from "./manifest.js";
 import { containedPath, safeRelativePath, validateWorkspace } from "./paths.js";
 import { readTransaction, LOCK_NAME } from "./transaction.js";
+import { inspectHubSkills } from "./hub-skills.js";
+import { retainedAssets, validateRetainedWorkflows } from "./workflow-install.js";
 import { inspectProjectedSkills } from "./agent-skills.js";
 
 export type DoctorResult = {
@@ -110,9 +112,12 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
   try {
     const catalog=await readAssetCatalog(join(target, INSTALL_ROOT));
     add("catalog", true, "registered sources are valid");
-    await readProjectCoordination(join(target, INSTALL_ROOT, '.speculo'),catalog);
+    const inactive = retainedAssets(validateRetainedWorkflows(install?.retained_workflows, workflows));
+    await readProjectCoordination(join(target, INSTALL_ROOT, '.speculo'),catalog,inactive);
+    if (inactive.length) add('retained-workflows',true,`${inactive.length} inactive Work registrations preserve runtime rules; no installed capability`);
     add("coordination",true,"optional project choices validated; no tools probed");
   } catch(error) { add("catalog-and-coordination", false, String(error)); }
+  for (const check of await inspectHubSkills(target)) add(check.id, check.ok, check.message);
   for (const check of await inspectProjectedSkills(target, workflows)) add(check.id, check.ok, check.message);
   try {
     if (await pathExists(join(target, LOCK_NAME))) {

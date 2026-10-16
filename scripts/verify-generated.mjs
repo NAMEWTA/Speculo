@@ -19,8 +19,12 @@ async function snapshot(directory,prefix=''){
  return rows.sort((a,b)=>a[0].localeCompare(b[0]));
 }
 const before=await snapshot(join(root,'template'));
+execFileSync(...pnpmCommand(['build']),{cwd:root,stdio:'pipe',timeout:300000});
+const hubImage=await readFile(join(root,'dist/src/hub-resources.json'));
 for(let pass=1;pass<=2;pass++){
  execFileSync(...pnpmCommand(['generate-assets']),{cwd:root,stdio:'pipe',timeout:300000});
+ execFileSync(process.execPath,['scripts/generate-hub-bundle.mjs'],{cwd:root,stdio:'pipe',timeout:300000});
+ assert.deepEqual(await readFile(join(root,'dist/src/hub-resources.json')),hubImage,`generation ${pass} changed Hub resource image`);
  assert.deepEqual(await snapshot(join(root,'template')),before,`generation ${pass} changed template content; rebuild before verification`);
 }
-console.log(`verify-generated: two generations unchanged across ${before.length} template files (routing, runtime library and all 12 canonical files)`);
+console.log(`verify-generated: two generations unchanged across ${before.length} template files (routing, runtime library, all 12 canonical files and Hub resource image)`);

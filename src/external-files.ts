@@ -18,18 +18,18 @@ export function imageDigest(value: FileImage): string {
   return value ? createHash("sha256").update(bytes(value)).update(`\0${value.mode}`).digest("hex") : "absent";
 }
 
-/** Do not treat EACCES, a dangling link, a directory or a shared inode as absence. */
-export async function readImage(path: string): Promise<FileImage> {
+/** Never treat unsafe nodes as absence. Shared inodes are allowed only for read-only package sources. */
+export async function readImage(path: string, options: { allowSourceHardlinks?: boolean } = {}): Promise<FileImage> {
   let stat;
   try { stat = await lstat(path); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; }
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) {
+  if (!stat.isFile() || stat.isSymbolicLink() || (!options.allowSourceHardlinks && stat.nlink !== 1)) {
     throw new Error(`unsafe-external-file: ${path}; preserve the link and resolve source ownership before init`);
   }
   const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
   try {
     const actual = await handle.stat();
-    if (!actual.isFile() || actual.dev !== stat.dev || actual.ino !== stat.ino || actual.nlink !== 1) throw new Error(`external-drift: ${path}`);
+    if (!actual.isFile() || actual.dev !== stat.dev || actual.ino !== stat.ino || (!options.allowSourceHardlinks && actual.nlink !== 1)) throw new Error(`external-drift: ${path}`);
     return image(await handle.readFile(), stat.mode & 0o777);
   } finally { await handle.close(); }
 }

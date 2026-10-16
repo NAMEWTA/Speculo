@@ -84,6 +84,34 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
     assert.equal(await resolvePathReference(target, "<Path>{roots.commands}/docs-sync/references/operation-contract.md</Path>"), join(target, ".agents/speculo/commands/docs-sync/references/operation-contract.md"));
     for (const value of ["../outside", "<Path>{roots.state}/../outside</Path>", "<Path>{roots.state}/changes/{change}</Path>", "<Path>{roots.unknown}/x</Path>", "C:\\escape", "<Path>bad"]) await assert.rejects(resolvePathReference(target, value));
   }));
+  it("preserves optional coordination preferences and third-party Herdr/Orca skills in both project targets across refresh and retry", async () => fixture(async (target) => {
+    const skills = new Map<string, string>();
+    for (const host of ["agents", "claude"]) for (const mode of ["herdr", "orca"]) {
+      const directory = join(target, `.${host}/skills/${mode}`);
+      await mkdir(directory, { recursive: true });
+      await writeFile(join(directory, "SKILL.md"), `---\nname: ${mode}\ndescription: Synthetic third-party fixture\nlicense: MIT\n---\n# ${mode}\n[Resource](resource.txt)\n`);
+      await writeFile(join(directory, "resource.txt"), `User-owned ${host}/${mode}\n`);
+      skills.set(directory, await fingerprintTree(directory));
+    }
+    const setup = { packageRoot, selection: { workflowIds: ["specdev"] }, skillTargets: ["agents", "claude"] as const, skills: { mode: "set" as const, assetIds: ["specdev/init-setup"] } };
+    await initSpeculo(target, { ...setup, skillTargets: [...setup.skillTargets] });
+    const stateRoot = join(target, ".agents/speculo/.speculo");
+    await mkdir(join(stateRoot, "coordination"));
+    const choices = JSON.stringify({ schema_version: 1, defaults: { mode: "orca", selection: "preferred", guide: ".claude/skills/orca/SKILL.md", fallback: ["lead"] }, rules: [{ work_id: "specdev/code-review", choice: { mode: "lead" } }] }, null, 2) + "\n";
+    await writeFile(join(stateRoot, "coordination/project.json"), choices);
+    const refresh = { ...setup, skillTargets: ["agents"] as Array<"agents" | "claude"> };
+    await assert.rejects(initSpeculo(target, { ...refresh, beforeCommit: async () => { throw new Error("injected coordination refresh interruption"); } }), /injected coordination refresh interruption/);
+    assert.equal(await readFile(join(stateRoot, "coordination/project.json"), "utf8"), choices);
+    for (const [directory, fingerprint] of skills) assert.equal(await fingerprintTree(directory), fingerprint);
+    await initSpeculo(target, refresh);
+    assert.equal(await readFile(join(stateRoot, "coordination/project.json"), "utf8"), choices);
+    for (const [directory, fingerprint] of skills) assert.equal(await fingerprintTree(directory), fingerprint);
+    const projections = JSON.parse(await readFile(join(stateRoot, "projections.json"), "utf8")) as { files: Array<{ path: string }> };
+    assert.ok(projections.files.every(item => !/\/skills\/(herdr|orca)\//.test(item.path)));
+    const beforeDoctor = await fingerprintTree(target);
+    assert.equal((await doctorSpeculo(target)).healthy, true);
+    assert.equal(await fingerprintTree(target), beforeDoctor);
+  }));
 });
 
 describe("review: trustworthy read-only doctor", () => {
@@ -155,7 +183,7 @@ describe("review: process-interruption recovery", () => {
     assert.equal(child.signal, "SIGKILL", child.stderr);
     const j = await readTransaction(target);
     assert.equal(j.phase, "skills-projected");
-    assert.equal(j.schema_version, 3);
+    assert.equal(j.schema_version, 4);
     await assert.rejects(readFile(join(target, ".claude/skills/learning-l-lesson/SKILL.md")), /ENOENT/);
     const outcome = await recoverInstall(target, j.id);
     await assert.rejects(readdir(join(target, ".agents/.speculo-transactions")), /ENOENT/);
@@ -218,7 +246,7 @@ describe("review R1/R2: metadata snapshots and configuration persistence", () =>
           throw new Error("injected interruption after metadata drift");
         } }), /recovery-required|committed-cleanup-pending/);
         const path = join(target, ".agents/.speculo-install.lock/transaction.json");
-        const j = await readTransaction(target); assert.equal(j.schema_version, 3); assert.equal(j.phase, phase);
+        const j = await readTransaction(target); assert.equal(j.schema_version, 4); assert.equal(j.phase, phase);
         // Disposable journal only: emulate a stopped owner for explicit recovery.
         const stopped = spawnSync(process.execPath, ["-e", ""], { timeout: 10000 });
         assert.equal(stopped.status, 0); j.pid = stopped.pid;

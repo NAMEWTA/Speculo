@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job application"
+  short_description: "从知识库生成经历原件，再按岗位派生简历、自我介绍、面试题和提升计划"
+  default_prompt: "Use $job-application to scan my knowledge base into a career corpus, then tailor a resume, 3-4 minute pitch, interview questions, and an improvement plan for a specific job. Do not invent metrics."

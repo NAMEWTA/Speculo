@@ -7,7 +7,8 @@ import { readAssetCatalog, type AssetCatalog } from "../src/assets.js";
 import { readProjectionManifest, resolveProjectionIds, resolveExposure } from "../src/agent-skills.js";
 import { initSpeculo, type InstallPreview } from "../src/index.js";
 import { InstallCancelled } from "../src/interaction.js";
-import { exposureGroups, promptExposureConfiguration, promptExposure, promptWorkflows, confirmInstallPreview, formatInstallPreview, wrapTerminalText, type PromptPort } from "../src/install-ui.js";
+import { exposureGroups, promptExposureConfiguration, promptExposure, promptWorkflows, promptPackages, renderPackageChoices, confirmInstallPreview, formatInstallPreview, wrapTerminalText, type PromptPort } from "../src/install-ui.js";
+import { discoverHubCatalog } from "../src/hub-skills.js";
 import { discoverWorkflowCatalog } from "../src/workflows.js";
 import { fingerprintTree } from "../src/manifest.js";
 import { RefreshBlockedError } from "../src/refresh.js";
@@ -17,6 +18,28 @@ const packageRoot = process.cwd();
 const catalog = await readAssetCatalog(join(packageRoot, "template"));
 const workflows = await discoverWorkflowCatalog(packageRoot);
 const emptyOptions = { targets: ["agents" as const], catalog, existing: [] as string[], hasHistory: false };
+test("one package list has render-only sections, category labels, exact preselection and narrow scrolling", async () => {
+  const hub = await discoverHubCatalog(packageRoot);
+  const s = script([{ kind: "multiselect", value: ["hub:automation/orca", "workflow:specdev"], check: o => {
+    assert.equal(o.options.length, 20);
+    assert.deepEqual(o.initialValues, ["hub:automation/herdr", "workflow:learning"]);
+    assert.equal(o.options[0].section, "SKILLS-HUB"); assert.equal(o.options[15].section, "WORKFLOWS");
+    assert.equal(o.options[0].label, "automation/grok-bot-team-steward");
+    assert.ok(o.options.every((v: any) => /^(hub|workflow):/.test(v.value)));
+    const first = renderPackageChoices(o.options, o.initialValues, 0, 25, 12);
+    const last = renderPackageChoices(o.options, o.initialValues, 19, 25, 12);
+    assert.match(first, /---- SKILLS-HUB ----/); assert.match(first, /↓ 更多/);
+    assert.match(last, /---- WORKFLOWS ----/); assert.match(last, /↑ 更多/);
+    for (const line of (first + "\n" + last).split("\n")) assert.equal(wrapTerminalText(line, 25), line);
+  } }]);
+  assert.deepEqual(await promptPackages({ workflows, hub, workflowIds: ["learning"], hubIds: ["automation/herdr"], chooseWorkflows: true, chooseHub: true }, s.ui), { workflowIds: ["specdev"], hubIds: ["automation/orca"] });
+  s.done();
+});
+test("Hub selection requires a target and repeats only the target page", async () => {
+  const s = script([{ kind: "multiselect", value: [] }, { kind: "multiselect", value: ["claude"] }, { kind: "select", value: "none" }]);
+  assert.deepEqual(await promptExposureConfiguration({ catalog, existing: { targets: ["agents"], assetIds: [] }, hasHistory: false, hubSelected: true }, s.ui), { targets: ["claude"], assetIds: [] });
+  assert.ok(s.notes.some(n => n.includes("至少勾选"))); s.done();
+});
 test("terminal wrapping respects Chinese display cells and preserves complete text", () => {
   assert.equal(wrapTerminalText("中文ab入口", 6), "中文ab\n入口");
   const longId = "command/engineering-standards-builder";
@@ -231,7 +254,8 @@ test("preview cancellation changes no active files and cleans staging and lock",
       packageRoot, selection: { workflowIds: [] }, skills: { mode: "none" },
       confirmInstall: preview => {
         assert.equal(preview.projections.agents.removed.length, 20);
-        assert.deepEqual(preview.retainedWorkflowIds, ["learning"]);
+        assert.deepEqual(preview.retainedWorkflowIds, []);
+        assert.deepEqual(preview.removedWorkflowIds, ["learning"]);
         assert.match(formatInstallPreview(preview), /learning\/lesson/);
         return confirmInstallPreview(preview, s.ui);
       },
@@ -294,7 +318,7 @@ test("keep never follows newly installed groups; all recomputes the catalog", ()
   await initSpeculo(target, { packageRoot, selection: { workflowIds: [] }, skills: { mode: "all" } });
   const kept = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
   assert.equal(kept.projections.agents.selected.length, 10);
-  const expanded = await initSpeculo(target, { packageRoot, selection: { workflowIds: [] }, skills: { mode: "all" } });
+  const expanded = await initSpeculo(target, { packageRoot, skills: { mode: "all" } });
   assert.equal(expanded.projections.agents.selected.length, 20);
   assert.equal(expanded.projections.agents.added.length, 10);
   await noTransactionResidue(target);

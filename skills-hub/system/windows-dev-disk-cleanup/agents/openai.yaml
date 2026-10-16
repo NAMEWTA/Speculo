@@ -1,0 +1,4 @@
+interface:
+  display_name: "Windows 磁盘清理"
+  short_description: "审计 Windows 磁盘并具名清理，保护活动运行时和用户数据"
+  default_prompt: "请使用 $windows-dev-disk-cleanup：仅审计 C 盘空间，列出可清理项目让我确认。"

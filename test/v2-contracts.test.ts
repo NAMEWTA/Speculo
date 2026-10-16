@@ -3,9 +3,10 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { readAssetCatalog, parseFrontmatter, validateSkill } from '../src/assets.js';
-import { validateProjectCoordination } from '../src/coordination.js';
+import { readProjectCoordination, validateProjectCoordination, type CoordinationChoice } from '../src/coordination.js';
 import { DEFAULT_ROOTS, WORKSPACE_PATH, assertSupportedProject, locateProject, readWorkspace, resolvePathReference, workspaceForPathSync } from '../src/paths.js';
 import { fingerprintTree } from '../src/manifest.js';
 import { validateStructuredRuntime } from '../src/structured.js';
@@ -58,6 +59,47 @@ test('coordination rejects unknown fields, retired modes, duplicate rules, inval
   const rule={work_id:'specdev/implement',choice:{mode:'lead'}};
   for (const v of [{...base,runner:{}},{...base,schema_version:2},{...base,defaults:{mode:'native'}},{...base,defaults:{mode:'cli',selection:'required',fallback:['lead']}},{...base,defaults:{mode:'cli',fallback:['lead','lead']}},{...base,rules:[rule,rule]},{...base,rules:[{...rule,stage:'unknown'}]},{...base,rules:[{...rule,work_id:'missing/work'}]}]) assert.throws(()=>validateProjectCoordination(v,catalog),/coordination-policy-conflict/);
 });
+test('initialization example and all optional choices remain schema-compatible and read-only without tools or skills', () => fixture(async root => {
+  const require = createRequire(import.meta.url), Ajv = require('ajv/dist/2020.js').default;
+  const schema = JSON.parse(await readFile('template/references/coordination/project-facts.schema.json', 'utf8'));
+  const validate = new Ajv({ strict: true }).compile(schema);
+  const setup = await readFile('template/workflows/specdev/specdev-i-init-setup/references/first-setup.md', 'utf8');
+  const exampleBlock = setup.match(/```json\n([\s\S]*?)\n```/);
+  assert.ok(exampleBlock, 'initialization must supply a complete project configuration example');
+  const example = JSON.parse(exampleBlock[1]);
+  assert.equal(validate(example), true, JSON.stringify(validate.errors));
+  validateProjectCoordination(example, catalog);
+
+  const beforeMissing = await fingerprintTree(root);
+  assert.equal(await readProjectCoordination(root, catalog), null);
+  assert.equal(await fingerprintTree(root), beforeMissing);
+
+  const defaults: CoordinationChoice[] = [{ mode: 'lead' }, { mode: 'cli', selection: 'preferred', fallback: ['lead'] }];
+  for (const mode of ['herdr', 'orca'] as const) for (const host of ['agents', 'claude']) {
+    defaults.push({ mode, selection: 'preferred', fallback: ['lead'], guide: `.${host}/skills/${mode}/SKILL.md` });
+  }
+  const rules = [{ work_id: 'specdev/code-review', choice: { mode: 'cli', selection: 'required', tool: 'explicit-reviewer', guide: 'local help' } }];
+  await mkdir(join(root, 'coordination'));
+  const file = join(root, 'coordination/project.json');
+  for (const choice of defaults) {
+    const value = { schema_version: 1, defaults: choice, rules };
+    assert.equal(validate(value), true, JSON.stringify(validate.errors));
+    await writeFile(file, JSON.stringify(value, null, 2) + '\n');
+    const before = await fingerprintTree(root);
+    assert.deepEqual(await readProjectCoordination(root, catalog), value);
+    assert.deepEqual(await readProjectCoordination(root, catalog), value);
+    assert.equal(await fingerprintTree(root), before);
+  }
+  const invalid = [{ ...example, schema_version: 2 }, { ...example, defaults: { mode: 'herdr', selection: 'required', fallback: ['lead'] } }];
+  for (const value of invalid) assert.equal(validate(value), false);
+  for (const source of ['{ invalid', ...invalid.map(value => JSON.stringify(value))]) {
+    await writeFile(file, source);
+    const before = await fingerprintTree(root);
+    await assert.rejects(readProjectCoordination(root, catalog));
+    assert.equal(await fingerprintTree(root), before);
+    assert.equal(await readFile(file, 'utf8'), source);
+  }
+}));
 test('strict YAML rejects aliases, duplicate keys, unsafe mappings and host-only fields in sources', () => {
   for(const source of ['---\nname: a\nname: b\n---','---\nx: &a yes\ny: *a\n---','---\nmetadata:\n  __proto__: x\n---']) assert.throws(()=>parseFrontmatter(source));
   assert.ok(validateSkill('---\nname: work\ndescription: test\ndisable-model-invocation: true\n---','work').length);

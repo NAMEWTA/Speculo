@@ -1,0 +1,20 @@
+schema: grok-bot-team-snapshot/v1
+snapshot_id: grok-bot-team-YYYY-MM-DD
+exported_at: ""
+completed_at: ""
+timezone: ""
+exporter: 管家
+source_skill: grok-bot-team-steward
+status: in_progress
+bots: []
+rooms: []
+skills: []
+routines: []
+connectors: []
+conversations_coverage: {}
+cannot_restore:
+  - OAuth and browser sessions
+  - cloud computer packages not listed in shared/workspace-map.md
+  - official chat history the platform refused to export
+  - attachments over the ~25MB cap that were not split
+gaps: []

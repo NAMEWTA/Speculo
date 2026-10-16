@@ -39,6 +39,7 @@ export type PrepareRefreshOptions = {
   stagedRoot: string;
   selectedWorkflowIds: string[];
   installedWorkflowIds: string[];
+  retainedWorkflowIds?: string[];
   existed: boolean;
 };
 
@@ -208,12 +209,13 @@ export async function loadWorkflowContract(stagedRoot: string, workflowId: strin
   return contract as WorkflowRuntimeContract;
 }
 
-async function assertNoSymlinks(root: string): Promise<void> {
+async function assertNoSymlinks(root: string, skip: string[] = []): Promise<void> {
   if (!(await pathExists(root))) return;
   const blockers: RefreshBlocker[] = [];
   async function visit(current: string): Promise<void> {
     for (const entry of await readdir(current, { withFileTypes: true })) {
       const path = join(current, entry.name);
+      if (skip.includes(toPosix(relative(root, path)))) continue;
       const stats = await lstat(path);
       if (stats.isSymbolicLink()) {
         blockers.push({
@@ -462,8 +464,9 @@ async function writeMetadata(
   source: string | null,
   selected: Set<string>,
   installedWorkflowIds: string[],
+  retainedWorkflowIds: string[] = [],
 ): Promise<ManagedFileRecord[]> {
-  const all = await collectFiles(stagedRoot);
+  const all = await collectFiles(stagedRoot, { skipDirectory: p => retainedWorkflowIds.some(id => p === `workflows/${id}`) });
   const priorManagedPath = join(previousRoot, ".speculo", "managed.json");
   const priorManaged = new Set<string>();
   if (await pathExists(priorManagedPath)) {
@@ -499,6 +502,7 @@ async function writeMetadata(
     if (file.path.endsWith("runtime-contract.json")) kind = "contract";
     if (owner) managed.push({
       ...file,
+      mode: process.platform === "win32" ? 0o666 : (await lstat(join(stagedRoot, file.path))).mode & 0o777,
       owner,
       kind,
       package_version: owner.startsWith("workflow/") && !selected.has(owner.slice("workflow/".length))
@@ -523,14 +527,14 @@ async function writeMetadata(
   return managed;
 }
 
-async function preserveUnmanagedStatic(previousRoot:string, stagedRoot:string):Promise<void>{
+async function preserveUnmanagedStatic(previousRoot:string, stagedRoot:string, retained:string[] = []):Promise<void>{
   const manifest=await readJson(join(previousRoot,'.speculo/managed.json'),'managed files');
   if(manifest.schema_version!==2||!Array.isArray(manifest.files))throw new RefreshBlockedError([{code:'invalid-managed-manifest',path:'.speculo/managed.json',message:'cannot establish static ownership'}]);
   const owned=new Set(manifest.files.map(item=>(item as JsonObject).path));
   async function visit(dir:string){
     for(const entry of await readdir(dir,{withFileTypes:true})){
       const source=join(dir,entry.name),p=toPosix(relative(previousRoot,source));
-      if(p==='.speculo'||p==='config.json')continue;
+      if(p==='.speculo'||p==='config.json'||retained.some(id=>p===`workflows/${id}`))continue;
       if(entry.isDirectory()){await visit(source);continue;}
       if(owned.has(p))continue;
       const target=await containedPath(stagedRoot,p);
@@ -559,7 +563,7 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   const stagedState = join(options.stagedRoot, ".speculo");
 
   if (options.existed) {
-    await preserveUnmanagedStatic(options.previousRoot,options.stagedRoot);
+    await preserveUnmanagedStatic(options.previousRoot,options.stagedRoot,options.retainedWorkflowIds);
     await assertNoSymlinks(previousState);
     if (await pathExists(join(previousState, "specdev", ".markdown-conversion-pending"))) {
       throw new RefreshBlockedError([{ code: "markdown-conversion-pending", path: ".speculo/specdev/.markdown-conversion-pending", message: "the original conversion owner must finish recovery before replacing this installation" }]);
@@ -582,8 +586,8 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     }
     verifyOpaqueFiles(opaqueBefore, await opaqueFiles(stagedState, reserved, workflowContracts));
     const backupPath = await writeTargetedBackup(options.stagedRoot, backups, source ?? "unknown", targetVersion);
-    const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, source, selected, options.installedWorkflowIds);
-    await assertNoSymlinks(options.stagedRoot);
+    const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, source, selected, options.installedWorkflowIds, options.retainedWorkflowIds);
+    await assertNoSymlinks(options.stagedRoot, (options.retainedWorkflowIds ?? []).map(id => `workflows/${id}`));
     return {
       status: "updated",
       sourceVersion: source,
@@ -600,8 +604,8 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     await reconcileWorkflowConfig(options.previousRoot, options.stagedRoot, workflowContract, false, stats, backups);
   }
   await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
-  const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, null, selected, options.installedWorkflowIds);
-  await assertNoSymlinks(options.stagedRoot);
+  const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, null, selected, options.installedWorkflowIds, options.retainedWorkflowIds);
+  await assertNoSymlinks(options.stagedRoot, (options.retainedWorkflowIds ?? []).map(id => `workflows/${id}`));
   return {
     status: "initialized",
     sourceVersion: null,

@@ -1,0 +1,4 @@
+interface:
+  display_name: "VS Code 全栈环境"
+  short_description: "统一本机与远程 VS Code，复用已有运行时并保留 Profile 定制"
+  default_prompt: "请使用 $vscode-fullstack：统一本机与 Remote SSH 的开发环境，复用已有 Java/Maven、Go、Node，保留项目版本和 formatter。"

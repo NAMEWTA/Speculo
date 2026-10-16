@@ -100,3 +100,7 @@ SOFTWARE.
 ## VoltAgent/awesome-design-md
 
 Ten fixed-revision design analyses are distributed under `template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/`. Their original MIT license and per-file provenance are included alongside the documents. This license does not grant rights to third-party brand fonts, photography or trademarks.
+
+## Bundled Skills Hub
+
+`skills-hub/` contains the project-provided copy of `wta-skills-hub/skills`, distributed as complete packages. Original Skill frontmatter, attribution and licenses inside each package are preserved. In particular, `skills-hub/system/optimize-codex-config/scripts/vendor/` retains its bundled license and attribution files. Installation does not execute bundled scripts or fetch a newer upstream revision.

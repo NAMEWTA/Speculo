@@ -41,7 +41,7 @@ export function resolveProjectionIds(request: SkillRequest, catalog: AssetCatalo
   throw new RefreshBlockedError([{code:"unknown-projection-asset",path:id,message:"select an installed public asset business id"}]);
  return [...new Set(ids)].sort();
 }
-type ManagedProjectionFile = {path:string;asset_id:string;sha256:string};
+type ManagedProjectionFile = {path:string;asset_id:string;sha256:string;mode?:number};
 export type ManagedManifest = {schema_version:3;package_version:string;targets:ProjectionHost[];asset_ids:string[];files:ManagedProjectionFile[]};
 export function sha256Buffer(value:Buffer|string):string{return createHash('sha256').update(value).digest('hex');}
 const BUSINESS_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -67,12 +67,13 @@ export async function readProjectionManifest(target:string):Promise<ManagedManif
  const m=JSON.parse(content) as ManagedManifest;
  if(!m||m.schema_version!==3)throw new Error('invalid-projection-manifest: expected schema_version 3; older formats are not migrated');
  if(typeof m.package_version!=='string'||!Array.isArray(m.targets)||m.targets.some(h=>h!=='agents'&&h!=='claude')||new Set(m.targets).size!==m.targets.length||!Array.isArray(m.asset_ids)||m.asset_ids.some(id=>typeof id!=='string'||!BUSINESS_ID.test(id))||new Set(m.asset_ids).size!==m.asset_ids.length||(!m.targets.length&&m.asset_ids.length)||!Array.isArray(m.files))throw new Error('invalid-projection-manifest');
- for(const file of m.files)if(!file||typeof file.path!=='string'||!safeRelativePath(file.path)||!/^\.(agents|claude)\/skills\/[a-z0-9-]+\/(SKILL\.md|agents\/openai\.yaml)$/.test(file.path)||typeof file.asset_id!=='string'||!BUSINESS_ID.test(file.asset_id)||typeof file.sha256!=='string'||!/^[a-f0-9]{64}$/.test(file.sha256))throw new Error('invalid-projection-record');
+ for(const file of m.files)if(!file||typeof file.path!=='string'||!safeRelativePath(file.path)||!/^\.(agents|claude)\/skills\/[a-z0-9-]+\/(SKILL\.md|agents\/openai\.yaml)$/.test(file.path)||typeof file.asset_id!=='string'||!BUSINESS_ID.test(file.asset_id)||typeof file.sha256!=='string'||!/^[a-f0-9]{64}$/.test(file.sha256)||(file.mode!==undefined&&(!Number.isInteger(file.mode)||file.mode<0||file.mode>0o777)))throw new Error('invalid-projection-record');
+ for (const file of m.files) if (file.mode !== undefined) file.mode = image('', file.mode)!.mode;
  if(new Set(m.files.map(f=>f.path)).size!==m.files.length)throw new Error('invalid-projection-manifest');
  return m;
 }
 function fileNode(content:Buffer|string):SkillNode{return {kind:'file',...image(content)!};}
-async function assertProjectionCasing(target: string, path: string): Promise<void> {
+export async function assertProjectionCasing(target: string, path: string): Promise<void> {
  let parent = target;
  for (const part of path.split('/')) {
   const names = await readdir(parent).catch((error: NodeJS.ErrnoException) => { if (error.code === 'ENOENT') return []; throw error; });
@@ -96,14 +97,14 @@ export function renderSkillPointer(asset:Asset,source:Buffer,host:ProjectionHost
  return files;
 }
 export async function resolveExposure(options: {
- target: string; catalog: AssetCatalog; targets?: ProjectionHost[]; request?: SkillRequest; prompt: boolean;
+ target: string; catalog: AssetCatalog; targets?: ProjectionHost[]; request?: SkillRequest; prompt: boolean; removedAssetIds?: string[]; hubSelected?: boolean; defaultTargets?: ProjectionHost[];
 }): Promise<ExposureSelection> {
  validateExposureRequest(options.targets, options.request);
  const manifest = await readProjectionManifest(options.target);
- const existing: ExposureSelection = { targets: manifest?.targets ?? ['agents'], assetIds: manifest?.asset_ids ?? [] };
+ const existing: ExposureSelection = { targets: options.defaultTargets ?? manifest?.targets ?? ['agents'], assetIds: (manifest?.asset_ids ?? []).filter(id => !options.removedAssetIds?.includes(id)) };
  if (options.prompt) {
   const { promptExposureConfiguration } = await import('./install-ui.js');
-  return promptExposureConfiguration({ catalog: options.catalog, existing, hasHistory: manifest !== null, targets: options.targets, request: options.request });
+  return promptExposureConfiguration({ catalog: options.catalog, existing, hasHistory: manifest !== null, targets: options.targets, request: options.request, hubSelected: options.hubSelected });
  }
  const targets = normalizeSkillTargets(options.targets ?? existing.targets);
  if (!targets.length) {
@@ -142,10 +143,10 @@ export async function planSkillProjection(options: {
     }
     for(const p of new Set([...owned.map(f=>f.path),...Object.keys(desired)])){
      const before=await snapshot(options.target,p),prior=owned.find(f=>f.path===p);
-     if(prior ? before.kind!=='file'||sha256Buffer(Buffer.from(before.content,'base64'))!==prior.sha256 : before.kind!=='absent')throw new Error(`file differs from ownership record: ${p}`);
+     if(prior ? before.kind!=='file'||sha256Buffer(Buffer.from(before.content,'base64'))!==prior.sha256 || prior.mode!==undefined && before.mode!==prior.mode : before.kind!=='absent')throw new Error(`file differs from ownership record: ${p}`);
      const after=desired[p]===undefined?{kind:'absent' as const}:fileNode(desired[p]);
      if(JSON.stringify(before)!==JSON.stringify(after))pending.push({name:p,before,after});
-     if(desired[p]!==undefined)registered.push({path:p,asset_id:id,sha256:sha256Buffer(desired[p])});
+     if(desired[p]!==undefined)registered.push({path:p,asset_id:id,sha256:sha256Buffer(desired[p]),mode:after.kind==='file'?after.mode:undefined});
     }
     records.push(...pending);next.files.push(...registered);
     if(ids.includes(id)) {
@@ -163,7 +164,7 @@ export async function inspectProjectedSkills(target:string,_installed:string[]):
  try{
   const manifest=await readProjectionManifest(target);if(!manifest)return [];
   const catalog=await readAssetCatalog(join(target,INSTALL_ROOT)),checks=[];
-  for(const record of manifest.files){const node=await snapshot(target,record.path);if(node.kind!=='file'||sha256Buffer(Buffer.from(node.content,'base64'))!==record.sha256)checks.push({id:`projection-file:${record.path}`,ok:false,message:'owned projection drifted; preserve and reconcile explicitly'});}
+  for(const record of manifest.files){const node=await snapshot(target,record.path);if(node.kind!=='file'||sha256Buffer(Buffer.from(node.content,'base64'))!==record.sha256||record.mode!==undefined&&node.mode!==record.mode)checks.push({id:`projection-file:${record.path}`,ok:false,message:'owned projection drifted; preserve and reconcile explicitly'});}
   for(const record of manifest.files)if(!manifest.targets.some(host=>record.path.startsWith(`.${host}/skills/`))||!manifest.asset_ids.includes(record.asset_id))checks.push({id:`projection-retained:${record.path}`,ok:false,message:'disabled projection retained due to conflict; preserve and reconcile explicitly'});
   for(const host of manifest.targets)for(const id of manifest.asset_ids){
    const asset=catalog.assets.find(a=>a.id===id);let ok=!!asset;

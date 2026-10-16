@@ -10,6 +10,7 @@ export type FileRecord = {
 };
 
 export type ManagedFileRecord = FileRecord & {
+  mode?: number;
   owner: string;
   kind: "static" | "baseline" | "contract";
   package_version: string;
@@ -29,7 +30,7 @@ export async function sha256File(path: string): Promise<{ bytes: number; sha256:
 
 export async function collectFiles(
   root: string,
-  options: { include?: (relativePath: string) => boolean; rejectSymlinks?: boolean } = {},
+  options: { include?: (relativePath: string) => boolean; rejectSymlinks?: boolean; skipDirectory?: (relativePath: string) => boolean } = {},
 ): Promise<FileRecord[]> {
   if (!(await pathExists(root))) return [];
   const files: FileRecord[] = [];
@@ -38,6 +39,7 @@ export async function collectFiles(
     for (const entry of await readdir(current, { withFileTypes: true })) {
       const path = join(current, entry.name);
       const relativePath = toPosix(relative(root, path));
+      if (options.skipDirectory?.(relativePath)) continue;
       const stats = await lstat(path);
       if (stats.isSymbolicLink()) {
         if (options.rejectSymlinks !== false) throw new Error("symbolic link is not allowed in refresh input: " + relativePath);

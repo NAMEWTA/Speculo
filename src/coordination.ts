@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AssetCatalog } from './assets.js';
+import { retainedAssets, validateRetainedWorkflows } from "./retained-workflows.js";
+import type { Asset, AssetCatalog } from './assets.js';
 export const ORCHESTRATION_MODES=['lead','orca','herdr','cli'] as const;
 export type OrchestrationMode=typeof ORCHESTRATION_MODES[number];
 export type CoordinationChoice={mode:OrchestrationMode;selection?:'required'|'preferred';tool?:string;model?:string;guide?:string;fallback?:OrchestrationMode[]};
@@ -17,19 +18,29 @@ function choice(value:unknown):asserts value is CoordinationChoice{
  if(value.selection==='required'&&Array.isArray(value.fallback)&&value.fallback.length)throw new Error('coordination-policy-conflict: required choice cannot allow fallback');
 }
 /** Structural validation only. This does not probe tools, choose an executor or grant permission. */
-export function validateProjectCoordination(value:unknown,catalog:AssetCatalog):asserts value is ProjectCoordination{
+export function validateProjectCoordination(value:unknown,catalog:AssetCatalog,inactive: Asset[] = []):asserts value is ProjectCoordination{
  if(!object(value))throw new Error('coordination-policy-conflict: project facts must be an object');
  exact(value,['schema_version','defaults','rules']);
  if(value.schema_version!==1||!Array.isArray(value.rules))throw new Error('coordination-policy-conflict: expected schema 1 and rules');
  choice(value.defaults);const seen=new Set<string>();
  for(const rule of value.rules){
   if(!object(rule))throw new Error('coordination-policy-conflict: invalid rule');exact(rule,['work_id','stage','choice']);choice(rule.choice);
-  const asset=catalog.assets.find(a=>a.kind==='work-skill'&&a.id===rule.work_id);
+  const asset=[...catalog.assets,...inactive].find(a=>a.kind==='work-skill'&&a.id===rule.work_id);
   if(!asset||rule.stage!==undefined&&(typeof rule.stage!=='string'||!asset.stages.includes(rule.stage)))throw new Error('coordination-policy-conflict: unknown Work or stage');
   const key=`${rule.work_id}:${rule.stage??'*'}`;if(seen.has(key))throw new Error('coordination-policy-conflict: duplicate rule '+key);seen.add(key);
  }
 }
-export async function readProjectCoordination(stateRoot:string,catalog:AssetCatalog):Promise<ProjectCoordination|null>{
+export async function readProjectCoordination(stateRoot:string,catalog:AssetCatalog,inactive?: Asset[]):Promise<ProjectCoordination|null>{
  let source:string;try{source=await readFile(join(stateRoot,'coordination','project.json'),'utf8');}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return null;throw e;}
- const value:unknown=JSON.parse(source);validateProjectCoordination(value,catalog);return value;
+ if (inactive === undefined) {
+  inactive = [];
+  let metadata;
+  try { metadata = JSON.parse(await readFile(join(stateRoot,'install.json'),'utf8')); }
+  catch (e) { if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e; }
+  if (metadata) {
+   if (metadata.schema_version !== 4) throw new Error('invalid-retained-installation-schema');
+   inactive = retainedAssets(validateRetainedWorkflows(metadata.retained_workflows,catalog.assets.filter(a=>a.kind==='domain-skill').map(a=>a.domain!)));
+  }
+ }
+ const value:unknown=JSON.parse(source);validateProjectCoordination(value,catalog,inactive);return value;
 }

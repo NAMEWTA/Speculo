@@ -537,6 +537,7 @@ describe("CLI surface", () => {
       const disabled = spawnSync(process.execPath, [join(packageRoot, "dist/src/cli.js"), "init", target, "--core-only", "--skill-targets", "none"], { encoding: "utf8", timeout: 60000 });
       assert.equal(disabled.status, 0, disabled.stderr);
       const stopped = await readJson(join(target, ".agents/speculo/.speculo/projections.json"));
+      assert.deepEqual((await readJson(join(target, ".agents/speculo/.speculo/install.json"))).workflows, []);
       assert.deepEqual(stopped.targets, []);
       assert.deepEqual(stopped.asset_ids, []);
       for (const host of ["agents", "claude"]) assert.deepEqual(await readdir(join(target, `.${host}/skills`)), []);
@@ -548,6 +549,7 @@ describe("CLI surface", () => {
     const target = await tempProject();
     try {
       for (const args of [
+        ["--hub-skills", "../orca"], ["--core-only", "--hub-skills", "all"], ["--hub-skills", "automation/orca", "--skill-targets", "none"],
         ["--agent-skills", "all"], ["--claude-skills", "all"], ["--skills", "domains"],
         ["--skill-targets", "elsewhere"], ["--skill-targets", "none,agents"],
         ["--skill-targets", "none", "--skills", "all"],
@@ -625,7 +627,7 @@ describe("CLI surface", () => {
     }
   });
 
-  it("retains installed knowledge references and preserves unrelated handbook bytes", async () => {
+  it("removes uninstalled workflow navigation and preserves unrelated handbook bytes", async () => {
     const target = await tempProject();
     try {
       await writeFile(join(target, "AGENTS.md"), "# Project rules\n\n<SPECULO>\nlegacy forced workflow\n</SPECULO>\n", "utf8");
@@ -635,7 +637,7 @@ describe("CLI surface", () => {
       assert.match(agents, /# Project rules/);
       assert.match(agents, /<SPECULO>\nlegacy forced workflow\n<\/SPECULO>/);
       assert.match(agents, /specdev\/adr/);
-      assert.match(agents, /learning\/context/);
+      assert.doesNotMatch(agents, /learning\/context/);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

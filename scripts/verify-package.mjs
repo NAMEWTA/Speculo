@@ -22,7 +22,7 @@ try{
   const installed=join(sandbox,'node_modules/@namewta/speculo'),cli=join(installed,'dist/src/cli.js'),project=join(sandbox,'project');
   await assert.rejects(readFile(join(installed,'scripts/generate-runtime.mjs')),/ENOENT/);
   assert.match(run([cli,'--help']),/--skill-targets/);
-  run([cli,'init',project,'--workflows','learning,media,ops,person,specdev','--skill-targets','agents,claude','--skills','all']);
+  run([cli,'init',project,'--workflows','learning,media,ops,person,specdev','--hub-skills','all','--skill-targets','agents,claude','--skills','all']);
   const doctor=JSON.parse(run([cli,'doctor',project,'--json']));assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
   const assets=join(project,'.agents/speculo'),lib=await import(pathToFileURL(join(assets,'lib/speculo-runtime.mjs')).href);
   assert.equal((await lib.readAssetCatalog(assets)).assets.length,53);
@@ -41,6 +41,16 @@ try{
   assert.equal(designValidators.designCatalog(designCatalog),true);
   assert.equal(designCatalog.templates.length,12);assert.equal(designCatalog.references.length,10);
   const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,116);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,53);
+  const {discoverHubCatalog}=await import(pathToFileURL(join(installed,'dist/src/hub-catalog.js')).href);
+  const {snapshotSkillTree}=await import(pathToFileURL(join(installed,'dist/src/skill-trees.js')).href);
+  const hub=await discoverHubCatalog(installed);assert.equal(hub.size,15);
+  for(const skill of hub.values()){
+    const packaged=skill.tree;
+    assert.deepEqual(packaged,await snapshotSkillTree(join(root,'skills-hub',skill.id)),`bundle omitted or changed resources: ${skill.id}`);
+    for(const host of ['agents','claude'])assert.deepEqual(await snapshotSkillTree(join(project,`.${host}/skills`,skill.name)),packaged);
+  }
+  assert.equal(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages.length,30);
+  await assert.rejects(readdir(join(assets,'skills-hub')),/ENOENT/);
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--self-check']);
   run([join(assets,'workflows/media/common/tools/validate-media.mjs'),'--state-root',join(assets,'.speculo/media')]);
   run([join(assets,'commands/engineering-standards-builder/scripts/validate-builder.mjs'),'--root',join(assets,'commands/engineering-standards-builder')]);
@@ -75,7 +85,14 @@ try{
   run([cli,'init',project]);
   for(const [locator,bytes] of preserved)assert.deepEqual(await readFile(join(assets,'.speculo/specdev',locator)),bytes,`refresh changed user design: ${locator}`);
   assert.equal(JSON.parse(run([cli,'doctor',project,'--json'])).healthy,true);
-  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh, optional SpecDev seed, explicit-root direct Work, 53 assets, 116 projection files, 12 canonical documents, standalone design validators, 12/10 catalog, byte-preserved designs and nested resolver passed`);
+  run([cli,'init',project,'--core-only']);
+  assert.deepEqual(JSON.parse(await readFile(join(assets,'.speculo/install.json'),'utf8')).workflows,[]);
+  const coreEntries=projections.asset_ids.filter(id=>id.startsWith('command/')).map(id=>'speculo-'+id.slice('command/'.length)).sort();
+  for(const host of ['agents','claude'])assert.deepEqual((await readdir(join(project,`.${host}/skills`))).sort(),coreEntries);
+  assert.deepEqual(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages,[]);
+  for(const [locator,bytes] of preserved)assert.deepEqual(await readFile(join(assets,'.speculo/specdev',locator)),bytes);
+  assert.equal(JSON.parse(run([cli,'doctor',project,'--json'])).healthy,true);
+  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 15 complete Hub packages in both targets, 53 assets, 116 projection files, 12 canonical documents, explicit-root direct Work, byte-preserved runtime and nested resolver passed`);
 }finally{
   // The only recursive cleanup target is the exact mkdtemp directory created above.
   assert.ok(resolve(sandbox).startsWith(temporaryRoot+ (process.platform==='win32'?'\\':'/')));

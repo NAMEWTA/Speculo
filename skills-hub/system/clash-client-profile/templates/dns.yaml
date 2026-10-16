@@ -1,0 +1,8 @@
+# Backward-compatible discovery fragment, NOT a privacy or deployment profile.
+# Do not apply this by itself: use scripts/dns_guard.py plan with a real effective
+# configuration and templates/dns-request.example.json customized by the user.
+# The generated plan pins nameserver/default/direct DNS to the approved group,
+# explicitly models node bootstrap, and requires map REPLACEMENT for stale policies.
+# No resolver, port-53 listener, OS DNS or IPv6 block is inferred here.
+dns:
+  enable: true

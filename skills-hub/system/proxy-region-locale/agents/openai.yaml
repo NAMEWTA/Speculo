@@ -1,0 +1,4 @@
+interface:
+  display_name: "时区与区域"
+  short_description: "按字段设置跨平台时区与区域，保留原值并核对生效作用域"
+  default_prompt: "请使用 $proxy-region-locale：把 Windows 当前用户时区设为纽约，只改时区。"

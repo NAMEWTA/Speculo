@@ -67,7 +67,7 @@ test('one saved selection follows target changes and disabled targets are cleane
  assert.equal(stopped.projections.claude.deleted,2);
  assert.deepEqual(await readdir(join(target,'.claude/skills')),[]);
  assert.equal((await doctorSpeculo(target)).healthy,true);
- const kept=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
+ const kept=await initSpeculo(target,{packageRoot});
  assert.deepEqual(kept.exposure.targets,[]);
  assert.deepEqual(kept.exposure.assetIds,[]);
 }));
@@ -162,7 +162,7 @@ test('all projections cover both hosts and exceed the old 64-record limit',()=>f
  assert.match(await readFile(join(target,'.claude/skills/speculo-docs-sync/SKILL.md'),'utf8'),/disable-model-invocation: true/);
  const doctor=await doctorSpeculo(target);assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
  const before=await fingerprintTree(join(target,'.agents/skills'));
- await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
+ await initSpeculo(target,{packageRoot});
  assert.equal(await fingerprintTree(join(target,'.agents/skills')),before);
 }));
 test('unmanaged collision only blocks that projection, preserving source installation and siblings',()=>fixture(async target=>{
@@ -175,9 +175,9 @@ test('unmanaged collision only blocks that projection, preserving source install
 test('edited projection is preserved, unaffected projections refresh, explicit disable removes only owned files',()=>fixture(async target=>{
  await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning']},skills:{mode:'set',assetIds:['learning/lesson','learning/goal']}});
  const edited=join(target,'.agents/skills/learning-l-lesson/SKILL.md');await writeFile(edited,'edited');
- const kept=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});assert.equal(kept.warnings.length,1);assert.equal(await readFile(edited,'utf8'),'edited');
+ const kept=await initSpeculo(target,{packageRoot});assert.equal(kept.warnings.length,1);assert.equal(await readFile(edited,'utf8'),'edited');
  const sibling=join(target,'.agents/skills/learning-g-goal/user.txt');await writeFile(sibling,'keep');
- const removed=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skills:{mode:'none'}});assert.equal(removed.warnings.length,1);
+ const removed=await initSpeculo(target,{packageRoot,skills:{mode:'none'}});assert.equal(removed.warnings.length,1);
  assert.equal(await readFile(sibling,'utf8'),'keep');assert.equal(await readFile(edited,'utf8'),'edited');
  await assert.rejects(readFile(join(target,'.agents/skills/learning-g-goal/SKILL.md')),/ENOENT/);
 }));

@@ -1,21 +1,21 @@
 # Herdr 编排
 
-仅在用户为当前任务明确选择 Herdr 时读取；选择可来自同范围仍有效的会话授权。plan 只说明接入步骤，不安装、不启动。Herdr 选择不隐含 worktree、模型或拓扑选择。
+仅在初始化明确选择 Herdr 接入分支，或按 <Path>{roots.references}/coordination/coordination-contract.md</Path> 为当前任务选中 Herdr 时读取；选择可来自当前请求、已批准安排或项目偏好。plan 只说明接入步骤，不安装、不启动。Herdr 选择不隐含 worktree、模型或拓扑选择。
 
-## 按需安装项目 Skill
+## 复用项目 Skill
 
-当前 Lead 负责首次接入，项目根由调用 Work 已验证的 projectRoot 确定，不取 pane cwd 或方法安装根。
+项目根由调用 Work 已验证的 projectRoot 确定，不取 pane cwd或方法安装根。
 
-1. 检查项目 `<Path>{roots.skills}/herdr/SKILL.md</Path>`（标准布局为项目 `.agents/skills/herdr/SKILL.md`）。存在且为有效 `name: herdr` 的完整 Skill 时先读取并复用，核对来源和兼容性；不因上游更新静默覆盖。符号链接、同名非 Skill、无效内容或归属冲突时保留原文件，仅阻塞安装分支，说明冲突位置与恢复方式。
-2. 缺失时从指定上游 [Herdr SKILL.md](https://github.com/NAMEWTA/wta-skills-hub/blob/main/skills/automation/herdr/SKILL.md) 获取 Skill。先解析 main 的实际 revision，再从该 revision 下载 `skills/automation/herdr/` 的完整内容；当前上游为单文件，未来若有相对资源依赖须完整获取，不能只保存 GitHub HTML 页面。
-3. 使用宿主可用的 Skill 安装器并显式指定项目 `.agents/skills/` 为目标；没有安装器时用宿主下载和文件工具完成同一流程。先在临时位置检查 UTF-8 Markdown、YAML frontmatter、`name: herdr`、引用闭包及路径，再以不覆盖方式安装。保留上游原文、frontmatter、许可和文件模式，不重写命令或权限参数。下载/校验失败时不留下半成品正式目录；目标期间发生变化时停止，不覆盖重试。
-4. 安装后回读实际 Skill，核对内容摘要与候选一致，在当前 Work 已有 Evidence/报告或会话结果中记录上游 URL、revision、内容 SHA-256、目标和结果。没有报告就不为安装制造 change 或 receipt。此 Skill 是项目第三方资产，不加入 Speculo 的投影清单，也不由 init/refresh 更新或删除。
+1. 按本次用户指定目录或有效选择的 guide 定位项目入口：`.agents/skills/herdr/SKILL.md` 或 `.claude/skills/herdr/SKILL.md`，两者均相对已验证的项目根；指定位置缺失时不偷偷换到另一目录。旧配置无此路径时只读检查两个候选，唯一有效且无冲突时复用；两处均有候选时请用户决定。已有其他 guide 文本仅作指南线索，不当作路径或命令执行。此选择不修改 roots.skills 的含义。
+2. 存在且为有效 `name: herdr` 的完整 Skill 时先读取并复用，核对来源和兼容性。核对每层父目录与目标均位于项目内且不经过符号链接；同名非 Skill、无效内容或归属冲突保留原文件，只停止受影响的读取分支，按共享合同判断回退并说明冲突位置与恢复方式。
+3. 缺失时报告未安装，保留偏好与原目标，引导用户重新运行 `speculo init`，在 **SKILLS-HUB** 中勾选 `automation/herdr` 并选择项目 `.agents/skills/` 或 `.claude/skills/`。唯一分发源是随 Speculo 包发布的 `skills-hub/automation/herdr/` 完整目录；不下载 GitHub main，不从全局缓存复制。无 CLI 的直接模式也据实报告缺失，独立事实发现继续。
+4. 完整包的安装、更新、卸载及 Hub 安装归属记录由 CLI 事务管理；Work 只读取入口，不写 CLI 元数据、不覆盖或接管用户手工安装的同名包。安装器保留原文、frontmatter、许可、资源与文件模式；冲突时整包保留并报告。
 
-用户选择并要求使用 Herdr 时可完成上述项目本地安装；持久配置本身不是新安装授权。安装 Skill 不等于安装 Herdr 二进制、登录账户或启动服务。缺少网络或写权限时只阻塞 Herdr 分支，给出原目标和缺失条件；重试前重新检查目标，不能自动换另一种执行方式。
+初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前智能体（lead）；强制要求 Herdr 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
 
 ## 运行与返回
 
-安装或复用后必须读取项目内 Skill，再检查 `HERDR_ENV=1`；不满足就停止 Herdr 控制，说明需要从受管会话恢复。检查通过后读取本机 `herdr --help` 和所需命令组帮助，核对版本、来源、运行上下文与目标会话。不同 fork 或同名工具不推定兼容。宿主技能列表是否已刷新不替代读取真实项目文件；也不把安装成功报告成运行可用。
+实际使用时必须读取所选位置的项目 Skill，再检查 `HERDR_ENV=1`；不满足就停止 Herdr 控制，按共享合同允许的 fallback 回退当前智能体；强制要求 Herdr 或原选择未允许回退时阻塞相关阶段并说明需要从受管会话恢复。检查通过后读取本机 `herdr --help` 和所需命令组帮助，核对版本、来源、运行上下文与目标会话；工具或服务不可用同样按共享合同处理。不同 fork 或同名工具不推定兼容。宿主技能列表是否已刷新不替代读取真实项目文件；也不把安装成功报告成运行可用。
 
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
 2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。

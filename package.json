@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "2.0.6",
+  "version": "2.1.0",
   "description": "Standard agent skills, commands and project methods with state-safe installation.",
   "type": "module",
   "bin": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "pnpm clean && tsc -p tsconfig.json",
+    "build": "pnpm clean && tsc -p tsconfig.json && node scripts/generate-hub-bundle.mjs",
     "test": "node --test dist/test/*.test.js",
     "pretest": "pnpm build",
     "generate-canonical": "node scripts/generate-specdev-canonical.mjs && node scripts/generate-learning-canonical.mjs && node scripts/generate-media-canonical.mjs && node scripts/generate-person-canonical.mjs",
@@ -37,6 +37,7 @@
   "files": [
     "dist/src",
     "template",
+    "skills-hub",
     "THIRD-PARTY-NOTICES.md"
   ],
   "keywords": [
@@ -75,6 +76,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@clack/core": "0.4.1",
     "@clack/prompts": "0.9.1",
     "yaml": "^2.9.1"
   }

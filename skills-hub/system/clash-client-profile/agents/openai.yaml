@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clash 网络与 DNS"
+  short_description: "配置 Clash 的 TUN、DNS 覆写与 AI 路径，并区分计划与现场证据"
+  default_prompt: "请使用 $clash-client-profile：只读检查我的 Clash Verge DNS 计划，说明 bootstrap 例外，不联网。"

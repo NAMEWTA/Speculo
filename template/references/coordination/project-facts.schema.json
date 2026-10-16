@@ -102,6 +102,7 @@
           "then": {
             "properties": {
               "fallback": {
+                "type": "array",
                 "maxItems": 0
               }
             }

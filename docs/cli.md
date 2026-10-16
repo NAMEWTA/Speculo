@@ -19,16 +19,17 @@ speculo version
 ## 安装与曝光
 
 ```bash
-speculo init [target] [--workflows <id,id> | --core-only] \
-  [--skill-targets <targets>] [--skills <selection>]
+speculo init [target] [--workflows <all|none|id,id> | --core-only] \
+  [--hub-skills <selection>] [--skill-targets <targets>] [--skills <selection>]
 ```
 
 `[target]` 默认是当前目录。方括号表示可选参数，不要把方括号输入终端。
 
 | 参数 | 用途 | 例子 |
 |---|---|---|
-| `--workflows` | 本次安装或刷新的领域 | `specdev,learning` 或 `all` |
-| `--core-only` | 只安装/刷新核心 Command 与共享方法 | 与 `--workflows` 互斥 |
+| `--workflows` | 最终安装的领域清单；取消选择会卸载 | `specdev,learning`、`all` 或 `none` |
+| `--hub-skills` | 完整 Skills Hub 包的最终清单 | `none`、`keep`、`all` 或 `automation/herdr,automation/orca` |
+| `--core-only` | 清空 workflows 和 Skills Hub，保留核心与运行数据 | 与 `--workflows`、非 `none` 的 `--hub-skills` 互斥 |
 | `--skill-targets` | 曝光位置，多选位置共用一份能力清单 | `agents`、`claude`、`agents,claude`、`none` |
 | `--skills` | 统一的入口选择 | `none`、`keep`、`all`、`specdev/implement,command/status` |
 
@@ -47,7 +48,7 @@ speculo init [target] [--workflows <id,id> | --core-only] \
 speculo init . --workflows specdev --skills specdev/implement,command/status
 ```
 
-交互式运行会按实际终端条件提示选择。**非交互首次安装**在没有领域参数时仅安装核心；**非交互刷新**默认刷新已安装且当前版本支持的领域。非交互新安装默认位置为 `agents`、能力为 `none`；刷新默认保留已有位置和统一能力清单。想得到确定结果时显式提供参数。
+交互式运行会按实际终端条件提示选择。**非交互首次安装**在没有领域参数时仅安装核心；**非交互刷新**默认保留并刷新已安装领域与 Hub 包；历史包当前不可用时明确报错，须显式重选。非交互新安装默认位置为 `agents`、能力为 `none`；刷新默认保留已有位置和统一能力清单。想得到确定结果时显式提供参数。
 
 同时曝光到两个位置，或关闭所有位置：
 
@@ -56,15 +57,27 @@ speculo init . --workflows specdev --skill-targets agents,claude --skills all
 speculo init . --skill-targets none
 ```
 
-`--skill-targets none` 会清空位置和能力；不能与显式非 `none` 的 `--skills` 同用。交互终端只询问未由参数指定的配置。
+`--skill-targets none` 会清空位置和曝光能力；所选 Hub 包非空时拒绝继续，需同时明确 `--hub-skills none`。不能与显式非 `none` 的 `--skills` 同用。交互终端只询问未由参数指定的配置。
 
 当前使用 `projections.json` schema 3，保存曝光位置与一份能力 ID 清单。旧的两份清单格式不自动迁移；旧参数 `--agent-skills`、`--claude-skills` 和 `domains` 值已删除。旧格式会明确报错并保留文件，不应仅改版本号绕过校验。
 
-刷新时本次未选的已安装领域仍保留；`--core-only` 不等于卸载所有领域。发生第三方同名目录、人工编辑或路径冲突时，阅读具体 warning；不要以删整个 `.agents/skills/` 的方式解决。
+显式清单及交互勾选决定最终安装内容。取消勾选会卸载未修改的受管 workflow 方法和领域/Work 入口，同时更新发现导航；其配置、change、知识、历史与基线数据保留。人工修改、额外资源、链接或归属冲突使整个受影响包保留，摘要区分请求与实际结果。发生第三方同名目录、人工编辑或路径冲突时，阅读具体 warning；不要以删整个 `.agents/skills/` 的方式解决。
 
 ## 交互向导怎么选
 
-在真实交互终端直接运行 `speculo init .`，可以先选择本次安装/刷新的 workflow，再多选曝光位置，最后统一选择一次能力。`.agents/skills/` 和 `.claude/skills/` 共用同一份清单。多选用空格勾选、Enter 继续。
+在真实交互终端直接运行 `speculo init .`，首先在同一多选列表中选择安装包：
+
+```text
+---- SKILLS-HUB ----
+automation/herdr
+automation/orca
+…
+---- WORKFLOWS ----
+SpecDev · 工程开发
+…
+```
+
+分区标题不可选，条目支持滚动和窄终端显示。首次两区均空选；刷新预选实际受管包。然后多选 Skill 安装位置，最后选择 workflow/Command 的曝光入口。Hub 包不会在曝光页重复询问。`.agents/skills/` 和 `.claude/skills/` 共用同一份清单。多选用空格勾选、Enter 继续。
 
 | 向导选项 | 适合什么需求 |
 |---|---|
@@ -74,7 +87,7 @@ speculo init . --skill-targets none
 | 保留已有选择 | 保留具体清单，升级新增入口不会自动加入 |
 | 全部不曝光 | 方法正文保留，只处理受管曝光入口 |
 
-首次默认勾选 `.agents/skills/`，能力范围默认“全部不曝光”；刷新恢复已有位置，能力范围默认“保留已有选择”。空选位置会跳过能力选择，清空统一清单，并清理两个位置中校验通过的受管入口。某组只选了部分入口时，自定义选择可以保留这个精确集合；“按组”勾选则选择整组。最后核对安装与曝光预览再确认应用，Ctrl+C/Esc 可取消。
+首次默认勾选 `.agents/skills/`，能力范围默认“全部不曝光”；刷新恢复已有位置，能力范围默认“保留已有选择”。未选 Hub 包时，空选位置会跳过能力选择，清空统一清单，并清理两个位置中校验通过的受管入口。某组只选了部分入口时，自定义选择可以保留这个精确集合；“按组”勾选则选择整组。最后核对安装与曝光预览再确认应用，Ctrl+C/Esc 可取消。
 
 “曝光”指本地宿主发现入口，不表示上传或公开到网络。所有选中位置共用一份能力清单。取消勾选某个位置，会清理该位置中未被人工修改的受管入口；第三方文件和冲突文件保留并报告。所有方式都定义本次最终清单，例如从全部曝光改为仅 Commands，会移除其他校验通过的受管入口，最终摘要只列一次能力清单的新增、保留和移除，再分别报告各位置预计新增、更新、移除、可用与冲突数量。
 
@@ -83,6 +96,19 @@ speculo init . --skill-targets none
 当前五个领域全部安装时，每个宿主有 53 个入口：5 个总入口、38 个 Work、10 个 Command。仅 SpecDev 整组为 16 个入口；自定义 `specdev/implement,specdev/code-review,command/status` 为 3 个入口。菜单按实际安装内容计算数量，包含本次没有选择刷新的已安装领域。
 
 `groups` 和 `custom` 是交互向导选项，不是 `--skills` 的参数值；非交互选择具体入口用业务 ID 列表。只要总入口时可使用 `--skills domain/specdev,domain/learning`。
+
+## Skills Hub 完整包
+
+仓库真实源为根目录 `skills-hub/<类别>/<技能>/SKILL.md`，与 `template/` 同级。安装器只发现两层入口，包内嵌套的示例 Skill 不单独列出；所选包的 references、scripts、templates、agents、许可、空目录与模式一并复制，保持原始名字。安装不执行包内脚本。npm 分发包含库源；构建时在 dist 中生成完整资源快照，保全 npm 会省略的 dotfile、空目录与模式，安装时核对包内现存源文件字节。用户项目只保存所选包，不在 `.agents/speculo/` 中镜像全库。
+
+```bash
+speculo init . --hub-skills automation/herdr,automation/orca --skill-targets agents,claude
+speculo init . --hub-skills none --workflows none
+```
+
+两类 Skill 共用安装位置。CLI 用 `.agents/speculo/.speculo/hub-skills.json` 记录 Hub 选择与每个包的文件、目录、摘要和模式归属；workflow/Command 入口继续使用 `projections.json`。同名非受管目录不自动接管；更新或卸载遇到修改、额外文件或 symlink 时整包保留，报告冲突，其余包继续。
+
+SpecDev 初始化仍可选择 Herdr / Orca / CLI / 暂时都不要，并保存允许回到 lead 的偏好。Herdr/Orca 只复用指定位置已有的 Skill；缺失时提示通过安装器勾选对应 Hub 包，不下载 GitHub main，不检查或启动服务。
 
 ## 刷新与升级
 

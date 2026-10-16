@@ -1,18 +1,18 @@
 import { INSTALL_ROOT, containedPath, assertSupportedProject } from "./paths.js";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
-import { lstat, mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
+import { lstat, mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, relative, join, resolve } from "node:path";
 import { fingerprintTree, isTreeFingerprint, TREE_FINGERPRINT_PREFIX } from "./manifest.js";
-import { EXTERNAL_NAMES, image, assertImage, imageDigest, readImage, replaceImage, syncDirectory, writeDurableJson, type ExternalEdit } from "./external-files.js";
+import { EXTERNAL_NAMES, assertImage, imageDigest, readImage, replaceImage, syncDirectory, writeDurableJson, type ExternalEdit } from "./external-files.js";
 
 export const LOCK_NAME = ".agents/.speculo-install.lock";
 export const TRANSACTIONS_ROOT = ".agents/.speculo-transactions";
 export type TransactionPhase = "prepared" | "old-renamed" | "installed" | "skills-applying" | "skills-projected" | "external-finalized" | "committed" | "rolled-back";
 export type TransactionHook = (phase: TransactionPhase) => Promise<void>;
-export type SkillNode = {kind:"absent"} | {kind:"file";content:string;mode:number};
-export type SkillRecord = {name:string;before:SkillNode;after:SkillNode};
-type Journal = {schema_version:3;id:string;host:string;pid:number;target:string;stage:string;backup:string;before:string;after:string;phase:TransactionPhase;external:ExternalEdit[];skills?:SkillRecord[]};
+export type { SkillNode, SkillRecord } from "./skill-trees.js";
+import { validSkillPath, validSkillNode, assertSkillRecords, applySkillRecords, type SkillRecord } from "./skill-trees.js";
+type Journal = {schema_version:3|4;id:string;host:string;pid:number;target:string;stage:string;backup:string;before:string;after:string;phase:TransactionPhase;external:ExternalEdit[];skills?:SkillRecord[]};
 const BASE_PHASES = ["prepared","old-renamed","installed","external-finalized","committed","rolled-back"] as const;
 const SKILL_PHASES = ["skills-applying","skills-projected"] as const;
 async function exists(path:string):Promise<boolean>{try{await lstat(path);return true;}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return false;throw e;}}
@@ -35,24 +35,18 @@ export async function cleanEmptyTransactionsDirectory(target: string): Promise<v
   await syncDirectory(join(target, ".agents"));
 }
 function journalPath(target:string):string{return join(target,LOCK_NAME,'transaction.json');}
-function validNode(value:SkillNode):boolean{return !!value&&(value.kind==='absent'?Object.keys(value).length===1:value.kind==='file'&&Object.keys(value).length===3&&typeof value.content==='string'&&Buffer.from(value.content,'base64').toString('base64')===value.content&&Number.isInteger(value.mode)&&value.mode>=0&&value.mode<=0o777);}
-function validSkills(records:SkillRecord[]):boolean{return Array.isArray(records)&&records.length>0&&records.length<=10000&&JSON.stringify(records).length<=64*1024*1024&&new Set(records.map(r=>r.name)).size===records.length&&records.every(r=>/^\.(agents|claude)\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/(SKILL\.md|agents\/openai\.yaml)$/.test(r.name)&&validNode(r.before)&&validNode(r.after));}
-function journalShapeValid(j:Journal):boolean{return j.skills===undefined?(BASE_PHASES as readonly string[]).includes(j.phase):validSkills(j.skills)&&[...BASE_PHASES,...SKILL_PHASES].includes(j.phase);}
-function imageOf(node:SkillNode){return node.kind==='absent'?null:image(Buffer.from(node.content,'base64'),node.mode);}
-function sameImage(a:Awaited<ReturnType<typeof readImage>>,node:SkillNode){return imageDigest(a)===imageDigest(imageOf(node));}
-async function applySkillProjection(j:Journal):Promise<void>{
- for(const r of j.skills??[])await assertImage(await containedPath(j.target,r.name),imageOf(r.before));
- for(const r of j.skills??[]){const file=await containedPath(j.target,r.name);await mkdir(dirname(file),{recursive:true});await replaceImage(file,imageOf(r.before),imageOf(r.after));}
+function validSkills(records:SkillRecord[], version:number):boolean {
+ return Array.isArray(records) && records.length>0 && records.length<=10000 && JSON.stringify(records).length<=64*1024*1024 &&
+  new Set(records.map(r=>r?.name)).size===records.length && records.every(r=>r && typeof r.name==='string' &&
+   (version===3 ? /^\.(agents|claude)\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/(SKILL\.md|agents\/openai\.yaml)$/.test(r.name) : validSkillPath(r.name)) &&
+   validSkillNode(r.before,version===4) && validSkillNode(r.after,version===4) &&
+   (r.before.kind==='absent'||r.after.kind==='absent'||r.before.kind===r.after.kind));
 }
-async function restoreSkillProjection(j:Journal):Promise<void>{
- for(const r of j.skills??[]){const current=await readImage(await containedPath(j.target,r.name));if(!sameImage(current,r.before)&&!sameImage(current,r.after))throw new Error('recovery-drift: '+r.name);}
- for(const r of [...j.skills??[]].reverse()){
-  const file=await containedPath(j.target,r.name),current=await readImage(file);if(sameImage(current,r.before))continue;
-  await mkdir(dirname(file),{recursive:true});await replaceImage(file,current,imageOf(r.before));
- }
-}
+function journalShapeValid(j:Journal):boolean{return j.skills===undefined?(BASE_PHASES as readonly string[]).includes(j.phase):validSkills(j.skills,j.schema_version)&&[...BASE_PHASES,...SKILL_PHASES].includes(j.phase);}
+async function applySkillProjection(j:Journal):Promise<void>{await applySkillRecords(j.target,j.skills??[],'after');}
+async function restoreSkillProjection(j:Journal):Promise<void>{await applySkillRecords(j.target,j.skills??[],'before');}
 async function cleanEmptyProjectionDirectories(j:Journal, side:'before'|'after'):Promise<void>{
- for(const r of j.skills??[])if(r[side].kind==='absent'){
+ for(const r of j.skills??[])if(r[side].kind==='absent' && r.name.split('/').length>3 && !j.skills?.some(d=>d.name===r.name.split('/').slice(0,3).join('/') && (d.before.kind==='directory'||d.after.kind==='directory'))){
   let dir=dirname(await containedPath(j.target,r.name));
   const boundary=join(j.target,r.name.startsWith('.agents/')?'.agents/skills':'.claude/skills');
   while(dir!==boundary){try{await rmdir(dir);}catch(e){if(!['ENOENT','ENOTEMPTY','EEXIST'].includes((e as NodeJS.ErrnoException).code??''))throw e;break;}dir=dirname(dir);}
@@ -66,7 +60,7 @@ export async function readTransaction(target: string): Promise<Journal> {
   const raw = await readImage(journalPath(target));
   if (!raw) throw new Error("unidentified-lock: no durable transaction; inspect owner.json and preserve all residues");
   const j = JSON.parse(Buffer.from(raw.content, "base64").toString("utf8")) as Journal;
-  if (!j || typeof j !== "object" || j.schema_version !== 3 || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
+  if (!j || typeof j !== "object" || ![3,4].includes(j.schema_version) || j.target !== resolve(target) || !/^[a-f0-9-]{36}$/.test(j.id) ||
       typeof j.host !== "string" || !Number.isSafeInteger(j.pid) || j.pid < 1 ||
       !/^\.agents\/\.speculo-transactions\/stage-[A-Za-z0-9]+$/.test(j.stage) || j.backup !== j.stage + "-backup" ||
       !(isTreeFingerprint(j.before) && isTreeFingerprint(j.after, false)) ||
@@ -86,7 +80,7 @@ export async function readTransaction(target: string): Promise<Journal> {
 
 /** Only current snapshots on their original platform may be recovered. */
 function assertCurrentSnapshot(j: Journal): void {
-  if (j.schema_version !== 3) throw new Error("invalid-transaction-version");
+  if (![3,4].includes(j.schema_version)) throw new Error("invalid-transaction-version");
   if ((j.before !== "absent" && !j.before.startsWith(TREE_FINGERPRINT_PREFIX)) || !j.after.startsWith(TREE_FINGERPRINT_PREFIX)) {
     throw new Error("snapshot-platform-mismatch: recover on the original snapshot platform; preserve all evidence");
   }
@@ -138,7 +132,7 @@ async function finish(j: Journal): Promise<void> {
   await directory(root); await directory(backup);
   if (await fingerprintTree(root) !== j.after) throw new Error("recovery-drift: committed installation changed");
   for (const e of j.external) await assertImage(join(j.target, e.name), e.after);
-  for (const r of j.skills??[]) await assertImage(await containedPath(j.target,r.name),imageOf(r.after));
+  await assertSkillRecords(j.target,j.skills??[],'after');
   const fingerprint = await fingerprintTree(backup);
   if (fingerprint !== "absent" && fingerprint !== j.before) throw new Error("recovery-drift: backup changed; preserve it");
   await rm(backup, { recursive: true, force: true });
@@ -150,9 +144,11 @@ async function finish(j: Journal): Promise<void> {
 export async function commitInstall(target: string, stagedRoot: string, before: string, external: ExternalEdit[], hook?: TransactionHook, skills?: SkillRecord[] | null): Promise<void> {
   if (!isTreeFingerprint(before) || (before !== "absent" && !before.startsWith(TREE_FINGERPRINT_PREFIX))) throw new Error("invalid-current-tree-snapshot");
   const projecting = Array.isArray(skills) && skills.length > 0;
-  const j: Journal = { schema_version: 3, id: randomUUID(), host: hostname(), pid: process.pid, target,
+  const j: Journal = { schema_version: 4, id: randomUUID(), host: hostname(), pid: process.pid, target,
     stage: relative(target, stagedRoot).split("\\").join("/"), backup: relative(target, stagedRoot).split("\\").join("/") + "-backup", before,
     after: await fingerprintTree(stagedRoot), phase: "prepared", external, ...(projecting ? { skills } : {}) };
+  if (!journalShapeValid(j)) throw new Error("invalid-transaction-journal");
+  await assertSkillRecords(target,j.skills??[],"before");
   const root = join(target, INSTALL_ROOT);
   if (await fingerprintTree(root) !== before) throw new Error("concurrent-drift: installation changed before commit");
   for (const e of external) await assertImage(join(target, e.name), e.before);
@@ -177,7 +173,7 @@ export async function commitInstall(target: string, stagedRoot: string, before: 
     await save(j, "external-finalized"); await hook?.("external-finalized");
     if (await fingerprintTree(root) !== j.after || await fingerprintTree(join(target, j.backup)) !== before) throw new Error("concurrent-drift: final snapshot changed");
     for (const e of external) await assertImage(join(target, e.name), e.after);
-    for (const r of j.skills??[]) await assertImage(await containedPath(target,r.name),imageOf(r.after));
+    await assertSkillRecords(target,j.skills??[],'after');
     await save(j, "committed"); await hook?.("committed");
     await finish(j);
   } catch (error) {

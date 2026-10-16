@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseHubSkillSpec } from "./hub-skills.js";
 import { initSpeculo } from "./index.js";
 import { parseSkillSpec, parseSkillTargets, validateExposureRequest } from "./agent-skills.js";
 import { discoverWorkflowCatalog, isInteractive as catalogIsInteractive } from "./workflows.js";
@@ -24,10 +25,11 @@ function usage(): string {
     "  speculo doctor [target] [--json]",
     "  speculo recover [target] --transaction <id>",
     "  speculo resolve [target] --path <reference>",
-    "  speculo init [target] [--workflows <id,id> | --core-only] [--skill-targets <targets>] [--skills <selection>]",
+    "  speculo init [target] [--workflows <all|none|id,id> | --core-only] [--hub-skills <selection>] [--skill-targets <targets>] [--skills <selection>]",
     "",
     "Commands:",
     "  init      Install or directly refresh Speculo assets and selected workflow packages.",
+    "            --hub-skills: none|keep|all|<category/name,...>. Unchecked managed packages are uninstalled.",
     "            --skill-targets: agents|claude|agents,claude|none. --skills: none|keep|all|<business-id,id>.",
     "            Interactive: choose targets, then one shared selection: all, groups, custom, keep, or none.",
     "  version   Print the current Speculo version and check for updates.",
@@ -109,15 +111,21 @@ async function main(argv: string[]): Promise<number> {
       else console.log(await resolvePathReference(args.target, value));
       return 0;
     }
-    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--skill-targets", "--skills"]));
+    const args = parseArguments(command === "init" ? rest : argv, new Set(["--core-only"]), new Set(["--workflows", "--hub-skills", "--skill-targets", "--skills"]));
     if (args.flags.has("--core-only") && args.values.has("--workflows")) throw new Error("--core-only and --workflows are mutually exclusive");
     const requested = args.values.get("--workflows");
     if (requested !== undefined && !/^[a-z0-9-]+(?:,[a-z0-9-]+)*$/.test(requested)) throw new Error("--workflows requires comma-separated workflow ids");
     const selection = args.flags.has("--core-only") ? { workflowIds: [] } : requested === undefined ? undefined :
-      { workflowIds: requested === "all" ? [...(await discoverWorkflowCatalog(packageRoot)).keys()].sort() : requested.split(",") };
+      { workflowIds: requested === "none" ? [] : requested === "all" ? [...(await discoverWorkflowCatalog(packageRoot)).keys()].sort() : requested.split(",") };
+    let hubSkills = args.values.has("--hub-skills") ? parseHubSkillSpec(args.values.get("--hub-skills")!) : undefined;
+    if (args.flags.has("--core-only")) {
+      if (hubSkills && hubSkills.mode !== "none") throw new Error("--core-only conflicts with --hub-skills other than none");
+      hubSkills = { mode: "none" };
+    }
     const skills = args.values.has("--skills") ? parseSkillSpec(args.values.get("--skills")!) : undefined;
     const skillTargets = args.values.has("--skill-targets") ? parseSkillTargets(args.values.get("--skill-targets")!) : undefined;
     validateExposureRequest(skillTargets, skills);
+    if (skillTargets?.length === 0 && hubSkills && (hubSkills.mode === "all" || hubSkills.mode === "set" && hubSkills.assetIds.length)) throw new Error("--hub-skills requires at least one --skill-targets destination");
     const targetArg = args.target;
 
     if (catalogIsInteractive()) {
@@ -129,7 +137,7 @@ async function main(argv: string[]): Promise<number> {
     }
 
     const result = await initSpeculo(targetArg, {
-      packageRoot, selection, skillTargets, skills, promptExposure: !!ui,
+      packageRoot, selection, skillTargets, skills, hubSkills, promptExposure: !!ui,
       confirmInstall: ui?.confirm, onProgress: ui?.progress,
     });
     if (ui) { ui.finish(result); return 0; }
@@ -141,6 +149,8 @@ async function main(argv: string[]): Promise<number> {
       result.refresh.config.updated + " updated, " + result.refresh.config.preserved + " preserved, " +
       result.refresh.config.removed + " removed",
     );
+    console.log(`  Skills Hub: ${result.hub.created.length} installed, ${result.hub.updated.length} updated, ${result.hub.removed.length} removed, ${result.hub.conflicts.length} conflicts`);
+    if (result.removedWorkflowIds.length) console.log(`  uninstalled workflows: ${result.removedWorkflowIds.join(", ")}; runtime data retained`);
     if (result.exposure.projected) console.log(`  projected ${result.exposure.projected} public entries`);
     for (const warning of result.warnings) console.log("  warning: " + warning);
     if (result.refresh.backupPath) console.log("  retained targeted backup " + result.refresh.backupPath);

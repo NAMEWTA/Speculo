@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-16
+
+### Added
+
+- Bundle 15 complete Skills Hub packages from the root `skills-hub/` directory, with separate SKILLS-HUB and WORKFLOWS sections in the installer and category/skill labels.
+- Add `--hub-skills` selection and installation into `.agents/skills/`, `.claude/skills/`, or both, including package resources, ownership records, and doctor checks.
+
+### Changed
+
+- Treat explicit workflow and Hub selections as the desired installation: safely uninstall deselected managed packages while preserving workflow runtime data and retaining conflicting packages intact.
+- Support `--workflows none`; `--core-only` removes workflow and Hub selections while retaining core commands. Omitted noninteractive selections preserve installed choices.
+- Let SpecDev initialization choose Herdr, Orca, CLI, or no coordination mode, reusing locally installed Hub skills and guiding users back to the installer when a required skill is missing.
+
+### Fixed
+
+- Preserve complete Hub resources through npm packaging, including dotfiles, empty directories, and file modes.
+- Extend atomic installation and recovery to nested skill resources with transaction journal v4, while retaining recovery support for v3 journals and rejecting concurrent filesystem drift.
+- Preserve inactive workflow registrations so existing coordination rules remain readable after workflow removal.
+
 ## [2.0.6] - 2026-10-16
 
 ### Added
@@ -1005,7 +1024,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/NAMEWTA/Speculo/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/NAMEWTA/Speculo/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/NAMEWTA/Speculo/compare/v2.0.3...v2.0.4

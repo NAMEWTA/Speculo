@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "reviewed_at": null,
+  "notes": "模板不是已验证证据。仅填写已安装版本实际支持的键；日期最长有效 30 天。不要读取或保存凭据。",
+  "clients": {
+    "codex": {
+      "version": null,
+      "verification": "pending",
+      "higher_precedence_reviewed": false,
+      "scopes": [],
+      "keys": [],
+      "status_items": []
+    },
+    "claude": {
+      "version": null,
+      "verification": "pending",
+      "higher_precedence_reviewed": false,
+      "scopes": [],
+      "keys": []
+    }
+  }
+}

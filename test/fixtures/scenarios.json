@@ -1,5 +1,82 @@
 [
   {
+    "id": "specdev-init-optional-coordination",
+    "workflow": "specdev",
+    "trigger": "Initialize an unconfigured project; exercise Herdr, Orca, CLI and none, including each project Skill target for Herdr/Orca",
+    "expected": "Offers four choices; external defaults are preferred with lead fallback, none persists lead, and only Herdr/Orca ask for a project Skill directory. Saves the relative guide and reuses the complete local Skill. If missing, directs the user to SKILLS-HUB in speculo init; never downloads GitHub main or starts services.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
+      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/modes/herdr.md",
+      "template/references/coordination/modes/orca.md"
+    ]
+  },
+  {
+    "id": "specdev-init-reuse-and-change",
+    "workflow": "specdev",
+    "trigger": "Repeat initialization with saved lead or external preferences; then explicitly change the default mode",
+    "expected": "Displays and reuses valid preferences without asking again. Explicit changes replace defaults while preserving Work/stage rules and old third-party files; obsolete tool/model/guide fields are not carried into another mode. A saved preference alone does not authorize reinstalling a missing Skill.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
+      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md"
+    ]
+  },
+  {
+    "id": "specdev-init-no-write",
+    "workflow": "specdev",
+    "trigger": "Read-only initialization, plan-only initialization, unanswered/cancelled selection, or a normal Work without coordination configuration",
+    "expected": "Does not install Skills, save defaults, start services or create business state; an unanswered choice is not treated as consent to persist lead. A normal Work uses its current host without starting the initialization questionnaire.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
+      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/coordination-contract.md"
+    ]
+  },
+  {
+    "id": "specdev-init-install-failure-retry",
+    "workflow": "specdev",
+    "trigger": "Choose Herdr/Orca but its project Skill is missing, or a previous CLI installation was interrupted",
+    "expected": "Keeps the saved preference and target, reports not installed and continues independent initialization with lead fallback. Directs installation and transaction recovery to the Speculo CLI with its bundled automation/herdr or automation/orca package; never writes CLI metadata or installs from GitHub main.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/modes/herdr.md",
+      "template/references/coordination/modes/orca.md"
+    ]
+  },
+  {
+    "id": "specdev-init-conflict-and-drift",
+    "workflow": "specdev",
+    "trigger": "Initialization encounters invalid configuration, configuration drift, a linked install path, an invalid same-name Skill or two legacy Skill candidates without a saved guide",
+    "expected": "Preserves original files and stops only affected writes; invalid configuration does not trigger dependent installation. Ambiguous directories require a user choice; valid explicit guide paths are honored and no global Skill directory is substituted.",
+    "instruction_paths": [
+      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/modes/herdr.md",
+      "template/references/coordination/modes/orca.md"
+    ]
+  },
+  {
+    "id": "coordination-optional-service-fallback",
+    "workflow": "specdev",
+    "trigger": "Execute an authorized task with preferred Herdr, Orca or CLI plus lead fallback when its Skill, CLI, service, login or required environment is unavailable before dispatch",
+    "expected": "Reports the unavailable capability and continues with the current agent without repeating the choice, changing saved preferences or installing/starting a service. Independent review still requires an eligible reviewer; an implementer cannot approve their own work.",
+    "instruction_paths": [
+      "template/references/coordination/coordination-contract.md",
+      "template/references/coordination/modes/herdr.md",
+      "template/references/coordination/modes/orca.md",
+      "template/references/coordination/modes/cli.md"
+    ]
+  },
+  {
+    "id": "coordination-required-and-uncertain-dispatch",
+    "workflow": "specdev",
+    "trigger": "A required tool or stage overrides an optional project default, or an external dispatch loses its response while the worker may still be writing",
+    "expected": "Does not inherit lower-priority fallback for a forced choice. For uncertain dispatch, recovers the original task and verifies effects and stopped writers before continuing unfinished work; a service error never justifies duplicate execution.",
+    "instruction_paths": [
+      "template/references/coordination/coordination-contract.md",
+      "template/references/coordination/result-and-recovery.md"
+    ]
+  },
+  {
     "id": "specdev-intake",
     "workflow": "specdev",
     "trigger": "explicit source intake request",

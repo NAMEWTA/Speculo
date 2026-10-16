@@ -601,13 +601,15 @@ function transformContent(content, tagsBySource, source) {
   if (hostSkill) {
     const title = hostSkill === 'herdr' ? 'Herdr' : 'Orca';
     // These are optional host integrations, not static capability dependencies.
-    // Preserve its exact upstream identity and install checks without an external
-    // Markdown dependency or a hard-coded native installation root in the web copy.
-    content = content.replace(
-      `[${title} SKILL.md](https://github.com/NAMEWTA/wta-skills-hub/blob/main/skills/automation/${hostSkill}/SKILL.md)`,
-      `GitHub 的 NAMEWTA/wta-skills-hub 仓库 main 分支、skills/automation/${hostSkill} 目录中的完整 ${title} Skill`,
-    ).replaceAll(`项目 \x60.agents/skills/${hostSkill}/SKILL.md\x60`, `宿主确认的项目 ${title} Skill 入口`)
-      .replaceAll('项目 `.agents/skills/`', '宿主确认的项目 Skill 安装目录');
+    // Keep bundled source identity and host-neutral lookup in the web copy.
+    content = content.replaceAll(
+      `\x60skills-hub/automation/${hostSkill}/\x60`,
+      `Speculo 分发包中的 automation/${hostSkill} 完整 Skill`,
+    ).replaceAll(
+      `\x60.agents/skills/${hostSkill}/SKILL.md\x60 或 \x60.claude/skills/${hostSkill}/SKILL.md\x60`,
+      `宿主确认的通用智能体项目 ${title} Skill 入口或 Claude 项目 ${title} Skill 入口`,
+    ).replaceAll('项目 `.agents/skills/` 或 `.claude/skills/`', '项目通用智能体或 Claude Skill 目录')
+      .replaceAll('此选择不修改 roots.skills 的含义。', '此选择不改变宿主的通用项目 Skill 根。');
   }
   if (source) content = content.replace(/\[([^\]\n]+)\]\(([^)\n]+\.(?:md|json))(#[^)]*)?\)/g, (match, label, target, anchor) => {
     if (/^(?:https?:|#|\/)/.test(target)) return match;

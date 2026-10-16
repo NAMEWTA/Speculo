@@ -1,4 +1,6 @@
 import * as clack from "@clack/prompts";
+import { MultiSelectPrompt } from "@clack/core";
+import type { HubCatalog, HubSummary } from "./hub-skills.js";
 import type { Asset, AssetCatalog } from "./assets.js";
 import { resolveProjectionIds, normalizeSkillTargets, validateExposureRequest, type SkillRequest, type ProjectionHost, type ExposureSelection } from "./agent-skills.js";
 import type { InstallPreview, InstallProgress, SpeculoCommandResult } from "./index.js";
@@ -6,7 +8,7 @@ import type { WorkflowCatalog, WorkflowSelection } from "./workflows.js";
 import type { VersionInfo } from "./version.js";
 import { InstallCancelled } from "./interaction.js";
 
-type Choice = { value: string; label: string; hint?: string };
+type Choice = { value: string; label: string; hint?: string; section?: string };
 function cellWidth(char: string): number {
   if (/\p{Mark}/u.test(char)) return 0;
   return /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Emoji_Presentation}\u3000-\u303f\uff01-\uff60]/u.test(char) ? 2 : 1;
@@ -48,7 +50,7 @@ export type PromptPort = {
 };
 const prompts: PromptPort = {
   select: options => clack.select({ ...options, message: wrapTerminalText(options.message, terminalWidth()), options: fitChoices(options.options), maxItems: 12 }),
-  multiselect: options => clack.multiselect({ ...options, message: wrapTerminalText(options.message, terminalWidth()), options: fitChoices(options.options), maxItems: 12 }),
+  multiselect: options => options.options.some(o => o.section) ? sectionedMultiselect(options) : clack.multiselect({ ...options, message: wrapTerminalText(options.message, terminalWidth()), options: fitChoices(options.options), maxItems: 12 }),
   confirm: options => clack.confirm({ ...options, message: wrapTerminalText(options.message, terminalWidth()) }),
   note(message, title) {
     // Clack 0.9's boxed notes measure JS string length, not Chinese display cells.
@@ -56,6 +58,41 @@ const prompts: PromptPort = {
     clack.log.message(wrapTerminalText(message, terminalWidth()));
   },
 };
+
+/** Headers are render-only; keyboard navigation and select-all operate on leaves. */
+export function renderPackageChoices(options: Choice[], selected: string[], cursor: number, width: number, rows = 12): string {
+  const count = Math.max(1, rows - 4), start = Math.max(0, Math.min(cursor - Math.floor(count / 2), options.length - count));
+  const lines: string[] = []; let section: string | undefined;
+  if (start) lines.push("  ↑ 更多");
+  for (let i = start; i < Math.min(options.length, start + count); i++) {
+    const choice = options[i];
+    if (choice.section !== section) { section = choice.section; lines.push(fitText(`---- ${section} ----`, width)); }
+    lines.push(`${i === cursor ? ">" : " "} ${selected.includes(choice.value) ? "[x]" : "[ ]"} ${fitText(choice.label, width - 6)}`);
+  }
+  if (start + count < options.length) lines.push("  ↓ 更多");
+  return lines.join("\n");
+}
+async function sectionedMultiselect(options: Parameters<PromptPort["multiselect"]>[0]): Promise<string[] | symbol> {
+  return new MultiSelectPrompt({ ...options, render() {
+    if (this.state === "cancel") return "安装已取消";
+    if (this.state === "submit") return `已选择 ${this.value.length} 个安装包`;
+    return `${wrapTerminalText(options.message, terminalWidth())}\n${renderPackageChoices(options.options, this.value, this.cursor, terminalWidth(), Math.min(16, (process.stdout.rows || 24) - 6))}\n空格勾选 · ↑↓ 移动 · Enter 继续 · Esc 取消`;
+  } }).prompt() as unknown as Promise<string[] | symbol>;
+}
+
+export async function promptPackages(options: { workflows: WorkflowCatalog; hub: HubCatalog; workflowIds: string[]; hubIds: string[]; chooseWorkflows: boolean; chooseHub: boolean }, ui: PromptPort = prompts): Promise<{ workflowIds: string[]; hubIds: string[] }> {
+  ui.note("勾选清单决定最终安装内容；取消勾选会卸载未修改的受管包。\nWorkflow 的配置、change、知识和历史数据保留。冲突包整包保留并报告。", "选择安装内容");
+  const choices: Choice[] = [
+    ...(options.chooseHub ? [...options.hub.values()].map(s => ({ value: `hub:${s.id}`, label: s.id, section: "SKILLS-HUB" })) : []),
+    ...(options.chooseWorkflows ? [...options.workflows.values()].map(w => ({ value: `workflow:${w.id}`, label: workflowLabel(w.id), section: "WORKFLOWS" })) : []),
+  ];
+  const initialValues = [...options.hubIds.map(id => `hub:${id}`), ...options.workflowIds.map(id => `workflow:${id}`)].filter(id => choices.some(c => c.value === id));
+  const selected = choices.length ? answer(await ui.multiselect({ message: "选择要安装的 Skills Hub 与 Workflows", options: choices, initialValues, required: false })) : [];
+  return {
+    workflowIds: options.chooseWorkflows ? selected.filter(s => s.startsWith("workflow:")).map(s => s.slice(9)).sort() : options.workflowIds,
+    hubIds: options.chooseHub ? selected.filter(s => s.startsWith("hub:")).map(s => s.slice(4)).sort() : options.hubIds,
+  };
+}
 
 function answer<T>(value: T | symbol): T {
   if (typeof value === "symbol") throw new InstallCancelled();
@@ -71,7 +108,7 @@ const workflowLabel = (id: string) => WORKFLOW_LABELS[id] ?? id;
 export async function promptWorkflows(
   catalog: WorkflowCatalog, installed: Set<string>, ui: PromptPort = prompts,
 ): Promise<WorkflowSelection> {
-  ui.note("空选只安装或刷新核心能力。已安装但本次未勾选的 workflow 仍保留，不会卸载。\n空格勾选，Enter 继续；Ctrl+C / Esc 取消安装。", "选择安装内容");
+  ui.note("取消勾选会卸载未修改的受管 workflow；运行时数据保留。\n空格勾选，Enter 继续；Ctrl+C / Esc 取消安装。", "选择安装内容");
   return { workflowIds: answer(await ui.multiselect({
     message: "选择本次安装或刷新的 workflow",
     options: [...catalog.values()].sort((a, b) => a.id.localeCompare(b.id)).map(w => ({
@@ -101,23 +138,27 @@ function groupDescription(group: ExposureGroup): string {
 }
 
 export async function promptExposureConfiguration(
-  options: { catalog: AssetCatalog; existing: ExposureSelection; hasHistory: boolean; targets?: ProjectionHost[]; request?: SkillRequest },
+  options: { catalog: AssetCatalog; existing: ExposureSelection; hasHistory: boolean; targets?: ProjectionHost[]; request?: SkillRequest; hubSelected?: boolean },
   ui: PromptPort = prompts,
 ): Promise<ExposureSelection> {
   validateExposureRequest(options.targets, options.request);
   let targets = options.targets;
   if (targets === undefined) {
     ui.note("所有勾选位置共用一份能力清单，只需选择一次能力。\n空选关闭全部曝光；取消勾选的位置会清理未被人工修改的旧入口。\n空格勾选，Enter 继续；Ctrl+C / Esc 取消安装。", "选择曝光位置");
+    do {
     targets = answer(await ui.multiselect({
-      message: "选择能力曝光到哪些位置（可多选）",
+      message: "选择 Skill 安装位置（Skills Hub 与曝光入口共用，可多选）",
       options: [
         { value: "agents", label: ".agents/skills", hint: "通用 Skill 发现目录" },
         { value: "claude", label: ".claude/skills", hint: "Claude Skill 发现目录" },
       ],
       initialValues: options.existing.targets, required: false,
     })) as ProjectionHost[];
+    if (options.hubSelected && !targets.length) ui.note("已选择 Skills Hub 包，请至少勾选一个安装位置。", "需要安装位置");
+    } while (options.hubSelected && !targets.length);
   }
   targets = normalizeSkillTargets(targets);
+  if (options.hubSelected && !targets.length) throw new Error("--hub-skills requires at least one --skill-targets destination");
   if (!targets.length) {
     validateExposureRequest(targets, options.request);
     return { targets, assetIds: [] };
@@ -207,8 +248,10 @@ export function formatInstallPreview(preview: InstallPreview): string {
     `目标：${preview.target}`,
     `操作：${preview.mode === "init" ? "首次安装" : "刷新"}（包含核心能力）`,
     `安装或刷新 workflow：${preview.workflowIds.join(", ") || "无，仅核心"}`,
-    `保留未刷新的 workflow：${preview.retainedWorkflowIds.join(", ") || "无"}`,
+    `冲突保留的 workflow：${preview.retainedWorkflowIds.join(", ") || "无"}`,
+    `卸载 workflow：${preview.removedWorkflowIds?.join(", ") || "无"}（配置、change、知识和历史数据保留）`,
   ];
+  if (preview.hub) lines.push("", ...formatHubSummary(preview.hub));
   const exposure = preview.exposure;
   lines.push("", `曝光位置：${exposure.targets.map(host => `.${host}/skills`).join("、") || "无（关闭全部曝光）"}`,
     `统一能力清单：${exposure.assetIds.length} 个入口`);
@@ -223,6 +266,11 @@ export function formatInstallPreview(preview: InstallPreview): string {
   }
   if (preview.warnings.length) lines.push("", "警告：", ...preview.warnings);
   return lines.join("\n");
+}
+
+function formatHubSummary(hub: HubSummary): string[] {
+  return ["---- SKILLS-HUB ----", `所选包：${hub.selected.join(", ") || "无"}`, `实际受管包：${hub.installed.join(", ") || "无"}`,
+    `新增：${hub.created.join(", ") || "无"}`, `更新：${hub.updated.join(", ") || "无"}`, `卸载：${hub.removed.join(", ") || "无"}`, `冲突保留：${hub.conflicts.join(", ") || "无"}`];
 }
 
 export async function confirmInstallPreview(preview: InstallPreview, ui: PromptPort = prompts): Promise<boolean> {
@@ -253,6 +301,7 @@ export function createInstallUI() {
       clack.log.success(`${result.mode === "init" ? "已安装" : "已刷新"}：${result.target}`);
       clack.log.info(`更新受管文件 ${r.managedFiles} 个；保留运行时文件 ${r.preservedFiles} 个。\n配置：新增 ${r.config.added}，更新 ${r.config.updated}，保留 ${r.config.preserved}，移除 ${r.config.removed}。`);
       clack.log.info(`统一选择 ${result.exposure.assetIds.length} 个入口；曝光位置：${result.exposure.targets.map(host => `.${host}/skills`).join("、") || "无"}。`);
+      clack.log.info(formatHubSummary(result.hub).join("\n"));
       for (const host of ["agents", "claude"] as const) {
         const p = result.projections[host];
         if (p.affected) clack.log.info(`.${host}/skills：${p.enabled ? "启用" : "关闭"}；新增 ${p.created}，更新 ${p.updated}，移除 ${p.deleted}，可用 ${p.ready}，冲突 ${p.conflicts.length}。`);
