@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Separate automatic/serial/parallel Ticket scheduling, actual Agent concurrency and workspace selection. Coordinate shared writes and Git operations explicitly, and accept verified frozen working-tree delivery without requiring a commit or extra integration checkout.
 - Extend the shared agent-writing guidance with project Skill ownership and maintenance rules. Prefer deterministic checks for mechanical violations, reserve review standards for judgement calls, and refresh portable canonical documents with their required references.
 
+### Fixed
+- Compare native filesystem paths in workspace recovery fixtures so Windows temporary-directory aliases do not cause false failures.
+
 ### Upgrade Notes
 - Goal Plan schema 8, Implementation Plan schema 3 and execution context/record schema 1 replace the previous execution contracts; `ticket-control` now emits schema 2. Existing active records require explicit reconciliation by their owner; unknown or mixed versions are rejected without rewriting the originals.
 - New retrospective reports and upgrade plans live under `specdev/retro/`, with completed records under `specdev/retro/archive/`. The former change-local retrospective artifact and `validate-specdev --stage retro` are replaced by `validate-retro.mjs`.

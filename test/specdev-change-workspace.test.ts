@@ -123,7 +123,7 @@ test('verified status cannot replace independent review, checks, or required Lea
 
 test('recovery rejects invalid locators, branch drift and a foreign repository without mutation',t=>{
   const f=fixture(t,true),original=readFileSync(join(f.root,'README.md'),'utf8'),worktrees=f.git('worktree','list','--porcelain');
-  assert.equal(resolveExecutionWorkspace(f.repo,readExecutionContext(f.root)),f.workspace);
+  assert.equal(resolveExecutionWorkspace(f.repo,readExecutionContext(f.root)),realpathSync.native(f.workspace));
   for(const value of ['../outside','/absolute','specdev-worktree/../outside']){f.context.workspace_ref=value;f.saveContext();assert.notDeepEqual(f.validate(),[]);}
   f.context.workspace_ref=`specdev-worktree/${f.change}`;f.context.branch='wrong';f.saveContext();assert.match(f.validate().join('\n'),/branch drifted/);
   writeFileSync(join(f.root,'README.md'),original);assert.deepEqual(f.validate(),[]);
