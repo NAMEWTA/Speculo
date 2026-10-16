@@ -7,7 +7,7 @@ import { readAssetCatalog, type AssetCatalog } from "../src/assets.js";
 import { readProjectionManifest, resolveProjectionIds, resolveExposure } from "../src/agent-skills.js";
 import { initSpeculo, type InstallPreview } from "../src/index.js";
 import { InstallCancelled } from "../src/interaction.js";
-import { exposureGroups, promptExposureConfiguration, promptExposure, promptWorkflows, promptPackages, renderPackageChoices, confirmInstallPreview, formatInstallPreview, wrapTerminalText, type PromptPort } from "../src/install-ui.js";
+import { exposureGroups, promptExposureConfiguration, promptExposure, promptWorkflows, promptPackages, confirmInstallPreview, formatInstallPreview, wrapTerminalText, type PromptPort } from "../src/install-ui.js";
 import { discoverHubCatalog } from "../src/hub-skills.js";
 import { discoverWorkflowCatalog } from "../src/workflows.js";
 import { fingerprintTree } from "../src/manifest.js";
@@ -18,22 +18,89 @@ const packageRoot = process.cwd();
 const catalog = await readAssetCatalog(join(packageRoot, "template"));
 const workflows = await discoverWorkflowCatalog(packageRoot);
 const emptyOptions = { targets: ["agents" as const], catalog, existing: [] as string[], hasHistory: false };
-test("one package list has render-only sections, category labels, exact preselection and narrow scrolling", async () => {
+test("package browser shows peer categories and workflows, expanding only the chosen category", async () => {
   const hub = await discoverHubCatalog(packageRoot);
-  const s = script([{ kind: "multiselect", value: ["hub:automation/orca", "workflow:specdev"], check: o => {
-    assert.equal(o.options.length, 20);
-    assert.deepEqual(o.initialValues, ["hub:automation/herdr", "workflow:learning"]);
-    assert.equal(o.options[0].section, "SKILLS-HUB"); assert.equal(o.options[15].section, "WORKFLOWS");
-    assert.equal(o.options[0].label, "automation/grok-bot-team-steward");
-    assert.ok(o.options.every((v: any) => /^(hub|workflow):/.test(v.value)));
-    const first = renderPackageChoices(o.options, o.initialValues, 0, 25, 12);
-    const last = renderPackageChoices(o.options, o.initialValues, 19, 25, 12);
-    assert.match(first, /---- SKILLS-HUB ----/); assert.match(first, /↓ 更多/);
-    assert.match(last, /---- WORKFLOWS ----/); assert.match(last, /↑ 更多/);
-    for (const line of (first + "\n" + last).split("\n")) assert.equal(wrapTerminalText(line, 25), line);
-  } }]);
+  const s = script([
+    { kind: "select", value: "category:automation", check: o => {
+      assert.equal(o.options.length, 11);
+      assert.deepEqual(o.options.filter((x: any) => x.value.startsWith("category:")).map((x: any) => x.value),
+        ["category:automation", "category:coding", "category:design", "category:system", "category:writing"]);
+      assert.equal(o.options.filter((x: any) => x.value.startsWith("workflow:")).length, 5);
+      assert.ok(o.options.every((x: any) => !x.value.includes("/")));
+      assert.match(o.options[0].label, /1\/3/);
+      assert.equal(o.options.find((x: any) => x.value === "workflow:learning").tone, "selected");
+    } },
+    { kind: "multiselect", value: ["automation/orca"], check: o => {
+      assert.deepEqual(o.initialValues, ["automation/herdr"]);
+      assert.ok(o.options.every((x: any) => x.value.startsWith("automation/")));
+      assert.ok(o.options.every((x: any) => x.hint));
+    } },
+    { kind: "select", value: "workflow:learning", check: o => assert.equal(o.initialValue, "category:automation") },
+    { kind: "select", value: "workflow:specdev" },
+    { kind: "select", value: "done", check: o => {
+      assert.equal(o.options.find((x: any) => x.value === "workflow:learning").tone, undefined);
+      assert.equal(o.options.find((x: any) => x.value === "workflow:specdev").tone, "selected");
+    } },
+  ]);
   assert.deepEqual(await promptPackages({ workflows, hub, workflowIds: ["learning"], hubIds: ["automation/herdr"], chooseWorkflows: true, chooseHub: true }, s.ui), { workflowIds: ["specdev"], hubIds: ["automation/orca"] });
   s.done();
+});
+
+test("package drafts survive category revisits and clearing affects only that category", async () => {
+  const hub = await discoverHubCatalog(packageRoot);
+  const system = [...hub.keys()].find(id => id.startsWith("system/"))!;
+  const s = script([
+    { kind: "select", value: "category:automation" },
+    { kind: "multiselect", value: ["automation/herdr", "automation/orca"] },
+    { kind: "select", value: "category:system" },
+    { kind: "multiselect", value: [system] },
+    { kind: "select", value: "category:automation" },
+    { kind: "multiselect", value: [], check: o => assert.deepEqual(o.initialValues, ["automation/herdr", "automation/orca"]) },
+    { kind: "select", value: "done", check: o => assert.match(o.options[0].label, /0\/3/) },
+  ]);
+  assert.deepEqual(await promptPackages({ workflows, hub, workflowIds: ["learning"], hubIds: [], chooseWorkflows: true, chooseHub: true }, s.ui), { workflowIds: ["learning"], hubIds: [system] });
+  s.done();
+});
+
+test("explicit package selections skip their branch and remain unchanged", async () => {
+  const hub = await discoverHubCatalog(packageRoot);
+  for (const chooseHub of [true, false]) {
+    const s = script([{ kind: "select", value: "done", check: o => {
+      assert.equal(o.options.some((x: any) => x.value.startsWith("category:")), chooseHub);
+      assert.equal(o.options.some((x: any) => x.value.startsWith("workflow:")), !chooseHub);
+    } }]);
+    const existing = { workflowIds: ["learning"], hubIds: ["automation/orca"] };
+    assert.deepEqual(await promptPackages({ workflows, hub, ...existing, chooseWorkflows: !chooseHub, chooseHub }, s.ui), existing);
+    s.done();
+  }
+  const s = script([]);
+  assert.deepEqual(await promptPackages({ workflows, hub, workflowIds: [], hubIds: [], chooseWorkflows: false, chooseHub: false }, s.ui), { workflowIds: [], hubIds: [] });
+  s.done();
+});
+
+test("empty catalogs finish without prompting and unknown category labels are usable", async () => {
+  const s = script([]);
+  assert.deepEqual(await promptPackages({ workflows: new Map(), hub: new Map(), workflowIds: [], hubIds: [], chooseWorkflows: true, chooseHub: true }, s.ui), { workflowIds: [], hubIds: [] });
+  s.done();
+  const hub = new Map([["new-category/example", { id: "new-category/example", name: "example", description: "Example", root: "", tree: new Map() }]]);
+  const fallback = script([{ kind: "select", value: "done", check: o => assert.match(o.options[0].label, /new-category/) }]);
+  await promptPackages({ workflows: new Map(), hub, workflowIds: [], hubIds: [], chooseWorkflows: true, chooseHub: true }, fallback.ui);
+  fallback.done();
+});
+
+test("cancelling either package screen discards the draft without mutating inputs", async () => {
+  const hub = await discoverHubCatalog(packageRoot);
+  for (const steps of [
+    [{ kind: "select", value: Symbol("cancel") }],
+    [{ kind: "select", value: "workflow:learning" }, { kind: "select", value: "category:automation" }, { kind: "multiselect", value: Symbol("cancel") }],
+  ] as Step[][]) {
+    const options = { workflows, hub, workflowIds: ["learning"], hubIds: ["automation/orca"], chooseWorkflows: true, chooseHub: true };
+    const s = script(steps);
+    await assert.rejects(promptPackages(options, s.ui), InstallCancelled);
+    assert.deepEqual(options.workflowIds, ["learning"]);
+    assert.deepEqual(options.hubIds, ["automation/orca"]);
+    s.done();
+  }
 });
 test("Hub selection requires a target and repeats only the target page", async () => {
   const s = script([{ kind: "multiselect", value: [] }, { kind: "multiselect", value: ["claude"] }, { kind: "select", value: "none" }]);

@@ -65,19 +65,27 @@ speculo init . --skill-targets none
 
 ## 交互向导怎么选
 
-在真实交互终端直接运行 `speculo init .`，首先在同一多选列表中选择安装包：
+在真实交互终端直接运行 `speculo init .`，首屏并列显示全部 Hub 分类和 Workflow。使用 ↑↓ 移动，Enter 进入分类或切换 Workflow：
 
 ```text
----- SKILLS-HUB ----
-automation/herdr
-automation/orca
-…
----- WORKFLOWS ----
-SpecDev · 工程开发
-…
+Hub · automation · 自动化 (0/3)
+Hub · coding · 编程 (0/3)
+Hub · design · 设计 (0/1)
+Hub · system · 系统 (0/6)
+Hub · writing · 写作 (0/2)
+Learning · 学习
+Media · 内容创作
+Ops · 运维
+Person · 认知与决策
+✓ SpecDev · 工程开发
+完成选择 →
 ```
 
-分区标题不可选，条目支持滚动和窄终端显示。首次两区均空选；刷新预选实际受管包。然后多选 Skill 安装位置，最后选择 workflow/Command 的曝光入口。Hub 包不会在曝光页重复询问。`.agents/skills/` 和 `.claude/skills/` 共用同一份清单。多选用空格勾选、Enter 继续。
+分类括号显示已选数/总数，Workflow 的 ✓ 表示已选。只有进入某个分类后才列出其中的 Skill，用空格勾选、Enter 保存并返回；空选清空当前分类，其他分类的选择保留。首次均未选中，刷新预选实际受管包。列表按终端高度尽量完整显示，放不下时滚动，长文本适配终端宽度。
+
+选择“完成选择”后，多选 Skill 安装位置，再选择 workflow/Command 的曝光入口。Hub 包不会在曝光页重复询问。`.agents/skills/` 和 `.claude/skills/` 共用同一份清单。
+
+界面使用青色重点、绿色选中/成功、黄色提醒和红色错误。设置 `NO_COLOR=1` 可关闭颜色；标准输入或输出被重定向时不启动交互向导，输出重定向时使用无色文本且不播放动画。`doctor --json`、`recover` 的 JSON 和 `resolve` 的路径输出保持纯文本格式。
 
 | 向导选项 | 适合什么需求 |
 |---|---|

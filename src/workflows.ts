@@ -23,7 +23,7 @@ async function discover(root:string):Promise<WorkflowCatalog>{
 }
 export async function discoverWorkflowCatalog(packageRoot:string):Promise<WorkflowCatalog>{return discover(join(packageRoot,'template'));}
 export async function scanInstalledWorkflows(installRoot:string):Promise<string[]>{return [...(await discover(installRoot)).keys()].sort();}
-export function isInteractive():boolean{return process.stdin.isTTY===true;}
+export function isInteractive():boolean{return process.stdin.isTTY===true && process.stdout.isTTY===true;}
 export async function promptWorkflowSelection(catalog:WorkflowCatalog,options?:{preSelectedWorkflowIds?:Set<string>}):Promise<WorkflowSelection>{
  if(!isInteractive())return {workflowIds:[...(options?.preSelectedWorkflowIds??[])].filter(id=>catalog.has(id)).sort()};
  const {promptWorkflows}=await import('./install-ui.js');

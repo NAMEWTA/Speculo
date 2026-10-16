@@ -6,43 +6,21 @@ import { initSpeculo } from "./index.js";
 import { parseSkillSpec, parseSkillTargets, validateExposureRequest } from "./agent-skills.js";
 import { discoverWorkflowCatalog, isInteractive as catalogIsInteractive } from "./workflows.js";
 import { RefreshBlockedError } from "./refresh.js";
-import { checkForUpdate, formatVersionBanner, type VersionInfo } from "./version.js";
+import { checkForUpdate, type VersionInfo } from "./version.js";
 import { doctorSpeculo } from "./doctor.js";
 import { recoverInstall } from "./transaction.js";
 import { INSTALL_ROOT, resolvePathReference } from "./paths.js";
 import { pathExists } from "./utils.js";
 import { InstallCancelled } from "./interaction.js";
 import type { createInstallUI } from "./install-ui.js";
+import { formatHelp, printBlocker, printDoctor, printError, printVersion } from "./terminal-ui.js";
 
 const REMOVED_COMMANDS = new Set(["migrate", "mirror-skills", "update"]);
 const REMOVED_OPTIONS = new Set(["--all", "--apply", "--dry-run"]);
 
-function usage(): string {
-  return [
-    "Usage:",
-    "  speculo [init] [target]",
-    "  speculo version",
-    "  speculo doctor [target] [--json]",
-    "  speculo recover [target] --transaction <id>",
-    "  speculo resolve [target] --path <reference>",
-    "  speculo init [target] [--workflows <all|none|id,id> | --core-only] [--hub-skills <selection>] [--skill-targets <targets>] [--skills <selection>]",
-    "",
-    "Commands:",
-    "  init      Install or directly refresh Speculo assets and selected workflow packages.",
-    "            --hub-skills: none|keep|all|<category/name,...>. Unchecked managed packages are uninstalled.",
-    "            --skill-targets: agents|claude|agents,claude|none. --skills: none|keep|all|<business-id,id>.",
-    "            Interactive: choose targets, then one shared selection: all, groups, custom, keep, or none.",
-    "  version   Print the current Speculo version and check for updates.",
-    "  doctor    Validate installation integrity and report recovery evidence (read-only).",
-    "  recover   Explicitly roll back an interrupted transaction, or finish committed cleanup.",
-    "  resolve   Resolve a Path reference to a contained local path (read-only; no shell).",
-    "  Non-interactive init: core-only on first install; existing supported workflows on refresh.",
-  ].join("\n");
-}
-
 async function showVersionWithCheck(packageRoot: string, packageName: string): Promise<VersionInfo> {
   const info = await checkForUpdate(packageRoot, packageName);
-  console.log(formatVersionBanner(info));
+  printVersion(info);
   return info;
 }
 
@@ -71,13 +49,13 @@ function parseArguments(argv: string[], booleanFlags = new Set<string>(), valueF
 
 async function main(argv: string[]): Promise<number> {
   if (argv[0] === "--help" || argv[0] === "-h") {
-    console.log(usage());
+    console.log(formatHelp());
     return 0;
   }
 
   const [command, ...rest] = argv;
   if (command && REMOVED_COMMANDS.has(command)) {
-    console.error("speculo " + command + " has been removed. Run speculo init [target] to refresh Speculo.");
+    printError("speculo " + command + " has been removed. Run speculo init [target] to refresh Speculo.");
     return 1;
   }
 
@@ -96,10 +74,7 @@ async function main(argv: string[]): Promise<number> {
       const args = parseArguments(rest, new Set(["--json"]));
       const result = await doctorSpeculo(args.target);
       if (args.flags.has("--json")) console.log(JSON.stringify(result, null, 2));
-      else {
-        for (const check of result.checks) console.log(`${check.ok ? "ok" : "fail"} ${check.id}: ${check.message}`);
-        console.log(`scope: ${result.scope}; not checked: ${result.notChecked.join(", ")}`);
-      }
+      else printDoctor(result);
       return result.healthy ? 0 : 2;
     }
     if (command === "recover" || command === "resolve") {
@@ -165,11 +140,11 @@ async function main(argv: string[]): Promise<number> {
       return error.exitCode;
     }
     if (error instanceof RefreshBlockedError) {
-      if (!ui) console.error(error.message);
-      for (const blocker of error.blockers) console.error("  " + blocker.code + " " + blocker.path + ": " + blocker.message);
+      if (!ui) printError(error.message);
+      for (const blocker of error.blockers) printBlocker(blocker);
       return 2;
     }
-    if (!ui) console.error(error instanceof Error ? error.message : String(error));
+    if (!ui) printError(error instanceof Error ? error.message : String(error));
     return 1;
   }
 }

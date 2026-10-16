@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-16
+
+### Changed
+
+- Unify CLI prompts, help, version information, installation summaries and diagnostics with Clack components, consistent colors and clearer Chinese guidance.
+- Show Skills Hub categories alongside Workflows; open a category to select individual Skills, preserve selections between visits and toggle Workflows directly from the overview.
+- Size selection lists to the terminal height, wrap Chinese and colored text by display width, and simplify installation previews while retaining removal and conflict details.
+
+### Fixed
+
+- Skip interactive prompts and animations when standard input or output is redirected, keeping piped output and machine-readable JSON/path results free of decorations.
+
 ## [2.1.0] - 2026-10-16
 
 ### Added
@@ -1024,7 +1036,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/NAMEWTA/Speculo/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/NAMEWTA/Speculo/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/NAMEWTA/Speculo/compare/v2.0.4...v2.0.5

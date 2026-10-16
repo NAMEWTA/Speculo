@@ -23,7 +23,7 @@ entry points and test commands. Keep this task read-only.
 
 For all domains and public entries, use `--workflows all --skills all`. Use `--skill-targets claude` for hosts reading `.claude/skills/`, or `--skill-targets agents,claude` to expose the same selection in both locations. Installation, host exposure and execution are separate steps. See the [walkthrough](docs/getting-started.md) and [CLI reference](docs/cli.md).
 
-The installer shows **SKILLS-HUB** (`category/skill`) and **WORKFLOWS** as separate sections in one selection list. Select full bundled packages with `--hub-skills automation/herdr,automation/orca`; both kinds share `--skill-targets`. Unchecking a managed package uninstalls it when unchanged; workflow runtime data and conflicting packages are preserved. The project receives only selected Hub packages.
+The installer shows **Skills Hub categories** and **Workflows** at the same level. Open a category to select its Skills, or toggle a Workflow directly; selections are kept when returning to the overview. Select full bundled packages with `--hub-skills automation/herdr,automation/orca`; both kinds share `--skill-targets`. Unchecking a managed package uninstalls it when unchanged; workflow runtime data and conflicting packages are preserved. The project receives only selected Hub packages.
 
 
 ## Workflow guides
