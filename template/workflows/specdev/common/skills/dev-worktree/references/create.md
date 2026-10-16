@@ -1,71 +1,42 @@
-# Create Or Restore Worktree
+# 创建、复用与恢复 change 工作区
 
-## 前置条件
+## 前置与创建
 
-- Ticket Ready 或完整 Direct Spec 已获批且规格就绪，项目根是有效 Git repository，父分支和 `base_sha` 可解析；
-- implementation commit 与 local candidate integration/父分支更新已授权；
-- workspace、implementation、integration owner 唯一；integration owner 必须为 Lead；
-- 检查 `specdev-worktree/` 已被 Git ignore；未初始化项目由当前 I 在授权写集内补充该忽略规则并记录，不能强制运行 init；
-- 目标 branch/worktree 不覆盖现有用户 workspace，路径合同无冲突。
+1. 核对获批 change、原 owner、项目根、允许写集和工作区选择。复用既有授权，不把创建 worktree 当作提交或合并授权。
+2. 重读 README Execution Context、Git worktree list、branch/HEAD/dirty 状态。已有选择与 Git 一致就复用；冲突时停止，不换路径无限新建。
+3. current 使用当前项目 checkout，允许 main 或已有工作分支/worktree。worktree 新建默认 branch `speculo/<change>`、locator `specdev-worktree/<change>`；用户指定位置时使用可解析的项目相对 locator。已有外部 checkout 可作为明确 project-root 以 current 复用，不持久化机器绝对路径。
+4. 创建前检查目标不存在或精确属于本 change，检查 `specdev-worktree/` 被忽略；只在授权范围补充 ignore。固定真实 base SHA 后创建一个 worktree。恢复不执行创建，不覆盖现有 branch/目录。
+5. 在选定工作区读取项目 Agent 指令、适用 Skill、依赖与验证合同，运行实际需要的最小基线。
+6. Lead 重验旧字节后原子更新 README 唯一记录并回读；不建立全局镜像。没有安装元数据也可按明确根运行。
 
-## 创建来源 worktree
+## Execution Context
 
-先确定 `unit-id`：Ticket 使用真实 ID（如 T-01），Direct Spec 固定为 `direct-spec`；change 使用已解析的 change 名。下列路径由两者共同限定。
+首次真实执行时添加以下锚点和唯一 JSON object；值来自实际操作，不预造空记录。current 同样保存上下文，但不执行 worktree create。
 
-1. 重读父分支 HEAD、工作树、现有 worktrees 与 refs；父 HEAD 与计划基线不一致时由 Lead决定更新 `base_sha` 或阻塞；
-2. 固定 branch `speculo/<change>/<unit-id>` 与 locator `specdev-worktree/<change>/<unit-id>`；
-3. 确认目标 branch/path 不存在，或其实际记录精确匹配当前实现单元；
-4. 从 `base_sha` 创建 Git worktree，不复用其他实现单元目录；
-5. 在来源 worktree 读取项目 Agent 指令、依赖、构建与路径合同；
-6. 安装实际需要的依赖，运行最小非 E2E 基线；
-7. Lead 将实际 workspace、owner、checkpoint 和 `status: active` 记录在本单元原 Evidence 的 `## Workspace Execution Record` 唯一 JSON object 中，保留原执行字段；不创建全局 worktree 镜像。
-
-初始记录：
+````markdown
+<a id="execution-context"></a>
+## Execution Context
 
 ```json
 {
-  "ticket_id": "T-01",
-  "owner": "lead",
-  "implementation_owner": "lead-or-dynamic-agent",
-  "integration_owner": "lead",
-  "provider": "git",
-  "base_sha": "<immutable-sha>",
-  "parent_branch": "<parent-branch>",
-  "branch": "speculo/<change>/T-01",
-  "workspace_ref": "specdev-worktree/<change>/T-01",
-  "source_checkpoint": null,
-  "integration": {
-    "status": "pending",
-    "parent_ref": "<parent-branch>",
-    "parent_before_sha": null,
-    "source_sha": null,
-    "candidate_sha": null,
-    "candidate_tree_sha": null,
-    "candidate_branch": null,
-    "candidate_workspace_ref": null,
-    "result_sha": null,
-    "method": null,
-    "conflict_paths": [],
-    "verification": "pending",
-    "full_suite": {"required": true, "status": "pending", "reason": null, "evidence": null},
-    "e2e": {"required": false, "status": "not-required", "reason": "实际范围无端到端风险时填写依据", "evidence": null},
-    "evidence": "<Path>{roots.state}/specdev/changes/<change>/evidence/T-01.md</Path>",
-    "attempts": 0,
-    "promotion_status": "pending"
-  },
-  "status": "active",
-  "updated_at": "<ISO-8601>"
+  "schema_version": 1,
+  "change": "2026-10-15-example",
+  "workspace_policy": "worktree",
+  "workspace_ref": "specdev-worktree/2026-10-15-example",
+  "branch": "speculo/2026-10-15-example",
+  "base_sha": "<actual-immutable-git-sha>",
+  "owner": "native:actual-lead",
+  "ticket_execution": "auto"
 }
 ```
+````
 
-Direct Spec 将 `ticket_id` 替换为 `purpose: "direct-spec"`、`change: "<change>"`、`integration_attempt_limit: <实际正整数上限>`；branch 与 workspace 的单元部分替换为 direct-spec，integration.evidence 指向 <Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>。不额外创建 Ticket。
+current 使用 `workspace_policy: current`、`workspace_ref: current` 和实际 branch。`ticket_execution` 为无计划时的选择；有计划时计划拥有调度，恢复核对约束不冲突。可选 `max_parallel_tickets` 计量票据；可选 `concurrent_implementation_limit` 计量实际实现者，互不换算；可选 `integration_attempt_limit` 记录验证尝试上限，缺省 3。相关 schema：<Path>{roots.workflows}/specdev/common/schemas/execution-context.schema.json</Path>。
 
-`full_suite` 与 `e2e` 的 required/reason 依据 Spec/Ticket/有效计划的实际验证合同；required 初始为 pending，not-required 必须给真实理由。未发生操作不预填通过。
+Ticket/Direct Spec 的 workspace_context 统一引用 `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>` 的 execution-context 锚点，不复制 branch/locator/base。实际实现者写原执行记录，正式状态只由 Lead 更新。
 
-## 恢复
+## 恢复与迁移
 
-恢复时核对 repository、branch、locator、`base_sha`、实际 HEAD、dirty 状态和 owner。状态记录与 Git 不一致、branch 被其他 worktree 占用或出现越界修改时停止；Lead 写 blocker，不重建覆盖。
+核验 checkout 所属 Git common directory、branch、base 可达、工作区路径和实际 writer。未知 owner、路径链接、漂移或旧活动 per-Ticket worktree 记录先阻塞受影响写入。旧记录按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 由原 owner 显式整理；历史与旧工作区保留，不自动归并或删除。
 
-进入 `review` 前必须由 implementation owner 创建最终 commit；Lead 重读 branch tip、diff 与 `git status`，把精确 SHA 写入 `source_checkpoint`。
-
-**完成标准**：来源 worktree 可定位且唯一；基线、记录与 Git 一致；source 检查不含 E2E；失败时保留现场。
+**完成标准**：change 唯一工作区可定位，记录与 Git 一致，创建次数不随票据/Agent 数增长。

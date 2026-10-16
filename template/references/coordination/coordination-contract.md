@@ -32,12 +32,14 @@
 
 ## 工作区和并行
 
-执行输入、编排方式和工作区是三个独立选择。工作区继承当前有效计划或用户选择，无 Goal 时由当前 Work owner 在原工件记录；未指定默认 current，已有选择不重复问。Herdr 不强制 worktree，原生 agent team 也不隐含开启 worktree。只读审查使用固定候选所在工作区，不为审查本身创建实现 worktree。
+票据调度、Agent 编排和工作区分别决定。serial 表示逐票完成，不限制同票内部协作；parallel/auto 允许按 DAG、路径、共享资源及实际能力推进多票，不强制派遣。按用户、项目初始化和 Work/Skill 要求选择实现者与工具；Lead 是状态/验收角色，不代表只能独自实现。
 
-- current：严格单 writer，Lead 自己实现时也计入。上一任务的写入是否结束不明时，先查询真实工具，不开始冲突写入。
-- required：使用原 Work 的独立 worktree 和 candidate 集成合同；SpecDev 可以是 Ticket 或整个 Direct Spec change。并行数取实际存在的配置、有效计划和平台能力的共同上限；无计划默认一个实现单元。Lead 及宿主原生协作者参与代码写入同样计数。另核对 shared paths、端口、数据库等实际资源。
-- review/research/test-observation 对业务文件默认只读；可写本任务明确分配的报告，测试输出仅写原任务允许的缓存或产物位置。
-- worktree 是工作副本，不是沙箱。Speculo 不提供运行期强制隔离、进程监管、租约或任务锁服务。
+工作区继承用户和 owning Work 的选择，已有选择不重复问。SpecDev 使用 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 的 change 级唯一工作区，默认复用 current；所有 Ticket 和协作者复用，Herdr、CLI、subagent/team 不触发额外 worktree。跨 change 保留成员各自选择。
+
+- 共享工作区的写集明确 owner；不相交且资源无冲突可并行。Git index、提交、checkout/merge 和全局验证协调串行，不暂存他人改动。
+- review 使用固定输入，相关 writer 停写并回读快照；输入漂移后重验。review/research/test-observation 默认只读业务文件，可写获分配报告和允许的缓存/测试产物。
+- 票据数量、实现者人数和 workspace 数量各自核对，不能互相换算。明确的项目/宿主限制继续生效。
+- worktree 是工作副本，不是沙箱；Speculo 不提供运行期进程监管、租约或任务锁服务。
 
 ## 记录和接续
 

@@ -8,32 +8,29 @@
 至少要求：
 
 - Spec 验收合同全部有通过 Evidence 或明确批准的 deferred；
-- current 模式的非 cancelled Ticket 都有 implementation commit、通过的 direct-parent 验证和父分支 result SHA；required 模式都有 source commit、通过的 candidate 和父分支 result SHA；
+- 非 cancelled Ticket 有真实改动、verified 执行记录、独立双轴审查、AC 和适用验证；commit 或工作副本快照都可固定交付；
 - shared path、接口、数据、兼容、迁移、调用点与回滚合同闭合；
 - 项目定向检查、受影响回归、类型检查、lint/build 和适用 E2E 无未经批准退化；
 - README Outcome、Ticket、Map 导航、Goal Plan、Evidence 与实际 Git 状态一致；
-- 没有未集成 implementation/source checkpoint、活动 integration candidate 或未决高影响偏差。
+- 无活动 writer、未验证交付或未决高影响偏差；明确承诺的 Git/外部交付按约定完成或获明确处置。
 
 无需改动的 Ticket 必须转为 `cancelled` 并记录来源事实；不得用 Evidence-only Done 或 empty commit 关闭。
 
-## 2. 两层验证
+## 2. 单票与整体验证
 
-- `current-workspace`：current 模式 implementation owner 运行 Ticket 要求的检查，Lead 在同一 workspace 运行受影响集成/回归和适用 E2E；
-- `source-worktree`/`parent-candidate`：required 模式由 implementation owner 和 Lead 分别运行非 E2E 与集成/E2E 检查。
-
-Evidence 必须记录命令运行环境。required 模式任何在 source worktree 声称的 E2E pass 都无效；任务执行者 返回的测试结果在 Lead 核对前保持候选状态。
+按 <Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path> 在选定 change-workspace 验证。实现者运行适用检查，Lead 在固定输入上核验集成/回归和适用 E2E；独立 reviewer 按原合同审查。记录真实命令环境，不以执行者自报代替 Lead 验收。整体输入覆盖全部票据，不只最后一票。
 
 ## 3. Gate 关闭
 
-Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candidate/result SHA、适用 E2E、反向验证、偏差、风险和批准。Gate 不以“完成若干 Ticket”作为唯一关闭条件。
+Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、固定 checkpoint/快照、适用 E2E、反向验证、偏差、风险和批准。Gate 不以“完成若干 Ticket”作为唯一关闭条件。
 
 ## 4. 失败与恢复
 
-- current/source 检查失败：保留当前 workspace 或 source worktree，继续当前 Ticket；
-- direct-parent/candidate 冲突或检查失败：父分支不动，integration 记 `failed`，Ticket 回到 `in_progress`/`blocked`；
-- 父 HEAD 漂移：integration 记 `stale`，从最新父分支重建并重跑；
-- E2E required 失败：父分支不动，保留失败命令、适用 checkpoint 和恢复条件；
-- 同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限：停止自动重复，保留 workspace、checkpoint/candidate 和全部失败事实，将受影响 Ticket 标为 `blocked` 并返回有效 Lead；Lead 按 lead-orchestration 在 Evidence 写复盘决定后，才可重置该 Ticket 的 `attempts` 并以有实质变化的新 Packet 重新派发；
+- 单票检查失败：保留选定 change 工作区与快照，修复受影响票；
+- 工作区共享资源或 Git 冲突：停止冲突写入，由 owner 处置，保留当前事实；
+- 固定输入漂移：使受影响证据失效，重新冻结并验证；不新建工作区；
+- required E2E 失败：不能 verified/done，保留失败命令、快照和恢复条件；
+- 同一 blocker 反复出现、下一轮没有新证据，或 integration attempts 达到有效上限：停止自动重复，保留 workspace、checkpoint 和全部失败事实，将受影响 Ticket 标为 `blocked` 并返回有效 Lead；Lead 按 lead-orchestration 在 Evidence 写复盘决定后，才可重置该 Ticket 的 `attempts` 并以有实质变化的新 Packet 重新派发；
 - 命中当次 Dispatch Packet/候选协议的停止条件、继续修正已无合理收益或需要新产品决定：停止受影响 Wave，按 deviation control 返回契约 owner；
 - Lead 会话变化：读取 Goal Plan、Ticket、change worktree 状态与最新 Evidence，从最后不可变 checkpoint 恢复。
 
@@ -43,7 +40,7 @@ Lead 在每个 Gate 汇总覆盖 Evidence、接口/数据/兼容状态、candida
 
 Lead 是 Goal Plan change 的唯一完成 owner。没有 Goal Plan 的单 Ticket/Direct Spec 由当前 I-implement owner 按 change completion 规则完成。Archive 不补造完成证据。
 
-**完成标准**：所有通过、阻塞、取消和未验证声明均定位到权威工件、命令与 Git checkpoint；失败不会推进父分支或 Done。
+**完成标准**：所有通过、阻塞、取消和未验证声明均定位到权威工件、命令与 Git checkpoint；失败不能推进 verified 或 Done。
 
 ## 完成声明的版本
 

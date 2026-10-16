@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:goal-plan:v7",
+  "$id": "urn:speculo:specdev:goal-plan:v8",
   "title": "SpecDev Goal Plan Frontmatter",
   "type": "object",
   "required": [
@@ -11,15 +11,13 @@
     "modes",
     "orchestration",
     "lead",
-    "concurrent_implementation_limit",
     "integration_attempt_limit",
-    "ticket_workspace_policy",
-    "integration_gate",
-    "ready_for_execution"
+    "ready_for_execution",
+    "ticket_execution"
   ],
   "properties": {
     "schema_version": {
-      "const": 7
+      "const": 8
     },
     "artifact": {
       "const": "goal-plan"
@@ -64,61 +62,23 @@
       "type": "integer",
       "minimum": 1
     },
-    "ticket_workspace_policy": {
-      "enum": [
-        "current",
-        "required"
-      ]
-    },
-    "integration_gate": {
-      "enum": [
-        "direct-parent",
-        "candidate-merge"
-      ]
-    },
     "ready_for_execution": {
       "type": "boolean"
+    },
+    "ticket_execution": {
+      "enum": [
+        "auto",
+        "serial",
+        "parallel"
+      ],
+      "default": "auto"
+    },
+    "max_parallel_tickets": {
+      "type": "integer",
+      "minimum": 1
     }
   },
   "allOf": [
-    {
-      "if": {
-        "properties": {
-          "ticket_workspace_policy": {
-            "const": "current"
-          }
-        },
-        "required": [
-          "ticket_workspace_policy"
-        ]
-      },
-      "then": {
-        "properties": {
-          "integration_gate": {
-            "const": "direct-parent"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ticket_workspace_policy": {
-            "const": "required"
-          }
-        },
-        "required": [
-          "ticket_workspace_policy"
-        ]
-      },
-      "then": {
-        "properties": {
-          "integration_gate": {
-            "const": "candidate-merge"
-          }
-        }
-      }
-    },
     {
       "if": {
         "properties": {

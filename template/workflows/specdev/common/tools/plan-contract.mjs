@@ -319,7 +319,9 @@ export function readSpecification(changeRoot, { allowLightweight = false, requir
 export function validateExecutionPolicy(plan, config = null) {
   const errors = [];
   const meta = plan.meta;
-  if (!Number.isInteger(meta.concurrent_implementation_limit) || meta.concurrent_implementation_limit < 1 || !Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) return ['plan must declare positive execution limits'];
+  if (!['auto','serial','parallel'].includes(meta.ticket_execution)) errors.push('plan must declare ticket_execution: auto, serial or parallel');
+  for (const key of ['concurrent_implementation_limit','max_parallel_tickets']) if (meta[key] !== undefined && (!Number.isInteger(meta[key]) || meta[key] < 1)) errors.push(`${key} must be a positive integer when specified`);
+  if (!Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) errors.push('plan must declare a positive integration_attempt_limit');
   if (config) {
     if (config.schema_version !== 7 || !Number.isInteger(config.execution?.max_concurrent_implementations) || !Number.isInteger(config.execution?.max_integration_attempts)) return ['existing tool config requires schema v7 and explicit execution limits'];
     if (meta.concurrent_implementation_limit > config.execution.max_concurrent_implementations) errors.push(`concurrent_implementation_limit ${meta.concurrent_implementation_limit} exceeds config max_concurrent_implementations ${config.execution.max_concurrent_implementations}`);

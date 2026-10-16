@@ -6,7 +6,7 @@ import {resolveReviewScope} from '../review-scope.mjs';
 import {reviewInputDigest} from '../review-evidence.mjs';
 import {readArtifactSectionSync} from '../../../../../lib/speculo-runtime.mjs';
 const hash=text=>createHash('sha256').update(text).digest('hex');
-export function appendReviewFixture({repo,root,artifact='evidence/direct-spec.md',base,head=null,files=['value.txt'],mode='native',reviewer='native:reviewer',implementers=['native:implementer'],spec=null,sourceLocators=null}) {
+export function appendReviewFixture({repo,sourceRoot=repo,root,artifact='evidence/direct-spec.md',base,head=null,files=['value.txt'],sourceFiles=false,mode='native',reviewer='native:reviewer',implementers=['native:implementer'],spec=null,sourceLocators=null}) {
   const path=join(root,artifact);mkdirSync(dirname(path),{recursive:true});
   let prior=existsSync(path)?readFileSync(path,'utf8'):'';
   prior=prior.split('\n<!-- synthetic-independent-review -->')[0];
@@ -14,14 +14,14 @@ export function appendReviewFixture({repo,root,artifact='evidence/direct-spec.md
   let sources;
   if(sourceLocators) sources=sourceLocators.map(({kind,locator})=>{
     const [file,anchor]=locator.split('#');
-    return {kind,locator,sha256:hash(anchor?readArtifactSectionSync(join(repo,file),anchor).text:readFileSync(join(repo,file),'utf8'))};
+    return {kind,locator,sha256:hash(anchor?readArtifactSectionSync(join(sourceRoot,file),anchor).text:readFileSync(join(sourceRoot,file),'utf8'))};
   });
   else {
     const standards=join(root,'evidence/fixture-standards.md');mkdirSync(dirname(standards),{recursive:true});writeFileSync(standards,'# Fixture standards\nPreserve existing behavior and test changes.\n');
     if(!spec) {spec=join(root,'evidence/fixture-spec.md');writeFileSync(spec,'# Fixture Spec\nAC-001: deliver the accepted behavior.\n');}
-    sources=[['standards',standards],['specification',spec]].map(([kind,file])=>({kind,locator:relative(repo,file).split('\\').join('/'),sha256:hash(readFileSync(file,'utf8'))}));
+    sources=[['standards',standards],['specification',spec]].map(([kind,file])=>({kind,locator:relative(sourceRoot,file).split('\\').join('/'),sha256:hash(readFileSync(file,'utf8'))}));
   }
-  const scope=resolveReviewScope(head?{repo,mode:'range',base,head}:{repo,mode:'working-tree',base,files});
+  const scope=resolveReviewScope(sourceFiles?{repo,mode:'source-files',files}:head?{repo,mode:'range',base,head}:{repo,mode:'working-tree',base,files});
   const input={scope,sources,exclusions:'Fixture-only records and unrelated inputs are outside the implementation scope.'};
   const digest=reviewInputDigest(input);
   const report=axis=>`<a id="${axis}-output"></a>\n## Original ${axis} output\nReviewer: ${reviewer}\nAxis: ${axis}\nResult: pass\nInput-SHA256: ${digest}\nObserved: synthetic fixture reviewer inspected the fixed inputs; no blocking findings.\n`;

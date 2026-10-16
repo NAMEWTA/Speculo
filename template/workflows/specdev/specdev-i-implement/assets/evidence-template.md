@@ -1,14 +1,14 @@
 # Evidence: <Ticket ID> — <Ticket title>
 
-本模板按有效计划或当前 I 的 workspace/integration 策略记录实际验证环境；不适用的环境明确写 `not-applicable`，不伪造 source、candidate 或 result 链。Direct Spec 使用本模板时写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>`，current 使用实施前基线和最终 checkpoint；required 保存真实 change 工作区集成链，不填 Ticket ID。
+本模板记录选定 change-workspace 上的实际实现与验证，不预造 source/candidate/result。Direct Spec 写 evidence/direct-spec.md；所有执行者复用 README 的 Execution Context，提交与合并仅记录实际获授权的结果。
 
 - **Change：** `<change>`
 - **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`
 - **Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
 - **Lead：** `<owner-or-session-locator>`
-- **Workspace/branch：** `<workspace_ref>` / `<branch>`
-- **Base/implementation-or-source/candidate/result SHA：** `<sha>` / `<sha>` / `<sha>` / `<sha>`
+- **工作区：** `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>` 的 execution-context 锚点（唯一实际 workspace/branch/base）
+- **固定交付：** 实际 commit 或工作副本快照/审查输入 locator
 - **状态：** review / done / blocked / deviated / cancelled
 
 ## 1. 实现摘要
@@ -17,12 +17,12 @@
 
 ## 2. Lead Dispatch And Candidate Return
 
-- **执行选择与来源：** 当前宿主正常执行（mode: lead，App/CLI 等）/ 显式 CLI 交互或调用 / Herdr / 其他已选方式；current / required；实际用户选择或有效计划来源，无 Goal 时默认串行、集成尝试上限 3
-- **Implementation owner：** Lead / `<agent/provider>`
+- **执行选择与来源：** ticket_execution=auto/serial/parallel；单 Agent/subagent/team/指定工具的要求来源；README 工作区引用；验证尝试上限缺省 3
+- **Implementation owners：** 实际实现及修复者身份；同票多人时列明各自写集
 - **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
 - **文件交接（实际外部派遣时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
-- **允许动作：** worktree changes / implementation commit / ...
-- **返回：** commit、dirty 状态、修改路径、非 E2E 命令、未验证项与恢复条件
+- **允许动作：** 授权路径写入、检查；commit/merge 仅明确授权时
+- **返回：** checkpoint/快照、dirty 状态、实际实现者、修改路径、命令/退出码、未验证项与恢复条件
 - **Lead 独立核对：** pass / fail；实际读取与命令摘要
 - **只读 Agent findings：** 无 / 固定输入、来源、结论、Lead 核对
 
@@ -48,11 +48,11 @@
 
 ## 5. Workspace Verification
 
-按有效计划或当前 I 执行合同 记录 current workspace 或 source worktree 检查，并注明运行环境。
+在 README 选定的 change-workspace 记录适用检查；冻结审查/整体测试输入前协调相关 writer 停写。
 
 | 命令或步骤 | 运行环境 | 结果 | 摘要 |
 |---|---|---|---|
-| ... | current-workspace | pass / fail / not-run | ... |
+| ... | change-workspace | pass / fail / not-run | ... |
 
 - **失败后修复与重跑：** 无 / ...
 - **未运行检查：** 无 / 原因与风险
@@ -78,26 +78,15 @@
 
 ## 7. Integration Verification
 
-按有效计划或当前 I 执行合同 记录 direct-parent 或 parent-candidate 集成；未采用的字段写 `null` 或 `not-applicable`。
+Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E。记录命令、退出码、真实观察、输入与运行环境。E2E disposition 为 required 或 not-required: reason；required 未执行/失败不得完成。提交、合并和发布单独列实际授权与结果，不是默认每票门。
 
-| 项目 | 结果 |
-|---|---|
-| Parent before SHA | `<sha>` |
-| Implementation/source SHA | `<sha>` / `<sha>` |
-| Candidate branch/workspace | current / `<branch>` / `not-applicable` |
-| Method/conflicts | direct-parent / fast-forward / merge-commit；无 / paths |
-| Integration checks | 命令、运行环境 `current-workspace`、结果 |
-| E2E disposition | required / not-required: reason |
-| E2E result | pending / passed / failed / not-required；场景与证据 |
-| Parent result/re-read | `<sha>`；HEAD/tree/ancestor 核对 |
-
-集成失败时明确父 HEAD 是否推进、失败命令、旧 SHA 和恢复条件。
+实际运行后在本文件建立 `verification` 锚点，含 `Result: passed|failed`、`Observed: <真实观察>`，有命令时记录 `Command` 与 `Exit`。required E2E 单独可回读段另记 `Owner: <实际 Lead>`。不能以模板标题或 passed 结论自证运行。
 
 ### Failure History And Lead Recovery
 
-| 轮次 | 阶段 | Checkpoint/candidate | 失败事实 | 下一轮变化 |
+| 轮次 | 阶段 | Checkpoint/snapshot | 失败事实 | 下一轮变化 |
 |---|---|---|---|---|
-| ... | implementation / review / direct-parent / parent-candidate | `<sha-or-locator>` | blocker、命令与摘要 | 首次失败待定 / Lead 决定 |
+| ... | implementation / review / workspace-verification | `<sha-or-locator>` | blocker、命令与摘要 | 首次失败待定 / Lead 决定 |
 
 - **共同失败模式：** not-applicable / ...
 - **最可能原因：** not-applicable / ...
@@ -117,9 +106,9 @@
 - **残余风险/已知限制：** 无 / ...
 - **后续 Ticket：** 无 / `<ticket-id>`
 - **监控或回滚触发：** 不适用 / ...
-- **Source commit：** `<sha>`
-- **Parent result：** `<sha>`
-- **Source workspace：** `<workspace_ref>`
+- **已授权 Git 交付：** 实际执行的 commit/merge 或 not-requested
+- **最终交付 checkpoint/快照：** `<actual-locator>`
+- **工作区引用：** `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>` 的 execution-context 锚点
 - **Evidence：** `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`
 
 ## Skill Execution Records
@@ -148,11 +137,30 @@
 
 ## Workspace Execution Record
 
-独立 Ticket 或 required Direct Spec 真正开始时，在本节保存本单元 workspace 执行字段的唯一 JSON object：base_sha、parent_branch、workspace/implementation/integration owner、workspace_ref、branch、source_checkpoint、status、integration 的 candidate/result/验证/E2E/attempts 等。由实际操作生成，不能预填空对象；current/direct-parent 与 required/source/parent-candidate 仍各按原合同验证。其他表格只说明和导航这些事实，不复制第二套可写状态；Direct Spec 使用 purpose=direct-spec、change 和 integration_attempt_limit 代替 ticket_id；required 必须记录，current 可保留原 checkpoint 证据不造集成记录。字段和生成步骤见 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>。无票不创建 Ticket/Map/Goal，历史 current 证据不回填。
+实际开始时保存唯一 JSON object，遵循 <Path>{roots.workflows}/specdev/common/schemas/execution-record.schema.json</Path>。不预造空记录：
+
+```json
+{
+  "schema_version": 1,
+  "ticket_id": "T-01",
+  "workspace_context": "README.md#execution-context",
+  "implementation_owners": ["native:actual-implementer"],
+  "status": "active",
+  "checkpoint": null,
+  "verification": {
+    "status": "pending",
+    "evidence": null,
+    "e2e": {"required": false, "status": "not-required", "reason": "填写实际依据", "evidence": null}
+  },
+  "attempts": 0
+}
+```
+
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。旧活动记录先由原 owner 显式整理，历史原文保留。
 
 ## Acceptance Verification
 
-仅独立 Spec 的无票 Direct Spec 完成时填写本节 JSON array，每个 Spec AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
+Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
 
 ## 独立审查记录的填写
 

@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:retro-upgrade:v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "id",
+    "owner",
+    "created_at",
+    "inputs",
+    "decisions",
+    "changes",
+    "archive_reports"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "retro-upgrade"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "report",
+          "sha256"
+        ],
+        "properties": {
+          "report": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "report",
+          "finding",
+          "disposition",
+          "reason",
+          "targets"
+        ],
+        "properties": {
+          "report": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "finding": {
+            "type": "string",
+            "pattern": "^F-[0-9]{3,}$"
+          },
+          "disposition": {
+            "enum": [
+              "adopt",
+              "reject",
+              "defer"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "action",
+          "owner",
+          "before_sha256",
+          "after_sha256",
+          "candidate"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "enum": [
+              "create",
+              "update",
+              "retain"
+            ]
+          },
+          "owner": {
+            "enum": [
+              "project",
+              "engineering-standards-builder"
+            ]
+          },
+          "before_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "candidate": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "archive_reports": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

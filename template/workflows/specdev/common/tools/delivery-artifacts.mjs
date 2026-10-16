@@ -14,7 +14,7 @@ function check(value, rule, at, errors) {
   if (rule.type) {
     const types = Array.isArray(rule.type) ? rule.type : [rule.type];
     const t = value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
-    if (!types.includes(t)) { errors.push(at + ": invalid type"); return; }
+    if (!types.includes(t) && !(types.includes("integer") && Number.isInteger(value))) { errors.push(at + ": invalid type"); return; }
   }
   if (typeof value === "string") {
     if (rule.minLength && value.trim().length < rule.minLength) errors.push(at + ": empty");
@@ -35,7 +35,6 @@ function check(value, rule, at, errors) {
 }
 const specs = {
   "pull-request": ["pull-request.schema.json", ["Summary","Evidence","Before / After","Merge Risk","Authorization","Receipt","Recovery"]],
-  retrospective: ["retrospective.schema.json", ["Scope","Evidence","Findings","Acceptance","Routes"]],
   "logic-prototype": ["logic-prototype.schema.json", ["Model","Scenarios","Evidence","Decisions","Handoff"]],
   "triage-run": ["triage-run.schema.json", ["Targets","Plan","Evidence","Authorization","Receipts","Recovery"]],
 };
@@ -54,7 +53,6 @@ export function validateRecord(path, kind, parse, expectedChange = null) {
     if (meta.status === "ready" && meta.verification !== "passed") errors.push(path + ": ready PR requires passed verification");
     if (["draft","ready"].includes(meta.status) && !new RegExp("^https://github\\.com/" + String(meta.repo).replaceAll(".","\\.") + "/pull/[1-9]\\d*$").test(meta.url ?? "")) errors.push(path + ": missing matching PR URL");
   }
-  if (kind === "retrospective" && (meta.sources ?? []).some(s => typeof s !== "string" || !s.trim() || /(?:[A-Za-z]:[\\/]|\b(?:token|secret)=)/i.test(s))) errors.push(path + ": unsafe source");
   if (kind === "triage-run" && meta.status === "completed" && meta.mode !== "ci-security") {
     if (meta.npm_target === "unknown") errors.push(path + ": completed release target cannot be unknown");
     if (!meta.commit_sha) errors.push(path + ": completed release requires fixed commit");
@@ -83,7 +81,7 @@ export function validateRecord(path, kind, parse, expectedChange = null) {
   return {errors,meta,body};
 }
 export function validateRecords(change, kind, parse) {
-  const folder = kind === "retrospective" ? "retro" : "pull-requests", root=join(change,folder);
+  const root=join(change,"pull-requests");
   const errors=[], records=[];
   if (!existsSync(root)) return {errors,records};
   if (lstatSync(root).isSymbolicLink() || !lstatSync(root).isDirectory()) return {errors:[root + ": unsafe directory"],records};
@@ -93,3 +91,5 @@ export function validateRecords(change, kind, parse) {
   }
   return {errors,records};
 }
+
+export { check as checkSchema };

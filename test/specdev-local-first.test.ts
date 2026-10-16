@@ -154,7 +154,7 @@ async function writeImplementationArtifacts(
   const workspacePolicy = options.workspacePolicy ?? "current";
   await writeFile(join(root, "implementation-plan.md"), [
     "---",
-    "schema_version: 2",
+    "schema_version: 3",
     "artifact: implementation-plan",
     `change: ${basename(root)}`,
     `status: ${status}`,
@@ -163,8 +163,8 @@ async function writeImplementationArtifacts(
     "lead: lead-session",
     "concurrent_implementation_limit: 3",
     "integration_attempt_limit: 3",
-    `ticket_workspace_policy: ${workspacePolicy}`,
-    `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`,
+    "ticket_execution: auto",
+    "max_parallel_tickets: 3",
     `ready_for_execution: ${ready}`,
     "---",
     "## 1. Outcome and Authority",
@@ -330,10 +330,8 @@ async function writeGoalPlan(
     .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
     .replace("status: draft", "status: ready")
     .replaceAll("<owner-or-session-locator>", "lead-session")
-    .replace("concurrent_implementation_limit: 3", `concurrent_implementation_limit: ${implementationAgentLimit}`)
+    .replace("ticket_execution: auto", `ticket_execution: auto\nconcurrent_implementation_limit: ${implementationAgentLimit}\nmax_parallel_tickets: 3`)
     .replace("integration_attempt_limit: 3", `integration_attempt_limit: ${integrationAttemptLimit}`)
-    .replace("ticket_workspace_policy: current", `ticket_workspace_policy: ${workspacePolicy}`)
-    .replace("integration_gate: direct-parent", `integration_gate: ${workspacePolicy === "current" ? "direct-parent" : "candidate-merge"}`)
     .replace("ready_for_execution: false", "ready_for_execution: true");
   if (extraFrontmatter.length) {
     content = content.replace(
@@ -494,7 +492,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.match(missing.stdout + missing.stderr, /missing Goal Plan/);
       assert.doesNotMatch(missing.stdout + missing.stderr, /implementation-(map|plan)/);
       const invalid = [
-        readyGoal.replace("schema_version: 7", "schema_version: 5"),
+        readyGoal.replace("schema_version: 8", "schema_version: 5"),
         readyGoal.replace("artifact: goal-plan", "artifact: wrong"),
         readyGoal.replace("status: ready", "status: unknown"),
         readyGoal.replace("status: ready", "status: draft"),
@@ -574,7 +572,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
     } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
-  it("retains owner, resource and current-writer gates with a draft consumer", async () => {
+  it("retains owner, resource and serial Ticket gates with a draft consumer", async () => {
     const root = await progressiveGoalFixture("required");
     try {
       await addControllerTicket(root, "T-02", ["T-01"], false);
@@ -592,12 +590,13 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.match(JSON.stringify(result.deferred), /semantic resource: db:users/);
 
       await writeGoalPlan(root, 3, [], "", "current");
+      const goal=join(root,"goal-plan.md"); await writeFile(goal,(await readFile(goal,"utf8")).replace("ticket_execution: auto","ticket_execution: serial"));
       await writeFile(firstPath, first.replace("status: ready", "status: in_progress"));
       result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.frontier, []);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
-      assert.match(JSON.stringify(result.blocked), /current workspace/);
+      assert.match(JSON.stringify(result.deferred), /Ticket scheduling concurrency limit/);
 
       await writeFile(firstPath, first.replace("owner: lead-session", "owner: unassigned"));
       result = analyzeMap(input);
@@ -646,19 +645,20 @@ describe("SpecDev Goal routing and progressive readiness", () => {
     try {
       const consumer = await addControllerTicket(root, "T-02", ["T-01"], false);
       const repo = fixtureProject(root);
-      await writeFile(join(repo, ".git", "info", "exclude"), "*\n");
-      const commit = spawnSync("git", ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "--allow-empty", "-m", "fixture"], { cwd: repo, encoding: "utf8" });
-      assert.equal(commit.status, 0, commit.stderr);
-      const sha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
-      const worktree = currentTicketWorktree("integrated");
-      worktree.base_sha = sha;
-      worktree.source_checkpoint = sha;
-      for (const field of ["parent_before_sha", "source_sha", "result_sha"]) worktree.integration[field] = sha;
-      await writeStatus(root, "active", [worktree]);
-      const firstPath = join(root, "ticket", "01-implementation.md");
-      await writeFile(firstPath, (await readFile(firstPath, "utf8")).replace("status: ready", "status: done"));
-      await mkdir(join(root, "evidence"), {recursive:true});
-      await writeFile(join(root, "evidence", "T-01.md"), await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"), "utf8"));
+      const firstPath = join(root,"ticket","01-implementation.md");
+      await writeFile(firstPath,(await readFile(firstPath,"utf8")).replace("status: ready","status: done"));
+      await writeFile(join(repo,".gitignore"),".agents/\n");
+      await mkdir(join(root,"evidence"),{recursive:true});
+      const evidence=join(root,"evidence/T-01.md");
+      let text=await readFile(join(packageRoot,"template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"),"utf8");
+      text=text.slice(0,text.indexOf("## Workspace Execution Record"));
+      await writeRaw(evidence,text);
+      const review=attachReviewFixture(repo,root,"evidence/T-01.md");
+      const context={schema_version:1,change:changeName,workspace_policy:"current",workspace_ref:"current",branch:"main",base_sha:review.input.scope.base_sha,owner:"lead-session",ticket_execution:"auto"};
+      await writeFile(join(root,"README.md"),(await readFile(join(root,"README.md"),"utf8"))+`\n<a id="execution-context"></a>\n## Execution Context\n\n\x60\x60\x60json\n${JSON.stringify(context)}\n\x60\x60\x60\n`);
+      const execution={schema_version:1,ticket_id:"T-01",workspace_context:"README.md#execution-context",implementation_owners:["native:implementer"],status:"verified",checkpoint:"evidence/T-01.md#review-input",verification:{status:"passed",evidence:"evidence/T-01.md#verification",e2e:{required:false,status:"not-required",reason:"fixture has no E2E",evidence:null}},attempts:1};
+      const acceptance=[{id:"AC-001",result:"passed",method:"fixture",source:"reviewed-value.txt",observed:"fixture value changed"}];
+      await writeRaw(evidence,(await readFile(evidence,"utf8"))+`\n## Workspace Execution Record\n\n\x60\x60\x60json\n${JSON.stringify(execution)}\n\x60\x60\x60\n\n<a id="verification"></a>\n## Actual verification\nResult: passed\nObserved: fixture inspected changed value\n\n## Acceptance Verification\n\n\x60\x60\x60json\n${JSON.stringify(acceptance)}\n\x60\x60\x60\n`);
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot, "template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const input = { mapPath: join(root, "tickets-map.md"), repoRoot: repo };
       const before = await readFile(consumer, "utf8");
@@ -717,59 +717,12 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
-  it("defines one Lead, bounded implementation agents, and mandatory Ticket integration", async () => {
-    const goalPlan = await readFile(
-      join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/assets/goal-plan-template.md"),
-      "utf8",
-    );
-    for (const marker of [
-      "orchestration: lead-directed",
-      "concurrent_implementation_limit: 3",
-      "ticket_workspace_policy: current",
-      "integration_gate: direct-parent",
-      "Concurrent implementations",
-      "Read-only agents",
-      "Local direct-parent verification and parent update",
-      "source worktree 不运行 E2E",
-      "Local candidate integration and parent update",
-    ]) {
-      assert.match(goalPlan, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    }
-    assert.doesNotMatch(goalPlan, /coordination_mode|workspace_strategy|Delegated Execution Addendum/);
-    for (const obsolete of [
-      "delegated-execution.md",
-      "delegated-execution-template.md",
-      "workspace-execution-template.md",
-    ]) {
-      await assert.rejects(readFile(join(packageRoot, "template/workflows/specdev/P-goal-plan", obsolete), "utf8"));
-    }
-
-    const config = JSON.parse(
-      await readFile(
-        join(packageRoot, "template/workflows/specdev/specdev-i-init-setup/assets/config-template.json"),
-        "utf8",
-      ),
-    );
-    const pathOwnership = await readFile(
-      join(packageRoot, "template/workflows/specdev/common/rules/path-ownership.md"),
-      "utf8",
-    );
-    const evidence = await readFile(
-      join(packageRoot, "template/workflows/specdev/common/rules/evidence-and-verification.md"),
-      "utf8",
-    );
-
-    assert.equal(config.schema_version, 7);
-    assert.equal(config.execution.max_concurrent_implementations, 3);
-    assert.equal(config.execution.max_integration_attempts, 3);
-    assert.equal(config.planning.ui_design_default_candidates, 3);
-    assert.equal(config.planning.ui_design_max_candidates, 4);
-    assert.equal(config.execution.shared_path_owner, "explicit");
-    assert.equal("max_parallel" in config.execution, false);
-    assert.equal("auto_commit" in config.git, false);
-    assert.match(pathOwnership, /实现执行者 上限取实际存在的 Goal\/父计划、项目约定和平台能力共同约束/);
-    assert.match(pathOwnership, /review\/research\/test-observation agent 不设置 SpecDev 数字上限/);
-    assert.match(evidence, /source-worktree/);
+  it("defines independent Ticket scheduling and change workspace contracts", async () => {
+    const plan=await readFile(join(packageRoot,"template/workflows/specdev/specdev-p-goal-plan/assets/goal-plan-template.md"),"utf8");
+    const context=JSON.parse(await readFile(join(packageRoot,"template/workflows/specdev/common/schemas/execution-context.schema.json"),"utf8"));
+    assert.match(plan,/schema_version: 8/);assert.match(plan,/ticket_execution: auto/);
+    assert.doesNotMatch(plan,/ticket_workspace_policy:|integration_gate:|concurrent_implementation_limit: 3/);
+    assert.deepEqual(context.properties.workspace_policy.enum,["current","worktree"]);
   });
 
   it("requires every Ticket to be covered by valid project Skill routing", async () => {
@@ -982,8 +935,8 @@ describe("SpecDev local-first contracts", () => {
     );
 
     for (const marker of [
-      "Direct Spec 同样可以交接实现",
-      "Direct Spec current 同样跳过 source/candidate 与父分支推进",
+      "工作区和协作方式分别选择",
+      "不创建候选 checkout、不自动提交或合并",
       "evidence/direct-spec.md",
       "common/rules/code-commenting-rule.md",
       "{roots.state}/specdev/adr/",
@@ -997,7 +950,7 @@ describe("SpecDev local-first contracts", () => {
     assert.doesNotMatch(delivery, /达到修正上限后/);
   });
 
-  it("validates the Lead-directed Goal Plan workspace strategy contract", async () => {
+  it("validates the Lead-directed Goal Plan independent execution policy contract", async () => {
     const root = await fixture();
     try {
       await writeStatus(root);
@@ -1020,19 +973,10 @@ describe("SpecDev local-first contracts", () => {
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /exceeds config max_integration_attempts 3/);
 
-      const attempted = currentTicketWorktree("active");
-      attempted.integration = { ...attempted.integration, attempts: 4 };
-      await writeStatus(root, "active", [attempted]);
-      await writeGoalPlan(root, 4, [], "", "current", 3);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /integration attempts 4 exceed Goal Plan limit 3/);
-      await writeStatus(root);
-
       await writeGoalPlan(root, 3, ["coordination_mode: single-session"]);
       result = runValidator(root);
       assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /obsolete Goal Plan field coordination_mode/);
+      assert.match(result.stdout + result.stderr, /obsolete or unexpected field coordination_mode/);
 
       await writeGoalPlan(root, 3, [], "\n## Delegated Execution Addendum\nlegacy\n");
       result = runValidator(root);
@@ -1043,283 +987,15 @@ describe("SpecDev local-first contracts", () => {
     }
   });
 
-  it("requires a source commit and a passed parent candidate before integration", async () => {
-    const root = await fixture();
+  it("refuses active legacy per-Ticket workspace contracts without rewriting their evidence", async () => {
+    const root=await fixture();
     try {
-      await writeStatus(root, "active", [ticketWorktree()]);
-      let result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await writeStatus(root, "active", [ticketWorktree({ status: "review" })]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /review requires source_checkpoint/);
-
-      const integrating = ticketWorktree({
-        status: "integrating",
-        source_checkpoint: "source-sha",
-        integration: {
-          status: "candidate",
-          parent_before_sha: "parent-sha",
-          source_sha: "source-sha",
-          candidate_sha: "source-sha",
-          candidate_branch: `speculo/integration/${changeName}/T-01`,
-          candidate_workspace_ref: `specdev-worktree/.integration/${changeName}/T-01`,
-          method: "fast-forward",
-          e2e: { required: true, status: "pending", evidence: null },
-          attempts: 1,
-        },
-      });
-      await writeStatus(root, "active", [integrating]);
-      result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      const fastForward = ticketWorktree({
-        status: "integrated",
-        source_checkpoint: "source-sha",
-        integration: {
-          status: "passed",
-          parent_before_sha: "parent-sha",
-          source_sha: "source-sha",
-          candidate_sha: "source-sha",
-          candidate_branch: `speculo/integration/${changeName}/T-01`,
-          candidate_workspace_ref: `specdev-worktree/.integration/${changeName}/T-01`,
-          result_sha: "source-sha",
-          method: "fast-forward",
-          verification: "passed",
-          e2e: { required: false, status: "not-required", reason: "Ticket exempts E2E", evidence: null },
-          attempts: 1,
-        },
-      });
-      await writeStatus(root, "active", [fastForward]);
-      result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await writeStatus(root, "active", [{
-        ...fastForward,
-        integration: { ...fastForward.integration, result_sha: "other-sha" },
-      }]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /passed candidate\/result\/E2E state/);
-
-      await writeStatus(root, "active", [{
-        ...fastForward,
-        integration: {
-          ...fastForward.integration,
-          e2e: { required: true, status: "pending", evidence: null },
-        },
-      }]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /passed candidate\/result\/E2E state/);
-
-      await writeStatus(root, "active", [{
-        ...fastForward,
-        terminal_action: "integrate",
-      }]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /obsolete terminal_action/);
-
-      const mergeCommit = ticketWorktree({
-        status: "integrated",
-        source_checkpoint: "source-sha",
-        integration: {
-          status: "passed",
-          parent_before_sha: "parent-sha",
-          source_sha: "source-sha",
-          candidate_sha: "candidate-sha",
-          candidate_branch: `speculo/integration/${changeName}/T-01`,
-          candidate_workspace_ref: `specdev-worktree/.integration/${changeName}/T-01`,
-          result_sha: "candidate-sha",
-          method: "merge-commit",
-          verification: "passed",
-          e2e: { required: true, status: "passed", evidence: "e2e-report" },
-          attempts: 1,
-        },
-      });
-      await writeStatus(root, "active", [mergeCommit]);
-      result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await writeStatus(root, "active", [completedTicketWorktree("removed")]);
-      result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await writeStatus(root, "active", [ticketWorktree({
-        ...completedTicketWorktree("removed"),
-        integration: { ...completedTicketWorktree("removed").integration, verification: "failed" },
-      })]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /removed worktree T-01 requires passed candidate\/result\/E2E state/);
-    } finally {
-      await rm(fixtureProject(root), { recursive: true, force: true });
-    }
-  });
-
-  it("requires one source worktree record for every executable Ticket", async () => {
-    const root = await fixture();
-    try {
-      await writeStatus(root);
-      const spec = (await readFile(
-        join(packageRoot, "template/workflows/specdev/specdev-s-spec/assets/spec-template.md"),
-        "utf8",
-      ))
-        .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
-    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
-    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
-        .replace("status: draft", "status: ready")
-        .replace("ready_for_tickets: false", "ready_for_tickets: true")
-        .replace("存在高影响未决问题时，`ready_for_tickets` 必须为 `false`。", "");
-      await writeFile(join(root, "spec.md"), spec);
-
-      const map = (await readFile(
-        join(packageRoot, "template/workflows/specdev/specdev-t-tickets/assets/tickets-map-template.md"),
-        "utf8",
-      ))
-        .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
-    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
-    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
-        .replace("status: draft", "status: ready");
-      await writeFile(join(root, "tickets-map.md"), map);
-
-      await mkdir(join(root, "ticket"));
-      const ticket = (await readFile(
-        join(packageRoot, "template/workflows/specdev/specdev-t-tickets/assets/ticket-template.md"),
-        "utf8",
-      ))
-        .replace("change: <YYYY-MM-DD-topic>", `change: ${changeName}`)
-    .replace("skill_scan: unreviewed", "skill_scan: fixture inspected project roots; no applicable Skills")
-    .replace("deliverable_policy: unreviewed", "deliverable_policy: fixture requires no additional quantified deliverables")
-        .replace("status: draft", "status: ready")
-        .replace("ready: false", "ready: true")
-        .replace("存在会改变行为、接口、数据、兼容、安全、范围、迁移或验收的问题时，frontmatter 中 `ready` 必须为 `false`。", "");
-      await writeFile(join(root, "ticket", "01-ticket.md"), ticket);
-      await writeGoalPlan(root);
-
-      let result = runValidator(root, "implement");
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /Implement stage requires one Ticket workspace execution record/);
-
-      await writeGoalPlan(root, 3, [], "", "required");
-      await writeStatus(root, "active", [ticketWorktree()]);
-      result = runValidator(root, "implement");
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await rm(join(root, "goal-plan.md"));
-      for (const execution of [currentTicketWorktree("active"), ticketWorktree()]) {
-        await writeStatus(root, "active", [execution]);
-        result = runValidator(root, "implement");
-        assert.equal(result.status, 0, result.stdout + result.stderr);
-        await assert.rejects(readFile(join(root, "goal-plan.md")), /ENOENT/);
-      }
-
-      await writeFile(join(root, "ticket", "01-ticket.md"), ticket.replace("status: ready", "status: done"));
-      await mkdir(join(root, "evidence"), {recursive:true});
-      await writeFile(
-        join(root, "evidence", "T-01.md"),
-        await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/assets/evidence-template.md"), "utf8"),
-      );
-      await writeStatus(root, "active", [completedTicketWorktree("removed")]);
-      result = runValidator(root, "implement");
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-    } finally {
-      await rm(fixtureProject(root), { recursive: true, force: true });
-    }
-  });
-
-  it("supports current workspace direct-parent completion and rejects concurrent Tickets", async () => {
-    const root = await fixture();
-    try {
-      await writeStatus(root, "active", [currentTicketWorktree("integrated")]);
-      await writeGoalPlan(root);
-      let result = runValidator(root);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      await writeStatus(root, "active", [currentTicketWorktree("active"), { ...currentTicketWorktree("active"), ticket_id: "T-02" }]);
-      result = runValidator(root);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /strictly serial Ticket execution/);
-    } finally {
-      await rm(fixtureProject(root), { recursive: true, force: true });
-    }
-  });
-
-  it("requires actual isolated Git worktrees for recorded parallel writers", async()=>{
-    const root=await fixture(),repo=fixtureProject(root);
-    try {
-      const git=(args:string[])=>{const result=spawnSync("git",["-c","user.name=Speculo Test","-c","user.email=speculo@example.invalid",...args],{cwd:repo,encoding:"utf8"});assert.equal(result.status,0,result.stderr);return result.stdout.trim();};
-      git(["init","-b","main"]);await writeFile(join(repo,".gitignore"),".agents/\nspecdev-worktree/\n");await writeFile(join(repo,"app.txt"),"source\n");git(["add","."]);git(["commit","-m","source"]);
-      const record=ticketWorktree({base_sha:git(["rev-parse","HEAD"])});
-      await writeStatus(root,"active",[record]);
-      let result=runValidator(root,undefined,repo);assert.equal(result.status,1);assert.match(result.stderr,/actual source isolation is missing/);
-      git(["worktree","add","-b",record.branch,join(repo,record.workspace_ref),record.base_sha]);
-      result=runValidator(root,undefined,repo);assert.equal(result.status,0,result.stderr);
-      record.branch="another-recorded-branch";await writeStatus(root,"active",[record]);
-      result=runValidator(root,undefined,repo);assert.equal(result.status,1);assert.match(result.stderr,/real isolated worktree/);
-    } finally {await rm(repo,{recursive:true,force:true});}
-  });
-
-  it("verifies recorded completion SHAs against an actual Git repository", async () => {
-    const root = await fixture();
-    const repo = fixtureProject(root);
-    try {
-      assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: repo }).status, 0);
-      await writeFile(join(repo, ".gitignore"), ".agents/speculo/.speculo/\n");
-      await writeFile(join(repo, "tracked.txt"), "base\n");
-      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "add", "."], { cwd: repo }).status, 0);
-      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "commit", "-m", "base"], { cwd: repo }).status, 0);
-      const baseSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
-      await writeFile(join(repo, "tracked.txt"), "implemented\n");
-      assert.equal(spawnSync("git", ["add", "."], { cwd: repo }).status, 0);
-      assert.equal(spawnSync("git", ["-c", "user.name=Speculo Test", "-c", "user.email=speculo@example.invalid", "commit", "-m", "implementation"], { cwd: repo }).status, 0);
-      const resultSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).stdout.trim();
-      const completed = currentTicketWorktree("integrated");
-      completed.base_sha = baseSha;
-      completed.source_checkpoint = resultSha;
-      completed.integration = { ...completed.integration, parent_before_sha: baseSha, source_sha: resultSha, result_sha: resultSha };
-      await writeStatus(root, "active", [completed]);
-      await writeGoalPlan(root);
-
-      let result = runValidator(root, undefined, repo);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-
-      completed.base_sha = "f".repeat(40);
-      await writeStatus(root, "active", [completed]);
-      result = runValidator(root, undefined, repo);
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /base_sha is not a resolvable Git commit/);
-    } finally {
-      await rm(fixtureProject(root), { recursive: true, force: true });
-      await rm(repo, { recursive: true, force: true });
-    }
-  });
-
-  it("keeps automatic worktree integration local and recoverable", async () => {
-    const finalize = await readFile(
-      join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/references/finalize.md"),
-      "utf8",
-    );
-    const conflict = await readFile(
-      join(packageRoot, "template/workflows/specdev/specdev-i-implement/references/merge-conflict-protocol.md"),
-      "utf8",
-    );
-    const worktree = await readFile(
-      join(packageRoot, "template/workflows/specdev/common/skills/dev-worktree/SKILL.md"),
-      "utf8",
-    );
-
-    for (const marker of ["git merge --ff-only", "git merge --no-ff --no-commit", "git merge --abort", "integration_attempt_limit", "specdev-worktree/.integration/<change>/<unit-id>"]) {
-      assert.match(finalize, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    }
-    assert.match(conflict, /需要新行为或上层决定时停止/);
-    assert.match(worktree, /Ticket 或 Direct Spec change 决定工作单元/);
-    assert.match(worktree, /required E2E 只在 Lead-owned parent-candidate checkout 运行/);
-    assert.match(worktree, /push、PR、remote merge、deploy、migration/);
-    assert.match(finalize, /来源 branch\/worktree 不自动清理/);
-    assert.match(finalize, /父分支保持 `parent_before_sha`/);
+      await writeStatus(root,"active",[ticketWorktree()]);
+      const file=join(root,"evidence/T-01.md"), before=await readFile(file,"utf8");
+      const result=runValidator(root);
+      assert.equal(result.status,1);assert.match(result.stderr,/legacy-active-execution.*explicit reconciliation/);
+      assert.equal(await readFile(file,"utf8"),before);
+    } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
   it("returns repeated Ticket failures to the Lead before redispatch", async () => {
@@ -1332,11 +1008,11 @@ describe("SpecDev local-first contracts", () => {
       readFile(join(packageRoot, "template/workflows/specdev/specdev-p-goal-plan/references/multi-execution-loop.md"), "utf8"),
     ]);
 
-    assert.match(finalize, /已达到上限，不创建或重建 candidate、不增加 attempts/);
-    assert.match(implement, /implementation、review、direct-parent 还是 parent-candidate[\s\S]*返回父 O Lead/);
+    assert.match(finalize, /attempts 达到有效上限时返回 Lead 复盘/);
+    assert.match(implement, /同一 blocker[\s\S]*返回有效 Lead/);
     assert.match(evidence, /Failure History And Lead Recovery[\s\S]*共同失败模式[\s\S]*最可能原因[\s\S]*下一轮具体改变[\s\S]*下一 owner\/路由/);
-    assert.match(lead, /上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态/);
-    assert.match(lead, /新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么/);
+    assert.match(lead, /达到有效尝试上限时停止重复派单/);
+    assert.match(lead, /有实质变化的新 Dispatch Packet/);
     assert.match(completion, /单个 Ticket 进入 Lead 复盘不自动终止整个父循环/);
     assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 ready frontier/);
   });
@@ -1788,7 +1464,7 @@ fs.writeFileSync(path, JSON.stringify(state));
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
-  it("honors semantic resources and current workspace serialization", async () => {
+  it("honors semantic resources independently of workspace choice", async () => {
     const root=await controllerFixture(); const members=["2026-09-08-api","2026-09-08-ui"];
     try {
       await writeNamedStatus(root,changeName,"active","specdev/goal-plan");
@@ -1803,7 +1479,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       let result=analyzeMap(input);
       assert.deepEqual(result.errors,[]); assert.equal(result.frontier.length,1); assert.match(JSON.stringify(result.deferred),/semantic resource/);
       await writeImplementationArtifacts(root,members,{workspacePolicy:"current"});
-      result=analyzeMap(input); assert.equal(result.implementation_limit,1); assert.equal(result.frontier.length,1);
+      result=analyzeMap(input); assert.equal(result.max_parallel_tickets,3); assert.equal(result.frontier.length,1);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 

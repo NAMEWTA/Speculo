@@ -39,8 +39,8 @@ metadata:
 ## 执行底线
 
 - 先冻结 Outcome、权威来源、用户指定的交付数量、范围、Definition of Done 和失败停止条件；按风险确定 DAG/Gate/Wave，不用文档长度替代质量。
-- 固定 `lead-directed`。完整 Goal 的 `concurrent_implementation_limit` 由 Execution Policy Source 说明，实际存在 config 时不超过其有效上限与宿主能力；只读审查没有新增数字上限。进入派单前读取 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>`。
-- 保留原 worktree 选择：未明确时询问，默认 current 严格串行；required 才使用独立 worktree 与 candidate-merge。用户已答过不重复问。默认工具、数量、提交与集成权限均不因入口合并改变。
+- 固定 `lead-directed`，Lead 拥有状态和验收，不固定实现团队。ticket_execution 默认 auto；max_parallel_tickets 计量票据，显式 concurrent_implementation_limit 计量实现者；策略来源写 Execution Policy Source。派单读取 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>。
+- 保留 change 已选工作区，未指定复用 current；明确要求才创建一个 change worktree。串并行、派遣和审查不增建工作区，提交/合并按实际授权执行。
 - `plan` 只形成计划，缺少执行授权是计划中可见的待满足条件，不等于获准执行。运行前逐项核对真实授权；文档中的“已批准”不构成授权。
 - 当前票必须调用所绑定的真实 Skill，不能以“读过入口”替代；先读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。缺失必需 Skill、引用或验收证据时阻塞本票及依赖它的分支。
 - 他人 owner、资源或事务冲突仅暂停受影响的依赖闭包；继续独立已授权工作，不抢占、解锁或覆盖他人内容。正式记忆仍只走原网关。
@@ -66,6 +66,6 @@ node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --ma
 
 进入实现或审查时读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
 
-`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
+`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和共享资源 owner 约束。未曝光到宿主列表不影响读取真实入口。
 
 P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。

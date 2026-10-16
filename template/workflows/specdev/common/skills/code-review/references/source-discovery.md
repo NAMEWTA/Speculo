@@ -17,6 +17,8 @@ UI 范围按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Pa
 
 穷尽仓库中声明代码写法的文件：适用的 AGENTS/CLAUDE、CONTRIBUTING、编码标准、lint/type/test 配置和项目生成的 standards skill。记录适用范围；工具已经机械执行的格式项不重复生成人工噪声。
 
+项目 CODING_STANDARDS.md 或已有 standards Skill 的 reviewer 分支是判断性标准的入口；包含从 RETRO 升级的规则时沿其来源与适用范围读取。实现入口只需相应导航，不要求实现者预加载整份审查标准。机械规则是否真正接入检查由配置和执行证据判断，文字禁令不替代 guardrail。
+
 ## 完成标准
 
 - 每个候选来源有 found/not-found/not-applicable 结论；

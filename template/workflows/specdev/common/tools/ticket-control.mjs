@@ -5,6 +5,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, validateChange, pathsOverlap } from './validate-specdev.mjs';
 import { CHANGE_ID, digest, findGraphCycle, resolveProjectSource, validateGoalMap, resolveToolContext, validateExecutionPolicy, canonicalToolPath } from './plan-contract.mjs';
+import { readExecutionContext, ticketPolicy } from './execution-context.mjs';
 import * as runtime from '../../../../lib/speculo-runtime.mjs';
 
 const terminal = new Set(['done','cancelled']);
@@ -43,7 +44,7 @@ function contractHash(node) {
       }
     }
   }
-  return digest(JSON.stringify({ meta, body: node.artifact.body, spec: node.specDigest, goal: node.goalDigest, dependencies: node.dependencies, serializations: node.serializations, sources }));
+  return digest(JSON.stringify({ meta, body: node.artifact.body, spec: node.specDigest, goal: node.goalDigest, scheduling:node.policy, workspace:readExecutionContext(dirname(dirname(node.artifact.path))), dependencies: node.dependencies, serializations: node.serializations, sources }));
 }
 
 export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: suppliedContext, previous = null }) {
@@ -68,9 +69,9 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   if (!Array.isArray(members) || !members.length || (parent && members.length < 2) || new Set(members).size !== members.length || members.some(id => !CHANGE_ID.test(id))) return failure(['invalid/duplicate member change IDs']);
   const planFile = join(root,parent ? 'implementation-plan.md' : 'goal-plan.md');
   const plan = existsSync(planFile) ? readArtifact(planFile) : null;
-  const strategy = plan?.meta.ticket_workspace_policy ?? 'current';
-  let limit = strategy === 'current' ? 1 : plan?.meta.concurrent_implementation_limit;
-  if (!['current','required'].includes(strategy) || !Number.isInteger(limit) || limit < 1) errors.push('invalid workspace strategy or implementation limit');
+  const scopeContext = readExecutionContext(root);
+  const policy = ticketPolicy(plan?.meta,scopeContext);
+  const limit = policy.max_parallel_tickets;
   const configPath = join(context.specdevRoot, 'config.json');
   const config = existsSync(configPath) ? JSON.parse(readFileSync(runtime.safeWorkPathSync(context.specdevRoot, 'config.json', {mustExist:true,type:'file'}), 'utf8')) : null;
   if (plan) errors.push(...validateExecutionPolicy(plan, config));
@@ -81,6 +82,9 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
     if (!existsSync(memberRoot) || lstatSync(memberRoot).isSymbolicLink() || !lstatSync(memberRoot).isDirectory()) { errors.push(`member must be a real change directory: ${member}`); continue; }
     memberRoots.set(member,memberRoot);
     const facts = runtime.readChangeFactsSync(context, member);
+    const childPlanPath = join(memberRoot,'goal-plan.md');
+    const childPlan = parent && existsSync(childPlanPath) ? readArtifact(childPlanPath) : null;
+    const memberPolicy = ticketPolicy(plan?.meta,childPlan?.meta,readExecutionContext(memberRoot));
     if (facts.location.root !== memberRoot) { errors.push(`member is not an active change: ${member}`); continue; }
     const specFile = join(memberRoot,'spec.md');
     const spec = readArtifact(specFile);
@@ -93,7 +97,7 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
       const id = parent ? `${member}::${artifact.meta.id}` : artifact.meta.id;
       if (nodes.has(id)) { errors.push(`duplicate Ticket ${id}`); continue; }
       if (!Array.isArray(artifact.meta.blocked_by) || artifact.meta.blocked_by.some(value => !/^T-\d{2,}$/.test(value))) { errors.push(`invalid dependencies: ${id}`); continue; }
-      nodes.set(id, { id, member, repoRoot, artifact, specDigest, facts, dependencies: artifact.meta.blocked_by.map(value => parent ? `${member}::${value}` : value), reasons: [], validationErrors: [] });
+      nodes.set(id, { id, member, repoRoot, policy:memberPolicy, artifact, specDigest, facts, dependencies: artifact.meta.blocked_by.map(value => parent ? `${member}::${value}` : value), reasons: [], validationErrors: [] });
       if (spec.meta.ready_for_tickets !== true) nodes.get(id).reasons.push('source Spec is not Ready');
     }
   }
@@ -146,7 +150,7 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   }
   for (const node of nodes.values()) {
     node.reasons.push(...node.validationErrors);
-    if (!terminal.has(node.artifact.meta.status) && (!plan || plan.meta.ready_for_execution !== true)) node.reasons.push('Goal planning gate is not ready for execution');
+    if (!terminal.has(node.artifact.meta.status) && (plan && plan.meta.ready_for_execution !== true)) node.reasons.push('Goal planning gate is not ready for execution');
     if (node.artifact.meta.plan_contract_version !== 1) node.reasons.push('Ticket requires current plan_contract_version: 1');
   }
   const goalDigest = stableGoalContract(plan,entry);
@@ -157,7 +161,7 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   const contractDigests = Object.fromEntries([...nodes].map(([id,node]) => [id,contractHash(node)]));
   const invalidated = new Set();
   if (previous !== null) {
-    if (previous.schema_version !== 1 || !previous.contract_digests || typeof previous.contract_digests !== 'object' || Array.isArray(previous.contract_digests) || previous.scope !== basename(root)) errors.push('previous checkpoint schema/scope does not match this Goal');
+    if (previous.schema_version !== 2 || !previous.contract_digests || typeof previous.contract_digests !== 'object' || Array.isArray(previous.contract_digests) || previous.scope !== basename(root)) errors.push('previous checkpoint schema/scope does not match this Goal');
     else {
       for (const [id,value] of Object.entries(contractDigests)) if (previous.contract_digests[id] !== value) invalidated.add(id);
       for (const id of Object.keys(previous.contract_digests)) if (!nodes.has(id)) warnings.push(`previous node removed; check coverage before accepting replan: ${id}`);
@@ -183,7 +187,7 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
       if (!prerequisite || prerequisite.artifact.meta.status !== 'done' || prerequisite.reasons.length) node.reasons.push(`dependency not successfully satisfied: ${dependency}`);
     }
     for (const other of active) {
-      const issue = strategy === 'current' ? 'current workspace already has an implementation writer' : conflicts(node,other,serializations);
+      const issue = conflicts(node,other,serializations);
       if (issue) node.reasons.push(`in-flight owner ${other.artifact.meta.owner ?? 'unknown'} (${other.id}): ${issue}`);
     }
     if (!node.reasons.length) candidates.push(node);
@@ -206,15 +210,16 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   for (const node of candidates.sort((a,b) => a.id.localeCompare(b.id))) {
     if (node.reasons.length) continue;
     const conflict = frontier.map(id => conflicts(node,nodes.get(id),serializations)).find(Boolean);
-    if (conflict || frontier.length >= Math.max(0,limit-active.length)) { deferred.push({id:node.id, reason:conflict ?? 'workspace/config concurrency limit'});continue; }
+    const memberActive = active.filter(other=>other.member === node.member).length + frontier.filter(id=>nodes.get(id).member === node.member).length;
+    if (conflict || limit !== null && frontier.length >= Math.max(0,limit-active.length) || node.policy.max_parallel_tickets !== null && memberActive >= node.policy.max_parallel_tickets) { deferred.push({id:node.id, reason:conflict ?? 'Ticket scheduling concurrency limit'});continue; }
     frontier.push(node.id);
   }
   const blocked = [...nodes.values()].filter(node => node.reasons.length).map(node => ({id:node.id,reasons:[...new Set(node.reasons)]}));
   const nodeErrors = [...nodes.values()].flatMap(node => node.validationErrors.map(message => ({id:node.id,message})));
   const result = {
-    schema_version:1, scope:basename(root), mode:'read-only-analysis',
+    schema_version:2, scope:basename(root), mode:'read-only-analysis',
     authorization_checked:false, transaction_gateway_checked:false,
-    workspace_policy:strategy, implementation_limit:limit,
+    ticket_execution:policy.ticket_execution, max_parallel_tickets:limit,
     input_digest:digest(JSON.stringify({entry:entry.meta,contracts:contractDigests})),
     goal_contract_digest:goalDigest, contract_digests:contractDigests, frontier:errors.length ? [] : frontier,
     deferred, in_flight:active.map(node => ({id:node.id,owner:node.artifact.meta.owner})),
@@ -226,7 +231,7 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   return result;
 }
 function failure(errors) {
-  return {schema_version:1,mode:'read-only-analysis',frontier:[],errors,validation_errors:[],eligible_for_final_verification:false};
+  return {schema_version:2,mode:'read-only-analysis',frontier:[],errors,validation_errors:[],eligible_for_final_verification:false};
 }
 function main(args) {
   const options = {};

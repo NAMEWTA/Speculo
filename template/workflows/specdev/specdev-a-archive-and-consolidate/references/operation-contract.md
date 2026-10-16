@@ -2,6 +2,8 @@
 
 A 单一拥有本合同；Command 只路由领域入口，不作为通用知识执行器。默认 dry-run 返回会话计划、零文件写入；confirmed 仅执行真实具体批准覆盖的动作。
 
+R 调用的 RETRO 归档沿 [RETRO 窄网关](retro-archive.md)，总决策/执行回执留在原升级方案，逐对象移动回执随对象保存；不创建 change 回执或触发以下四类维护。
+
 ## 输入、范围与唯一回执
 
 输入是验证过的 WorkContext（projectRoot/methodRoot/stateRoot）、固定目标/主题清单、模式、批准来源和写集。未指定 change 时只读目录/README 候选消歧，不读旧全局索引决定新身份。独立知识审计/维护无需虚构 change。资料缺失或网关不明只阻塞依赖动作。归档没有候选返回 no-candidates；不创建访谈 change 或空回执。

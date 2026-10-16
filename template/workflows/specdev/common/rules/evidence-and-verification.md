@@ -1,34 +1,21 @@
-# 证据与验证规范
+# Evidence 与验证
 
-验证回答“怎样证明”，Evidence 记录“实际运行了什么、在哪个状态运行、结果和残余风险是什么”。
+I、C、P 验收时读取。环境由 change README 的执行上下文定位，不从票据串并行或 Agent 数量推导。
 
-## 1. 验证矩阵
+| 检查 | 执行位置 | owner | 证据 |
+|---|---|---|---|
+| 单元、组件、类型、lint/build、正常/失败路径 | change-workspace | 实际实现者 | 原 Ticket/Direct Spec Evidence |
+| 独立双轴审查 | 选定工作区的固定 commit 或工作副本快照 | 未参与本范围实现的 reviewer | 原 Independent Review 与工具核验 |
+| 集成/回归及适用 E2E | change-workspace 的稳定交付输入 | Lead | 命令、退出码、观察、E2E disposition |
+| 整体 AC/Gate | 同一 change 工作区；跨 change 按明确 aggregate 合同 | Lead | 原整体 Evidence |
 
-每行绑定行为、合同或风险，并标记环境：
+有提交授权可用实际 commit 固定输入；没有授权时使用 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path>。快照必须包含本票真实实现范围，保留其他票及用户改动的排除理由。单票通过不代表整个工作区全部通过；最终审查覆盖全部实际交付。
 
-| 行为或风险 | 接缝 | 命令/方法 | 环境 | 预期 | Evidence |
-|---|---|---|---|---|---|
-| 正常/失败路径 | 公共接口或稳定接缝 | 定向测试 | current-workspace 或 source-worktree | 合同成立 | Ticket Evidence |
-| 跨模块回归 | 集成接缝 | 回归命令 | current-workspace 或 parent-candidate | 组合状态成立 | Ticket Evidence |
-| E2E required | 真实端到端边界 | 场景步骤 | current-workspace 或 parent-candidate | 外部行为成立 | Ticket Evidence |
+共享工作区验收前协调相关 writer 停写，测试资源/生成输出独占或明确隔离。Git index 操作串行；当前交付与固定输入、规范或标准不一致时重验受影响项。必需 E2E 未运行/失败不能写 passed，not-required 必须给理由。E2E Gate 仍由 Lead 拥有，不接受执行者自报代替。
 
-## 2. 两层验证
+Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查与独立审查；不要求每票提交、父分支推进或 candidate worktree。Direct Spec 同样逐 AC 验收，不制造票据。明确承诺的 Git/发布交付按原授权单列，失败不伪造成功。
 
-### Current workspace
-
-current 模式的 implementation owner 在当前父分支和当前 workspace 工作。Ticket 必须严格串行，workspace clean 后形成非空 implementation commit；Lead 在同一 workspace 执行适用集成/回归和 E2E，并在父 HEAD 未漂移时将 Ticket commit 记录为 result SHA。
-
-### Source-worktree
-
-implementation owner 运行最接近目标行为的单元/组件测试、静态分析、类型、lint/build 等适用非 E2E 检查。来源实现必须在 clean worktree 形成 commit。任何 source-worktree E2E pass 声明无效。
-
-### Parent-candidate
-
-required 模式下，Lead 在最新父分支与 source commit 的 candidate 状态运行受影响集成/回归、项目父状态检查和适用 E2E。E2E 由实际跨边界风险决定，不限于 UI；not-required 必须写理由。required E2E 未运行或失败时不得推进父分支。
-
-### Direct Spec
-
-Direct Spec 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 独立选择工作区。current 记录实施前基线、最终 checkpoint、dirty 状态和实际检查；required 以整个 change 为单元复用上方 source-worktree/parent-candidate 两层验证，记录真实 source/candidate/result。E2E 仍只由 Lead 执行；两种模式均按完整规格覆盖全部 AC，不伪造 Ticket 或未发生的集成。
+重复失败按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 保留历史并复盘。恢复读原 Evidence、Git 和工具事实，不从 REPORT completed 或进程退出推断验收通过。
 
 低层证据不能替代明确要求的外部行为证据。高风险迁移还需要 dry-run、调用点扫描、数据核对、监控或恢复演练。
 
@@ -38,21 +25,17 @@ Direct Spec 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md
 
 ## 4. 失败分类与完整性
 
-失败分类为本 Ticket 新失败、基线既有失败、环境/权限/基础设施失败、无效验证或 candidate stale。不得通过跳过、放宽断言、吞错、删除用例或迁移验证位置制造绿色。
+失败分类为本 Ticket 新失败、基线既有失败、环境/权限/基础设施失败、无效验证或 固定输入漂移。不得通过跳过、放宽断言、吞错、删除用例或迁移验证位置制造绿色。
 
 受控反向验证只用于可能静默通过的关键门禁：证明检查能在目标风险出现时失败，再恢复并重跑。普通测试不为形式执行破坏性操作。
 
-## 5. Evidence 最低内容
+## Evidence 最低内容
 
-每个 Ticket Evidence 至少包含：Lead、Dispatch/返回（若有）、workspace 策略、base/source/result SHA、candidate 字段（required 模式适用，current 模式明确不适用）、实际路径、每条命令/环境/退出状态、合同映射、双轴审查、E2E disposition、未运行项、失败分类、偏差、残余风险和父分支重读结果。
+记录 Lead、实际派遣/返回、唯一 change 工作区引用、基线与实际 checkpoint/快照、真实修改路径、逐命令环境/退出结果、AC 映射、独立双轴审查、E2E disposition、未运行项、失败分类、偏差和残余风险。Direct Spec 同时保留实际授权和唯一获批规格，不制造 Ticket。
 
-required Ticket Done 必须有 source commit、通过 candidate、父分支 result 与 Lead Evidence；current Ticket Done 必须有 implementation commit、通过 direct-parent 验证、父分支 result 与 Lead Evidence。无法运行 required 验证、存在未批准偏差、父分支未包含 Ticket commit 或 Evidence 不完整时不得 Done。
+父 Implementation Orchestration Evidence 不能替代子 Evidence；至少记录最终 Map revision、成员状态/证据引用、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、漂移处置与残余风险。成员未 completed 或整体验证未通过不能完成父 change。
 
-Direct Spec Evidence 至少包含：用户实际授权与唯一获批规格、执行方式/workspace 选择、Lead、实施前/最终 checkpoint、实际路径、定向/回归/E2E 命令及环境、验收映射、未运行项、偏差、残余风险和提交授权状态；required 还包括原 Workspace Execution Record、候选集成与父分支回读。
-
-父实现 change 的 Implementation Orchestration Evidence 不能替代子 Evidence。它至少记录最终 Map revision、全部成员最终状态和子证据指针、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、stale candidate 处理、偏差和残余风险。任何成员未 completed 或整体验证未通过时不得形成父完成证据。
-
-Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按公共投影规则生成，不替代本文件的完整记录。
+Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按公共投影规则生成，不替代完整记录。
 
 ## 6. 按改动选择检查与复用证据
 

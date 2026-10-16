@@ -1,21 +1,11 @@
-# Merge / Rebase Conflict Protocol
+# Git 冲突处置
 
-只在 `git status` 证明仓库正处于 merge/rebase 冲突时加载。
+仅在当前工作区已有 merge/rebase 冲突或明确授权的 Git 集成发生冲突时读取；普通票据实现不创建 candidate worktree 或自动合并。
 
-## 流程
+1. 读取实际 Git 操作状态、原 owner、目标、基线、授权和冲突文件，不将未知现场视作本次操作。
+2. 暂停重叠写集，保留未提交用户/其他票改动及可恢复 checkpoint。解决冲突须在原写集内保持双方已批准意图。
+3. 需要改变 Spec/ADR、安全/迁移/验收或越过 owner 时停止并返回真正 owner；未知 merge/rebase 不自动 abort。
+4. 只有与当前操作匹配的授权包含相应暂存、提交或 abort 时才执行；任何操作不扩展到其他 branch/worktree 或远端。
+5. 修正者属于实现者，不能自审；在选定工作区冻结实际结果，补充独立双轴审查和受影响验证，再记录结果。
 
-1. 读取 Git 状态、操作类型、冲突路径、base/ours/theirs SHA、Ticket/Evidence 与匹配的 candidate integration 记录。
-2. 从 commit、source、Spec、Ticket、ADR、测试和调用者追溯双方意图；信息不足时不猜产品行为。
-3. 对每个 hunk 写出双方意图、共同约束和唯一可推导结果；需要新行为或上层决定时停止并登记 deviation。
-4. 在授权路径内解决文本，运行受影响的非 E2E 检查；candidate checkout 中按 finalize 合同运行父状态检查/E2E。
-5. 匹配的 local candidate integration 授权包含 `git add`、candidate merge commit、必要的 `git merge --abort` 和 transient candidate checkout/branch 生命周期；不扩展到来源 branch/worktree cleanup 或远端动作。
-6. 需要改变 Spec/ADR、安全/迁移决定、越过 owner 或无法同时保持既有意图时，在 Lead-created candidate 中执行 `git merge --abort`，记录 blocker 并保留来源 worktree；未知普通冲突现场不擅自 abort。
-7. 重读 Git 状态、parents 与 diff，确认无 marker、无未声明路径、双方合同及验证仍成立。
-
-## 完成标准
-
-- 每个 hunk 可追溯到既有意图；
-- 新产品决定没有藏在冲突解决中；
-- 验证记录命令、运行环境、退出码和摘要；
-- Git 副作用来自明确的 candidate integration 或其他逐动作授权；
-- 完成/暂停可以从 Git、原计划/README 与 Evidence 恢复。
+**完成标准**：实际 Git 状态、交付和证据一致；失败保留现场，不创建额外工作区或删除来源分支。

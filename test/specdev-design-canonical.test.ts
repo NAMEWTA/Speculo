@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 
@@ -48,12 +48,20 @@ test('isolated design canonical generation is deterministic and fails on missing
     await cp(join(root, 'scripts/generate-specdev-canonical.mjs'), join(target, 'scripts/generate-specdev-canonical.mjs'));
     await cp(join(root, 'template/workflows/specdev'), join(target, 'template/workflows/specdev'), { recursive: true });
     await cp(join(root, 'template/references'), join(target, 'template/references'), { recursive: true });
+    const builderContract = 'template/commands/engineering-standards-builder/references/rules/14-generation-contract.md';
+    await mkdir(dirname(join(target, builderContract)), { recursive: true });
+    await cp(join(root, builderContract), join(target, builderContract));
     const run = (check = false) => spawnSync(process.execPath, [join(target, 'scripts/generate-specdev-canonical.mjs'), ...(check ? ['--check'] : [])], { cwd: target, encoding: 'utf8', timeout: 60000 });
     let result = run();
     assert.equal(result.status, 0, result.stderr);
     result = run(true);
     assert.equal(result.status, 0, result.stderr);
     for (const name of outputs) assert.equal(await readFile(join(target, `template/canonical/canonical-specdev-${name}.md`), 'utf8'), await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8'));
+    await rm(join(target, builderContract));
+    result = run();
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /14-generation-contract\.md/);
+    await cp(join(root, builderContract), join(target, builderContract));
     await rm(join(target, 'template/workflows/specdev/common/schemas/change-design.schema.json'));
     result = run();
     assert.notEqual(result.status, 0);

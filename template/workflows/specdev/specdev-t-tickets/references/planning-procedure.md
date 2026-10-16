@@ -132,9 +132,9 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 - 依赖缺失或 DAG 有环；
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
-- Ticket 未声明 E2E required/not-required 及理由，或在 required 模式把 E2E 安排到 source worktree；
+- Ticket 未声明 E2E required/not-required 及理由，或未指定 Lead 在稳定 change-workspace 上验收；
 - Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
-- 无法形成实现 commit 与 Goal Plan 所选 direct-parent/candidate-merge 父分支出口；
+- 无法冻结真实交付、完成独立审查或提供适用验收证据；未获提交授权本身不阻塞快照验收；
 - 单个新上下文无法完成；
 - Standard/Deep 缺少有序执行路线；
 - Deep 缺少迁移、兼容、监控、回滚或批准点。

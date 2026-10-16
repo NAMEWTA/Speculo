@@ -77,3 +77,13 @@ UI 原型阶段用 --stage prototype --prototype-id UI-NNN；逻辑原型可指�
 `--review-scope --repo <project-root> --mode working-tree --base <baseline-sha> [--file <relative-path> ...]` 固定真实 Git 根的工作副本。无 file 参数覆盖全部相对基线的变化和非忽略新增；显式 file 包含删除路径，排除项返回供 Lead 核对。输出保留已暂存/未暂存状态、实际内容摘要、类型、模式、链接、基线和观察到的 HEAD，不写项目文件、commit 或 index。
 
 新增文件必须按 working_snapshot 阅读，不能只看 tracked_diff_command。子模块、冲突 index、越界或目录链接保持未验证。停止 writer 后固定输入，结束与完成前重验；显式范围外新增报告不使代码摘要自引用，遗漏实现仍由 Lead 的完整范围审计阻塞。详见 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 与 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path>。
+
+## 票据调度与 change 工作区
+
+Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial|parallel 和可选 max_parallel_tickets。ticket-control 输出 schema_version:2，返回 ticket_execution/max_parallel_tickets；取消由 current 推导 implementation_limit 的旧接口。人数限制仍由 Lead 按真实工具状态独立执行，不从票数或历史实现者名单推断。
+
+实际执行的 README Execution Context v1 是唯一工作区事实，原 Ticket/Direct Spec 的 Workspace Execution Record v1 引用它。相关格式见 <Path>{roots.workflows}/specdev/common/schemas/execution-context.schema.json</Path>、<Path>{roots.workflows}/specdev/common/schemas/execution-record.schema.json</Path>；校验器只读核对 Git、固定审查输入、AC 与验证，不创建 worktree/Agent 或授予权限。无 Goal 的合法 Map 仍可分析，默认 auto；运行前 Lead 核对真实授权。旧活动记录先由原 owner 显式整理，未知版本和混合协议拒绝继续，原件不改写。
+
+## 独立开发复盘
+
+<Path>{roots.workflows}/specdev/common/tools/validate-retro.mjs</Path> 只读枚举/校验独立 RETRO、升级方案、批准、实际执行与归档完整性；使用 `--help` 查看 report/upgrade 和各 stage。数据根使用 WorkContext 的领域共同父根。协议见 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path>；工具不写 Skill、不执行验证命令、不认证授权或宿主行为。

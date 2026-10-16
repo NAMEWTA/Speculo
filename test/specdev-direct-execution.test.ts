@@ -110,89 +110,22 @@ test('formal C report cannot approve findings that its original reviewer rejecte
   assert.deepEqual(f.validate('review'),[]);
 });
 
-test('Direct Spec current execution is independent of native or Herdr selection and reads without mutation', t => {
-  const f = fixture(t); const r = f.record(true);
-  for (const mode of ['lead', 'herdr']) {
-    mkdirSync(join(f.repo,'data/coordination'), {recursive:true});
-    writeFileSync(join(f.repo,'data/coordination/project.json'), JSON.stringify({schema_version:1,defaults:{mode},rules:[]}));
-    f.save(r); const before = readFileSync(f.file);
-    assert.deepEqual(f.validate(), []); assert.deepEqual(readChangeExecution(f.root), [r]);
-    assert.deepEqual(readFileSync(f.file), before);
-  }
+test('legacy active Direct Spec records are readable but cannot resume without explicit reconciliation', t => {
+  const f=fixture(t),r=f.record();f.source(r);f.save(r);
+  const before=readFileSync(f.file),worktrees=f.git('worktree','list','--porcelain');
+  assert.deepEqual(readChangeExecution(f.root),[r]);
+  assert.match(f.validate().join('\n'),/legacy-active-execution.*explicit reconciliation/);
+  assert.deepEqual(readFileSync(f.file),before);assert.equal(f.git('worktree','list','--porcelain'),worktrees);
 });
 
-test('Direct Spec worktree creates, restores, validates candidate and integrates without fabricated Tickets', t => {
-  const f = fixture(t), r = f.record(); const source = f.source(r); f.save(r);
-  assert.deepEqual(f.validate(), []); assert.deepEqual(f.validate(), []);
-  const candidate = f.candidate(r); assert.deepEqual(f.validate(), []);
-  assert.equal(readFileSync(join(candidate,'value.txt'),'utf8'), 'after\n');
-  Object.assign(r.integration,{verification:'passed',full_suite:{required:true,status:'passed',reason:null,evidence:'actual fixture read'}});
-  f.git('merge','--ff-only',r.integration.candidate_sha);
-  r.integration.result_sha = f.git('rev-parse','HEAD'); r.integration.status='passed';r.integration.promotion_status='applied';r.status='integrated';
-  f.save(r);f.complete();assert.deepEqual(f.validate('complete'), []);
-  const worktrees = f.git('worktree','list','--porcelain','-z').split('\0')
-    .filter(field => field.startsWith('worktree ')).map(field => realpathSync.native(field.slice(9)));
-  assert.ok(worktrees.some(path => relative(realpathSync.native(source),path) === '')); // Validation never cleans up.
-  f.git('worktree','remove',source); f.git('branch','-d',r.branch); r.status='removed';f.save(r);
-  assert.deepEqual(f.validate('complete'), []);assert.equal(r.integration.result_sha,r.source_checkpoint);
-});
-
-test('failed E2E, stale parent and forged completion cannot pass or move the parent', t => {
-  const f=fixture(t),r=f.record();f.source(r);f.candidate(r);
-  Object.assign(r.integration,{status:'failed',verification:'failed',e2e:{required:true,status:'failed',reason:null,evidence:'fixture failing check'}});
-  r.status='blocked';f.save(r);assert.deepEqual(f.validate(),[]);
-  f.complete();assert.match(f.validate('complete').join('\n'),/requires integrated or removed/);assert.equal(f.git('rev-parse','main'),f.base);
-  r.status='integrated';f.save(r);assert.match(f.validate('complete').join('\n'),/passed candidate\/result\/E2E/);assert.equal(f.git('rev-parse','main'),f.base);
-  writeFileSync(join(f.root,'README.md'),f.readme);
-  r.status='integrating';r.integration.status='candidate';r.integration.verification='pending';
-  writeFileSync(join(f.repo,'unrelated.txt'),'parent update\n');f.git('add','unrelated.txt');f.git('commit','-m','external parent change');
-  const changed=f.git('rev-parse','main');f.save(r);assert.match(f.validate().join('\n'),/parent HEAD drifted/);assert.equal(f.git('rev-parse','main'),changed);
-});
-
-test('stale Direct Spec candidate can be rebuilt and verified against a newer parent', t => {
-  const f=fixture(t),r=f.record();f.source(r);const candidate=f.candidate(r);
-  writeFileSync(join(f.repo,'parent.txt'),'independent parent behavior\n');f.git('add','parent.txt');f.git('commit','-m','parent advanced');
-  const parent=f.git('rev-parse','main');assert.notEqual(parent,f.base);
-  f.git('worktree','remove',candidate);f.git('branch','-f',r.integration.candidate_branch,parent);
-  f.git('worktree','add',candidate,r.integration.candidate_branch);
-  f.at(candidate,'merge','--no-ff',r.source_checkpoint,'-m','rebuilt candidate');
-  Object.assign(r.integration,{parent_before_sha:parent,candidate_sha:f.at(candidate,'rev-parse','HEAD'),candidate_tree_sha:f.at(candidate,'rev-parse','HEAD^{tree}'),method:'merge-commit',attempts:2});
-  f.save(r);assert.deepEqual(f.validate(),[]);
-  assert.equal(readFileSync(join(candidate,'value.txt'),'utf8'),'after\n');assert.equal(readFileSync(join(candidate,'parent.txt'),'utf8'),'independent parent behavior\n');
-  f.git('merge','--ff-only',r.integration.candidate_sha);
-  Object.assign(r.integration,{status:'passed',verification:'passed',result_sha:f.git('rev-parse','main'),promotion_status:'applied',full_suite:{required:true,status:'passed',reason:null,evidence:'both actual candidate files read'}});
-  r.status='integrated';f.save(r);f.complete();assert.deepEqual(f.validate('complete'),[]);
-  r.integration.candidate_tree_sha='0'.repeat(40);f.save(r);assert.match(f.validate('complete').join('\n'),/candidate tree/);
-});
-
-test('recovery rejects wrong repository, source drift, unsafe paths, excess attempts and identity conflicts', t => {
-  const f=fixture(t),r=f.record();const source=f.source(r);f.save(r);
-  const invalids=[{...r,change:'2026-10-14-foreign'},{...r,ticket_id:'T-01'}, {...r,workspace_ref:'../outside'},
-    {...r,integration_owner:'foreign-lead'}, {...r,owner:'foreign-lead',integration_owner:'foreign-lead'}, {...r,integration_attempt_limit:0},
-    {...r,integration:{...r.integration,attempts:4}}, {...r,branch:'other-branch'},
-    {...r,integration:{...r.integration,evidence:`<Path>{roots.state}/specdev/changes/2026-10-14-foreign/evidence/direct-spec.md</Path>`}}];
-  for(const bad of invalids){f.save(bad);assert.notDeepEqual(f.validate(),[],JSON.stringify(bad));}
-  writeFileSync(join(f.repo,'data/specdev/config.json'),JSON.stringify({schema_version:7,execution:{max_concurrent_implementations:1,max_integration_attempts:2}}));
-  f.save(r);assert.match(f.validate().join('\n'),/exceeds config max_integration_attempts/);
-  rmSync(join(f.repo,'data/specdev/config.json'));
-  f.save(r);f.git('worktree','remove',source);mkdirSync(source,{recursive:true});
-  f.at(source,'init','-b',r.branch);assert.match(f.validate().join('\n'),/real isolated worktree/);
-  rmSync(source,{recursive:true,force:true});
-  symlinkSync(f.repo,source,'dir');assert.notDeepEqual(f.validate(),[]);
-  rmSync(source);f.git('worktree','add',source,r.branch);f.candidate(r);
-  writeFileSync(join(source,'value.txt'),'uncommitted drift\n');assert.match(f.validate().join('\n'),/source worktree is dirty/);
-});
-
-test('Ticket records retain their format, cannot mix with Direct Spec, and enforce one current writer without Goal', t => {
-  const f=fixture(t),r=f.record(true);
-  const ticket: Record<string, any>={...r,ticket_id:'T-01'};delete ticket.purpose;delete ticket.change;delete ticket.integration_attempt_limit;
-  ticket.integration={...r.integration,evidence:`<Path>{roots.state}/specdev/changes/${change}/evidence/T-01.md</Path>`};
-  f.save();writeFileSync(join(f.root,'evidence/T-01.md'),fence('Workspace Execution Record',ticket));
-  assert.deepEqual(readChangeExecution(f.root),[ticket]);
-  const second={...ticket,ticket_id:'T-02',integration:{...ticket.integration,evidence:`<Path>{roots.state}/specdev/changes/${change}/evidence/T-02.md</Path>`}};
-  writeFileSync(join(f.root,'evidence/T-02.md'),fence('Workspace Execution Record',second));
-  assert.match(f.validate('grill').join('\n'),/strictly serial/);
-  f.save(r);assert.throws(()=>readChangeExecution(f.root),/cannot coexist/);
+test('frozen legacy completed Direct Spec integration evidence stays readable without migration', t => {
+  const f=fixture(t),r=f.record();f.source(r);const sourcePath=join(f.repo,r.workspace_ref);
+  writeFileSync(join(sourcePath,'value.txt'),'after\n');f.at(sourcePath,'add','value.txt');f.at(sourcePath,'commit','-m','historical implementation');
+  r.source_checkpoint=f.at(sourcePath,'rev-parse','HEAD');
+  f.git('merge','--ff-only',r.source_checkpoint);
+  Object.assign(r.integration,{status:'passed',verification:'passed',parent_before_sha:f.base,source_sha:r.source_checkpoint,candidate_sha:r.source_checkpoint,candidate_tree_sha:f.git('rev-parse','HEAD^{tree}'),candidate_branch:`speculo/integration/${change}/direct-spec`,candidate_workspace_ref:`specdev-worktree/.integration/${change}/direct-spec`,result_sha:r.source_checkpoint,method:'fast-forward',attempts:1,promotion_status:'applied',full_suite:{required:true,status:'passed',reason:null,evidence:'historical fixture observations'}});
+  r.status='integrated';f.save(r);f.complete();
+  const before=readFileSync(f.file);assert.deepEqual(f.validate('complete'),[]);assert.deepEqual(readFileSync(f.file),before);
 });
 
 test('cancellation and archive preflight include Direct Spec writers, even without Ticket files', t => {

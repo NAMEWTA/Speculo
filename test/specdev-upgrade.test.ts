@@ -129,7 +129,7 @@ test("wrong object type and invalid flags fail without mutation", async () => {
 });
 
 const markdown=(meta:Record<string,unknown>,headings:string[])=>"---\n"+Object.entries(meta).map(([k,v])=>k+": "+JSON.stringify(v)).join("\n")+"\n---\n\n"+headings.map(h=>"## "+h+"\nObserved evidence.\n").join("\n");
-test("delivery records enforce verification, completed release targets and nonempty retrospective sources", async () => {
+test("delivery records enforce verification and completed release targets", async () => {
   const temp=await mkdtemp(join(tmpdir(),"speculo-records-"));
   try {
     const {validateRecord}=await artifactModule(),{parseFrontmatter}=await validatorModule();
@@ -148,32 +148,26 @@ test("delivery records enforce verification, completed release targets and nonem
     await writeFile(rp,markdown({...rec,targets:[{...target,dist_tag:null}]},rh));assert.match(validateRecord(rp,"triage-run",parseFrontmatter).errors.join("\n"),/metadata/);
     await writeFile(rp,markdown({...rec,mode:"release-preflight",targets:[{...target,observed:"pending",receipt:null}]},rh));
     assert.deepEqual(validateRecord(rp,"triage-run",parseFrontmatter).errors,[]);
-    const retro=join(temp,"RETRO-001.md"),ret={...common,artifact:"retrospective",change:id,id:"RETRO-001",status:"completed",outcome:"no-findings",sources:["session:current"]},hh=["Scope","Evidence","Findings","Acceptance","Routes"];
-    await writeFile(retro,markdown(ret,hh));assert.deepEqual(validateRecord(retro,"retrospective",parseFrontmatter,id).errors,[]);
-    await writeFile(retro,markdown({...ret,sources:[]},hh));assert.match(validateRecord(retro,"retrospective",parseFrontmatter,id).errors.join("\n"),/missing entries/);
+
   } finally {await rm(temp,{recursive:true,force:true});}
 });
 
-test("retro-only completion needs no implementation and requested PR delivery remains an independent gate", async () => {
-  const temp=await mkdtemp(join(tmpdir(),"speculo-retro-gates-")),id="2026-10-08-review",change=await seedChange(temp,id);
+test("requested PR delivery remains an independent archive gate", async () => {
+  const temp=await mkdtemp(join(tmpdir(),"speculo-delivery-gates-")),id="2026-10-08-review",change=await seedChange(temp,id);
   try {
-    await mkdir(join(change,"retro"),{recursive:true});
+    const {validateChange}=await validatorModule();
+    await writeFile(join(change,"README.md"),"# Delivery fixture\n\nOutcome: active\n");
     const cfg=join(temp,".agents/speculo/.speculo/specdev");await mkdir(cfg,{recursive:true});
     await cp(join(wf,"specdev-i-init-setup/assets/config-template.json"),join(cfg,"config.json"));
-    const sp=join(change,"README.md"),readme=`# ${id}\n\nOutcome: completed\n\n## Ownership\nOwner: lead\nWork: specdev/retro\nEvidence: handoff.md\n`;
-    await writeFile(sp,readme);await writeFile(join(change,"handoff.md"),"# Original owner\nOwner: lead\nWork: specdev/retro\nSource: fixture:review-request\n");
-    const common={schema_version:1,change:id,updated_at:"2026-10-08T00:00:00Z"};
-    await writeFile(join(change,"retro/RETRO-001.md"),markdown({...common,artifact:"retrospective",id:"RETRO-001",status:"completed",outcome:"no-findings",sources:["archive:prior-change"]},["Scope","Evidence","Findings","Acceptance","Routes"]));
-    const {validateChange}=await validatorModule();
-    assert.deepEqual(validateChange(change,"complete").errors,[]);
+    const readme=await readFile(join(change,"README.md"),"utf8");
     await mkdir(join(change,"pull-requests"));
+    const common={schema_version:1,change:id,updated_at:"2026-10-08T00:00:00Z"};
     const pr={...common,artifact:"pull-request",id:"PR-001",requested:true,delivery_target:"ready",status:"planned",repo:"owner/repo",base_sha:base,head_sha:head,body_sha256:sha(body),verification:"pending",url:null};
     const pp=join(change,"pull-requests/PR-001.md"),hh=["Summary","Evidence","Before / After","Merge Risk","Authorization","Receipt","Recovery"];
-    await writeFile(pp,markdown(pr,hh));assert.deepEqual(validateChange(change,"complete").errors,[]);assert.match(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
+    await writeFile(pp,markdown(pr,hh));assert.match(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
     await writeFile(pp,markdown({...pr,status:"draft",url:"https://github.com/owner/repo/pull/1"},hh));assert.match(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
-    await writeFile(pp,markdown({...pr,requested:false},hh));assert.deepEqual(validateChange(change,"archive-ready").errors,[]);
-    assert.equal(await readFile(sp,"utf8"),readme);
-    await mkdir(join(change,"evidence"));assert.match(validateChange(change,"complete").errors.join("\n"),/spec.md|direct-spec/);
+    await writeFile(pp,markdown({...pr,requested:false},hh));assert.doesNotMatch(validateChange(change,"archive-ready").errors.join("\n"),/pending PR delivery/);
+    assert.equal(await readFile(join(change,"README.md"),"utf8"),readme);
   } finally {await rm(temp,{recursive:true,force:true});}
 });
 test("logic prototypes require inline offline content, browser evidence and matching digest", async () => {

@@ -144,9 +144,11 @@
       "path": "skills/engineering/retro/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/specdev-r-retro/SKILL.md"
+        "template/workflows/specdev/specdev-r-retro/SKILL.md",
+        "template/workflows/specdev/specdev-r-retro/references/development-retrospective.md",
+        "template/workflows/specdev/specdev-r-retro/references/skill-upgrade.md"
       ],
-      "rationale": "Separate development retrospective, reusable analysis and Speculo product feedback."
+      "rationale": "Retain the seven environment categories, implementation/review split and file roles; add independent dated evidence, confirmed project Skill upgrades and A-owned archival, separate from Speculo product feedback."
     },
     {
       "id": "setup-matt-pocock-skills",
@@ -347,7 +349,8 @@
       "path": "skills/productivity/writing-for-agents/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/references/writing-for-agents/writing-contract.md"
+        "template/references/writing-for-agents/writing-contract.md",
+        "template/references/writing-for-agents/references/project-skill-maintenance.md"
       ],
       "rationale": "Unified authoring, fidelity and host-specific invocation profiles."
     }

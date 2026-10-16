@@ -84,7 +84,7 @@ test('conversion plan rejects malformed UTF-8 in rewritten Markdown without chan
 test('conversion preserves Unicode, BOM, CRLF and Markdown modes through apply and resume', { skip: process.platform === 'win32' ? 'conversion requires proven POSIX mode/link fidelity; Windows is plan-only' : false }, async () => {
   const f = await fixture();
   try {
-    await addPlannedWorkspace(f);
+    await mkdir(join(f.change, 'evidence'));
     const originals = [
       { path: 'README.md', mode: 0o640, bytes: Buffer.from('\ufeff# 原有上下文\r\n\r\nCafé / café / e\u0301 / 🧭 / � 均为原文。\r\n') },
       { path: 'evidence/T-01.md', mode: 0o600, bytes: Buffer.from('\ufeff# 原有证据\r\n\r\n观察记录：完整保留 Unicode 与换行。\r\n') },
@@ -94,8 +94,13 @@ test('conversion preserves Unicode, BOM, CRLF and Markdown modes through apply a
     assert.deepEqual(await inventory(f.projectRoot), before);
     for (const original of originals) {
       const action = plan.actions.find((action: any) => action.path === `changes/${name}/${original.path}`);
-      assert.deepEqual(Buffer.from(action.content, 'base64').subarray(0, original.bytes.length), original.bytes);
-      assert.equal(action.mode, original.mode);
+      if (action) {
+        assert.deepEqual(Buffer.from(action.content, 'base64').subarray(0, original.bytes.length), original.bytes);
+        assert.equal(action.mode, original.mode);
+      } else {
+        assert.equal(original.path,'evidence/T-01.md'); // No execution record means no Evidence rewrite.
+        assert.deepEqual(await readFile(join(f.change,original.path)),original.bytes);
+      }
     }
     await approve(plan, f);
     const readmeAction = plan.actions.findIndex((action: any) => action.path === `changes/${name}/README.md`);
@@ -110,6 +115,23 @@ test('conversion preserves Unicode, BOM, CRLF and Markdown modes through apply a
     assert.equal((await applyConversion(plan, f.options)).state, 'completed');
     assert.equal(await pathExists(join(f.specdevRoot, '.markdown-conversion-pending')), false);
   } finally { await rm(f.projectRoot, { recursive: true, force: true }); }
+});
+
+test('conversion plans preserve legacy Evidence bytes but active execution requires owner reconciliation before apply', { skip: process.platform === 'win32' ? 'POSIX apply validation' : false }, async () => {
+  const f=await fixture();
+  try {
+    await addPlannedWorkspace(f);
+    const path=join(f.change,'evidence/T-01.md'),bytes=Buffer.from('\ufeff# 原有证据\r\nCafé / e\u0301 / 🧭 完整保留。\r\n');
+    await writeFile(path,bytes);await chmod(path,0o600);
+    const {inventory,planConversion,applyConversion}=await tools(),before=await inventory(f.specdevRoot),plan=await planConversion(f);
+    const action=plan.actions.find((value:any)=>value.path === `changes/${name}/evidence/T-01.md`);
+    assert.deepEqual(Buffer.from(action.content,'base64').subarray(0,bytes.length),bytes);assert.equal(action.mode,0o600);
+    await approve(plan,f);
+    await assert.rejects(applyConversion(plan,f.options),/legacy-active-execution.*explicit reconciliation/);
+    assert.deepEqual(await inventory(f.specdevRoot),before);
+    assert.equal(await pathExists(join(f.specdevRoot,'.markdown-conversion-pending')),false);
+    assert.deepEqual(await readFile(path),bytes);
+  } finally {await rm(f.projectRoot,{recursive:true,force:true});}
 });
 
 test('conversion plan is read-only; apply preserves originals, modes, links, history and owner facts', { skip: process.platform === 'win32' ? 'conversion requires proven POSIX mode/link fidelity; Windows is plan-only' : false }, async () => {

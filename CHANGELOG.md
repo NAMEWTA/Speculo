@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.5] - 2026-10-15
+
+### Added
+- Independent, dated SpecDev retrospective reports with original quotations, source change references and severity-ranked environment improvements. Review covers navigation, automated checks, coding standards, steering instructions, tool economy and information access.
+- A project Skill maintenance cycle that consolidates unarchived reports into a concrete plan, records confirmation, updates existing Skills or creates missing ones under `.agents/skills/`, verifies the result and archives completed inputs through the existing archive owner. Deferred findings stay active.
+- Read-only retrospective validation for source snapshots, complete finding decisions, candidate digests, ownership, approval, execution evidence, drift, interrupted upgrades and sealed archive inventories.
+
+### Changed
+- Keep one selected workspace per change, with its branch, baseline and owner recorded once in the change README. Ticket and Direct Spec evidence reference that context; retries, reviewers and collaborators reuse it.
+- Separate automatic/serial/parallel Ticket scheduling, actual Agent concurrency and workspace selection. Coordinate shared writes and Git operations explicitly, and accept verified frozen working-tree delivery without requiring a commit or extra integration checkout.
+- Extend the shared agent-writing guidance with project Skill ownership and maintenance rules. Prefer deterministic checks for mechanical violations, reserve review standards for judgement calls, and refresh portable canonical documents with their required references.
+
+### Upgrade Notes
+- Goal Plan schema 8, Implementation Plan schema 3 and execution context/record schema 1 replace the previous execution contracts; `ticket-control` now emits schema 2. Existing active records require explicit reconciliation by their owner; unknown or mixed versions are rejected without rewriting the originals.
+- New retrospective reports and upgrade plans live under `specdev/retro/`, with completed records under `specdev/retro/archive/`. The former change-local retrospective artifact and `validate-specdev --stage retro` are replaced by `validate-retro.mjs`.
+- Automated fixtures do not certify live AI host invocation, actual Agent concurrency or human approval.
+
 ## [2.0.4] - 2026-10-15
 
 ### Fixed

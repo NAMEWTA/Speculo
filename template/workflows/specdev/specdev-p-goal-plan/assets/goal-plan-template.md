@@ -1,15 +1,13 @@
 ---
-schema_version: 7
+schema_version: 8
 artifact: goal-plan
 change: <YYYY-MM-DD-topic>
 status: draft
 modes: []
 orchestration: lead-directed
 lead: <owner-or-session-locator>
-concurrent_implementation_limit: 3
 integration_attempt_limit: 3
-ticket_workspace_policy: current
-integration_gate: direct-parent
+ticket_execution: auto
 ready_for_execution: false
 ---
 
@@ -85,36 +83,35 @@ ready_for_execution: false
 
 | 项目 | 决定 | 事实依据 |
 |---|---|---|
-| Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与父分支 owner |
-| Concurrent implementations | `<concurrent_implementation_limit>`，Lead 实际参与实现时计入；current 始终单 writer | 本计划 Execution Policy Source；核对实际存在的 config、依赖和平台限制 |
-| Integration attempts | `<integration_attempt_limit>` | 本计划 Execution Policy Source；核对实际存在的 config 限制 |
-| Read-only agents | 无 SpecDev 数字上限 | review/research/test-observation，不写状态 |
-| Dispatch | execution-time dynamic | provider/模型/派单按 Ticket 事实选择 |
+| Lead | `<owner-or-session-locator>` | 唯一 SpecDev 状态、Evidence 与交付验收 owner |
+| Ticket scheduling | `ticket_execution: auto`；有明确票据上限时增加 max_parallel_tickets | DAG、路径/资源、用户与项目要求 |
+| Implementation agents | 有明确要求才记录 concurrent_implementation_limit；核对已有 config/宿主人数限制 | 不从票数或工作区数量推导 |
+| Integration attempts | `<integration_attempt_limit>` | 检查失败后的 Lead 复盘上限 |
+| Read-only agents | 不额外占票据槽，review 中的票仍计入 | 当前 Work 的独立审查/工具要求仍生效 |
+| Dispatch | execution-time dynamic | 单 Agent、subagent 或团队按事实选择 |
 
-### Ticket Workspace and Integration
+### Change Workspace and Verification
 
-本节拥有跨票工作区策略和集成安排。每票实际 Parent/base、workspace/branch、implementation/source commit、检查/E2E 和 parent result 只记录在原 Ticket Evidence 的 Workspace Execution Record；通过上表导航回读，不在 Goal 再维护一套结果。
+工作区实际事实只在 change README 的 Execution Context，所有票据和执行者复用。未指定时使用 current，明确要求才创建/复用一个 change worktree。父计划只导航成员选择；串并行不改变工作区数量。
 
-当 `ticket_workspace_policy: current` 时，Ticket 必须严格串行。Lead 每次只允许一个 implementation owner 写入当前 workspace；完成非 E2E 检查并形成 commit 后，Lead 在同一父分支/current workspace 运行适用集成检查和 E2E，验证通过后将该 Ticket 的 `result_sha` 记录为其 implementation commit，再开始下一个 Ticket。不得创建 source/candidate worktree。
-
-当 `ticket_workspace_policy: required` 时，Ticket 使用独立 source worktree；source worktree 不运行 E2E，Lead 在最新父分支的 candidate 状态运行集成检查和适用 E2E，通过且父 HEAD 未漂移后才推进父分支。
+serial 完成当前票的实现、审查和验证后开始下一票；auto/parallel 推进无冲突 Ready 票。shared owner、Git index 操作与全局验证协调串行。验收固定真实 commit 或未提交快照；Lead-owned E2E 在稳定 change-workspace 上执行，不创建 candidate checkout。
 
 ### Authorization Matrix
 
 | 动作 | 状态 | 目标与条件 |
 |---|---|---|
-| Current workspace Ticket changes | allowed / not-authorized | 仅 current 模式；严格串行，单一 implementation writer |
-| Ticket worktree local changes | allowed / not-authorized | 仅 required 模式；限 writable/shared owner 合同 |
-| Implementation commit | allowed / not-authorized | 每 Ticket 必需；缺失则 Plan blocked |
-| Local direct-parent verification and parent update | allowed / not-authorized | 仅 current 模式；Lead 核对 Ticket commit 后继续 |
-| Local candidate integration and parent update | allowed / not-authorized | 仅 required 模式；Lead-only；缺失则 Plan blocked |
-| Push / PR / remote merge | allowed / not-authorized | 不从本计划本地授权继承 |
-| Branch/worktree cleanup | allowed / not-authorized | 成功集成不自动继承 |
+| Change workspace implementation | allowed / not-authorized | 授权范围和唯一写集 owner |
+| Change worktree creation | allowed / not-requested | 一个 change 的明确选择，不从并行继承 |
+| Change workspace verification | allowed / not-authorized | 固定输入、独立审查与 Lead E2E |
+| Implementation commit | allowed / not-requested | 仅明确要求且获授权时执行 |
+| Merge / parent update | allowed / not-requested | 具体目标与交付约定，不是每票默认门 |
+| Push / PR / remote merge | allowed / not-authorized | 不从实现授权继承 |
+| Branch/worktree cleanup | allowed / not-authorized | 精确授权目标，保全可恢复产物 |
 | Deploy / migration / production actions | allowed / not-authorized | 逐动作、目标和条件 |
 
 ### Evidence Return
 
-任务执行者 只返回候选事实与 commit；Lead 独立核对并写 Evidence、状态和最终验收。
+任务执行者 只返回候选事实与 checkpoint/快照；Lead 独立核对并写 Evidence、状态和最终验收。
 
 ## 5. Constraints, Risk and Recovery
 
@@ -122,7 +119,7 @@ ready_for_execution: false
 
 ### Verification Integrity
 
-记录判卷接缝、基线、禁止的伪绿色方式，以及 current/direct-parent 或 source/candidate 两层验证边界。
+记录判卷接缝、基线、禁止的伪绿色方式，以及选定 change 工作区内每票与整体交付的验证边界。
 
 ### Migration or Release Sequence
 
@@ -136,13 +133,13 @@ ready_for_execution: false
 
 ### Current Status
 
-只记录本 Goal 独有的当前 Wave/Gate、跨票验收、整体阻塞与下一步；相关 Ticket、implementation/source、candidate/result SHA 与逐票验证只导航原 Ticket/Evidence，不复制状态或结果；不使用主观百分比。
+只记录本 Goal 独有的当前 Wave/Gate、跨票验收、整体阻塞与下一步；相关 Ticket、固定 checkpoint/快照与逐票验证只导航原 Ticket/Evidence，不复制状态或结果；不使用主观百分比。
 
 ### Pending Decisions and Blockers
 
 ### Resume Protocol
 
-恢复时读取 Goal Plan、当前 Ticket 和原 Evidence 的 Workspace Execution Record，并核对实际 Git；从最后通过的父分支 result 或待修正 implementation/source checkpoint 继续。
+恢复时读取 Goal Plan、README 的 Execution Context、当前 Ticket 和原 Evidence 的 Workspace Execution Record，并核对选定工作区、实际 Git 与 writer；从最后可信 checkpoint/快照及未决事项继续。
 
 ## Assumptions
 
@@ -151,4 +148,4 @@ ready_for_execution: false
 
 ## Execution Policy Source
 
-<实际项目/本次约定及可回读出处；填写已有并发和集成尝试字段的真实来源。存在 config 时核对其上限；Lead 自己实现计入，current 严格单 writer。无票轻量 Goal 只使用必要清单/验收，不预造执行记录。>
+记录用户/项目约定的可回读出处；说明 ticket_execution、可选票据上限、明确人数限制和验证尝试上限。缺少人数或票数要求时不填固定数字；工作区引用 change README。轻量无票 Goal 继续使用必要清单和验收，不预造运行记录。

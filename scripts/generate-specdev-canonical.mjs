@@ -486,6 +486,7 @@ function workflowPathToCanonical(value, tagsBySource) {
   if (relative === "common/tools/ticket-control.mjs") return "本地只读 Goal 控制器（不含于网页快照）";
   if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
   if (relative === "common/tools/change-artifacts.mjs") return "本地只读工件与完成证据检查（缺工具时按内联合同核对并明确未执行自动检查）";
+  if (relative === "common/tools/validate-retro.mjs") return "本地只读复盘与升级证据检查（缺工具时按内联合同逐项核对并明确未执行自动检查，不伪造批准、写入或封存）";
 
   if (relative === "common/tools/README.md") {
     return "Speculo Node 校验器说明";
@@ -528,6 +529,10 @@ function replacePaths(content, tagsBySource) {
         const tag=tagsBySource.get(value.replace("{roots.references}","template/references"));
         if(!tag)throw new Error(`Unmapped shared reference: ${value}`);
         return `下方 \`<${tag}>\` 标签`;
+      }
+      if (value.startsWith("{roots.commands}/")) {
+        const tag = tagsBySource.get(value.replace("{roots.commands}", "template/commands"));
+        if (tag) return `下方 \`<${tag}>\` 标签`;
       }
 
       if (value.startsWith("{roots.skills}/")) {
@@ -739,6 +744,15 @@ async function expandNamedReferences(documentDefinition) {
       const target=`template/references/${match[1]}`;
       if(!/\.(md|json)$/.test(target)||target.includes('{'))continue;
       if(!bySource.has(target)) {const item={source:target,tag:`shared-${match[1].replace(/\.(md|json)$/,'').replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase()}`,format:target.endsWith('.json')?'json':undefined};bySource.set(target,item);queue.push(target);}
+    }
+    // A narrow command-owned reference is a static contract, not invocation of its Command.
+    for (const match of content.matchAll(/<Path>\{roots\.commands\}\/([^<>]+\/references\/[^<>]+\.(?:md|json))<\/Path>/g)) {
+      const target = `template/commands/${match[1]}`;
+      if (target.includes('{')) continue;
+      if (!bySource.has(target)) {
+        const item = { source: target, tag: `command-ref-${match[1].replace(/\.(md|json)$/, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`, format: target.endsWith('.json') ? 'json' : undefined };
+        bySource.set(target, item); queue.push(target);
+      }
     }
     for (const match of content.matchAll(/<Path>\{roots\.workflows\}\/specdev\/([^<>]+)<\/Path>/g)) {
       const relative = match[1];

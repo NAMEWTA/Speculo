@@ -52,7 +52,7 @@ shared_path_owners: []
 | ... | ... | ... | ... | `<Path>{roots.state}/specdev/changes/{change}/evidence/T-01.md</Path>` |
 
 - **E2E disposition：** required / not-required：原因。
-- **运行环境：** 按有效执行合同选择 current-workspace 或 source-worktree；required E2E 由 Lead 在 current-workspace 或 parent-candidate 执行。
+- **运行环境：** change README 选定的 change-workspace；本票的检查和 Lead-owned E2E 在固定输入上执行，所有执行者复用该工作区。
 
 覆盖真实正常、失败和回归风险；不为无关风险制造测试或重复验收条目。
 

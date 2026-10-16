@@ -1,53 +1,34 @@
 ---
 name: dev-worktree
-description: 管理 SpecDev required Ticket 或 Direct Spec change 的 Git worktree；创建隔离来源 workspace、固定实现 commit，并由 Lead 在 parent-candidate checkout 验证后推进父分支。
+description: 为 SpecDev change 创建、复用、恢复和核验一个选定 Git worktree；仅在 change 明确选择独立工作区或授权清理时使用。
 compatibility: Requires the owning Speculo workflow and its workspace path resolver.
 ---
 
 # Dev Worktree
 
-本 Skill 由 T-tickets、P-goal-plan 和 I-implement 复用。按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 选择 `required` 时使用 source → candidate → parent 状态机，无需先建 Goal；`current` 不调用本 Skill。原生执行与 Herdr 使用同一工作区合同。
+由 P-goal-plan 和 I-implement 复用；T 只规划并引用工作区选择。按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，一个 change 的全部票据与协作者使用同一工作区；current 不创建 worktree。
 
 ## 输入
 
-- `operation=create | restore | finalize | remove`；
-- `purpose=ticket | direct-spec`；
-- repository、父分支、`base_sha`、branch、portable workspace locator；
-- workspace、implementation 和 integration owner；
-- 允许动作、路径合同、验证合同、调用方状态记录位置。
+- `operation=create | restore | finalize | remove`，`purpose=change`；
+- 已授权 change、Spec/实际 Ticket、项目根、基线、选定 branch/workspace；
+- 原 owner、授权写集、验证合同、原 README/Evidence；
+- 创建或删除的具体授权；创建不要求预先授权 commit/merge。
 
-required Ticket 提供 Ready Ticket；Direct Spec 提供获批完整规格及验证合同。两者都提供实际存在的 Goal/父计划、原 Evidence 路径、Lead、尝试上限来源、implementation commit 与 local candidate integration/父分支更新授权。缺失时返回 blocked；不为这些输入补造 Ticket/Goal。
+## 创建或恢复
 
-## 1. 创建或恢复
+create/restore 读取 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>。先检查已有记录和实际 Git，精确匹配则复用。没有指定名称的新 change worktree 使用 `specdev-worktree/<change>` 和 `speculo/<change>`；不按 Ticket、Agent、重试或审查拆分目录。
 
-`operation=create` 时加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>`。Ticket 使用 `specdev-worktree/<change>/<ticket-id>`；Direct Spec 使用 `specdev-worktree/<change>/direct-spec`。每个实现单元只有一个来源 worktree。`operation=restore` 时重读实际 Git worktree/branch/tip/dirty 状态并与调用方记录核对，漂移时停止。
+**完成标准**：唯一 workspace/branch/base 与真实 Git 和原授权一致，未覆盖用户改动。
 
-**完成标准**：来源基线、branch、locator、owners 和实际 Git 状态一致；现有用户改动未被覆盖。
+## 核验
 
-## 2. 来源实现门
+finalize 读取 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>。它只验收选定工作区，不创建 candidate checkout、不合并或推进其他分支。每票和整个 change 通过各自 AC、独立审查及验证门。
 
-implementation owner 只在来源 worktree 修改授权项目路径，运行规格或 Ticket 要求的单元、组件、静态、类型、lint/build 等非 E2E 检查。进入 `review` 前，worktree 必须 clean，branch tip 必须是已授权的 `source_checkpoint` commit，实际 diff 必须符合路径合同。
+## 授权清理
 
-**完成标准**：source checkpoint 不可变且可达；来源 worktree 没有 E2E pass 声明。
+remove 只在明确授权的精确目标上执行：writer 已停止、工作区 clean、未提交产物已另有可恢复处置，已承诺交付完成或获明确处置。先核验真实 Git，再删除并重读 worktree list/refs；保留全部 Evidence。强制删除需专门授权，不能因 done 自动清理。
 
-## 3. 候选合并与父分支推进
+清理前完成仍需读取该工作区的父完成和归档验收。若用户明确要求提前删除，保留原上下文、可恢复 checkpoint 和尚未验收事项；相关验收保持阻塞，恢复时只重建原选定工作区，不能将不存在的工作区当作已核验交付。
 
-`operation=finalize` 仅由 Lead/integration owner 调用，并加载 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>`。Lead 在独立 parent-candidate checkout 组合最新父分支与 source checkpoint，运行集成检查和适用 E2E，通过后才推进父分支。
-
-本地 candidate checkout/branch 的创建、重建和回收属于已授权 local candidate integration；来源 branch/worktree 的删除仍需要独立 cleanup 授权。push、PR、remote merge、deploy、migration 和生产动作不从本 Skill 继承。
-
-**完成标准**：执行单元 `integrated` 时父 HEAD 精确等于记录的 result SHA，并包含 source checkpoint；失败或 stale 时父分支未变化。后续 `removed` 只表示来源 branch/worktree 已清理，不撤销该集成事实。
-
-## 4. 移除
-
-`operation=remove` 先验证执行单元已 `integrated`、目标 worktree clean、checkpoint 可恢复且删除目标精确。只有明确 cleanup 授权时删除来源 branch/worktree；强制删除需要单独确认。删除后重读 `git worktree list` 与 refs，并只把调用方生命周期状态更新为 `removed`；`base_sha`、source checkpoint、candidate/result、验证、E2E 与 Evidence 字段必须原样保留。
-
-**完成标准**：只删除精确授权目标；失败保留现场与恢复命令。
-
-## 固定规则
-
-- 执行方式与工作区正交；获批策略决定是否使用 worktree，Ticket 或 Direct Spec change 决定工作单元；
-- required E2E 只在 Lead-owned parent-candidate checkout 运行；
-- 每个 required 实现单元完成前必须有 source commit 与父分支 result，worktree 状态为 `integrated` 或其清理后终态 `removed`；
-- candidate 失败保留来源 worktree 修正，父分支不动；
-- 成功集成不自动清理来源 branch/worktree。
+**完成标准**：只处理授权的 change 工作区，失败保留现场和下一步。push、PR、merge、部署和永久知识写入仍属于原 owning 入口。

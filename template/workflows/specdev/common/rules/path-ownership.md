@@ -20,16 +20,18 @@
 5. 越界前停止并按 deviation control 提出 ownership change；不得先改后报。
 6. 上游 Ticket 改变目录/合同后，下游基于已集成父分支重新解析路径和 preflight。
 
-## 3. Ticket workspace strategy
+## 3. change 工作区与协作
 
-按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 选择工作区，与当前宿主执行、显式 CLI 交互或 Herdr 等方式正交。默认 current，已有选择直接复用；无 Goal 时 I 在原 Evidence 负责选择与记录。current 严格单代码 writer，前一 Ticket 完成 commit、Lead 验收和 direct-parent 验证后才进入下一票。required 的 Ticket locator 为 `specdev-worktree/<change>/<ticket-id>`，Direct Spec 为 `specdev-worktree/<change>/direct-spec`，两者都走 candidate 集成；只读调查/审查不创建实现 worktree。
+按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 独立确定票据调度、Agent 编排与工作区。每个 change 的工作区事实只在 README 执行上下文保存，所有票据和执行者复用；不以同一工作区推导单 writer，也不以并行推导独立 worktree。
 
-workspace/implementation owner 可以是 Lead 或动态 实现执行者；integration owner 固定为 Lead。current 模式 Lead 在父分支直接验收和推进，required 模式 Lead 建立 parent-candidate、运行适用 E2E 并推进父分支。required 生命周期由 `<Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>` 管理，current 生命周期由 I-implement 的 direct-parent 规则管理。
+Ticket owner 负责本票交付，可以安排多个执行者并细分授权写集；Lead 参与实现也遵守相同路径边界。SpecDev 状态、Evidence 和最终验收仍由 Lead 写入。只读任务可以并行，不占票据并发数；当前 Work 的独立 reviewer 要求仍生效。
 
-## 4. 并发
+## 4. 并发与验收时序
 
-required 模式 实现执行者 上限取实际存在的 Goal/父计划、项目约定和平台能力共同约束，无计划默认串行，Lead 参与实现时计入。current 模式保持单 writer 串行安全不变量，Ticket 严格串行。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免重复工作与可变环境争用。
+并行候选必须满足依赖、可写路径、shared owner、语义资源和明确并发限制。冲突操作由 owner 排序，不创建额外 worktree 规避共享语义冲突。单票 serial 不限制该票内部 Agent 合作；同一票多个 Agent 的写集仍不得相撞。
 
-子 change 属于父 Implementation Map 时，再取父 Implementation Plan 的全局 实现执行者 上限与 workspace 策略；该上限跨全部成员合计。无 dependency 的组合 Ready Tickets 若 writable/shared paths 重叠，也必须在父 Map 建立 serialization。相同 repository/ref 的 parent integration 严格串行；一次父 HEAD 推进会使其他成员旧 candidate 失效。
+Git index/提交/切换分支/合并串行协调；不得提交其他票或用户改动。固定审查输入与整体测试前停止相关 writer，记录真实 checkpoint 或工作副本快照，回读发现漂移后使受影响证据失效。Lead 的 E2E Gate 在选定 change 工作区执行。
 
-**完成标准**：每个项目写入映射到唯一 change、已有 Ticket 或 Direct Spec、owner 和来源 worktree；shared 与父分支写入 owner 唯一。
+父实现存在时，按组合 ID 协调跨 change 依赖和 serialization；保留每个成员工作区，父票据上限计量 Ticket，已有实现者限制单独执行。跨分支交付若要求合并，按具体授权和 Git 事实串行执行，不由单票 Done 自动触发。
+
+**完成标准**：每个写集有唯一票据/实现者归属，所有票据可追溯至该 change 的唯一工作区，审查与验证覆盖真实交付。

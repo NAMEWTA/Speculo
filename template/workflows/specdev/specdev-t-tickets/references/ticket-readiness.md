@@ -20,8 +20,8 @@
 - [ ] 每个 shared path 在 `shared_path_owners` 中有唯一 owner。
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
-- [ ] 按有效计划或当前 I 执行合同 策略定义 current-workspace 或 source-worktree 的非 E2E 检查；E2E owner 固定为 Lead，运行环境分别为 current-workspace 或 parent-candidate。
-- [ ] Ticket 已明确进入 I-implement，由该入口负责 implementation commit、direct-parent 或 candidate-merge、独立双轴审查、父分支 result SHA 和 Lead Evidence；正文不重复通用清单。
+- **运行环境：** change README 选定的 change-workspace；本票的检查和 Lead-owned E2E 在固定输入上执行，所有执行者复用该工作区。
+- [ ] Ticket 已明确进入 I，由其负责真实实现、checkpoint/快照、独立双轴审查、验证和 Lead Evidence；不强制每票 commit/merge。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用完整根变量 Path 标签。
@@ -37,7 +37,7 @@
 
 - [ ] 实际涉及的迁移、兼容、监控、恢复、收缩条件和批准点完整；无关项省略。
 - [ ] 安全、隐私、资金或数据完整性风险有缓解与验证。
-- [ ] 跨 implementation owner 的路径所有权和所选 direct-parent/parent-candidate 集成 Gate 明确。
+- [ ] 跨实现者的写集/共享资源 owner 与稳定输入验收安排明确，所有协作者复用所属 change 工作区。
 - [ ] expand-contract 的收缩条件可通过扫描、指标、查询或测试证明。
 
 ## Ready 状态

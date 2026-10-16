@@ -1,28 +1,36 @@
-# 执行方式与工作区
+# 票据调度、Agent 编排与 change 工作区
 
-I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。规格、执行方式、工作区独立选择；共同的工具选择与交接协议见 <Path>{roots.references}/coordination/coordination-contract.md</Path>。
+I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项决定分别记录，互不推导。工具选择和任务交接读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>。
 
 ## 输入和选择
 
-- 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 继续表示规格已就绪，不要求真的拆票。多个行为、公共接口、迁移或高风险不单独构成强制拆票理由，相应设计、批准、验证和恢复门必须完整。
-- README 替代独立 Spec 仍限原轻量边界。用户要求独立 Spec/Ticket/Goal 时按要求交付；缺产品决定不能用执行策略补造。
-- 独立调度、依赖 DAG 或逐票追踪确有需要才使用 T；跨任务 Gate、跨 change 或用户要求总控时使用 P。已有 Ticket/父实现不能通过转称 Direct Spec 绕过未完成责任；先由原 owner 处置活动执行和证据，再改路由。
-- 没有明确执行方式时，按当前宿主正常执行，App、CLI 等均可；工作区默认 `current`。明确指定 CLI 交互、Herdr 等方式时按选择执行；复用已有明确选择，不逐层重问。只读 C 冻结原候选，不创建实现工作区。
-- 已有父 Implementation Plan 的 workspace/Gate/上限优先约束子任务；子 Goal 不得放宽。无父计划使用已有 Goal；无 Goal 时由当前 I owner 在原 Evidence 的执行上下文记录方式、workspace 策略、Lead、路径、验证、原授权来源和恢复依据，不创建 Goal。
-- 无 Goal 的实现单元默认串行，集成尝试上限为 3；有明确项目约定时记录其来源并复用更严格上限。有效计划、实际存在的执行限制和平台能力取共同上限。不为这些默认值创建 config。
+- 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 表示规格就绪，不强制拆票。README 替代独立 Spec 仍限原轻量边界；明确要求的 Spec/Ticket/Goal 必须交付。
+- 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
+- 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、独立审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
+- `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
+- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。一张票可以由 Lead、subagent 或团队完成。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
+- 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
 
-## 工作区
+## 工作区与写入
 
-`current` 在当前工作副本执行；同一时刻只有一个代码 writer，包括 Lead、原生 subagent/team 和 Herdr 执行者。派出实现任务后 Lead 等待写入结束再接收，测试、审查不读正在漂移的候选。只读任务可以并行。Ticket 继续 direct-parent 验收；Direct Spec 保留实施前/最终 checkpoint、dirty 状态与提交授权，未授权不提交，不伪造已集成。
+一个 change 使用一个选定工作区，所有 Ticket、Direct Spec、协作者、修复和验证都在这里完成。`workspace_policy: current` 可为 main、普通分支或已在使用的 worktree；`worktree` 表示本 change 明确选择的独立 checkout。需要新建时调用 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path>，默认 locator 为 `specdev-worktree/<change>`，branch 为 `speculo/<change>`。按实际用户选择复用已有工作区。
 
-`required` 对每个独立实现单元创建 source worktree；无票时整个 Direct Spec change 就是一个单元。使用 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/SKILL.md</Path> 的 source → parent-candidate → parent 流程，Lead 拥有集成、适用 E2E 与正式证据。创建前核对实现 commit 和本地集成授权；来源清理仍单独授权。worktree 不构成沙箱或执行锁。
+串并行、Agent 数量、重试、review 均不新增工作区。额外 worktree 或扩大分支范围必须另有具体授权，不从创建一个 change worktree 的要求继承。
 
-## 记录与恢复
+同一工作区可由多个实现者写互不冲突的授权路径。共享路径、API、迁移序列、端口、数据库、生成输出须明确唯一 owner 或串行阶段；worktree 不提供锁或沙箱。Git index、commit、checkout、merge 和改变公共依赖的操作由 Lead 协调串行，任何执行者都不能暂存他人改动。审查和整体测试使用固定输入，冻结前协调相关 writer 停止写入；未知运行状态先查询，不以无报告/超时推断结束。
 
-Ticket 沿用原 Evidence；无票使用 <Path>{roots.state}/specdev/changes/{change}/evidence/direct-spec.md</Path>，其中 `Workspace Execution Record` 的 Direct Spec 记录用 `purpose: direct-spec`、`change` 与 `integration_attempt_limit` 代替 `ticket_id`，其余 workspace/integration 字段沿用现有合同。不允许两种执行记录并存。
+## 唯一记录与完成
 
-新建 Direct Spec required 必须记录真实执行对象；current 可以保留原 checkpoint 证据而不制造集成记录，历史无记录 current Evidence 仍可读取。使用结构化 current 记录时必须满足同一 commit/direct-parent 完成门。无论模式，完整 Spec 的完成需要逐 AC 的 Acceptance Verification 与实际双轴审查；未完成或未验证不能标 completed。
+实际执行开始时，Lead 在 change README 的 `Execution Context` 锚点保存一次工作区事实、基线、owner 和无计划时的调度选择。完整计划拥有票据策略，README 只保留该 change 的实际上下文；工作区只有 README 一个事实源。格式和恢复检查见 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/create.md</Path>，current 同样使用该记录而不调用创建操作。纯只读不造执行记录；既有无票 current 证据可按原快照合同读取。
 
-恢复先核对原 Evidence、实际 writer、Git、候选和权限；未知结果先查询，失败候选不推进父分支。重复同一 blocker 无新证据或达到尝试上限时暂停，Lead 记录下一轮实质变化后才能重试。取消、归档不能抹掉活动 worktree 或未决 candidate。
+每票原 Evidence 保存自己的 `Workspace Execution Record`，引用 `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>` 的 execution-context 锚点，只记录实际实现者、checkpoint、验证与失败次数；Direct Spec 使用原 evidence/direct-spec.md，不造 Ticket/Map/Goal。使用 <Path>{roots.workflows}/specdev/specdev-i-implement/assets/evidence-template.md</Path>。Lead 是正式状态/Evidence owner，implementation_owners 可有多人。
 
-Direct Spec 整体取消时，原 owner 先按 change-completion 记录真实取消决定、已停止 writer、依赖及 checkpoint/candidate 的保留或交接；这些条件满足后才把本单元记录 status 改为 cancelled。此状态仅适用于 Direct Spec，不表示集成通过或授予清理权限；不能用于 completed。Ticket 状态格式不变。
+完成以真实改动、AC、独立双轴审查和适用验证为准。未授权提交时使用固定工作副本快照；不要求 empty commit、每票 commit、父分支 result 或额外 candidate checkout。明确承诺的提交、合并、发布等仍按原目标与授权执行；完成声明不得冒充这些动作已发生。整体完成仍按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>。
+
+验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
+
+## 恢复和旧记录
+
+恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
+
+旧 per-Ticket/source/candidate 执行记录仅作历史只读依据。活动旧记录必须由原 owner 显式整理：停止或交接旧 writer，盘点全部 branch/worktree/checkpoint/未决动作，确认本 change 的唯一工作区；没有合并授权不能收拢代码。将旧记录原字节移存原 Evidence 的历史段并保留引用，经核对后才写新上下文和新记录，重新核验失效的审查/验证。不自动删除旧工作区、不批量改 done，不由安装刷新转换。未处置完毕保持 blocked。

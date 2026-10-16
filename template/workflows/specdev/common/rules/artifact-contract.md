@@ -99,7 +99,7 @@ W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只�
 ## 新增工件 owner
 
 - T：<Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> 拥有 PR 交付回执；<Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path> 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
-- R-retro：<Path>{roots.state}/specdev/changes/{change}/retro/RETRO-###.md</Path> 拥有活动复盘建议和来源；不成为永久知识。
+- R-retro：<Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path> 拥有独立复盘及原文来源；<Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path> 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path> 保存，不成为永久知识或 change 完成证据。A 只拥有已批准的移动/封存。
 - P：<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
 - 来源更新：<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 冻结后保持不变。T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
 

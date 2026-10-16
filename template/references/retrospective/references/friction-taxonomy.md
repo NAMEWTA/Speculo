@@ -8,7 +8,7 @@
 
 1. **当前对话上下文** —— 本次会话激活过的 command / workflow；用户在哪一步卡住、追问、返工；为绕开限制做了哪些手动动作；哪些指令被误解。
 2. **命令产物** —— `<Path>{roots.state}/commands/{command}/*.md</Path>`：其中记录的验证失败、未完成和阻塞点是一手摩擦。
-3. **change 状态机** —— 按所属 workflow schema 读取 `<Path>{roots.state}/{workflow}/changes/{change}/.status.json</Path>`；SpecDev 使用 current_work、works_run、真实工件和失败记录，不假定存在 phase_history。停滞时间仅为线索，不能推断用户动机或问题根因。
+3. **change 状态与事实** —— 按所属 workflow 合同读取真实负责工件。SpecDev 从 README 唯一 Outcome、计划/Ticket/Evidence 与失败记录取证，不读取旧 current_work/works_run 镜像；其他领域仍按自身 schema。停滞时间仅为线索，不能推断用户动机或问题根因。
 4. **change 产物正文** —— 所属 workflow 的 Spec、Ticket、Evidence、diagnosis.md 等真实工件中显式写下的待澄清、风险和阻塞；不臆造不存在的文件。
 5. **沉淀教训** —— 各 workflow 声明的 lessons/knowledge store：已记录但尚未转成改进项的教训，用于去重与佐证频率。
 6. **契约落差** —— 实际产物路径、frontmatter、命名是否偏离所属入口的合同及 schema；不同工件命名分别判断，不能强制全部使用日期前缀。

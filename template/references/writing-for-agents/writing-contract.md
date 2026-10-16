@@ -10,6 +10,8 @@
 
 当前工程事实维护或明确基线请求直接读取 [局部事实方法](references/current-facts-docs.md)；它不包含 docs-sync 的全局/Git/state 编排。
 
+明确要求根据项目事实或复盘经验创建、更新 `.agents/skills/` 时读取 [项目 Skill 维护](references/project-skill-maintenance.md)。它负责证据筛选、已有能力优先升级与缺失能力新增；具体方案、批准和记录归调用方，不因一次文档编辑自动迭代 Skills。
+
 ## 宿主适配
 
 Claude 的显式调用使用 disable-model-invocation；Codex 使用 agents/openai.yaml 中 policy.allow_implicit_invocation=false。metadata 仅描述策略，不授予权限。Speculo 的分发路径不等于宿主原生发现目录，安装/启用需由对应宿主方式完成；不要复制到系统或插件缓存。

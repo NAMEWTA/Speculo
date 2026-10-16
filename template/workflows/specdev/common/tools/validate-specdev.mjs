@@ -30,15 +30,16 @@ import {
 
 import { validateChangeClosure, readChangeOwner } from "./change-artifacts.mjs";
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
+import { readExecutionContext, ticketPolicy, resolveExecutionWorkspace, validateExecutionRecord } from './execution-context.mjs';
 import { reviewScopeCLI } from "./review-scope.mjs";
 import { hasIndependentReview, validateIndependentReview } from "./review-evidence.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
 const CONFIG_SCHEMA_VERSION = 7;
-const GOAL_PLAN_SCHEMA_VERSION = 7;
+const GOAL_PLAN_SCHEMA_VERSION = 8;
 const IMPLEMENTATION_MAP_SCHEMA_VERSION = 1;
-const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 2;
+const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 3;
 const CHANGE_STATUS_SCHEMA_VERSION = 6;
 const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
@@ -174,7 +175,6 @@ const VALID_STAGES = new Set([
   "goal-plan",
   "implement",
   "learn",
-  "retro",
   "pr-delivery",
   "review",
   "prototype",
@@ -213,10 +213,10 @@ const REQUIRED_GOAL_PLAN_SECTIONS = new Set([
 ]);
 const REQUIRED_LEAD_GOAL_PLAN_MARKERS = [
   "### Lead Orchestration",
-  "Concurrent implementations",
+  "Ticket scheduling",
   "Read-only agents",
   "execution-time dynamic",
-  "### Ticket Workspace and Integration",
+  "### Change Workspace and Verification",
   "### Authorization Matrix",
   "Implementation commit",
 ];
@@ -602,6 +602,8 @@ function validateDocumentReferences(root) {
       .replace(/`?\s*<Path>.*?<\/Path>\s*`?/gs, "")
       .replace(/`?\s*<Url>.*?<\/Url>\s*`?/gs, "");
     for (const link of acceptedLinks) withoutTags = withoutTags.replaceAll(link, "");
+    // This exact JSON field is a change-local data locator, not a static dependency.
+    withoutTags = withoutTags.replace(/"workspace_context":\s*"README\.md#execution-context"/g, '"workspace_context": "change-local-anchor"');
 
     for (const match of withoutTags.matchAll(/\{roots\.(?:workflows|state)\}/g)) {
       errors.push(
@@ -755,13 +757,13 @@ function validateExecutionContractAssets(root) {
 
   const goalPlanSchema = JSON.parse(readText(goalPlanSchemaPath));
   if (
-    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v7" ||
+    goalPlanSchema.$id !== "urn:speculo:specdev:goal-plan:v8" ||
     goalPlanSchema.properties?.schema_version?.const !== GOAL_PLAN_SCHEMA_VERSION ||
     goalPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
     goalPlanSchema.properties?.concurrent_implementation_limit?.minimum !== 1 ||
     goalPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
-    !["current", "required"].every((value) => goalPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
-    !["direct-parent", "candidate-merge"].every((value) => goalPlanSchema.properties?.integration_gate?.enum?.includes(value)) ||
+    !["auto", "serial", "parallel"].every((value) => goalPlanSchema.properties?.ticket_execution?.enum?.includes(value)) ||
+    goalPlanSchema.properties?.max_parallel_tickets?.minimum !== 1 ||
     goalPlanSchema.additionalProperties !== false
   ) {
     errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v7 workspace strategy contract");
@@ -791,12 +793,12 @@ function validateExecutionContractAssets(root) {
   }
   const implementationPlanSchema = JSON.parse(readText(implementationPlanSchemaPath));
   if (
-    implementationPlanSchema.$id !== "urn:speculo:specdev:implementation-plan:v2" ||
+    implementationPlanSchema.$id !== "urn:speculo:specdev:implementation-plan:v3" ||
     implementationPlanSchema.properties?.schema_version?.const !== IMPLEMENTATION_PLAN_SCHEMA_VERSION ||
     implementationPlanSchema.properties?.orchestration?.const !== "lead-directed" ||
     implementationPlanSchema.properties?.concurrent_implementation_limit?.minimum !== 1 ||
     implementationPlanSchema.properties?.integration_attempt_limit?.minimum !== 1 ||
-    !["current", "required"].every((value) => implementationPlanSchema.properties?.ticket_workspace_policy?.enum?.includes(value)) ||
+    !["auto", "serial", "parallel"].every((value) => implementationPlanSchema.properties?.ticket_execution?.enum?.includes(value)) ||
     implementationPlanSchema.additionalProperties !== false
   ) {
     errors.push("implementation-plan.schema.json must define the strict parent implementation projection contract v1");
@@ -852,7 +854,7 @@ function capabilityChecks(root) {
           "Wave",
           "lead-directed",
           "concurrent_implementation_limit",
-          "candidate-merge",
+          "ticket_execution",
           "lead-orchestration.md",
           "Definition of Done",
         ],
@@ -862,7 +864,7 @@ function capabilityChecks(root) {
       "implement",
       [
         join(root, "specdev-i-implement", "SKILL.md"),
-        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "parent-candidate", "共享编排方法", "实现 commit"],
+        ["codebase-design", "design-it-twice", "TDD", "双轴审查", "Evidence", "change 工作区", "共享编排方法", "checkpoint"],
       ],
     ],
     [
@@ -972,14 +974,13 @@ function capabilityChecks(root) {
   } else {
     const text = readText(goalPlanTemplate);
     for (const required of [
-      "schema_version: 7",
+      "schema_version: 8",
       "orchestration: lead-directed",
-      "concurrent_implementation_limit: 3",
+      "ticket_execution: auto",
       "integration_attempt_limit: 3",
-      "ticket_workspace_policy: current",
-      "integration_gate: direct-parent",
+
       ...REQUIRED_LEAD_GOAL_PLAN_MARKERS,
-      "Local direct-parent verification and parent update",
+      "Change workspace verification",
     ]) {
       if (!text.includes(required)) errors.push(`Goal Plan template lost marker ${required}`);
     }
@@ -1861,6 +1862,27 @@ function validateMap(path, errors, repoRoot = null) {
 }
 
 function validateGoalPlan(path, errors) {
+  if (!isFile(path)) { errors.push(`missing Goal Plan: ${basename(path)}`); return null; }
+  const {meta,body} = parseFrontmatter(path);
+  if (meta.schema_version === 7 && /^Outcome: completed$/m.test(readText(join(dirname(path),'README.md')))) return validateLegacyGoalPlan(path,errors);
+  const schema = JSON.parse(readText(fileURLToPath(new URL('../schemas/goal-plan.schema.json', import.meta.url))));
+  if (/^## (?:Delegated Execution|Isolated Workspace) Addendum$/m.test(body)) errors.push('goal-plan.md: obsolete Goal Plan addendum');
+  for (const key of schema.required) if (!(key in meta)) errors.push(`${basename(path)}: missing ${key}`);
+  for (const key of Object.keys(meta)) if (!(key in schema.properties)) errors.push(`${basename(path)}: obsolete or unexpected field ${key}; explicit reconciliation required`);
+  if (meta.schema_version !== GOAL_PLAN_SCHEMA_VERSION || meta.artifact !== 'goal-plan') errors.push('goal-plan.md: requires schema v8; explicit reconciliation required');
+  if (meta.orchestration !== 'lead-directed' || typeof meta.lead !== 'string' || !meta.lead.trim()) errors.push('goal-plan.md: needs a recoverable Lead');
+  if (!Array.isArray(meta.modes) || meta.modes.some(mode=>!VALID_PLAN_MODES.has(mode)) || new Set(meta.modes).size !== meta.modes.length) errors.push('goal-plan.md: has invalid/duplicate modes');
+  if (!['draft','ready','in_progress','completed','blocked'].includes(meta.status) || typeof meta.ready_for_execution !== 'boolean' || meta.ready_for_execution !== ['ready','in_progress'].includes(meta.status)) errors.push('goal-plan.md: ready_for_execution must match status');
+  errors.push(...validateExecutionPolicy({meta,body}));
+  if (meta.ready_for_execution) {
+    for (const heading of [...REQUIRED_GOAL_PLAN_SECTIONS,...REQUIRED_LEAD_GOAL_PLAN_MARKERS]) if (!body.includes(heading)) errors.push(`${basename(path)}: ready Goal Plan missing '${heading}'`);
+    const assumptions=sectionBody(body,'## Assumptions');
+    if (assumptions && assumptions.includes('高影响') && !assumptions.includes('必须为 `false`')) errors.push(`${basename(path)}: high-impact assumptions cannot remain in a ready Goal Plan`);
+  }
+  return {path,meta,body};
+}
+
+function validateLegacyGoalPlan(path, errors) {
   if (!isFile(path)) {
     errors.push(`missing Goal Plan: ${basename(path)}`);
     return null;
@@ -1884,8 +1906,8 @@ function validateGoalPlan(path, errors) {
   if (missing.length) errors.push(`${basename(path)}: missing keys ${JSON.stringify(missing.sort())}`);
   const unexpected = Object.keys(meta).filter((key) => !required.includes(key));
   if (unexpected.length) errors.push(`${basename(path)}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
-  if (meta.artifact !== "goal-plan" || meta.schema_version !== GOAL_PLAN_SCHEMA_VERSION) {
-    errors.push(`${basename(path)}: artifact/schema_version must be goal-plan/${GOAL_PLAN_SCHEMA_VERSION}`);
+  if (meta.artifact !== "goal-plan" || meta.schema_version !== 7) {
+    errors.push(`${basename(path)}: artifact/schema_version must be goal-plan/7`);
   }
   const modes = requireList(meta, "modes", basename(path), errors);
   const invalidModes = modes.filter((mode) => !VALID_PLAN_MODES.has(mode));
@@ -1937,9 +1959,10 @@ function validateGoalPlan(path, errors) {
         errors.push(`${basename(path)}: ready Goal Plan missing '${heading}'`);
       }
     }
+    const legacyMarkers = REQUIRED_LEAD_GOAL_PLAN_MARKERS.map(marker=>marker === 'Ticket scheduling' ? 'Concurrent implementations' : marker === '### Change Workspace and Verification' ? '### Ticket Workspace and Integration' : marker);
     const requiredMarkers = meta.ticket_workspace_policy === "current"
-      ? [...REQUIRED_LEAD_GOAL_PLAN_MARKERS, "Local direct-parent verification and parent update"]
-      : [...REQUIRED_LEAD_GOAL_PLAN_MARKERS, "source worktree 不运行 E2E", "Local candidate integration and parent update"];
+      ? [...legacyMarkers, "Local direct-parent verification and parent update"]
+      : [...legacyMarkers, "source worktree 不运行 E2E", "Local candidate integration and parent update"];
     const missingLeadMarkers = requiredMarkers.filter((marker) => !body.includes(marker));
     if (missingLeadMarkers.length) {
       errors.push(`${basename(path)}: ready Goal Plan missing Lead/workspace markers ${JSON.stringify(missingLeadMarkers)}`);
@@ -1954,6 +1977,7 @@ function validateGoalPlan(path, errors) {
 
 function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot = null, options = {}) {
   if (!goalPlan) return;
+  if (goalPlan.meta.schema_version === 7 && /^Outcome: completed$/m.test(readText(join(change,'README.md')))) return;
   errors.push(...validateExecutionPolicy(goalPlan, findSpecdevConfig(change, repoRoot, options)).map(error => `${basename(path)}: ${error}`));
 }
 
@@ -2200,7 +2224,7 @@ function validateTicket(path, errors) {
     if (!verification || !verification.includes("|")) {
       errors.push(`${basename(path)}: Ready Ticket has no usable verification matrix`);
     }
-    if (!verification.includes("E2E disposition") || !/(current-workspace|source-worktree|parent-candidate|direct-parent)/.test(verification)) {
+    if (!verification.includes("E2E disposition") || !/(change-workspace|current-workspace|source-worktree|parent-candidate|direct-parent)/.test(verification)) {
       errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and an explicit execution environment`);
     }
     const acceptance = semanticSection(body, ["验收标准"]).toLowerCase();
@@ -2217,10 +2241,24 @@ function validateChangeExecution(change, errors, context) {
   try {
     const facts = runtime.readChangeFactsSync(context, basename(change));
     if (facts.location.root !== resolve(change)) throw new Error('change identity does not match requested location');
-    data = { ...facts, worktrees:readChangeExecution(change) };
+    data = { ...facts, worktrees:readChangeExecution(change), executionContext:readExecutionContext(change) };
   } catch (error) { errors.push(`${change}: ${error.message}`); return null; }
+  const modern = data.worktrees.filter(record=>record.schema_version === 1);
+  const legacy = data.worktrees.filter(record=>record.schema_version !== 1);
+  if (legacy.length && (data.outcome === 'active' || modern.length || data.executionContext)) errors.push('legacy-active-execution: explicit reconciliation by original owner required; preserve old worktrees and evidence');
+  if (data.executionContext) {
+    try {
+      const owner = readChangeOwner(context,expectedChange).owner;
+      if (owner !== data.executionContext.owner) errors.push('Execution Context owner differs from original Lead');
+      data.workspaceRoot = resolveExecutionWorkspace(context.projectRoot,data.executionContext);
+    } catch(error) { errors.push(error.message); }
+  }
+  for (const record of modern) {
+    errors.push(...validateExecutionRecord(change,record,data.executionContext,{repoRoot:data.workspaceRoot ?? context.projectRoot,sourceRoot:context.projectRoot}));
+    if (record.purpose === 'direct-spec' && record.status === 'cancelled' && data.outcome !== 'cancelled') errors.push('cancelled Direct Spec execution requires the original whole-change cancellation');
+  }
   const seenWorktreeTickets = new Set();
-  for (const worktree of Array.isArray(data.worktrees) ? data.worktrees : []) {
+  for (const worktree of legacy) {
     if (!worktree || typeof worktree !== "object" || Array.isArray(worktree)) {
       errors.push(`${basename(path)}: invalid worktree entry`);
       continue;
@@ -2505,7 +2543,7 @@ function validateChangeExecution(change, errors, context) {
 }
 
 function validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors) {
-  const allEntries = Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : [];
+  const allEntries = (changeStatus?.worktrees ?? []).filter(record=>record.schema_version !== 1);
   const entries = goalPlan?.meta.ticket_workspace_policy === "current" ? allEntries : allEntries.filter(entry => entry.workspace_ref === "current");
   const active = [];
   for (const worktree of entries) {
@@ -2562,7 +2600,7 @@ function validateGitEvidence(repoRoot, changeStatus, errors) {
     return;
   }
   const currentBranch = gitOutput(resolvedRoot, ["branch", "--show-current"]);
-  for (const worktree of Array.isArray(changeStatus?.worktrees) ? changeStatus.worktrees : []) {
+  for (const worktree of (changeStatus?.worktrees ?? []).filter(record=>record.schema_version !== 1)) {
     const label = String(worktree.ticket_id ?? worktree.purpose ?? "worktree");
     for (const [name, sha] of [
       ["base_sha", worktree.base_sha],
@@ -2647,13 +2685,13 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   const map = parseFrontmatter(mapPath);
   const plan = parseFrontmatter(planPath);
   const mapKeys = ["schema_version", "artifact", "change", "status", "revision", "members", "tasks", "dependencies", "serializations"];
-  const planKeys = ["schema_version", "artifact", "change", "status", "source_map_revision", "orchestration", "lead", "concurrent_implementation_limit", "integration_attempt_limit", "ticket_workspace_policy", "integration_gate", "ready_for_execution"];
+  const planKeys = ["schema_version", "artifact", "change", "status", "source_map_revision", "orchestration", "lead", "concurrent_implementation_limit", "integration_attempt_limit", "ticket_execution", "ready_for_execution"];
   for (const [label, meta, expected] of [
     ["implementation-map.md", map.meta, mapKeys],
     ["implementation-plan.md", plan.meta, planKeys],
   ]) {
-    const missing = expected.filter((key) => !(key in meta));
-    const unexpected = Object.keys(meta).filter((key) => !expected.includes(key));
+    const missing = expected.filter((key) => key !== "concurrent_implementation_limit" && !(key in meta));
+    const unexpected = Object.keys(meta).filter((key) => !expected.includes(key) && key !== "max_parallel_tickets");
     if (missing.length) errors.push(`${label}: missing keys ${JSON.stringify(missing)}`);
     if (unexpected.length) errors.push(`${label}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
   }
@@ -2661,7 +2699,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     errors.push("implementation-map.md: artifact/schema_version must be implementation-map/1");
   }
   if (plan.meta.schema_version !== IMPLEMENTATION_PLAN_SCHEMA_VERSION || plan.meta.artifact !== "implementation-plan") {
-    errors.push("implementation-plan.md: artifact/schema_version must be implementation-plan/1");
+    errors.push("implementation-plan.md: artifact/schema_version must be implementation-plan/3");
   }
   if (map.meta.change !== parentName || plan.meta.change !== parentName) {
     errors.push("parent implementation artifacts must name their containing change");
@@ -2678,17 +2716,7 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   if (plan.meta.orchestration !== "lead-directed" || typeof plan.meta.lead !== "string" || !plan.meta.lead.trim()) {
     errors.push("implementation-plan.md: lead-directed orchestration requires a recoverable Lead");
   }
-  for (const key of ["concurrent_implementation_limit", "integration_attempt_limit"]) {
-    if (!Number.isInteger(plan.meta[key]) || plan.meta[key] < 1) {
-      errors.push(`implementation-plan.md: ${key} must be a positive integer`);
-    }
-  }
-  const validStrategy =
-    (plan.meta.ticket_workspace_policy === "current" && plan.meta.integration_gate === "direct-parent") ||
-    (plan.meta.ticket_workspace_policy === "required" && plan.meta.integration_gate === "candidate-merge");
-  if (!validStrategy) {
-    errors.push("implementation-plan.md: workspace/integration strategy must be current/direct-parent or required/candidate-merge");
-  }
+  errors.push(...validateExecutionPolicy(plan, findSpecdevConfig(change, repoRoot, options)));
   const readyStatuses = new Set(["ready", "in_progress"]);
   if (
     typeof plan.meta.ready_for_execution !== "boolean" ||
@@ -2736,8 +2764,6 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   const expectedTasks = new Set();
   const expectedInternalEdges = new Set();
   let activeImplementations = 0;
-  let activeCurrentWriters = 0;
-  const integratingByRef = new Map();
 
   for (const member of members) {
     if (!CHANGE_NAME.test(member)) {
@@ -2761,24 +2787,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       memberStatuses.set(member, status);
       if (parentStatus?.outcome === "completed") validateGitEvidence(options.context.projectRoot,status,memberErrors);
       if (parentStatus?.location.kind !== "archive" && status.location.kind !== "active") memberErrors.push("archived change cannot be an implementation member");
-      for (const worktree of Array.isArray(status.worktrees) ? status.worktrees : []) {
-        if (worktree?.status === "active") {
-          activeImplementations += 1;
-          if (worktree.workspace_ref === "current") activeCurrentWriters += 1;
-          if (plan.meta.ticket_workspace_policy === "current" && worktree.workspace_ref !== "current") {
-            memberErrors.push(`${worktree.ticket_id}: active workspace must follow parent current policy`);
-          }
-          if (plan.meta.ticket_workspace_policy === "required" && worktree.workspace_ref === "current") {
-            memberErrors.push(`${worktree.ticket_id}: active workspace must follow parent required policy`);
-          }
-        }
-        if (worktree?.status === "integrating") {
-          const key = String(worktree.parent_branch ?? "<unknown-ref>");
-          integratingByRef.set(key, (integratingByRef.get(key) ?? 0) + 1);
-        }
-        if (Number.isInteger(worktree?.integration?.attempts) && worktree.integration.attempts > plan.meta.integration_attempt_limit) {
-          memberErrors.push(`${worktree.ticket_id}: integration attempts ${worktree.integration.attempts} exceed parent limit ${plan.meta.integration_attempt_limit}`);
-        }
+      for (const record of status.worktrees ?? []) {
+        if ((record.attempts ?? record.integration?.attempts ?? 0) > plan.meta.integration_attempt_limit) memberErrors.push(`${record.ticket_id}: verification attempts exceed parent limit`);
       }
     }
 
@@ -2875,15 +2885,14 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       if (unfinished.length) memberErrors.push(`completed member has unfinished Tickets: ${JSON.stringify(unfinished)}`);
     }
 
+    activeImplementations += [...childTickets.values()].filter(ticket=>['in_progress','review'].includes(ticket.meta.status)).length;
     const goalPath = join(memberRoot, "goal-plan.md");
-    if (isFile(goalPath)) {
-      const goal = validateGoalPlan(goalPath, memberErrors);
-      if (goal && (
-        goal.meta.ticket_workspace_policy !== plan.meta.ticket_workspace_policy ||
-        goal.meta.integration_gate !== plan.meta.integration_gate
-      )) {
-        memberErrors.push("Goal Plan workspace/integration strategy conflicts with parent Implementation Plan");
-      }
+    const goal = isFile(goalPath) ? validateGoalPlan(goalPath, memberErrors) : null;
+    const childPolicy = ticketPolicy(plan.meta,goal?.meta,status?.executionContext);
+    const active = [...childTickets.values()].filter(ticket=>['in_progress','review'].includes(ticket.meta.status));
+    if (childPolicy.max_parallel_tickets !== null && active.length > childPolicy.max_parallel_tickets) memberErrors.push('child concurrent Ticket limit exceeded');
+    if (stage === 'complete' && status?.outcome === 'completed' && !isFile(join(memberRoot,'implementation-map.md'))) {
+      memberErrors.push(...validateChange(memberRoot,'complete',repoRoot,null,null,options).errors);
     }
     errors.push(...memberErrors.map((message) => `${member}: ${message}`));
     warnings.push(...memberWarnings.map((message) => `${member}: ${message}`));
@@ -2954,6 +2963,16 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   const unfinishedTasks = [...ticketByTask]
     .filter(([, value]) => !new Set(["done", "cancelled"]).has(value.artifact.meta.status))
     .map(([task]) => task);
+  const activeTasks = [...ticketByTask].filter(([,value])=>['in_progress','review'].includes(value.artifact.meta.status)).map(([task])=>task);
+  for (const task of activeTasks) {
+    for (const prerequisite of graph.get(task) ?? []) if (ticketByTask.get(prerequisite)?.artifact.meta.status !== 'done') errors.push(`${task}: active Ticket prerequisite is not done: ${prerequisite}`);
+  }
+  for (let index=0; index<activeTasks.length; index++) for (const right of activeTasks.slice(index+1)) {
+    const left=activeTasks[index], a=ticketByTask.get(left).artifact.meta, b=ticketByTask.get(right).artifact.meta;
+    if (serializationPairs.has([left,right].sort().join('\0'))) errors.push(`${left}/${right}: serialized Tickets cannot be active together`);
+    if ((a.writable_paths ?? []).some(x=>(b.writable_paths ?? []).some(y=>pathsOverlap(String(x),String(y))))) errors.push(`${left}/${right}: active Tickets have conflicting writable paths`);
+    if ((a.resource_claims ?? []).some(x=>(b.resource_claims ?? []).some(y=>x === y || x.endsWith('*') && y.startsWith(x.slice(0,-1)) || y.endsWith('*') && x.startsWith(y.slice(0,-1))))) errors.push(`${left}/${right}: active Tickets have conflicting semantic resources`);
+  }
   for (let index = 0; index < unfinishedTasks.length; index += 1) {
     const leftId = unfinishedTasks[index];
     const left = ticketByTask.get(leftId).artifact;
@@ -2995,15 +3014,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
   }
 
   errors.push(...validateExecutionPolicy(plan, findSpecdevConfig(change, repoRoot, options)).map(error => `implementation-plan.md: ${error}`));
-  if (activeImplementations > plan.meta.concurrent_implementation_limit) {
-    errors.push(`parent implementation agent limit exceeded: ${activeImplementations} active for limit ${plan.meta.concurrent_implementation_limit}`);
-  }
-  if (plan.meta.ticket_workspace_policy === "current" && activeCurrentWriters > 1) {
-    errors.push(`parent current policy permits only one active implementation writer; found ${activeCurrentWriters}`);
-  }
-  for (const [ref, count] of integratingByRef) {
-    if (count > 1) errors.push(`repository/ref integration must be serialized for ${ref}; found ${count}`);
-  }
+  const parentTicketPolicy = ticketPolicy(plan.meta);
+  if (parentTicketPolicy.max_parallel_tickets !== null && activeImplementations > parentTicketPolicy.max_parallel_tickets) errors.push('parent concurrent Ticket limit exceeded');
 
   if (parentStatus?.outcome === "completed") {
     const incomplete = members.filter((member) => memberStatuses.get(member)?.outcome !== "completed");
@@ -3026,8 +3038,8 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
         errors.push(`${task}: completed parent requires child Ticket Evidence`);
       }
       const worktree = value.status?.worktrees?.find((entry) => entry?.ticket_id === value.artifact.meta.id);
-      if (!worktree || !new Set(["integrated", "removed"]).has(worktree.status)) {
-        errors.push(`${task}: completed parent requires integrated or removed child workspace record`);
+      if (!worktree || !new Set(["verified", "integrated", "removed"]).has(worktree.status)) {
+        errors.push(`${task}: completed parent requires verified child execution evidence`);
       }
     }
     const evidencePath = join(change, "evidence", "implementation-orchestration.md");
@@ -3128,21 +3140,18 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   validatePrototypes(change, stage === "prototype", errors, prototypeId, new Set(["spec", "tickets", "goal-plan", "implement", "review", "complete"]).has(stage), workspace.context);
   if (new Set(["tickets", "goal-plan", "implement", "review", "complete"]).has(stage)) runDesignCheck("--handoff", change, errors, workspace.context);
   validateChangeLearning(change, stage === "learn", errors);
-  const retro = validateRecords(change, "retrospective", parseFrontmatter);
   const prs = validateRecords(change, "pull-request", parseFrontmatter);
-  errors.push(...retro.errors, ...prs.errors);
-  if (stage === "retro" && !retro.records.some(r => r.meta.status === "completed")) errors.push("retro stage requires a completed retrospective");
+  errors.push(...prs.errors);
   if (stage === "pr-delivery" && !prs.records.length) errors.push("pr-delivery stage requires a PR record");
   if (archiveReady && prs.records.some(r => r.meta.requested === true && (["planned", "failed"].includes(r.meta.status) || (r.meta.delivery_target === "ready" && r.meta.status === "draft")))) errors.push("complete stage cannot archive pending PR delivery");
-  const retroOnly = retro.records.length > 0 && retro.errors.length === 0 && retro.records.every(r => r.meta.status === "completed") &&
-    !["spec.md", "ticket", "tickets-map.md", "goal-plan.md", "implementation-map.md", "implementation-plan.md", "evidence"].some(p => existsSync(join(change,p))) && !changeStatus.worktrees?.length;
+
 
   let simpleGoal = null;
   try { simpleGoal = readLightweightGoal(change); } catch (error) { errors.push(error.message); }
-  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation && !retroOnly;
+  const specRequired = new Set(["spec", "tickets", "goal-plan", "implement", "complete"]).has(stage) && !isParentImplementation;
   const specPath = join(change, "spec.md");
   let specification = null;
-  if (!isParentImplementation && !retroOnly && (isFile(specPath) || specRequired)) {
+  if (!isParentImplementation && (isFile(specPath) || specRequired)) {
     try { specification = readSpecification(change, {allowLightweight: stage !== "tickets" && (stage !== "goal-plan" || Boolean(simpleGoal)), requiredArtifact:options.requiredArtifact, depth:options.depth}); }
     catch(error) { errors.push(error.message); }
   }
@@ -3229,7 +3238,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
         .map((entry) => [String(entry.ticket_id), entry]),
     );
     for (const [ticketId, artifact] of tickets) {
-      if (new Set(["draft", "cancelled"]).has(artifact.meta.status)) continue;
+      if (new Set(["draft", "ready", "cancelled"]).has(artifact.meta.status)) continue;
       if (!worktreesByTicket.has(ticketId)) {
         errors.push(`${ticketId}: Implement stage requires one Ticket workspace execution record`);
       }
@@ -3245,23 +3254,28 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     const attemptLimit = Number.isInteger(goalPlan.meta.integration_attempt_limit) ? goalPlan.meta.integration_attempt_limit : null;
     if (attemptLimit !== null) {
       for (const worktree of changeStatus.worktrees ?? []) {
-        if (worktree?.integration && Number.isInteger(worktree.integration.attempts) && worktree.integration.attempts > attemptLimit) {
-          errors.push(`${worktree.ticket_id}: integration attempts ${worktree.integration.attempts} exceed Goal Plan limit ${attemptLimit}`);
+        if ((worktree.attempts ?? worktree.integration?.attempts ?? 0) > attemptLimit) {
+          errors.push(`${worktree.ticket_id}: integration attempts ${worktree.attempts ?? worktree.integration?.attempts} exceed Goal Plan limit ${attemptLimit}`);
         }
       }
     }
   }
   validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
   const directExecution = changeStatus?.worktrees?.find(entry => entry.purpose === "direct-spec");
-  if (directExecution && workspace.config) errors.push(...validateExecutionPolicy({meta:{concurrent_implementation_limit:1,integration_attempt_limit:directExecution.integration_attempt_limit}},workspace.config).map(error => `Direct Spec: ${error}`));
+  if (changeStatus?.executionContext && workspace.config) {
+    const execution=changeStatus.executionContext,limits=workspace.config.execution;
+    if (execution.integration_attempt_limit > limits.max_integration_attempts) errors.push('Execution Context exceeds config max_integration_attempts');
+    if (execution.concurrent_implementation_limit > limits.max_concurrent_implementations) errors.push('Execution Context exceeds config max_concurrent_implementations');
+    for (const record of changeStatus.worktrees ?? []) if (record.attempts > limits.max_integration_attempts) errors.push(`${record.ticket_id ?? record.purpose}: verification attempts exceed config limit`);
+  }
   if (directExecution && (ticketMode || isParentImplementation)) errors.push("Direct Spec execution cannot coexist with Ticket or parent implementation artifacts");
-  if (directExecution && (stage === "complete" || changeStatus.outcome === "completed") && !new Set(["integrated", "removed"]).has(directExecution.status)) errors.push("Direct Spec completion requires integrated or removed execution; active or failed candidates cannot complete");
+  if (directExecution && (stage === "complete" || changeStatus.outcome === "completed") && !new Set(["verified", "integrated", "removed"]).has(directExecution.status)) errors.push("Direct Spec completion requires verified execution; active or failed checks cannot complete");
   validateGitEvidence(stage === "complete" ? workspace.context.projectRoot : repoRoot, changeStatus, errors);
 
   if (stage === "implement" && spec && !ticketMode && (spec.meta.ready_for_tickets !== true || spec.meta.status !== "ready")) errors.push("Direct Spec implementation requires a ready Spec with ready_for_tickets=true");
   if (spec?.meta.ready_for_tickets === true && !/\bAC-\d+\b/.test(spec.body)) errors.push("ready Spec must define at least one AC-### acceptance contract");
 
-  if (stage === "complete" && spec && !ticketMode && !isParentImplementation && !retroOnly) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
+  if (stage === "complete" && spec && !ticketMode && !isParentImplementation) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
 
   // New completion/archival consumes actual review evidence. Historical records
   // remain readable outside these gates; archived validation returned earlier.
@@ -3275,17 +3289,18 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       } else if (owner.work === 'specdev/triage' && source && triage?.meta.ready_for_implementation === false) nonImplementation = true;
     } catch(error) { errors.push(error.message); }
   }
-  if (stage === 'complete' && changeStatus?.location.kind === 'active' && changeStatus?.outcome !== 'cancelled' && !retroOnly && !nonImplementation) {
+  if (stage === 'complete' && changeStatus?.location.kind === 'active' && changeStatus?.outcome !== 'cancelled' && !nonImplementation) {
     const units = [...tickets.values()].filter(ticket => ticket.meta.status !== 'cancelled');
     const finalArtifact = isParentImplementation ? 'evidence/implementation-orchestration.md'
       : units.length > 1 ? 'evidence/final-review.md'
       : units.length === 1 ? `evidence/${units[0].meta.id}.md`
       : lightweight ? 'README.md' : 'evidence/direct-spec.md';
     try {
-      const head = execFileSync('git',['-C',workspace.context.projectRoot,'rev-parse','--verify','HEAD^{commit}'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+      const deliveryRoot = changeStatus.workspaceRoot ?? workspace.context.projectRoot;
+      const head = execFileSync('git',['-C',deliveryRoot,'rev-parse','--verify','HEAD^{commit}'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
       const executions = [...(changeStatus.worktrees ?? []), ...[...(parentImplementation?.memberStatuses?.values() ?? [])].flatMap(status=>status.worktrees ?? [])];
-      const owners = executions.flatMap(record => [record.implementation_owner, ...(record.integration?.conflict_paths?.length ? [record.integration_owner] : [])]).filter(value => typeof value === 'string' && /^[a-z][a-z0-9-]*:\S+$/i.test(value));
-      const bases = [...new Set(executions.map(record=>record.base_sha).filter(value=>/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value ?? '')))];
+      const owners = executions.flatMap(record => [...(record.implementation_owners ?? []), record.implementation_owner, ...(record.integration?.conflict_paths?.length ? [record.integration_owner] : [])]).filter(value => typeof value === 'string' && /^[a-z][a-z0-9-]*:\S+$/i.test(value));
+      const bases = [...new Set([changeStatus.executionContext?.base_sha, ...executions.map(record=>record.base_sha)].filter(value=>/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value ?? '')))];
       const expectedBase = bases.length > 1 ? execFileSync('git',['-C',workspace.context.projectRoot,'merge-base','--octopus',...bases],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim() : bases[0] ?? null;
       const sourceLocator = path => {
         const snapshot = workspace.context.readOnlySnapshot;
@@ -3294,9 +3309,12 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       };
       const specLocator = sourceLocator(spec ? spec.path : join(change,'README.md'));
       const requiredSpecifications = isParentImplementation
-        ? [sourceLocator(join(change,'implementation-plan.md')),sourceLocator(join(change,'implementation-map.md')),...new Set([...(parentImplementation?.ticketByTask?.values() ?? [])].map(unit=>sourceLocator(join(unit.memberRoot,'spec.md'))))]
+        ? [sourceLocator(join(change,'implementation-plan.md')),sourceLocator(join(change,'implementation-map.md')),...new Set([...(parentImplementation?.ticketByTask?.values() ?? [])].map(unit=>sourceLocator(join(unit.memberRoot,'spec.md')))),...[...(parentImplementation?.memberStatuses ?? [])].filter(([,status])=>status.executionContext).map(([member])=>{
+          const units=[...parentImplementation.ticketByTask.values()].filter(unit=>unit.member===member && unit.artifact.meta.status !== 'cancelled');
+          return units.length ? `${sourceLocator(join(units[0].memberRoot,'evidence',units.length>1?'final-review.md':`${units[0].artifact.meta.id}.md`))}#review-input` : null;
+        }).filter(Boolean)]
         : spec ? [specLocator] : [`${specLocator}#scope`,`${specLocator}#acceptance`];
-      errors.push(...validateIndependentReview(change,finalArtifact,{repoRoot:workspace.context.projectRoot,expectedHead:head,expectedBase,requiredImplementers:owners,requiredSpecifications,checkCurrent:true,requireDelivery:true}));
+      errors.push(...validateIndependentReview(change,finalArtifact,{repoRoot:deliveryRoot,sourceRoot:workspace.context.projectRoot,expectedHead:isParentImplementation?null:head,expectedBase:isParentImplementation?null:expectedBase,requiredImplementers:owners,requiredSpecifications,checkCurrent:true,requireDelivery:!isParentImplementation,allowSourceFiles:isParentImplementation}));
     } catch(error) { errors.push(`independent-review: final delivery checkpoint unavailable: ${error.message}`); }
   }
 
@@ -3376,6 +3394,17 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     }
   }
 
+  const scheduling = ticketPolicy(goalPlan?.meta,changeStatus?.executionContext);
+  const inFlight = [...tickets.values()].filter(ticket=>['in_progress','review'].includes(ticket.meta.status));
+  if (scheduling.max_parallel_tickets !== null && inFlight.length > scheduling.max_parallel_tickets) errors.push('concurrent Ticket limit exceeded');
+  for (const ticket of inFlight) for (const dependency of graph.get(ticket.meta.id) ?? []) if (tickets.get(dependency)?.meta.status !== 'done') errors.push(`${ticket.meta.id}: active Ticket prerequisite is not done: ${dependency}`);
+  for (const record of changeStatus?.worktrees ?? []) if (record.schema_version === 1 && record.ticket_id && ['active','review'].includes(record.status) && !['in_progress','review'].includes(tickets.get(record.ticket_id)?.meta.status)) errors.push(`${record.ticket_id}: active execution requires an in_progress/review Ticket`);
+  for (let i=0;i<inFlight.length;i++) for (const other of inFlight.slice(i+1)) {
+    const ticket = inFlight[i];
+    if ((ticket.meta.writable_paths ?? []).some(a=>(other.meta.writable_paths ?? []).some(b=>pathsOverlap(a,b)))) errors.push(`active Tickets ${ticket.meta.id}/${other.meta.id} have conflicting writable paths`);
+    if ((ticket.meta.resource_claims ?? []).some(a=>(other.meta.resource_claims ?? []).some(b=>a === b || a.endsWith('*') && b.startsWith(a.slice(0,-1)) || b.endsWith('*') && a.startsWith(b.slice(0,-1))))) errors.push(`active Tickets ${ticket.meta.id}/${other.meta.id} have conflicting semantic resources`);
+    if (transitivelyDepends(graph,ticket.meta.id,other.meta.id) || transitivelyDepends(graph,other.meta.id,ticket.meta.id)) errors.push('active Ticket dependency is not completed');
+  }
   const evidenceDir = join(change, "evidence");
   for (const [ticketId, artifact] of tickets) {
     if (artifact.meta.status !== "done") continue;
@@ -3385,6 +3414,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       continue;
     }
     const text = readText(evidence);
+    if (changeStatus?.worktrees?.find(entry=>entry.ticket_id === ticketId)?.schema_version === 1) errors.push(...validateAcceptanceEvidence(change,`evidence/${ticketId}.md`,artifact.meta.contract_ids ?? []));
     if (stage === 'complete' && changeStatus?.location.kind === 'active' || hasIndependentReview(evidence)) {
       const execution = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId);
       errors.push(...validateIndependentReview(change, `evidence/${ticketId}.md`, {
@@ -3410,17 +3440,17 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       }
     }
     const workspaceVerification = sectionBody(text, "## 5. Workspace Verification");
-    if (!/(current-workspace|source-worktree)/.test(workspaceVerification)) {
-      errors.push(`${toPosix(relative(change, evidence))}: Workspace Verification must name current-workspace or source-worktree`);
+    if (!/(change-workspace|current-workspace|source-worktree)/.test(workspaceVerification)) {
+      errors.push(`${toPosix(relative(change, evidence))}: Workspace Verification must name change-workspace`);
     }
-    if (!currentWorkspace && /E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(workspaceVerification) && !/不得|禁止|not-run/i.test(workspaceVerification)) {
+    if (changeStatus?.worktrees?.find(entry=>entry.ticket_id === ticketId)?.schema_version !== 1 && !currentWorkspace && /E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(workspaceVerification) && !/不得|禁止|not-run/i.test(workspaceVerification)) {
       errors.push(`${toPosix(relative(change, evidence))}: E2E pass cannot come from source-worktree`);
     }
     const worktree = Array.isArray(changeStatus?.worktrees)
       ? changeStatus.worktrees.find((entry) => entry?.ticket_id === ticketId)
       : null;
-    if (!worktree || !new Set(["integrated", "removed"]).has(worktree.status)) {
-      errors.push(`${ticketId}: status is done but no integrated or removed Ticket worktree exists`);
+    if (!worktree || !new Set(["verified", "integrated", "removed"]).has(worktree.status)) {
+      errors.push(`${ticketId}: status is done but no verified Ticket execution exists`);
     }
   }
 
@@ -3454,7 +3484,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   }
   if (
     stage === "complete" &&
-    !ticketFiles.length && !retroOnly && !lightweight &&
+    !ticketFiles.length && !lightweight &&
     !isFile(join(change, "implementation-map.md")) &&
     !isFile(join(change, "evidence", "direct-spec.md"))
   ) {

@@ -1,6 +1,6 @@
 ---
 name: specdev-a-archive-and-consolidate
-description: "核对并封存已完成或取消的 change，或独立审计维护 ADR、context 与当前 docs；拥有项目设计基线批准与提升网关，仅在用户明确要求时从代码访谈形成知识 change。"
+description: "核对并封存已完成或取消的 change、已处置 RETRO，或独立审计维护 ADR、context 与当前 docs；拥有设计基线网关，明确要求时从代码访谈形成知识 change。"
 metadata:
   speculo-kind: work-skill
   speculo-id: specdev/archive-and-consolidate
@@ -14,6 +14,7 @@ metadata:
 
 ## 选择范围
 
+- **archive-retro**：R 的项目 Skill 升级已验证后，按 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/retro-archive.md</Path> 执行固定报告及方案的归档；复用具体批准。该窄分支使用独立 RETRO 门，不执行下方 change 专属流程。
 - **archive-single / archive-batch**：用户指定 completed/cancelled 对象；batch 必须明确请求并固定清单。无候选返回 no-candidates，不创建 change。
 - **knowledge-audit / knowledge-maintenance**：按用户指定主题检查/维护既有知识，无需新 change；只读审计默认会话结果。
 - **consolidate-from-code**：明确要求从代码访谈形成新知识，按 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/consolidation-interview.md</Path> 建立真实验收载体，验证后结束并走归档。

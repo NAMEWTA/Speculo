@@ -34,7 +34,7 @@ function readLocator(root, locator) {
 export function reviewInputDigest(input) { return hash(JSON.stringify(input)); }
 
 /** Sources use project-relative locators; an anchor avoids a README hashing itself. */
-export function validateIndependentReview(root, artifact, {repoRoot=null, requirePassed=true, expectedHead=null, expectedBase=null, expectedResults=null, requiredImplementers=[], requiredSpecifications=[], checkCurrent=false, requireDelivery=false, allowSourceFiles=false} = {}) {
+export function validateIndependentReview(root, artifact, {repoRoot=null, sourceRoot=repoRoot, requirePassed=true, expectedHead=null, expectedBase=null, expectedResults=null, requiredImplementers=[], requiredSpecifications=[], checkCurrent=false, requireDelivery=false, allowSourceFiles=false} = {}) {
   const errors = [], label = `independent-review: ${artifact}`;
   try {
     const path = safeWorkPathSync(root, artifact, {mustExist:true, type:'file'});
@@ -54,7 +54,7 @@ export function validateIndependentReview(root, artifact, {repoRoot=null, requir
     for (const source of input.sources) {
       if (!['standards','specification','instructions'].includes(source.kind) || !real(source.locator) || !/^[a-f0-9]{64}$/.test(source.sha256 ?? '')) throw new Error('invalid review source');
       sourceKinds.add(source.kind);
-      if (repoRoot && checkCurrent && hash(readLocator(repoRoot,source.locator).text) !== source.sha256) throw new Error(`source drift: ${source.locator}`);
+      if (repoRoot && checkCurrent && hash(readLocator(sourceRoot,source.locator).text) !== source.sha256) throw new Error(`source drift: ${source.locator}`);
     }
     if (!sourceKinds.has('standards') || requirePassed && !sourceKinds.has('specification')) throw new Error('missing required review sources');
     if (requiredSpecifications.some(locator=>!input.sources.some(source=>source.kind === 'specification' && source.locator === locator))) throw new Error('review omits the authoritative specification/acceptance source');

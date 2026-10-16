@@ -4,11 +4,11 @@
 
 ## 冻结输入
 
-在报告中建立独立的 `review-input` 锚点，用一个 JSON 对象保存 `scope`（review-scope 的完整原始返回值）、`sources` 和适用的 `exclusions`。sources 每项为 `kind: standards|specification|instructions`、项目根相对 `locator` 和实际 UTF-8 原文字节的 `sha256`。locator 可带显式锚点；轻量 README 只摘要其 scope/acceptance 等合同段，不能摘要包含审查记录的整份 README。来源必须覆盖本轮实际规范、标准及适用指令。
+在报告中建立独立的 `review-input` 锚点，用一个 JSON 对象保存 `scope`（review-scope 的完整原始返回值）、`sources` 和适用的 `exclusions`。sources 每项为 `kind: standards|specification|instructions`、项目根相对 `locator` 和实际 UTF-8 原文字节的 `sha256`。locator 可带显式锚点；轻量 README 只摘要其 scope/acceptance 等合同段，不能摘要包含审查记录的整份 README。来源必须覆盖本轮实际规范、标准及适用指令。规范来源 locator 相对明确项目根，代码 scope 相对选定 change 工作区；两者不同时，校验器分别使用 sourceRoot 与 repoRoot，不复制规范进 worktree、不用 .. 穿越 locator。
 
 `Input-SHA256` 为该对象经 JSON.parse 后再 JSON.stringify 的 UTF-8 SHA256，由工具计算，不手写猜测。将同一对象及摘要交给 reviewer。摘要证明输入一致，不证明审查真的发生。
 
-未提交的 Direct Spec 先读取 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path>。Git diff 使用实际工具返回的不可变端点；规范/标准和相关指令变化也会使受影响结论失效。
+未提交的 Ticket 或 Direct Spec 先读取 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path>。Git diff 使用实际工具返回的不可变端点；规范/标准和相关指令变化也会使受影响结论失效。
 
 ## 最小记录
 

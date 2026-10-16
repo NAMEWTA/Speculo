@@ -14,6 +14,8 @@ metadata:
 
 每张票都是供新上下文执行的 Plan：说明背景、来源、目标、非目标、真实项目 SKILL 调用、修改顺序、验证和失败停止点。Tickets Map 是统一启动与恢复入口，不是静态清单；它不复制 Ticket 的状态权威。
 
+按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 区分三个决定：串行/并行只描述票据推进顺序，默认按依赖和条件选择；每票的 Agent、subagent、团队或 CLI 编排遵守用户与 Work/Skill 要求；一个 change 的全部票据复用同一选定工作区，串并行与协作者数量都不触发额外 worktree。
+
 ## 读取范围
 
 先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；按相关条目定位上游 Spec/ADR/CONTEXT、代码与项目 Agent 指令，再回读当前拆分所需原文。只枚举 Skill 的元数据与触发路由，不默认展开全部技能。

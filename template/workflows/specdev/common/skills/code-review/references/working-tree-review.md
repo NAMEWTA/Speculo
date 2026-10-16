@@ -1,6 +1,6 @@
 # 未提交工作副本审查
 
-I 的 Direct Spec current 未获提交授权时使用本分支。它覆盖实际交付差异，不以 HEAD 代替未提交内容；C 的 source-files 仍只承诺指定文件阅读。
+I 的 Ticket 或 Direct Spec 未提交交付使用本分支；current 与 change worktree 均适用。它覆盖实际交付差异，不以 HEAD 代替未提交内容；C 的 source-files 仍只承诺指定文件阅读。
 
 1. 停止相关 writer，回读实施前 Git 基线、原有 dirty 改动、当前授权写集与实际变更。确认项目 Git 根；无已存在的基线、冲突 index、不可读取文件或不支持的子模块时保持未验证，不伪造提交。
 2. 调用以下只读工具。`--file` 可重复，使用已核对的完整交付文件清单，包含删除路径；不传时覆盖相对基线的全部实际变化和非忽略未跟踪文件。只读冻结不创建 commit、不暂存、不修改 index。

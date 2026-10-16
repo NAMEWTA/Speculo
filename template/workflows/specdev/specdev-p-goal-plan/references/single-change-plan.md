@@ -3,7 +3,7 @@
 
 Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、跨 Ticket 顺序与并发、共享所有权、里程碑 Gate、动态派单边界、父分支集成、迁移/发布顺序、偏差升级和恢复。Ticket 继续拥有局部实现合同。
 
-每次 Goal Plan 都采用 `lead-directed`：当前主会话是唯一 Lead，负责计划、SpecDev 状态、Evidence、派单、验收、父分支推进和最终回复。形成 Goal Plan 时按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分别确定执行方式和工作区，复用已有选择；未指定时按当前宿主正常执行，工作区默认 current，选择写入当前 Goal Plan，不修改全局配置。不开启时 Ticket 严格串行，允许动态派遣 实现执行者，但同一时间只有一个 implementation owner 可写当前 workspace；开启时沿用每 Ticket 独立 worktree 与 candidate-merge。
+每次 Goal Plan 使用 lead-directed 表示唯一状态和验收 owner；实现团队按要求决定。按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分别确定票据调度、Agent 编排和 change 工作区；复用已有选择，不修改全局配置。
 
 产物写入 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`。
 
@@ -59,11 +59,11 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 1. 验证 Spec、Tickets、合同覆盖、DAG、路径所有权和待执行 Deep Ticket 完整性；未来 draft 票按规划输入门记录局部缺口；
 2. 只读探索影响调度的代码与项目事实；
 3. 识别 migration、high-assurance、reference-conformance、release-coordination 等适用模式；
-4. 从项目/本次约定读取实际并发与尝试上限，在 `Execution Policy Source` 记录来源并填写既有 `concurrent_implementation_limit` 与 `integration_attempt_limit`；存在 config 时不得超过其有效上限或平台能力，Lead 参与实现时计入；
-5. 根据 workspace 策略记录实现 commit 与 direct-parent/candidate integration 授权事实；缺失时仍可完成 plan 文档，但 ready_for_execution 保持 false，并列为 run 的阻塞条件；
+4. 在 Execution Policy Source 记录 ticket_execution、可选 max_parallel_tickets 及验证尝试上限；显式实现者限制独立核对，不把人数换成票数；
+5. 核对本次实现与工作区创建的实际授权；commit/merge 仅在明确交付要求下另行核对，不作为默认每票执行门；
 6. 只询问无法发现且会改变 Gate、Wave、owner、迁移、批准或验收的问题。
 
-**完成标准**：计划内 Ticket、范围、覆盖、DAG 与所有权完整；未来 draft 票已记录真实缺口、生产者证据和 DoR 重审条件；Lead、授权状态、实现并发上限和父分支可判定。缺执行授权时可交付规划，但 `ready_for_execution` 保持 `false`。
+**完成标准**：计划内 Ticket、范围、覆盖、DAG 与所有权完整；未来 draft 票已记录真实缺口、生产者证据和 DoR 重审条件；Lead、授权状态、票据策略、明确存在的实现者限制和工作区选择可判定。缺执行授权时可交付规划，但 `ready_for_execution` 保持 `false`。
 
 ### 2. 构建 Outcome、DAG、Wave 与 Gate
 
@@ -72,20 +72,20 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 1. 压缩 Outcome、成功/伪完成、非目标和权威来源；
 2. 从 Ticket frontmatter 构建 DAG、关键路径、扇出与汇合点；
 3. 为 shared path、共享合同和集中修改指定唯一 owner；
-4. 将依赖满足且项目写路径不相交的 Ticket 分入 Wave；current 模式仍按依赖顺序串行执行，不得把 Wave 当作并发授权；
+4. 将依赖满足、路径与语义资源无冲突的票分入候选 Wave，按 serial/auto/parallel 和票据上限实际推进；
 5. 为合同稳定、垂直路径、迁移完成、发布就绪等状态定义 Gate；
 6. 为每个 Ticket 记录开始条件、workspace 策略、验证层级、Evidence 目标、集成顺序和失败恢复。
 
-**完成标准**：DAG、Wave、Gate 与 Tickets Map 一致；每个 Ticket 有唯一项目写 owner、worktree 合同和可验证集成出口。
+**完成标准**：DAG、Wave、Gate 与 Tickets Map 一致；每个 Ticket 有明确写集 owner、change 工作区引用和可验证出口。
 
 ### 3. 固定 Lead 编排与动态派单合同
 
 加载 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>`，并按规划阶段读取 `<Path>{roots.references}/coordination/task-brief.md</Path>`：
 
 1. 固定 Lead 的可恢复 owner/session locator；
-2. 按 `Execution Policy Source` 声明实现与集成尝试上限，核对实际存在的 config/平台限制，Lead 实际参与实现时计入；
+2. 按 `Execution Policy Source` 声明票据策略、验证尝试上限和明确存在的票据/实现者上限，核对实际 config/平台限制，Lead 实际参与实现时计入人数；
 3. 不为只读 review/research/test-observation agent 写 SpecDev 数字上限；
-4. current 模式固定只有一个 implementation writer 写项目路径，Lead 仍是唯一 SpecDev 工件与状态写入者；required 模式 implementation owner 写自己的 Ticket worktree；
+4. 所有执行者复用 change 选定工作区并细分写集；正式状态/Evidence 仍由 Lead 写入；
 5. 定义执行期动态 Dispatch Packet、候选返回和 Lead 验收；
 6. provider、模型和具体派单在 Ticket 开始时按事实选择，不在 Goal Plan 中预分配。
 
@@ -97,12 +97,12 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 1. 定义整体 Definition of Done 和每个 Gate 的关闭证据；
 2. 固化不可协商约束与允许的局部实现自由；
-3. 按 workspace 策略为每个 Ticket 明确 current-workspace/direct-parent 检查或 source-worktree/parent-candidate 检查；
+3. 每票在选定 change-workspace 冻结实际输入并完成本票检查，Lead 核验整体 Gate；
 4. E2E 按 Ticket 实际跨边界风险标记 required 或 not-required；
-5. 定义 direct-parent 验证失败、candidate 冲突/失败、父 HEAD 漂移、偏差、暂停、批准和恢复动作；
+5. 定义共享资源冲突、检查失败、快照漂移、偏差、暂停和恢复；
 6. 定义 change 完成、远程 reconcile、残余风险和回滚要求。
 
-**完成标准**：每个完成声明映射到不可变 commit、候选/父分支 SHA、命令、Evidence 或人工批准。
+**完成标准**：每个完成声明映射到固定 commit 或工作副本快照、命令、Evidence 或人工批准。
 
 ### 5. 写入、导航与验证
 
@@ -120,7 +120,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ```
 
 5. 写回 Goal Plan 的 Gate/执行事实与 Map 导航，README 只保留目标/接续并重新读取；
-6. 向用户报告 Outcome、关键路径、Wave/Gate、Lead、实现 agent 上限、shared owner、E2E disposition、迁移与主要风险；
+6. 向用户报告 Outcome、关键路径、Wave/Gate、Lead、票据调度与已明确的实现者限制、shared owner、E2E disposition、迁移与主要风险；
 7. 未经用户要求，不自动进入实现。
 
 ## 决策完备标准
@@ -131,19 +131,19 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - 跨 Ticket 先后、Wave、Gate 和关键汇合点；
 - shared path 与共享合同 owner；
 - 实现执行者 上限及动态派单边界；
-- 每 Ticket workspace、implementation commit、对应验证和父分支推进规则；
+- change 唯一工作区、每票固定输入和验证出口，以及明确承诺的 Git 交付；
 - E2E disposition、偏差、暂停、批准和恢复路径。
 
 Goal Plan 不复制 Ticket 的局部施工路线、全部文件预测或逐项验收清单。
 
 ## 完成标准
 
-- Goal Plan schema v7 且 `ready_for_execution` 与状态一致；
+- Goal Plan schema v8 且 `ready_for_execution` 与状态一致；
 - 规划完成与执行就绪分别报告；允许交付 `draft / ready_for_execution: false`，单 change 不创建父 Implementation Map/Plan；
 - 等待上游产物的未来票保持 draft，局部缺口只阻塞依赖闭包；进入执行的票必须重新通过 DoR，上游完成不自动提升 Ready；
 - Lead 唯一，Execution Policy Source 可回读，实际存在的 config/平台限制已核对，Lead 实际参与实现时计入；review/research agent 不受 SpecDev 数字限制；
-- 每个实现 Ticket 都有 workspace、commit、对应 integration gate 和 Evidence 出口；
-- current 模式不创建 source/candidate worktree，适用 E2E 由 Lead 在 current workspace 运行；required 模式保持 source/parent-candidate 边界；
+- 每张票有真实工作区引用、checkpoint/快照、验证和 Evidence 出口；
+- current/worktree 均可串行或并行票据；所有执行者复用 change 工作区，E2E 由 Lead 在稳定输入上执行；
 - 计划只保留当前固定 Lead 与选定 workspace/integration 合同；
 - validator 无 error，Tickets Map 导航与合同覆盖正确，用户收到下一步选择。
 

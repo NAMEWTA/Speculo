@@ -1,44 +1,23 @@
-> 通用编排方法唯一权威：<Path>{roots.references}/coordination/coordination-contract.md</Path>。本文件仅补充 SpecDev Goal 的既有 DAG、工作区、集成和状态职责。
+# Lead 编排与动态派单
 
-# Lead 编排与动态派单协议
+共同方法读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；票据调度和工作区规则读取 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。
 
-## 1. 唯一 Lead
+## 唯一 Lead 与实际执行者
 
-Lead 是主会话中的唯一编排 owner，保留需求解释、DAG/Wave/Gate、路径分配、权限、SpecDev 状态、Evidence、候选验收、父分支集成和最终回复责任。恢复时以 Goal Plan 的 `lead` locator 和权威工件继续；更换会话只转移 Lead 身份，不产生第二写入者。
+Lead 保留需求解释、DAG/Wave/Gate、路径分配、授权、正式状态、Evidence、整体 E2E 和最终回复。Lead 是职责，不是单 Agent 拓扑；实现可由单 Agent、subagent 或团队完成，按用户/项目/Work 要求安排。独立 reviewer 不参与本范围实现。
 
-## 2. 派单类型
+## 调度与并发
 
-- **implementation**：写入 Goal Plan 选择的 current workspace 或 Ticket worktree 的授权项目路径，运行非 E2E 检查并返回 implementation/source commit；
-- **review**：只读审查固定 checkpoint，返回 findings；
-- **research**：只读收集代码或外部事实，返回来源与结论；
-- **test-observation**：只读运行或观察已授权检查，返回命令与结果，不拥有 E2E Gate。
+serial 完成一票的实现、审查和验证后再开始下一票，同票内部仍可合作。auto/parallel 只推进 Ready、依赖满足、路径和语义资源无冲突的票；max_parallel_tickets 计量票据，显式实现者限制另行核对。Wave 不是填满 Agent 数的目标。review/research/test-observation 默认只读，不额外占票据槽；review 状态的原票仍计入活动票数。
 
-Lead 在 Ticket 可以独立执行、写路径不冲突、上下文足够且平台支持时派单。派单是执行期决定，不写回 Goal Plan 作为固定拓扑。
+## 写集与派单
 
-## 3. 并发
+所有本 change 执行者使用 README 的同一工作区；细分授权写集，shared path 有唯一 owner。Git index、commit/checkout/merge 串行协调；没有具体授权不操作。正式 Ticket/Map/Goal/Evidence/Outcome 只由 Lead 写入。
 
-required 模式 实现执行者 上限取 Goal Plan、实际存在的 config 与平台能力的最小值；current 模式保持单 writer 串行安全不变量；Lead 参与实现时计入。review/research/test-observation agent 不设置 SpecDev 数字上限，但 Lead 必须避免测试资源冲突、重复工作和上下文失控。
+实际派遣按 <Path>{roots.references}/coordination/task-brief.md</Path> 绑定票据/Spec、依赖证据、不可变基线、选定工作区、允许路径/动作、验证、停止条件和返回位置。外部交接使用原 sessions，原生协作按需交接，不建 Agent 注册表。返回包含实际实现者、路径、checkpoint 或快照、dirty 状态、命令结果、未验证项及 blocker。
 
-## 4. 写入边界
+## 验收与恢复
 
-实现执行者 只写分配的 current workspace 或 worktree 中的项目路径和其 Git commit，不写 Ticket、Map、Goal Plan、Evidence、README Outcome 或父分支。current 模式 commit 直接落在 parent branch；required 模式 commit 落在 source branch。其他 任务执行者 全部只读。Lead 接收返回后独立核对，再写本次负责工件的独有事实。
+Lead 回读实际工具和工作区事实，在稳定输入上完成审查和检查；REPORT completed 不等于 Ticket done。E2E Gate 仍由 Lead 执行并核验，实施者自报不替代。输入漂移后仅使相关证据失效。
 
-## 5. 动态 Dispatch Packet
-
-每次派单必须绑定 Ticket、Goal Plan、依赖 Evidence、不可变 `base_sha`、branch/workspace locator、workspace strategy、writable/read-only/shared paths、provider、允许动作、非 E2E 验证、停止条件和返回格式。provider 或模型按当次能力与授权选择；外部 provider 需要独立的数据发送授权。
-
-implementation 返回至少包含：Ticket ID、workspace locator、最终 commit、dirty 状态、修改路径、检查命令/结果、未验证项、冲突与阻塞。review/research 返回固定输入、findings、来源和未验证声明。
-
-## 6. Lead 验收
-
-Lead 核对基线、路径、commit、dirty 状态、项目事实与非 E2E 结果；不接受 任务执行者 自报的 Evidence 或 E2E pass。required implementation 候选进入 dev-worktree candidate-merge；current implementation 由 Lead 在同一 parent branch/current workspace 做 direct-parent 验证。read-only 结果由 Lead 复核后写入对应权威工件。首次失败可返回同一 workspace/worktree 修正或标记 blocked。
-
-同一 Ticket 在 implementation/review 反复返回相同 blocker、下一轮没有产生新证据，或 integration attempts 达到有效 Plan 的 `integration_attempt_limit` 时，停止把相同请求直接退回原 implementation owner。Lead 保留 workspace、commit/candidate 与失败事实，在现有 Ticket Evidence 中回答四项：共同失败模式、最可能原因、下一轮具体改变、下一 owner/路由。Lead 可改写指导、调整 Ticket 内实现路径、更换 implementation owner 或自行实现；若发现 Ticket、Goal、父 Plan、Spec/ADR 已失效，则返回对应 owner。
-
-只有 Lead 的复盘决定已写入 Evidence，才可将当前 Ticket 的 `attempts` 重置为 `0` 并发出新 Dispatch Packet；新 Packet 必须引用该 Evidence 并明确相较上一轮改变了什么。没有实质变化时不得重新派发同一请求。上限因此是 Lead 复盘触发点，不是 Ticket 的永久失败终态。
-
-**完成标准**：每次写入只有一个 Ticket/owner/worktree；所有 SpecDev 状态由 Lead 落盘；派单、返回与重复失败后的 Lead 决定可从 Evidence 恢复。
-
-## 可解释的再派发
-
-重复 blocker 且没有新证据时保持原停滞停止。新的 Dispatch 明确改变输入、方法、范围、环境或处置的哪一项；仅更换 Agent、重置 attempts、让用户再答相同问题不构成恢复。旧历史保留，按原 owner 和依赖闭包处理。
+重复同一 blocker 无新证据或达到有效尝试上限时停止重复派单；原 Evidence 保存共同失败模式、可能原因、下一轮改变和 owner/路由。形成有实质变化的新 Dispatch Packet 才能重置 attempts；仅换 Agent、重置计数或重问同一问题不构成恢复。契约失效返回真正 owner，其他独立票可继续。

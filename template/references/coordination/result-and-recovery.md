@@ -14,7 +14,7 @@ REPORT 的 completed 只表示候选已交回；blocked、failed、cancelled 分
 
 ## 修复与集成
 
-同范围 finding 有明确修复路径时，继续原 Ticket 的修复和复验，不逐个要求用户确认、不为每个 finding 新建 Ticket。current 由 Lead 在原 workspace 核验；required 使用原 source/candidate 集成合同。父分支推进、commit 和外部动作继续核对原授权。
+同范围 finding 有明确修复路径时继续原票修复和复验，不逐项询问、不为每个 finding 新建票。复用 change 选定工作区，冻结新的实际输入；提交、合并和外部动作继续核对原授权，不创建额外 worktree。
 
 达到原 integration_attempt_limit 或重复相同 blocker 时，在现有 Evidence 记录共同失败模式、最可能原因、下一轮具体改变、下一 owner/路由。只有有实质变化和新证据才开始下一尝试。更换执行者、清空 attempts 或再次询问相同问题不构成变化。
 

@@ -9,17 +9,17 @@
 
 一个 change 只有同时满足以下条件才能 completed：
 
-1. 所有计划内 Ticket 为 done，或因权威事实无需改动而记录为 cancelled；Direct Spec/非实现流程有等价验收；required Direct Spec 的执行记录必须 integrated/removed，父 HEAD 为 result 且包含 source，候选与 required 验证通过。
-2. required Ticket 有 source commit、passed candidate、父分支 result SHA，且父分支包含 source commit；current Ticket 有 implementation commit、passed direct-parent 验证和父分支 result SHA；对应 Ticket Evidence 的 workspace/集成记录均完整；不要求 JSON 镜像。
+1. 所有计划内 Ticket 为 done，或因权威事实无需改动而有依据地 cancelled；Direct Spec/非实现流程有等价验收。
+2. 每票的原执行记录 verified，实际改动、AC、checkpoint、独立审查和验证证据完整；Direct Spec 有等价证据。未提交工作副本快照可作为交付，不强制 commit 或合并。
 3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
-4. current Ticket 的 current-workspace 检查/回归和适用 E2E，或 required Ticket 的 source-worktree 非 E2E 检查、parent-candidate 集成/回归和 required E2E 已通过；not-required 有理由。
+4. 选定 change 工作区中的适用单元/组件、集成/回归和 Lead-owned E2E 已通过；not-required 有真实理由。
 5. 迁移、发布、监控、恢复和不可逆批准已完成或明确不适用。
-6. 没有未批准 deviation、blocker、unverified、活动 candidate 或未集成 source checkpoint。
+6. 没有未批准 deviation、blocker、unverified 或活动 writer；明确承诺的 Git/外部交付按原约定完成或获明确处置，不虚构未发生的集成。
 7. Ticket、Map 的依赖/导航、Goal Plan、Evidence、README 与实际 Git 一致；不复制单票状态。
 
 UI 实施还需 Evidence 对照已批准 change DESIGN、固定基线与页面/状态验收；原型截图不代替实现的真实渲染。设计漂移或未确认例外按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 返回 owner，不能以票全 done 消除缺口。
 
-Evidence-only Done 和 empty commit 不满足完成门.
+只有结论而无实际改动/验收证据不能 Done；无需改动须有权威依据并 cancelled，不用 empty commit 代替。
 
 L 新建的学习专用 change 属于非实现终点：以 README 的学习 scope、逐 AC 实际验证及 learning 图解/索引完成轻量验收，由 L 原 owner 在本轮交付后结束。已有开发 change 的学习材料不替代其实现完成门；向 completed/cancelled 对象续加学习图解不重开或重新判定原 Outcome。学习的选择与恢复由 <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path> 负责。
 
@@ -38,7 +38,7 @@ Owner 依据来自原 Goal/Implementation Plan、I 的真实会话或非实现�
 
 远程动作不参与本地完成判定。Triage `external_action` 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。Triage `publish_action` 为 `pending`/`publish-failed` 时先恢复或结束 publish；`not-requested`、`published` 或 `waived` 才允许 Archive。`not-requested` 是默认，未点过 publish 的 change 不被新模式绑架。归档后工件只读。
 
-**完成标准**：完成声明可由本地工件、Git 与验证重建；只有一个 owner 命中；失败 candidate 不污染父分支。
+**完成标准**：完成声明可由原工件、真实工作区与验证重建，只有一个 owner；完成不自动授权提交、合并或工作区清理。
 
 ## 非实现复盘终点与 PR 归档门
 

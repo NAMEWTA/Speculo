@@ -66,11 +66,11 @@ T-01
 
 ## 5. 并行与路径所有权
 
-- 并发与集成尝试策略来自原 Goal 的 `Execution Policy Source` 或实际项目约定；存在有效 `<Path>{roots.state}/specdev/config.json</Path>` 时核对其限制，不为确定上限创建 config。未采用完整并行计划时缺省 current/direct-parent、单 writer；required 模式取计划、现有 config 和宿主能力允许的上限，Lead 实际参与实现时计入。
-- review/research/test-observation agent 不设 SpecDev 数字上限，但保持只读。
-- shared owner 为专用 Ticket；Lead 是 SpecDev 状态与父分支 integration owner。
-- 项目路径契约以 Ticket frontmatter 为准。
-- 每个实现 Ticket 的 workspace 由有效 Goal/父计划或无 Goal 时当前 I 的原 Evidence 选择；current 模式串行使用当前 workspace，required 模式使用独立 worktree；只读调查不进入 I-implement Ticket。
+- 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分别决定票据调度、Agent 编排和 change 工作区。默认 auto；serial 逐票完成，parallel 仅推进已就绪且无冲突的票，不强制多 Agent。
+- `max_parallel_tickets` 只计量票据；项目明确的实现者人数限制独立适用。一张票可由一个 Agent、subagent 或团队协作，按用户/项目/Work 要求选择。
+- 所有票据引用 change README 的唯一工作区；current 可在 main 或已有 checkout，明确选择的 change worktree 创建一次后持续复用。并行和派遣不增加 worktree。
+- shared owner 为专用 Ticket；项目路径以 Ticket frontmatter 为准。Lead 是正式状态与 Evidence owner，Git index 操作和全局验证协调串行。
+- 只读 research/review 不构成实现票据并发，当前 Work 的独立审查要求继续生效。
 
 | Ticket A | Ticket B | Writable 交集 | 真实依赖 | 处理 |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ T-01
 
 ## 6. Gate、Wave 与集成点
 
-T-tickets 可以标注候选 Wave 和行为里程碑；单票 E2E disposition 在原 Ticket。需要正式跨 Ticket 编排时，由 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>` 完成 Gate、Wave、Lead、动态派单边界、candidate 集成顺序、发布与恢复，本 Map 只导航相应 Goal 章节。
+T-tickets 可以标注候选 Wave 和行为里程碑；单票 E2E disposition 在原 Ticket。需要正式跨 Ticket 编排时，由 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>` 完成 Gate、Wave、Lead、动态派单边界、共享工作区验收顺序、发布与恢复，本 Map 只导航相应 Goal 章节。
 
 ## 7. 横切契约与风险
 

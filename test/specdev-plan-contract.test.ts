@@ -204,9 +204,7 @@ describe("Ticket authority and execution policy without config", () => {
     await writeFile(join(root, "tickets-map.md"), map);
     const plan = (await materialize("specdev-p-goal-plan/assets/goal-plan-template.md"))
       .replaceAll("<owner-or-session-locator>", "lead-session")
-      .replace("concurrent_implementation_limit: 3", "concurrent_implementation_limit: 2")
-      .replace("ticket_workspace_policy: current", `ticket_workspace_policy: ${policy}`)
-      .replace("integration_gate: direct-parent", `integration_gate: ${policy === "current" ? "direct-parent" : "candidate-merge"}`)
+      .replace("ticket_execution: auto", `ticket_execution: ${policy === "current" ? "serial" : "parallel"}\nmax_parallel_tickets: 2\nconcurrent_implementation_limit: 2`)
       .replace("ready_for_execution: false", "ready_for_execution: true")
       .replace(/## Execution Policy Source[\s\S]*$/, "## Execution Policy Source\n\nFixture request allows two simultaneous implementations including the Lead and three integration attempts; current workspace remains serial.\n");
     await writeFile(join(root, "goal-plan.md"), plan);
@@ -214,14 +212,14 @@ describe("Ticket authority and execution policy without config", () => {
     return { repo, root, tickets, input, map, plan };
   }
 
-  it("reads and resumes Ticket progress without rewriting Map or Goal and defaults current to one writer", async () => {
+  it("reads and resumes Ticket progress without rewriting Map or Goal and honors explicit serial scheduling", async () => {
     const f = await controllerFixture();
     try {
       const executionTable = f.map.split("## 2. 执行清单")[1].split("## 3.")[0];
       assert.doesNotMatch(executionTable.split("\n").filter(line => line.startsWith("|")).join("\n"), /\b(?:Status|Ready|Owner)\b/);
       let result = controller.analyzeMap(f.input);
       assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
-      assert.equal(result.workspace_policy, "current"); assert.equal(result.implementation_limit, 1);
+      assert.equal(result.ticket_execution, "serial"); assert.equal(result.max_parallel_tickets, 1);
       assert.deepEqual(result.frontier, ["T-01"]);
       const previous = result;
       const original = await readFile(f.tickets[0], "utf8");
@@ -240,7 +238,7 @@ describe("Ticket authority and execution policy without config", () => {
     } finally { await rm(f.repo, { recursive: true, force: true }); }
   });
 
-  it("counts an implementing Lead against required concurrency from the declared policy source", async () => {
+  it("counts active Tickets against the declared Ticket cap independently of Agent owners", async () => {
     const f = await controllerFixture("required");
     try {
       let result = controller.analyzeMap(f.input);
@@ -248,7 +246,7 @@ describe("Ticket authority and execution policy without config", () => {
       await writeFile(f.tickets[0], (await readFile(f.tickets[0], "utf8")).replace("status: ready", "status: in_progress"));
       result = controller.analyzeMap(f.input);
       assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
-      assert.equal(result.implementation_limit, 2);
+      assert.equal(result.max_parallel_tickets, 2);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
       assert.deepEqual(result.frontier, ["T-02"]);
       assert.ok(result.deferred.some((node: any) => node.id === "T-03" && /concurrency limit/.test(node.reason)));

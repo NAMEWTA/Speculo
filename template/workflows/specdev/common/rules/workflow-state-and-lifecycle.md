@@ -16,6 +16,10 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 
 实际外部派遣的输入、报告和按需历史快照按 <Path>{roots.references}/coordination/session-files.md</Path> 保存在 <Path>{roots.state}/specdev/changes/{change}/sessions/</Path>，随 change 整体归档并进入原完整性清单；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
+## 独立开发复盘
+
+RETRO 与升级方案使用 <Path>{roots.state}/specdev/retro/</Path>，与 changes、adr、context 平级；具体日期对象、原文来源、确认和执行回执归 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path>。R 不创建复盘专用 change，A 通过 RETRO 窄网关移至该目录的 archive。报告不成为 change 的完成依据或永久知识，不预造目录、不维护全局状态镜像。
+
 ## 唯一整体结论
 
 每个新 change README 正文恰有一行：
@@ -32,9 +36,9 @@ Outcome: active
 
 不默认创建 leadership epoch、空批准槽或每 Work 记录。实际交接、并行、worktree/集成发生时，在原计划、Ticket Evidence 或操作回执记录唯一负责者、获批写集、输入、真实交接与下一步。复杂任务 owner 从原 implementation-plan/goal-plan 的 `lead` 读取。无 Goal 且动作确需 owner 时，README 的 `## Ownership` 内保存 `Owner: <session locator>` 与 `Evidence: <对象内相对路径>[#anchor]`，证据指向实际会话/交接；设计 bootstrap 还保存 `Work: specdev/prototype` 且依据正文绑定该 Work。普通只读不预建所有权记录，字段不创造授权。
 
-每个实现 Ticket 的 Evidence 在 `## Workspace Execution Record` 下以唯一 JSON object 保留实际执行记录（原 worktree 字段），不创建全局 array 镜像；其中保留 base SHA、父分支、workspace/implementation/integration owner、workspace locator、implementation/source checkpoint、candidate/result SHA、验证与 E2E disposition。current 使用 current/direct-parent；required 使用 source/parent-candidate，清理后也保留集成证据。父计划只导航，不另复制一套结果。
+change README 的 Execution Context 是工作区、branch、base 与 Lead 的唯一事实源；实际执行才创建。每票原 Evidence 的 Workspace Execution Record 引用该上下文，保存实际实现者、固定输入、验证与失败历史；无票沿原 Direct Spec Evidence。格式和兼容边界见 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。父计划只导航，不复制 workspace 结果。
 
-语言、用户工具和数量来自当前请求/既有项目说明；实际并发、worktree 与尝试上限由原 Goal/项目约定负责，原 Goal/Implementation Plan 的 `## Execution Policy Source` 说明实际策略来源；已有 config 仍校验相应上限，Lead 自己实现计入并发。旧 config 的真实远程/验证用途可选保留；未知独有字段不能以简化为由丢弃。默认 UI 3 个、配置 2–4、明确用户数量覆盖，均不变。
+语言、用户工具和数量来自当前请求/既有项目说明。原 Goal/Implementation Plan 的 Execution Policy Source 说明调度来源；票据并发上限与已配置实现者人数限制分别检查。未知 config 独有字段保留；默认 UI 3 个、配置 2–4、明确用户数量覆盖，均不变。
 
 ## 创建、恢复和历史边界
 

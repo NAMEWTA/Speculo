@@ -1,58 +1,27 @@
-> 通用编排方法唯一权威：<Path>{roots.references}/coordination/coordination-contract.md</Path>。本文件仅补充 SpecDev Goal 的既有 DAG、工作区、集成和状态职责。
-
 # Goal Plan 核心编排协议
 
-本文件定义 DAG、Wave、Gate、路径所有权、Ticket workspace 策略、Evidence 返回和父分支集成队列。
+共同编排见 <Path>{roots.references}/coordination/coordination-contract.md</Path>；执行选择见 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。
 
-## 1. DAG 与关键路径
+## DAG、Wave 与调度
 
-- 依赖权威来自 Ticket frontmatter 的 `blocked_by`；Tickets Map 是投影；
-- 计算根节点、扇出、汇合点、关键路径、共享合同 owner 和最终收缩点；
-- 依赖只表示真实开始条件，不表达偏好、Agent 交接或“最好先做”；
-- 无法独立保持可验证状态的迁移批次必须有明确 Gate 和恢复策略。
+依赖权威来自 Ticket blocked_by，Map 是投影。边只表示真实开始条件，不表达 Agent 交接偏好。计算关键路径、扇出/汇合与共享合同 owner；Wave 内票据 Ready、依赖 Evidence 完整、路径与语义资源无冲突且 Gate 已打开。
 
-## 2. Wave 与实现并发
+serial 逐票实现、审查和验证；auto/parallel 按条件推进合法集合，不受 current/worktree 类型影响。max_parallel_tickets 计票，既有实现者限制单独遵守。只读探索和同票团队协作不改变票据调度。
 
-required 模式的 Wave 内 Ticket 必须 Ready、依赖 Evidence 完整、项目写路径不相交、shared owner 已稳定、适用 Gate 已打开且基线一致。current 模式即使 DAG 存在可并行节点，也强制一次只执行一个 Ticket。
+## Gate 与 shared owner
 
-Lead 根据当前事实决定自行实现或派单。required 模式同时活跃的 实现执行者 不得超过 Goal Plan、实际存在的 config 与平台能力的共同上限；current 模式保持单 writer 串行安全不变量。Lead 参与实现时计入。Wave 是可并发性，不是必须填满的目标。只读 review/research/test-observation agent 不写固定数字上限，但不得写项目或 SpecDev 状态，也不得争用同一可变测试环境。
+Gate 写明工程/业务状态、开启条件、关闭证据、阻塞范围、owner/批准人和失败恢复。共享合同稳定、垂直路径、迁移、发布、观察期均按实际风险设门，不以完成票数代替。
 
-## 3. Gate
+按 <Path>{roots.workflows}/specdev/common/rules/path-ownership.md</Path> 指定 shared path 的专用 owner Ticket，消费者等其验收后开始。每票都在 change 选定工作区工作；输入变化重新 preflight，不为下游创建 worktree。
 
-Gate 用可验证状态定义，必须写明：工程/业务状态、开启条件、关闭证据、阻塞范围、Lead/批准人和失败恢复。常见 Gate 包括共享合同稳定、首条垂直路径、迁移完成、旧调用点归零、候选合并通过、发布就绪和观察期结束。
+## 稳定输入与验收顺序
 
-## 4. Shared path 与合同
+Git index 操作和共享环境检查串行协调；停止相关 writer 后冻结实际交付，独立 reviewer 和 Lead 检查相同输入。单票可用实际 commit 或未提交快照，Evidence 引用 README 唯一工作区，不复制生命周期。整体 Gate 覆盖全部票据交付。
 
-遵循 `<Path>{roots.workflows}/specdev/common/rules/path-ownership.md</Path>`：
+验证失败保留现场，按原上限复盘；不创建候选 worktree、不强制每票提交/合并。明确承诺的跨分支集成按具体授权串行执行并重验结果。
 
-1. 专用 owner Ticket 修改共享路径；
-2. required 模式在其 source worktree 形成 commit 与非 E2E 证据；current 模式在当前 workspace 形成 commit 与证据；
-3. required 模式通过 Lead candidate-merge 进入父分支；current 模式由 Lead 在父分支 direct-parent 验证并推进；
-4. required 模式下游 Ticket 基于新的父分支 checkpoint 创建或刷新 worktree；current 模式仅在前一 Ticket 完成后开始下一个；
-5. 共享合同变化时暂停消费者并修订上游，不让多个执行者竞争写入。
+## Expand-contract
 
-## 5. 每 Ticket workspace 记录
+顺序保持 expand → migrate → observe → contract → verify，每批有可恢复 checkpoint、验证和所需批准；提交与部署按实际项目交付约定执行。收缩依据旧调用/数据/协议归零证据。
 
-每个进入 I-implement 的 Ticket 建立唯一记录。current 模式使用 `workspace_ref=current`、`branch=parent_branch`，记录 implementation/source/result SHA 与 direct-parent 验证；required 模式使用唯一 `specdev-worktree/<change>/<ticket-id>`，记录 source/candidate/result SHA 与验证状态。Lead 自行实现或派 任务执行者 不改变所选策略。
-
-required 模式同一 Ticket 在 candidate 验证失败后保留来源 worktree 并继续修正。新的 source commit 替换当前 `source_checkpoint`，旧 commit 继续由 Git/Evidence 可追溯。成功集成不自动清理 branch/worktree。
-
-## 6. 父分支集成队列
-
-required 模式 Lead 串行集成 Ready 候选：
-
-1. 冻结最新 `parent_before_sha`；
-2. 在 Lead-owned parent integration checkout 组合父分支与 `source_checkpoint`；
-3. 生成可定位的 `candidate_sha`；
-4. 在 candidate 状态运行集成检查和适用 E2E；
-5. 重读父 HEAD；若变化，将候选标记 `stale` 并重建；
-6. 检查通过且父 HEAD 未变时，父分支 fast-forward 到 candidate；
-7. 重读父 HEAD/tree，写入 `result_sha` 后才允许 Ticket Done。
-
-父分支是 source checkpoint 的祖先时 candidate/result 可等于 source SHA，方法为 `fast-forward`；否则 candidate 必须是独立 merge commit。候选失败时父分支保持不变，Ticket 回到 `in_progress` 或 `blocked`。current 模式跳过候选 checkout，Lead 在 current workspace 核对 implementation commit、运行集成检查并记录 `method=direct-parent`；失败时父 HEAD 不推进。
-
-## 7. Expand-contract
-
-标准顺序为 expand → migrate → observe → contract → verify。每批迁移独立 commit、按所选策略验证和父分支集成；收缩依据旧调用/数据/协议归零证据，不依据 Ticket 数量推断。
-
-**完成标准**：每个 Ticket 从父基线、implementation/source commit、对应 integration 到 result 都可恢复；父分支只包含已通过所选门禁的 Ticket。
+**完成标准**：票据依赖、资源和验收可恢复，实际交付与 Evidence 一致，额外 Git/发布动作有独立授权和结果。

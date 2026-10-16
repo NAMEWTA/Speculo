@@ -27,7 +27,7 @@
 
 ## 复盘与交付路由
 
-开发环境/流程复盘 → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码与参考资料学习 → <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+开发环境/流程复盘、积累独立 RETRO，以及明确要求汇总升级项目 Skills → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码与参考资料学习 → <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
 

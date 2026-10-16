@@ -20,13 +20,13 @@ metadata:
 
 ## 当前票的执行入口
 
-执行先读取 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，确定 Spec/Ticket、执行方式与工作区三个独立选择；完整获批 Spec 不因范围较大而强制拆票，已有 Ready Ticket 不强制补 Goal。执行必须读取 `<Path>{roots.workflows}/specdev/specdev-i-implement/references/implementation-procedure.md</Path>` 和 `<Path>{roots.workflows}/specdev/specdev-i-implement/references/execution-preflight.md</Path>`；执行过程按当前阶段路由设计、TDD、双轴审查和 Evidence；预检单独拥有 Git、workspace、Ready 与授权检查。两者必读，分支参考只在对应 workspace/风险/阶段进入时加载。
+执行先读取 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，确定输入，分别选择票据调度、Agent 编排和 change 工作区；完整获批 Spec 不因范围较大而强制拆票，已有 Ready Ticket 不强制补 Goal。执行必须读取 `<Path>{roots.workflows}/specdev/specdev-i-implement/references/implementation-procedure.md</Path>` 和 `<Path>{roots.workflows}/specdev/specdev-i-implement/references/execution-preflight.md</Path>`；执行过程按当前阶段路由设计、TDD、双轴审查和 Evidence；预检单独拥有 Git、workspace、Ready 与授权检查。两者必读，分支参考只在对应 workspace/风险/阶段进入时加载。
 
 UI Ticket 或 Direct Spec 必须读取 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 与当前批准 DESIGN，核验 design_ref（revision/digest/pages/acceptance）、原型和基线。页面任务按已批准规则实现，不重新选择模板；实际实现证据写入 `Design Conformance`，原型截图不替代生产页面验证。
 
 1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 实际调用绑定能力并记录证据。票缺调用契约时先由 Lead 补齐，不猜测。
 2. 保持 codebase-design、design-it-twice 和 TDD 的适用门禁；进入对应实现步骤再读其 reference。派单时调用 共享编排方法；Lead 是唯一 SpecDev 状态写入者。
-3. Ticket 和 Direct Spec 均可在 current 模式串行使用当前 workspace，或在 required 模式使用独立 worktree，E2E 由 Lead 在 current 或 required 的 parent-candidate 完成。实现 commit、父分支推进和集成均需真实授权。
+3. Ticket 和 Direct Spec 的全部执行者复用选定 change 工作区；票据调度和 Agent 编排分别决定。E2E 由 Lead 在稳定输入上验收；checkpoint 可为实际 commit 或工作副本快照，提交/合并按明确授权执行。
 4. 安全、并发、公共接口、数据迁移或用户要求全面审查时展开 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`；不为省上下文删减必要检查或限制发现数量。
 5. 写 Evidence、运行适用校验并回读后才推进状态；必需 Skill 失败、验收失败、越界或归属冲突暂停本票及依赖它的分支。无关工作仍由总控继续，不接管他人事务。
 
@@ -44,6 +44,6 @@ UI Ticket 或 Direct Spec 必须读取 <Path>{roots.workflows}/specdev/common/ru
 
 进入实现或审查时读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
 
-`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，不修改正式 Ticket、Map、Goal、Evidence，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和单 writer 约束。未曝光到宿主列表不影响读取真实入口。
+`lead` 上下文维护原业务状态和 Evidence；`task` 上下文处理指定目标、阶段及授权写集，返回候选、findings、检查和未验证项，不修改正式 Ticket/Map/Goal/Evidence，不递归启动 Goal 或擅自跨 CLI 派单。同票可按要求协作，写集和共享资源仍须唯一 owner。
 
 P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。

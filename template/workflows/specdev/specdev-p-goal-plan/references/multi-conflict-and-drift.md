@@ -13,6 +13,6 @@
 
 同一共享 API/schema/锁文件/迁移索引即使路径预测不重叠，也必须根据实际消费者和集成事实决定 dependency 或 serialization。
 
-## 集成冲突
+## 共享工作区和 Git 冲突
 
-同一 repository/ref 的 direct-parent/candidate integration 严格串行。一次父 HEAD 推进后，其他 candidate 全部 stale；必须在最新父状态重新组合并重跑要求的 full suite/E2E。需要新行为或上层决定的 merge conflict 立即停止。
+同一 workspace 的 Git index/commit/checkout/merge 及共享验证资源串行协调；不同票据的无冲突路径可并行。固定输入漂移后重新冻结并验证，不增加 candidate worktree。只有明确要求跨分支集成交付且授权匹配时才合并；需要新行为或上层决定的冲突停止并保留现场。

@@ -29,7 +29,7 @@ metadata:
 - **specdev/learn** — 学习与图解：<Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>
 - **specdev/goal-plan** — Goal 规划与执行：<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>
 - **specdev/prototype** — 逻辑与 UI 原型：<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>
-- **specdev/retro** — 开发复盘：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
+- **specdev/retro** — 开发复盘与项目 Skill 迭代：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
 - **specdev/review-architecture** — 架构审查：<Path>{roots.workflows}/specdev/specdev-r-review-architecture/SKILL.md</Path>
 - **specdev/spec** — 编写 Spec：<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>
 - **specdev/tickets** — 编写计划型 Tickets：<Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>

@@ -5,7 +5,7 @@
 
 本 Work 只编排实现。它不创建或补写子 change 的 Triage、Grill、Wayfinder、Spec、Ticket 或普通 Goal Plan。父 change 创建前，每个输入 change 都必须已有 Ready Spec、Tickets Map 和决策完备的 Ready Tickets；缺一项就停止并报告具体缺口。
 
-父 change 将所有子 Ticket 投影为 `<member-change>::<ticket-id>` 组合节点，以跨 change implementation super-DAG、全局 workspace 策略、serialization、agent 配额和 integration queue 持续驱动 I-implement。子 Spec/Ticket/Evidence/Git 继续是行为与实现权威，父工件只拥有跨 change 实现编排。
+父 change 将所有子 Ticket 投影为 `<member-change>::<ticket-id>` 组合节点，以跨 change implementation super-DAG、成员工作区引用、serialization、票据配额与独立实现者约束和 integration queue 持续驱动 I-implement。子 Spec/Ticket/Evidence/Git 继续是行为与实现权威，父工件只拥有跨 change 实现编排。
 
 父 change 的主产物是 `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>`；整体验证写入 `<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>`。
 
@@ -53,20 +53,15 @@
 
 **完成标准**：父 Map 的 members/tasks/internal edges 与全部子工件精确一致；跨 change 边有来源；DAG 无环；每个并行冲突已依赖化、串行化或阻塞。
 
-### 3. 一次决定全局执行策略
+### 3. 确定跨 change 调度
 
-只询问一次是否开启 Ticket worktree，默认不开启，并把选择写入父 Plan：
+父 Plan 使用 schema_version: 3、orchestration: lead-directed、唯一 lead、ticket_execution: auto|serial|parallel、integration_attempt_limit 和 ready_for_execution；有明确票据上限才记录 max_parallel_tickets，显式实现者上限用 concurrent_implementation_limit。实际来源写 Execution Policy Source，不把人数、票数、workspace 数量互相换算。
 
-- `current/direct-parent`：全部成员的待实现 Ticket 全局严格串行，只允许一个 current workspace implementation writer；
-- `required/candidate-merge`：依赖满足且无 serialization/path/resource 冲突的 Tickets 可跨 change 并行，每个 Ticket 使用自己的 source worktree。
+按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 引用各成员 README 的 Execution Context。成员可分别使用 current 或自己的 change worktree；父计划不覆盖已有选择、不因派单新建 worktree。一个需求内所有票据及协作者复用其选定工作区。
 
-在父 Plan 的 Execution Policy Source 记录实际 implementation agent 与 integration attempt 上限来源；已有 config 的有效上限不可提高，缺 config 使用明确项目/本次约定和宿主能力，默认 current 单写入者。Lead 参与实现时计入实现 agent 数；review/research/test-observation agents 只读且不受该数字限制。同一 repository/ref 的 integration 永远串行。
+父约束与子计划共同作用于票据 DAG、资源和 Gate；serial 全局逐票完成，auto/parallel 选择无冲突 Ready 集合。Agent 的内部合作方式按用户/项目/Work 要求决定。相同 Git index/ref 或测试资源的动作串行协调；跨分支合并仅在明确交付约定与授权下执行。
 
-使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>` 写父 Plan。已有子 Goal Plan 只提供子 change 内的额外 Gate/约束；其 workspace 策略与父 Plan 冲突时阻塞，不能覆盖父级全局选择。
-
-Implementation Plan 固定使用 `orchestration: lead-directed`，并显式持久化 `concurrent_implementation_limit`、`integration_attempt_limit`、workspace/integration 策略和唯一 Lead；恢复时不得从会话记忆重建这些值。
-
-**完成标准**：Lead、workspace/integration 策略、全局 agent 上限、frontier、Wave、serialization owner 和 integration queue 可从父 Plan 恢复。
+**完成标准**：票据调度、成员工作区引用、跨 change Gate、原 owner 和恢复边界均可回读。
 
 随后用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/goal-tickets-map-template.md</Path>` 写父无状态总控入口，并执行 `<Path>{roots.workflows}/specdev/common/skills/plan-quality-review/SKILL.md</Path>`。plan 到此返回计划、门禁和缺失授权；不得自行进入执行循环。
 
@@ -76,17 +71,17 @@ Implementation Plan 固定使用 `orchestration: lead-directed`，并显式持�
 
 1. 重读父 Map/Plan、所有子 Ticket/README/Evidence 和 Git；
 2. 计算依赖满足、lock 可用且配额允许的 ready frontier；
-3. current 模式选择一个 Ticket，required 模式选择一组互不冲突的 Tickets；
+3. 按 ticket_execution、父子票据上限与路径/资源选择本轮 Ready 票，不从 workspace 类型决定串并行；
 4. 由父 Plan 记录实际 Dispatch 与 owner，按组合 ID 调用 I-implement；
-5. implementation agent 仅写授权 workspace，Lead 验收 commit/diff/验证/Evidence；
-6. 按 repository/ref queue 串行完成 direct-parent 或 candidate integration；
+5. 实现者只写成员选定工作区的授权路径，Lead 核验实际 checkpoint/快照、diff 与 Evidence；
+6. 在稳定输入上验收；Git index/ref 操作和共享验证资源串行协调，只有明确要求才执行跨分支集成；
 7. 先写回子 Ticket/Evidence 的负责事实，再更新父 Plan 导航/集成 Gate；
 8. 父 HEAD、Map revision 或子合同变化后使旧 dispatch/candidate stale，并重新 preflight；
 9. 仍有 frontier 时立即进入下一轮，否则完成或持久化 blocker。
 
 I-implement 是实际实现 owner；父 Work 不复制 TDD、代码审查、Evidence 或 worktree 逻辑。用户只在合同冲突、高影响偏差、缺失授权、不可逆动作或无合法 frontier 时被打断。
 
-**完成标准**：单次父激活可以连续完成多个子 Ticket；没有第二个 SpecDev 状态 writer、超限 agent、并发 parent integration 或绕过子 I-implement 完成门。
+**完成标准**：单次父激活可以连续完成多个子 Ticket；没有第二个 SpecDev 状态 writer、超限票据或实现者、并发 parent integration 或绕过子 I-implement 完成门。
 
 ### 5. 关闭子 Changes 与父 Change
 
@@ -109,7 +104,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - 父 change 只接受 Spec/Tickets 已 Ready 的成员；
 - Implementation Map/Plan 可恢复完整组合 DAG、全局策略、frontier 和 integration queue；
 - 子工件保持权威，父投影与子 Ticket 精确一致；
-- current 全局串行，required 只并行无冲突 Ticket，全部实现受父级 agent cap 约束；
+- serial 全局逐票完成；auto/parallel 只推进无冲突票，各成员保留自己的唯一工作区；
 - I-implement 自动回到父循环，全部子 change 和父 change completed；
 - aggregate Evidence 与 validator 通过；
 - 无未经授权的归档、远程 Git、部署或生产副作用。
