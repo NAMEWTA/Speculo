@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.1.2] - 2026-10-17
 
+### 发布
+
+- CI 改用 npm 暂存发布并核对暂存记录；维护者在官网以 2FA 确认后公开上架，GitHub Release 标注待确认状态。
+
 ### Added
 
 - Check for stable CLI updates before interactive installation and text diagnostics, with a two-second total network deadline and update/skip/ignore choices.

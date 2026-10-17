@@ -50,7 +50,7 @@ pnpm verify-package
 
 ## 发布事实
 
-版本由 `package.json` 和 `CHANGELOG.md` 驱动；`v*` tag 触发 CI release。发布、npm 写入和 GitHub Release 仍受上方授权边界约束。
+版本由 `package.json` 和 `CHANGELOG.md` 驱动；`v*` tag 触发 CI release。CI 使用 NPM_TOKEN 执行 `npm stage publish`，核对暂存记录并创建 GitHub Release；维护者在 npmjs.com → Staged Packages 使用 2FA 确认后才公开上架。Token 可使用 Read and write (stage only)，无需 Bypass 2FA。已有暂存或公开版本不可重复上传。发布、npm 写入和 GitHub Release 仍受上方授权边界约束。
 
 ## 文档重构保真
 
