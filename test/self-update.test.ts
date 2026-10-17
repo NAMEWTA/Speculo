@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { it } from 'node:test';
 import { createServer, get as httpGet } from 'node:http';
 import type { get as httpsGet } from 'node:https';
@@ -140,7 +141,7 @@ it('gates CI and non-interactive checks and consumes the resume marker without a
   assert.equal(consumeResumeMarker({ FASTCLI_UPDATE_RESUME: 'old' }, 'FASTCLI', '2.0.0'), false);
 });
 
-it('cancelling an npm-style operation stops the whole child tree before returning', async () => {
+it('cancelling an npm-style operation stops the whole child tree', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'update-cancel-'));
   const ready = join(dir, 'ready.json');
   const leaf = `require('fs').writeFileSync(${JSON.stringify(ready)},JSON.stringify([process.ppid,process.pid]));setInterval(()=>{},1000);`;
@@ -159,12 +160,27 @@ it('cancelling an npm-style operation stops the whole child tree before returnin
     cancel('SIGTERM');
     assert.equal((await result).code, 143);
     for (const pid of pids) {
-      let alive = false;
-      try {
-        process.kill(pid, 0);
-        alive = process.platform !== 'linux' || !(await readFile(`/proc/${pid}/stat`, 'utf8')).split(') ')[1]?.startsWith('Z');
-      } catch { /* Reaped. */ }
-      assert.equal(alive, false);
+      // Descendants can outlive the parent's close event while the OS reaps them.
+      // A zombie has already stopped and must not count as a running process.
+      const exitedBy = Date.now() + 2000;
+      let alive = true;
+      while (alive && Date.now() < exitedBy) {
+        try {
+          process.kill(pid, 0);
+          if (process.platform === 'linux') {
+            alive = !(await readFile(`/proc/${pid}/stat`, 'utf8')).split(') ')[1]?.startsWith('Z');
+          } else if (process.platform === 'darwin') {
+            const status = execFileSync('/bin/ps', ['-o', 'stat=', '-p', String(pid)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+            alive = status !== '' && !status.startsWith('Z');
+          }
+        } catch (error) {
+          const failure = error as NodeJS.ErrnoException & { status?: number };
+          if (failure.code !== 'ESRCH' && failure.code !== 'ENOENT' && failure.status !== 1) throw error;
+          alive = false;
+        }
+        if (alive) await delay(20);
+      }
+      assert.equal(alive, false, `child ${pid} must stop after cancellation`);
     }
   } finally {
     cancel?.('SIGTERM');
