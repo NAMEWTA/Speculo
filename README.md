@@ -26,6 +26,8 @@ For all domains and public entries, use `--workflows all --skills all`. Use `--s
 The installer shows **Skills Hub categories** and **Workflows** at the same level. Open a category to select its Skills, or toggle a Workflow directly; selections are kept when returning to the overview. Select full bundled packages with `--hub-skills automation/herdr,automation/orca`; both kinds share `--skill-targets`. Unchecking a managed package uninstalls it when unchanged; workflow runtime data and conflicting packages are preserved. The project receives only selected Hub packages.
 
 
+Interactive starts check for CLI updates with a two-second network deadline. Choose to update now, skip once, or skip until a newer version; verified npm global installations resume the original command after updating. Scripts and machine-readable commands stay prompt-free. See [CLI updates](docs/cli.md#刷新与升级).
+
 ## Workflow guides
 
 Five domains contain 38 Works. Each guide explains every Work's purpose, use cases, inputs, outputs, example requests and next steps. The detailed manual is currently in Chinese.

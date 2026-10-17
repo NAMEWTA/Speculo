@@ -11,6 +11,8 @@ export function terminalColors(stream: { isTTY?: boolean } = process.stdout, env
 }
 
 export const color = terminalColors();
+// Apply the same color policy to Clack chrome without changing the child environment.
+Object.assign(pc, color);
 export const terminalWidth = () => Math.max(8, (process.stdout.columns || 80) - 5);
 
 export function wrapTerminalText(text: string, width: number): string {
@@ -138,6 +140,7 @@ export function formatHelp(): string {
     "  Hub 分类与 Workflow 同层展示；进入分类后多选 Skill。",
     "  所有安装位置共用能力曝光清单：全部、按组、自定义、保留或不曝光。",
     "  取消勾选将卸载未修改的受管包；运行时数据和冲突内容保留。",
+    "  交互启动检查 CLI 更新；SPECULO_NO_UPDATE_CHECK=1 可关闭。",
     "  非交互首次安装默认仅核心；刷新沿用已有受支持 Workflow。",
     "",
     heading("示例"),

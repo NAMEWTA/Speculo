@@ -7,7 +7,7 @@ import type { WorkflowCatalog, WorkflowSelection } from "./workflows.js";
 import type { VersionInfo } from "./version.js";
 import { InstallCancelled } from "./interaction.js";
 
-import { color, fitChoices, logMessage, note, printError, promptMessage, terminalWidth, versionStatus, visibleChoiceCount, wrapTerminalText, type TerminalChoice } from "./terminal-ui.js";
+import { color, fitChoices, logMessage, note, printError, promptMessage, terminalWidth, visibleChoiceCount, wrapTerminalText, type TerminalChoice } from "./terminal-ui.js";
 export { wrapTerminalText } from "./terminal-ui.js";
 
 type Choice = TerminalChoice;
@@ -17,7 +17,7 @@ export type PromptPort = {
   confirm(options: { message: string; initialValue: boolean; active: string; inactive: string }): Promise<boolean | symbol>;
   note(message: string, title: string): void;
 };
-const prompts: PromptPort = {
+export const prompts: PromptPort = {
   select: options => {
     const message = `${options.message}\n${color.dim("↑↓ 移动 · Enter 选择 · Esc 取消")}`;
     return clack.select({ ...options, message: promptMessage(message), options: fitChoices(options.options), maxItems: visibleChoiceCount(options.options.length, message) });
@@ -282,7 +282,6 @@ export function createInstallUI() {
     start(info: VersionInfo, target: string, existed: boolean) {
       clack.intro(`${color.bold(color.cyan("Speculo"))} ${color.dim(`v${info.local}`)} · ${existed ? "刷新安装" : "首次安装"}`);
       logMessage("info", `${color.dim("目标目录")} ${target}`);
-      versionStatus(info);
     },
     progress(phase: InstallProgress) {
       if (phase === "staging" || phase === "committing") {

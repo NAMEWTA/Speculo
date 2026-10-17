@@ -1,6 +1,6 @@
 {
   "name": "@namewta/speculo",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Standard agent skills, commands and project methods with state-safe installation.",
   "type": "module",
   "bin": {
@@ -69,7 +69,9 @@
     "node": ">=22.22.3 <25"
   },
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
     "@types/node": "^22.0.0",
+    "@types/semver": "^7.8.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "esbuild": "^0.28.2",
@@ -77,7 +79,10 @@
   },
   "dependencies": {
     "@clack/prompts": "0.9.1",
+    "cross-spawn": "^7.0.6",
     "picocolors": "1.1.1",
+    "read-cmd-shim": "^5.0.0",
+    "semver": "^7.8.5",
     "string-width": "7.2.0",
     "wrap-ansi": "9.0.0",
     "yaml": "^2.9.1"

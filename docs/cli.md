@@ -2,7 +2,7 @@
 
 [手册首页](README.md) · [快速入门](getting-started.md) · [安装恢复](transaction-recovery.md)
 
-CLI 的真实入口是 [src/cli.ts](../src/cli.ts)。本页讲终端命令；AI 使用的功能入口见 [Command 工具箱](commands/README.md)。
+CLI 启动入口是 [src/cli.ts](../src/cli.ts)，命令分派见 [src/cli-app.ts](../src/cli-app.ts)。本页讲终端命令；AI 使用的功能入口见 [Command 工具箱](commands/README.md)。
 
 ## 环境与安装
 
@@ -120,7 +120,17 @@ SpecDev 初始化仍可选择 Herdr / Orca / CLI / 暂时都不要，并保存�
 
 ## 刷新与升级
 
-先更新全局包，再到使用项目中刷新：
+交互启动 `speculo`、`speculo init` 或普通文本 `doctor` 时，会先查询 CLI 自身的 npm 最新稳定版本。每次联网最多等待 2 秒，断网或查询失败直接继续。发现新版本后，方向键选择、Enter 确认：
+
+- **立即升级**：显示并执行 `npm install -g @namewta/speculo@<目标版本>`，验证后用新版继续原命令，保留参数、目录及环境。
+- **本次跳过**：继续本次操作，下次启动重新提醒。
+- **跳过直到下个版本**：保存忽略版本，更高版本发布后再次提醒。
+
+自动升级仅支持核验通过的当前 npm 全局安装；源码、链接、npx、pnpm 等来源提供手动处理提示。新版 Node.js 要求不满足时停止升级；升级失败或取消后不执行原命令，按提示修复后重试。不会自动使用 sudo 或更新 Node.js。更新发生在安装事务创建之前，CLI 包升级本身不刷新项目；原命令为 `init` 时才进入项目安装流程。
+
+忽略记录保存在用户目录 `~/.speculo/update-state.json`，不属于项目内的 `.agents/speculo/.speculo/`；删除该文件即可恢复提醒。设置 `SPECULO_NO_UPDATE_CHECK=1` 可关闭自动检查。非 TTY、CI、帮助、`doctor --json`、`resolve` 和 `recover` 不触发自动检查，也不增加提示或动画。`speculo version` 保留显式查询功能，不弹升级菜单。
+
+也可以手动升级，再到使用项目中刷新：
 
 ```bash
 npm install -g @namewta/speculo

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { get } from "node:https";
+import { fetchRelease, isNewerRelease } from "./update-check.js";
 import { join } from "node:path";
 
 export type VersionInfo = {
@@ -8,27 +8,7 @@ export type VersionInfo = {
   isOutdated: boolean;
 };
 
-function parseVersion(version: string): number[] {
-  return version.split(".").map((part) => {
-    const num = parseInt(part, 10);
-    return Number.isNaN(num) ? 0 : num;
-  });
-}
-
-export function isLocalOutdated(local: string, latest: string): boolean {
-  const localParts = parseVersion(local);
-  const latestParts = parseVersion(latest);
-  const length = Math.max(localParts.length, latestParts.length);
-
-  for (let index = 0; index < length; index += 1) {
-    const left = localParts[index] ?? 0;
-    const right = latestParts[index] ?? 0;
-    if (right > left) return true;
-    if (left > right) return false;
-  }
-
-  return false;
-}
+export const isLocalOutdated = isNewerRelease;
 
 export async function getLocalVersion(packageRoot: string): Promise<string> {
   const packagePath = join(packageRoot, "package.json");
@@ -40,42 +20,8 @@ export async function getLocalVersion(packageRoot: string): Promise<string> {
   return packageJson.version;
 }
 
-export async function fetchLatestVersion(
-  packageName: string
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    const url = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
-    const request = get(url, { timeout: 5000 }, (response) => {
-      if (response.statusCode !== 200) {
-        response.resume();
-        resolve(null);
-        return;
-      }
-
-      let data = "";
-      response.on("data", (chunk: Buffer) => {
-        data += chunk.toString();
-      });
-      response.on("end", () => {
-        try {
-          const parsed = JSON.parse(data) as { version?: string };
-          resolve(
-            parsed.version && typeof parsed.version === "string"
-              ? parsed.version
-              : null
-          );
-        } catch {
-          resolve(null);
-        }
-      });
-    });
-
-    request.on("error", () => resolve(null));
-    request.on("timeout", () => {
-      request.destroy();
-      resolve(null);
-    });
-  });
+export async function fetchLatestVersion(packageName: string): Promise<string | null> {
+  return (await fetchRelease(packageName))?.version ?? null;
 }
 
 export async function checkForUpdate(

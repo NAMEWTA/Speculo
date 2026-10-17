@@ -22,8 +22,10 @@ speculo doctor .
 
 需要所有领域与公开入口时使用 `--workflows all --skills all`；使用 `.claude/skills/` 的宿主可指定 `--skill-targets claude`；`--skill-targets agents,claude` 将同一份能力清单应用到两个位置。安装、曝光和实际执行是不同步骤，见[安装教程](docs/getting-started.md)与 [CLI 参考](docs/cli.md)。
 
-安装器在同一列表中用 **SKILLS-HUB**（`类别/技能`）与 **WORKFLOWS** 两区分隔。完整包可用 `--hub-skills automation/herdr,automation/orca` 选择，与 workflow 入口共用 `--skill-targets`。取消勾选会卸载未修改的受管包；workflow 运行数据和冲突包保留。项目只接收已选择的 Hub 包。
+安装器在同一层级展示 **Skills Hub 分类**与 **Workflows**；进入分类选择 Skill，或直接切换 Workflow，返回时保留已有选择。完整包可用 `--hub-skills automation/herdr,automation/orca` 选择，与 workflow 入口共用 `--skill-targets`。取消勾选会卸载未修改的受管包；workflow 运行数据和冲突包保留。项目只接收已选择的 Hub 包。
 
+
+交互启动会检查 CLI 自身更新，网络查询最多等待 2 秒；可选择立即升级、本次跳过或跳过直到下个版本。核验通过的 npm 全局安装升级后会用新版继续原命令。详见[升级说明](docs/cli.md#刷新与升级)。
 
 ## 按领域查看完整教程
 

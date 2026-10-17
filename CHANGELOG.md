@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-10-17
+
+### Added
+
+- Check for stable CLI updates before interactive installation and text diagnostics, with a two-second total network deadline and update/skip/ignore choices.
+- Upgrade verified npm global installations to the displayed version and resume the original command with its arguments and working directory after verification.
+
+### Changed
+
+- Store ignored versions outside projects, preserve explicit `version` checks, and skip automatic checks for scripts, CI, JSON, help, resolve and recovery.
+- Use SemVer comparison and bounded registry responses; share terminal color and keyboard conventions with fastcli and avoid duplicate version notices in the install wizard.
+
 ## [2.1.1] - 2026-10-16
 
 ### Changed
