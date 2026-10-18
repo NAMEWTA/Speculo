@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.4] - 2026-10-18
+
+### Fixed
+
+- Pass `--no-daemon` in the bundled Herdr Skill's Codex launch examples, bypassing the shared daemon when switching accounts.
+
 ## [2.1.3] - 2026-10-18
 
 ### Added
