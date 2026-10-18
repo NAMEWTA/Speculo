@@ -23,8 +23,9 @@ Command 是你明确交给 AI 的一次任务。它的入口是 `COMMAND.md`，�
 
 | Command | 什么时候用 | 产物与边界 |
 |---|---|---|
+| [coordination-init](coordination-init.md) | 设置全项目默认编排方式 | 配置一次，实际任务可覆盖 |
 | [status](status.md) | 不知道当前进度、异常或下一步 | 会话概览，可明确要求保存；不修复 |
-| [handoff](handoff.md) | 切换会话或执行者 | 一份可恢复交接，不复制全部材料 |
+| [handoff](handoff.md) | 切换会话或执行者 | 更新 change/handoff.md；跨对象另存会话摘要 |
 
 <a id="documentation"></a>
 ## 文档、规范与知识整理

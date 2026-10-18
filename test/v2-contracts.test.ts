@@ -63,7 +63,7 @@ test('initialization example and all optional choices remain schema-compatible a
   const require = createRequire(import.meta.url), Ajv = require('ajv/dist/2020.js').default;
   const schema = JSON.parse(await readFile('template/references/coordination/project-facts.schema.json', 'utf8'));
   const validate = new Ajv({ strict: true }).compile(schema);
-  const setup = await readFile('template/workflows/specdev/specdev-i-init-setup/references/first-setup.md', 'utf8');
+  const setup = await readFile('template/references/coordination/initialization.md', 'utf8');
   const exampleBlock = setup.match(/```json\n([\s\S]*?)\n```/);
   assert.ok(exampleBlock, 'initialization must supply a complete project configuration example');
   const example = JSON.parse(exampleBlock[1]);

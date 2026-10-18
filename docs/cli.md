@@ -101,7 +101,7 @@ Person · 认知与决策
 
 按组选择会包含 workflow 总入口和全部 Work；自定义时总入口单独勾选，选择某个 Work 不自动附带总入口。自定义分组页支持反复进入不同组编辑，返回曝光方式时保留本次草稿。仅核心安装时只能选择 Commands，不会为曝光而补装 workflow。
 
-当前五个领域全部安装时，每个宿主有 53 个入口：5 个总入口、38 个 Work、10 个 Command。仅 SpecDev 整组为 16 个入口；自定义 `specdev/implement,specdev/code-review,command/status` 为 3 个入口。菜单按实际安装内容计算数量，包含本次没有选择刷新的已安装领域。
+当前五个领域全部安装时，每个宿主有 54 个入口：5 个总入口、38 个 Work、11 个 Command。仅 SpecDev 整组为 16 个入口；自定义 `specdev/implement,specdev/code-review,command/status` 为 3 个入口。菜单按实际安装内容计算数量，包含本次没有选择刷新的已安装领域。
 
 `groups` 和 `custom` 是交互向导选项，不是 `--skills` 的参数值；非交互选择具体入口用业务 ID 列表。只要总入口时可使用 `--skills domain/specdev,domain/learning`。
 

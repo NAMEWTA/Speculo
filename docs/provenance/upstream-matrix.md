@@ -37,7 +37,7 @@ Revision: f3fc5632f401156837ee3872f14fe33ccf1024ea (checked 2026-10-08); prior s
 | setup-pre-commit | adapted | template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md | Inspect existing guardrails; no implicit dependency or hook installation. |
 | grill-me | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Fold interview/clarification into the existing design Work. |
 | grilling | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Merge clarification without a duplicate entry. |
-| handoff | adapted | template/commands/handoff/COMMAND.md | Preserve source pointers, owner, checkpoints and unresolved actions. |
+| handoff | adapted | template/commands/handoff/COMMAND.md + template/references/handoff/ | Shared explicit handoff preserves source pointers, owner, checkpoints and unresolved actions; change summaries update while whole-session reports remain immutable. |
 | teach | excluded |  | Learning owns structured courses, practice and review; L-learn explains requirements references, project code, changes and external material. |
 | to-questionnaire | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Reuse durable questionnaires in design clarification. |
 | wait-what | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Clarify only consequential ambiguity and retain current goal. |

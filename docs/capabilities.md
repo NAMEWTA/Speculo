@@ -2,7 +2,7 @@
 
 [手册首页](README.md) · [领域指南](workflows/README.md) · [Command 工具箱](commands/README.md)
 
-当前有 **5 个领域、38 个 Work、10 个 Command**。表中的业务 ID 可用于显式曝光选择；教程用于理解场景，源入口用于核对完整合同。Work 的 Skill name 与业务 ID 的区别见[基本概念](concepts.md)。
+当前有 **5 个领域、38 个 Work、11 个 Command**。表中的业务 ID 可用于显式曝光选择；教程用于理解场景，源入口用于核对完整合同。Work 的 Skill name 与业务 ID 的区别见[基本概念](concepts.md)。
 
 ## 领域入口
 
@@ -82,6 +82,7 @@
 | 业务 ID | 使用手册 | 源入口 |
 |---|---|---|
 | `command/archive-and-consolidate` | [archive-and-consolidate](commands/archive-and-consolidate.md) | [COMMAND.md](../template/commands/archive-and-consolidate/COMMAND.md) |
+| `command/coordination-init` | [coordination-init](commands/coordination-init.md) | [COMMAND.md](../template/commands/coordination-init/COMMAND.md) |
 | `command/docs-sync` | [docs-sync](commands/docs-sync.md) | [COMMAND.md](../template/commands/docs-sync/COMMAND.md) |
 | `command/engineering-standards-builder` | [engineering-standards-builder](commands/engineering-standards-builder.md) | [COMMAND.md](../template/commands/engineering-standards-builder/COMMAND.md) |
 | `command/git-history-squash` | [git-history-squash](commands/git-history-squash.md) | [COMMAND.md](../template/commands/git-history-squash/COMMAND.md) |

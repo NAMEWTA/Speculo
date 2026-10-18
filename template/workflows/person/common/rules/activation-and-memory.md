@@ -22,3 +22,9 @@
 ## 事务与归属隔离
 
 启动正式写入前检查原网关未闭合事务与写集。属于本任务的事务按原恢复协议处理；属于其他任务的事务不得接管、解锁、清空或覆盖。只暂停资源重叠的写入与依赖分支，继续独立、已授权工作；事务年龄不构成接管授权。写后按变更 ID 定位受影响的索引项并回读目标原文，不为核验默认整读整库。
+
+## 跨领域编排与显式交接
+
+用户明确要求委派、跨工具/模型协作，或本 Work 已要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。项目默认方式由公共 command/coordination-init 显式初始化；普通激活不触发问答。
+
+只有用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>。本域未归档 change 允许本次唯一交接作者更新 handoff.md 侧记；无 change 的资源模型使用共享方法定义的会话报告。它反映已有事实，不推进本域状态、完成门或永久知识。

@@ -33,7 +33,7 @@ pnpm verify-package
 - `template/workflows/<workflow>/<workflow>-<letter>-<name>/`：一个可恢复步骤；只读取当前分支需要的规则、schema、模板和工具。
 - `.agents/skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
 
-当前模板包含 10 个 Command、43 个公开 Skill（5 个领域、38 个 Work）、5 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works、Media 7 works。
+当前模板包含 11 个 Command、43 个公开 Skill（5 个领域、38 个 Work）、5 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works、Media 7 works。
 
 ## 边界与停止条件
 

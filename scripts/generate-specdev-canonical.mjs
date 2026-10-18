@@ -526,6 +526,7 @@ function replacePaths(content, tagsBySource) {
       if (value.startsWith("{roots.workflows}/specdev/")) {
         return workflowPathToCanonical(value, tagsBySource);
       }
+      if (value === "{roots.references}/coordination/scripts/validate-dispatch.mjs") return "本地只读派遣结构检查（网页环境按内联合同核对输入、报告和定位文件，明确自动校验未执行，不认证工具或业务完成）";
       if (value.startsWith("{roots.references}/")) {
         const tag=tagsBySource.get(value.replace("{roots.references}","template/references"));
         if(!tag)throw new Error(`Unmapped shared reference: ${value}`);
@@ -550,6 +551,8 @@ function replacePaths(content, tagsBySource) {
 
 function adaptCanonicalLanguage(content) {
   return content
+    .replace(/(?:公共 )?command\/coordination-init/g, "本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化）")
+    .replaceAll("安装后的 command/handoff 提供标准入口", "本地交接能力可作为标准入口；无本地写入能力时输出完整交接内容并明确尚未保存")
     .replaceAll("项目相对 Path 标签", "项目根相对路径")
     .replaceAll("完整根变量 Path 标签", "本文约定的逻辑路径")
     .replaceAll("完整 Path 标签 所指位置", "本文约定的位置")

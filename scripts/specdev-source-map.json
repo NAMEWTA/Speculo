@@ -219,10 +219,12 @@
       "source_sha256": "d83e0daa699b72111b4b49bff3fd59f6e55c0fa8803abfc63f92ade5f94974f1",
       "classification": "adapted",
       "targets": [
-        "template/commands/handoff/COMMAND.md"
+        "template/commands/handoff/COMMAND.md",
+        "template/references/handoff/handoff-contract.md",
+        "template/references/handoff/domain-context.md"
       ],
       "integration_deltas": [
-        "Command-owned immutable report naming replaces temporary output"
+        "Explicit handoff uses a shared method to update change/handoff.md; cross-object or object-free session reports retain immutable command-owned naming, source pointers and original recovery ownership"
       ]
     },
     {

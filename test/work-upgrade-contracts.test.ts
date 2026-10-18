@@ -74,7 +74,7 @@ test('repeat Learning init preserves existing state and retention publication re
   assert.match(goal, /每单元 ≤15 节与每课最多10问/);
 });
 test('handoff is pointer-based and does not create new authority or replay unknown effects', async () => {
-  const text = await read('template/commands/handoff/COMMAND.md');
+  const text = await read('template/references/handoff/handoff-contract.md') + await read('template/references/handoff/domain-context.md');
   for (const marker of ['下一安全动作', '未闭合动作', '真实授权来源', '当前 owner', '摘要', '不复制整套 Spec', '不是新授权', '不能包装成新 task 再试']) assert.ok(text.includes(marker));
 });
 test('Dev to OPS handoff uses existing spec fields and separate completion owners', async () => {

@@ -1,55 +1,55 @@
 [
   {
-    "id": "specdev-init-optional-coordination",
-    "workflow": "specdev",
+    "id": "coordination-init-optional-coordination",
+    "workflow": "shared",
     "trigger": "Initialize an unconfigured project; exercise Herdr, Orca, CLI and none, including each project Skill target for Herdr/Orca",
     "expected": "Offers four choices; external defaults are preferred with lead fallback, none persists lead, and only Herdr/Orca ask for a project Skill directory. Saves the relative guide and reuses the complete local Skill. If missing, directs the user to SKILLS-HUB in speculo init; never downloads GitHub main or starts services.",
     "instruction_paths": [
-      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
-      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/commands/coordination-init/COMMAND.md",
+      "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
     ]
   },
   {
-    "id": "specdev-init-reuse-and-change",
-    "workflow": "specdev",
+    "id": "coordination-init-reuse-and-change",
+    "workflow": "shared",
     "trigger": "Repeat initialization with saved lead or external preferences; then explicitly change the default mode",
     "expected": "Displays and reuses valid preferences without asking again. Explicit changes replace defaults while preserving Work/stage rules and old third-party files; obsolete tool/model/guide fields are not carried into another mode. A saved preference alone does not authorize reinstalling a missing Skill.",
     "instruction_paths": [
-      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
-      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md"
+      "template/commands/coordination-init/COMMAND.md",
+      "template/references/coordination/initialization.md"
     ]
   },
   {
-    "id": "specdev-init-no-write",
-    "workflow": "specdev",
+    "id": "coordination-init-no-write",
+    "workflow": "shared",
     "trigger": "Read-only initialization, plan-only initialization, unanswered/cancelled selection, or a normal Work without coordination configuration",
     "expected": "Does not install Skills, save defaults, start services or create business state; an unanswered choice is not treated as consent to persist lead. A normal Work uses its current host without starting the initialization questionnaire.",
     "instruction_paths": [
-      "template/workflows/specdev/specdev-i-init-setup/SKILL.md",
-      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/commands/coordination-init/COMMAND.md",
+      "template/references/coordination/initialization.md",
       "template/references/coordination/coordination-contract.md"
     ]
   },
   {
-    "id": "specdev-init-install-failure-retry",
-    "workflow": "specdev",
+    "id": "coordination-init-install-failure-retry",
+    "workflow": "shared",
     "trigger": "Choose Herdr/Orca but its project Skill is missing, or a previous CLI installation was interrupted",
     "expected": "Keeps the saved preference and target, reports not installed and continues independent initialization with lead fallback. Directs installation and transaction recovery to the Speculo CLI with its bundled automation/herdr or automation/orca package; never writes CLI metadata or installs from GitHub main.",
     "instruction_paths": [
-      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
     ]
   },
   {
-    "id": "specdev-init-conflict-and-drift",
-    "workflow": "specdev",
+    "id": "coordination-init-conflict-and-drift",
+    "workflow": "shared",
     "trigger": "Initialization encounters invalid configuration, configuration drift, a linked install path, an invalid same-name Skill or two legacy Skill candidates without a saved guide",
     "expected": "Preserves original files and stops only affected writes; invalid configuration does not trigger dependent installation. Ambiguous directories require a user choice; valid explicit guide paths are honored and no global Skill directory is substituted.",
     "instruction_paths": [
-      "template/workflows/specdev/specdev-i-init-setup/references/first-setup.md",
+      "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
     ]
@@ -418,6 +418,70 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
+    ]
+  },
+  {
+    "id": "coordination-cross-workflow-chain",
+    "workflow": "shared",
+    "trigger": "User assigns Codex planning, Grok tickets/map, a Learning explanation, and PI review",
+    "expected": "Uses actual tool/model choices and dependency inputs; workers write assigned artifacts, Lead verifies via original owners. No mandatory Goal/Ticket or SpecDev installation for generic coordination.",
+    "instruction_paths": [
+      "template/references/coordination/coordination-contract.md",
+      "template/references/coordination/session-files.md"
+    ]
+  },
+  {
+    "id": "coordination-core-only",
+    "workflow": "shared",
+    "trigger": "Install only core, Learning or OPS; dispatch without a SpecDev change",
+    "expected": "The public initialization command and shared v2 validator resolve without SpecDev files; no fake change or business state; global sessions retain their original root.",
+    "instruction_paths": [
+      "template/references/coordination/coordination-contract.md",
+      "template/references/coordination/session-files.md"
+    ]
+  },
+  {
+    "id": "handoff-explicit-only",
+    "workflow": "shared",
+    "trigger": "Ordinary completion, status request or plan-only handoff; later an explicit handoff request",
+    "expected": "No handoff write until explicit execution request; completion does not auto-spawn a handoff worker. Explicit handoff can summarize unfinished work.",
+    "instruction_paths": [
+      "template/commands/handoff/COMMAND.md",
+      "template/references/handoff/handoff-contract.md",
+      "template/references/handoff/handoff-template.md"
+    ]
+  },
+  {
+    "id": "handoff-update-and-preserve",
+    "workflow": "shared",
+    "trigger": "Explicit handoff twice after progress and a user addition",
+    "expected": "Rereads actual artifacts and prior handoff.md, preserves valid context and user additions, revises obsolete conclusions with evidence; does not update business completion or approvals.",
+    "instruction_paths": [
+      "template/commands/handoff/COMMAND.md",
+      "template/references/handoff/handoff-contract.md",
+      "template/references/handoff/handoff-template.md"
+    ]
+  },
+  {
+    "id": "handoff-multiple-or-no-change",
+    "workflow": "shared",
+    "trigger": "Handoff spans several changes, OPS resources, or no change",
+    "expected": "Updates writable changes separately; writes one non-overwriting whole-session report with pointers and per-object results; no invented business objects.",
+    "instruction_paths": [
+      "template/commands/handoff/COMMAND.md",
+      "template/references/handoff/handoff-contract.md",
+      "template/references/handoff/handoff-template.md"
+    ]
+  },
+  {
+    "id": "handoff-conflict-and-recovery",
+    "workflow": "shared",
+    "trigger": "An archived object, drift, a lock or one failed write occurs during multi-object handoff",
+    "expected": "Archives and conflicting originals remain unchanged; successful independent writes retained; per-object report shows failures and original recovery routes; retries reread actual files, never replay unknown effects.",
+    "instruction_paths": [
+      "template/commands/handoff/COMMAND.md",
+      "template/references/handoff/handoff-contract.md",
+      "template/references/handoff/handoff-template.md"
     ]
   }
 ]

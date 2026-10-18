@@ -148,7 +148,7 @@ test('archived handoffs remain unchanged and new retries retain prior reports',a
 
 test('published locator schema validates with a complete JSON Schema engine',async()=>{
   const require=createRequire(import.meta.url), Ajv=require('ajv/dist/2020.js').default;
-  const schema=JSON.parse(await readFile(join(methodRoot,'workflows/specdev/common/schemas/session-locator.schema.json'),'utf8'));
+  const schema=JSON.parse(await readFile(join(methodRoot,'references/coordination/session-locator.schema.json'),'utf8'));
   const validate=new Ajv({strict:true}).compile(schema);
   assert.equal(validate(locator()),true,JSON.stringify(validate.errors));
   for(const value of [null,{}, {path:42},{path:''},{...locator(),tool:'fixture'},{...locator(),provider:{session_id:'42'}}]) {

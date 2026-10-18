@@ -25,7 +25,7 @@
 ## Direct Spec 硬检查
 
 - [ ] 用户已授权按当前规格实现；独立 Spec 已就绪（ready_for_tickets=true），目标、行为、风险门与验收完整；README 替代规格时仍满足轻量边界。不要求单一行为或低风险，确需独立调度/依赖 DAG 才拆票。
-- [ ] Direct Spec 的执行者复用 change 唯一工作区，写集无冲突；SpecDev 正式工件只由 Lead 写入。
+- [ ] Direct Spec 的执行者复用 change 唯一工作区，写集无冲突；可由 worker 写获分配的业务文档，正式状态和 Evidence 仍由 Lead 核验维护。
 - [ ] 目标、IN/OUT、可写范围、不变量、验证与验收完整。
 - [ ] Direct Spec 涉及 UI 时读取批准 DESIGN 并冻结版本、页面/状态与原型摘要；无 UI 不要求此项。
 - [ ] 实施前 Git checkpoint、dirty 状态和现有用户改动已记录，不覆盖无关改动。

@@ -21,11 +21,13 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 五个领域根 Skill 只做发现、路由和永久知识定位；用户指定 Work 时可直接读 Work Skill，再读 activation-and-memory 与该领域运行合同。根 README/INDEX 不承担激活。
 
-38 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。10 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
+38 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。11 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
 
-跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。Lead 持续推进已授权 Goal，唯一写正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
+跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。公共 command/coordination-init 初始化一个项目默认方式，具体模型与任务由当次请求决定。Worker 可直接写获分配的计划、票据、地图等产物，Lead 核验并协调原 owner/gateway 推进正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
-已有 change 的外部 CLI/Herdr/Orca 派遣使用 change/sessions/<session>/<task>/ 的 TASK.md 与 REPORT.md：Lead 写输入，执行者写报告，原 Evidence 引用并独立验收。session 用中性 UTC 时间标识一轮编排，task 用递增编号加实际主题标识一次派遣，不镜像工具运行状态；原生协作按需采用，Lead 自行执行不创建。交付前主动定位历史入口并核验主机、会话对应关系和可读性，附本任务检索范围；不可取得时说明原因。接收方按需检索，快照按需保存并随 change 归档；无 change 沿用原报告位置。
+外部派遣使用共享 TASK v2 / REPORT，单个 change 下使用 sessions/<session>/<task>，跨多个对象或无 change 使用 state/coordination/sessions。范围根一轮固定，原生协作按需采用，Lead 自行执行不造派单。存量 v1 按原合同保留。可选 session-locator.json 只保存经过确认的绝对日志 path，不自动读取历史或恢复工具会话。
+
+用户明确调用 handoff 后，任何 Agent 可使用共享 references/handoff 方法更新实际 change 的 handoff.md；多个对象另有会话摘要，无 change 或归档对象沿 state/commands/handoff 保存报告。侧记可持续更新，会话报告不可覆盖；业务状态和永久知识仍走原网关。
 
 ## 元数据与生成
 

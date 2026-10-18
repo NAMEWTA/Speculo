@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-10-18
+
+### Added
+
+- Add a public coordination-init command for one project-wide default orchestration method, shared by all workflows.
+- Add workflow-independent TASK v2 validation and session storage for arbitrary planning, ticket, explanation, review and handoff tasks, retaining the legacy SpecDev TASK v1 adapter.
+- Add a shared, explicitly requested handoff method that updates each writable change's handoff.md and preserves whole-session summaries across multiple or absent changes.
+
+### Changed
+
+- Move orchestration initialization out of SpecDev engineering setup; choose tools, models, task order and Skills at runtime while preserving domain ownership and acceptance gates.
+- Allow workers to write assigned artifacts directly, with Lead verification and original domain gateways maintaining formal state and Evidence.
+- Update workflow routing, documentation, canonical exports and isolated installation/package checks for the shared coordination capabilities.
+
 ## [2.1.2] - 2026-10-17
 
 ### 发布

@@ -20,7 +20,7 @@ describe("command report roots", () => {
   it("declares a state-root report path for every command", () => {
     const files = commandFiles();
     assert.ok(files.includes("git-history-squash/COMMAND.md"));
-    assert.equal(files.length, 10);
+    assert.equal(files.length, 11);
     for (const name of files) {
       const content = readFileSync(join(commandsDir, name), "utf8");
       const id = content.match(/^id:\s*(\S+)/m)?.[1];

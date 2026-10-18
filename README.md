@@ -46,11 +46,11 @@ External CLI, Herdr and Orca tasks use compact Markdown inputs and reports, with
 
 ## Commands by category
 
-The ten Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
+The eleven Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
 
 | Category | Guides |
 |---|---|
-| [Navigation and handoff](docs/commands/README.md#navigation) | [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
+| [Navigation and handoff](docs/commands/README.md#navigation) | [coordination-init](docs/commands/coordination-init.md), [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
 | [Documentation, standards and knowledge](docs/commands/README.md#documentation) | [docs-sync](docs/commands/docs-sync.md), [engineering-standards-builder](docs/commands/engineering-standards-builder.md), [archive-and-consolidate](docs/commands/archive-and-consolidate.md) |
 | [Git analysis and history](docs/commands/README.md#git) | [git-repository-audit](docs/commands/git-repository-audit.md), [git-history-squash](docs/commands/git-history-squash.md), [upstream-fork-sync](docs/commands/upstream-fork-sync.md) |
 | [Source exchange and feedback](docs/commands/README.md#exchange) | [source-code-zip](docs/commands/source-code-zip.md), [retro](docs/commands/retro.md) |

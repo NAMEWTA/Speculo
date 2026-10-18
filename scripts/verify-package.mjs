@@ -25,7 +25,7 @@ try{
   run([cli,'init',project,'--workflows','learning,media,ops,person,specdev','--hub-skills','all','--skill-targets','agents,claude','--skills','all']);
   const doctor=JSON.parse(run([cli,'doctor',project,'--json']));assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
   const assets=join(project,'.agents/speculo'),lib=await import(pathToFileURL(join(assets,'lib/speculo-runtime.mjs')).href);
-  assert.equal((await lib.readAssetCatalog(assets)).assets.length,53);
+  assert.equal((await lib.readAssetCatalog(assets)).assets.length,54);
   assert.equal(JSON.parse(await readFile(join(assets,'workflows/specdev/runtime-contract.json'),'utf8')).state_seed,'optional');
   for (const name of ['status.json','config.json']) await assert.rejects(readFile(join(assets,'.speculo/specdev',name)),/ENOENT/);
   const canonicalRoot=join(installed,'template/canonical');
@@ -40,7 +40,7 @@ try{
   const designCatalog=JSON.parse(await readFile(join(assets,'workflows/specdev/specdev-p-prototype/design-library/catalog.json'),'utf8'));
   assert.equal(designValidators.designCatalog(designCatalog),true);
   assert.equal(designCatalog.templates.length,12);assert.equal(designCatalog.references.length,10);
-  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,116);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,53);
+  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,119);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,54);
   const {discoverHubCatalog}=await import(pathToFileURL(join(installed,'dist/src/hub-catalog.js')).href);
   const {snapshotSkillTree}=await import(pathToFileURL(join(installed,'dist/src/skill-trees.js')).href);
   const hub=await discoverHubCatalog(installed);assert.equal(hub.size,15);
@@ -92,7 +92,14 @@ try{
   assert.deepEqual(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages,[]);
   for(const [locator,bytes] of preserved)assert.deepEqual(await readFile(join(assets,'.speculo/specdev',locator)),bytes);
   assert.equal(JSON.parse(run([cli,'doctor',project,'--json'])).healthy,true);
-  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 15 complete Hub packages in both targets, 53 assets, 116 projection files, 12 canonical documents, explicit-root direct Work, byte-preserved runtime and nested resolver passed`);
+  await assert.rejects(readFile(join(assets,'workflows/specdev/SKILL.md')),/ENOENT/);
+  assert.ok(coreEntries.includes('speculo-coordination-init'));
+  const scope='.agents/speculo/.speculo/coordination',session='20261018T080000Z',task='001-handoff';
+  const taskRoot=join(project,scope,'sessions',session,task);await mkdir(taskRoot,{recursive:true});
+  await writeFile(join(taskRoot,'TASK.md'),`---\nschema_version: 2\nsession: "${session}"\ntask: "${task}"\nkind: handoff\n---\n\n${['Goal','Inputs','Workspace and Scope','Acceptance','Return'].map(title=>`## ${title}\nExplicit session summary, no business state writes.\n`).join('\n')}`);
+  const dispatched=JSON.parse(run([join(assets,'references/coordination/scripts/validate-dispatch.mjs'),'--repo',project,'--scope-root',scope,'--session',session,'--task',task,'--stage','dispatch']));
+  assert.deepEqual(dispatched.errors,[]);
+  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 15 complete Hub packages in both targets, 54 assets, 119 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
 }finally{
   // The only recursive cleanup target is the exact mkdtemp directory created above.
   assert.ok(resolve(sandbox).startsWith(temporaryRoot+ (process.platform==='win32'?'\\':'/')));

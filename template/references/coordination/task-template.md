@@ -1,20 +1,20 @@
 ---
-schema_version: 1
+schema_version: 2
 session: "<UTC-round-id>"
 task: "<sequence-topic>"
-kind: implementation
+kind: planning
 ---
 
 # 任务简报
 
 ## Goal
-填写 Lead、分配的执行者职责、目标及成功定义。kind 替换为 implementation/review/research/test-observation 的实际值；已有 change/Ticket 可在头部增加 change/ticket，不制造对象。
+填写 Lead、分配的执行者职责、目标、用户指定的交付数量及成功定义。kind 填写本次真实用途，如 planning、tickets、explanation、review 或用户明确要求的 handoff；用途不是权限；已有 change/Ticket 可在头部增加 change/ticket，不制造对象。
 
 ## Inputs
-引用真实 Work SKILL.md、必要规格/项目 Skill、已锁定决定与依赖报告。先读真实入口，按当前阶段执行，不递归启动 Goal、不扩大派遣范围。
+引用实际调用的 Work/Skill 入口（若需要）、必要规格/项目 Skill、已锁定决定与依赖报告。先读真实入口，按当前阶段执行，不擅自扩大编排或再次派遣、不扩大派遣范围。
 
 ## Workspace and Scope
-填写实际工作区及基线、允许/只读/共享路径、共享构建输出/端口/测试资源 owner、已授权动作和停止条件。执行者只写分配产物与自己的 REPORT，不写 TASK、定位文件或正式业务状态/Evidence；需要额外权限时返回问题与依据。
+填写实际工作区及基线、允许/只读/共享路径、共享构建输出/端口/测试资源 owner、已授权动作和停止条件。执行者可直接生成或修改分配的计划、票据、地图、说明等产物与自己的 REPORT，不写 TASK、定位文件或正式业务状态/Evidence；需要额外权限时返回问题与依据。
 
 ## Acceptance
 填写真实检查命令、可观察通过标准、未在执行者环境执行的 Gate 及其 owner。整体 E2E 与最终验收由 Lead 核验，候选自报不替代验收。

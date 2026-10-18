@@ -944,9 +944,9 @@ describe("SpecDev local-first contracts", () => {
     ]) {
       assert.match(implement, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
-    assert.match(delivery, /规划阶段[\s\S]*尚未产生/);
-    assert.match(delivery, /身份[\s\S]*工作区[\s\S]*调用[\s\S]*边界/);
-    assert.match(delivery, /返回实际修改[\s\S]*result-and-recovery/);
+    assert.match(delivery, /规划安排[\s\S]*尚未产生/);
+    assert.match(delivery, /身份[\s\S]*能力与依赖[\s\S]*工具与模型[\s\S]*工作区与写集[\s\S]*权限与验收/);
+    assert.match(delivery, /交付实际文件[\s\S]*result-and-recovery/);
     assert.doesNotMatch(delivery, /达到修正上限后/);
   });
 
