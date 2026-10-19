@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { it } from 'node:test';
-import { chmod, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { delimiter, dirname, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { inspectSelfInstall } from '../src/self-update.js';
@@ -38,7 +38,7 @@ async function voltaFixture() {
     else await symlink(target, launcher);
   };
   await writeFile(manifest, JSON.stringify({ name: '@example/tool', version: '1.0.0', bin: { example: 'cli.cjs' } }));
-  await writeFile(entry, `#!${process.execPath}\nrequire('fs').writeFileSync(${JSON.stringify(record)}, JSON.stringify({args:process.argv.slice(2),cwd:process.cwd(),keep:process.env.KEEP,marker:process.env.FASTCLI_UPDATE_RESUME}));process.exitCode=19;\n`);
+  await writeFile(entry, `#!${process.execPath}\nrequire('fs').writeFileSync(${JSON.stringify(record)}, JSON.stringify({entry:require('node:fs').realpathSync(__filename),args:process.argv.slice(2),cwd:process.cwd(),keep:process.env.KEEP,marker:process.env.FASTCLI_UPDATE_RESUME}));process.exitCode=19;\n`);
   await chmod(entry, 0o755);
   await writeLauncher(entry);
   const volta = await fakeTool(join(home, 'bin'), 'volta', `
@@ -74,7 +74,7 @@ it('updates a verified Volta installation with the existing Node runtime and res
     await f.writeLauncher(next);
     assert.equal(await install.verify('2.0.0'), true);
     assert.equal(await install.resume({ ...f.options.env, FASTCLI_UPDATE_RESUME: '2.0.0' }), 19);
-    assert.deepEqual(JSON.parse(await readFile(f.record, 'utf8')), { args: f.options.argv, cwd: process.cwd(), keep: 'kept', marker: '2.0.0' });
+    assert.deepEqual(JSON.parse(await readFile(f.record, 'utf8')), { entry: await realpath(next), args: f.options.argv, cwd: process.cwd(), keep: 'kept', marker: '2.0.0' });
     const events = (await readFile(f.log, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
     const mutations = events.filter(event => event.args[0] === 'run');
     assert.deepEqual(mutations, [{ args: ['run', '--node', process.versions.node, '--bundled-npm', 'npm', 'install', '--global', '@example/tool@2.0.0'], cwd: process.cwd(), home: f.home }]);

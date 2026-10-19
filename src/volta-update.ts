@@ -48,7 +48,9 @@ export async function inspectVoltaInstall(options: { packageRoot: string; name: 
         if (!isAbsolute(path) || await realpath(path) !== await realpath(state.entryPath)) return;
         const manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
         if (manifest.name !== name) return;
-        return { entry: await realpath(state.entryPath), version: manifest.version };
+        const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.[executable];
+        if (typeof bin !== 'string') return;
+        return { entry: await realpath(join(root, bin)), version: manifest.version };
       } catch (error) {
         if (error instanceof ProcessCancelledError) throw error;
         return;
