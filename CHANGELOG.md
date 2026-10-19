@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.7] - 2026-10-19
+
 ### Fixed
 
 - Resume Volta self-updates from the package's declared JavaScript entry instead of passing the Windows npm command shim to Node.js.
