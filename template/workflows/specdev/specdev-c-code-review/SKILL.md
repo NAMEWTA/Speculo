@@ -48,8 +48,4 @@ UI diff 按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Pat
 
 ## 编排与执行上下文
 
-进入实现或审查时读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/agent team 属于宿主能力。明确指定 CLI 交互、Herdr 等方式时按选择执行并展开对应参考；编排与 current/worktree 独立，已有授权和选择直接复用。只读取所选工具的当前指南，不固定工具或模型。
-
-`lead` 上下文维护原业务状态和 Evidence；`task` 上下文只处理 Lead 指定目标和阶段，执行同一方法并返回候选、findings、检查和未验证项，可直接写分配的计划、票据、Map 等业务文档；正式状态、审批与 Evidence 由原 owner 在验收后维护，不递归启动 Goal 或擅自跨 CLI 派单；宿主原生协作遵守原写集和共享资源 owner 约束。未曝光到宿主列表不影响读取真实入口。
-
-P 在已授权 run/resume 中完成当前实现、审查、验证和同范围修复后继续下一 Ready 任务，不逐票询问“继续”。只读分析或 plan 不执行。双轴审查必须由未参与本范围实现的 Agent 执行，默认派遣一位原生 subagent；已有编排选择沿用于 review，不能由实现者或参与实现的 Lead 自审替代。
+调用独立审查前读取 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，按当前固定输入实际派遣 reviewer。本 Work 保持只读并返回原 C 报告；不启动 Goal 或实施。

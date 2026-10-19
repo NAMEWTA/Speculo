@@ -10,6 +10,7 @@ import { readTransaction, LOCK_NAME } from "./transaction.js";
 import { inspectHubSkills } from "./hub-skills.js";
 import { retainedAssets, validateRetainedWorkflows } from "./workflow-install.js";
 import { inspectProjectedSkills } from "./agent-skills.js";
+import { validateCapabilityProfile } from "./contracts.js";
 
 export type DoctorResult = {
   target: string; healthy: boolean; scope: "installation-integrity";
@@ -52,23 +53,14 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
       add("workspace-contract", true, "roots are complete, contained and match the installed layout");
     } catch (error) { add("workspace-contract", false, String(error)); }
   }
-  const kernel = await json(".speculo/kernel.json");
-  if (kernel) {
-    const ok = kernel.schema_version === 1 && kernel.runtime === "speculo-kernel" && strings(kernel.change_lifecycle) &&
-      ["draft", "active", "blocked", "awaiting_user", "completed", "archived", "cancelled"].every((s) => (kernel.change_lifecycle as string[]).includes(s)) &&
-      strings(kernel.risk_classes) && ["read-only", "local-reversible", "local-destructive", "external-mutation", "production-critical"].every((s) => (kernel.risk_classes as string[]).includes(s));
-    add("kernel-contract", ok, ok ? "kernel lifecycle and risk contract valid" : "invalid kernel contract");
-  }
   const capabilities = await json(".speculo/capabilities.json");
   if (capabilities) {
-    const m = capabilities.model, t = capabilities.tools, e = capabilities.execution, mem = capabilities.memory;
-    const ok = capabilities.schema_version === 1 && record(m) && nonempty(m.id) &&
-      Number.isSafeInteger(m.context_window) && Number(m.context_window) >= (m.id === "unknown" ? 0 : 1) && Number.isSafeInteger(m.max_output) && Number(m.max_output) >= (m.id === "unknown" ? 0 : 1) &&
-      strings(m.modalities) && strings(m.reasoning_levels) && record(t) && strings(t.classes) && typeof t.parallel === "boolean" && typeof t.programmatic === "boolean" &&
-      record(e) && typeof e.sandbox === "boolean" && typeof e.network === "boolean" && strings(e.filesystem_roots) && ["none", "session", "persistent"].includes(String(e.data_retention)) &&
-      record(mem) && ["compaction", "persistent", "cache"].every((key) => typeof mem[key] === "boolean");
-    add("capability-contract", ok, ok ? "declared capability profile structurally valid (not a live probe)" : "invalid capability profile");
+    try {
+      validateCapabilityProfile(capabilities);
+      add("capability-contract", true, "declared capability profile structurally valid (not a live probe)");
+    } catch (error) { add("capability-contract", false, String(error)); }
   }
+
   const install = await json(".speculo/install.json");
   let workflows: string[] = [];
   if (install) {
@@ -95,7 +87,7 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
           if (actual.bytes !== file.bytes || actual.sha256 !== file.sha256) throw new Error("managed content differs from recorded digest; init replaces managed edits");
         } catch (error) { add("managed-file:" + file.path, false, String(error)); }
       }
-      for (const required of ["commands/status/COMMAND.md", ".speculo/workspace.json", ".speculo/kernel.json", ".speculo/AGENTS.md", "catalog.json"]) {
+      for (const required of ["commands/status/COMMAND.md", ".speculo/workspace.json", ".speculo/AGENTS.md", "catalog.json"]) {
         add("managed-required:" + required, seen.has(required), seen.has(required) ? "recorded" : "missing managed entry; refresh the installation");
       }
       add("managed-integrity", !checks.some((c) => !c.ok && /^(managed-entry|managed-file:|managed-required:)/.test(c.id)), `verified ${seen.size} declared files; runtime evidence is not overwritten`);

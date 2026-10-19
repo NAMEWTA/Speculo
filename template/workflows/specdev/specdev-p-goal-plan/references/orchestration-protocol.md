@@ -8,6 +8,8 @@
 
 serial 逐票实现、审查和验证；auto/parallel 按条件推进合法集合，不受 current/worktree 类型影响。max_parallel_tickets 计票，既有实现者限制单独遵守。只读探索和同票团队协作不改变票据调度。
 
+新型批量重复任务且派单或验收方法尚未验证时，读取 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/representative-ticket.md</Path>，用第一张真实 Ticket 验证整条交付路径后再扩大同类 frontier。已验证方法不增加此门。
+
 ## Gate 与 shared owner
 
 Gate 写明工程/业务状态、开启条件、关闭证据、阻塞范围、owner/批准人和失败恢复。共享合同稳定、垂直路径、迁移、发布、观察期均按实际风险设门，不以完成票数代替。

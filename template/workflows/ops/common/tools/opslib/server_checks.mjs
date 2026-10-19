@@ -12,6 +12,32 @@ export const CHECK_IDS = Object.freeze([
 ]);
 const profiles = new Set(["base", "compose", "native"]);
 const statuses = new Set(["pass", "fail", "warn", "unknown", "not-applicable"]);
+const failureCategories = new Set(["timeout", "connection-failed", "authentication-failed", "missing-executor", "invalid-response", "probe-failed"]);
+const failureCodes = new Set(["ETIMEDOUT", "ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "ENOENT", "EACCES", "node-missing"]);
+
+/** Only finite public categories survive; messages, stderr and unknown error codes never enter a view. */
+export function probeFailure(error, stage) {
+  const code = failureCodes.has(error?.code) ? error.code : null;
+  const message = String(error?.message ?? "");
+  let category = "probe-failed";
+  if (code === "ETIMEDOUT" || /timed? ?out|timeout/i.test(message)) category = "timeout";
+  else if (code === "node-missing" || error?.name === "NodeMissing" || /node-missing|node[^\r\n]*not found/i.test(message)) category = "missing-executor";
+  else if (error instanceof SyntaxError || /invalid (?:target )?(json|response)|parse.*json|unexpected.*json/i.test(message)) category = "invalid-response";
+  else if (/permission denied.*publickey|authentication failed/i.test(message)) category = "authentication-failed";
+  else if (["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "ENOENT"].includes(code) || /connection (refused|reset)|no route to host|network is unreachable/i.test(message)) category = "connection-failed";
+  else if (stage === "ssh-publickey") category = "connection-failed";
+  return { stage, category, code };
+}
+
+export function publicProbeFailures(failures = []) {
+  if (!Array.isArray(failures) || failures.length > 2) throw new OpsError("invalid probe failures");
+  return failures.map(f => {
+    if (!f || Object.keys(f).sort().join(",") !== "category,code,stage"
+      || !["ssh-publickey", "inventory"].includes(f.stage) || !failureCategories.has(f.category)
+      || (f.code !== null && !failureCodes.has(f.code))) throw new OpsError("invalid public probe failure");
+    return { stage: f.stage, category: f.category, code: f.code };
+  });
+}
 
 function version(v) {
   const m = typeof v === "string" && /(?:^|\s)v?(\d+)\.(\d+)\.(\d+)(?:\s|$|[-+])/.exec(v);
@@ -86,6 +112,7 @@ export function validateCheck(report, host) {
   }
   if (found.size !== CHECK_IDS.length) throw new OpsError("incomplete server checklist");
   if (!/^[a-f0-9]{64}$/.test(report.host_digest || "")) throw new OpsError("missing check host digest");
+  publicProbeFailures(report.probe_failures);
   return report;
 }
 
@@ -118,21 +145,24 @@ export async function checkServer(state, serverId, options = {}, adapter = null)
     adapter = { call: transport.call, sshArgv: transport.sshArgv, spawn: spawnSync };
   }
   let keyLogin = null, inventory = null;
+  const probeFailures = [];
   if (host.transport === "ssh") {
     const argv = adapter.sshArgv(host.connection);
     argv.push("-o", "PreferredAuthentications=publickey", "-o", "PasswordAuthentication=no",
       "-o", "KbdInteractiveAuthentication=no", "--", host.connection.username + "@" + host.connection.hostname, "true");
     const p = adapter.spawn(argv[0], argv.slice(1), { encoding: "utf8", timeout: 30000, maxBuffer: 1024 * 1024, windowsHide: true });
     keyLogin = !p.error && p.status === 0;
+    if (!keyLogin) probeFailures.push(probeFailure(p.error ?? new Error(p.stderr || "SSH public-key check failed"), "ssh-publickey"));
   }
   if (host.transport === "local" || keyLogin) {
     try { inventory = adapter.call(host, { action: "probe", include_docker: true, disk_roots: [host.root], paths: [host.root] }, { timeout: 180 }); }
-    catch { /* A failed read is not evidence of health; keep inventory-dependent checks unknown. */ }
+    catch (error) { probeFailures.push(probeFailure(error, "inventory")); }
   }
   const report = {
     schema_version: 1, artifact: "ops-server-check", host_id: serverId,
     profile: options.profile ?? "base", checked_at: now(), host_digest: pinnedTarget,
     checks: assessServer(host, { ...options, keyLogin, inventory }),
+    probe_failures: probeFailures,
   };
   validateCheck(report, host);
   // Refuse to attribute observations to a changed endpoint or identity.
@@ -144,6 +174,6 @@ export async function checkServer(state, serverId, options = {}, adapter = null)
     writeJson(join(folder, "latest.json"), { check_id: checkId, digest: digest(report) });
   });
   const status = readiness(report.checks, report.checked_at);
-  return { status, server_id: serverId, profile: report.profile, report: join(folder, checkId + ".json"), checks: report.checks,
+  return { status, server_id: serverId, profile: report.profile, report: join(folder, checkId + ".json"), checks: report.checks, probe_failures: report.probe_failures,
     note: "Read-only baseline, not application readiness, live monitoring or production acceptance" };
 }

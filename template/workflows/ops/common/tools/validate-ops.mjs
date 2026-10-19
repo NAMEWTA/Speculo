@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Static/semantic validation bridge; no target connections or mutations. */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { validateStatus } from "./opslib/model.mjs";
@@ -12,7 +12,7 @@ const root = resolve(tools, "../..");
 const args = process.argv.slice(2);
 
 try {
-  if (args.length === 1 && args[0] === "--self-check") {
+  if (args.length === 1 && ["--self-check", "--package-check"].includes(args[0])) {
     const works = readdirSync(root, { withFileTypes: true })
       .filter((x) => x.isDirectory() && !["common", "_state", "__pycache__"].includes(x.name))
       .map((x) => x.name).sort();
@@ -33,16 +33,18 @@ try {
       JSON.parse(readFileSync(join(root, "common/schemas", name), "utf8"));
     }
     JSON.parse(readFileSync(join(root, "common/toolchains/volta-linux.json"), "utf8"));
-    validateStatus(JSON.parse(readFileSync(join(root, "_state/status.json"), "utf8")));
+    for (const file of ["common/tools/opslib/resource-validation.mjs", "common/tools/business-verification.mjs", "common/verification/README.md"]) if (!existsSync(join(root, file))) throw new Error("missing " + file);
+    if (args[0] === "--package-check") validateStatus(JSON.parse(readFileSync(join(root, "_state/status.json"), "utf8")));
     console.log("resource schema valid");
     console.log(JSON.stringify({ valid: true, version: manifest.version, workers: works, schema_version: 3,
-      scope: "static and empty-resource-schema check; not live target acceptance" }, null, 2));
-  } else if (args.length === 2 && ["--state-root", "--state"].includes(args[0])) {
+      scope: args[0] === "--package-check" ? "source assets and initialization seed; not live target acceptance" : "static installed assets; no state inferred or target contacted" }, null, 2));
+  } else if (args.length === 2 && args[0] === "--state-root") {
+    if (!isAbsolute(args[1])) throw new Error("--state-root requires an explicit absolute directory");
     const p = spawnSync(process.execPath, [join(tools, "ops.mjs"), "--state", resolve(args[1]), "validate"], { encoding: "utf8", timeout: 30000 });
-    if (p.status !== 0) throw new Error(p.stdout + p.stderr);
+    if (p.error || p.status !== 0 || !p.stdout?.trim()) throw new Error(p.error?.message || p.stdout + p.stderr || "state validator produced no result");
     console.log(p.stdout.trim());
   } else {
-    throw new Error("Usage: validate-ops.mjs --self-check | --state-root ABSOLUTE_STATE. Legacy change flags are not supported.");
+    throw new Error("Usage: validate-ops.mjs --package-check | --self-check | --state-root ABSOLUTE_STATE. Package mode checks the source seed; installed static mode never infers state.");
   }
 } catch (error) {
   console.error(String(error));

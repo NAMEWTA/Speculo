@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Unify current workflow manifest and capability-profile validation across discovery, installation, doctor and portable assets. Keep domain lifecycles with their original owners, and regenerate the shared runtime, validators and complete Canonical documents from source.
+- Route ready Direct Specs and approved prototype follow-through to Implement, preserve actual uncommitted delivery snapshots, and centralize shared SpecDev coordination. Add correctly typed parent Map, Plan and aggregate Evidence templates with structured, scope-aware scheduling diagnostics.
+- Isolate Person consultation state and stage evidence by Change. Publish validated candidates against exact digests, merge only the current consultation's active entry, and preserve the original five-stage method, question requirements and original-text sources.
+- Share dependency-free OPS resource semantics between installation and standalone tools. Separate package, installed-method and explicit state-root checks; retain unknown probe outcomes with controlled diagnostic categories and project-owned business verification recipes.
+- Connect deterministic installed-CLI artifact scenarios to CI, retaining actual process logs, file inventories and failures. Distinguish fixture readiness, artifact checks, authenticated observed gates and publication authority.
+- Make Command root discovery and domain delegation self-contained. Keep upstream dry-runs byte-preserving even for first-use stdin configuration and Git merge analysis; ship the source packaging entry as CommonJS in both module environments.
+
+### Fixed
+
+- Make Learning consolidation journaled and recoverable with exact input digests, owned locks, complete descendant locators, idempotent resume/rollback and concurrent-drift protection. Recheck terminal transaction direction instead of accepting the opposite complete image.
+- Validate Learning time budgets, actual source/objective references, exact submission markers, frozen original answers and delayed retention evidence. Require an explicit supported immediate result; reviewed, incorrect or blocked Homework cannot silently certify mastery.
+- Correct the Media Python renderer's shared-tool path in installed packages. Bind reports to actual input and execution identity, and require final delivery to consume complete review gates, preview/still bytes, media signatures and declared artifact dependencies.
+- Reject dangling Person state, candidate and lock symlinks without replacing them; load the package-owned consultation validator through the asynchronous module boundary.
+
+### Removed
+
+- Remove inactive kernel/checkpoint contracts, legacy SpecDev JSON authority readers and converters, TASK v1 adapters, and obsolete execution branches after updating their live consumers. Current unknown or mixed protocols are rejected without rewriting user records.
+
+### Upgrade Notes
+
+- This is an intentional contract cleanup without legacy protocol conversion. Current workflow manifests use schema 2, SpecDev Goal Plan uses schema 8 and Implementation Plan uses schema 3; current Media render/review reports use schema 2. Consultations store runtime facts per Change rather than global scalars. Preserve historical or unknown business files and reconcile them through their owner before continuing affected writes.
+- Complete Canonical exports and all 16 Skills Hub packages remain available. Mechanical fixtures and offline rendering do not certify live model behavior, semantic review quality, human approval or external publication.
+
 ## [2.1.7] - 2026-10-19
 
 ### Fixed

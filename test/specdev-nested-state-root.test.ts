@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { DEFAULT_ROOTS } from "../src/paths.js";
-import { readLegacyChangeEvidenceSync } from "../src/specdev-artifacts.js";
+import { readChangeFactsSync } from "../src/specdev-artifacts.js";
 const packageRoot = process.cwd();
 const validator = join(
   packageRoot,
@@ -38,32 +38,6 @@ function specdevConfig(): string {
       ui_design_default_candidates: 3,
       ui_design_max_candidates: 4,
     },
-  }, null, 2)}\n`;
-}
-
-function changeStatus(name: string): string {
-  return `${JSON.stringify({
-    schema_version: 6,
-    artifact: "change-status",
-    change: name,
-    change_status: "active",
-    current_work: null,
-    works_run: [],
-    claimed_investigations: [],
-    execution_authorization: {
-      implementation_commit: { status: "not-authorized", source: null, granted_at: null, scope: "Ticket source commits" },
-      local_candidate_integration: { status: "not-authorized", source: null, granted_at: null, scope: "Lead-owned local parent candidate integration and parent update" },
-      source_cleanup: { status: "not-authorized", source: null, granted_at: null, scope: "Source worktree and branch cleanup" },
-    },
-    leadership: { current: "lead-session", epoch: 1, assigned_at: "2026-09-16T00:00:00Z", history: [] },
-    created_at: "2026-09-16T00:00:00Z",
-    updated_at: "2026-09-16T00:00:00Z",
-    completed_at: null,
-    archived: false,
-    archive_path: null,
-    blockers: [],
-    deviations: [],
-    worktrees: [],
   }, null, 2)}\n`;
 }
 
@@ -101,7 +75,6 @@ async function nestedFixture(): Promise<{
   const specdevRoot = join(stateRoot, "specdev");
   const shadowRoot = join(proj, ".speculo", "specdev");
   await mkdir(join(specdevRoot, "changes"), { recursive: true });
-  await mkdir(join(specdevRoot, "archive", "2026-08"), { recursive: true });
   await mkdir(join(shadowRoot, "changes"), { recursive: true });
   await writeFile(join(stateRoot, "workspace.json"), `${JSON.stringify({
     schema_version: 2, layout_version: "agents-v2", installation_id: "00000000-0000-0000-0000-000000000000",
@@ -116,8 +89,8 @@ async function nestedFixture(): Promise<{
   return { proj, legal, illegal, archived };
 }
 
-async function flatLegacyFixture(): Promise<{ parent: string; change: string }> {
-  const parent = await mkdtemp(join(tmpdir(), "specdev-flat-legacy-"));
+async function uninstalledFixture(): Promise<{ parent: string; change: string }> {
+  const parent = await mkdtemp(join(tmpdir(), "specdev-uninstalled-"));
   const change = await writeGrillChange(parent, legalName);
   await mkdir(join(parent, ".speculo", "specdev"), { recursive: true });
   await writeFile(join(parent, ".speculo", "specdev", "config.json"), specdevConfig());
@@ -233,22 +206,22 @@ describe("SpecDev nested workspace.json state root", () => {
     }
   });
 
-  it("reads frozen legacy archive evidence separately and refuses to run new Work gates on it", async () => {
+  it("refuses a historical folder outside current change locations and preserves its source bytes", async () => {
     const fixture = await nestedFixture();
     try {
-      const name = '2026-08-02-legacy', root = join(fixture.proj, '.agents/speculo/.speculo/specdev');
-      const legacy = join(root, 'archive/2026-08', name); await mkdir(legacy, { recursive: true });
-      const status = JSON.parse(changeStatus(name)); Object.assign(status, { change_status: 'archived', archived: true, archive_path: `<Path>{roots.state}/specdev/archive/2026-08/${name}</Path>` });
-      const original = JSON.stringify(status, null, 3) + '\r\n'; await writeFile(join(legacy, '.status.json'), original);
-      assert.equal(readLegacyChangeEvidenceSync(root, name).readonly, true);
-      const result = runValidator(legacy, { stage: 'grill', repo: fixture.proj }); assert.notEqual(result.status, 0);
-      assert.match(combined(result), /read-only legacy evidence reader/);
-      assert.equal(await readFile(join(legacy, '.status.json'), 'utf8'), original);
+      const name = '2026-08-02-history', root = join(fixture.proj, '.agents/speculo/.speculo/specdev');
+      const historical = join(root, 'archive/2026-08', name); await mkdir(historical, { recursive: true });
+      const original = '{"historical":"opaque source bytes"}\r\n'; await writeFile(join(historical, '.status.json'), original);
+      assert.throws(() => readChangeFactsSync(root, name), /identity-conflict/);
+      const result = runValidator(historical, { stage: 'grill', repo: fixture.proj }); assert.notEqual(result.status, 0);
+      assert.match(combined(result), /identity-conflict/);
+      assert.equal(await readFile(join(historical, '.status.json'), 'utf8'), original);
+      assert.equal(runValidator(fixture.legal, { stage: 'grill', repo: fixture.proj }).status, 0);
     } finally { await rm(fixture.proj, { recursive: true, force: true }); }
   });
 
-  it("rejects missing workspace instead of inferring a legacy state root", async () => {
-    const fixture = await flatLegacyFixture();
+  it("rejects missing workspace instead of guessing a state root from nearby files", async () => {
+    const fixture = await uninstalledFixture();
     try {
       const result = runValidator(fixture.change, { stage: "grill", cwd: fixture.parent });
       assert.notEqual(result.status, 0, combined(result));

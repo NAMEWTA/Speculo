@@ -9,7 +9,7 @@ description: 将用户选择的归档或知识整理请求交给 owning workflow
 
 ## 定位与路由
 
-1. 从项目入口或当前目录向上定位字面路径 `.agents/speculo/.speculo/workspace.json`，唯一确定 project_root，验证 path_base 与 roots；之后才使用 alias。SpecDev 无安装时可传明确 projectRoot/methodRoot/stateRoot，由其新根合同验证；其他领域保持原安装/状态语义，缺失仅阻塞依赖的操作。配置 `<Path>{roots.config}</Path>` 缺失可使用领域默认值，不降低授权要求。
+1. 从当前目录向上定位字面路径 `.agents/speculo/.speculo/workspace.json`，唯一确定 project_root，验证当前 schema、path_base 与 roots；之后才通过现有 resolver 将 alias 解析为绝对路径。用户明确项目根与发现结果不一致时先消歧；无效 workspace 不猜测或初始化。SpecDev 无安装时可传明确 projectRoot/methodRoot/stateRoot，由其根合同验证；其他领域保持原安装/状态语义，缺失仅阻塞依赖的操作。配置 `<Path>{roots.config}</Path>` 缺失可使用领域默认值，并在回执说明，不降低授权要求。
 2. 从用户请求和领域 `<Path>{roots.workflows}/{workflow}/SKILL.md</Path>`、manifest 定位真实 Work。已明确的目标和模式直接复用；只有多个合理候选或意图冲突才消歧。
 3. SpecDev 交给 `<Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>`，传入经验证的新根上下文、指定 change/知识主题、dry-run/confirmed 和已批准动作；Work 自己维护完成门、知识网关及恢复。
 4. Learning 按请求交给 `<Path>{roots.workflows}/learning/learning-c-consolidate/SKILL.md</Path>` 或 `<Path>{roots.workflows}/learning/learning-a-archive/SKILL.md</Path>`。C 拥有递归 source/parent lock、relocation 与 synthesis；A 只归档用户 close/confirm 的 root 树，按最新源更新时间选月份，不要求 Homework、R 或 mastery。冷归档树要先经明确恢复才能移动。

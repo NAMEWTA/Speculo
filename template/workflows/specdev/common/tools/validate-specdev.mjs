@@ -25,12 +25,14 @@ import * as runtime from "../../../../lib/speculo-runtime.mjs";
 
 import {
   validateTicketPlan, validatePlanMap, validateInvocationCoverage,
-  validateGoalMap, validateInitiative, resolveProjectSource, readChangeExecution, readSpecification, resolveToolContext, validateExecutionPolicy, canonicalToolPath, resolveSnapshotContext, readLightweightGoal, validateAcceptanceEvidence,
+  validateGoalMap, validateInitiative, resolveProjectSource, readSpecification, resolveToolContext, validateExecutionPolicy, canonicalToolPath, readLightweightGoal, validateAcceptanceEvidence,
 } from "./plan-contract.mjs";
 
 import { validateChangeClosure, readChangeOwner } from "./change-artifacts.mjs";
 import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
-import { readExecutionContext, ticketPolicy, resolveExecutionWorkspace, validateExecutionRecord } from './execution-context.mjs';
+import { ticketPolicy } from './execution-context.mjs';
+import { validateChangeExecution } from './execution-validation.mjs';
+import { diagnosticErrors, addDiagnostic, appendDiagnostics, validationResult } from './validation-diagnostics.mjs';
 import { reviewScopeCLI } from "./review-scope.mjs";
 import { hasIndependentReview, validateIndependentReview } from "./review-evidence.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
@@ -40,8 +42,6 @@ const CONFIG_SCHEMA_VERSION = 7;
 const GOAL_PLAN_SCHEMA_VERSION = 8;
 const IMPLEMENTATION_MAP_SCHEMA_VERSION = 1;
 const IMPLEMENTATION_PLAN_SCHEMA_VERSION = 3;
-const CHANGE_STATUS_SCHEMA_VERSION = 6;
-const GLOBAL_STATUS_SCHEMA_VERSION = 5;
 const WORKFLOW_PREFIX = "{roots.workflows}/specdev/";
 const STATE_PREFIX = "{roots.state}/specdev/";
 const STATE_ROOT_PREFIX = "{roots.state}/";
@@ -137,19 +137,6 @@ const VALID_PLAN_MODES = new Set([
   "reference-conformance",
   "release-coordination",
 ]);
-const VALID_WORKTREE_STATUS = new Set([
-  "planned",
-  "active",
-  "review",
-  "integrating",
-  "integrated",
-  "removed",
-  "blocked",
-]);
-const VALID_INTEGRATION_STATUS = new Set(["pending", "candidate", "passed", "failed", "stale"]);
-const VALID_INTEGRATION_METHOD = new Set([null, "direct-parent", "fast-forward", "merge-commit"]);
-const VALID_INTEGRATION_VERIFICATION = new Set(["pending", "passed", "failed"]);
-const VALID_E2E_STATUS = new Set(["not-required", "pending", "passed", "failed"]);
 const VALID_DESIGN_TREE_STATUS = new Set(["active", "consensus", "blocked"]);
 const VALID_DESIGN_NODE_STATUS = new Set(["open", "answered", "deferred", "rejected"]);
 const VALID_WAYFINDER_LABEL = new Set([
@@ -292,7 +279,7 @@ function walk(root) {
 
 function resolveWorkspaceContract(repoRoot, change, options = {}) {
   try {
-    const context = options.readOnlySnapshot ? resolveSnapshotContext(options.readOnlySnapshot) : resolveToolContext(change, { ...options, repoRoot });
+    const context = resolveToolContext(change, { ...options, repoRoot });
     const location = runtime.resolveChangeSync(context, basename(change), { includeArchived: true });
     const errors = canonicalToolPath(context, change) === location.root ? [] : ["change is outside the declared state root"];
     const configPath = join(context.specdevRoot, "config.json");
@@ -301,11 +288,6 @@ function resolveWorkspaceContract(repoRoot, change, options = {}) {
   } catch(error) { return {errors:[String(error)],config:null,specdevRoot:null}; }
 }
 function findSpecdevConfig(change,repoRoot=null,options={}) {return resolveWorkspaceContract(repoRoot,change,options).config;}
-
-function positiveConfigLimit(config, key, fallback) {
-  const value = config?.execution?.[key];
-  return Number.isInteger(value) && value >= 1 ? value : fallback;
-}
 
 function parseFrontmatter(path) {
   const text=readText(path);
@@ -674,30 +656,12 @@ function validateJsonFiles(root) {
   return errors;
 }
 
-function validateGlobalStatusAssets(root) {
+function validateRetiredSeeds(root) {
   const errors = [];
   for (const path of [join(root,"_state/status.json"),join(root,"specdev-i-init-setup/assets/status-template.json"),join(root,"specdev-i-init-setup/assets/change-status-template.json")]) {
     if (existsSync(path)) errors.push(`retired business status must not be distributed as a new seed: ${toPosix(relative(root,path))}`);
   }
 
-  const schemaPath = join(root, "common", "schemas", "status.schema.json");
-  if (!isFile(schemaPath)) {
-    errors.push("missing common/schemas/status.schema.json");
-    return errors;
-  }
-  const schema = JSON.parse(readText(schemaPath));
-  if (
-    schema.$id !== "urn:speculo:specdev:status:v5" ||
-    schema.properties?.schema_version?.const !== GLOBAL_STATUS_SCHEMA_VERSION ||
-    schema.additionalProperties !== false
-  ) {
-    errors.push("status.schema.json must define the strict SpecDev global status v5 index contract");
-  }
-  for (const removed of ["work_history", "completed", "result"]) {
-    if (JSON.stringify(schema).includes(`\"${removed}\"`)) {
-      errors.push(`status.schema.json still contains removed global field ${removed}`);
-    }
-  }
   return errors;
 }
 
@@ -706,7 +670,6 @@ function validateExecutionContractAssets(root) {
   const configTemplatePath = join(root, "specdev-i-init-setup", "assets/config-template.json");
   const configSchemaPath = join(root, "common", "schemas", "config.schema.json");
   const goalPlanSchemaPath = join(root, "common", "schemas", "goal-plan.schema.json");
-  const changeSchemaPath = join(root, "common", "schemas", "change-status.schema.json");
   const implementationMapSchemaPath = join(root, "common", "schemas", "implementation-map.schema.json");
   const implementationPlanSchemaPath = join(root, "common", "schemas", "implementation-plan.schema.json");
 
@@ -714,7 +677,6 @@ function validateExecutionContractAssets(root) {
     configTemplatePath,
     configSchemaPath,
     goalPlanSchemaPath,
-    changeSchemaPath,
     implementationMapSchemaPath,
     implementationPlanSchemaPath,
   ]) {
@@ -766,19 +728,7 @@ function validateExecutionContractAssets(root) {
     goalPlanSchema.properties?.max_parallel_tickets?.minimum !== 1 ||
     goalPlanSchema.additionalProperties !== false
   ) {
-    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v7 workspace strategy contract");
-  }
-
-  const changeSchema = JSON.parse(readText(changeSchemaPath));
-  const worktreeRequired = new Set(changeSchema.$defs?.worktree?.required ?? []);
-  const integrationRequired = new Set(changeSchema.$defs?.integration?.required ?? []);
-  if (
-    changeSchema.$id !== "urn:speculo:specdev:change-status:v6" ||
-    !["implementation_owner", "integration_owner", "source_checkpoint", "integration"].every((key) => worktreeRequired.has(key)) ||
-    !["parent_ref", "candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref", "full_suite", "e2e", "promotion_status"].every((key) => integrationRequired.has(key)) ||
-    changeSchema.additionalProperties !== false
-  ) {
-    errors.push("change-status.schema.json must define the strict Ticket integration v6 contract");
+    errors.push("goal-plan.schema.json must define the strict Lead-directed Goal Plan v8 workspace contract");
   }
 
   const implementationMapSchema = JSON.parse(readText(implementationMapSchemaPath));
@@ -801,7 +751,7 @@ function validateExecutionContractAssets(root) {
     !["auto", "serial", "parallel"].every((value) => implementationPlanSchema.properties?.ticket_execution?.enum?.includes(value)) ||
     implementationPlanSchema.additionalProperties !== false
   ) {
-    errors.push("implementation-plan.schema.json must define the strict parent implementation projection contract v1");
+    errors.push("implementation-plan.schema.json must define the strict parent implementation plan v3 contract");
   }
   return errors;
 }
@@ -1054,7 +1004,7 @@ function selfCheck(root) {
   }
 
   errors.push(...validateJsonFiles(root));
-  errors.push(...validateGlobalStatusAssets(root));
+  errors.push(...validateRetiredSeeds(root));
   errors.push(...validateExecutionContractAssets(root));
   const references = validateDocumentReferences(root);
   errors.push(...references.errors);
@@ -1864,7 +1814,6 @@ function validateMap(path, errors, repoRoot = null) {
 function validateGoalPlan(path, errors) {
   if (!isFile(path)) { errors.push(`missing Goal Plan: ${basename(path)}`); return null; }
   const {meta,body} = parseFrontmatter(path);
-  if (meta.schema_version === 7 && /^Outcome: completed$/m.test(readText(join(dirname(path),'README.md')))) return validateLegacyGoalPlan(path,errors);
   const schema = JSON.parse(readText(fileURLToPath(new URL('../schemas/goal-plan.schema.json', import.meta.url))));
   if (/^## (?:Delegated Execution|Isolated Workspace) Addendum$/m.test(body)) errors.push('goal-plan.md: obsolete Goal Plan addendum');
   for (const key of schema.required) if (!(key in meta)) errors.push(`${basename(path)}: missing ${key}`);
@@ -1882,102 +1831,8 @@ function validateGoalPlan(path, errors) {
   return {path,meta,body};
 }
 
-function validateLegacyGoalPlan(path, errors) {
-  if (!isFile(path)) {
-    errors.push(`missing Goal Plan: ${basename(path)}`);
-    return null;
-  }
-  const { meta, body } = parseFrontmatter(path);
-  const required = [
-    "schema_version",
-    "artifact",
-    "change",
-    "status",
-    "modes",
-    "orchestration",
-      "lead",
-      "concurrent_implementation_limit",
-      "integration_attempt_limit",
-    "ticket_workspace_policy",
-    "integration_gate",
-    "ready_for_execution",
-  ];
-  const missing = required.filter((key) => !(key in meta));
-  if (missing.length) errors.push(`${basename(path)}: missing keys ${JSON.stringify(missing.sort())}`);
-  const unexpected = Object.keys(meta).filter((key) => !required.includes(key));
-  if (unexpected.length) errors.push(`${basename(path)}: unexpected keys ${JSON.stringify(unexpected.sort())}`);
-  if (meta.artifact !== "goal-plan" || meta.schema_version !== 7) {
-    errors.push(`${basename(path)}: artifact/schema_version must be goal-plan/7`);
-  }
-  const modes = requireList(meta, "modes", basename(path), errors);
-  const invalidModes = modes.filter((mode) => !VALID_PLAN_MODES.has(mode));
-  if (invalidModes.length) {
-    errors.push(`${basename(path)}: invalid modes ${JSON.stringify(invalidModes)}`);
-  }
-  if (meta.orchestration !== "lead-directed") {
-    errors.push(`${basename(path)}: orchestration must be lead-directed`);
-  }
-  if (typeof meta.lead !== "string" || !meta.lead.trim()) {
-    errors.push(`${basename(path)}: lead must be a non-empty recoverable locator`);
-  }
-  if (!Number.isInteger(meta.concurrent_implementation_limit) || meta.concurrent_implementation_limit < 1) {
-    errors.push(`${basename(path)}: concurrent_implementation_limit must be a positive integer`);
-  }
-  if (!Number.isInteger(meta.integration_attempt_limit) || meta.integration_attempt_limit < 1) {
-    errors.push(`${basename(path)}: integration_attempt_limit must be a positive integer`);
-  }
-  if (!new Set(["current", "required"]).has(meta.ticket_workspace_policy)) {
-    errors.push(`${basename(path)}: ticket_workspace_policy must be current or required`);
-  }
-  if (!new Set(["direct-parent", "candidate-merge"]).has(meta.integration_gate)) {
-    errors.push(`${basename(path)}: integration_gate must be direct-parent or candidate-merge`);
-  }
-  if (
-    (meta.ticket_workspace_policy === "current" && meta.integration_gate !== "direct-parent") ||
-    (meta.ticket_workspace_policy === "required" && meta.integration_gate !== "candidate-merge")
-  ) {
-    errors.push(`${basename(path)}: ticket_workspace_policy and integration_gate must use current/direct-parent or required/candidate-merge`);
-  }
-  for (const obsolete of ["coordination_mode", "workspace_strategy", "terminal_action"]) {
-    if (obsolete in meta) errors.push(`${basename(path)}: obsolete Goal Plan field ${obsolete} is not allowed`);
-  }
-  for (const obsolete of ["## Delegated Execution Addendum", "## Isolated Workspace Addendum"]) {
-    if (body.includes(obsolete)) errors.push(`${basename(path)}: obsolete Goal Plan addendum '${obsolete}' is not allowed`);
-  }
-  const validReadyStates = new Set(["ready", "in_progress"]);
-  const validNotReadyStates = new Set(["draft", "blocked", "completed"]);
-  if (
-    typeof meta.ready_for_execution !== "boolean" ||
-    (meta.ready_for_execution === true && !validReadyStates.has(meta.status)) ||
-    (meta.ready_for_execution === false && !validNotReadyStates.has(meta.status))
-  ) {
-    errors.push(`${basename(path)}: ready_for_execution must match status`);
-  }
-  if (meta.ready_for_execution === true) {
-    for (const heading of REQUIRED_GOAL_PLAN_SECTIONS) {
-      if (!body.includes(heading)) {
-        errors.push(`${basename(path)}: ready Goal Plan missing '${heading}'`);
-      }
-    }
-    const legacyMarkers = REQUIRED_LEAD_GOAL_PLAN_MARKERS.map(marker=>marker === 'Ticket scheduling' ? 'Concurrent implementations' : marker === '### Change Workspace and Verification' ? '### Ticket Workspace and Integration' : marker);
-    const requiredMarkers = meta.ticket_workspace_policy === "current"
-      ? [...legacyMarkers, "Local direct-parent verification and parent update"]
-      : [...legacyMarkers, "source worktree 不运行 E2E", "Local candidate integration and parent update"];
-    const missingLeadMarkers = requiredMarkers.filter((marker) => !body.includes(marker));
-    if (missingLeadMarkers.length) {
-      errors.push(`${basename(path)}: ready Goal Plan missing Lead/workspace markers ${JSON.stringify(missingLeadMarkers)}`);
-    }
-    const assumptions = sectionBody(body, "## Assumptions");
-    if (assumptions && assumptions.includes("高影响") && !assumptions.includes("必须为 `false`")) {
-      errors.push(`${basename(path)}: high-impact assumptions cannot remain in a ready Goal Plan`);
-    }
-  }
-  return { path, meta, body };
-}
-
 function validateGoalPlanRuntimeLimits(path, change, goalPlan, errors, repoRoot = null, options = {}) {
   if (!goalPlan) return;
-  if (goalPlan.meta.schema_version === 7 && /^Outcome: completed$/m.test(readText(join(change,'README.md')))) return;
   errors.push(...validateExecutionPolicy(goalPlan, findSpecdevConfig(change, repoRoot, options)).map(error => `${basename(path)}: ${error}`));
 }
 
@@ -2151,8 +2006,16 @@ function validateWayfinder(change, errors) {
   return tickets;
 }
 
+function ticketDiagnostics(errors, change, ticket, artifact = null, code = 'ticket-contract-invalid') {
+  return diagnosticErrors({code, scope: /^T-\d{2,}$/.test(ticket ?? '') ? 'ticket' : 'change',
+    change: basename(change), ...(/^T-\d{2,}$/.test(ticket ?? '') ? {ticket: String(ticket)} : {}),
+    ...(artifact ? {artifact: toPosix(relative(change, artifact))} : {}),
+  }, errors);
+}
+
 function validateTicket(path, errors) {
   const { meta, body } = parseFrontmatter(path);
+  errors = ticketDiagnostics(errors, dirname(dirname(path)), meta.id, path);
   const missing = [...REQUIRED_TICKET_KEYS].filter((key) => !(key in meta));
   if (missing.length) {
     errors.push(`${basename(path)}: missing frontmatter keys ${JSON.stringify(missing.sort())}`);
@@ -2224,7 +2087,7 @@ function validateTicket(path, errors) {
     if (!verification || !verification.includes("|")) {
       errors.push(`${basename(path)}: Ready Ticket has no usable verification matrix`);
     }
-    if (!verification.includes("E2E disposition") || !/(change-workspace|current-workspace|source-worktree|parent-candidate|direct-parent)/.test(verification)) {
+    if (!verification.includes("E2E disposition") || !/\bchange-workspace\b/.test(verification)) {
       errors.push(`${basename(path)}: Ready Ticket must define E2E disposition and an explicit execution environment`);
     }
     const acceptance = semanticSection(body, ["验收标准"]).toLowerCase();
@@ -2233,445 +2096,6 @@ function validateTicket(path, errors) {
     }
   }
   return { path, meta, body };
-}
-
-function validateChangeExecution(change, errors, context) {
-  const path = join(change, "evidence"), expectedChange = basename(change);
-  let data;
-  try {
-    const facts = runtime.readChangeFactsSync(context, basename(change));
-    if (facts.location.root !== resolve(change)) throw new Error('change identity does not match requested location');
-    data = { ...facts, worktrees:readChangeExecution(change), executionContext:readExecutionContext(change) };
-  } catch (error) { errors.push(`${change}: ${error.message}`); return null; }
-  const modern = data.worktrees.filter(record=>record.schema_version === 1);
-  const legacy = data.worktrees.filter(record=>record.schema_version !== 1);
-  if (legacy.length && (data.outcome === 'active' || modern.length || data.executionContext)) errors.push('legacy-active-execution: explicit reconciliation by original owner required; preserve old worktrees and evidence');
-  if (data.executionContext) {
-    try {
-      const owner = readChangeOwner(context,expectedChange).owner;
-      if (owner !== data.executionContext.owner) errors.push('Execution Context owner differs from original Lead');
-      data.workspaceRoot = resolveExecutionWorkspace(context.projectRoot,data.executionContext);
-    } catch(error) { errors.push(error.message); }
-  }
-  for (const record of modern) {
-    errors.push(...validateExecutionRecord(change,record,data.executionContext,{repoRoot:data.workspaceRoot ?? context.projectRoot,sourceRoot:context.projectRoot}));
-    if (record.purpose === 'direct-spec' && record.status === 'cancelled' && data.outcome !== 'cancelled') errors.push('cancelled Direct Spec execution requires the original whole-change cancellation');
-  }
-  const seenWorktreeTickets = new Set();
-  for (const worktree of legacy) {
-    if (!worktree || typeof worktree !== "object" || Array.isArray(worktree)) {
-      errors.push(`${basename(path)}: invalid worktree entry`);
-      continue;
-    }
-    const direct = worktree.purpose === "direct-spec";
-    const unit = direct ? "direct-spec" : worktree.ticket_id;
-    const requiredWorktreeKeys = [
-      ...(direct ? ["purpose", "change", "integration_attempt_limit"] : ["ticket_id"]),
-      "owner",
-      "implementation_owner",
-      "integration_owner",
-      "provider",
-      "base_sha",
-      "parent_branch",
-      "branch",
-      "workspace_ref",
-      "source_checkpoint",
-      "integration",
-      "status",
-      "updated_at",
-    ];
-    const missingWorktreeKeys = requiredWorktreeKeys.filter((key) => !(key in worktree));
-    if (missingWorktreeKeys.length) {
-      errors.push(`${basename(path)}: worktree integration contract missing ${JSON.stringify(missingWorktreeKeys)}`);
-      continue;
-    }
-    const unexpectedWorktreeKeys = Object.keys(worktree).filter((key) => !requiredWorktreeKeys.includes(key));
-    if (unexpectedWorktreeKeys.length) {
-      errors.push(`${basename(path)}: worktree ${unit} has unexpected keys ${JSON.stringify(unexpectedWorktreeKeys.sort())}`);
-    }
-    if (direct) {
-      if (worktree.change !== expectedChange) errors.push("Direct Spec execution belongs to another change");
-      try {
-        if (readChangeOwner(context, expectedChange).owner !== worktree.owner) errors.push("Direct Spec execution owner differs from original Lead");
-      } catch (error) { errors.push(error.message); }
-      if (!Number.isInteger(worktree.integration_attempt_limit) || worktree.integration_attempt_limit < 1) errors.push("Direct Spec requires a positive integration_attempt_limit");
-      if (worktree.integration?.attempts > worktree.integration_attempt_limit) errors.push("Direct Spec integration attempts exceed integration_attempt_limit");
-      if (worktree.integration_owner !== worktree.owner) errors.push("Direct Spec integration owner must be Lead");
-      if (worktree.status === "cancelled" && data.outcome !== "cancelled") errors.push("cancelled Direct Spec execution requires the original whole-change cancellation");
-      if (worktree.workspace_ref !== "current" && worktree.branch !== `speculo/${expectedChange}/direct-spec`) errors.push("Direct Spec source branch must match its change");
-    } else if (!/^T-[0-9]{2,}$/.test(String(unit))) {
-      errors.push(`${basename(path)}: invalid worktree ticket_id ${unit}`);
-    } else if (seenWorktreeTickets.has(unit)) {
-      errors.push(`${basename(path)}: duplicate worktree for ${unit}`);
-    }
-    seenWorktreeTickets.add(unit);
-    const ref = worktree.workspace_ref;
-    if (
-      typeof ref !== "string" ||
-      ref.startsWith("/") ||
-      /^[A-Za-z]:[\\/]/.test(ref)
-    ) {
-      errors.push(`${basename(path)}: workspace_ref must be a portable non-absolute locator`);
-      continue;
-    }
-    if (!VALID_WORKTREE_STATUS.has(worktree.status) && !(direct && worktree.status === "cancelled")) {
-      errors.push(`${basename(path)}: invalid worktree status ${worktree.status}`);
-    }
-    const currentWorkspace = ref === "current";
-    if (worktree.provider !== "git") {
-      errors.push(`${basename(path)}: Ticket worktree ${unit} provider must be git`);
-    }
-    const expectedRef = `specdev-worktree/${expectedChange}/${unit}`;
-    if (!currentWorkspace && ref !== expectedRef) {
-      errors.push(`${basename(path)}: git workspace_ref must equal ${expectedRef}`);
-    }
-
-    if ("terminal_action" in worktree) {
-      errors.push(`${basename(path)}: worktree ${unit} obsolete terminal_action is not allowed`);
-    }
-    const requiredIntegrationKeys = [
-      "owner",
-      "implementation_owner",
-      "integration_owner",
-      "parent_branch",
-      "source_checkpoint",
-      "integration",
-    ];
-    const missingIntegrationKeys = requiredIntegrationKeys.filter((key) => !(key in worktree));
-    if (missingIntegrationKeys.length) {
-      errors.push(`${basename(path)}: worktree ${unit} integration contract missing ${JSON.stringify(missingIntegrationKeys)}`);
-      continue;
-    }
-    for (const key of ["owner", "implementation_owner", "integration_owner", "base_sha", "parent_branch", "branch", "updated_at"]) {
-      if (typeof worktree[key] !== "string" || !worktree[key].trim()) {
-        errors.push(`${basename(path)}: worktree ${unit} ${key} is required`);
-      }
-    }
-    if (typeof worktree.parent_branch !== "string" || !worktree.parent_branch.trim()) {
-      errors.push(`${basename(path)}: worktree ${unit} parent_branch is required`);
-    } else if (currentWorkspace && worktree.parent_branch !== worktree.branch) {
-      errors.push(`${basename(path)}: current workspace ${unit} branch must equal parent_branch`);
-    } else if (!currentWorkspace && worktree.parent_branch === worktree.branch) {
-      errors.push(`${basename(path)}: worktree ${unit} parent_branch must differ from branch`);
-    }
-
-    const sourceRequired = new Set(["review", "integrating", "integrated", "removed"]).has(worktree.status);
-    if (sourceRequired && (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())) {
-      errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires source_checkpoint`);
-    } else if (
-      worktree.source_checkpoint !== null &&
-      (typeof worktree.source_checkpoint !== "string" || !worktree.source_checkpoint.trim())
-    ) {
-      errors.push(`${basename(path)}: worktree ${unit} source_checkpoint must be null or non-empty`);
-    }
-
-    const integration = worktree.integration;
-    if (!integration || typeof integration !== "object" || Array.isArray(integration)) {
-      errors.push(`${basename(path)}: worktree ${unit} integration must be an object`);
-      continue;
-    }
-    const requiredResultKeys = [
-      "status",
-      "parent_ref",
-      "parent_before_sha",
-      "source_sha",
-      "candidate_sha",
-      "candidate_tree_sha",
-      "candidate_branch",
-      "candidate_workspace_ref",
-      "result_sha",
-      "method",
-      "conflict_paths",
-      "verification",
-      "full_suite",
-      "e2e",
-      "evidence",
-      "attempts",
-      "promotion_status",
-    ];
-    const missingResultKeys = requiredResultKeys.filter((key) => !(key in integration));
-    if (missingResultKeys.length) {
-      errors.push(`${basename(path)}: worktree ${unit} integration missing ${JSON.stringify(missingResultKeys)}`);
-    }
-    const unexpectedResultKeys = Object.keys(integration).filter((key) => !requiredResultKeys.includes(key));
-    if (unexpectedResultKeys.length) {
-      errors.push(`${basename(path)}: worktree ${unit} integration has unexpected keys ${JSON.stringify(unexpectedResultKeys.sort())}`);
-    }
-    if (!VALID_INTEGRATION_STATUS.has(integration.status)) {
-      errors.push(`${basename(path)}: worktree ${unit} has invalid integration status ${integration.status}`);
-    }
-    if (!VALID_INTEGRATION_METHOD.has(integration.method)) {
-      errors.push(`${basename(path)}: worktree ${unit} has invalid integration method ${integration.method}`);
-    }
-    if (!VALID_INTEGRATION_VERIFICATION.has(integration.verification)) {
-      errors.push(`${basename(path)}: worktree ${unit} has invalid integration verification ${integration.verification}`);
-    }
-    if (!Array.isArray(integration.conflict_paths)) {
-      errors.push(`${basename(path)}: worktree ${unit} conflict_paths must be an array`);
-    }
-    if (!Number.isInteger(integration.attempts) || integration.attempts < 0) {
-      errors.push(`${basename(path)}: worktree ${unit} attempts must be a non-negative integer`);
-    }
-    const expectedEvidence = `<Path>{roots.state}/specdev/changes/${expectedChange}/evidence/${unit}.md</Path>`;
-    if (direct ? integration.evidence !== expectedEvidence : typeof integration.evidence !== "string" || !/^<Path>\{roots\.state\}\/specdev\/changes\/[^<]+\/evidence\/T-[0-9]{2,}\.md<\/Path>$/.test(integration.evidence)) {
-      errors.push(`${basename(path)}: worktree ${unit} integration evidence must be its rooted Evidence path: ${expectedEvidence}`);
-    }
-    if (!new Set(["pending", "applying", "applied", "failed", "stale"]).has(integration.promotion_status)) {
-      errors.push(`${basename(path)}: worktree ${unit} has invalid promotion_status ${integration.promotion_status}`);
-    }
-    for (const [name, suite] of [["full_suite", integration.full_suite], ["e2e", integration.e2e]]) {
-      if (!suite || typeof suite !== "object" || Array.isArray(suite) || typeof suite.required !== "boolean" || !VALID_E2E_STATUS.has(suite.status)) {
-        errors.push(`${basename(path)}: worktree ${unit} ${name} contract is invalid`);
-        continue;
-      }
-      const unexpectedSuiteKeys = Object.keys(suite).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
-      if (unexpectedSuiteKeys.length) errors.push(`${basename(path)}: worktree ${unit} ${name} has unexpected keys ${JSON.stringify(unexpectedSuiteKeys.sort())}`);
-      if (suite.required === false && (suite.status !== "not-required" || typeof suite.reason !== "string" || !suite.reason.trim())) {
-        errors.push(`${basename(path)}: worktree ${unit} non-required ${name} needs not-required status and reason`);
-      }
-      if (suite.required === true && suite.status === "not-required") {
-        errors.push(`${basename(path)}: worktree ${unit} required ${name} cannot be not-required`);
-      }
-      if (direct && suite.required === true && suite.status === "passed" && (typeof suite.evidence !== "string" || !suite.evidence.trim())) errors.push(`Direct Spec passed ${name} requires actual evidence`);
-    }
-    const e2e = integration.e2e;
-    if (
-      !e2e ||
-      typeof e2e !== "object" ||
-      Array.isArray(e2e) ||
-      typeof e2e.required !== "boolean" ||
-      !VALID_E2E_STATUS.has(e2e.status)
-    ) {
-      errors.push(`${basename(path)}: worktree ${unit} integration e2e contract is invalid`);
-    } else {
-      const unexpectedE2eKeys = Object.keys(e2e).filter((key) => !new Set(["required", "status", "reason", "evidence"]).has(key));
-      if (unexpectedE2eKeys.length) {
-        errors.push(`${basename(path)}: worktree ${unit} integration e2e has unexpected keys ${JSON.stringify(unexpectedE2eKeys.sort())}`);
-      }
-      if (e2e.required === false && e2e.status !== "not-required") {
-        errors.push(`${basename(path)}: worktree ${unit} non-required E2E must use status=not-required`);
-      }
-      if (e2e.required === true && e2e.status === "not-required") {
-        errors.push(`${basename(path)}: worktree ${unit} required E2E cannot be not-required`);
-      }
-      if (
-        e2e.required === true &&
-        e2e.status === "passed" &&
-        (typeof e2e.evidence !== "string" || !e2e.evidence.trim())
-      ) {
-        errors.push(`${basename(path)}: worktree ${unit} passed required E2E needs evidence`);
-      }
-    }
-    const integrationLifecycleActive = new Set(["integrating", "integrated", "removed"]).has(worktree.status);
-    if (integrationLifecycleActive) {
-      if (typeof integration.parent_before_sha !== "string" || !integration.parent_before_sha.trim()) {
-        errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires parent_before_sha`);
-      }
-      if (typeof integration.source_sha !== "string" || !integration.source_sha.trim()) {
-        errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires source_sha`);
-      } else if (integration.source_sha !== worktree.source_checkpoint) {
-        errors.push(`${basename(path)}: worktree ${unit} source_sha must equal source_checkpoint`);
-      }
-      if (currentWorkspace) {
-        if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
-          errors.push(`${basename(path)}: current workspace ${unit} cannot record candidate workspace fields`);
-        }
-        if (integration.method !== "direct-parent") {
-          errors.push(`${basename(path)}: current workspace ${unit} requires integration.method=direct-parent`);
-        }
-      } else {
-        if (typeof integration.candidate_sha !== "string" || !integration.candidate_sha.trim()) {
-          errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires candidate_sha`);
-        }
-        const expectedCandidateBranch = `speculo/integration/${expectedChange}/${unit}`;
-        if (integration.candidate_branch !== expectedCandidateBranch) {
-          errors.push(`${basename(path)}: worktree ${unit} candidate_branch must equal ${expectedCandidateBranch}`);
-        }
-        const expectedCandidateRef = `specdev-worktree/.integration/${expectedChange}/${unit}`;
-        if (integration.candidate_workspace_ref !== expectedCandidateRef) {
-          errors.push(`${basename(path)}: worktree ${unit} candidate_workspace_ref must equal ${expectedCandidateRef}`);
-        }
-        if (!new Set(["fast-forward", "merge-commit"]).has(integration.method)) {
-          errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires an integration method`);
-        }
-      }
-    if (!Number.isInteger(integration.attempts) || integration.attempts < 1) {
-      errors.push(`${basename(path)}: worktree ${unit} ${worktree.status} requires attempts >= 1`);
-    }
-    }
-    if (worktree.status === "integrating" && integration.status !== "candidate") {
-      errors.push(`${basename(path)}: integrating worktree ${unit} requires integration.status=candidate`);
-    }
-    if (new Set(["integrated", "removed"]).has(worktree.status)) {
-      if (
-        integration.status !== "passed" ||
-        integration.verification !== "passed" ||
-        !(currentWorkspace ? integration.method === "direct-parent" : new Set(["fast-forward", "merge-commit"]).has(integration.method)) ||
-        typeof integration.result_sha !== "string" ||
-        !integration.result_sha.trim() ||
-        (currentWorkspace ? integration.result_sha !== worktree.source_checkpoint : integration.result_sha !== integration.candidate_sha) ||
-        (direct && (integration.promotion_status !== "applied" || !new Set(["not-required", "passed"]).has(integration.full_suite?.status))) ||
-        !e2e ||
-        !new Set(["not-required", "passed"]).has(e2e.status)
-      ) {
-        errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} requires passed candidate/result/E2E state`);
-      }
-      if (currentWorkspace && integration.method === "direct-parent") {
-        if (integration.candidate_sha !== null || integration.candidate_tree_sha !== null || integration.candidate_branch !== null || integration.candidate_workspace_ref !== null) {
-          errors.push(`${basename(path)}: current workspace ${unit} direct-parent cannot record candidate fields`);
-        }
-        if (integration.result_sha !== worktree.source_checkpoint) {
-          errors.push(`${basename(path)}: current workspace ${worktree.status} ${unit} result_sha must equal source_checkpoint`);
-        }
-      } else if (integration.method === "fast-forward") {
-        if (integration.candidate_sha !== worktree.source_checkpoint) {
-          errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} fast-forward candidate/result must equal source_checkpoint`);
-        }
-        if (Array.isArray(integration.conflict_paths) && integration.conflict_paths.length > 0) {
-          errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} fast-forward cannot record conflict_paths`);
-        }
-      } else if (
-        integration.method === "merge-commit" &&
-        typeof integration.candidate_sha === "string" &&
-        (integration.candidate_sha === worktree.source_checkpoint || integration.candidate_sha === integration.parent_before_sha)
-      ) {
-        errors.push(`${basename(path)}: ${worktree.status} worktree ${unit} merge-commit candidate must be a distinct checkpoint`);
-      }
-    }
-  }
-  return data;
-}
-
-function validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors) {
-  const allEntries = (changeStatus?.worktrees ?? []).filter(record=>record.schema_version !== 1);
-  const entries = goalPlan?.meta.ticket_workspace_policy === "current" ? allEntries : allEntries.filter(entry => entry.workspace_ref === "current");
-  const active = [];
-  for (const worktree of entries) {
-    if (worktree.workspace_ref !== "current") {
-      errors.push(`${worktree.ticket_id}: current Goal Plan requires workspace_ref=current; source worktrees are not allowed`);
-    }
-    if (worktree.parent_branch !== worktree.branch) {
-      errors.push(`${worktree.ticket_id}: current workspace execution must commit directly on parent_branch`);
-    }
-    if (new Set(["active", "review", "integrating", "blocked"]).has(worktree.status)) {
-      active.push(worktree.ticket_id ?? worktree.purpose);
-    }
-    const integration = worktree.integration;
-    if (integration && typeof integration === "object" && !Array.isArray(integration)) {
-      if (["candidate_sha", "candidate_tree_sha", "candidate_branch", "candidate_workspace_ref"].some((key) => integration[key] !== null)) {
-        errors.push(`${worktree.ticket_id}: current workspace execution cannot record candidate workspace fields`);
-      }
-      if (integration.method !== null && integration.method !== "direct-parent") {
-        errors.push(`${worktree.ticket_id}: current workspace execution requires direct-parent integration`);
-      }
-    }
-  }
-  if (active.length > 1) {
-    errors.push(`current Goal Plan requires strictly serial Ticket execution; active worktrees: ${active.join(", ")}`);
-  }
-}
-
-function gitOutput(repoRoot, args) {
-  try {
-    return execFileSync("git", ["-C", repoRoot, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
-  } catch {
-    return null;
-  }
-}
-
-function gitCommitExists(repoRoot, sha) {
-  return typeof sha === "string" && gitSucceeds(repoRoot, ["cat-file", "-e", `${sha}^{commit}`]);
-}
-
-function gitSucceeds(repoRoot, args) {
-  try {
-    execFileSync("git", ["-C", repoRoot, ...args], { stdio: ["ignore", "ignore", "ignore"] });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function validateGitEvidence(repoRoot, changeStatus, errors) {
-  if (!repoRoot || !changeStatus?.worktrees?.length) return;
-  const resolvedRoot = resolve(repoRoot);
-  if (gitOutput(resolvedRoot, ["rev-parse", "--is-inside-work-tree"]) !== "true") {
-    errors.push(`--repo is not a Git worktree: ${resolvedRoot}`);
-    return;
-  }
-  const currentBranch = gitOutput(resolvedRoot, ["branch", "--show-current"]);
-  for (const worktree of (changeStatus?.worktrees ?? []).filter(record=>record.schema_version !== 1)) {
-    const label = String(worktree.ticket_id ?? worktree.purpose ?? "worktree");
-    for (const [name, sha] of [
-      ["base_sha", worktree.base_sha],
-      ["source_checkpoint", worktree.source_checkpoint],
-      ["parent_before_sha", worktree.integration?.parent_before_sha],
-      ["source_sha", worktree.integration?.source_sha],
-      ["candidate_sha", worktree.integration?.candidate_sha],
-      ["result_sha", worktree.integration?.result_sha],
-    ]) {
-      if (sha !== null && sha !== undefined && sha !== "" && !gitCommitExists(resolvedRoot, sha)) {
-        errors.push(`${label}: ${name} is not a resolvable Git commit: ${sha}`);
-      }
-    }
-    if (worktree.workspace_ref === "current") {
-      if (currentBranch !== worktree.parent_branch) errors.push(`${label}: current branch ${currentBranch ?? "<detached>"} must equal ${worktree.parent_branch}`);
-      if (new Set(["integrated", "removed"]).has(worktree.status) && worktree.integration?.result_sha && gitOutput(resolvedRoot, ["rev-parse", worktree.parent_branch]) !== worktree.integration.result_sha) {
-        errors.push(`${label}: parent branch HEAD must equal recorded result_sha`);
-      }
-      if (worktree.integration?.source_sha && worktree.base_sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.integration.source_sha])) {
-        errors.push(`${label}: source_sha must descend from base_sha`);
-      }
-    } else if (worktree.integration?.source_sha && worktree.base_sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.integration.source_sha])) {
-      errors.push(`${label}: source_sha must descend from base_sha`);
-    }
-    if (worktree.workspace_ref !== "current" && new Set(["active","review","integrating","blocked"]).has(worktree.status)) {
-      try {
-        const source = runtime.safeWorkPathSync(resolvedRoot,worktree.workspace_ref,{mustExist:true,type:"directory"});
-        const common = gitOutput(resolvedRoot,["rev-parse","--path-format=absolute","--git-common-dir"]);
-        if (gitOutput(source,["rev-parse","--path-format=absolute","--git-common-dir"]) !== common || gitOutput(source,["branch","--show-current"]) !== worktree.branch) errors.push(`${label}: source workspace must be a real isolated worktree of the recorded repository and branch`);
-      } catch(error) { errors.push(`${label}: actual source isolation is missing: ${error.message}`); }
-    }
-    if (worktree.status === "integrating" && worktree.workspace_ref !== "current") {
-      try {
-        const candidate = runtime.safeWorkPathSync(resolvedRoot,worktree.integration.candidate_workspace_ref,{mustExist:true,type:"directory"});
-        if (gitOutput(candidate,["rev-parse","HEAD"]) !== worktree.integration.candidate_sha || gitOutput(candidate,["rev-parse","HEAD^{tree}"]) !== worktree.integration.candidate_tree_sha) errors.push(`${label}: actual candidate workspace differs from the recorded checkpoint/tree`);
-      } catch(error) { errors.push(`${label}: actual candidate isolation is missing: ${error.message}`); }
-    }
-    if (worktree.purpose === "direct-spec") {
-      const integration = worktree.integration;
-      if (worktree.source_checkpoint && gitOutput(resolvedRoot, ["rev-parse", worktree.branch]) !== worktree.source_checkpoint && worktree.status !== "removed") errors.push(`${label}: source branch tip differs from source_checkpoint`);
-      if (worktree.source_checkpoint && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.base_sha, worktree.source_checkpoint])) errors.push(`${label}: source_checkpoint must descend from base_sha`);
-      if (worktree.workspace_ref !== "current" && new Set(["review", "integrating", "integrated"]).has(worktree.status)) {
-        try {
-          const source = runtime.safeWorkPathSync(resolvedRoot, worktree.workspace_ref, {mustExist:true,type:"directory"});
-          if (gitOutput(source, ["status", "--porcelain"])) errors.push(`${label}: source worktree is dirty`);
-        } catch (error) { errors.push(`${label}: source worktree missing before cleanup: ${error.message}`); }
-      }
-      if (integration?.candidate_sha) {
-        if (gitOutput(resolvedRoot, ["rev-parse", `${integration.candidate_sha}^{tree}`]) !== integration.candidate_tree_sha) errors.push(`${label}: candidate tree differs from recorded tree`);
-        for (const sha of [integration.parent_before_sha, worktree.source_checkpoint]) {
-          if (sha && !gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", sha, integration.candidate_sha])) errors.push(`${label}: candidate must contain parent and source checkpoints`);
-        }
-      }
-      const parent = gitOutput(resolvedRoot, ["rev-parse", worktree.parent_branch]);
-      if (worktree.status === "integrating" && worktree.workspace_ref !== "current") {
-        try {
-          const candidate = runtime.safeWorkPathSync(resolvedRoot, integration.candidate_workspace_ref, {mustExist:true,type:"directory"});
-          if (gitOutput(candidate, ["rev-parse", "--path-format=absolute", "--git-common-dir"]) !== gitOutput(resolvedRoot, ["rev-parse", "--path-format=absolute", "--git-common-dir"]) || gitOutput(candidate, ["branch", "--show-current"]) !== integration.candidate_branch || gitOutput(candidate, ["status", "--porcelain"])) errors.push(`${label}: candidate must be a clean worktree of the recorded repository and branch`);
-        } catch (error) { errors.push(`${label}: candidate cannot be inspected: ${error.message}`); }
-      }
-      if (worktree.status === "integrating" && parent !== integration?.parent_before_sha) errors.push(`${label}: parent HEAD drifted; candidate must be marked stale and rebuilt`);
-      if (new Set(["failed", "stale"]).has(integration?.status) && parent === integration.candidate_sha && parent !== integration.parent_before_sha) errors.push(`${label}: failed or stale candidate has already advanced the parent; reconcile before continuing`);
-      if (new Set(["integrated", "removed"]).has(worktree.status)) {
-        if (parent !== integration?.result_sha) errors.push(`${label}: parent branch HEAD must equal recorded result_sha`);
-        if (!gitSucceeds(resolvedRoot, ["merge-base", "--is-ancestor", worktree.source_checkpoint, parent])) errors.push(`${label}: parent must contain source_checkpoint`);
-      }
-    }
-    if (new Set(["integrated", "removed"]).has(worktree.status) && gitOutput(resolvedRoot, ["status", "--porcelain"])) {
-      errors.push(`${label}: repository is dirty while Ticket is recorded as ${worktree.status}`);
-    }
-  }
 }
 
 function validateParentImplementation(change, parentStatus, stage, errors, warnings, repoRoot = null, options = {}) {
@@ -2780,15 +2204,14 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       errors.push(`implementation-map.md: nested parent implementation is not supported in v1: ${member}`);
     }
 
-    const memberErrors = [];
+    const memberErrors = diagnosticErrors({code: "member-contract-invalid", scope: "change", change: member});
     const memberWarnings = [];
     const status = validateChangeExecution(memberRoot, memberErrors, options.context);
     if (status) {
       memberStatuses.set(member, status);
-      if (parentStatus?.outcome === "completed") validateGitEvidence(options.context.projectRoot,status,memberErrors);
       if (parentStatus?.location.kind !== "archive" && status.location.kind !== "active") memberErrors.push("archived change cannot be an implementation member");
-      for (const record of status.worktrees ?? []) {
-        if ((record.attempts ?? record.integration?.attempts ?? 0) > plan.meta.integration_attempt_limit) memberErrors.push(`${record.ticket_id}: verification attempts exceed parent limit`);
+      for (const record of status.executions ?? []) {
+        if ((record.attempts ?? 0) > plan.meta.integration_attempt_limit) ticketDiagnostics(memberErrors, memberRoot, record.ticket_id, null, 'execution-attempt-limit').push(`${record.ticket_id}: verification attempts exceed parent limit`);
       }
     }
 
@@ -2820,18 +2243,19 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     const childTickets = new Map();
     for (const name of ticketFiles) {
       const artifact = validateTicket(join(ticketRoot, name), memberErrors);
-      if (artifact) memberErrors.push(...validateTicketPlan(artifact, { repoRoot }).map(error => `${name}: ${error}`));
       if (!artifact) continue;
       const ticketId = String(artifact.meta.id);
-      if (artifact.meta.change !== member) memberErrors.push(`${name}: change must equal member directory name`);
-      if (childTickets.has(ticketId)) memberErrors.push(`duplicate Ticket id ${ticketId}`);
+      const localErrors = ticketDiagnostics(memberErrors, memberRoot, ticketId, artifact.path);
+      localErrors.push(...validateTicketPlan(artifact, { repoRoot }).map(error => `${name}: ${error}`));
+      if (artifact.meta.change !== member) localErrors.push(`${name}: change must equal member directory name`);
+      if (childTickets.has(ticketId)) localErrors.push(`duplicate Ticket id ${ticketId}`);
       childTickets.set(ticketId, artifact);
       const numericId = ticketId.replace(/^T-/, "");
-      if (!name.startsWith(`${numericId}-`)) memberErrors.push(`${name}: filename prefix must match ${ticketId}`);
-      if (childMap && !childMap.body.includes(ticketId)) memberErrors.push(`${name}: Ticket id is absent from Tickets Map`);
+      if (!name.startsWith(`${numericId}-`)) localErrors.push(`${name}: filename prefix must match ${ticketId}`);
+      if (childMap && !childMap.body.includes(ticketId)) localErrors.push(`${name}: Ticket id is absent from Tickets Map`);
       if (childSpec) {
         for (const contractId of artifact.meta.contract_ids ?? []) {
-          if (!childSpec.body.includes(String(contractId))) memberErrors.push(`${name}: contract ${contractId} not found in Spec`);
+          if (!childSpec.body.includes(String(contractId))) localErrors.push(`${name}: contract ${contractId} not found in Spec`);
         }
       }
 
@@ -2841,21 +2265,24 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       const terminal = new Set(["done", "cancelled"]).has(artifact.meta.status);
       if (!terminal) {
         if (map.meta.status === "ready" && (artifact.meta.status !== "ready" || artifact.meta.ready !== true)) {
-          memberErrors.push(`${ticketId}: parent creation requires status=ready and ready=true`);
+          localErrors.push(`${ticketId}: parent creation requires status=ready and ready=true`);
         } else if (new Set(["ready", "in_progress", "review"]).has(artifact.meta.status) && artifact.meta.ready !== true) {
-          memberErrors.push(`${ticketId}: executable Ticket must keep ready=true`);
+          localErrors.push(`${ticketId}: executable Ticket must keep ready=true`);
         } else if (new Set(["blocked", "deviated"]).has(artifact.meta.status)) {
           // A local blocker does not revoke unrelated nodes' execution gate.
           // The controller excludes this node and its dependency closure; only a
           // global blocker or an empty legal frontier pauses the whole parent.
         } else if (artifact.meta.status === "draft") {
-          memberErrors.push(`${ticketId}: draft Ticket cannot belong to a parent implementation`);
+          localErrors.push(`${ticketId}: draft Ticket cannot belong to a parent implementation`);
         }
       }
     }
 
     if (childMap) {
-      memberErrors.push(...validateInvocationCoverage(childTickets, childMap.projectSkillMatrix));
+      for (const [id, artifact] of childTickets) {
+        ticketDiagnostics(memberErrors, memberRoot, id, artifact.path, 'ticket-invocation-invalid')
+          .push(...validateInvocationCoverage(new Map([[id, artifact]]), childMap.projectSkillMatrix));
+      }
       validateProjectSkillCoverage(
         childMap.projectSkillMatrix,
         childTickets.keys(),
@@ -2892,9 +2319,9 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     const active = [...childTickets.values()].filter(ticket=>['in_progress','review'].includes(ticket.meta.status));
     if (childPolicy.max_parallel_tickets !== null && active.length > childPolicy.max_parallel_tickets) memberErrors.push('child concurrent Ticket limit exceeded');
     if (stage === 'complete' && status?.outcome === 'completed' && !isFile(join(memberRoot,'implementation-map.md'))) {
-      memberErrors.push(...validateChange(memberRoot,'complete',repoRoot,null,null,options).errors);
+      appendDiagnostics(memberErrors, validateChange(memberRoot,'complete',repoRoot,null,null,options));
     }
-    errors.push(...memberErrors.map((message) => `${member}: ${message}`));
+    appendDiagnostics(errors, memberErrors, {prefix: `${member}: `});
     warnings.push(...memberWarnings.map((message) => `${member}: ${message}`));
   }
 
@@ -3010,7 +2437,10 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
     }
     if (new Set(["completed", "cancelled"]).has(otherStatus)) continue;
     const overlap = otherMap.members.map(String).filter((member) => memberSet.has(member));
-    if (overlap.length) errors.push(`member changes already belong to unfinished parent implementation ${entry.name}: ${JSON.stringify(overlap)}`);
+    for (const member of overlap) addDiagnostic(errors, {
+      code: 'parent-ownership-conflict', scope: 'change', change: member,
+      artifact: `${entry.name}/implementation-map.md`,
+    }, `member ${member} already belongs to unfinished parent implementation ${entry.name}`);
   }
 
   errors.push(...validateExecutionPolicy(plan, findSpecdevConfig(change, repoRoot, options)).map(error => `implementation-plan.md: ${error}`));
@@ -3026,19 +2456,19 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       errors.push("completed parent requires completed Implementation Map and Implementation Plan");
     }
     const activeMemberWork = [...memberStatuses]
-      .flatMap(([member, status]) => (status.worktrees ?? []).map((worktree) => ({ member, worktree })))
-      .filter(({ worktree }) => new Set(["planned", "active", "review", "integrating", "blocked"]).has(worktree?.status) || worktree?.integration?.status === "candidate")
-      .map(({ member, worktree }) => `${member}::${worktree.ticket_id}`);
+      .flatMap(([member, status]) => (status.executions ?? []).map((execution) => ({ member, execution })))
+      .filter(({ execution }) => new Set(['active', 'review', 'blocked']).has(execution?.status))
+      .map(({ member, execution }) => `${member}::${execution.ticket_id}`);
     if (activeMemberWork.length) {
-      errors.push(`completed parent has active member worktrees or candidates: ${JSON.stringify(activeMemberWork)}`);
+      errors.push(`completed parent has active member executions: ${JSON.stringify(activeMemberWork)}`);
     }
     for (const [task, value] of ticketByTask) {
       if (value.artifact.meta.status !== "done") continue;
       if (!isFile(join(value.memberRoot, "evidence", `${value.artifact.meta.id}.md`))) {
         errors.push(`${task}: completed parent requires child Ticket Evidence`);
       }
-      const worktree = value.status?.worktrees?.find((entry) => entry?.ticket_id === value.artifact.meta.id);
-      if (!worktree || !new Set(["verified", "integrated", "removed"]).has(worktree.status)) {
+      const execution = value.status?.executions?.find((entry) => entry?.ticket_id === value.artifact.meta.id);
+      if (!execution || execution.status !== 'verified') {
         errors.push(`${task}: completed parent requires verified child execution evidence`);
       }
     }
@@ -3069,17 +2499,18 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
 }
 
 function validateChange(change, stage = null, repoRoot = null, engineeringKind = null, prototypeId = null, options = {}) {
-  const errors = [];
+  const errors = diagnosticErrors({code: "change-contract-invalid", scope: "change", change: basename(change)});
   const warnings = [];
   const archiveReady = stage === "archive-ready";
   if (archiveReady) stage = "complete";
   if (!isDirectory(change)) {
-    return { errors: [`change directory does not exist: ${change}`], warnings };
+    errors.push(`change directory does not exist: ${change}`);
+    return validationResult(errors, warnings);
   }
 
   const workspace = resolveWorkspaceContract(repoRoot, change, options);
   errors.push(...workspace.errors);
-  if (errors.length) return {errors,warnings};
+  if (errors.length) return validationResult(errors, warnings);
   options = {...options, context:workspace.context};
   change = canonicalToolPath(workspace.context, change);
 
@@ -3090,7 +2521,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
       const path=runtime.safeWorkPathSync(change,name);
       if(isDirectory(path)) for(const child of walk(path)) runtime.safeWorkPathSync(change,toPosix(relative(change,child)));
     }
-  }catch(error){return {errors:[...errors,error.message],warnings};}
+  }catch(error){errors.push(error.message);return validationResult(errors,warnings);}
 
   // A partial parent must never fall back to the single-change artifact contract.
   const mapPath = join(change, "tickets-map.md");
@@ -3098,15 +2529,15 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     isFile(join(change, "implementation-plan.md")) ||
     (isFile(mapPath) && parseFrontmatter(mapPath).meta.artifact === "goal-tickets-map");
   const changeStatus = stage === "archived" ? null : validateChangeExecution(change, errors, workspace.context);
-  if (errors.length) return {errors,warnings};
+  if (stage !== "archived" && !changeStatus) return validationResult(errors, warnings);
   if (stage === "complete" || changeStatus?.outcome === "completed") errors.push(...validateChangeClosure({context:workspace.context,change:basename(change),forArchive:archiveReady}).errors);
-  if (archiveReady && changeStatus?.outcome === "cancelled") return {errors,warnings};
+  if (archiveReady && changeStatus?.outcome === "cancelled") return validationResult(errors, warnings);
   if (stage === "archived") {
     const output=runDesignCheck("--archived", change, errors, workspace.context,options.sealed ? ['--sealed'] : []);
     let archive;
     if(output) {try {archive=JSON.parse(output);}catch {errors.push('archived consumer returned no verified receipt result');}}
     if(archive?.archive_state === 'moved') warnings.push('archive moved and checked, but is not sealed; finish the original A8 receipt');
-    return { errors, warnings, ...(archive ? {archive} : {}) };
+    return validationResult(errors, warnings, archive ? {archive} : {});
   }
   const parentImplementation = isParentImplementation ? validateParentImplementation(change, changeStatus, stage, errors, warnings, repoRoot, options) : null;
   errors.push(...validateInitiative(change));
@@ -3198,31 +2629,35 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   for (const path of ticketFiles) {
     const artifact = validateTicket(path, errors);
     if (!artifact) continue;
-    errors.push(...validateTicketPlan(artifact, { repoRoot, requirePlan: stage === "implement" }).map(error => `${basename(path)}: ${error}`));
     const ticketId = String(artifact.meta.id);
+    const localErrors = ticketDiagnostics(errors, change, ticketId, path);
+    localErrors.push(...validateTicketPlan(artifact, { repoRoot, requirePlan: stage === "implement" }).map(error => `${basename(path)}: ${error}`));
     if (artifact.meta.change !== basename(change)) {
-      errors.push(`${basename(path)}: change must equal directory name ${basename(change)}`);
+      localErrors.push(`${basename(path)}: change must equal directory name ${basename(change)}`);
     }
     const numericId = ticketId.replace(/^T-/, "");
     if (!basename(path).startsWith(`${numericId}-`)) {
-      errors.push(`${basename(path)}: filename prefix must match ${ticketId}`);
+      localErrors.push(`${basename(path)}: filename prefix must match ${ticketId}`);
     }
-    if (tickets.has(ticketId)) errors.push(`duplicate Ticket id ${ticketId}`);
+    if (tickets.has(ticketId)) localErrors.push(`duplicate Ticket id ${ticketId}`);
     tickets.set(ticketId, artifact);
     if (ticketsMap && !ticketsMap.body.includes(ticketId)) {
-      errors.push(`${basename(path)}: Ticket id is absent from Tickets Map`);
+      localErrors.push(`${basename(path)}: Ticket id is absent from Tickets Map`);
     }
     if (spec) {
       for (const contractId of artifact.meta.contract_ids ?? []) {
         if (!spec.body.includes(String(contractId))) {
-          errors.push(`${basename(path)}: contract ${contractId} not found in Spec`);
+          localErrors.push(`${basename(path)}: contract ${contractId} not found in Spec`);
         }
       }
     }
   }
 
   if (ticketsMap && !ticketsMap.goalMap) {
-    errors.push(...validateInvocationCoverage(tickets, ticketsMap.projectSkillMatrix));
+    for (const [id, artifact] of tickets) {
+      ticketDiagnostics(errors, change, id, artifact.path, 'ticket-invocation-invalid')
+        .push(...validateInvocationCoverage(new Map([[id, artifact]]), ticketsMap.projectSkillMatrix));
+    }
     validateProjectSkillCoverage(
       ticketsMap.projectSkillMatrix,
       tickets.keys(),
@@ -3232,20 +2667,20 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   }
 
   if (stage === "implement" && ticketMode && changeStatus) {
-    const worktreesByTicket = new Map(
-      (Array.isArray(changeStatus.worktrees) ? changeStatus.worktrees : [])
+    const executionsByTicket = new Map(
+      (Array.isArray(changeStatus.executions) ? changeStatus.executions : [])
         .filter((entry) => entry && typeof entry === "object")
         .map((entry) => [String(entry.ticket_id), entry]),
     );
     for (const [ticketId, artifact] of tickets) {
       if (new Set(["draft", "ready", "cancelled"]).has(artifact.meta.status)) continue;
-      if (!worktreesByTicket.has(ticketId)) {
-        errors.push(`${ticketId}: Implement stage requires one Ticket workspace execution record`);
+      if (!executionsByTicket.has(ticketId)) {
+        ticketDiagnostics(errors, change, ticketId, artifact.path, 'ticket-execution-missing').push(`${ticketId}: Implement stage requires one Ticket workspace execution record`);
       }
     }
-    for (const ticketId of worktreesByTicket.keys()) {
+    for (const ticketId of executionsByTicket.keys()) {
       if (!tickets.has(ticketId)) {
-        errors.push(`${ticketId}: worktree record has no matching Ticket`);
+        errors.push(`${ticketId}: execution record has no matching Ticket`);
       }
     }
   }
@@ -3253,34 +2688,31 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     validateGoalPlanRuntimeLimits(goalPlan.path, change, goalPlan, errors, repoRoot, options);
     const attemptLimit = Number.isInteger(goalPlan.meta.integration_attempt_limit) ? goalPlan.meta.integration_attempt_limit : null;
     if (attemptLimit !== null) {
-      for (const worktree of changeStatus.worktrees ?? []) {
-        if ((worktree.attempts ?? worktree.integration?.attempts ?? 0) > attemptLimit) {
-          errors.push(`${worktree.ticket_id}: integration attempts ${worktree.attempts ?? worktree.integration?.attempts} exceed Goal Plan limit ${attemptLimit}`);
+      for (const execution of changeStatus.executions ?? []) {
+        if ((execution.attempts ?? 0) > attemptLimit) {
+          ticketDiagnostics(errors, change, execution.ticket_id, null, 'execution-attempt-limit').push(`${execution.ticket_id}: verification attempts ${execution.attempts} exceed Goal Plan limit ${attemptLimit}`);
         }
       }
     }
   }
-  validateCurrentWorkspaceExecution(changeStatus, goalPlan, errors);
-  const directExecution = changeStatus?.worktrees?.find(entry => entry.purpose === "direct-spec");
+  const directExecution = changeStatus?.executions?.find(entry => entry.purpose === "direct-spec");
   if (changeStatus?.executionContext && workspace.config) {
     const execution=changeStatus.executionContext,limits=workspace.config.execution;
     if (execution.integration_attempt_limit > limits.max_integration_attempts) errors.push('Execution Context exceeds config max_integration_attempts');
     if (execution.concurrent_implementation_limit > limits.max_concurrent_implementations) errors.push('Execution Context exceeds config max_concurrent_implementations');
-    for (const record of changeStatus.worktrees ?? []) if (record.attempts > limits.max_integration_attempts) errors.push(`${record.ticket_id ?? record.purpose}: verification attempts exceed config limit`);
+    for (const record of changeStatus.executions ?? []) if (record.attempts > limits.max_integration_attempts) ticketDiagnostics(errors, change, record.ticket_id, null, 'execution-attempt-limit').push(`${record.ticket_id ?? record.purpose}: verification attempts exceed config limit`);
   }
   if (directExecution && (ticketMode || isParentImplementation)) errors.push("Direct Spec execution cannot coexist with Ticket or parent implementation artifacts");
-  if (directExecution && (stage === "complete" || changeStatus.outcome === "completed") && !new Set(["verified", "integrated", "removed"]).has(directExecution.status)) errors.push("Direct Spec completion requires verified execution; active or failed checks cannot complete");
-  validateGitEvidence(stage === "complete" ? workspace.context.projectRoot : repoRoot, changeStatus, errors);
+  if (directExecution && (stage === "complete" || changeStatus.outcome === "completed") && directExecution.status !== 'verified') errors.push("Direct Spec completion requires verified execution; active or failed checks cannot complete");
 
   if (stage === "implement" && spec && !ticketMode && (spec.meta.ready_for_tickets !== true || spec.meta.status !== "ready")) errors.push("Direct Spec implementation requires a ready Spec with ready_for_tickets=true");
   if (spec?.meta.ready_for_tickets === true && !/\bAC-\d+\b/.test(spec.body)) errors.push("ready Spec must define at least one AC-### acceptance contract");
 
   if (stage === "complete" && spec && !ticketMode && !isParentImplementation) errors.push(...validateAcceptanceEvidence(change,"evidence/direct-spec.md",[...new Set(spec.body.match(/\bAC-\d+\b/g) ?? [])]));
 
-  // New completion/archival consumes actual review evidence. Historical records
-  // remain readable outside these gates; archived validation returned earlier.
+  // Completion consumes actual review evidence; sealed archive validation returned earlier.
   let nonImplementation = false;
-  if (stage === 'complete' && !spec && !ticketMode && !simpleGoal && !goalPlan && !isParentImplementation && !changeStatus?.worktrees?.length && !isDirectory(join(change,'evidence'))) {
+  if (stage === 'complete' && !spec && !ticketMode && !simpleGoal && !goalPlan && !isParentImplementation && !changeStatus?.executions?.length && !isDirectory(join(change,'evidence'))) {
     try {
       const owner = readChangeOwner(workspace.context,basename(change));
       if (owner.work === 'specdev/learn' && isFile(join(change,'learning','index.md'))) {
@@ -3298,15 +2730,11 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     try {
       const deliveryRoot = changeStatus.workspaceRoot ?? workspace.context.projectRoot;
       const head = execFileSync('git',['-C',deliveryRoot,'rev-parse','--verify','HEAD^{commit}'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
-      const executions = [...(changeStatus.worktrees ?? []), ...[...(parentImplementation?.memberStatuses?.values() ?? [])].flatMap(status=>status.worktrees ?? [])];
-      const owners = executions.flatMap(record => [...(record.implementation_owners ?? []), record.implementation_owner, ...(record.integration?.conflict_paths?.length ? [record.integration_owner] : [])]).filter(value => typeof value === 'string' && /^[a-z][a-z0-9-]*:\S+$/i.test(value));
-      const bases = [...new Set([changeStatus.executionContext?.base_sha, ...executions.map(record=>record.base_sha)].filter(value=>/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value ?? '')))];
+      const executions = [...(changeStatus.executions ?? []), ...[...(parentImplementation?.memberStatuses?.values() ?? [])].flatMap(status=>status.executions ?? [])];
+      const owners = executions.flatMap(record => record.implementation_owners ?? []).filter(value => typeof value === 'string' && /^[a-z][a-z0-9-]*:\S+$/i.test(value));
+      const bases = [...new Set([changeStatus.executionContext?.base_sha, ...[...(parentImplementation?.memberStatuses?.values() ?? [])].map(status=>status.executionContext?.base_sha)].filter(value=>/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value ?? '')))];
       const expectedBase = bases.length > 1 ? execFileSync('git',['-C',workspace.context.projectRoot,'merge-base','--octopus',...bases],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim() : bases[0] ?? null;
-      const sourceLocator = path => {
-        const snapshot = workspace.context.readOnlySnapshot;
-        const original = snapshot ? join(snapshot.sourceContext.specdevRoot,relative(workspace.context.specdevRoot,path)) : path;
-        return toPosix(relative(workspace.context.projectRoot,original));
-      };
+      const sourceLocator = path => toPosix(relative(workspace.context.projectRoot, path));
       const specLocator = sourceLocator(spec ? spec.path : join(change,'README.md'));
       const requiredSpecifications = isParentImplementation
         ? [sourceLocator(join(change,'implementation-plan.md')),sourceLocator(join(change,'implementation-map.md')),...new Set([...(parentImplementation?.ticketByTask?.values() ?? [])].map(unit=>sourceLocator(join(unit.memberRoot,'spec.md')))),...[...(parentImplementation?.memberStatuses ?? [])].filter(([,status])=>status.executionContext).map(([member])=>{
@@ -3397,8 +2825,8 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   const scheduling = ticketPolicy(goalPlan?.meta,changeStatus?.executionContext);
   const inFlight = [...tickets.values()].filter(ticket=>['in_progress','review'].includes(ticket.meta.status));
   if (scheduling.max_parallel_tickets !== null && inFlight.length > scheduling.max_parallel_tickets) errors.push('concurrent Ticket limit exceeded');
-  for (const ticket of inFlight) for (const dependency of graph.get(ticket.meta.id) ?? []) if (tickets.get(dependency)?.meta.status !== 'done') errors.push(`${ticket.meta.id}: active Ticket prerequisite is not done: ${dependency}`);
-  for (const record of changeStatus?.worktrees ?? []) if (record.schema_version === 1 && record.ticket_id && ['active','review'].includes(record.status) && !['in_progress','review'].includes(tickets.get(record.ticket_id)?.meta.status)) errors.push(`${record.ticket_id}: active execution requires an in_progress/review Ticket`);
+  for (const ticket of inFlight) for (const dependency of graph.get(ticket.meta.id) ?? []) if (tickets.get(dependency)?.meta.status !== 'done') ticketDiagnostics(errors, change, ticket.meta.id, ticket.path, 'ticket-dependency-incomplete').push(`${ticket.meta.id}: active Ticket prerequisite is not done: ${dependency}`);
+  for (const record of changeStatus?.executions ?? []) if (record.ticket_id && ['active','review'].includes(record.status) && !['in_progress','review'].includes(tickets.get(record.ticket_id)?.meta.status)) ticketDiagnostics(errors, change, record.ticket_id, null, 'ticket-execution-status').push(`${record.ticket_id}: active execution requires an in_progress/review Ticket`);
   for (let i=0;i<inFlight.length;i++) for (const other of inFlight.slice(i+1)) {
     const ticket = inFlight[i];
     if ((ticket.meta.writable_paths ?? []).some(a=>(other.meta.writable_paths ?? []).some(b=>pathsOverlap(a,b)))) errors.push(`active Tickets ${ticket.meta.id}/${other.meta.id} have conflicting writable paths`);
@@ -3409,21 +2837,15 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   for (const [ticketId, artifact] of tickets) {
     if (artifact.meta.status !== "done") continue;
     const evidence = join(evidenceDir, `${ticketId}.md`);
+    const localErrors = ticketDiagnostics(errors, change, ticketId, evidence, 'ticket-evidence-invalid');
     if (!isFile(evidence)) {
-      errors.push(`${ticketId}: status is done but Evidence is missing`);
+      localErrors.push(`${ticketId}: status is done but Evidence is missing`);
       continue;
     }
     const text = readText(evidence);
-    if (changeStatus?.worktrees?.find(entry=>entry.ticket_id === ticketId)?.schema_version === 1) errors.push(...validateAcceptanceEvidence(change,`evidence/${ticketId}.md`,artifact.meta.contract_ids ?? []));
-    if (stage === 'complete' && changeStatus?.location.kind === 'active' || hasIndependentReview(evidence)) {
-      const execution = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId);
-      errors.push(...validateIndependentReview(change, `evidence/${ticketId}.md`, {
-        repoRoot:workspace.context.projectRoot,
-        expectedHead:execution?.integration?.result_sha ?? execution?.source_checkpoint ?? null,
-        checkCurrent:false,
-      }));
-    }
-    const currentWorkspace = changeStatus?.worktrees?.find(entry => entry.ticket_id === ticketId)?.workspace_ref === "current";
+    localErrors.push(...validateAcceptanceEvidence(change,`evidence/${ticketId}.md`,artifact.meta.contract_ids ?? []));
+    // The execution validator owns each record's independent review. The final
+    // delivery gate above additionally checks current code and aggregate scope.
     const requiredHeadings = [
       "## 2. Lead Dispatch And Candidate Return",
       "## 3. 修改范围与路径所有权",
@@ -3436,21 +2858,18 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     ];
     for (const heading of requiredHeadings) {
       if (!text.includes(heading)) {
-        errors.push(`${toPosix(relative(change, evidence))}: missing '${heading}'`);
+        localErrors.push(`${toPosix(relative(change, evidence))}: missing '${heading}'`);
       }
     }
     const workspaceVerification = sectionBody(text, "## 5. Workspace Verification");
-    if (!/(change-workspace|current-workspace|source-worktree)/.test(workspaceVerification)) {
-      errors.push(`${toPosix(relative(change, evidence))}: Workspace Verification must name change-workspace`);
+    if (!/\bchange-workspace\b/.test(workspaceVerification)) {
+      localErrors.push(`${toPosix(relative(change, evidence))}: Workspace Verification must name change-workspace`);
     }
-    if (changeStatus?.worktrees?.find(entry=>entry.ticket_id === ticketId)?.schema_version !== 1 && !currentWorkspace && /E2E[^\n]*(?:\bpass(?:ed)?\b|通过)/i.test(workspaceVerification) && !/不得|禁止|not-run/i.test(workspaceVerification)) {
-      errors.push(`${toPosix(relative(change, evidence))}: E2E pass cannot come from source-worktree`);
-    }
-    const worktree = Array.isArray(changeStatus?.worktrees)
-      ? changeStatus.worktrees.find((entry) => entry?.ticket_id === ticketId)
+    const execution = Array.isArray(changeStatus?.executions)
+      ? changeStatus.executions.find((entry) => entry?.ticket_id === ticketId)
       : null;
-    if (!worktree || !new Set(["verified", "integrated", "removed"]).has(worktree.status)) {
-      errors.push(`${ticketId}: status is done but no verified Ticket execution exists`);
+    if (!execution || execution.status !== 'verified') {
+      localErrors.push(`${ticketId}: status is done but no verified Ticket execution exists`);
     }
   }
 
@@ -3505,30 +2924,34 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
     errors.push(`complete stage cannot archive publish_action=${triage.meta.publish_action}`);
   }
 
+  const artifactOwners = new Map([...tickets].flatMap(([id, artifact]) => [
+    [artifact.path, id], [join(change, 'evidence', `${id}.md`), id],
+  ]));
   for (const path of walk(change).filter((item) => lstatSync(item).isFile() && extname(item) === ".md")) {
+    const owner = artifactOwners.get(path);
+    const pathErrors = owner ? ticketDiagnostics(errors, change, owner, path, 'artifact-path-invalid') : errors;
     const text = readText(path);
     if ((text.match(/<Path>/g) ?? []).length !== (text.match(/<\/Path>/g) ?? []).length) {
-      errors.push(`${toPosix(relative(change, path))}: unbalanced <Path> tags`);
+      pathErrors.push(`${toPosix(relative(change, path))}: unbalanced <Path> tags`);
     }
     const withoutPaths = text.replace(PATH_TAG_RE, "");
     if (withoutPaths.includes("{roots.")) {
-      errors.push(`${toPosix(relative(change, path))}: root variable outside <Path>`);
+      pathErrors.push(`${toPosix(relative(change, path))}: root variable outside <Path>`);
     }
     for (const match of text.matchAll(PATH_TAG_RE)) {
       const issue = validatePathValue(match[1]);
-      if (issue) errors.push(`${toPosix(relative(change, path))}: invalid Path: ${issue}`);
+      if (issue) pathErrors.push(`${toPosix(relative(change, path))}: invalid Path: ${issue}`);
     }
   }
 
   errors.push(...validateEngineeringArtifacts(change, engineeringKind));
   if (simpleGoal && changeStatus?.outcome === "completed" && /^[-*] \[ \]/m.test(simpleGoal.body)) errors.push("completed Goal still has unfinished tasks");
-  return { errors, warnings, ...(options.readOnlySnapshot ? {snapshot:true,preflight:true} : {}) };
+  return validationResult(errors, warnings);
 }
 
 function contextArguments(context) {
   if (!context) return [];
-  const source = context.readOnlySnapshot?.sourceContext ?? context;
-  return ['--repo',source.projectRoot,'--method-root',source.methodRoot,'--state-root',source.specdevRoot,...(context.readOnlySnapshot ? ['--snapshot-specdev',context.specdevRoot] : [])];
+  return ['--repo',context.projectRoot,'--method-root',context.methodRoot,'--state-root',context.specdevRoot];
 }
 function runDesignCheck(operation, path, errors, context = null, flags = []) {
   try { return execFileSync(process.execPath, [fileURLToPath(new URL("./design-artifacts.mjs", import.meta.url)), operation, path, ...contextArguments(context),...flags], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }

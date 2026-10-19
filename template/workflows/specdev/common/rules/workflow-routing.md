@@ -12,10 +12,9 @@
 | 大需求包含多个未界定 change 或未知路径 | W-wayfinder | G / P / D / S / T |
 | 需要检测项目 UI、选择设计方向并生成可运行设计包 | P-prototype | G / S / T / I |
 | 固定点 diff、branch 或 PR review | C-code-review | completed / T / S / G |
-| 外部行为已清楚 | S-spec | T-tickets |
+| 外部行为已清楚 | S-spec | I（完整 Ready Spec 且有实现授权）/ T（需要拆票）/ 返回规格 |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
-| 单个已拆票 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
-| 旧 O 调用或恢复键 | P-goal-plan | 统一 P 多 change 模式 |
+| 按需的轻量 Goal、单 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
 | 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |

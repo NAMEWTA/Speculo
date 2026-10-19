@@ -10,7 +10,7 @@
 4. 按实际分支读取必要参考。创建、恢复、完成、取消或归档时读取 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>；轻量/完整输入或事实冲突读取 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path>；实际交接、并行、父子集成才加载 <Path>{roots.workflows}/specdev/common/rules/operating-governance.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>。
 5. 写前核对路径、原 owner、实际写入者、相关 pending transaction、lock 和 recovery evidence。失败/阻塞记录在原 README、计划、Evidence 或操作回执；真实交接只更新原负责位置。完成产物、适用验证并回读，返回证据和下一入口。
 
-新普通流程不读写全局 status、change status 或 Work 调用镜像。发现旧活动协议、混合权威或转换 pending 标记时停止受影响写入，保留原件并交显式转换；README 存在不证明转换已完成。旧归档仅走独立历史只读定位。
+普通流程只使用当前 Markdown 协议，不分发全局 status、change status 或 Work 调用镜像。遇到不支持的 schema、混合权威或无法确认的原 writer 时停止受影响写入并保留原件；工具不提供旧协议 reader 或自动转换。归档按当前唯一目录及其完整性回执读取。
 
 ## 工件与能力
 

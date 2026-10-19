@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpath, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -45,14 +46,27 @@ async function seedRuntime(target: string): Promise<string> {
     works_run: ['media/brief'], revision: 1, blockers: [], updated_at: '2026-10-10T00:00:00Z',
   }));
   await writeFile(join(state, 'changes', changeName, 'evidence.bin'), Buffer.from([0, 255, 1, 2]));
+  const article = 'Original local installation test article\n';
+  await writeFile(join(state, 'changes', changeName, 'master.md'), article);
+  await writeFile(join(state, 'changes', changeName, 'artifacts.json'), JSON.stringify({ schema_version: 1, change: changeName, artifacts: [{
+    id: 'article', owner: 'media/brief', kind: 'document', root: 'change', path: 'master.md', version: 1,
+    sha256: createHash('sha256').update(article).digest('hex'), evidence_kind: 'executed', depends_on: [],
+  }] }));
   await writeFile(join(state, 'context', 'creator.md'), 'User-owned profile\r\nKeep trailing bytes.  \r\n');
   return state;
 }
 
 function runNode(args: string[]): void {
-  const result = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 60000 });
+  const env = { ...process.env }; delete env.NODE_TEST_CONTEXT;
+  const nestedTests = args.includes('--test');
+  const result = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: nestedTests ? 180000 : 60000, env });
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stdout + result.stderr);
+  if (nestedTests) {
+    assert.match(result.stdout, /^# tests [1-9][0-9]*$/m, 'Media child runner must execute actual tests');
+    assert.match(result.stdout, /^# fail 0$/m, result.stdout + result.stderr);
+    console.log('Media child runner: ' + result.stdout.split(/\r?\n/).filter(line => /^# (tests|pass|fail|skipped) /.test(line)).join('; '));
+  }
 }
 
 test('media: passive discovery does not create a Change', async () => fixture(async target => {
@@ -150,7 +164,7 @@ test('media: coexists with Learning without replacing either workflow', async ()
 }));
 
 test('media: local primitive failure-path suite', () => {
-  runNode(['--test', `${tools}/tests/media-tools.test.mjs`]);
+  runNode(['--test', '--test-reporter=tap', `${tools}/tests/media-tools.test.mjs`, `${tools}/tests/media-artifacts.test.mjs`, `${tools}/tests/media-final-consumer.test.mjs`, `${tools}/tests/test_media_render.mjs`]);
 });
 
 test('media: package contract and generated documents are current', () => {

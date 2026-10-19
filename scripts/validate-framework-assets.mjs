@@ -2,7 +2,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseFrontmatter as parseYaml, readAssetCatalog, validateWorkspace } from "../template/lib/speculo-runtime.mjs";
+import { parseFrontmatter as parseYaml, readAssetCatalog, validateWorkspace, validateWorkflowManifest as assertWorkflowManifest } from "../template/lib/speculo-runtime.mjs";
 
 const packageRoot = resolve(
   process.argv[2] ?? resolve(dirname(fileURLToPath(import.meta.url)), "..")
@@ -61,14 +61,6 @@ function readJson(path, label) {
   }
 }
 
-const workflowRisks = new Set([
-  "read-only",
-  "local-reversible",
-  "local-destructive",
-  "external-mutation",
-  "production-critical",
-]);
-
 const workflowPersistentKnowledge = {
   specdev: new Set([
     "<Path>{roots.state}/specdev/adr/</Path>",
@@ -89,10 +81,8 @@ function validateWorkflowManifest(workflowId, workflowDir) {
   const relative = manifestPath.slice(packageRoot.length + 1);
   const manifest = readJson(manifestPath, relative);
   if (!manifest) return;
-  if (manifest.schema_version !== 2 || manifest.id !== workflowId || typeof manifest.version !== "string" || !Array.isArray(manifest.persistent_knowledge) || !Array.isArray(manifest.stages) || manifest.stages.length === 0) {
-    fail(`${relative}: workflow manifest must use schema v2 with matching id, version, and stages`);
-    return;
-  }
+  try { assertWorkflowManifest(manifest, workflowId); }
+  catch (error) { fail(`${relative}: ${error.message}`); return; }
   const declaredKnowledge = new Set();
   for (const path of manifest.persistent_knowledge) {
     if (typeof path !== "string" || !/^<Path>\{roots\.state\}\/[^<]+<\/Path>$/.test(path)) {
@@ -108,29 +98,6 @@ function validateWorkflowManifest(workflowId, workflowDir) {
   const expectedKnowledge = workflowPersistentKnowledge[workflowId] || new Set();
   if (declaredKnowledge.size !== expectedKnowledge.size || [...expectedKnowledge].some((path) => !declaredKnowledge.has(path))) {
     fail(`${relative}: persistent_knowledge does not match the registered ${workflowId} knowledge roots`);
-  }
-  const stageIds = new Set();
-  for (const stage of manifest.stages) {
-    if (!stage || typeof stage !== "object" || typeof stage.id !== "string" || stage.id.length === 0) {
-      fail(`${relative}: each stage requires a non-empty id`);
-      continue;
-    }
-    if (stageIds.has(stage.id)) fail(`${relative}: duplicate stage id ${stage.id}`);
-    stageIds.add(stage.id);
-    if (!Array.isArray(stage.after) || stage.after.some((id) => typeof id !== "string")) {
-      fail(`${relative}: stage ${stage.id} has invalid after dependencies`);
-    }
-    if (!Array.isArray(stage.inputs) || !Array.isArray(stage.outputs) || stage.inputs.some((value) => typeof value !== "string") || stage.outputs.some((value) => typeof value !== "string")) {
-      fail(`${relative}: stage ${stage.id} inputs/outputs must be string arrays`);
-    }
-    if (!workflowRisks.has(stage.risk)) fail(`${relative}: stage ${stage.id} has unsupported risk ${String(stage.risk)}`);
-    if (!Number.isInteger(stage.context_budget) || stage.context_budget < 1) fail(`${relative}: stage ${stage.id} context_budget must be a positive integer`);
-  }
-  for (const stage of manifest.stages) {
-    if (!stage || typeof stage.id !== "string" || !Array.isArray(stage.after)) continue;
-    for (const dependency of stage.after) {
-      if (!stageIds.has(dependency)) fail(`${relative}: stage ${stage.id} depends on missing stage ${dependency}`);
-    }
   }
 }
 

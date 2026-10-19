@@ -219,7 +219,7 @@ describe("git-history-squash skill", () => {
     }
   });
 
-  it("protects Markdown SpecDev evidence and rejects ambiguous or legacy active authority", async () => {
+  it("protects Markdown SpecDev evidence and rejects ambiguous or unsupported authority", async () => {
     const fixture = await createLinearFixture();
     try {
       // Exercise the deployed consumer so archive validation has the same installed roots.
@@ -258,7 +258,7 @@ describe("git-history-squash skill", () => {
         await writeFile(join(specdev, marker), "{}");
         const blocked = await planInstalled(fixture.root, [requestEntry({ start: fixture.base, end: fixture.end })], "markdown-pending");
         assert.equal(blocked.status, 2);
-        assert.match(blocked.stderr, /recovery-required|legacy-active-needs-conversion/);
+        assert.match(blocked.stderr, /recovery-required|unsupported-specdev-protocol/);
         await rm(join(specdev, marker));
       }
       await writeJson(join(changeRoot, ".status.json"), { change_status: "completed" });

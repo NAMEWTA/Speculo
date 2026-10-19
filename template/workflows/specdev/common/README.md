@@ -35,8 +35,9 @@
 ## 结构化工件 Schema
 
 - 全局配置：`<Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path>`
-- 新业务工件生命周期：<Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>；旧 status schema 只用于历史/显式转换，普通 Work 不读写镜像。
-- 单 change 生命周期状态：`<Path>{roots.workflows}/specdev/common/schemas/change-status.schema.json</Path>`
+- 业务工件生命周期：<Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>；整体 Outcome、Goal 与 Ticket 各在自己的 Markdown 原件中持有唯一状态。
+- 工作区上下文：<Path>{roots.workflows}/specdev/common/schemas/execution-context.schema.json</Path>
+- 实际执行证据：<Path>{roots.workflows}/specdev/common/schemas/execution-record.schema.json</Path>
 - Spec：`<Path>{roots.workflows}/specdev/common/schemas/spec.schema.json</Path>`
 - Ticket：`<Path>{roots.workflows}/specdev/common/schemas/ticket.schema.json</Path>`
 - Tickets Map：`<Path>{roots.workflows}/specdev/common/schemas/tickets-map.schema.json</Path>`

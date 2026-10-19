@@ -105,7 +105,7 @@ async function acquire(context, operation, source, resume) {
 
 async function changeFor(context, id) {
   const location = runtime.resolveChangeSync(context, id, {includeArchived:true});
-  const facts = location.kind === 'legacy-archive' ? runtime.readLegacyChangeEvidenceSync(context, location) : runtime.readChangeFactsSync(context, location);
+  const facts = runtime.readChangeFactsSync(context, location);
   return {root:location.root, location, facts};
 }
 
@@ -115,7 +115,6 @@ function within(root, path) {
 }
 
 async function assertWriterState(context, change, mode, alreadyPublished = false) {
-  if (change.location.kind === 'legacy-archive') fail('legacy archive is read-only; it cannot own a new design publication');
   if (change.location.kind === 'archive' && !alreadyPublished) fail('new design publication must complete before change archival');
   const { readChangeOwner } = await import('./change-artifacts.mjs');
   const owner = readChangeOwner(context, change.location.name);
@@ -162,9 +161,8 @@ async function verifySources(context, meta, mode, alreadyPublished = false) {
     for (const source of rule.sources) {
       if (isAbsolute(source.locator) || source.locator.includes('\\') || source.locator.split('/').includes('..')) fail('unsafe design evidence locator');
       const change = await changeFor(context, source.change);
-      if(rule.verification === 'implemented' && change.facts.readonly && !alreadyPublished) fail(`implemented rule ${rule.id}: legacy archive alone does not prove completed acceptance; preserve its historical snapshot and obtain a current completion chain`);
-      if (rule.verification === 'implemented' && !(change.facts.readonly ? change.facts.status.change_status === 'archived' : change.facts.outcome === 'completed')) fail(`implemented rule ${rule.id} requires a completed source change`);
-      if (rule.verification === 'implemented' && !change.facts.readonly) {
+      if (rule.verification === 'implemented' && change.facts.outcome !== 'completed') fail(`implemented rule ${rule.id} requires a completed source change`);
+      if (rule.verification === 'implemented') {
         const {validateChange} = await import('./validate-specdev.mjs');
         const completed = validateChange(change.root,'complete',context.projectRoot,null,null,{context});
         if (completed.errors.length) fail(`implemented rule ${rule.id} source completion is unverified: ${completed.errors.join('; ')}`);

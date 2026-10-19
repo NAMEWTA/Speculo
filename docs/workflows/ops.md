@@ -103,7 +103,15 @@ AI 读取真实项目清单，识别构建、持久化、环境变量、依赖�
 
 产物是状态根的 `FLEET.md` 和 `records/views/<view-id>/` 下的 Markdown、JSON、HTML、manifest。可以直接本地打开，不启动服务、不访问 CDN、不连接目标机器。
 
+探测失败保留 unknown，同时展示已记录的失败阶段、受控分类和错误码；不把原始 stderr 或含凭据的异常文本写入视图。已保存视图表示当时的记录，不表示刚刚重新探测了机器。
+
 视图不会读取私密配置用于展示，也不会刷新远端真实健康。要重新检查用 S/H，要修改部署用 D。视图生成失败只处理视图，不重跑业务操作。
+
+## 方法自检与业务验证
+
+安装后静态自检使用 `validate-ops.mjs --self-check`；检查指定状态使用 `--state-root <绝对路径>`。两者只读，不初始化业务状态，不执行 SSH。仓库分发维护使用 `--package-check`，会额外检查种子布局。
+
+安装器与独立工具共用无外部依赖的资源规则；业务是否可用仍由项目自己的 verifier 判断。[业务验证工具](../../template/workflows/ops/common/tools/business-verification.mjs) 可为原验证入口生成检查配置，实际执行继续走原计划、apply、验收与 commit 合同。详见 [Workflow 合同、证据与恢复](../workflow-integrity.md)。
 
 ## 新手如何确认一次部署真的完成
 

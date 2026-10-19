@@ -150,21 +150,6 @@ const sharedSources = {
     tag: "config-template",
     format: "json",
   },
-  statusSchema: {
-    source: `${commonRoot}/schemas/status.schema.json`,
-    tag: "status-schema",
-    format: "json",
-  },
-  statusTemplate: {
-    source: `${workflowRoot}/specdev-i-init-setup/assets/status-template.json`,
-    tag: "status-template",
-    format: "json",
-  },
-  changeStatusSchema: {
-    source: `${commonRoot}/schemas/change-status.schema.json`,
-    tag: "change-status-schema",
-    format: "json",
-  },
   specSchema: {
     source: `${commonRoot}/schemas/spec.schema.json`,
     tag: "spec-schema",
@@ -203,11 +188,6 @@ const sharedSources = {
   wayfinderTicketSchema: {
     source: `${commonRoot}/schemas/wayfinder-ticket.schema.json`,
     tag: "wayfinder-ticket-schema",
-    format: "json",
-  },
-  changeStatusTemplate: {
-    source: `${workflowRoot}/specdev-i-init-setup/assets/change-status-template.json`,
-    tag: "change-status-template",
     format: "json",
   },
 };
@@ -395,7 +375,7 @@ const webRuntimeConvention = `## 网页平台运行约定
 本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
 
 - 项目根下的 \`specdev/\` 是业务工件区。普通 Work 的直接使用不要求安装元数据；先明确项目、可读方法资源和获批写入根，不按 cwd 猜测另一个项目。
-- 当前 change 位于 \`specdev/changes/{change}/\`，其中 \`{change}\` 使用真实日期 \`YYYY-MM-DD-<kebab-topic>\`。新归档位于 \`specdev/changes/archive/{change}/\`；旧月份归档原位只读，同名跨位置冲突必须先解决。
+- 当前 change 位于 \`specdev/changes/{change}/\`，其中 \`{change}\` 使用真实日期 \`YYYY-MM-DD-<kebab-topic>\`。新归档位于 \`specdev/changes/archive/{change}/\`；同名在当前活动与归档位置冲突时必须先解决；其他历史文件保留原件，不解释成现役对象。
 - 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 \`specdev/adr/\`、\`specdev/context/\` 和 \`specdev/research/\`。永久设计位于 \`specdev/design/\`，消费、确认、离线导出和原 owner 恢复遵守下方 \`<design-portability>\` 标签。
 - 整体结论只在 \`specdev/changes/{change}/README.md\` 的唯一正文行 \`Outcome: active|completed|cancelled\` 中表达。新 change 不创建重复业务状态 JSON，也不默认创建 config；实际工具配置只在使用该分支时读取。正文、真实验收与 owner 证据共同决定能否完成或取消，Outcome 本身不授权。任务进度由 README、Goal 或 Ticket 择一负责。
 - 轻量 README 保留 scope、acceptance、verification 明确锚点、真实 AC 和证据；复杂 Goal/Ticket、并行隔离、Git 集成与 UI 专用合同仍按内联规则执行。当前工程 docs 位于 \`docs/\` 或引用项目原有负责文档；只在明确请求时建立基线。
@@ -487,7 +467,6 @@ function workflowPathToCanonical(value, tagsBySource) {
   if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
   if (relative === "common/tools/change-artifacts.mjs") return "本地只读工件与完成证据检查（缺工具时按内联合同核对并明确未执行自动检查）";
   if (relative === "common/tools/validate-retro.mjs") return "本地只读复盘与升级证据检查（缺工具时按内联合同逐项核对并明确未执行自动检查，不伪造批准、写入或封存）";
-  if (relative === "common/tools/validate-handoff.mjs") return "本地只读交接与会话定位检查（缺工具时按内联合同核对并明确未执行自动检查，不扫描外部日志或认证工具身份）";
 
   if (relative === "common/tools/README.md") {
     return "Speculo Node 校验器说明";
@@ -582,19 +561,6 @@ function adaptSchema(content, tag) {
     );
   }
 
-  if (tag === "status-schema") {
-    return content.replaceAll(
-      '"pattern": "^<Path>\\\\{roots\\\\.state\\\\}/specdev/archive/[^<]+</Path>$"',
-      '"pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"',
-    );
-  }
-
-  if (tag === "change-status-schema") {
-    return content.replaceAll(
-      '"pattern": "^<Path>\\\\{roots\\\\.state\\\\}/specdev/archive/[^<]+</Path>$"',
-      '"pattern": "^specdev/archive/[0-9]{4}-[0-9]{2}/.+/$"',
-    );
-  }
 
   return content;
 }

@@ -7,7 +7,7 @@
   "properties": {
     "schema_version": {"const": 2},
     "artifact": {"const": "learning-change-status"},
-    "change_id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "change_id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "kind": {"enum": ["learning", "consolidation"]},
     "domain": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "domain_type": {"enum": ["project", "product", "subject", "language", "skill"]},
@@ -51,7 +51,9 @@
       "additionalProperties": false
     },
     "children": {"type": "array", "items": {"$ref": "#/$defs/child"}, "uniqueItems": true},
-    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "$defs": {
     "child": {
       "type": "object",
       "required": ["change_id", "locator", "content_hash", "effective_at", "lifecycle"],
@@ -60,7 +62,7 @@
         "locator": {"type": "string"},
         "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "effective_at": {"type": "string", "format": "date-time"},
-        "lifecycle": {"type": "string"}
+        "lifecycle": {"enum": ["active", "blocked", "closed", "archived"]}
       },
       "additionalProperties": false
     }

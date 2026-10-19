@@ -3,7 +3,8 @@
   "workflow": "person",
   "config": null,
   "structured_state": [
-    ".speculo/person/status.json"
+    ".speculo/person/status.json",
+    ".speculo/person/changes/*/.status.json"
   ],
   "opaque_default": "preserve-byte-for-byte"
 }

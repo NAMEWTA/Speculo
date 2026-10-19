@@ -70,7 +70,7 @@ export async function validate(path, options = {}) {
   const designPath = resolve(path), root = dirname(designPath);
   await safePath(dirname(root), `${basename(root)}/${basename(designPath)}`);
   const { meta } = await readDesign(designPath);
-  if (meta.schema_version !== 3) throw new Error('legacy design package is read-only; create a new v3 UI package and obtain fresh confirmation');
+  if (meta.schema_version !== 3) throw new Error('unsupported design package schema: current UI packages require schema_version: 3');
   assertSchema('designPackage', meta);
   if (meta.design_id !== basename(root) || meta.change !== basename(dirname(dirname(root)))) throw new Error('prototype identity does not match owning change/UI directory');
   const count = meta.candidates.length;
@@ -121,7 +121,7 @@ export async function validate(path, options = {}) {
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const args = process.argv.slice(2), paths = [], options = {};
   for (let i=0;i<args.length;i++) {
-    const arg=args[i], field={'--repo':'repoRoot','--method-root':'methodRoot','--state-root':'stateRoot','--snapshot-specdev':'snapshotSpecdev'}[arg];
+    const arg=args[i], field={'--repo':'repoRoot','--method-root':'methodRoot','--state-root':'stateRoot'}[arg];
     if (field) { if (!args[i+1] || args[i+1].startsWith('--') || field in options) throw new Error('invalid design context'); options[field]=args[++i]; }
     else if (arg === '--allow-draft') options.allowDraft=true;
     else if (arg === '--check-ready') options.checkReady=true;

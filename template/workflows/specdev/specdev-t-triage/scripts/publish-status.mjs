@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { discoverChangesSync, readChangeFactsSync, readLegacyChangeEvidenceSync, safeWorkPathSync } from "../../../../lib/speculo-runtime.mjs";
+import { discoverChangesSync, readChangeFactsSync, safeWorkPathSync } from "../../../../lib/speculo-runtime.mjs";
 
 const COUNTED = new Set(["closed", "created", "commented"]);
 const SKIPPED = new Set(["skipped:cancelled", "skipped:excluded"]);
@@ -36,9 +36,8 @@ function parseLedgerStates(body) {
 
 function collectLedgers(stateRoot) {
   const files = [];
-  for (const location of discoverChangesSync(stateRoot, { includeArchived: true, includeLegacy: true })) {
-    if (location.kind === 'legacy-archive') readLegacyChangeEvidenceSync(stateRoot, location);
-    else readChangeFactsSync(stateRoot, location);
+  for (const location of discoverChangesSync(stateRoot, { includeArchived: true })) {
+    readChangeFactsSync(stateRoot, location);
     const file = safeWorkPathSync(location.root, 'publish.md', { type: 'file' });
     if (existsSync(file)) files.push({ file, change: location.name });
   }

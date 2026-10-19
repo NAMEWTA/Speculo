@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:person:mao-consultation:v1",
+  "title": "Person Mao consultation Change state",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "workflow",
+    "change",
+    "work_id",
+    "status",
+    "phase",
+    "problem_type",
+    "primary_framework",
+    "models_applied",
+    "frameworks_applied",
+    "methods_applied",
+    "quotes_cited",
+    "activation",
+    "analysis_conditions",
+    "strategy_stages",
+    "action_conditions",
+    "action_disciplines",
+    "delivery_checks",
+    "phase_evidence",
+    "revision_reason",
+    "created_at",
+    "updated_at",
+    "completed_at",
+    "blockers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "person-work-status"
+    },
+    "workflow": {
+      "const": "person"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "work_id": {
+      "const": "person/mao-zedong-cognitive-os"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "completed"
+      ]
+    },
+    "phase": {
+      "enum": [
+        "activating",
+        "diagnosing",
+        "strategizing",
+        "mobilizing",
+        "delivering",
+        "completed"
+      ]
+    },
+    "problem_type": {
+      "enum": [
+        null,
+        "战略方向不清",
+        "面对强大对手",
+        "实力悬殊、长期战",
+        "起步弱小、缺信心",
+        "资源/兵力分配",
+        "团队/组织问题",
+        "决策方法",
+        "路线/两难"
+      ]
+    },
+    "primary_framework": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "models_applied": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^A[1-8]$"
+      },
+      "uniqueItems": true
+    },
+    "frameworks_applied": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^B[1-8]$"
+      },
+      "uniqueItems": true
+    },
+    "methods_applied": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^C[1-8]$"
+      },
+      "uniqueItems": true
+    },
+    "quotes_cited": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "text",
+          "article_id",
+          "source",
+          "artifact"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "direct",
+              "paraphrase"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "article_id": {
+            "type": "string",
+            "pattern": "^[0-9]{3}$"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^books/src/[0-9]{3}-.+\\.md$"
+          },
+          "artifact": {
+            "enum": [
+              "problem-statement.md",
+              "analysis.md",
+              "strategy.md",
+              "action-plan.md",
+              "consultation-output.md"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "activation": {
+      "type": "object",
+      "required": [
+        "statement_delivered",
+        "statement_evidence",
+        "opening_questions"
+      ],
+      "properties": {
+        "statement_delivered": {
+          "type": "boolean"
+        },
+        "statement_evidence": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "opening_questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "question",
+              "answer"
+            ],
+            "properties": {
+              "question": {
+                "type": "string",
+                "minLength": 1
+              },
+              "answer": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "analysis_conditions": {
+      "type": "object",
+      "required": [
+        "second_hand",
+        "multiple_interests",
+        "trend_forecast",
+        "standard_practice"
+      ],
+      "properties": {
+        "second_hand": {
+          "type": "boolean"
+        },
+        "multiple_interests": {
+          "type": "boolean"
+        },
+        "trend_forecast": {
+          "type": "boolean"
+        },
+        "standard_practice": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "strategy_stages": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "action_conditions": {
+      "type": "object",
+      "required": [
+        "coordination",
+        "team_management",
+        "ambiguous_task",
+        "staffing",
+        "retrospective"
+      ],
+      "properties": {
+        "coordination": {
+          "type": "boolean"
+        },
+        "team_management": {
+          "type": "boolean"
+        },
+        "ambiguous_task": {
+          "type": "boolean"
+        },
+        "staffing": {
+          "type": "boolean"
+        },
+        "retrospective": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "action_disciplines": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:[1-9]|1[0-2])$"
+      },
+      "uniqueItems": true
+    },
+    "delivery_checks": {
+      "type": "object",
+      "required": [
+        "five_beats",
+        "four_closing_actions",
+        "anti_patterns",
+        "tensions",
+        "source_attribution"
+      ],
+      "properties": {
+        "five_beats": {
+          "type": "boolean"
+        },
+        "four_closing_actions": {
+          "type": "boolean"
+        },
+        "anti_patterns": {
+          "type": "boolean"
+        },
+        "tensions": {
+          "type": "boolean"
+        },
+        "source_attribution": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "phase_evidence": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "activating",
+          "diagnosing",
+          "strategizing",
+          "mobilizing",
+          "delivering"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "artifact",
+          "sha256"
+        ],
+        "properties": {
+          "artifact": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "revision_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  },
+  "not": {
+    "required": [
+      "consultation_status"
+    ]
+  },
+  "additionalProperties": true
+}

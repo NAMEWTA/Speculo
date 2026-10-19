@@ -102,7 +102,7 @@ describe('versioned design lifecycle',()=>{
     const f=await fixture();try{
       const validator=await designValidator(),api=await designTools();
       const original=await readFile(f.path,'utf8');await writeFile(f.path,original.replace('schema_version: 3','schema_version: 3\nschema_version: 3'));await assert.rejects(validator.validate(f.path),/unique|duplicat/i);
-      await writeFile(f.path,original.replace('schema_version: 3','schema_version: 2'));await assert.rejects(validator.validate(f.path),/legacy design package/);
+      await writeFile(f.path,original.replace('schema_version: 3','schema_version: 2'));await assert.rejects(validator.validate(f.path),/unsupported design package schema/);
       assert.throws(()=>api.validateTokens({a:'{b}',b:'{a}'}),/cyclic/);
       await assert.rejects(api.safePath(f.root,'../../DESIGN.md'),/unsafe/);
       await symlink(join(f.change,'LOG.md'),join(f.root,'evidence/link.md'));await assert.rejects(api.safePath(f.root,'evidence/link.md'),/symlink|symbolic links/);
@@ -140,17 +140,14 @@ describe('versioned design lifecycle',()=>{
       await assert.rejects((await designValidator()).validate(f.path),/baseline revision\/digest mismatch/);
     }finally{await f.cleanup()}
   });
-  it('validates immutable legacy design sources without rewriting historical status',async()=>{
+  it('refuses unsupported status archives without rewriting their design evidence',async()=>{
     const f=await fixture();try{
-      const target=join(f.state,'archive','2026-10',changeName);await mkdir(dirname(target),{recursive:true});await rename(f.change,target);
-      const status={...JSON.parse(await readFile(join(process.cwd(),'test/fixtures/specdev-legacy-change-v6.json'),'utf8')),change:changeName,change_status:'archived',archived:true,current_work:null,archive_path:`<Path>{roots.state}/specdev/archive/2026-10/${changeName}</Path>`};
-      const frozen=JSON.stringify(status);await writeFile(join(target,'.status.json'),frozen);
-      const result=spawnSync(process.execPath,[validatorPath,'--stage','archived',target],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);
-      assert.equal(await readFile(join(target,'.status.json'),'utf8'),frozen);
-      await rm(join(target,'prototypes/UI-001/evidence'),{recursive:true});
-      const missing=spawnSync(process.execPath,[validatorPath,'--stage','archived',target],{encoding:'utf8'});assert.equal(missing.status,1);assert.match(missing.stderr,/ENOENT|path-unsafe/);
-      await mkdir(f.change,{recursive:true});await writeFile(join(f.change,'README.md'),'Outcome: active\n');
-      await assert.rejects((await designTools()).validateArchived(target),/duplicate identity/);
+      const target=join(f.state,'changes/archive',changeName);await mkdir(dirname(target),{recursive:true});await rename(f.change,target);
+      const frozen=JSON.stringify({schema_version:6,change:changeName,change_status:'archived'});
+      await writeFile(join(target,'.status.json'),frozen);
+      const designBefore=await readFile(join(target,'DESIGN.md'));
+      const result=spawnSync(process.execPath,[validatorPath,'--stage','archived',target],{encoding:'utf8'});assert.equal(result.status,1);assert.match(result.stderr,/unsupported|mixed-protocol|legacy/);
+      assert.equal(await readFile(join(target,'.status.json'),'utf8'),frozen);assert.deepEqual(await readFile(join(target,'DESIGN.md')),designBefore);
     }finally{await f.cleanup()}
   });
   it('enforces UI Ticket design references while leaving non-UI work independent',async()=>{

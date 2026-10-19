@@ -3,6 +3,7 @@
   "narration": null,
   "audio": null,
   "transcript": null,
+  "font_files": [],
   "shots": [
     {
       "id": "shot-01",

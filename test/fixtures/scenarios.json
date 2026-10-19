@@ -9,7 +9,11 @@
       "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-init-reuse-and-change",
@@ -19,7 +23,11 @@
     "instruction_paths": [
       "template/commands/coordination-init/COMMAND.md",
       "template/references/coordination/initialization.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-init-no-write",
@@ -30,7 +38,11 @@
       "template/commands/coordination-init/COMMAND.md",
       "template/references/coordination/initialization.md",
       "template/references/coordination/coordination-contract.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-init-install-failure-retry",
@@ -41,18 +53,26 @@
       "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-init-conflict-and-drift",
     "workflow": "shared",
-    "trigger": "Initialization encounters invalid configuration, configuration drift, a linked install path, an invalid same-name Skill or two legacy Skill candidates without a saved guide",
+    "trigger": "Initialization encounters invalid configuration, configuration drift, a linked install path, an invalid same-name Skill or two local Skill candidates without a saved guide",
     "expected": "Preserves original files and stops only affected writes; invalid configuration does not trigger dependent installation. Ambiguous directories require a user choice; valid explicit guide paths are honored and no global Skill directory is substituted.",
     "instruction_paths": [
       "template/references/coordination/initialization.md",
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-optional-service-fallback",
@@ -64,7 +84,11 @@
       "template/references/coordination/modes/herdr.md",
       "template/references/coordination/modes/orca.md",
       "template/references/coordination/modes/cli.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-required-and-uncertain-dispatch",
@@ -74,7 +98,11 @@
     "instruction_paths": [
       "template/references/coordination/coordination-contract.md",
       "template/references/coordination/result-and-recovery.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-intake",
@@ -85,7 +113,11 @@
       "template/workflows/specdev/specdev-t-triage/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-diagnose",
@@ -96,7 +128,11 @@
       "template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-spec",
@@ -107,7 +143,11 @@
       "template/workflows/specdev/specdev-s-spec/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-ticket",
@@ -118,7 +158,11 @@
       "template/workflows/specdev/specdev-t-tickets/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-tdd",
@@ -129,7 +173,11 @@
       "template/workflows/specdev/specdev-i-implement/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-review",
@@ -140,7 +188,11 @@
       "template/workflows/specdev/specdev-c-code-review/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-recovery",
@@ -151,7 +203,11 @@
       "template/workflows/specdev/specdev-i-implement/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-archive",
@@ -162,7 +218,11 @@
       "template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md",
       "template/workflows/specdev/common/rules/domain-runtime.md",
       "template/workflows/specdev/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "learning-assess",
@@ -173,7 +233,11 @@
       "template/workflows/learning/learning-a-assess-and-plan/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "learning-lesson",
@@ -184,7 +248,11 @@
       "template/workflows/learning/learning-l-lesson/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "learning-homework",
@@ -195,7 +263,11 @@
       "template/workflows/learning/learning-h-homework/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "learning-review",
@@ -206,7 +278,11 @@
       "template/workflows/learning/learning-r-review/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "learning-consolidate",
@@ -217,18 +293,26 @@
       "template/workflows/learning/learning-c-consolidate/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
-    "id": "learning-reset",
+    "id": "learning-unsupported-state",
     "workflow": "learning",
-    "trigger": "legacy v1 state",
-    "expected": "blocks without migration",
+    "trigger": "unsupported Learning state format",
+    "expected": "Rejects unsupported state without rewriting bytes or inventing an automatic migration, and identifies the original owner.",
     "instruction_paths": [
       "template/workflows/learning/learning-i-init-setup/SKILL.md",
       "template/workflows/learning/common/rules/domain-runtime.md",
       "template/workflows/learning/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-intake",
@@ -239,7 +323,11 @@
       "template/workflows/ops/ops-d-project-deploy/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-plan",
@@ -250,7 +338,11 @@
       "template/workflows/ops/ops-d-project-deploy/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-approval",
@@ -261,7 +353,11 @@
       "template/workflows/ops/ops-d-project-deploy/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-execute",
@@ -272,7 +368,11 @@
       "template/workflows/ops/ops-d-project-deploy/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-rollback",
@@ -283,7 +383,11 @@
       "template/workflows/ops/ops-d-project-deploy/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "ops-archive",
@@ -294,7 +398,11 @@
       "template/workflows/ops/ops-v-inventory-view/SKILL.md",
       "template/workflows/ops/common/rules/domain-runtime.md",
       "template/workflows/ops/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "person-steelman",
@@ -305,7 +413,11 @@
       "template/workflows/person/person-s-steelman-deliberation/SKILL.md",
       "template/workflows/person/SKILL.md",
       "template/workflows/person/common/rules/activation-and-memory.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "person-mao",
@@ -316,25 +428,11 @@
       "template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md",
       "template/workflows/person/SKILL.md",
       "template/workflows/person/common/rules/activation-and-memory.md"
-    ]
-  },
-  {
-    "id": "kernel-compaction",
-    "workflow": "kernel",
-    "trigger": "context threshold reached",
-    "expected": "writes recoverable checkpoint",
-    "instruction_paths": [
-      "AGENTS.md"
-    ]
-  },
-  {
-    "id": "kernel-capability",
-    "workflow": "kernel",
-    "trigger": "model session starts",
-    "expected": "performs capability handshake",
-    "instruction_paths": [
-      "AGENTS.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-requirement-reference",
@@ -346,7 +444,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-project-code",
@@ -358,7 +460,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-selected-change",
@@ -370,7 +476,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-external-article",
@@ -382,7 +492,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-unavailable-source",
@@ -394,7 +508,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-resume",
@@ -406,7 +524,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "specdev-learn-archived-source",
@@ -418,7 +540,11 @@
       "template/workflows/specdev/specdev-l-learn/references/learning-change.md",
       "template/workflows/specdev/specdev-l-learn/references/lesson-format.md",
       "template/workflows/specdev/common/rules/domain-runtime.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-cross-workflow-chain",
@@ -428,7 +554,11 @@
     "instruction_paths": [
       "template/references/coordination/coordination-contract.md",
       "template/references/coordination/session-files.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "coordination-core-only",
@@ -438,7 +568,11 @@
     "instruction_paths": [
       "template/references/coordination/coordination-contract.md",
       "template/references/coordination/session-files.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "handoff-explicit-only",
@@ -449,7 +583,11 @@
       "template/commands/handoff/COMMAND.md",
       "template/references/handoff/handoff-contract.md",
       "template/references/handoff/handoff-template.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "handoff-update-and-preserve",
@@ -460,7 +598,11 @@
       "template/commands/handoff/COMMAND.md",
       "template/references/handoff/handoff-contract.md",
       "template/references/handoff/handoff-template.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "handoff-multiple-or-no-change",
@@ -471,7 +613,11 @@
       "template/commands/handoff/COMMAND.md",
       "template/references/handoff/handoff-contract.md",
       "template/references/handoff/handoff-template.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   },
   {
     "id": "handoff-conflict-and-recovery",
@@ -482,6 +628,1498 @@
       "template/commands/handoff/COMMAND.md",
       "template/references/handoff/handoff-contract.md",
       "template/references/handoff/handoff-template.md"
-    ]
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "artifact-install-refresh",
+    "workflow": "shared",
+    "trigger": "Refresh an actual CLI-created disposable installation with original runtime notes",
+    "expected": "Runtime bytes survive refresh and read-only doctor reports a healthy installation",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "src/refresh.ts",
+      "src/doctor.ts"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "refresh",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "doctor",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/doctor.stdout.txt",
+          "json": {
+            "/healthy": true
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/context/user-notes.md",
+          "equals": "# Original fixture text\r\n用户原始内容：保持字节。\r\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-install-unsupported-state",
+    "workflow": "shared",
+    "trigger": "Refresh a CLI-created installation whose install metadata declares an unsupported schema",
+    "expected": "Reject without converting or changing any project file",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "src/refresh.ts"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-refresh",
+            "exit_code": 2
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-refresh.process.json",
+          "json": {
+            "/exit_code": 2
+          }
+        },
+        {
+          "path": "logs/reject-refresh.stderr.txt",
+          "contains": [
+            "unsupported-installation-version"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-install-foreign-lock",
+    "workflow": "shared",
+    "trigger": "Attempt refresh while another fixture owner holds the installation lock",
+    "expected": "Reject and retain the original foreign lock and all project files",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "src/transaction.ts"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-locked-refresh",
+            "exit_code": 2
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-locked-refresh.process.json",
+          "json": {
+            "/exit_code": 2
+          }
+        },
+        {
+          "path": "project/.agents/.speculo-install.lock",
+          "equals": "foreign fixture lock\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-core-dispatch",
+    "workflow": "shared",
+    "trigger": "Install core only and validate a current shared coordination task through its shipped CLI",
+    "expected": "Validate a generic task without installing or inventing SpecDev business state",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/references/coordination/scripts/validate-dispatch.mjs",
+      "template/references/coordination/session-files.md"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-dispatch",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-dispatch.stdout.txt",
+          "json": {
+            "/errors": []
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/specdev/status.json",
+          "absent": true
+        },
+        {
+          "path": "project/.agents/speculo/workflows/specdev",
+          "absent": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-specdev-closure",
+    "workflow": "specdev",
+    "trigger": "Validate a current Markdown Spec and then attempt the archive gate while Outcome is active",
+    "expected": "Current Spec validates; active Outcome blocks the archive gate without changing authoritative Markdown. This minimal fixture does not certify a completed archive's full closure evidence.",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/specdev/common/tools/validate-specdev.mjs",
+      "src/specdev-artifacts.ts"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-spec",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-active-archive",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-spec.process.json",
+          "json": {
+            "/exit_code": 0
+          }
+        },
+        {
+          "path": "logs/reject-active-archive.stderr.txt",
+          "contains": [
+            "complete stage requires Outcome: completed"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-specdev-unsupported-state",
+    "workflow": "specdev",
+    "trigger": "Invoke an installed current Work with an unsupported JSON business authority present",
+    "expected": "Reject with unsupported-specdev-protocol and preserve all original bytes",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/specdev/common/tools/validate-specdev.mjs",
+      "src/specdev-artifacts.ts"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-unsupported-state",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-unsupported-state.stderr.txt",
+          "contains": [
+            "unsupported-specdev-protocol"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/specdev/status.json",
+          "equals": "{\"schema_version\":0,\"original\":\"preserve bytes\"}\r\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-learning-relocation-lock",
+    "workflow": "learning",
+    "trigger": "Review a real relocation plan, then apply it while a foreign consolidation lock exists",
+    "expected": "No business move or metadata edit; foreign lock survives; only transaction recovery evidence may be added",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/learning/learning-c-consolidate/SKILL.md",
+      "template/workflows/learning/common/tools/relocate-learning.mjs",
+      "template/workflows/learning/common/tools/validate-learning.mjs",
+      "template/workflows/learning/common/tools/learning-evidence.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "relocation-plan",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-foreign-lock",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/relocation-plan.stdout.txt",
+          "json": {
+            "/status": "dry-run"
+          }
+        },
+        {
+          "path": "logs/reject-foreign-lock.process.json",
+          "json": {
+            "/exit_code": 1
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/.consolidate.lock",
+          "equals": "foreign fixture lock\n"
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/changes/2026-10-19-source/original.md",
+          "equals": "# Original fixture text\r\n用户原始内容：保持字节。\r\n"
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/changes/2026-10-19-parent/children/2026-10-19-source",
+          "absent": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-learning-relocation-recovery",
+    "workflow": "learning",
+    "trigger": "Move a real source subtree with a descendant; resume an applied transaction and roll it back twice",
+    "expected": "Every live projection updates, recovery uses the prewritten manifest, rollback restores exact business bytes",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/learning/learning-c-consolidate/SKILL.md",
+      "template/workflows/learning/common/tools/relocate-learning.mjs",
+      "template/workflows/learning/common/tools/validate-learning.mjs",
+      "template/workflows/learning/common/tools/learning-evidence.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "relocation-plan",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "relocation-apply",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-moved-state",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "resume-applied",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "rollback",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "rollback-again",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "moved-status.json",
+          "json": {
+            "/active/1/locator": "changes/2026-10-19-parent/children/2026-10-19-source",
+            "/active/1/root_change": "2026-10-19-parent",
+            "/active/2/locator": "changes/2026-10-19-parent/children/2026-10-19-source/children/2026-10-19-child",
+            "/active/2/root_change": "2026-10-19-parent"
+          }
+        },
+        {
+          "path": "moved-locations.json",
+          "json": {
+            "/entries/1/locator": "changes/2026-10-19-parent/children/2026-10-19-source",
+            "/entries/2/locator": "changes/2026-10-19-parent/children/2026-10-19-source/children/2026-10-19-child"
+          }
+        },
+        {
+          "path": "moved-source.json",
+          "json": {
+            "/parent_change": "2026-10-19-parent",
+            "/children/0/locator": "changes/2026-10-19-parent/children/2026-10-19-source/children/2026-10-19-child"
+          }
+        },
+        {
+          "path": "moved-child.json",
+          "json": {
+            "/locator": "changes/2026-10-19-parent/children/2026-10-19-source/children/2026-10-19-child",
+            "/parent_change": "2026-10-19-source",
+            "/root_change": "2026-10-19-parent"
+          }
+        },
+        {
+          "path": "prepared-and-applied-manifest.json",
+          "json": {
+            "/schema_version": 2,
+            "/artifact": "learning-relocation-manifest",
+            "/status": "applied"
+          }
+        },
+        {
+          "path": "logs/rollback-again.stdout.txt",
+          "json": {
+            "/status": "rolled-back",
+            "/unchanged": true
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/changes/2026-10-19-source/original.md",
+          "equals": "# Original fixture text\r\n用户原始内容：保持字节。\r\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-learning-budget",
+    "workflow": "learning",
+    "trigger": "Validate a numeric Lesson budget, then replace its segments with a sum that contradicts estimated_minutes",
+    "expected": "Accept real numeric totals and reject mismatched budgets without repairing user materials",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/learning/common/tools/validate-learning.mjs",
+      "template/workflows/learning/common/tools/learning-evidence.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-budget",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-budget",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-budget.process.json",
+          "json": {
+            "/exit_code": 0
+          }
+        },
+        {
+          "path": "logs/reject-budget.process.json",
+          "json": {
+            "/exit_code": 1
+          }
+        },
+        {
+          "path": "logs/reject-budget.stderr.txt",
+          "contains": [
+            "time_budget"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-learning-submission",
+    "workflow": "learning",
+    "trigger": "Validate a reviewed ready Homework, then edit its submitted answer while retaining the review fingerprint",
+    "expected": "Detect answer drift and leave the altered source and old review evidence intact",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/learning/common/tools/validate-learning.mjs",
+      "template/workflows/learning/common/tools/learning-evidence.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-submission",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-answer-drift",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-submission.process.json",
+          "json": {
+            "/exit_code": 0
+          }
+        },
+        {
+          "path": "logs/reject-answer-drift.stderr.txt",
+          "contains": [
+            "fingerprint"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/learning/changes/2026-10-19-learning/homework/HW-001-topic-attempt-01.md",
+          "contains": [
+            "外来改动后的回答",
+            "Submission: ready"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-learning-retention",
+    "workflow": "learning",
+    "trigger": "Claim retention before a Review exists, then add a scoped synthetic dated Review and finally make it premature",
+    "expected": "Reject missing and premature evidence; accept only the fixture's correctly timed declared evidence, without certifying actual learning",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/learning/common/tools/validate-learning.mjs",
+      "template/workflows/learning/common/tools/learning-evidence.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-missing-review",
+            "exit_code": 1
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-retention",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-premature-review",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-missing-review.stderr.txt",
+          "contains": [
+            "real passed R Review"
+          ]
+        },
+        {
+          "path": "logs/validate-retention.process.json",
+          "json": {
+            "/exit_code": 0
+          }
+        },
+        {
+          "path": "logs/reject-premature-review.process.json",
+          "json": {
+            "/exit_code": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-person-isolation",
+    "workflow": "person",
+    "trigger": "Publish two separate initial consultation candidates through the installed tool, then refresh",
+    "expected": "Each Change retains its own problem type; global extension and runtime bytes survive; refresh only checks structure",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "src/structured.ts",
+      "template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md",
+      "template/workflows/person/person-m-mao-zedong-cognitive-os/scripts/consultation-state.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-consultation-one",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "publish-consultation-one",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-consultation-two",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "publish-consultation-two",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "refresh",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/person/status.json",
+          "json": {
+            "/extension": "retained",
+            "/active/0/change": "2026-10-19-consultation-one",
+            "/active/1/change": "2026-10-19-consultation-two"
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/person/changes/2026-10-19-consultation-one/.status.json",
+          "json": {
+            "/problem_type": "决策方法",
+            "/phase": "activating"
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/person/changes/2026-10-19-consultation-two/.status.json",
+          "json": {
+            "/problem_type": "团队/组织问题",
+            "/phase": "activating"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-person-phase-gate",
+    "workflow": "person",
+    "trigger": "Publish activation, then try diagnosing without the completed activation artifact or original method evidence",
+    "expected": "Business publication fails and preserves the authoritative activating state and active index",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "src/structured.ts",
+      "template/workflows/person/person-m-mao-zedong-cognitive-os/SKILL.md",
+      "template/workflows/person/person-m-mao-zedong-cognitive-os/scripts/consultation-state.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-activation",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "publish-activation",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-missing-phase-evidence",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-missing-phase-evidence.stderr.txt",
+          "contains": [
+            "missing artifact hash"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/person/changes/2026-10-19-consultation/.status.json",
+          "json": {
+            "/phase": "activating",
+            "/status": "active"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-ops-resource-state",
+    "workflow": "ops",
+    "trigger": "Validate the installed resource schema, then supply an unsupported resource version",
+    "expected": "Reject unsupported resource state without a migration or target execution",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/ops/common/tools/validate-ops.mjs",
+      "template/workflows/ops/common/tools/opslib/resource-validation.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-resource-state",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-resource-state",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-resource-state.process.json",
+          "json": {
+            "/exit_code": 0
+          }
+        },
+        {
+          "path": "logs/reject-resource-state.process.json",
+          "json": {
+            "/exit_code": 1
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/ops/status.json",
+          "json": {
+            "/schema_version": 0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-ops-expired-approval",
+    "workflow": "ops",
+    "trigger": "Pass a schema-valid expired empty-operation fixture to the actual approval CLI",
+    "expected": "Reject expiration before creating an approval or writing controller/target data; simulated fixture statement grants no user authority",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/ops/common/tools/opslib/execution.mjs",
+      "template/workflows/ops/common/tools/opslib/cli.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-expired-fixture",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-expired-approval",
+            "exit_code": 2
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-expired-fixture.stdout.txt",
+          "json": {
+            "/valid": true,
+            "/schema": "plan"
+          }
+        },
+        {
+          "path": "logs/reject-expired-approval.stderr.txt",
+          "contains": [
+            "plan expired; replan"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/ops/releases/expired-fixture/approval.json",
+          "absent": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-media-article",
+    "workflow": "media",
+    "trigger": "Complete a fixture promising only an article and validate its actual file digest",
+    "expected": "Accept the promised article without inventing an image or video deliverable; no quality, rights or publication certification",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/media/common/rules/artifact-contract.md",
+      "template/workflows/media/common/tools/media-tools.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-article",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-media-state",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/validate-article.stdout.txt",
+          "json": {
+            "/valid": true,
+            "/artifacts": 1
+          }
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/media/changes/2026-10-19-media/master.md",
+          "equals": "# Original fixture text\r\n用户原始内容：保持字节。\r\n"
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/media/changes/2026-10-19-media/video",
+          "absent": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-media-drift",
+    "workflow": "media",
+    "trigger": "After an original article validates, alter its bytes outside its declared owner",
+    "expected": "Reject artifact-drift and preserve the actual human-edited file",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/media/common/rules/artifact-contract.md",
+      "template/workflows/media/common/tools/media-tools.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "validate-original",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-artifact-drift",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-artifact-drift.stderr.txt",
+          "contains": [
+            "artifact-drift:article:media/brief"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/media/changes/2026-10-19-media/master.md",
+          "equals": "Human edit must survive the rejected check.\r\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-media-owner",
+    "workflow": "media",
+    "trigger": "Declare an article output as owned by the video Work",
+    "expected": "Reject the ownership conflict without adopting or rewriting the artifact",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/media/common/rules/artifact-contract.md",
+      "template/workflows/media/common/tools/media-tools.mjs"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-foreign-owner",
+            "exit_code": 1
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "after.json",
+          "same_as": "before.json"
+        },
+        {
+          "path": "logs/reject-foreign-owner.stderr.txt",
+          "contains": [
+            "artifact-owner"
+          ]
+        },
+        {
+          "path": "project/.agents/speculo/.speculo/media/changes/2026-10-19-media/master.md",
+          "equals": "# Original fixture text\r\n用户原始内容：保持字节。\r\n"
+        }
+      ]
+    }
+  },
+  {
+    "id": "artifact-media-draft",
+    "workflow": "media",
+    "trigger": "Fingerprint a local draft, reject absent gate approvals, then export and repeat using explicitly simulated fixture approvals",
+    "expected": "Actual local files are copied, repeat reuses identical draft, publication_performed remains false and no user authority is inferred",
+    "instruction_paths": [
+      "src/cli-app.ts",
+      "template/workflows/media/common/rules/artifact-contract.md",
+      "template/workflows/media/common/tools/media-tools.mjs",
+      "template/workflows/media/media-p-publish-draft/SKILL.md"
+    ],
+    "execution": {
+      "kind": "artifact-harness",
+      "runner": "installed-cli-artifacts-v1",
+      "scope": "actual installed CLI/tool contracts on disposable data; no host/model or publication certification"
+    },
+    "assertions": {
+      "events": [
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "install",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "fingerprint-draft",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reject-unapproved-draft",
+            "exit_code": 1
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "export-local-draft",
+            "exit_code": 0
+          }
+        },
+        {
+          "kind": "tool",
+          "payload": {
+            "name": "reuse-local-draft",
+            "exit_code": 0
+          }
+        }
+      ],
+      "forbidden_effects": [
+        "undeclared-local-write",
+        "external-mutation",
+        "publish",
+        "deploy"
+      ],
+      "artifacts": [
+        {
+          "path": "logs/fingerprint-draft.stdout.txt",
+          "json": {
+            "/approved": false
+          }
+        },
+        {
+          "path": "logs/reject-unapproved-draft.stderr.txt",
+          "contains": [
+            "approval-direction"
+          ]
+        },
+        {
+          "path": "draft-package.json",
+          "json": {
+            "/status": "local-draft-ready",
+            "/publication_performed": false,
+            "/publication_authorization": "not-authorized",
+            "/side_effects": []
+          }
+        },
+        {
+          "path": "logs/reuse-local-draft.stdout.txt",
+          "json": {
+            "/reused": true
+          }
+        },
+        {
+          "path": "copied-media.txt",
+          "equals": "Actual local copy fixture; not an image quality claim.\n"
+        },
+        {
+          "path": "draft.md",
+          "contains": [
+            "Synthetic draft fixture",
+            "No upload, login or publication was performed."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "media-creator-context",
+    "workflow": "media",
+    "trigger": "Initialize creator context from explicit user inputs",
+    "expected": "Writes only confirmed creator facts; missing optional context does not trigger unrelated research or publication.",
+    "instruction_paths": [
+      "template/workflows/media/media-i-init-setup/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-brief-scope",
+    "workflow": "media",
+    "trigger": "Turn an approved content direction into a brief",
+    "expected": "Preserves requested output types and binds claims to available sources; written approval alone is not external publication authority.",
+    "instruction_paths": [
+      "template/workflows/media/media-b-brief/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-deconstruct-source",
+    "workflow": "media",
+    "trigger": "Analyze an accessible reference while some source evidence is unavailable",
+    "expected": "Distinguishes observed content, interpretation and missing evidence; does not reconstruct inaccessible source claims as facts.",
+    "instruction_paths": [
+      "template/workflows/media/media-d-deconstruct/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-video-deliverable",
+    "workflow": "media",
+    "trigger": "Request a video engineering project, preview or final with different tool availability",
+    "expected": "Keeps the three deliverable levels separate; unavailable rendering does not produce a fake final or quality approval.",
+    "instruction_paths": [
+      "template/workflows/media/media-v-video/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-hand-drawn-source",
+    "workflow": "media",
+    "trigger": "Use the selected original hand-drawn style package",
+    "expected": "Preserves exact recipe output and reads only necessary style resources; permission, package digest and offline asset boundaries remain explicit.",
+    "instruction_paths": [
+      "template/workflows/media/media-h-hand-drawn/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-local-draft-boundary",
+    "workflow": "media",
+    "trigger": "Prepare a platform draft from reviewed content",
+    "expected": "Checks content-bound gate evidence, exports local artifacts and does not upload, log in or publish without a separate authorized entry.",
+    "instruction_paths": [
+      "template/workflows/media/media-p-publish-draft/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
+  },
+  {
+    "id": "media-retro-evidence",
+    "workflow": "media",
+    "trigger": "Review actual performance with incomplete or conflicting evidence",
+    "expected": "Separates observed results from inference, preserves counter-evidence and writes only bounded reusable findings through the original owner.",
+    "instruction_paths": [
+      "template/workflows/media/media-r-retro/SKILL.md",
+      "template/workflows/media/common/rules/artifact-contract.md"
+    ],
+    "execution": {
+      "kind": "host-observation",
+      "runner": null
+    }
   }
 ]

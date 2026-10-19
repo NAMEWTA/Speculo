@@ -1,6 +1,12 @@
 # 开发任务的编排边界
 
-SpecDev 实际委派任务时，在共享编排方法之外读取本文件。全局初始化属于 command/coordination-init；普通 Work 和无安装直接模式不要求先初始化编排。
+C/I/P 开始实施、独立审查或调度时读取本文件，并读取 <Path>{roots.references}/coordination/coordination-contract.md</Path> 的当前阶段方法。全局初始化属于 command/coordination-init；普通 Work 和无安装直接模式不要求先初始化编排。
+
+## 执行方式与上下文
+
+未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/team 是宿主能力。明确选择 CLI 交互、Herdr、Orca 或 review 方式时遵循实际选择，只读取所选工具的当前指南；不固定模型，不重复询问仍有效的授权或工作区选择。
+
+lead 上下文维护原业务责任；task 只处理分配目标、阶段和写集，使用相同 Work 方法返回候选、findings、验证与未验证项，不递归启动 Goal 或擅自跨 CLI 派单。宿主原生协作遵守原写集与共享资源 owner。真实入口未曝光到宿主列表不妨碍按准确路径读取，但读取入口不等于执行。
 
 ## 输入与作者
 
@@ -18,4 +24,4 @@ Lead 明确任务所用 Work、阶段和必要前置条件：Ticket implementati
 
 有明确授权的 run/resume 完成当前实现、审查、验证和同范围修复后，继续下一 Ready 任务，不逐票要求“继续”。同范围 finding 沿原任务修复；重复 blocker 或达到有效尝试上限时保留证据，只有新证据或实质改变才能重试。业务生命周期门由 owning Work 核对，通用派遣结构通过不等于允许启动已取消或已归档的业务。
 
-新派遣使用共享 TASK v2；存量 TASK v1 继续使用 <Path>{roots.workflows}/specdev/common/tools/validate-handoff.mjs</Path> 原接口，保留 active change、固定 kind 与归档冻结检查。它是历史校验适配器，不是其他领域的依赖。
+派遣只使用共享 TASK v2，并按 <Path>{roots.references}/coordination/session-files.md</Path> 保存真实冻结输入与原始返回；未知协议拒绝派遣，不转换历史交接文件。

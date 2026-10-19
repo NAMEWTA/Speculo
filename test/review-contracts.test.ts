@@ -15,7 +15,7 @@ test("Learning conditional contracts remain directly reachable without unrelated
   for (const [work, rule, required] of [
     ["learning-l-lesson", "lesson-contract", "estimated_minutes"],
     ["learning-h-homework", "homework-contract", "Submission: ready"],
-    ["learning-c-consolidate", "consolidation-contract", "source_change_id"],
+    ["learning-c-consolidate", "consolidation-contract", "evidence-integrity.md"],
     ["learning-a-archive", "consolidation-contract", "archive/YYYY-MM"],
     ["learning-a-assess-and-plan", "artifact-layouts", "background/foundation.md"],
   ]) {
@@ -23,6 +23,12 @@ test("Learning conditional contracts remain directly reachable without unrelated
     assert.ok((await read(`template/workflows/learning/${work}/SKILL.md`)).includes(`/common/rules/${rule}.md`));
     assert.ok((await read(`template/workflows/learning/common/rules/${rule}.md`)).includes(required));
   }
+  const consolidation = await read("template/workflows/learning/common/rules/consolidation-contract.md");
+  assert.match(consolidation, /--apply --expect-digest/);
+  assert.match(consolidation, /--resume <manifest-path>/);
+  assert.match(consolidation, /dry-run 本身不写任何文件/);
+  assert.match(consolidation, /迁移确认不代替发布确认/);
+  assert.match(consolidation, /不检查作业或掌握，不做综合/);
   assert.ok(!readme.includes("Submission: pending"));
   assert.match(await read("template/workflows/learning/learning-g-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
 });

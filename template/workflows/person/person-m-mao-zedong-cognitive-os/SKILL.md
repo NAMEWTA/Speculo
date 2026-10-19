@@ -32,12 +32,4 @@ metadata:
 
 ## 状态追踪
 
-咨询过程中维护以下状态字段，记录在 `<Path>{roots.state}/person/status.json</Path>` 中：
-
-- **`problem_type`**（字符串）—— 问题类型，从激活阶段的问题类型表中选定
-- **`primary_framework`**（字符串）—— 匹配的主框架及篇目编号
-- **`models_applied`**（数组）—— 诊断阶段已应用的 Module A 模型列表
-- **`frameworks_applied`**（数组）—— 战略阶段已应用的 Module B 框架列表
-- **`methods_applied`**（数组）—— 组织阶段已应用的 Module C 方法列表
-- **`quotes_cited`**（数组）—— 已引用的毛泽东原话及出处
-- **`consultation_status`**（字符串）—— 当前阶段：`activating` → `diagnosing` → `strategizing` → `mobilizing` → `delivering` → `completed`
+新建、恢复、推进或修订阶段时读取 <Path>{roots.workflows}/person/person-m-mao-zedong-cognitive-os/references/state-and-publication.md</Path>。咨询字段只写当前 Change 的 .status.json；全局 status.json 只保留 active 索引。按合同调用真实候选校验/发布工具，完成当前阶段验证后才更新下一阶段；不新增逐阶段用户确认。

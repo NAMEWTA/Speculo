@@ -24,6 +24,8 @@ metadata:
 
 识别项目真实启动、构建、所有持久化参数、环境变量、迁移、健康检查及恢复能力。不能仅生成通用 Compose 后声称完成。选择专用、shared、external 依赖：优先遵循用户指定 provider，多候选不得随机选择。MySQL/Redis/MinIO 按显式逻辑资源与应用账号分配；未知 lauctric 保留原名，需要真实仓库/版本和经验证的适配规则，不猜产品。
 
+需要验证业务正确性时，读取 `<Path>{roots.workflows}/ops/common/verification/README.md</Path>`，由项目owner维护可重复的真实业务路径及已知错误反例。把验证脚本、依赖与夹具加入原任务input_paths，并入现有health/verify-command；端口存活不代替业务结果。验证涉及的数据写入、网络与清理仍在本次原授权内，未执行配方保持unverified。
+
 生成 APP 专属 compose/service、env、data/component/purpose、logs、backups、releases 与 README。公共服务独立同级，不向 APP 复制其物理数据。APP 副本可以使用同一 allocation；不同 APP 默认不同逻辑数据与凭据。跨 Compose/主机依赖由 Binding 与执行序列管理，不能使用跨文件 depends_on 冒充协调。
 
 完整 plan 明示持久化映射、来源和构件摘要、执行顺序、账号版本、网络、受影响消费者、数据库迁移单一执行者、备份与恢复限制。新装或现有 provider 均先准备并验证，再分配逻辑资源，再部署消费者。跨主机失败停止后续，逐主机保留事实，不假装全局事务。

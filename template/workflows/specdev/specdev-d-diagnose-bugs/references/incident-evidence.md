@@ -2,6 +2,8 @@
 
 当故障只发生过一次、暂时无法复现，或缺少安全的运行环境时读取。此分支允许收集事实，不放宽已确认根因的红灯标准。当前 Work 仍为 `specdev/diagnose-bugs`；原 diagnosis 与 diagnostics 承载结果，不新建事故状态或永久知识。
 
+已取得 HAR、trace、core、profile 或日志且需要具体分析时，读取 <Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/captured-evidence-forensics.md</Path>，选择材料对应的只读方法，结果仍写原 diagnosis/diagnostics。
+
 ## 可执行的调查
 
 1. 固定事件、时间区间、受影响对象、版本和读权限。按来源定位脱敏日志、trace、变更、配置和相关源码路径，不全面导出生产数据。

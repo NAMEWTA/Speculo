@@ -206,7 +206,7 @@ describe("Ticket authority and execution policy without config", () => {
       .replaceAll("<owner-or-session-locator>", "lead-session")
       .replace("ticket_execution: auto", `ticket_execution: ${policy === "current" ? "serial" : "parallel"}\nmax_parallel_tickets: 2\nconcurrent_implementation_limit: 2`)
       .replace("ready_for_execution: false", "ready_for_execution: true")
-      .replace(/## Execution Policy Source[\s\S]*$/, "## Execution Policy Source\n\nFixture request allows two simultaneous implementations including the Lead and three integration attempts; current workspace remains serial.\n");
+      .replace(/## Execution Policy Source[\s\S]*$/, "## Execution Policy Source\n\nFixture request allows two simultaneous implementations including the Lead and three integration attempts; Ticket scheduling follows the declared ticket_execution policy.\n");
     await writeFile(join(root, "goal-plan.md"), plan);
     const input = { mapPath: join(root, "tickets-map.md"), repoRoot: repo, methodRoot: join(process.cwd(), "template"), stateRoot: "facts" };
     return { repo, root, tickets, input, map, plan };

@@ -22,13 +22,13 @@
 从已安装项目根执行，最后的 `.` 是要打包的项目目录：
 
 ```bash
-node .agents/speculo/commands/source-code-zip/scripts/zip_source_code.js . --dry-run --verbose
+node .agents/speculo/commands/source-code-zip/scripts/zip_source_code.cjs . --dry-run --verbose
 ```
 
 确认预览后：
 
 ```bash
-node .agents/speculo/commands/source-code-zip/scripts/zip_source_code.js .
+node .agents/speculo/commands/source-code-zip/scripts/zip_source_code.cjs .
 ```
 
 默认输出在源目录旁，名为 `<目录名>.code.zip`。自定义输出、过滤、覆盖和压缩参数以[脚本参考](../../template/commands/source-code-zip/references/cli-reference.md)为准。

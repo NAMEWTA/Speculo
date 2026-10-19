@@ -15,7 +15,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 
 存在 Implementation Map、Implementation Plan 或 goal-tickets-map 入口中的任一项即走父编排校验；缺少另一父工件会报错，不回退单 change，也不额外要求单 change Goal。父编排读取 sibling 成员，创建时要求每个成员已有 Ready Spec/Tickets，继续校验组合 Ticket DAG、唯一父归属、serialization、跨 Ticket 写路径、全局 workspace/实现配额和完成门。已有父 Map/Plan 尚未补建无状态入口时仍可验证。
 
-解析出项目根后，把 Ticket Evidence 中实际 Workspace Execution Record 的 SHA、祖先关系、当前分支和完成时 clean 状态与真实 Git 仓库交叉验证。没有实际 Git 执行记录时不制造 worktree/领导权骨架；结构通过不等于取得并行排他或写入授权。
+解析出项目根后，把 Ticket Evidence 中实际 Workspace Execution Record 的 基线、当前分支、固定 commit 或工作副本快照与实际交付范围与真实 Git 仓库交叉验证。没有实际 Git 执行记录时不制造 worktree/领导权骨架；结构通过不等于取得并行排他或写入授权。
 
 校验 workspace 捕获账本（文件必须已存在；缺失时不要为了校验去创建）：
 
@@ -30,7 +30,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --self-check
 ```
 
-工件结构校验只依赖 Speculo 已要求的 Node.js 运行时；YAML、设计 schema 和冻结历史 schema 所需代码随包分发，无需项目另装校验依赖。真实 Git 检查、Git review-scope 模式和包 self-check 中的隔离回归另需 Git；source-files 模式不依赖 Git。self-check 会在系统临时目录创建并清理测试仓库，不修改用户项目或 workflow 状态。返回码 `0` 表示没有阻塞性结构错误；warning 仍需人工判断。工具不替代项目测试、事实核验、设计审查或用户批准。
+工件结构校验只依赖 Speculo 已要求的 Node.js 运行时；YAML 与当前设计 schema 所需代码随包分发，无需项目另装校验依赖。真实 Git 检查、Git review-scope 模式和包 self-check 中的隔离回归另需 Git；source-files 模式不依赖 Git。self-check 会在系统临时目录创建并清理测试仓库，不修改用户项目或 workflow 状态。返回码 `0` 表示没有阻塞性结构错误；warning 仍需人工判断。工具不替代项目测试、事实核验、设计审查或用户批准。
 
 ## 从 tickets-map 分析下一轮
 
@@ -38,9 +38,11 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <map-file> --repo <project-root>
 ```
 
-接受普通 tickets-map、父 goal-tickets-map 入口或旧 Implementation Map。可选 --previous 读取上轮 JSON 输出作漂移检查；该输出应保存到调用方已有 Evidence，不建立第二套权威状态。输出 frontier、blocked、deferred、in_flight、invalidated 与逐票契约摘要。
+接受普通 tickets-map、父 goal-tickets-map 入口或 Implementation Map。可选 --previous 读取上轮 JSON 输出作漂移检查；该输出应保存到调用方已有 Evidence，不建立第二套权威状态。输出 frontier、blocked、deferred、in_flight、invalidated 与逐票契约摘要。
 
 单 change 的 Goal Ready 不要求所有未来票同时 Ready。合法 draft 票保留缺口与重审条件，只阻塞自身及依赖闭包；`ready/in_progress/review` 却没有 `ready=true` 是逐票错误。frontier 只包含自身 Ready、依赖成功完成、owner/资源/并发条件满足的票；上游 done 不自动修改消费者状态。全局执行门未满足时无可派单票，空 frontier 的 blocked/deferred 说明恢复条件。多 change 父创建的全员 Ready 输入门保持不变。
+
+校验 API 返回同源的 `errors`（展示文本）与 `diagnostics`（稳定结构）。每项 diagnostic 携带 code、scope（global / change / ticket）、必要的 change/ticket 和实际 artifact；owner 在发现错误时确定。<Path>{roots.workflows}/specdev/common/tools/validation-diagnostics.mjs</Path> 负责保留子项归属与分派，controller 不再解析英文前缀或嵌入 JSON。未知 scope、缺失结构或无法定位 owner 的错误按全局阻塞处理，文案翻译不改变 frontier。
 
 只读工具不调用 Skill、不执行实现、不检查真实授权/正式记忆网关，不获取锁或自动解锁；Lead 必须在 dispatch 前完成这些检查。结构错误返回非零；局部错误仍可能带独立 frontier，调用方必须检查节点和全局 diagnostics。结构检查成功的退出码 0 不代表任务完成，且业务门禁可能仍阻塞全部票。eligible_for_final_verification 只表示可进入最终验收，不是 Goal completed。
 
@@ -70,7 +72,7 @@ UI 原型阶段用 --stage prototype --prototype-id UI-NNN；逻辑原型可指�
 
 本地完成使用 `--stage complete`；移动前使用 `--stage archive-ready`，额外核验本次实际请求的外部交付。A 完成现役维护后最后无覆盖移动，再以 `--stage archived` 核验唯一目标与原回执；`moved` 结果明确尚未封存，原 A8 回执完成后用 `--stage archived --sealed` 验证。回执导航与完整移动清单依 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md</Path>，不能创建第二份报告。
 
-历史已完成/已归档包不自动重写；旧 v6 归档只读解析原完整 schema、身份和位置，不凭 archived 枚举批准新的 implemented 晋升。旧活动 UI 包应保留为证据，按 v3 新建 UI 编号、生成新 HTML/浏览器证据并重新确认。不能只把旧 schema 数字或 ready 标记改成新版。
+已完成/已归档包不自动重写。当前工具只接受现行 Markdown 归档与 UI schema v3，不读取旧 status 或升级旧 UI 包；schema、摘要和批准必须对应实际产物，不能仅修改版本或 ready 标记。
 
 ## 未提交交付的只读审查范围
 
@@ -82,7 +84,7 @@ UI 原型阶段用 --stage prototype --prototype-id UI-NNN；逻辑原型可指�
 
 Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial|parallel 和可选 max_parallel_tickets。ticket-control 输出 schema_version:2，返回 ticket_execution/max_parallel_tickets；取消由 current 推导 implementation_limit 的旧接口。人数限制仍由 Lead 按真实工具状态独立执行，不从票数或历史实现者名单推断。
 
-实际执行的 README Execution Context v1 是唯一工作区事实，原 Ticket/Direct Spec 的 Workspace Execution Record v1 引用它。相关格式见 <Path>{roots.workflows}/specdev/common/schemas/execution-context.schema.json</Path>、<Path>{roots.workflows}/specdev/common/schemas/execution-record.schema.json</Path>；校验器只读核对 Git、固定审查输入、AC 与验证，不创建 worktree/Agent 或授予权限。无 Goal 的合法 Map 仍可分析，默认 auto；运行前 Lead 核对真实授权。旧活动记录先由原 owner 显式整理，未知版本和混合协议拒绝继续，原件不改写。
+实际执行的 README Execution Context v1 是唯一工作区事实，原 Ticket/Direct Spec 的 Workspace Execution Record v1 引用它。相关格式见 <Path>{roots.workflows}/specdev/common/schemas/execution-context.schema.json</Path>、<Path>{roots.workflows}/specdev/common/schemas/execution-record.schema.json</Path>；校验器只读核对 Git、固定审查输入、AC 与验证，不创建 worktree/Agent 或授予权限。无 Goal 的合法 Map 仍可分析，默认 auto；运行前 Lead 核对真实授权。未知版本和混合协议拒绝继续，原件不改写；不提供旧 source/candidate 执行协议或转换接口。
 
 ## 独立开发复盘
 
@@ -90,6 +92,6 @@ Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial
 
 ## 派遣交接与可选会话定位
 
-<Path>{roots.workflows}/specdev/common/tools/validate-handoff.mjs</Path> 只用于存量 TASK v1 的投递/回收校验；新 TASK v2 使用共享 references/coordination/scripts/validate-dispatch.mjs。此旧接口只读校验 TASK YAML、REPORT、目录身份与可选 session-locator.json，协议见 <Path>{roots.references}/coordination/session-files.md</Path>。参数：`--repo <project> [--method-root <methods> --state-root <data-parent>] --change <id> --session <round> --task <id> --stage dispatch|return`，无安装时必须给出三个根。
+实际交接只使用共享 TASK v2 与 <Path>{roots.references}/coordination/scripts/validate-dispatch.mjs</Path>；原输入、返回与会话 locator 格式见 <Path>{roots.references}/coordination/session-files.md</Path>。
 
 没有准确日志地址就不创建定位文件，缺失时正常通过；已有文件仅含非空绝对路径 path，须符合 <Path>{roots.references}/coordination/session-locator.schema.json</Path>。不扫描工具缓存、不读取外部历史，不认证 provider 身份、授权或完成。结构错误退出 1，参数错误退出 2。存量交接按原合同回收，归档用原完整性清单，不强制补新版字段。

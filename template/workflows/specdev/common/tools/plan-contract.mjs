@@ -249,7 +249,7 @@ export function validateInitiative(directory) {
       else if (existsSync(join(target,'implementation-map.md'))) errors.push(`${label}: target must not be a parent implementation change`);
       else {
         try {
-          if (existsSync(join(target, '.status.json'))) throw new Error('legacy-active-needs-conversion');
+          if (existsSync(join(target, '.status.json'))) throw new Error('unsupported status protocol: use current Markdown change artifacts');
           runtime.parseOutcome(readFileSync(join(target, 'README.md'), 'utf8'), join(target, 'README.md'));
         } catch (error) { errors.push(`${label}: target has no valid Markdown change facts: ${error.message}`); }
       }
@@ -350,16 +350,6 @@ export function canonicalToolPath(context, input) {
     }
     if (dirname(ancestor) === ancestor) throw new Error(`path-unsafe: artifact escapes confirmed project: ${input}`);
   }
-}
-
-/** Read-only conversion validation against a contained snapshot, never a write context. */
-export function resolveSnapshotContext(snapshot) {
-  const source = resolveToolContext(snapshot.sourceContext.projectRoot, {context:snapshot.sourceContext});
-  const specdevRoot = canonicalToolPath(source, snapshot.specdevRoot);
-  runtime.safeWorkPathSync(source.projectRoot, relative(source.projectRoot,specdevRoot).split(sep).join('/'), {mustExist:true,type:'directory'});
-  if (specdevRoot === source.specdevRoot) throw new Error('snapshot must be separate from the live SpecDev root');
-  runtime.assertMarkdownProtocolSync(specdevRoot);
-  return {...source,specdevRoot,stateRoot:dirname(specdevRoot),readOnlySnapshot:{sourceContext:source,specdevRoot}};
 }
 
 export function readLightweightGoal(changeRoot) {

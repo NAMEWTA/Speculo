@@ -1,6 +1,6 @@
 # SpecDev 归档移动
 
-只适用于 A 固定的新协议候选，生命周期由 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path> 定义。旧月份归档原位只读，不纳入普通移动。
+只适用于 A 固定的当前协议候选，生命周期由 <Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path> 定义。不支持的旧协议拒绝进入本次移动，不改变其原件。
 
 ## 预检
 

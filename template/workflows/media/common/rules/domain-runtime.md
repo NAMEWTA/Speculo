@@ -23,7 +23,7 @@ I 拥有 creator 档案与初始化；B 拥有 brief.json（结构化真值）�
 1. 只在用户激活后解析 roots，读取当前 Work、激活/记忆规则和相关状态。先核对 owner、pending transaction、lock、recovery evidence；不能接管其他任务或 CLI-owned `.speculo/back/`。
 2. 用户指定合法 Change 则使用；否则从全局筛选一个 active 候选恢复，多个则列出并停止选择，零个才创建。名字以真实日期和 kebab 主题生成，冲突追加最小数字后缀；不从示例日期推断今天。
 3. 恢复先读 Change 状态、原始请求和本 Work 权威工件。运行 `<Path>{roots.workflows}/media/common/tools/validate-media.mjs</Path>` 的 --state-root 只读检查。未知版本、缺失工件或漂移先阻塞受影响写入，不覆盖人工修改。
-4. 开始设置 current_work；先完成 owned 工件并自检，验收后清空 current_work、追加 works_run。阻塞保留证据；取消设置 cancelled、清空 current_work、移到 completed 终态索引。
+4. 开始设置 current_work，在 artifacts.json 登记本次承诺、owner和依赖；先完成 owned 工件并自检，验收后清空 current_work、追加 works_run。blocked保留受影响产物与证据，不撤销承诺来伪装完成；取消设置 cancelled、清空 current_work、移到 completed 终态索引。
 5. 写入顺序：完整候选工件 → 自检 → 同目录原子替换 → Change 状态 → 全局索引。写前重读共享基线，不覆盖其他条目。中断按原事务恢复，不自动清锁。已成工件未登记时核实后只修索引。
 6. completed 必须没有 blocker 且本次承诺的产物真实完成。提示词完成不等于图像生成；工程完成不等于渲染完成；草稿完成绝不等于发布完成。
 
@@ -43,7 +43,7 @@ I 拥有 creator 档案与初始化；B 拥有 brief.json（结构化真值）�
 | change.blockers | unique string[]，初始[] | 有证据的阻塞/解除 |
 | change.updated_at | 实际 UTC ISO 时间 | 真正写入后更新 |
 
-全局索引不重复保存 current_work。终态必须 current_work=null；completed 无 blocker；blocked 至少一个 blocker。
+全局索引不重复保存 current_work。终态必须 current_work=null；completed 无 blocker；blocked 至少一个 blocker。artifacts.json是本次产物与依赖清单，不增加Run生命周期；它由原Work写入、按artifact-contract检查，安装/刷新仍按opaque工件原字节保留，不能用静态模板覆盖。
 
 ## 路径分配
 

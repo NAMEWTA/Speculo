@@ -46,6 +46,8 @@ flowchart LR
 
 图是常见路线，不意味着每个节点必跑。只请求审查、诊断或规划时，相应报告本身就可以是本轮终点。
 
+Ready 的完整 Direct Spec 可直接交 Implement，不必先补 Goal 或 Ticket；原型后获准继续实现也回到 Implement。验收可使用冻结的真实未提交工作树，明确隔离用户原有 dirty 写集。多 Change 规划使用专用父 Map、Plan 和整体 Evidence；调度按结构化诊断的实际范围阻塞，错误文案不决定哪些独立工作可以继续。详见 [Workflow 合同、证据与恢复](../workflow-integrity.md)。
+
 ## 从目标到实现与审查
 
 Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可独立验证的垂直切片。Goal Plan 负责确有需要的跨任务调度和整体交付。获批后，Goal、Map 或 Ticket 都明确进入 Implement，实际调用匹配的项目 Skill，并完成独立双轴审查；仅列出 Skill 名称不代表已经执行。

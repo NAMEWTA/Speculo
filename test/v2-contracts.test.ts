@@ -126,13 +126,23 @@ test('domain entry renames do not rename runtime knowledge indexes or OPS genera
   assert.doesNotMatch(status,/\{roots\.workflows\}\/\{workflow\}\/(INDEX|README)\.md/);
 });
 
-test('legacy structured changes require explicit conversion and validation never rewrites state',()=>fixture(async root=>{
- const change='2026-10-13-exact-schema',directory=join(root,'.speculo/specdev'),path=join(directory,'changes',change,'.status.json');
- await mkdir(dirname(path),{recursive:true});
- await writeFile(join(directory,'status.json'),JSON.stringify({schema_version:5,workflow:'specdev',active:[{change}],archived:[]}));
- for(const version of ['6',5,6]){
-  await writeFile(path,JSON.stringify({schema_version:version,artifact:'change-status',change}));const before=await fingerprintTree(root);
-  await assert.rejects(validateStructuredRuntime(root,['specdev']),/explicit Markdown conversion/);
+test('structured refresh validates current Markdown facts and rejects unsupported authority without rewriting state',()=>fixture(async root=>{
+ const change='2026-10-13-current-facts',directory=join(root,'.speculo/specdev'),changeRoot=join(directory,'changes',change);
+ await mkdir(changeRoot,{recursive:true});
+ const readme=join(changeRoot,'README.md');
+ await writeFile(readme,'# Current request\nOutcome: active\n');
+ const original=await fingerprintTree(root);
+ await validateStructuredRuntime(root,['specdev']);assert.equal(await fingerprintTree(root),original);
+ for(const text of ['Outcome: active\nOutcome: completed\n','Outcome: archived\n']){
+  await writeFile(readme,text);const before=await fingerprintTree(root);
+  await assert.rejects(validateStructuredRuntime(root,['specdev']),/outcome-invalid/);
   assert.equal(await fingerprintTree(root),before);
  }
+ await writeFile(readme,'# Current request\nOutcome: active\n');
+ for(const [path,diagnostic] of [[join(directory,'status.json'),/unsupported-specdev-protocol/],[join(changeRoot,'.status.json'),/mixed-protocol/],[join(directory,'.markdown-conversion-pending'),/recovery-required/]] as const){
+  await writeFile(path,'{"unsupported":"authority or unfinished operation"}\r\n');const before=await fingerprintTree(root);
+  await assert.rejects(validateStructuredRuntime(root,['specdev']),diagnostic);
+  assert.equal(await fingerprintTree(root),before);await rm(path);
+ }
+ await validateStructuredRuntime(root,['specdev']);assert.equal(await fingerprintTree(root),original);
 }));

@@ -234,6 +234,50 @@
               "runtime"
             ],
             "additionalProperties": false
+          },
+          "probe_failures": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "enum": [
+                    "ssh-publickey",
+                    "inventory"
+                  ]
+                },
+                "category": {
+                  "enum": [
+                    "timeout",
+                    "connection-failed",
+                    "authentication-failed",
+                    "missing-executor",
+                    "invalid-response",
+                    "probe-failed"
+                  ]
+                },
+                "code": {
+                  "enum": [
+                    null,
+                    "ETIMEDOUT",
+                    "ECONNREFUSED",
+                    "ECONNRESET",
+                    "EHOSTUNREACH",
+                    "ENETUNREACH",
+                    "ENOENT",
+                    "EACCES",
+                    "node-missing"
+                  ]
+                }
+              },
+              "required": [
+                "stage",
+                "category",
+                "code"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [

@@ -65,7 +65,7 @@ Canonical 文档本身仍不得使用 YAML frontmatter。
 
 ## SpecDev 的源协议优先
 
-下面的通用状态示例只适用于源领域仍拥有该状态的能力，不能向 SpecDev 重新引入重复镜像。5 份 SpecDev canonical 必须继承 Markdown 优先协议：稳定名称、README 唯一 Outcome、轻量范围/AC/验证、复杂 Goal/Ticket/执行 Evidence、原 owner 与完成/取消门、新 archive、旧历史只读、先维护现役后移动。普通新产物不导出 status.json、.status.json 或 Work 调用记录。
+下面的通用状态示例只适用于源领域仍拥有该状态的能力，不能向 SpecDev 重新引入重复镜像。5 份 SpecDev canonical 必须继承 Markdown 优先协议：稳定名称、README 唯一 Outcome、轻量范围/AC/验证、复杂 Goal/Ticket/执行 Evidence、原 owner 与完成/取消门、当前 archive、历史原件保留、先维护现役后移动。普通新产物不导出 status.json、.status.json 或 Work 调用记录。
 
 SpecDev 持久化只写当次确需工件；只读不制造对象，缺能力导出完整 FILE 包并标明待保存/待执行。DESIGN 仍保留 schema、三类摘要、具体批准、浏览器截图原件、原型源码/离线资源与 pending 网关请求；这些运行时证据不是编译 provenance，不得以隔离规则删除。平台无浏览器/摘要/网关时不伪造 Ready 或发布。学习/其他领域保留各自真实状态语义。
 

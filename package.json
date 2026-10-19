@@ -13,7 +13,7 @@
     "pretest": "pnpm build",
     "generate-canonical": "node scripts/generate-specdev-canonical.mjs && node scripts/generate-learning-canonical.mjs && node scripts/generate-media-canonical.mjs && node scripts/generate-person-canonical.mjs",
     "validate-source-parity": "node scripts/check-specdev-source-parity.mjs",
-    "validate-assets": "node scripts/generate-design-validators.mjs --check && node scripts/generate-runtime.mjs --check && node scripts/generate-domain-index.mjs --check && node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/check-specdev-upstream.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/generate-learning-canonical.mjs --check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning && node scripts/generate-media-canonical.mjs --check && node template/workflows/media/common/tools/validate-media.mjs --workflow-root template/workflows/media && node scripts/generate-person-canonical.mjs --check && node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs .",
+    "validate-assets": "node scripts/generate-contract-validators.mjs --check && node scripts/generate-runtime.mjs --check && node scripts/generate-domain-index.mjs --check && node scripts/validate-skills.mjs && node scripts/check-specdev-source-parity.mjs && node scripts/check-specdev-upstream.mjs && node scripts/generate-specdev-canonical.mjs --check && node scripts/generate-learning-canonical.mjs --check && node template/workflows/ops/common/tools/validate-ops.mjs --package-check && node scripts/validate-refresh-contracts.mjs && node scripts/validate-framework-assets.mjs && node scripts/check-template-links.mjs && node scripts/validate-workflow-disclosure.mjs && node template/workflows/specdev/common/tools/validate-specdev.mjs --self-check && node template/workflows/learning/common/tools/validate-learning.mjs --workflow-root template/workflows/learning && node scripts/generate-media-canonical.mjs --check && node template/workflows/media/common/tools/validate-media.mjs --workflow-root template/workflows/media && node scripts/generate-person-canonical.mjs --check && node .agents/skills/speculo-write-workflows/scripts/validate-speculo-assets.mjs . && node scripts/validate-disposition.mjs",
     "check": "pnpm test && pnpm validate-assets",
     "verify-bin": "node scripts/verify-bin.mjs",
     "eval:scenarios": "node scripts/evaluate-scenarios.mjs",
@@ -28,11 +28,12 @@
     "eval:learning": "node scripts/evaluate-scenarios.mjs test/fixtures/learning-inquiry-scenarios.json",
     "generate-runtime": "node scripts/generate-runtime.mjs",
     "generate-index": "node scripts/generate-domain-index.mjs",
-    "generate-assets": "pnpm generate-runtime && pnpm generate-design-validators && pnpm generate-index && pnpm generate-canonical",
+    "generate-assets": "pnpm generate-contract-validators && pnpm generate-runtime && pnpm generate-index && pnpm generate-canonical",
     "verify-package": "node scripts/verify-package.mjs",
     "verify-generated": "node scripts/verify-generated.mjs",
     "validate-disposition": "node scripts/validate-disposition.mjs",
-    "generate-design-validators": "node scripts/generate-design-validators.mjs"
+    "generate-contract-validators": "node scripts/generate-contract-validators.mjs",
+    "eval:run-artifacts": "node scripts/run-artifact-scenarios.mjs"
   },
   "files": [
     "dist/src",

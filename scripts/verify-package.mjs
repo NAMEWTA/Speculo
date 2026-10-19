@@ -53,6 +53,9 @@ try{
   await assert.rejects(readdir(join(assets,'skills-hub')),/ENOENT/);
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--self-check']);
   run([join(assets,'workflows/media/common/tools/validate-media.mjs'),'--state-root',join(assets,'.speculo/media')]);
+  if(process.env.MEDIA_RENDER_REQUIRED==='1') {
+    run(['--test',join(assets,'workflows/media/common/tests/test_media_render.mjs')]);
+  }
   run([join(assets,'commands/engineering-standards-builder/scripts/validate-builder.mjs'),'--root',join(assets,'commands/engineering-standards-builder')]);
   const nested=join(project,'src/nested');await mkdir(nested,{recursive:true});
   assert.ok(run([cli,'resolve',nested,'--path','{roots.references}/coordination/coordination-contract.md']).trim().endsWith('coordination-contract.md'));
@@ -64,16 +67,14 @@ try{
   assert.equal(lib.readChangeFactsSync(directContext,'2026-10-14-direct').outcome,'active');
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--repo',directProject,'--method-root',assets,'--state-root',join(directProject,'data'),'--stage','spec',directChange]);
   assert.deepEqual(await readdir(directChange),['README.md']);
-  const legacyName='2025-01-01-frozen',legacyRoot=join(directContext.specdevRoot,'archive/2025-01',legacyName);
-  await mkdir(legacyRoot,{recursive:true});
-  const legacy={...JSON.parse(await readFile(join(root,'test/fixtures/specdev-legacy-change-v6.json'),'utf8')),change:legacyName,change_status:'archived',archived:true,archive_path:`<Path>{roots.state}/specdev/archive/2025-01/${legacyName}</Path>`};
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify(legacy));
-  assert.equal(lib.readLegacyChangeEvidenceSync(directContext,legacyName).readonly,true);
   const compiledArtifacts=await import(pathToFileURL(join(installed,'dist/src/specdev-artifacts.js')).href);
-  assert.equal(compiledArtifacts.readLegacyChangeEvidenceSync(directContext,legacyName).readonly,true);
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify({...legacy,worktrees:undefined}));
-  assert.throws(()=>lib.readLegacyChangeEvidenceSync(directContext,legacyName),/invalid frozen v6 schema/);
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify(legacy));
+  assert.equal(compiledArtifacts.readChangeFactsSync(directContext,'2026-10-14-direct').outcome,'active');
+  assert.equal('readLegacyChangeEvidenceSync' in lib,false);
+  const manifest=JSON.parse(await readFile(join(assets,'workflows/specdev/manifest.json'),'utf8'));
+  lib.validateWorkflowManifest(manifest,'specdev');
+  assert.throws(()=>lib.validateWorkflowManifest({...manifest,schema_version:1},'specdev'),/invalid-domain-manifest/);
+  run([join(assets,'workflows/ops/common/tools/validate-ops.mjs'),'--self-check']);
+  run([join(assets,'workflows/ops/common/tools/validate-ops.mjs'),'--state-root',join(assets,'.speculo/ops')]);
   const preserved=new Map([
     ['design/DESIGN.md',Buffer.from('# User design baseline\r\n\r\nOriginal bytes remain unchanged.\r\n')],
     ['design/revisions/DESIGN-0001.md',Buffer.from('# Immutable historical revision\n')],

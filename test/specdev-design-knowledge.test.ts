@@ -175,7 +175,7 @@ test('root user DESIGN with unknown owner, missing provenance or drift blocks a 
 test('unknown change schema and another Work owner block the publication branch', () => scoped(async f => {
   const { publishDesign } = await load();
   await writeFile(join(f.change, '.status.json'), JSON.stringify({ ...status(id, 'active', 'specdev/prototype'), schema_version: 5 }));
-  await assert.rejects(publishDesign({ ...options(f), apply: true }), /mixed-protocol|legacy-active-needs-conversion/);
+  await assert.rejects(publishDesign({ ...options(f), apply: true }), /mixed-protocol|unsupported/);
   await rm(join(f.change,'.status.json'));
   await lifecycle(f.change,'active','specdev/grill-with-docs');
   await assert.rejects(publishDesign({ ...options(f), apply: true }), /owning prototype Work/);
@@ -328,20 +328,20 @@ test('legacy archived evidence remains unchanged and cannot prove a new implemen
   await publishDesign({...options(f),apply:true});
   const previous=hash(await readFile(join(f.store,'DESIGN.md')));
   await completeFixture(f);
-  const legacyName='2026-09-14-existing-focus',legacy=join(f.state,'archive/2026-09',legacyName);
+  const legacyName='2026-09-14-existing-focus',legacy=join(f.state,'changes/archive',legacyName);
   await mkdir(join(legacy,'evidence'),{recursive:true});
-  const historicalStatus=JSON.stringify({...JSON.parse(await readFile(join(process.cwd(),'test/fixtures/specdev-legacy-change-v6.json'),'utf8')),...status(legacyName,'archived'),archived:true,archive_path:`<Path>{roots.state}/specdev/archive/2026-09/${legacyName}</Path>`}),historicalEvidence='# Existing focus evidence\n\nKeyboard focus was observed in the deployed interaction.\r\n';
+  const historicalStatus=JSON.stringify({schema_version:6,change:legacyName,change_status:'archived'}),historicalEvidence='# Existing focus evidence\n\nKeyboard focus was observed in the deployed interaction.\r\n';
   await writeFile(join(legacy,'.status.json'),historicalStatus);await writeFile(join(legacy,'evidence/T-01.md'),historicalEvidence);
   const meta=metadata();
   await writeFile(f.candidate,text({...meta,revision:'DESIGN-0002',supersedes:'DESIGN-0001',rules:[{...meta.rules[0],verification:'implemented',sources:[{change:legacyName,locator:'evidence/T-01.md',digest:hash(historicalEvidence)}]}]}));
   const approval=await confirmation(f.repo,dirname(f.candidate),{...f.approval,candidate_sha256:hash(await readFile(f.candidate)),current_sha256:previous,preview:undefined});
-  await assert.rejects(publishDesign({...options(f),mode:'promotion',expectedCurrent:previous,approval,apply:true}),/legacy archive alone does not prove completed acceptance/);
+  await assert.rejects(publishDesign({...options(f),mode:'promotion',expectedCurrent:previous,approval,apply:true}),/unsupported|mixed-protocol|legacy|missing-readme/);
   assert.equal(hash(await readFile(join(f.store,'DESIGN.md'))),previous);
   assert.equal(await readFile(join(legacy,'.status.json'),'utf8'),historicalStatus);
   assert.equal(await readFile(join(legacy,'evidence/T-01.md'),'utf8'),historicalEvidence);
   await assert.rejects(readFile(join(legacy,'README.md')),/ENOENT/);
   const legacyCandidate=join(legacy,'candidate.md');await writeFile(legacyCandidate,await readFile(f.candidate));
-  await assert.rejects(publishDesign({...options(f),candidatePath:legacyCandidate,mode:'promotion',expectedCurrent:previous,approval,apply:true}),/legacy archive is read-only|confirmation record is outside/);
+  await assert.rejects(publishDesign({...options(f),candidatePath:legacyCandidate,mode:'promotion',expectedCurrent:previous,approval,apply:true}),/unsupported|mixed-protocol|legacy|confirmation record is outside|missing-readme/);
 }));
 
 test('unsafe roots, symlink stores and traversal evidence cannot write knowledge', () => scoped(async f => {

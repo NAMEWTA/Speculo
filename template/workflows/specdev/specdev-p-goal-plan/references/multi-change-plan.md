@@ -49,13 +49,13 @@
 5. 比较所有待实现 Ticket 的 writable/shared paths、公共合同、repository/ref 和迁移资源；
 6. 检测循环、缺失节点、重复边、无 owner overlap 和子图漂移。
 
-使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>` 写父 Map。Map 是子 Ticket 图的可重算投影；子 Ticket 变化时先重读权威，再递增 Map revision。
+使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-map-template.md</Path>` 写父 Map。Map 是子 Ticket 图的可重算投影；子 Ticket 变化时先重读权威，再递增 Map revision。
 
 **完成标准**：父 Map 的 members/tasks/internal edges 与全部子工件精确一致；跨 change 边有来源；DAG 无环；每个并行冲突已依赖化、串行化或阻塞。
 
 ### 3. 确定跨 change 调度
 
-父 Plan 使用 schema_version: 3、orchestration: lead-directed、唯一 lead、ticket_execution: auto|serial|parallel、integration_attempt_limit 和 ready_for_execution；有明确票据上限才记录 max_parallel_tickets，显式实现者上限用 concurrent_implementation_limit。实际来源写 Execution Policy Source，不把人数、票数、workspace 数量互相换算。
+使用 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-plan-template.md</Path> 写父 Plan；schema_version: 3、orchestration: lead-directed、唯一 lead、ticket_execution: auto|serial|parallel、integration_attempt_limit 和 ready_for_execution；有明确票据上限才记录 max_parallel_tickets，显式实现者上限用 concurrent_implementation_limit。实际来源写 Execution Policy Source，不把人数、票数、workspace 数量互相换算。
 
 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 引用各成员 README 的 Execution Context。成员可分别使用 current 或自己的 change worktree；父计划不覆盖已有选择、不因派单新建 worktree。一个需求内所有票据及协作者复用其选定工作区。
 
@@ -87,7 +87,7 @@ I-implement 是实际实现 owner；父 Work 不复制 TDD、代码审查、Evid
 
 一个成员的全部计划内 Ticket 已 done，或因权威事实无需改动而有依据地 cancelled，且相关依赖已处置、Goal/Evidence/Git 门通过时，父 Lead 按 change completion 关闭该子 change；不等待其他成员才关闭，也不自动归档。单票取消不是依赖交付，也不等于整个 change 被取消；整体取消仍由原 owner 核对真实用户决定与处置证据。
 
-全部成员 completed 后，Lead 运行跨 change aggregate test/typecheck/lint/build 与适用 E2E，核对跨 change 合同、依赖顺序、共享路径、迁移/恢复和最终 Git checkpoint，并使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>` 写整体验证。
+全部成员 completed 后，Lead 运行跨 change aggregate test/typecheck/lint/build 与适用 E2E，核对跨 change 合同、依赖顺序、共享路径、迁移/恢复和最终 Git checkpoint，并使用 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-evidence-template.md</Path>` 写整体验证。
 
 只有父 Map/Plan completed、全部成员 completed、无 blocker/deviation/active dispatch/candidate/lock 且整体验证通过时，才由原父 Lead 更新 README 的唯一 Outcome completed 并链接 aggregate Evidence。归档、push、PR、remote merge、deploy 和生产迁移保持独立授权。
 
@@ -115,7 +115,7 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 - Super-DAG：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/multi-super-dag.md</Path>`
 - 执行循环：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/multi-execution-loop.md</Path>`
 - 冲突与漂移：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/multi-conflict-and-drift.md</Path>`
-- Map 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>`
-- Plan 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>`
-- Evidence 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/goal-plan-template.md</Path>`
+- Map 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-map-template.md</Path>`
+- Plan 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-plan-template.md</Path>`
+- Evidence 模板：`<Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-evidence-template.md</Path>`
 - 共享规则：`<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`
