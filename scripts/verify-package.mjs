@@ -43,13 +43,13 @@ try{
   const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,119);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,54);
   const {discoverHubCatalog}=await import(pathToFileURL(join(installed,'dist/src/hub-catalog.js')).href);
   const {snapshotSkillTree}=await import(pathToFileURL(join(installed,'dist/src/skill-trees.js')).href);
-  const hub=await discoverHubCatalog(installed);assert.equal(hub.size,15);
+  const hub=await discoverHubCatalog(installed);assert.equal(hub.size,16);assert.ok(hub.has('writing/eli5'));
   for(const skill of hub.values()){
     const packaged=skill.tree;
     assert.deepEqual(packaged,await snapshotSkillTree(join(root,'skills-hub',skill.id)),`bundle omitted or changed resources: ${skill.id}`);
     for(const host of ['agents','claude'])assert.deepEqual(await snapshotSkillTree(join(project,`.${host}/skills`,skill.name)),packaged);
   }
-  assert.equal(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages.length,30);
+  assert.equal(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages.length,32);
   await assert.rejects(readdir(join(assets,'skills-hub')),/ENOENT/);
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--self-check']);
   run([join(assets,'workflows/media/common/tools/validate-media.mjs'),'--state-root',join(assets,'.speculo/media')]);
@@ -99,7 +99,7 @@ try{
   await writeFile(join(taskRoot,'TASK.md'),`---\nschema_version: 2\nsession: "${session}"\ntask: "${task}"\nkind: handoff\n---\n\n${['Goal','Inputs','Workspace and Scope','Acceptance','Return'].map(title=>`## ${title}\nExplicit session summary, no business state writes.\n`).join('\n')}`);
   const dispatched=JSON.parse(run([join(assets,'references/coordination/scripts/validate-dispatch.mjs'),'--repo',project,'--scope-root',scope,'--session',session,'--task',task,'--stage','dispatch']));
   assert.deepEqual(dispatched.errors,[]);
-  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 15 complete Hub packages in both targets, 54 assets, 119 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
+  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 16 complete Hub packages in both targets, 54 assets, 119 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
 }finally{
   // The only recursive cleanup target is the exact mkdtemp directory created above.
   assert.ok(resolve(sandbox).startsWith(temporaryRoot+ (process.platform==='win32'?'\\':'/')));

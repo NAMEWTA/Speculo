@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.5] - 2026-10-19
+
+### Added
+
+- Bundle the streamlined ELI5 teaching Skill with lesson, explain, explore and tutor modes, reusable templates, synthetic examples and optional read-only validation. Preserve its teaching, submission, original-answer protection and persistence rules while omitting redundant documentation and historical build/evaluation files.
+
+### Changed
+
+- Update Hub installation and package verification for 16 complete Skill packages, including ELI5 in both supported targets.
+
 ## [2.1.4] - 2026-10-18
 
 ### Fixed
