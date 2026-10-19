@@ -9,8 +9,7 @@ import { dirname, join, delimiter } from 'node:path';
 import { fetchRelease, isNewerRelease } from '../src/update-check.js';
 import { offerUpdate, consumeResumeMarker, shouldCheckUpdate, type UpdateChoice, type UpdateOptions } from '../src/update-flow.js';
 import { inspectSelfInstall } from '../src/self-update.js';
-import { atomicWriteJson } from '../src/update-state.js';
-import { runProcess } from '../src/update-process.js';
+import { ProcessCancelledError, runProcess } from '../src/update-process.js';
 import { setTimeout as delay } from 'node:timers/promises';
 
 it('compares stable SemVer releases without downgrading or accepting malformed versions', () => {
@@ -50,67 +49,81 @@ it('bounds the complete HTTP response, including a trickling body, and ignores f
   }
 });
 
-async function flowFixture(work: (options: UpdateOptions, messages: string[], counts: { prompts: number; installs: number; resumes: number }, setChoice: (choice: UpdateChoice) => void) => Promise<void>) {
-  const dir = await mkdtemp(join(tmpdir(), 'update-state-'));
+async function flowFixture(work: (options: UpdateOptions, messages: string[], counts: { prompts: number; inspections: number; installs: number; resumes: number }, setChoice: (choice: UpdateChoice) => void) => Promise<void>) {
   let choice: UpdateChoice = 'skip';
   const messages: string[] = [];
-  const counts = { prompts: 0, installs: 0, resumes: 0 };
+  const counts = { prompts: 0, inspections: 0, installs: 0, resumes: 0 };
   const options: UpdateOptions = {
     name: '@example/tool', local: '1.0.0', prefix: 'FASTCLI', language: 'en', env: { EXAMPLE: 'retained' },
-    statePath: join(dir, 'state.json'), writeState: atomicWriteJson,
     fetch: async () => ({ version: '2.0.0', node: '>=22' }),
     ui: {
-      choose: async (_message, choices) => { counts.prompts++; assert.deepEqual(choices.map(c => c.value), ['update', 'skip', 'ignore']); return choice; },
+      choose: async (message, choices) => {
+        counts.prompts++;
+        messages.push(message);
+        assert.deepEqual(choices.map(c => c.value), ['update', 'skip']);
+        return choice;
+      },
       message: (_kind, message) => messages.push(message),
     },
-    inspect: async () => ({
-      nodeVersion: process.versions.node,
-      install: async version => { assert.equal(version, '2.0.0'); counts.installs++; return 0; },
-      verify: async () => true,
-      resume: async env => { assert.equal(env.EXAMPLE, 'retained'); assert.equal(env.FASTCLI_UPDATE_RESUME, '2.0.0'); counts.resumes++; return 17; },
-    }),
+    inspect: async () => {
+      counts.inspections++;
+      return {
+        nodeVersion: process.versions.node,
+        command: version => `npm install -g @example/tool@${version}`,
+        install: async version => { assert.equal(version, '2.0.0'); counts.installs++; return 0; },
+        verify: async () => true,
+        resume: async env => { assert.equal(env.EXAMPLE, 'retained'); assert.equal(env.FASTCLI_UPDATE_RESUME, '2.0.0'); counts.resumes++; return 17; },
+      };
+    },
   };
-  try { await work(options, messages, counts, value => { choice = value; }); }
-  finally { await rm(dir, { recursive: true, force: true }); }
+  await work(options, messages, counts, value => { choice = value; });
 }
 
-it('skip is temporary; ignore persists across runs and only a greater release prompts again', async () => {
-  await flowFixture(async (o, _messages, counts, choose) => {
+it('update later continues immediately without inspecting installations and reminds on the next invocation', async () => {
+  await flowFixture(async (o, messages, counts) => {
     assert.equal(await offerUpdate(o), undefined);
     assert.equal(await offerUpdate(o), undefined);
-    assert.equal(counts.prompts, 2);
-    choose('ignore');
-    await offerUpdate(o);
-    assert.equal(JSON.parse(await readFile(o.statePath, 'utf8')).ignoredVersion, '2.0.0');
-    if (process.platform !== 'win32') assert.equal((await stat(o.statePath)).mode & 0o777, 0o600);
-    await offerUpdate({ ...o });
-    await offerUpdate({ ...o, fetch: async () => ({ version: '1.9.0' }) });
-    assert.equal(counts.prompts, 3);
-    await offerUpdate({ ...o, fetch: async () => ({ version: '2.0.1' }) });
-    assert.equal(counts.prompts, 4);
-    assert.equal(counts.installs, 0);
+    assert.deepEqual(counts, { prompts: 2, inspections: 0, installs: 0, resumes: 0 });
+    assert.match(messages[0]!, /Current version: v1\.0\.0\nLatest version: v2\.0\.0/);
   });
 });
 
-it('missing metadata and current versions are silent; damaged state and write failures do not block use', async () => {
-  await flowFixture(async (o, messages, counts, choose) => {
-    for (const fetch of [async () => null, async () => ({ version: '1.0.0' }), async () => { throw Error('offline'); }]) {
+it('the English and Chinese menus explicitly label both versions and offer update now or later', async () => {
+  await flowFixture(async o => {
+    for (const language of ['en', 'zh-CN'] as const) {
+      let prompts = 0;
+      assert.equal(await offerUpdate({ ...o, language, ui: {
+        ...o.ui,
+        choose: async (message, choices) => {
+          prompts++;
+          assert.match(message, /@example\/tool/);
+          assert.ok(message.includes(language === 'en' ? 'Current version: v1.0.0' : '当前版本号：v1.0.0'));
+          assert.ok(message.includes(language === 'en' ? 'Latest version: v2.0.0' : '最新版本号：v2.0.0'));
+          assert.deepEqual(choices.map(c => c.label), language === 'en' ? ['Update now', 'Update later'] : ['立即更新', '下次更新']);
+          return 'skip';
+        },
+      } }), undefined);
+      assert.equal(prompts, 1);
+    }
+  });
+});
+
+it('missing metadata, current or older versions and failed requests continue silently without probing installers', async () => {
+  await flowFixture(async (o, messages, counts) => {
+    for (const fetch of [async () => null, async () => ({ version: '1.0.0' }), async () => ({ version: '0.9.0' }), async () => { throw Error('offline'); }]) {
       assert.equal(await offerUpdate({ ...o, fetch }), undefined);
     }
-    assert.equal(counts.prompts, 0);
-    await writeFile(o.statePath, '{');
-    choose('ignore');
-    assert.equal(await offerUpdate({ ...o, writeState: async () => { throw Error('readonly'); } }), undefined);
-    assert.match(messages.join('\n'), /this time only/);
-    assert.equal(await readFile(o.statePath, 'utf8'), '{');
+    assert.deepEqual(counts, { prompts: 0, inspections: 0, installs: 0, resumes: 0 });
+    assert.deepEqual(messages, []);
   });
 });
 
-it('only the chosen update installs, verifies and resumes; failures and incompatible engines stop execution', async () => {
-  await flowFixture(async (o, _messages, counts, choose) => {
+it('only update now installs, verifies and resumes; installer failures and incompatible engines stop execution', async () => {
+  await flowFixture(async (o, messages, counts, choose) => {
     choose('update');
     assert.equal(await offerUpdate(o), 17);
-    assert.deepEqual(counts, { prompts: 1, installs: 1, resumes: 1 });
+    assert.deepEqual(counts, { prompts: 1, inspections: 1, installs: 1, resumes: 1 });
+    assert.match(messages.join('\n'), /npm install -g @example\/tool@2\.0\.0/);
     assert.equal(await offerUpdate({ ...o, fetch: async () => ({ version: '2.0.0', node: '>=999' }) }), 1);
     const base = (await o.inspect())!;
     for (const code of [1, 130, 143]) {
@@ -121,13 +134,38 @@ it('only the chosen update installs, verifies and resumes; failures and incompat
   });
 });
 
-it('unmanaged installations only get guidance; cancelling the prompt never installs', async () => {
-  await flowFixture(async (o, messages, counts) => {
-    assert.equal(await offerUpdate({ ...o, inspect: async () => undefined }), undefined);
+it('unmanaged installations still offer both options and only update now checks ownership and reports failure', async () => {
+  await flowFixture(async (o, messages, counts, choose) => {
+    let inspections = 0;
+    const inspect = async () => { inspections++; return undefined; };
+    assert.equal(await offerUpdate({ ...o, inspect }), undefined);
+    assert.equal(inspections, 0);
+    choose('update');
+    assert.equal(await offerUpdate({ ...o, inspect }), 1);
     assert.match(messages.join('\n'), /original installation method/);
-    assert.equal(counts.prompts, 0);
-    await assert.rejects(offerUpdate({ ...o, ui: { ...o.ui, choose: async () => { throw Error('cancel'); } } }), /cancel/);
+    assert.equal(inspections, 1);
+    assert.equal(counts.prompts, 2);
     assert.equal(counts.installs, 0);
+    assert.equal(counts.resumes, 0);
+  });
+});
+
+it('cancelling the update menu never inspects or changes an installation', async () => {
+  await flowFixture(async (o, _messages, counts) => {
+    await assert.rejects(offerUpdate({ ...o, ui: { ...o.ui, choose: async () => { throw Error('cancel'); } } }), /cancel/);
+    assert.equal(counts.inspections, 0);
+    assert.equal(counts.installs, 0);
+  });
+});
+
+it('preserves signal cancellation during installer probes, verification and resumed execution', async () => {
+  await flowFixture(async (o, _messages, _counts, choose) => {
+    choose('update');
+    const base = (await o.inspect())!;
+    for (const phase of ['install', 'verify', 'resume'] as const) {
+      await assert.rejects(offerUpdate({ ...o, inspect: async () => ({ ...base, [phase]: async () => { throw new ProcessCancelledError('SIGTERM'); } }) }),
+        (error: unknown) => error instanceof ProcessCancelledError && error.code === 143);
+    }
   });
 });
 
@@ -215,7 +253,7 @@ if(args[0]==='version') console.log(JSON.stringify({npm:'11.16.0',node:process.v
 else if(args[0]==='prefix') console.log(${JSON.stringify(prefix)});
 else if(args[0]==='root') console.log(${JSON.stringify(root)});
 else if(args[0]==='install') {
-  if(process.env.npm_config_prefix!==${JSON.stringify(prefix)}||args.join('|')!=='install|-g|@example/tool@2.0.0') process.exit(98);
+  if(process.env.npm_config_prefix!==${JSON.stringify(prefix)}||JSON.stringify(args)!==JSON.stringify(['install','-g','@example/tool@2.0.0','--prefix',${JSON.stringify(prefix)}])) process.exit(98);
   const path=${JSON.stringify(join(packageRoot, 'package.json'))}, p=JSON.parse(fs.readFileSync(path));p.version='2.0.0';fs.writeFileSync(path,JSON.stringify(p));
 } else process.exit(99);
 `);

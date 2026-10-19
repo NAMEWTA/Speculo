@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { main } from '../src/cli-app.js';
 import { getLocalVersion } from '../src/version.js';
 import { InstallCancelled } from '../src/interaction.js';
+import { prompts } from '../src/install-ui.js';
+import { offerUpdate } from '../src/update-flow.js';
 
 test('excluded and invalid CLI invocations never run the automatic update boundary', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'speculo-update-cli-'));
@@ -37,4 +39,33 @@ test('updates run before init transactions and doctor; completion and cancellati
     assert.equal(checks, 2);
     assert.deepEqual(await readdir(dir), []);
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('choosing update later continues into the original installation interaction', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'speculo-update-later-'));
+  const original = { select: prompts.select, multiselect: prompts.multiselect, confirm: prompts.confirm };
+  const events: string[] = [];
+  const cancelWizard = async () => { events.push('installation interaction'); throw new InstallCancelled(); };
+  Object.assign(prompts, { select: cancelWizard, multiselect: cancelWizard, confirm: cancelWizard });
+  try {
+    const code = await main(['init', dir], { interactive: true, env: {}, checkUpdate: () => offerUpdate({
+      name: '@namewta/speculo', local: '1.0.0', prefix: 'SPECULO', language: 'zh-CN', env: {},
+      fetch: async () => ({ version: '2.0.0' }),
+      inspect: async () => { throw new Error('Update later must not inspect installers'); },
+      ui: {
+        choose: async (message, choices) => {
+          events.push('update choice');
+          assert.match(message, /当前版本号：v1\.0\.0\n最新版本号：v2\.0\.0/);
+          assert.deepEqual(choices.map(choice => choice.label), ['立即更新', '下次更新']);
+          return 'skip';
+        },
+        message() {},
+      },
+    }) });
+    assert.equal(code, 130);
+    assert.deepEqual(events, ['update choice', 'installation interaction']);
+  } finally {
+    Object.assign(prompts, original);
+    await rm(dir, { recursive: true, force: true });
+  }
 });

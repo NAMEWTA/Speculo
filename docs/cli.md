@@ -120,15 +120,14 @@ SpecDev 初始化仍可选择 Herdr / Orca / CLI / 暂时都不要，并保存�
 
 ## 刷新与升级
 
-交互启动 `speculo`、`speculo init` 或普通文本 `doctor` 时，会先查询 CLI 自身的 npm 最新稳定版本。每次联网最多等待 2 秒，断网或查询失败直接继续。发现新版本后，方向键选择、Enter 确认：
+交互启动 `speculo`、`speculo init` 或普通文本 `doctor` 时，会先查询 CLI 自身的 npm 最新稳定版本。每次联网最多等待 2 秒，断网或查询失败直接继续。发现新版本后，先分行显示「当前版本号」和「最新版本号」，再用方向键选择、Enter 确认：
 
-- **立即升级**：显示并执行 `npm install -g @namewta/speculo@<目标版本>`，验证后用新版继续原命令，保留参数、目录及环境。
-- **本次跳过**：继续本次操作，下次启动重新提醒。
-- **跳过直到下个版本**：保存忽略版本，更高版本发布后再次提醒。
+- **立即更新**：核验当前安装方式，显示并执行对应更新命令，验证后用新版继续原命令，保留参数、目录及环境。
+- **下次更新**：立即继续原本交互，下次启动仍有新版时再次提醒。
 
-自动升级仅支持核验通过的当前 npm 全局安装；源码、链接、npx、pnpm 等来源提供手动处理提示。新版 Node.js 要求不满足时停止升级；升级失败或取消后不执行原命令，按提示修复后重试。不会自动使用 sudo 或更新 Node.js。更新发生在安装事务创建之前，CLI 包升级本身不刷新项目；原命令为 `init` 时才进入项目安装流程。
+自动更新支持核验通过的当前 npm 全局安装和 Volta 安装。npm 安装执行 `npm install -g @namewta/speculo@<最新版本> --prefix <已核验位置>`；Volta 安装通过 `volta run --node <当前 Node.js 版本> --bundled-npm npm install --global @namewta/speculo@<最新版本>` 更新，保留当前 Node.js 运行版本。源码、链接、npx、pnpm 等无法核验的来源同样先显示两个选项；选择立即更新后会提示按原安装方式处理并结束本次调用。新版 Node.js 要求不满足、更新失败或取消时不执行原命令，按提示修复后重试。不会自动使用 sudo 或更新 Node.js。更新发生在安装事务创建之前，CLI 包更新本身不刷新项目；原命令为 `init` 时才进入项目安装流程。
 
-忽略记录保存在用户目录 `~/.speculo/update-state.json`，不属于项目内的 `.agents/speculo/.speculo/`；删除该文件即可恢复提醒。设置 `SPECULO_NO_UPDATE_CHECK=1` 可关闭自动检查。非 TTY、CI、帮助、`doctor --json`、`resolve` 和 `recover` 不触发自动检查，也不增加提示或动画。`speculo version` 保留显式查询功能，不弹升级菜单。
+「下次更新」只影响本次启动，不写入忽略记录；旧版 `~/.speculo/update-state.json` 中的忽略记录不再屏蔽提醒。设置 `SPECULO_NO_UPDATE_CHECK=1` 可关闭自动检查。非 TTY、CI、帮助、`doctor --json`、`resolve` 和 `recover` 不触发自动检查，也不增加提示或动画。`speculo version` 保留显式查询功能，不弹更新菜单。
 
 也可以手动升级，再到使用项目中刷新：
 

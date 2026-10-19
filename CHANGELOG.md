@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.6] - 2026-10-19
+
+### Fixed
+
+- Always offer **Update now** or **Update later** when an interactive check finds a newer release, explicitly labeling the current and latest versions before checking installation ownership. Updating later continues the original interaction and reminds again next time; old ignored-version preferences no longer suppress prompts.
+- Recognize verified Volta-managed npm installations for self-updates, retain their current Node.js runtime, verify the updated package and resume the original command. Pin the verified prefix explicitly for ordinary npm global updates.
+
 ## [2.1.5] - 2026-10-19
 
 ### Added

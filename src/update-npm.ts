@@ -43,7 +43,7 @@ async function findPathExecutable(name: string, env: NodeJS.ProcessEnv): Promise
 /** Inspect only the named package in this npm scope; never inspect PATH aliases. */
 export async function inspectNpmPackage(
   tool: { npmPackage: string; executable: string },
-  context: NpmContext,
+  context: Pick<NpmContext, 'prefix' | 'root'>,
 ): Promise<NpmPackageState> {
   const packageDir = join(context.root, tool.npmPackage);
   const binDir = process.platform === 'win32' ? context.prefix : join(context.prefix, 'bin');
