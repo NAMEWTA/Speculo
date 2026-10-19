@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -83,7 +83,7 @@ describe("OPS five-entry resource workspace",()=>{
   const s=await seed();s.policies.strict_docker_root=false;const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/constant/);
  });
  it("installs v3 state and never creates old OPS changes directory",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-install-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-install-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const s=await json(join(root,".speculo/ops/status.json"));assert.equal(s.schema_version,3);
    const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("ops-d-project-deploy"));assert.ok(installed.includes("ops-s-server-connect"));assert.ok(installed.includes("ops-v-inventory-view"));assert.ok(!installed.includes("I-intake-and-assess"));
    const stateFiles=await readdir(join(root,".speculo/ops"));assert.ok(!stateFiles.includes("changes"));
@@ -98,7 +98,7 @@ describe("OPS five-entry resource workspace",()=>{
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("refresh preserves private and centralized record bytes and POSIX modes",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-refresh-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-refresh-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
    const record=join(root,".speculo/ops/records/tasks/example/result.json");const recordBytes=Buffer.from('{"synthetic":"preserve-record-byte-for-byte"}\n');await mkdir(dirname(record),{recursive:true,mode:0o700});await writeFile(record,recordBytes,{mode:0o600});
    const statePath=join(root,".speculo/ops/status.json"),legacy=await resourceState();await writeJson(statePath,legacy);
@@ -117,12 +117,12 @@ describe("OPS five-entry resource workspace",()=>{
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("rejects old OPS state without rewriting bytes or manufacturing approvals",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-legacy-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-legacy-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const p=join(root,".speculo/ops/status.json");await writeJson(p,{schema_version:2,workflow:"ops",active:[],archived:[]});const before=await readFile(p);await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}}),/blocked/);assert.deepEqual(await readFile(p),before);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("structured runtime validates v3 with the shipped schema",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-structured-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-structured-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");await writeJson(join(root,".speculo/ops/status.json"),await resourceState());await validateStructuredRuntime(root,["ops"]);
   }finally{await rm(target,{recursive:true,force:true});}
  });

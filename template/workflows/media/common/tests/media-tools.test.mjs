@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, symlinkSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, symlinkSync, readdirSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -9,7 +9,8 @@ const brief = () => ({ schema_version: 1, content_id: 'safe-drafts', topic: 'Saf
 const plan = () => ({ schema_version: 1, narration: 'Explicit silent on-screen text demonstration', audio: null, transcript: null, shots: [0, 1, 2].map(i => ({ id: `shot-${i + 1}`, start: i * 6, end: (i + 1) * 6, message: 'Review before handoff', narration: 'Silent, on-screen text', caption: 'Local draft', visual: 'Typography and progress line', assets: [] })) });
 const draft = () => ({ schema_version: 1, content_id: 'safe-drafts', revision: 1, channel: 'local-demo', account: 'fictional-account', title: 'Review before handoff', body: 'An original local workflow demonstration, not published.', media: [], sources: [], claims: [], approvals: [], publication_authorization: 'not-authorized' });
 function approve(d, root) { const digest = m.draftFingerprint(d, root); d.approvals = ['direction', 'platform', 'title', 'final'].map(gate => ({ gate, approved: true, by: 'SIMULATED TEST FIXTURE, NOT USER APPROVAL', at: '2026-10-10T00:00:00Z', digest })); return d; }
-function fixture(fn) { const dir = mkdtempSync(join(tmpdir(), 'media-test-')); try { return fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); } }
+// Resolve the test-owned temporary parent; business paths still reject linked ancestors.
+function fixture(fn) { const dir = mkdtempSync(join(realpathSync(tmpdir()), 'media-test-')); try { return fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); } }
 test('complete brief and three Hook kinds pass', () => assert.equal(m.validateBrief(brief()).content_id, 'safe-drafts'));
 test('article-only brief needs no video defaults; production still requires explicit video fields', () => {
   const b = brief(); for (const key of ['platform', 'duration_seconds', 'width', 'height', 'fps', 'style', 'font', 'colors', 'voice']) delete b[key];
