@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, symlinkSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, symlinkSync, readdirSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -9,8 +9,13 @@ const brief = () => ({ schema_version: 1, content_id: 'safe-drafts', topic: 'Saf
 const plan = () => ({ schema_version: 1, narration: 'Explicit silent on-screen text demonstration', audio: null, transcript: null, shots: [0, 1, 2].map(i => ({ id: `shot-${i + 1}`, start: i * 6, end: (i + 1) * 6, message: 'Review before handoff', narration: 'Silent, on-screen text', caption: 'Local draft', visual: 'Typography and progress line', assets: [] })) });
 const draft = () => ({ schema_version: 1, content_id: 'safe-drafts', revision: 1, channel: 'local-demo', account: 'fictional-account', title: 'Review before handoff', body: 'An original local workflow demonstration, not published.', media: [], sources: [], claims: [], approvals: [], publication_authorization: 'not-authorized' });
 function approve(d, root) { const digest = m.draftFingerprint(d, root); d.approvals = ['direction', 'platform', 'title', 'final'].map(gate => ({ gate, approved: true, by: 'SIMULATED TEST FIXTURE, NOT USER APPROVAL', at: '2026-10-10T00:00:00Z', digest })); return d; }
-function fixture(fn) { const dir = mkdtempSync(join(tmpdir(), 'media-test-')); try { return fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); } }
+// Resolve the test-owned temporary parent; business paths still reject linked ancestors.
+function fixture(fn) { const dir = mkdtempSync(join(realpathSync(tmpdir()), 'media-test-')); try { return fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); } }
 test('complete brief and three Hook kinds pass', () => assert.equal(m.validateBrief(brief()).content_id, 'safe-drafts'));
+test('article-only brief needs no video defaults; production still requires explicit video fields', () => {
+  const b = brief(); for (const key of ['platform', 'duration_seconds', 'width', 'height', 'fps', 'style', 'font', 'colors', 'voice']) delete b[key];
+  assert.equal(m.validateBrief(b).content_id, 'safe-drafts'); assert.throws(() => m.validateVideoBrief(b), /missing-video/);
+});
 test('missing inputs, guessed defaults and malformed numeric fields block video', () => {
   for (const key of ['font', 'audience', 'duration_seconds', 'fps', 'voice', 'style']) { const b = brief(); delete b[key]; assert.throws(() => m.validateVideo(b, plan())); }
   assert.throws(() => m.validateBrief({ ...brief(), fps: '24' })); assert.throws(() => m.validateBrief({ ...brief(), width: 641 }));
@@ -73,8 +78,11 @@ test('state rejects unknown versions/fields and terminal index conflicts', () =>
   m.validateStatus(s, { [id]: c }); c.status = 'completed'; assert.throws(() => m.validateStatus(s, { [id]: c }), /terminal-index/);
 });
 test('final video rejects stale review, missing stills and any score below eight', () => {
-  const b = brief(), p = plan(), r = { evidence_kind: 'executed', reviewer: 'fixture', input_digest: 'input', preview: { path: 'preview.mp4', sha256: 'a'.repeat(64), duration_seconds: 18 }, stills: p.shots.flatMap(s => [1, 2, 3].map(n => ({ shot_id: s.id, path: `${s.id}-${n}.png`, sha256: 'b'.repeat(64), accepted: true }))), checks: Object.fromEntries(['fonts', 'captions', 'aspect', 'rhythm', 'audio_sync', 'determinism'].map(k => [k, true])), scores: Object.fromEntries(['accuracy', 'readability', 'visual_consistency', 'rhythm', 'audio_visual'].map(k => [k, 8])), blockers: [] };
-  m.validateReview(r, b, p, 'input'); assert.throws(() => m.validateReview(r, b, p, 'new'), /stale/); r.scores.rhythm = 7; assert.throws(() => m.validateReview(r, b, p, 'input'), /score/); r.scores.rhythm = 8; r.stills.pop(); assert.throws(() => m.validateReview(r, b, p, 'input'), /three-stills/);
+  const b = brief(), p = plan(), execution = 'c'.repeat(64), r = { schema_version: 2, evidence_kind: 'executed', reviewer: 'SIMULATED CONTRACT FIXTURE; no actual media review', input_digest: 'd'.repeat(64), execution_digest: execution, preview: { path: 'preview.mp4', sha256: 'a'.repeat(64), duration_seconds: 18 }, stills: p.shots.flatMap(s => [1, 2, 3].map(n => ({ shot_id: s.id, path: `${s.id}-${n}.png`, sha256: 'b'.repeat(64), accepted: true }))), checks: Object.fromEntries(['fonts', 'captions', 'aspect', 'rhythm', 'audio_sync', 'determinism'].map(k => [k, true])), scores: Object.fromEntries(['accuracy', 'readability', 'visual_consistency', 'rhythm', 'audio_visual'].map(k => [k, 8])), blockers: [] };
+  m.validateReview(r, b, p, 'd'.repeat(64), execution); assert.throws(() => m.validateReview(r, b, p, 'new', execution), /stale/);
+  assert.throws(() => m.validateReview(r, b, p, 'd'.repeat(64), 'd'.repeat(64)), /stale-execution/);
+  r.schema_version = 1; assert.throws(() => m.validateReview(r, b, p, 'd'.repeat(64), execution), /not-observed/); r.schema_version = 2;
+  r.scores.rhythm = 7; assert.throws(() => m.validateReview(r, b, p, 'd'.repeat(64), execution), /score/); r.scores.rhythm = 8; r.stills.pop(); assert.throws(() => m.validateReview(r, b, p, 'd'.repeat(64), execution), /three-stills/);
 });
 test('reviewed renderer returns exact stdout bytes offline; changed package invalidates review', t => {
   const probe = spawnSync('python3', ['-c', 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)']); if (probe.status !== 0) return t.skip('optional Python 3.10+ not installed');

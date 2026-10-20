@@ -10,3 +10,5 @@ H 将教学和评估分开。生成作业时只提供问题和必要的作答边
 - 误区、修正路径和下一步。
 
 H 不要求固定百分比，也不把 immediate 评审自动称为 mastered。题目/回答/评审在单文件内按段落追加；重答创建新 attempt。评分无法裁决时使用 `uncertain` 并保留 blocker。
+
+按证据合同的 Review 骨架，逐题使用 `### Review Q<n>` 和唯一 `verdict:` 字段；另以 `Immediate result`、`Immediate rationale` 明确本轮 OBJ 的综合判断。评审完成与通过分开，不能用 Review 存在性推导掌握，也不能用总分替代对目标、误区和迁移证据的判断。

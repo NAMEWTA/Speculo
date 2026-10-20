@@ -185,7 +185,7 @@ test("target prompt cancellation propagates and never reaches capabilities", asy
 
 test("five modes, shared default selection, and workflow/command groups", async () => {
   assert.deepEqual(exposureGroups(catalog).map(g => [g.id, g.assets.length]), [
-    ["learning", 10], ["media", 8], ["ops", 6], ["person", 3], ["specdev", 16], ["commands", 10],
+    ["learning", 10], ["media", 8], ["ops", 6], ["person", 3], ["specdev", 16], ["commands", 11],
   ]);
   for (const mode of ["all", "keep", "none"] as const) {
     for (const hasHistory of [false, true]) {
@@ -211,7 +211,7 @@ test("bulk selection expands whole workflows and commands, but not unselected pa
   ]);
   const result = await promptExposure({ ...emptyOptions, existing: prior, hasHistory: true }, s.ui);
   const ids = resolveProjectionIds(result, catalog, prior);
-  assert.equal(ids.length, 26); assert.ok(ids.includes("domain/specdev"));
+  assert.equal(ids.length, 27); assert.ok(ids.includes("domain/specdev"));
   assert.ok(!ids.includes("domain/learning")); s.done();
 });
 
@@ -268,7 +268,7 @@ test("core-only and partial catalogs restrict menus, and empty bulk selection is
         } },
       ]);
       const result = await promptExposure({ ...emptyOptions, catalog: installed }, s.ui);
-      assert.equal(resolveProjectionIds(result, installed, []).length, picked.length ? 10 : 0); s.done();
+      assert.equal(resolveProjectionIds(result, installed, []).length, picked.length ? 11 : 0); s.done();
     }
   }
 });
@@ -304,11 +304,11 @@ test("explicit unified requests bypass prompts; fresh and recorded noninteractiv
   await initSpeculo(target, { packageRoot, selection: { workflowIds: [] }, skillTargets: ["claude"], skills: { mode: "all" } });
   const saved = await resolveExposure(options);
   assert.deepEqual(saved.targets, ["claude"]);
-  assert.equal(saved.assetIds.length, 10);
+  assert.equal(saved.assetIds.length, 11);
   assert.deepEqual(await resolveExposure({ ...options, targets: ["agents"], prompt: true, request: { mode: "none" } }), { targets: ["agents"], assetIds: [] });
   const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: [] } });
   assert.equal(result.projections.agents.selected.length, 0);
-  assert.equal(result.projections.claude.ready, 10);
+  assert.equal(result.projections.claude.ready, 11);
   await noTransactionResidue(target);
 }));
 
@@ -320,7 +320,7 @@ test("preview cancellation changes no active files and cleans staging and lock",
     await assert.rejects(initSpeculo(target, {
       packageRoot, selection: { workflowIds: [] }, skills: { mode: "none" },
       confirmInstall: preview => {
-        assert.equal(preview.projections.agents.removed.length, 20);
+        assert.equal(preview.projections.agents.removed.length, 21);
         assert.deepEqual(preview.retainedWorkflowIds, []);
         assert.deepEqual(preview.removedWorkflowIds, ["learning"]);
         assert.match(formatInstallPreview(preview), /learning\/lesson/);
@@ -357,13 +357,13 @@ test("preview matches application across hosts and distinguishes conflicted remo
   assert.deepEqual(result.projections.agents.conflicts, ["learning/lesson"]);
   assert.equal(result.projections.agents.ready, 1);
   assert.deepEqual(result.projections.agents.retained, ["command/status"]);
-  assert.equal(result.projections.agents.removed.length, 19);
+  assert.equal(result.projections.agents.removed.length, 20);
   assert.deepEqual(result.projections.claude.selected, ["command/status"]);
   assert.equal(await readFile(edited, "utf8"), "manual edit");
   const manifest = (await readProjectionManifest(target))!;
   assert.deepEqual(manifest.targets, ["agents", "claude"]);
   assert.deepEqual(manifest.asset_ids, ["command/status"]);
-  assert.equal(result.projections.agents.deleted, 18);
+  assert.equal(result.projections.agents.deleted, 19);
   assert.equal(result.projections.claude.created, 1);
   assert.equal(formatInstallPreview(seen!).match(/command\/status/g)?.length, 1);
   await assert.rejects(readFile(join(target, ".agents/skills/learning-g-goal/SKILL.md")), /ENOENT/);
@@ -384,9 +384,9 @@ test("confirmation does not bypass drift recheck", () => fixture(async target =>
 test("keep never follows newly installed groups; all recomputes the catalog", () => fixture(async target => {
   await initSpeculo(target, { packageRoot, selection: { workflowIds: [] }, skills: { mode: "all" } });
   const kept = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
-  assert.equal(kept.projections.agents.selected.length, 10);
+  assert.equal(kept.projections.agents.selected.length, 11);
   const expanded = await initSpeculo(target, { packageRoot, skills: { mode: "all" } });
-  assert.equal(expanded.projections.agents.selected.length, 20);
+  assert.equal(expanded.projections.agents.selected.length, 21);
   assert.equal(expanded.projections.agents.added.length, 10);
   await noTransactionResidue(target);
 }));

@@ -8,13 +8,16 @@ import {
   fsyncSync,
   lstatSync,
   mkdirSync,
+  mkdtempSync,
   openSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,9 +35,10 @@ function nowRfc3339() {
     + `${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
 }
 
-function run(cwd, command, args, { allowed = [0], timeout = 120_000 } = {}) {
+function run(cwd, command, args, { allowed = [0], timeout = 120_000, env } = {}) {
   const result = spawnSync(command, args, {
     cwd,
+    env,
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
     timeout,
@@ -54,7 +58,10 @@ function run(cwd, command, args, { allowed = [0], timeout = 120_000 } = {}) {
 function git(repo, ...args) {
   let options = {};
   if (args.length && typeof args.at(-1) === 'object') options = args.pop();
-  return run(repo, 'git', args, options);
+  return run(repo, 'git', ['-c', 'core.fsmonitor=false', ...args], {
+    ...options,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', ...options.env },
+  });
 }
 
 function ensureRepository(path) {
@@ -145,7 +152,11 @@ export function loadRepositoryMap(path, projectRoot) {
   let data;
   try { data = JSON.parse(readFileSync(path, 'utf8')); }
   catch (error) { throw new SyncError(`cannot read repository map ${path}: ${error.message}`); }
-  if (Object.keys(data).sort().join(',') !== 'repositories,schema_version' || data.schema_version !== SCHEMA_VERSION || !Array.isArray(data.repositories)) {
+  return validateRepositoryMap(data, projectRoot, path);
+}
+
+function validateRepositoryMap(data, projectRoot, path) {
+  if (!data || typeof data !== 'object' || Object.keys(data).sort().join(',') !== 'repositories,schema_version' || data.schema_version !== SCHEMA_VERSION || !Array.isArray(data.repositories)) {
     throw new SyncError(`unsupported or malformed repository map: ${path}`);
   }
   if (!data.repositories.length) throw new SyncError(`repository map has no repositories: ${path}`);
@@ -299,8 +310,27 @@ function globRegex(glob) {
   return new RegExp(`${output}$`);
 }
 
-export function mergeTree(repo, productSha, upstreamSha) {
-  const result = git(repo, 'merge-tree', '--write-tree', '--messages', productSha, upstreamSha, { allowed: [0, 1] });
+export function mergeTree(repo, productSha, upstreamSha, projectRoot = repo) {
+  const drivers = git(repo, 'config', '--name-only', '--get-regexp', '^merge\\..*\\.driver$', { allowed: [0, 1] }).stdout.trim();
+  if (drivers) throw new SyncError(`read-only merge simulation cannot execute configured custom merge drivers: ${drivers.split('\n').join(', ')}`);
+  const temporaryRoot = realpathSync(tmpdir());
+  const rel = relative(realpathSync(projectRoot), temporaryRoot);
+  if (!rel || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`))) {
+    throw new SyncError('merge simulation requires a temporary directory outside the project root');
+  }
+  const objects = git(repo, 'rev-parse', '--path-format=absolute', '--git-path', 'objects').stdout.trim();
+  const temporary = mkdtempSync(join(temporaryRoot, 'speculo-merge-preview-'));
+  let result;
+  try {
+    // merge-tree writes tree/blob objects even without touching refs. Keep those writes outside the project.
+    // Git accepts a C-style quoted alternate path, including spaces and path-list separator characters.
+    result = git(repo, 'merge-tree', '--write-tree', '--messages', productSha, upstreamSha, {
+      allowed: [0, 1],
+      env: { GIT_OBJECT_DIRECTORY: temporary, GIT_ALTERNATE_OBJECT_DIRECTORIES: JSON.stringify(objects) },
+    });
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
   const lines = result.stdout.split('\n');
   const treeSha = /^[0-9a-f]{40,64}$/.test(lines[0]?.trim()) ? lines[0].trim() : null;
   const conflicts = new Set();
@@ -314,12 +344,13 @@ export function mergeTree(repo, productSha, upstreamSha) {
     status: result.status === 0 ? 'clean' : conflicts.size ? 'conflicted' : 'conflicted-unparsed',
     exit_code: result.status,
     tree_sha: treeSha,
+    object_storage: 'temporary-discarded',
     conflict_paths: [...conflicts].sort(),
     messages,
   };
 }
 
-function collectRepository(config, saved, freshness, fetchError, timestamp) {
+function collectRepository(config, saved, freshness, fetchError, timestamp, projectRoot) {
   const repo = config.absolute_path;
   const productSha = resolveCommit(repo, config.product_ref);
   const upstreamSha = resolveCommit(repo, config.upstream_ref);
@@ -354,7 +385,7 @@ function collectRepository(config, saved, freshness, fetchError, timestamp) {
   const overlaps = [...upstreamPaths].filter((path) => productPaths.has(path)).sort();
   const dirty = dirtyPaths(repo);
   const dirtySet = new Set(dirty);
-  const tree = mergeTree(repo, productSha, upstreamSha);
+  const tree = mergeTree(repo, productSha, upstreamSha, projectRoot);
   const conflictSet = new Set(tree.conflict_paths);
   const riskPaths = files.filter((file) => file.risk_patterns.length)
     .map((file) => ({ path: file.path, patterns: file.risk_patterns }));
@@ -391,6 +422,7 @@ function collectRepository(config, saved, freshness, fetchError, timestamp) {
 
 function markdown(value) { return String(value).replaceAll('|', '\\|').replaceAll('\n', ' '); }
 function markdownPath(value) { return `\`${String(value).replaceAll('`', '').replaceAll('|', '\\|').replaceAll('\n', ' ')}\``; }
+function shellQuote(value) { return "'" + String(value).replaceAll("'", "'\\''") + "'"; }
 
 function renderDiffReport(snapshot) {
   const lines = ['# 上游增量 Diff 报告', '', `- Change：\`${snapshot.change}\``, `- 生成时间：\`${snapshot.created_at}\``, ''];
@@ -420,9 +452,9 @@ function renderDiffReport(snapshot) {
     if (item.risk_paths.length) lines.push(...item.risk_paths.map((entry) => `- ${markdownPath(entry.path)}: ${markdown(entry.patterns.join(', '))}`));
     else lines.push('- 未命中 repository map 风险规则；仍需核对 customization map。');
     lines.push('', '### 复现命令', '', '```bash',
-      `git -C ${item.path} log --oneline ${item.integration.upstream_sha}..${item.upstream_sha}`,
-      `git -C ${item.path} diff --name-status ${item.integration.upstream_sha}..${item.upstream_sha}`,
-      `git -C ${item.path} diff ${item.integration.upstream_sha}..${item.upstream_sha} -- <path>`, '```', '');
+      `git -C ${shellQuote(item.path)} log --oneline ${item.integration.upstream_sha}..${item.upstream_sha}`,
+      `git -C ${shellQuote(item.path)} diff --name-status ${item.integration.upstream_sha}..${item.upstream_sha}`,
+      `git -C ${shellQuote(item.path)} diff ${item.integration.upstream_sha}..${item.upstream_sha} -- <path>`, '```', '');
   }
   lines.push('## 现状清单', '', '| 仓库 | 上游增量 | Git 冲突 | 定制风险路径 | 当前处置 |', '|---|---:|---:|---:|---|');
   for (const item of snapshot.repositories) {
@@ -440,7 +472,8 @@ function appendPaths(lines, paths, empty) {
 
 function renderConflictReport(snapshot) {
   const lines = ['# 上游合并冲突客观报告', '', `- Change：\`${snapshot.change}\``, `- 生成时间：\`${snapshot.created_at}\``,
-    '- 模拟方式：`git merge-tree --write-tree --messages <product-sha> <upstream-sha>`', ''];
+    '- 模拟方式：`git merge-tree --write-tree --messages <product-sha> <upstream-sha>`；合并对象只写项目外临时数据库，结束后清除。',
+    '- 结果 tree SHA 是可重新计算的摘要；本工具不将该对象持久化到源仓库。', ''];
   for (const item of snapshot.repositories) {
     const tree = item.merge_tree;
     lines.push(`## ${item.id}`, '', '| 固定项 | 值 |', '|---|---|', `| Product SHA | \`${item.product_sha}\` |`,
@@ -460,7 +493,8 @@ function renderConflictReport(snapshot) {
     lines.push('', '### 工作树状态', '');
     appendPaths(lines, item.dirty_paths, '工作树 clean。');
     lines.push('', '### 复现命令', '', '```bash',
-      `git -C ${item.path} merge-tree --write-tree --messages ${item.product_sha} ${item.upstream_sha}`, '```', '');
+      `git -C ${shellQuote(item.path)} merge-tree --write-tree --messages ${item.product_sha} ${item.upstream_sha}`, '```',
+      '上述原生 Git 命令会写其对象数据库；需要零项目写入时使用本工具的 `assess --dry-run` 并核对输出中冻结的 SHAs。', '');
   }
   lines.push('## 局限', '', '零文本冲突不代表编译、运行时、API、权限、数据迁移或业务语义安全。', '');
   return lines.join('\n');
@@ -503,22 +537,40 @@ function chooseChange(stateRoot, date, topic) {
 function pathsFromOptions(options) {
   const root = resolve(options.root ?? '.');
   ensureRepository(root);
-  if (!options['state-root'] || !options['repository-map']) throw new SyncError('--state-root and --repository-map are required');
+  if (!options['state-root']) throw new SyncError('--state-root is required');
+  if (Boolean(options['repository-map']) === Boolean(options['repository-map-stdin'])) {
+    throw new SyncError('provide exactly one of --repository-map or --repository-map-stdin');
+  }
   return {
     root,
     stateRoot: inside(root, options['state-root'], 'state root'),
-    repositoryMap: inside(root, options['repository-map'], 'repository map'),
+    repositoryMap: options['repository-map'] ? inside(root, options['repository-map'], 'repository map') : null,
   };
 }
 
 export function assess(options) {
+  if (options['dry-run'] && options.fetch) throw new SyncError('--dry-run cannot be combined with --fetch: fetch writes Git refs and objects');
+  if (options['repository-map-stdin'] && !options['dry-run']) throw new SyncError('--repository-map-stdin is only available with assess --dry-run');
   const { root, stateRoot, repositoryMap } = pathsFromOptions(options);
   if (!options.topic) throw new SyncError('--topic is required');
   const topic = sanitizeTopic(options.topic);
   const timestamp = nowRfc3339();
   const date = options.date ?? timestamp.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new SyncError(`date must use YYYY-MM-DD: ${date}`);
-  const map = loadRepositoryMap(repositoryMap, root);
+  let map;
+  let mapIdentity;
+  if (options['repository-map-stdin']) {
+    if (process.stdin.isTTY) throw new SyncError('--repository-map-stdin requires JSON on stdin');
+    const raw = readFileSync(0, 'utf8');
+    if (Buffer.byteLength(raw) > 1024 * 1024) throw new SyncError('repository map stdin exceeds 1 MiB');
+    let data;
+    try { data = JSON.parse(raw); } catch { throw new SyncError('repository map stdin must be valid JSON'); }
+    map = validateRepositoryMap(data, root, 'stdin');
+    mapIdentity = { source: 'stdin', sha256: createHash('sha256').update(raw).digest('hex'), persisted: false };
+  } else {
+    map = loadRepositoryMap(repositoryMap, root);
+    mapIdentity = { source: 'file', sha256: sha256(repositoryMap), persisted: true };
+  }
   const stateFile = join(stateRoot, 'state.json');
   const ids = new Set(map.repositories.map((item) => item.id));
   const state = loadState(stateFile, ids);
@@ -536,12 +588,12 @@ export function assess(options) {
   for (const config of map.repositories) {
     const fetched = fetchResults[config.id]?.upstream;
     const freshness = !options.fetch ? 'cached' : fetched?.ok ? 'fresh' : 'stale';
-    const [observation, compact] = collectRepository(config, state.repositories[config.id], freshness, fetched?.error ?? null, timestamp);
+    const [observation, compact] = collectRepository(config, state.repositories[config.id], freshness, fetched?.error ?? null, timestamp, root);
     observations.push(observation);
     nextRepositoryState[config.id] = compact;
   }
   const change = chooseChange(stateRoot, date, topic);
-  const snapshot = { change, created_at: timestamp, topic, fetch_requested: Boolean(options.fetch), fetch_results: fetchResults, repositories: observations };
+  const snapshot = { change, created_at: timestamp, topic, repository_map: mapIdentity, fetch_requested: Boolean(options.fetch), fetch_results: fetchResults, repositories: observations };
   if (options['dry-run']) return { dryRun: true, result: snapshot };
 
   mkdirSync(stateRoot, { recursive: true });
@@ -608,6 +660,7 @@ function loadChangeState(path, repositoryIds) {
 }
 
 export function recordIntegration(options) {
+  if (options['dry-run'] || options.fetch || options['repository-map-stdin']) throw new SyncError('--dry-run, --fetch and --repository-map-stdin apply only to assess');
   const { root, stateRoot, repositoryMap } = pathsFromOptions(options);
   const map = loadRepositoryMap(repositoryMap, root);
   const ids = new Set(map.repositories.map((item) => item.id));
@@ -660,9 +713,9 @@ function parseArguments(argv) {
   const command = argv[0];
   if (!['assess', 'record-integration'].includes(command)) throw new SyncError('expected command: assess or record-integration');
   const options = { root: '.', verification: [] };
-  const booleans = new Set(['fetch', 'dry-run']);
+  const booleans = new Set(['fetch', 'dry-run', 'repository-map-stdin']);
   const allowed = new Set([
-    'root', 'state-root', 'repository-map', 'topic', 'date', 'fetch', 'dry-run', 'change',
+    'root', 'state-root', 'repository-map', 'repository-map-stdin', 'topic', 'date', 'fetch', 'dry-run', 'change',
     'repository', 'merge-commit', 'upstream-sha', 'verification',
   ]);
   for (let index = 1; index < argv.length; index += 1) {
@@ -687,14 +740,15 @@ function help(command) {
 
 Options:
   --date YYYY-MM-DD  Override the change date for reproducible runs.
-  --fetch            Refresh configured remote refs before assessment.
-  --dry-run          Print the frozen JSON snapshot without writing state or reports.
+  --fetch            Refresh configured remote refs before assessment; incompatible with --dry-run.
+  --dry-run          Print the frozen JSON snapshot; write no project files, Git objects, index or refs.
+  --repository-map-stdin  Read an in-memory candidate from stdin instead of --repository-map; dry-run only.
 
 Output:
   Creates a non-overwriting change under --state-root and atomically updates state.json.
 
 Example:
-  node upstream-sync.mjs assess --root . --state-root <resolved-state-root>/skills/upstream-fork-sync --repository-map <resolved-state-root>/skills/upstream-fork-sync/repository-map.json --topic upstream-refresh
+  node <absolute-command-root>/scripts/upstream-sync.mjs assess --root <absolute-project-root> --state-root <resolved-state-root>/commands/upstream-fork-sync --repository-map <resolved-state-root>/commands/upstream-fork-sync/repository-map.json --topic upstream-refresh
 `;
   if (command === 'record-integration') return `Usage:
   upstream-sync.mjs record-integration --root <project> --state-root <path> --repository-map <file> --repository <id> --merge-commit <sha> --upstream-sha <sha> --verification '<command>: exit 0' [--change <name>]
@@ -703,7 +757,7 @@ Output:
   Updates the selected change and compact checkpoint only after exact Git ancestry validation.
 
 Example:
-  node upstream-sync.mjs record-integration --root . --state-root <resolved-state-root>/skills/upstream-fork-sync --repository-map <resolved-state-root>/skills/upstream-fork-sync/repository-map.json --repository app --merge-commit <sha> --upstream-sha <sha> --verification 'pnpm test: exit 0'
+  node <absolute-command-root>/scripts/upstream-sync.mjs record-integration --root <absolute-project-root> --state-root <resolved-state-root>/commands/upstream-fork-sync --repository-map <resolved-state-root>/commands/upstream-fork-sync/repository-map.json --repository app --merge-commit <sha> --upstream-sha <sha> --verification 'pnpm test: exit 0'
 `;
   return `Usage:
   upstream-sync.mjs assess [options]

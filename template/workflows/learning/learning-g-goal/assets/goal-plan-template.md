@@ -24,16 +24,18 @@ ready_for_execution: false
 
 ## 路径
 
-- 本计划：`<Path>{roots.state}/learning/changes/{change}/goal/goal-plan.md</Path>`
-- Chain：`<Path>{roots.state}/learning/changes/{change}/goal/chain.md</Path>`
-- 覆盖矩阵：`<Path>{roots.state}/learning/changes/{change}/goal/coverage-matrix.md</Path>`
-- 进度：`<Path>{roots.state}/learning/changes/{change}/goal/progress.md</Path>`
-- 挖掘探针：`<Path>{roots.state}/learning/changes/{change}/goal/probes/</Path>`
-- 验收：`<Path>{roots.state}/learning/changes/{change}/goal/verify.md</Path>`
-- 旧计划：`<Path>{roots.state}/learning/changes/{change}/goal/revisions/</Path>`
-- 课程地图（A 所有）：`<Path>{roots.state}/learning/changes/{change}/course.md</Path>`
-- 讲义（L 所有）：`<Path>{roots.state}/learning/changes/{change}/lessons/</Path>`
-- 问答课（Q 所有，`/goal` 不得写入）：`<Path>{roots.state}/learning/changes/{change}/inquiry/</Path>`
+以下路径由稳定 Change ID 在 locations.json 中解析当前 locator，再连接状态根；编译时填入真实路径，不假定 Change 仍在顶层 changes/。搬入父 Change 后重新解析；只改本轮计划，不自动修写历史计划。
+
+- 本计划：`<resolved-goal-plan-path>`
+- Chain：`当前 locator 下的 goal/chain.md`
+- 覆盖矩阵：`当前 locator 下的 goal/coverage-matrix.md`
+- 进度：`当前 locator 下的 goal/progress.md`
+- 挖掘探针：`当前 locator 下的 goal/probes/`
+- 验收：`当前 locator 下的 goal/verify.md`
+- 旧计划：`当前 locator 下的 goal/revisions/`
+- 课程地图（A 所有）：`当前 locator 下的 course.md`
+- 讲义（L 所有）：`当前 locator 下的 lessons/`
+- 问答课（Q 所有，`/goal` 不得写入）：`当前 locator 下的 inquiry/`
 
 ---
 
@@ -42,7 +44,7 @@ ready_for_execution: false
 把下面整块复制到 AI CLI 后发送 `/goal`。不要改写 Outcome 或 HARD NO。
 
 ```text
-/goal READ <Path>{roots.state}/learning/changes/{change}/goal/goal-plan.md</Path>
+/goal READ <resolved-goal-plan-path>
 
 Outcome:
   范围内覆盖矩阵格子全部变为 covered | deferred(reason) | covered-by-parent；

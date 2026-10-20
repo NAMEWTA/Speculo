@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { initSpeculo } from "../src/index.js";
 import { validateStructuredRuntime } from "../src/structured.js";
 import { validateOpsResources } from "../src/ops-resources.js";
-import { assertOpsResourceApproval, type ResourceDispatchEnvelope } from "../src/kernel.js";
 import { discoverWorkflowCatalog } from "../src/workflows.js";
 
 const packageRoot=process.cwd();
@@ -29,14 +28,14 @@ describe("OPS five-entry resource workspace",()=>{
   const readme=await readFile(join(workflowRoot,"SKILL.md"),"utf8");for(const name of entries)assert.ok(readme.includes("/"+name+"/SKILL.md"));
  });
  it("runs static/package self-check without target mutation",()=>{
-  const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--self-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
+  const p=spawnSync(process.execPath,[join(workflowRoot,"common/tools/validate-ops.mjs"),"--package-check"],{encoding:"utf8"});assert.equal(p.status,0,p.stdout+p.stderr);
  });
  it("runs executor, bootstrap and workspace contract/integration tests",()=>{
   // Node's inherited test context makes a nested --test exit 0 without running files.
   const env={...process.env};delete env.NODE_TEST_CONTEXT;
   // Windows executes hundreds of real registry/process probes in disposable fixtures.
   // Keep every assertion; allow that measured platform overhead rather than skipping integration.
-  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs"),join(workflowRoot,"common/tests/test_ops_onboarding.mjs")],{encoding:"utf8",timeout:process.platform==="win32"?900000:180000,env});
+  const p=spawnSync(process.execPath,["--test","--test-reporter=tap",join(workflowRoot,"common/tests/test_ops.mjs"),join(workflowRoot,"common/tests/test_ops_bootstrap.mjs"),join(workflowRoot,"common/tests/test_ops_workspace.mjs"),join(workflowRoot,"common/tests/test_ops_onboarding.mjs"),join(workflowRoot,"common/tests/test_resource_contracts.mjs")],{encoding:"utf8",timeout:process.platform==="win32"?900000:180000,env});
   assert.equal(p.status,0,p.stdout+p.stderr);
   assert.match(p.stdout,/^# tests [1-9][0-9]*$/m,"OPS child runner must execute nonempty tests");
   assert.match(p.stdout,/^# fail 0$/m,p.stdout+p.stderr);
@@ -57,10 +56,10 @@ describe("OPS five-entry resource workspace",()=>{
   const s=await seed();s.unreviewed=true;const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/unknown/);
  });
  it("rejects persistent root escape",async()=>{
-  const s=await resourceState();s.deployments["app-a-prod"].storage[0].path="/tmp/hidden-data";const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/persistence escapes/);
+  const s=await resourceState();s.deployments["app-a-prod"].storage[0].path="/tmp/hidden-data";const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/persistent path outside/);
  });
  it("rejects deployment root override",async()=>{
-  const s=await resourceState();s.deployments["app-a-prod"].root="/srv/ops/elsewhere";const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/persistence policy/);
+  const s=await resourceState();s.deployments["app-a-prod"].root="/srv/ops/elsewhere";const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/host\/project policy/);
  });
  it("rejects duplicate physical host roots",async()=>{
   const s=await resourceState();s.hosts["node-b"]={...host(),host_id:"node-b"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/duplicate physical/);
@@ -69,10 +68,10 @@ describe("OPS five-entry resource workspace",()=>{
   const s=await resourceState();s.hosts["node-b"]={...host("/srv/ops/nested"),host_id:"node-b"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/overlapping registered/);
  });
  it("rejects Windows system root and ADS root",async()=>{
-  for(const root of ["C:\\Windows","C:\\Ops:stream"]) {const s=await seed();s.hosts["node-a"]={...host(root),platform:"windows"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/system\/ADS/);}
+  for(const root of ["C:\\Windows","C:\\Ops:stream"]) {const s=await seed();s.hosts["node-a"]={...host(root),platform:"windows"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/system directory|ADS/);}
  });
  it("rejects local connection parameters",async()=>{
-  const s=await resourceState();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local connection/);
+  const s=await resourceState();s.hosts["node-a"].connection={hostname:"bad"};const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/local host connection/);
  });
  it("rejects orphan deployments",async()=>{
   const s=await resourceState();delete s.hosts["node-a"];const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/orphan/);
@@ -83,22 +82,23 @@ describe("OPS five-entry resource workspace",()=>{
  it("cannot disable strict Docker persistence policy",async()=>{
   const s=await seed();s.policies.strict_docker_root=false;const sc=await schema();assert.throws(()=>validateOpsResources(s,sc),/constant/);
  });
- it("requires exact approval for resource dispatch, even reversible writes",()=>{
-  const e:ResourceDispatchEnvelope={schema_version:2,workflow:"ops",subject:{kind:"host",id:"node-a"},run_id:"run-test",plan_digest:"a".repeat(64),stage:"host-manage",transport:"native",required_capabilities:{},input_artifacts:[],output_artifacts:[],risk:"local-reversible"};
-  assert.doesNotThrow(()=>assertOpsResourceApproval(e,"a".repeat(64)));assert.throws(()=>assertOpsResourceApproval(e,"b".repeat(64)),/approval-mismatch/);
- });
- it("kernel checkpoint schema keeps v1 and adds v2",async()=>{
-  const s=await json(join(packageRoot,"template/.speculo/kernel/checkpoint.schema.json"));assert.equal(s.oneOf.length,2);assert.equal(s.oneOf[0].properties.schema_version.const,1);assert.equal(s.oneOf[1].properties.schema_version.const,2);assert.ok(!s.oneOf[1].required.includes("change_id"));
- });
  it("installs v3 state and never creates old OPS changes directory",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-install-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-install-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const s=await json(join(root,".speculo/ops/status.json"));assert.equal(s.schema_version,3);
    const installed=(await readdir(join(root,"workflows/ops")));assert.ok(installed.includes("ops-d-project-deploy"));assert.ok(installed.includes("ops-s-server-connect"));assert.ok(installed.includes("ops-v-inventory-view"));assert.ok(!installed.includes("I-intake-and-assess"));
    const stateFiles=await readdir(join(root,".speculo/ops"));assert.ok(!stateFiles.includes("changes"));
+   assert.ok(!installed.includes("_state"));
+   const validator=join(root,"workflows/ops/common/tools/validate-ops.mjs"),state=join(root,".speculo/ops"),before=await readFile(join(state,"status.json"));
+   for(const args of [["--self-check"],["--state-root",state]]) {
+    const r=spawnSync(process.execPath,[validator,...args],{encoding:"utf8"});assert.equal(r.status,0,r.stdout+r.stderr);
+   }
+   const sourceOnly=spawnSync(process.execPath,[validator,"--package-check"],{encoding:"utf8"});assert.equal(sourceOnly.status,1);
+   const relative=spawnSync(process.execPath,[validator,"--state-root","."],{encoding:"utf8"});assert.equal(relative.status,1);assert.match(relative.stderr,/absolute/);
+   assert.deepEqual(await readFile(join(state,"status.json")),before);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("refresh preserves private and centralized record bytes and POSIX modes",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-refresh-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-refresh-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const privateRoot=join(root,".speculo/ops/private");await mkdir(privateRoot,{mode:0o700});const p=join(privateRoot,"credentials.json");const secret=Buffer.from('{"example":"SYNTHETIC-TEST-ONLY"}\n');await writeFile(p,secret,{mode:0o600});if(process.platform!=="win32"){await chmod(p,0o600);await chmod(privateRoot,0o700);}
    const record=join(root,".speculo/ops/records/tasks/example/result.json");const recordBytes=Buffer.from('{"synthetic":"preserve-record-byte-for-byte"}\n');await mkdir(dirname(record),{recursive:true,mode:0o700});await writeFile(record,recordBytes,{mode:0o600});
    const statePath=join(root,".speculo/ops/status.json"),legacy=await resourceState();await writeJson(statePath,legacy);
@@ -117,17 +117,19 @@ describe("OPS five-entry resource workspace",()=>{
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("rejects old OPS state without rewriting bytes or manufacturing approvals",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-legacy-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-legacy-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");const p=join(root,".speculo/ops/status.json");await writeJson(p,{schema_version:2,workflow:"ops",active:[],archived:[]});const before=await readFile(p);await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}}),/blocked/);assert.deepEqual(await readFile(p),before);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("structured runtime validates v3 with the shipped schema",async()=>{
-  const target=await mkdtemp(join(tmpdir(),"ops-structured-"));try{
+  const target=await mkdtemp(join(await realpath(tmpdir()),"ops-structured-"));try{
    await initSpeculo(target,{packageRoot,selection:{workflowIds:["ops"]}});const root=join(target,".agents/speculo");await writeJson(join(root,".speculo/ops/status.json"),await resourceState());await validateStructuredRuntime(root,["ops"]);
   }finally{await rm(target,{recursive:true,force:true});}
  });
  it("status and archive routing no longer treat OPS as change folders",async()=>{
-  const status=await readFile(join(packageRoot,"template/commands/status/COMMAND.md"),"utf8");assert.match(status,/Ops schema v3/);assert.doesNotMatch(status,/ops\/projects\/\{project_id\}\/changes/);
+  const status=await readFile(join(packageRoot,"template/commands/status/COMMAND.md"),"utf8");
+  assert.match(status,/ops\/common\/tools\/ops\.mjs/);assert.match(status,/`--state <absolute-ops-root> status` \/ `validate`/);
+  assert.match(status,/`inspect-run` 会联系目标，`fleet` 会写视图，Status 不自动调用它们/);assert.doesNotMatch(status,/ops\/projects\/\{project_id\}\/changes/);
   const archive=await readFile(join(packageRoot,"template/commands/archive-and-consolidate/COMMAND.md"),"utf8");assert.match(archive,/OPS 资源运行记录/);
  });
 });

@@ -2,14 +2,12 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { test } from 'node:test';
 
 const methodRoot = resolve('template');
 const validator = join(methodRoot, 'workflows/specdev/common/tools/validate-specdev.mjs');
-const legacyValidator = createRequire(import.meta.url)(join(methodRoot, 'lib/legacy-status-validator.cjs'));
 const name = '2026-10-14-root-closure';
 
 function fixture(t: { after(fn: () => void): void }) {
@@ -62,29 +60,22 @@ test('archive-ready rejects a cancelled Ticket while its owning change remains a
   assert.deepEqual(snapshot(project), before);
 });
 
-test('strict valid v6 historical evidence cannot become a new whole-change cancellation or gain an archive receipt', t => {
-  const project = fixture(t), change = join(project, 'facts/specdev/archive/2026-10', name);
+test('unsupported archived authority cannot become a whole-change cancellation or gain an archive receipt', t => {
+  const project = fixture(t), change = join(project, 'facts/specdev/changes/archive', name);
   mkdirSync(join(change, 'evidence'), { recursive: true });
-  const legacy = {
-    ...JSON.parse(readFileSync(resolve('test/fixtures/specdev-legacy-change-v6.json'), 'utf8')),
-    change: name, change_status: 'archived', current_work: null, archived: true,
-    archive_path: `<Path>{roots.state}/specdev/archive/2026-10/${name}</Path>`,
-    leadership: { current: 'legacy-owner', epoch: 1, assigned_at: '2026-10-14T09:00:00Z', history: [] },
-    created_at: '2026-10-14T09:00:00Z', updated_at: '2026-10-14T10:00:00Z', completed_at: '2026-10-14T10:00:00Z',
-  };
-  assert.equal(legacyValidator(legacy), true, JSON.stringify(legacyValidator.errors));
-  writeFileSync(join(change, '.status.json'), JSON.stringify(legacy, null, 2) + '\n');
+  writeFileSync(join(change, '.status.json'), '{"change_status":"archived","historical":"unsupported authority"}\r\n');
   writeFileSync(join(change, 'README.md'), '# Historical record\nAn optional Ticket was cancelled. No whole-change cancellation was requested.\n');
   writeFileSync(join(change, 'evidence/original.txt'), 'Original historical evidence\r\n');
   chmodSync(join(change, '.status.json'), 0o640);
   chmodSync(join(change, 'evidence/original.txt'), 0o600);
   const before = snapshot(project);
   const historical = consume(project, change, project, 'archived');
-  assert.equal(historical.status, 0, historical.stdout + historical.stderr);
+  assert.equal(historical.status, 1, historical.stdout + historical.stderr);
+  assert.match(historical.stderr, /mixed-protocol/);
   assert.deepEqual(snapshot(project), before);
   const cancellation = consume(project, change, project, 'archive-ready');
   assert.equal(cancellation.status, 1, cancellation.stdout + cancellation.stderr);
-  assert.match(cancellation.stderr, /legacy-active-needs-conversion|read-only legacy/);
+  assert.match(cancellation.stderr, /mixed-protocol/);
   assert.deepEqual(snapshot(project), before);
   assert.equal(existsSync(join(change, 'archive-receipt.md')), false);
 });

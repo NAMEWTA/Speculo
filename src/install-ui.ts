@@ -20,11 +20,11 @@ export type PromptPort = {
 export const prompts: PromptPort = {
   select: options => {
     const message = `${options.message}\n${color.dim("↑↓ 移动 · Enter 选择 · Esc 取消")}`;
-    return clack.select({ ...options, message: promptMessage(message), options: fitChoices(options.options), maxItems: visibleChoiceCount(options.options.length, message) });
+    return clack.select({ ...options, message: promptMessage(message), options: fitChoices(options.options), maxItems: visibleChoiceCount(options.options.length, message), showInstructions: false });
   },
   multiselect: options => {
     const message = `${options.message}\n${color.dim("空格勾选 · Enter 确定 · Esc 取消")}`;
-    return clack.multiselect({ ...options, message: promptMessage(message), options: fitChoices(options.options), maxItems: visibleChoiceCount(options.options.length, message) });
+    return clack.multiselect({ ...options, message: promptMessage(message), options: fitChoices(options.options), maxItems: visibleChoiceCount(options.options.length, message), showInstructions: false });
   },
   confirm: options => clack.confirm({ ...options, message: promptMessage(options.message) }),
   note,
@@ -277,7 +277,10 @@ export async function confirmInstallPreview(preview: InstallPreview, ui: PromptP
 
 export function createInstallUI() {
   let active: ReturnType<typeof clack.spinner> | undefined;
-  const stop = (message: string, code = 0) => { active?.stop(message, code); active = undefined; };
+  const stop = (message: string, outcome: "stop" | "cancel" | "error" = "stop") => {
+    active?.[outcome](message);
+    active = undefined;
+  };
   return {
     start(info: VersionInfo, target: string, existed: boolean) {
       clack.intro(`${color.bold(color.cyan("Speculo"))} ${color.dim(`v${info.local}`)} · ${existed ? "刷新安装" : "首次安装"}`);
@@ -317,7 +320,7 @@ export function createInstallUI() {
         : `下一步：${color.cyan("speculo doctor")} 检查安装`, terminalWidth()));
     },
     fail(error: unknown) {
-      stop("安装未完成", 1);
+      stop("安装未完成", error instanceof InstallCancelled ? "cancel" : "error");
       if (error instanceof InstallCancelled) clack.cancel(wrapTerminalText(error.message, terminalWidth()));
       else printError(error instanceof Error ? error.message : String(error));
     },

@@ -1,3 +1,18 @@
+---
+artifact: learning-retention-review
+owner_work: learning/review
+review_id: RV-<id>
+change_id: <current-change-id>
+lesson_ids: [L-001]
+objective_ids: [OBJ-01]
+source_ids: [S-001]
+previous_evidence: lessons/L-001-topic.md
+previous_at: <exact-recorded-ISO-8601>
+due_at: <declared-ISO-8601-after-previous-at>
+occurred_at: null
+retention: due
+---
+
 # 延迟复习：<Lesson 或 topic>
 
 | 字段 | 值 |

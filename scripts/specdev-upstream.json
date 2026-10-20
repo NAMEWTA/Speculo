@@ -315,9 +315,11 @@
       "path": "skills/productivity/handoff/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/commands/handoff/COMMAND.md"
+        "template/commands/handoff/COMMAND.md",
+        "template/references/handoff/handoff-contract.md",
+        "template/references/handoff/domain-context.md"
       ],
-      "rationale": "Preserve source pointers, owner, checkpoints and unresolved actions."
+      "rationale": "Shared explicit handoff preserves source pointers, owner, checkpoints and unresolved actions; update per-change summaries and retain immutable whole-session reports."
     },
     {
       "id": "teach",

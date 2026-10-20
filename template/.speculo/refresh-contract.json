@@ -11,15 +11,12 @@
     ".speculo/README.md",
     ".speculo/workspace.json",
     ".speculo/refresh-contract.json",
-    ".speculo/kernel.json",
     ".speculo/AGENTS.md"
   ],
   "reserved_runtime": [
     "README.md",
     "workspace.json",
     "refresh-contract.json",
-    "kernel.json",
-    "kernel",
     "install.json",
     "managed.json",
     "projections.json",

@@ -6,7 +6,79 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Unify current workflow manifest and capability-profile validation across discovery, installation, doctor and portable assets. Keep domain lifecycles with their original owners, and regenerate the shared runtime, validators and complete Canonical documents from source.
+- Route ready Direct Specs and approved prototype follow-through to Implement, preserve actual uncommitted delivery snapshots, and centralize shared SpecDev coordination. Add correctly typed parent Map, Plan and aggregate Evidence templates with structured, scope-aware scheduling diagnostics.
+- Isolate Person consultation state and stage evidence by Change. Publish validated candidates against exact digests, merge only the current consultation's active entry, and preserve the original five-stage method, question requirements and original-text sources.
+- Share dependency-free OPS resource semantics between installation and standalone tools. Separate package, installed-method and explicit state-root checks; retain unknown probe outcomes with controlled diagnostic categories and project-owned business verification recipes.
+- Connect deterministic installed-CLI artifact scenarios to CI, retaining actual process logs, file inventories and failures. Distinguish fixture readiness, artifact checks, authenticated observed gates and publication authority.
+- Make Command root discovery and domain delegation self-contained. Keep upstream dry-runs byte-preserving even for first-use stdin configuration and Git merge analysis; ship the source packaging entry as CommonJS in both module environments.
+
+### Fixed
+
+- Make Learning consolidation journaled and recoverable with exact input digests, owned locks, complete descendant locators, idempotent resume/rollback and concurrent-drift protection. Recheck terminal transaction direction instead of accepting the opposite complete image.
+- Validate Learning time budgets, actual source/objective references, exact submission markers, frozen original answers and delayed retention evidence. Require an explicit supported immediate result; reviewed, incorrect or blocked Homework cannot silently certify mastery.
+- Correct the Media Python renderer's shared-tool path in installed packages. Bind reports to actual input and execution identity, and require final delivery to consume complete review gates, preview/still bytes, media signatures and declared artifact dependencies.
+- Reject dangling Person state, candidate and lock symlinks without replacing them; load the package-owned consultation validator through the asynchronous module boundary.
+
+### Removed
+
+- Remove inactive kernel/checkpoint contracts, legacy SpecDev JSON authority readers and converters, TASK v1 adapters, and obsolete execution branches after updating their live consumers. Current unknown or mixed protocols are rejected without rewriting user records.
+
+### Upgrade Notes
+
+- This is an intentional contract cleanup without legacy protocol conversion. Current workflow manifests use schema 2, SpecDev Goal Plan uses schema 8 and Implementation Plan uses schema 3; current Media render/review reports use schema 2. Consultations store runtime facts per Change rather than global scalars. Preserve historical or unknown business files and reconcile them through their owner before continuing affected writes.
+- Complete Canonical exports and all 16 Skills Hub packages remain available. Mechanical fixtures and offline rendering do not certify live model behavior, semantic review quality, human approval or external publication.
+
+## [2.1.7] - 2026-10-19
+
+### Fixed
+
+- Resume Volta self-updates from the package's declared JavaScript entry instead of passing the Windows npm command shim to Node.js.
+
+## [2.1.6] - 2026-10-19
+
+### Fixed
+
+- Always offer **Update now** or **Update later** when an interactive check finds a newer release, explicitly labeling the current and latest versions before checking installation ownership. Updating later continues the original interaction and reminds again next time; old ignored-version preferences no longer suppress prompts.
+- Recognize verified Volta-managed npm installations for self-updates, retain their current Node.js runtime, verify the updated package and resume the original command. Pin the verified prefix explicitly for ordinary npm global updates.
+
+## [2.1.5] - 2026-10-19
+
+### Added
+
+- Bundle the streamlined ELI5 teaching Skill with lesson, explain, explore and tutor modes, reusable templates, synthetic examples and optional read-only validation. Preserve its teaching, submission, original-answer protection and persistence rules while omitting redundant documentation and historical build/evaluation files.
+
+### Changed
+
+- Update Hub installation and package verification for 16 complete Skill packages, including ELI5 in both supported targets.
+
+## [2.1.4] - 2026-10-18
+
+### Fixed
+
+- Pass `--no-daemon` in the bundled Herdr Skill's Codex launch examples, bypassing the shared daemon when switching accounts.
+
+## [2.1.3] - 2026-10-18
+
+### Added
+
+- Add a public coordination-init command for one project-wide default orchestration method, shared by all workflows.
+- Add workflow-independent TASK v2 validation and session storage for arbitrary planning, ticket, explanation, review and handoff tasks, retaining the legacy SpecDev TASK v1 adapter.
+- Add a shared, explicitly requested handoff method that updates each writable change's handoff.md and preserves whole-session summaries across multiple or absent changes.
+
+### Changed
+
+- Move orchestration initialization out of SpecDev engineering setup; choose tools, models, task order and Skills at runtime while preserving domain ownership and acceptance gates.
+- Allow workers to write assigned artifacts directly, with Lead verification and original domain gateways maintaining formal state and Evidence.
+- Update workflow routing, documentation, canonical exports and isolated installation/package checks for the shared coordination capabilities.
+
 ## [2.1.2] - 2026-10-17
+
+### 发布
+
+- CI 改用 npm 暂存发布并核对暂存记录；维护者在官网以 2FA 确认后公开上架，GitHub Release 标注待确认状态。
 
 ### Added
 

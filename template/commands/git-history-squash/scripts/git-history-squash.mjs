@@ -21,7 +21,7 @@ import {
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { assertMarkdownProtocolSync, discoverChangesSync, readChangeFactsSync, readLegacyChangeEvidenceSync } from '../../../lib/speculo-runtime.mjs';
+import { assertMarkdownProtocolSync, discoverChangesSync, readChangeFactsSync } from '../../../lib/speculo-runtime.mjs';
 
 export const SCHEMA_VERSION = 1;
 const TERMINAL = new Set(['local-only', 'published']);
@@ -555,22 +555,17 @@ function scanEvidence(evidenceRoot, stateRoot, repositories, projectRoot) {
     });
   if (existsSync(specdevRoot)) {
     assertMarkdownProtocolSync(specdevRoot);
-    for (const location of discoverChangesSync(specdevRoot, { includeArchived: true, includeLegacy: true })) {
-      if (location.kind === 'legacy-archive') {
-        readLegacyChangeEvidenceSync(specdevRoot, location);
-        changeRoots.push({ root: location.root, active: false });
-      } else {
-        const facts = readChangeFactsSync(specdevRoot, location);
-        if (location.kind === 'archive') {
-          const methodRoot = fileURLToPath(new URL('../../../', import.meta.url));
-          const validator = join(methodRoot, 'workflows/specdev/common/tools/validate-specdev.mjs');
-          if (!existsSync(validator)) throw new SquashError('SpecDev archive verification requires the original method resources; preserve the evidence and restore that capability');
-          const check = spawnSync(process.execPath, [validator, '--repo', projectRoot, '--method-root', methodRoot, '--state-root', evidenceRoot, '--stage', 'archived', '--sealed', location.root], { encoding: 'utf8', timeout: 60_000 });
-          if (check.status !== 0) throw new SquashError(`SpecDev archive is not verified as sealed: ${location.name}; ${check.stderr || check.stdout || check.error?.message || 'validator failed'}`);
-        }
-        // Keep unfinished and unarchived cancellations protected from history rewriting.
-        changeRoots.push({ root: location.root, active: location.kind === 'active' && facts.outcome !== 'completed' });
+    for (const location of discoverChangesSync(specdevRoot, { includeArchived: true })) {
+      const facts = readChangeFactsSync(specdevRoot, location);
+      if (location.kind === 'archive') {
+        const methodRoot = fileURLToPath(new URL('../../../', import.meta.url));
+        const validator = join(methodRoot, 'workflows/specdev/common/tools/validate-specdev.mjs');
+        if (!existsSync(validator)) throw new SquashError('SpecDev archive verification requires the original method resources; preserve the evidence and restore that capability');
+        const check = spawnSync(process.execPath, [validator, '--repo', projectRoot, '--method-root', methodRoot, '--state-root', evidenceRoot, '--stage', 'archived', '--sealed', location.root], { encoding: 'utf8', timeout: 60_000 });
+        if (check.status !== 0) throw new SquashError(`SpecDev archive is not verified as sealed: ${location.name}; ${check.stderr || check.stdout || check.error?.message || 'validator failed'}`);
       }
+      // Keep unfinished and unarchived cancellations protected from history rewriting.
+      changeRoots.push({ root: location.root, active: location.kind === 'active' && facts.outcome !== 'completed' });
     }
   }
   changeRoots.sort((left, right) => right.root.length - left.root.length);

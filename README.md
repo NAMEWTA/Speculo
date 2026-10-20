@@ -26,7 +26,7 @@ For all domains and public entries, use `--workflows all --skills all`. Use `--s
 The installer shows **Skills Hub categories** and **Workflows** at the same level. Open a category to select its Skills, or toggle a Workflow directly; selections are kept when returning to the overview. Select full bundled packages with `--hub-skills automation/herdr,automation/orca`; both kinds share `--skill-targets`. Unchecking a managed package uninstalls it when unchanged; workflow runtime data and conflicting packages are preserved. The project receives only selected Hub packages.
 
 
-Interactive starts check for CLI updates with a two-second network deadline. Choose to update now, skip once, or skip until a newer version; verified npm global installations resume the original command after updating. Scripts and machine-readable commands stay prompt-free. See [CLI updates](docs/cli.md#刷新与升级).
+Interactive starts check for CLI updates with a two-second network deadline. The prompt labels the current and latest versions and offers **Update now** or **Update later**. Updating a verified npm global or Volta installation resumes the original command with the new version; updating later continues immediately and reminds you next time. Scripts and machine-readable commands stay prompt-free. See [CLI updates](docs/cli.md#刷新与升级).
 
 ## Workflow guides
 
@@ -46,11 +46,11 @@ External CLI, Herdr and Orca tasks use compact Markdown inputs and reports, with
 
 ## Commands by category
 
-The ten Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
+The eleven Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
 
 | Category | Guides |
 |---|---|
-| [Navigation and handoff](docs/commands/README.md#navigation) | [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
+| [Navigation and handoff](docs/commands/README.md#navigation) | [coordination-init](docs/commands/coordination-init.md), [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
 | [Documentation, standards and knowledge](docs/commands/README.md#documentation) | [docs-sync](docs/commands/docs-sync.md), [engineering-standards-builder](docs/commands/engineering-standards-builder.md), [archive-and-consolidate](docs/commands/archive-and-consolidate.md) |
 | [Git analysis and history](docs/commands/README.md#git) | [git-repository-audit](docs/commands/git-repository-audit.md), [git-history-squash](docs/commands/git-history-squash.md), [upstream-fork-sync](docs/commands/upstream-fork-sync.md) |
 | [Source exchange and feedback](docs/commands/README.md#exchange) | [source-code-zip](docs/commands/source-code-zip.md), [retro](docs/commands/retro.md) |

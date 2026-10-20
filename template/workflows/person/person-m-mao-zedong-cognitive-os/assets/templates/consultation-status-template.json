@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "artifact": "person-work-status",
+  "workflow": "person",
+  "change": "<YYYY-MM-DD-change>",
+  "work_id": "person/mao-zedong-cognitive-os",
+  "status": "active",
+  "phase": "activating",
+  "problem_type": null,
+  "primary_framework": null,
+  "models_applied": [],
+  "frameworks_applied": [],
+  "methods_applied": [],
+  "quotes_cited": [],
+  "activation": {
+    "statement_delivered": false,
+    "statement_evidence": null,
+    "opening_questions": []
+  },
+  "analysis_conditions": {
+    "second_hand": false,
+    "multiple_interests": false,
+    "trend_forecast": false,
+    "standard_practice": false
+  },
+  "strategy_stages": 0,
+  "action_conditions": {
+    "coordination": false,
+    "team_management": false,
+    "ambiguous_task": false,
+    "staffing": false,
+    "retrospective": false
+  },
+  "action_disciplines": [],
+  "delivery_checks": {
+    "five_beats": false,
+    "four_closing_actions": false,
+    "anti_patterns": false,
+    "tensions": false,
+    "source_attribution": false
+  },
+  "phase_evidence": {},
+  "revision_reason": null,
+  "created_at": "<actual-ISO-8601>",
+  "updated_at": "<actual-ISO-8601>",
+  "completed_at": null,
+  "blockers": []
+}

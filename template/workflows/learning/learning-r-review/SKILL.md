@@ -20,6 +20,8 @@ metadata:
 
 ## 流程
 
+读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+
 1. 用户明确指定 Lesson、Homework、Change 或 topic；按 review/来源索引只读取对应 sources、目标和到期的过去证据。没有真实间隔时只记录 `due_at`，不伪造通过。
 2. 在 Change 的 `review/INDEX.md` 和 `review/RV-<id>.md` 生成新复习记录。题目必须包含延迟回忆、机制/反例和新的迁移情境，不复制刚看过的示例。
 3. 原样保存回答并给出逐项证据；失败只生成补救范围和 `needs_review`，不删除历史、不改写 archived 原文。

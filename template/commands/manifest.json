@@ -2,6 +2,7 @@
   "schema_version": 1,
   "commands": [
     "archive-and-consolidate/COMMAND.md",
+    "coordination-init/COMMAND.md",
     "docs-sync/COMMAND.md",
     "engineering-standards-builder/COMMAND.md",
     "git-history-squash/COMMAND.md",

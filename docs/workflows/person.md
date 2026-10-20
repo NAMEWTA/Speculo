@@ -69,4 +69,6 @@ speculo init . --workflows person --skill-targets agents --skills domain/person
 
 两个 Work 都有自己的产物与状态。恢复时给出实际 change 或文件位置，让 AI 回读当前阶段；不要把 Steelman 的 waiting-answer 记录当成另一套咨询的输入状态。Person 当前没有通用归档 Work，不能用跨领域归档命令随意移动数据。
 
+Mao 咨询的阶段、问题类型、方法和工件摘要位于各自 Change 的 `.status.json`；全局 `person/status.json` 只保留 active 导航。候选校验和发布核对同一摘要，发布只合并当前对象的索引条目；中断修复不能覆盖另一咨询或 Steelman。软链接、外来锁和证据漂移会被保留并报告。详见 [状态发布合同](../../template/workflows/person/person-m-mao-zedong-cognitive-os/references/state-and-publication.md)。
+
 若只想在网页 AI 中进行双向论证，可使用 [Person Canonical](../canonical.md)。

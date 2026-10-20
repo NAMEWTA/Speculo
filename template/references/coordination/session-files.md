@@ -1,30 +1,34 @@
 # 派遣文件与聚焦交接
 
-在已有 change 中通过 CLI、Herdr、Orca 等外部工具实际派遣任务时读取。宿主原生协作按需采用，Lead 自行执行不创建虚构派遣。无 change 时使用当前 Work 已有报告位置，不补造 change。external-web 继续使用原 ZIP 交付合同。
+通过 CLI、Herdr、Orca 等外部工具实际派遣任意领域任务时读取。宿主原生协作按需采用，Lead 自行执行不创建虚构派遣。跨多个 change 或无 change 时使用全局交接位置，不补造 change。external-web 继续使用原 ZIP 交付合同。
 
 ## 目录与身份
 
-SpecDev 任务目录为 <Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/</Path>：
+派遣前确定一个项目内的范围根 scopeRoot，以项目根相对路径明确传入。恰好一个已存在、未归档的 change 承载整轮任务时，scopeRoot 是它的真实 change 目录；其他情况（包括跨多个 change、没有 change 或 OPS 资源任务）使用 <Path>{roots.state}/coordination/</Path>。该共享 namespace 由当轮 Lead 管理交接材料，不管理业务状态。
+
+任务目录固定为 `scopeRoot/sessions/{session}/{task}/`；实际 TASK/REPORT 位置必须填成接收方可读写的准确地址。一轮开始后不搬迁范围根，后续产生 change 时在其负责工件引用原交接位置。跨领域各自产物仍写各自获准路径。单个 change 的会话随其原归档保留；全局会话留在 coordination，不能随某个成员归档移动。
+
+
 
 - `{session}` 是一轮编排的交接分组，使用 UTC `YYYYMMDDTHHMMSSZ`，首次实际派遣才创建；同秒冲突追加最小未使用后缀 `-01`、`-02`。同一编排计划的实施、审查与修复沿用原轮次，恢复 Lead 或更换工具会话不自动新建轮次；另起独立编排或已收束后的新一轮执行才新建。
 - `{task}` 是一次具体派遣，使用轮内最大编号加一，至少三位，后接小写英文主题，如 `001-implement-a1`、`002-implement-a2`、`003-review-a1`。Lead 分配编号，不回收、不从未经检查的标题直接拼路径。具体 Work、任务类型、change/Ticket 写入 TASK。
 - 一轮可以只有一个 task，也可以并行或依次派遣多个 task；目录不是父子 Agent 拓扑。编排标识与工具的 Run、Dispatch、pane、provider session ID 分开，不能从临时目录 UUID 推导工具会话。
 - 普通提问、进度通知与未交付任务的正常恢复沿用原 task。正式交付后的修复、重新派遣、更换执行者或实质改变输入时建立新编号并引用旧报告，不覆盖旧输入与结果，不增加 attempt 子目录。工具状态未知时先查询原调用，不能以新编号为由重复派遣仍可能写入的任务。
-- 目录必须在当前 change 内，无链接跳转、大小写冲突或编号占用。一个工具会话可以承接多个 task，各自通过 TASK 与 REPORT 区分任务。
+- 目录必须在已确认的 scopeRoot 内，无链接跳转、大小写冲突或编号占用。一个工具会话可以承接多个 task，各自通过 TASK 与 REPORT 区分任务。
 
 | 文件 | 唯一写入者 | 创建与更新 |
 |---|---|---|
-| <Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path> | Lead | 派遣前写入并回读，投递后冻结 |
-| <Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/session-locator.json</Path> | Lead | 准确确认本任务会话日志的绝对路径后才创建 |
-| <Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path> | 执行者；仅文本返回时由 Lead 原样捕获 | 本次派遣交付时一次性写入，正式交付后不覆盖 |
+| `TASK.md`（在明确 task 目录内） | Lead | 派遣前写入并回读，投递后冻结 |
+| `session-locator.json`（在明确 task 目录内） | Lead | 准确确认本任务会话日志的绝对路径后才创建 |
+| `REPORT.md`（在明确 task 目录内） | 执行者；仅文本返回时由 Lead 原样捕获 | 本次派遣交付时一次性写入，正式交付后不覆盖 |
 
 不预造空定位文件、session 总表、状态 JSON、心跳或聊天流水。定位文件只保存一个会话日志路径，不承载执行进度、业务 Outcome 或另一套验收。
 
-原 Evidence 或当前 Work 工件引用这些文件并保存 Lead 验收，不复制正文或重复维护地址。持久导航绑定稳定 change 身份与 change 根相对 locator，归档后按该 change 的唯一实际位置解析。其他领域仅在其 Work 已拥有的产物位置使用交接内容，不接管 SpecDev namespace。
+原 Evidence 或当前 Work 工件引用这些文件并保存 Lead 验收，不复制正文或重复维护地址。有 change 时导航绑定领域、稳定 change 身份与根相对 locator，归档后按唯一实际位置解析；全局派遣使用项目根相对 locator。调用方不跨域接管业务 namespace。
 
 ## 输入与文件所有权
 
-派遣前按 <Path>{roots.references}/coordination/task-template.md</Path> 形成 TASK。YAML frontmatter 使用 `schema_version: 1`、`session`、`task`、`kind`；kind 为 `implementation | review | research | test-observation`。已有 change/Ticket 可写入可选 `change`、`ticket`，不补造对象。重复键、未知版本和身份不一致均拒绝。正文使用五组内容：
+派遣前按 <Path>{roots.references}/coordination/task-template.md</Path> 形成 TASK。YAML frontmatter 使用 `schema_version: 2`、`session`、`task`、`kind`；kind 是非空的本次任务用途，如 planning、tickets、explanation、implementation、review 或用户明确请求的 handoff；它不充当权限枚举。已有 change/Ticket 可写入可选 `change`、`ticket`，不补造对象。重复键、未知版本和身份不一致均拒绝。正文使用五组内容：
 
 | 章节 | 必需事实 |
 |---|---|
@@ -44,7 +48,7 @@ TASK 与 REPORT 完成候选内容后，使用同目录临时文件与不覆盖�
 
 ## 会话定位文件
 
-派遣后，Lead 准确确认执行者会话日志的绝对路径，才在 TASK 同目录创建可选的 session-locator.json。文件仅有 `path` 一个字段，合同为 <Path>{roots.workflows}/specdev/common/schemas/session-locator.schema.json</Path>：
+派遣后，Lead 准确确认执行者会话日志的绝对路径，才在 TASK 同目录创建可选的 session-locator.json。文件仅有 `path` 一个字段，合同为 <Path>{roots.references}/coordination/session-locator.schema.json</Path>：
 
 ```json
 {"path": "/absolute/path/to/session.jsonl"}
@@ -58,7 +62,7 @@ TASK 与 REPORT 完成候选内容后，使用同目录临时文件与不覆盖�
 
 回查时先读 TASK、REPORT 与当前产物，有具体疑问才读取 path 指向的日志，结合任务输入和关键词少量检索。地址不可读或对应关系不明时，继续从实际产物核验，缺少关键事实仅阻塞对应验收。日志只是历史材料，不授予 resume、接管或额外动作权限。
 
-原始日志由工具管理，SpecDev 不复制、移动或转换 JSONL。外部绝对路径只作只读地址，不使用内部 Path 标签，不是可移植项目路径或写目标；引用不承诺日志永久可用。
+原始日志由工具管理，本协议不复制、移动或转换 JSONL。外部绝对路径只作只读地址，不使用内部 Path 标签，不是可移植项目路径或写目标；引用不承诺日志永久可用。
 
 ## 报告与返回
 
@@ -77,10 +81,12 @@ TASK 与 REPORT 完成候选内容后，使用同目录临时文件与不覆盖�
 
 ## 校验、兼容与归档
 
-新 SpecDev 派遣在投递前、回收时分别使用 <Path>{roots.workflows}/specdev/common/tools/validate-handoff.mjs</Path> 的 `--stage dispatch|return`。参数为 `--repo <project> [--method-root <methods> --state-root <data-parent>] --change <change> --session <session> --task <task>`；无安装直接使用须给出三个根，state-root 为领域共同父根。dispatch 检查 TASK 且拒绝已有 REPORT；return 增加 REPORT 身份/状态检查。定位文件可缺失；存在则检查仅含非空 path 字段且为绝对路径。CLI 返回 JSON errors/warnings；退出 0 表示结构通过，1 表示校验失败，2 表示参数错误。
+新 TASK v2 在投递前、回收时分别使用 <Path>{roots.references}/coordination/scripts/validate-dispatch.mjs</Path> 的 `--stage dispatch|return`。参数为 `--repo <project> --scope-root <project-relative-owner-root> --session <session> --task <task>`；范围根必须是项目内真实目录，工具检查其下 sessions 目录。dispatch 检查 TASK 且拒绝已有 REPORT；return 增加 REPORT 身份/状态检查。定位文件可缺失；存在则只允许非空绝对路径 path。CLI 返回 JSON errors/warnings；退出 0 为结构通过，1 为校验失败，2 为参数错误。
+
+结构校验不判断领域 lifecycle、Ready 或 owner。调用方派遣前仍须通过真实 Work 的前置与授权检查；handoff 总结可读取已结束未归档对象，但不重开业务或改写完成状态。
 
 工具只读项目内显式任务，不扫描日志缓存或自动打开外部历史，也不认证真实身份、授权、原始日志内容、工具执行或业务完成。TASK/REPORT 的章节与结构不能替代 Lead 检查实质内容。
 
-新派遣采用此合同；存量 TASK、REPORT、旧历史文字及已有快照保持原状，按原合同回收，不批量升级或补字段。新版校验器不把旧无版本 TASK 当作新版通过，历史不纳入新派遣扫描；后续重试使用新任务。
+新派遣采用此合同；存量 TASK、REPORT、旧历史文字及已有快照保持原状，按原合同回收，不批量升级或补字段。旧 v1 继续由原领域的历史适配器校验，新版校验器不把 v1 或无版本 TASK 当作 v2 通过，历史不纳入新派遣扫描；后续重试使用新任务。
 
-输入、定位文件与报告随所属 change 保留并进入原归档完整性清单。既有历史副本按原字节保留，不再新建。归档前仍确认相关 writer 已停止，REPORT completed 不是业务完成或移动许可。归档后只读，外部工具日志的寿命由工具决定，引用不承诺永久可用。
+位于 change 内的输入、定位文件与报告随所属对象保留并进入原归档完整性清单；全局记录保持原位置。既有历史副本按原字节保留，不再新建。归档前仍确认相关 writer 已停止，REPORT completed 不是业务完成或移动许可。归档后只读，外部工具日志的寿命由工具决定，引用不承诺永久可用。

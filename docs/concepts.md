@@ -19,7 +19,7 @@
 
 终端中的 `speculo` 提供 `init`、`version`、`doctor`、`resolve`、`recover`。它们负责安装、检查和恢复。
 
-[10 个 Command](commands/README.md) 是 AI 读取的 `COMMAND.md`，例如 docs-sync。应对 AI 说“调用 command/docs-sync”，或给入口文件路径；不要把它写成不存在的 `speculo docs-sync`。斜杠命令、`$skill`、技能选择器等快捷方式属于宿主，可用时按宿主方式选择。
+[11 个 Command](commands/README.md) 是 AI 读取的 `COMMAND.md`，例如 docs-sync。应对 AI 说“调用 command/docs-sync”，或给入口文件路径；不要把它写成不存在的 `speculo docs-sync`。斜杠命令、`$skill`、技能选择器等快捷方式属于宿主，可用时按宿主方式选择。
 
 ## 三种调用粒度
 

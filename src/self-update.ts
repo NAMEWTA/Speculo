@@ -1,11 +1,14 @@
 import { readFile, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { getNpmContext, inspectNpmPackage } from './update-npm.js';
-import { ProcessCancelledError, runProcess } from './update-process.js';
+import { formatInvocation, ProcessCancelledError, runProcess } from './update-process.js';
 import type { OwnedInstall } from './update-flow.js';
+import { inspectVoltaInstall } from './volta-update.js';
 
 export async function inspectSelfInstall(options: { packageRoot: string; name: string; executable: string; argv: string[]; env: NodeJS.ProcessEnv }): Promise<OwnedInstall | undefined> {
   const { name, executable, packageRoot, argv, env } = options;
+  const volta = await inspectVoltaInstall(options);
+  if (volta !== undefined) return volta ?? undefined;
   try {
     const context = await getNpmContext(env);
     const identity = { npmPackage: name, executable };
@@ -23,10 +26,11 @@ export async function inspectSelfInstall(options: { packageRoot: string; name: s
     npmEnv.npm_config_prefix = context.prefix;
     return {
       nodeVersion: context.nodeVersion!,
+      command: version => formatInvocation({ file: context.file, args: ['install', '-g', `${name}@${version}`, '--prefix', context.prefix] }),
       async install(version) {
         const before = await inspectNpmPackage(identity, context);
         if (!before.entryPath || before.reason || await realpath(root) !== ownedRoot) return 1;
-        const result = await runProcess({ file: context.file, args: ['install', '-g', `${name}@${version}`], cwd, env: npmEnv }, { terminateTree: true });
+        const result = await runProcess({ file: context.file, args: ['install', '-g', `${name}@${version}`, '--prefix', context.prefix], cwd, env: npmEnv }, { terminateTree: true });
         if (result.error || result.cleanupError) throw new Error(result.error ?? result.cleanupError);
         return result.code;
       },

@@ -7,7 +7,7 @@
 - 用户指定未归档 change：核对身份和原 README，写入其 learning 目录。即使它已 completed/cancelled，也只追加学习材料和必要导航，不改变原 Outcome、范围、验收、owner 或开发进度。
 - 同轮继续追问：从原 README 导航与学习索引恢复已选 change；不因每条消息未重复名称就另建，也不因学习完成而重新打开状态。
 - 独立请求未指定 change：问题与必要资料明确后，按 `<Path>{roots.workflows}/specdev/common/rules/workflow-state-and-lifecycle.md</Path>` 新建 `YYYY-MM-DD-topic[-NN]`，检查活动与历史重名；不自动接入唯一活动 change。指定对象不存在、身份冲突、旧活动协议或未知 schema 时保留诊断，停止相关写入。
-- 指定已归档对象：只读原件，在新的学习 change 中引用原 locator，不向封存对象追加文件；旧历史沿原只读定位协议访问。
+- 指定已归档对象：只读原件，在新的学习 change 中引用原 locator，不向封存对象追加文件；不支持的旧协议不进入当前 change 工具。
 
 新建时采用 `<Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/change-readme-template.md</Path>` 的轻量结构，原子创建 `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>`，初始为 `Outcome: active`。scope 只记录学习对象、来源、本轮问题及获准的学习写集；acceptance 覆盖约定问题、来源与事实区分、图解和索引有效性；verification 在实际验证后填写。只创建真实需要的 README 和 learning 产物，无需 Spec、Ticket、Goal 或实现 Evidence。
 

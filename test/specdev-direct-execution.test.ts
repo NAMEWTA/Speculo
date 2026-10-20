@@ -44,40 +44,13 @@ function fixture(t: TestContext) {
     const result = appendReviewFixture({repo,root,base,spec:join(root,'spec.md')});
     review = '\n<!-- synthetic-independent-review -->' + result.text.split('\n<!-- synthetic-independent-review -->')[1];
   };
-  const record = (current = false): Record<string, any> => ({
-    purpose:'direct-spec', change, integration_attempt_limit:3,
-    owner:'fixture-lead', implementation_owner:'fixture-worker', integration_owner:'fixture-lead', provider:'git',
-    base_sha:base, parent_branch:'main', branch: current ? 'main' : `speculo/${change}/direct-spec`,
-    workspace_ref: current ? 'current' : `specdev-worktree/${change}/direct-spec`, source_checkpoint:null,
-    status:'active', updated_at:'2026-10-14T10:00:00Z',
-    integration:{status:'pending', parent_ref:'main', parent_before_sha:null, source_sha:null, candidate_sha:null,
-      candidate_tree_sha:null, candidate_branch:null, candidate_workspace_ref:null, result_sha:null, method:null,
-      conflict_paths:[], verification:'pending', full_suite:{required:true,status:'pending',reason:null,evidence:null},
-      e2e:{required:false,status:'not-required',reason:'fixture has no cross-boundary behavior',evidence:null},
-      evidence:`<Path>{roots.state}/specdev/changes/${change}/evidence/direct-spec.md</Path>`, attempts:0,promotion_status:'pending'}
-  });
-  const source = (r: Record<string, any>) => {
-    const path = join(repo, r.workspace_ref);
-    git('worktree', 'add', '-b', r.branch, path, base);
-    return path;
+  const record = (): Record<string, any> => {
+    const context={schema_version:1,change,workspace_policy:'worktree',workspace_ref:`specdev-worktree/${change}`,branch:`speculo/${change}`,base_sha:base,owner:'fixture-lead',ticket_execution:'auto'};
+    git('worktree','add','-b',context.branch,join(repo,context.workspace_ref),base);
+    writeFileSync(join(root,'README.md'),readme+'\n<a id="execution-context"></a>\n'+fence('Execution Context',context));
+    return {schema_version:1,purpose:'direct-spec',change,workspace_context:'README.md#execution-context',implementation_owners:['native:worker'],status:'active',checkpoint:null,verification:{status:'pending',evidence:null,e2e:{required:false,status:'not-required',reason:'fixture has no cross-boundary behavior',evidence:null}},attempts:0};
   };
-  const candidate = (r: Record<string, any>) => {
-    const sourcePath = join(repo, r.workspace_ref);
-    writeFileSync(join(sourcePath, 'value.txt'), 'after\n');
-    at(sourcePath, 'add', 'value.txt'); at(sourcePath, 'commit', '-m', 'fixture implementation');
-    r.source_checkpoint = at(sourcePath, 'rev-parse', 'HEAD');
-    r.status = 'review'; save(r); assert.deepEqual(validate(), []);
-    const branch = `speculo/integration/${change}/direct-spec`, locator = `specdev-worktree/.integration/${change}/direct-spec`;
-    const path = join(repo, locator);
-    git('worktree', 'add', '-b', branch, path, 'main');
-    at(path, 'merge', '--ff-only', r.source_checkpoint);
-    Object.assign(r.integration, {status:'candidate', parent_before_sha:git('rev-parse','main'), source_sha:r.source_checkpoint,
-      candidate_sha:at(path,'rev-parse','HEAD'), candidate_tree_sha:at(path,'rev-parse','HEAD^{tree}'), candidate_branch:branch,
-      candidate_workspace_ref:locator, method:'fast-forward', attempts:1});
-    r.status = 'integrating'; save(r);
-    return path;
-  };
-  return {repo, root, file, git, at, base, spec, readme, record, save, validate, complete, source, candidate};
+  return {repo, root, file, git, at, base, spec, readme, record, save, validate, complete};
 }
 
 test('full multi-behavior Direct Spec runs without Ticket, Map, Goal or installed workspace', t => {
@@ -85,7 +58,7 @@ test('full multi-behavior Direct Spec runs without Ticket, Map, Goal or installe
   assert.deepEqual(f.validate(), []);
   f.complete(); assert.deepEqual(f.validate('complete'), []);
   assert.deepEqual(readdirSync(f.root), before);
-  assert.deepEqual(readChangeExecution(f.root), []); // Historical current Evidence remains readable.
+  assert.deepEqual(readChangeExecution(f.root), []); // A no-Ticket current snapshot can carry equivalent acceptance and review evidence.
   writeFileSync(join(f.root, 'spec.md'), f.spec.replace('ready_for_tickets: true', 'ready_for_tickets: false'));
   assert.match(f.validate().join('\n'), /Direct Spec.*ready/);
 });
@@ -110,31 +83,23 @@ test('formal C report cannot approve findings that its original reviewer rejecte
   assert.deepEqual(f.validate('review'),[]);
 });
 
-test('legacy active Direct Spec records are readable but cannot resume without explicit reconciliation', t => {
-  const f=fixture(t),r=f.record();f.source(r);f.save(r);
+for(const status of ['active','integrated']) test(`unsupported ${status} Direct Spec records cannot enter current gates and remain unchanged`,t=>{
+  const f=fixture(t),r={purpose:'direct-spec',change,status,workspace_ref:`specdev-worktree/${change}/direct-spec`};
+  f.git('worktree','add','-b','retained-old',join(f.repo,r.workspace_ref),f.base);f.save(r);
+  if(status==='integrated')f.complete();
   const before=readFileSync(f.file),worktrees=f.git('worktree','list','--porcelain');
-  assert.deepEqual(readChangeExecution(f.root),[r]);
-  assert.match(f.validate().join('\n'),/legacy-active-execution.*explicit reconciliation/);
+  assert.deepEqual(readChangeExecution(f.root),[r]); // Reading bytes does not validate the unsupported protocol.
+  assert.match(f.validate(status==='integrated'?'complete':'implement').join('\n'),/unsupported execution record/);
   assert.deepEqual(readFileSync(f.file),before);assert.equal(f.git('worktree','list','--porcelain'),worktrees);
 });
 
-test('frozen legacy completed Direct Spec integration evidence stays readable without migration', t => {
-  const f=fixture(t),r=f.record();f.source(r);const sourcePath=join(f.repo,r.workspace_ref);
-  writeFileSync(join(sourcePath,'value.txt'),'after\n');f.at(sourcePath,'add','value.txt');f.at(sourcePath,'commit','-m','historical implementation');
-  r.source_checkpoint=f.at(sourcePath,'rev-parse','HEAD');
-  f.git('merge','--ff-only',r.source_checkpoint);
-  Object.assign(r.integration,{status:'passed',verification:'passed',parent_before_sha:f.base,source_sha:r.source_checkpoint,candidate_sha:r.source_checkpoint,candidate_tree_sha:f.git('rev-parse','HEAD^{tree}'),candidate_branch:`speculo/integration/${change}/direct-spec`,candidate_workspace_ref:`specdev-worktree/.integration/${change}/direct-spec`,result_sha:r.source_checkpoint,method:'fast-forward',attempts:1,promotion_status:'applied',full_suite:{required:true,status:'passed',reason:null,evidence:'historical fixture observations'}});
-  r.status='integrated';f.save(r);f.complete();
-  const before=readFileSync(f.file);assert.deepEqual(f.validate('complete'),[]);assert.deepEqual(readFileSync(f.file),before);
-});
-
 test('cancellation and archive preflight include Direct Spec writers, even without Ticket files', t => {
-  const f=fixture(t),r=f.record();f.source(r);f.save(r);
-  const cancelled=f.readme.replace('Outcome: active','Outcome: cancelled')+`\n<a id="cancellation"></a>\n## Cancellation\nSource: #request\nScope: whole change\nTime: 2026-10-14T10:00:00Z\nConfirmed-By: fixture-lead\nUndelivered: implementation cancelled\nLanded: none: source retained\nWriters: stopped: #stopped\nDependencies: none: independent\nCheckpoints: resolved: retain source, no integration\nExternal: none: no remote actions\nNext: retain source; cleanup not authorized\n<a id="request"></a>\n## Actual request\nUser cancelled this fixture task.\n<a id="stopped"></a>\n## Observed stop\nWriters: stopped\nObserved: fixture worker exited, source retained\n`;
+  const f=fixture(t),r=f.record();f.save(r);
+  const cancelled=readFileSync(join(f.root,'README.md'),'utf8').replace('Outcome: active','Outcome: cancelled')+`\n<a id="cancellation"></a>\n## Cancellation\nSource: #request\nScope: whole change\nTime: 2026-10-14T10:00:00Z\nConfirmed-By: fixture-lead\nUndelivered: implementation cancelled\nLanded: none: source retained\nWriters: stopped: #stopped\nDependencies: none: independent\nCheckpoints: resolved: retain source, no integration\nExternal: none: no remote actions\nNext: retain source; cleanup not authorized\n<a id="request"></a>\n## Actual request\nUser cancelled this fixture task.\n<a id="stopped"></a>\n## Observed stop\nWriters: stopped\nObserved: fixture worker exited, source retained\n`;
   writeFileSync(join(f.root,'README.md'),cancelled);
   assert.match(f.validate('archive-ready').join('\n'),/writer-active/);
   r.status='cancelled';f.save(r);assert.deepEqual(f.validate('archive-ready'),[]);
-  assert.match(f.git('worktree','list','--porcelain'),/direct-spec/);
+  assert.match(f.git('worktree','list','--porcelain'),/direct-execution/);
   writeFileSync(join(f.root,'README.md'),cancelled.replace('Writers: stopped: #stopped','Writers: none: no writer'));
   assert.match(f.validate('archive-ready').join('\n'),/stopped/);
 });

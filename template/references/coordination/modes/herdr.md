@@ -4,7 +4,7 @@
 
 ## 复用项目 Skill
 
-项目根由调用 Work 已验证的 projectRoot 确定，不取 pane cwd或方法安装根。
+项目根由调用方已验证的 projectRoot 确定，不取 pane cwd或方法安装根。
 
 1. 按本次用户指定目录或有效选择的 guide 定位项目入口：`.agents/skills/herdr/SKILL.md` 或 `.claude/skills/herdr/SKILL.md`，两者均相对已验证的项目根；指定位置缺失时不偷偷换到另一目录。旧配置无此路径时只读检查两个候选，唯一有效且无冲突时复用；两处均有候选时请用户决定。已有其他 guide 文本仅作指南线索，不当作路径或命令执行。此选择不修改 roots.skills 的含义。
 2. 存在且为有效 `name: herdr` 的完整 Skill 时先读取并复用，核对来源和兼容性。核对每层父目录与目标均位于项目内且不经过符号链接；同名非 Skill、无效内容或归属冲突保留原文件，只停止受影响的读取分支，按共享合同判断回退并说明冲突位置与恢复方式。
@@ -20,7 +20,7 @@
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
 2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
 3. 使用实际返回的 pane/session 标识，确认对应项目和工作区，等待当前指南定义的就绪条件。不要默认切换用户焦点。
-4. 每个任务使用能明确归属的目标会话，并按 <Path>{roots.references}/coordination/task-brief.md</Path> 提供输入。有 change 时提供已保存 TASK 和准确 REPORT 位置，准确确认日志绝对路径后，由 Lead 在可选 session-locator.json 中只记录 path，冻结 TASK 不补写运行信息；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
+4. 每个任务使用能明确归属的目标会话，并按 <Path>{roots.references}/coordination/task-brief.md</Path> 提供输入。派遣时提供已保存 TASK 和准确 REPORT 位置，准确确认日志绝对路径后，由 Lead 在可选 session-locator.json 中只记录 path，冻结 TASK 不补写运行信息；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
 5. 通过工具当前支持的返回读取方式取得结果。有文件交接时按 <Path>{roots.references}/coordination/session-files.md</Path> 交回 REPORT 及“任务标识、状态、报告位置、一句话摘要”；只能返回文本时由 Lead 原样捕获并标明来源。执行 CLI 的原始日志能确认属于本任务执行者且地址准确时，由 Lead 将绝对路径写入定位文件；不把 pane 标识或终端输出冒充 JSONL，无法核验时省略地址，不影响独立可验证的交付。输入、提问和通知仍遵守工具原生接口。
 6. 超时或投递结果不明时先检查原目标，不盲目重发。取消按当前工具说明进行；不要宽泛结束所有 pane 或服务。
 

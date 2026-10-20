@@ -46,6 +46,8 @@ flowchart LR
 
 图是常见路线，不意味着每个节点必跑。只请求审查、诊断或规划时，相应报告本身就可以是本轮终点。
 
+Ready 的完整 Direct Spec 可直接交 Implement，不必先补 Goal 或 Ticket；原型后获准继续实现也回到 Implement。验收可使用冻结的真实未提交工作树，明确隔离用户原有 dirty 写集。多 Change 规划使用专用父 Map、Plan 和整体 Evidence；调度按结构化诊断的实际范围阻塞，错误文案不决定哪些独立工作可以继续。详见 [Workflow 合同、证据与恢复](../workflow-integrity.md)。
+
 ## 从目标到实现与审查
 
 Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可独立验证的垂直切片。Goal Plan 负责确有需要的跨任务调度和整体交付。获批后，Goal、Map 或 Ticket 都明确进入 Implement，实际调用匹配的项目 Skill，并完成独立双轴审查；仅列出 Skill 名称不代表已经执行。
@@ -372,6 +374,8 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 
 ## 执行方式与工作区
 
+项目默认编排方式由公共 [coordination-init](../commands/coordination-init.md) 初始化，所有 workflow 共用；本域初始化仅处理工程事实与开发配置。每次可指定不同工具、模型和 Skill。
+
 这是两个独立选择：
 
 | 执行方式 | 说明 |
@@ -388,7 +392,7 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 
 完整 Spec 不拆票也可以用 worktree，整个 change 是一个实现单元。只读审查不为此创建实现 worktree。使用 worktree 需要核对实现提交和本地集成授权，清理仍是单独动作。
 
-外部派遣的输入与回报位于当前 change 的 `sessions/<session>/<task>/TASK.md` 和 `REPORT.md`，原 Evidence 保存链接与 Leader 验收。报告包含聚焦摘要和按需回查的历史入口，结构与例子见[外部 Agent 的任务交接](../agent-handoffs.md)。任务回报状态不替代 change Outcome，历史记录默认引用，快照按需保存并随 change 归档。
+由单个 change 承载的外部派遣输入与回报位于该 change 的 `sessions/<session>/<task>/TASK.md` 和 `REPORT.md`，原 Evidence 保存链接与 Leader 验收。报告包含聚焦摘要和按需回查的历史入口，结构与例子见[外部 Agent 的任务交接](../agent-handoffs.md)。跨多个 change 或无 change 时使用全局 coordination/sessions。任务回报状态不替代 change Outcome；原始日志默认只引用，交接文件随所属 change 保留。
 
 ```text
 按当前 App 正常实施这个 Ready Spec，使用独立 worktree。
@@ -400,7 +404,7 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 工作区使用 current，保持单代码 writer；按所选工具的当前指南执行。
 ```
 
-选择 Herdr 后才按需获取项目 `.agents/skills/herdr/`，指定上游为 `NAMEWTA/wta-skills-hub` 的 `skills/automation/herdr/SKILL.md`；已有有效包复用，冲突不覆盖。安装与受管会话检查分别进行，`HERDR_ENV=1` 等运行条件仍须满足。具体流程见 [Herdr 方法](../../template/references/coordination/modes/herdr.md)。不必因为安装 Speculo 就安装 Herdr。
+选择 Herdr 后才按需获取项目 `.agents/skills/herdr/`，从 Speculo 安装器的 SKILLS-HUB 选择随包分发的 `automation/herdr`；已有有效包复用，冲突不覆盖。安装与受管会话检查分别进行，`HERDR_ENV=1` 等运行条件仍须满足。具体流程见 [Herdr 方法](../../template/references/coordination/modes/herdr.md)。不必因为安装 Speculo 就安装 Herdr。
 
 ## 三个完整练习
 

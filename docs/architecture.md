@@ -10,7 +10,7 @@ Speculo 分发可供 AI 读取的提示词、方法、领域合同和确定性�
 
 Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。可选项目选择保存在 `.agents/speculo/.speculo/coordination/project.json`。实际业务进度继续使用 Goal Plan、Ticket、Evidence 和各领域原有状态；工具返回的 session/attempt locator 只作为证据。
 
-完整获批 Spec 与 Ready Ticket 都可以直接进入实现，无需先补 Goal。无票 worktree 以整个 change 为单元，其执行、候选集成和恢复记录保存在原 direct-spec Evidence；Ticket/Goal 格式保持兼容。选择 Herdr 时才从指定上游安装项目第三方 Skill，回读后再核验 HERDR_ENV 与当前 Herdr CLI；init/refresh 不接管该 Skill。
+完整获批 Spec 与 Ready Ticket 都可以直接进入实现，无需先补 Goal。无票 worktree 以整个 change 为单元，其执行、独立审查和恢复记录保存在原 direct-spec Evidence；Ready Goal/Ticket 使用当前工作区合同。选择 Herdr 时才从指定上游安装项目第三方 Skill，回读后再核验 HERDR_ENV 与当前 Herdr CLI；init/refresh 不接管该 Skill。
 
 ## 真实源与生成物
 
@@ -36,7 +36,7 @@ Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。
 
 可独立选择 `.agents/skills/` 与 `.claude/skills/` 曝光范围。领域/Work 投影原样复制源 YAML，正文要求先读权威入口。Command 生成独立包装；Claude 使用显式调用字段，Agents 使用 `agents/openai.yaml`。这些格式与政策的静态验证不等同于宿主实际调用认证。
 
-投影清单 v2 记录选择、文件路径、业务 ID 和 SHA-256。第三方同名目录、人工改动、只读文件、hardlink 和 symlink 冲突只阻塞相关投影，报告 warning；其他源和投影继续安装。关闭曝光只删除校验通过的受管文件，保留用户附加文件。
+投影清单 v3 记录选择、文件路径、业务 ID 和 SHA-256。第三方同名目录、人工改动、只读文件、hardlink 和 symlink 冲突只阻塞相关投影，报告 warning；其他源和投影继续安装。关闭曝光只删除校验通过的受管文件，保留用户附加文件。
 
 安装采用 staging → 验证 → 原子切换 → 外部受管块/投影 → 验证的事务。事务日志 schema v3，支持两个宿主超过 64 个文件的投影与显式 ID 恢复。事务锁只保护安装，详见[恢复说明](transaction-recovery.md)。未知 runtime bytes 保留，配置按当前 schema 的三方合并规则处理；不自动转换旧版本。
 
@@ -46,15 +46,15 @@ Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。
 
 安装 API 继续严格验证 workspace；普通 SpecDev Work 使用只读上下文解析器，接受明确 projectRoot、methodRoot 和 stateRoot。后者是各领域共同数据父根，业务写入仍受路径、owner 和相关事务保护。无安装时可从只读方法目录调用，不创建 context 注册文件或依赖业务 CLI。
 
-稳定日期目录名表示 change 身份，README 顶层唯一 Outcome 表示 active/completed/cancelled；实际目录表示归档。简单任务用 README scope/acceptance/verification；无票 Goal 用原计划 Tasks 清单；完整票据保留依赖、写集、Ready、Skill binding 与 Gate，进度归 Ticket/Evidence。票级 workspace/集成独有事实在对应 Evidence 的 Workspace Execution Record，父计划只导航。
+稳定日期目录名表示 change 身份，README 顶层唯一 Outcome 表示 active/completed/cancelled；实际目录表示归档。简单任务用 README scope/acceptance/verification；无票 Goal 用原计划 Tasks 清单；完整票据保留依赖、写集、Ready、Skill binding 与 Gate，进度归 Ticket/Evidence。共享执行上下文绑定当前 Change 的实际工作区；Ticket 完成证据保存在 Execution Records，父计划聚合成员原证据。
 
-原 owner 核验实际证据后才能结束；取消保存用户决定、writer/依赖/checkpoint/外部动作处置，不能自动回滚或改票。A 核对 change、ADR、context、docs 与适用 DESIGN，先完成现役维护/发布，再最后整体无覆盖移到 `specdev/changes/archive/<change>`，从目标验证并完成原回执后冻结。旧 `specdev/archive/YYYY-MM` 原位只读。
+原 owner 核验实际证据后才能结束；取消保存用户决定、writer/依赖/checkpoint/外部动作处置，不能自动回滚或改票。A 核对 change、ADR、context、docs 与适用 DESIGN，先完成现役维护/发布，再最后整体无覆盖移到 `specdev/changes/archive/<change>`，从目标验证并完成原回执后冻结。发现器只统计 `changes/` 与 `changes/archive/` 的当前 Markdown 工件；历史文件留在原位，不解释成现役状态。
 
 DESIGN 的 current、不可变 revision、三类摘要、真实批准、浏览器证据及专用发布锁/恢复继续有效；来源以稳定 change 与 locator 定位，移动不改不可变字节。普通多文件收尾没有全局原子保证。
 
 `state/docs` 按主题保存当前工程事实，已有项目正文只导航，明确基线请求才建立。A/I/init/docs-sync 复用 writing-for-agents 的 current-facts-docs；局部维护不创建命令 state，docs-sync 保持手动全局 audit/update/commit 及其隔离 Git 合同。
 
-当前 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。旧活动必须用[显式转换维护工具](../scripts/references/migrate-specdev-markdown.md)，未知/混合协议和转换 pending 阻塞相关写入；CLI 刷新不偷偷转换或清理历史。Learning、OPS、Person、Media 的状态不变。
+当前 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。只支持 README Outcome 和当前 Goal/Ticket/执行协议；旧活动、混合协议和未闭合事务阻塞相关操作并保留原件。本版本不再分发转换器、旧状态 schema 或历史 reader。其他领域由各自的现役合同管理。
 
 ## 执行方法
 
@@ -68,16 +68,19 @@ Lead 可自行完成实现、修复和验证，也可按任务类型派遣。上
 
 外部网页 ZIP 仍是用户选择时的条件交换方式，保留包清单、hash、唯一尝试与 ZIP-only 返回约束；它不是默认编排模式。
 
+## 共享合同与领域状态
+
+`workflows/workflow-manifest.schema.json` 是当前 manifest 的公开定义；CLI、便携运行库和资产审计复用同一份生成校验器与图/身份检查。能力 profile 只描述声明的宿主事实；`doctor` 不探测工具、不认证模型。未被业务消费的通用 kernel lifecycle、dispatch 和 checkpoint 已移除，领域状态不会被强行映射到同一套生命周期。
+
 ## Schema 与验证
 
 | 合同 | 当前版本 |
 |---|---|
-| workspace / domain manifest / projection | 2 / 2 / 2 |
+| workspace / domain manifest / projection | 2 / 2 / 3 |
 | install / installation transaction | 4 / 3 |
 | 可选 coordination project | 1 |
-| SpecDev config / Goal Plan / Implementation Plan | 7 / 7 / 2 |
+| SpecDev config / Goal Plan / Implementation Plan | 7 / 8 / 3 |
 | SpecDev 整体结论 / Ticket、Map | README Outcome / 3 |
-| SpecDev 旧历史 global status / change status | 5 / 6（只读/显式转换） |
 | Learning / OPS / Person / Media state | 2 / 3 / 1 / 1 |
 
 构建与校验以 package.json scripts 为准：`pnpm generate-assets`、`pnpm check`、`pnpm verify-bin`。生成两次须无内容差异。行为回归覆盖正常、失败、冲突、恢复及包隔离；保留来源、许可、真实观察与未验证项，不将机械检查当成业务或模型行为证明。

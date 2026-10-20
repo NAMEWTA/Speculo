@@ -20,10 +20,12 @@ metadata:
 
 ## 流程
 
+读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+
 1. 用户指定目标 domain/topic 和 source Change IDs。允许 active/closed 的未归档根 Change；已归档内容必须先显式恢复。已有综合子树只能整棵选择，不得拆分。
 2. 读取每个 source 的 current locator、旧 locator、时间、内容哈希、Lesson/Homework/Review 索引和关系；若祖先/后代循环、重复 ID、活动锁或路径越界则阻塞。
 3. 输出 dry-run：目标父 Change、子目录、effective date、移动清单、哈希、未掌握 evidence、冲突/空白和 context 写入计划。用户未确认前不移动、不改状态。
-4. 用户确认后由 `<Path>{roots.workflows}/learning/common/tools/relocate-learning.mjs</Path>` 在父根锁内 stage、移动整个目录到 `children/<child-id>/`、更新 locations/status projection，并在失败时回滚。现有 Markdown 字节必须保持一致；子 owner 仍写自己的子目录，父负责路由和锁。
+4. 用户确认后由 `<Path>{roots.workflows}/learning/common/tools/relocate-learning.mjs</Path>` 以 dry-run 的 `--expect-digest` 在全局索引锁及所有涉及的根锁内执行：先保存恢复清单，再移动整个目录到 `children/<child-id>/`、更新全体后代的 locations/global status/子状态；失败按清单回滚，外部改动则停止恢复。现有 Markdown 字节必须保持一致；子 owner 仍写自己的子目录，父负责路由和锁。
 5. 生成 `synthesis/` 的 source-manifest、overview、claim-matrix、concept-map、conflicts-and-gaps 和带版本的 revisions。每个 claim 带 source Change/Lesson/Homework anchor、外部 source id、evidence status 和验证时间。
 6. 用户再次确认后才发布 `context/domains/<domain>/topics/<topic-id>/`；发布不删除原料、不改变 immediate/retention 掌握结论。C 完成后不自动激活 A/R。
 
@@ -38,3 +40,5 @@ metadata:
 
 - 综合规则：`<Path>{roots.workflows}/learning/common/skills/topic-synthesis/SKILL.md</Path>`
 - 迁移工具：`<Path>{roots.workflows}/learning/common/tools/relocate-learning.mjs</Path>`
+- 来源清单模板：`<Path>{roots.workflows}/learning/learning-c-consolidate/assets/source-manifest-template.json</Path>`
+- 发布指针模板：`<Path>{roots.workflows}/learning/learning-c-consolidate/assets/topic-provenance-template.json</Path>`

@@ -15,7 +15,7 @@
 只在会话中报告，按各领域自己的状态解释。
 ```
 
-需要保存快照时明确说“将这次状态报告保存到命令规定的位置”。安装后的入口是 `.agents/speculo/commands/status/COMMAND.md`，需要有效 workspace 来解析数据根。
+需要保存快照时明确说“将这次状态报告保存到命令规定的位置”。安装后的入口是 `.agents/speculo/commands/status/COMMAND.md`。入口从当前目录向上找到字面路径 `.agents/speculo/.speculo/workspace.json`，验证后使用现有 resolver 解析数据根；没有安装就返回 not-installed，无效 workspace 保留原诊断，不初始化或猜测根。config 缺失时可只读降级，但会说明缺口。
 
 ## 你会得到什么
 
@@ -23,6 +23,10 @@
 - Learning：课程/主题、Lesson/Homework、即时与延迟表现、整合与复习信息。
 - OPS：主机、项目、部署、版本、检查和双边文档状态，不套用 change 数量模型。
 - 其他领域：依其当前 schema 解释；未知结构列异常并保留原件。
+
+Status 只做薄汇总：返回各领域的身份、当前位置、已验证事实、原诊断、证据 locator 和可选下一入口，直接消费公共 reader 和领域已有 owner，不创建另一份业务状态。一个领域损坏时，独立合法领域仍能返回；失败分支计数为 unknown，不能当作零。
+
+OPS 的自动调用限于本地 `ops.mjs --state <absolute-ops-root> status` / `validate`。`inspect-run` 会联系目标，`fleet` 会写视图，因此不会随 Status 自动执行；已有本地脱敏视图和回执可以回读，但须标明来源与时效。普通状态检查不读取 private 凭据账本、env、outbox 或原始任务 spec，不把历史 completed 或过期 ready 当作当前线上健康。
 
 数字以本地权威记录为准，不临时扫 GitHub 代替本地账本。没有可靠更新时间时写 unknown，不能只靠 mtime 宣称 SpecDev 停滞。
 

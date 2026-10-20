@@ -37,6 +37,6 @@ Ticket/Direct Spec 的 workspace_context 统一引用 `<Path>{roots.state}/specd
 
 ## 恢复与迁移
 
-核验 checkout 所属 Git common directory、branch、base 可达、工作区路径和实际 writer。未知 owner、路径链接、漂移或旧活动 per-Ticket worktree 记录先阻塞受影响写入。旧记录按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 由原 owner 显式整理；历史与旧工作区保留，不自动归并或删除。
+核验 checkout 所属 Git common directory、branch、base 可达、工作区路径和实际 writer。未知 owner、路径链接、漂移或旧活动 per-Ticket worktree 记录先阻塞受影响写入。版本边界按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 拒绝不支持的记录；历史与旧工作区保留，不转换、归并或删除。
 
 **完成标准**：change 唯一工作区可定位，记录与 Git 一致，创建次数不随票据/Agent 数增长。

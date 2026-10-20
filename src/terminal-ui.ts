@@ -11,8 +11,6 @@ export function terminalColors(stream: { isTTY?: boolean } = process.stdout, env
 }
 
 export const color = terminalColors();
-// Apply the same color policy to Clack chrome without changing the child environment.
-Object.assign(pc, color);
 export const terminalWidth = () => Math.max(8, (process.stdout.columns || 80) - 5);
 
 export function wrapTerminalText(text: string, width: number): string {
@@ -57,7 +55,7 @@ export function fitChoices(choices: TerminalChoice[], width = terminalWidth()): 
 }
 
 export function note(message: string, title: string): void {
-  // Avoid Clack 0.9's boxed note, which measures Chinese text as JS code units.
+  // Use the same display-width wrapping as other Speculo terminal messages.
   clack.log.step(color.bold(color.cyan(title)));
   clack.log.message(wrapTerminalText(message, terminalWidth()));
 }

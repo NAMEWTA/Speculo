@@ -23,10 +23,10 @@ Speculo 把需求澄清、软件开发、学习、运维、决策和内容制作
 | 权衡选择、分析复杂问题、形成行动方案 | [Person：分析与决策](workflows/person.md) |
 | 写内容、拆解案例、准备画风提示词、做视频与本地草稿 | [Media：内容创作](workflows/media.md) |
 | 整理文档、生成交接、打包源码、审计 Git 等一次性任务 | [Command 工具箱](commands/README.md) |
-| 通过 CLI、Herdr、Orca 派遣任务并追踪输入、报告与历史 | [外部 Agent 的任务交接](agent-handoffs.md) |
+| 全局初始化并跨 workflow 派遣任务，追踪输入、报告与历史 | [外部 Agent 的任务交接](agent-handoffs.md) |
 | 不使用本地项目，只想在网页 AI 中使用一个方法 | [Canonical 单文件使用](canonical.md) |
 
-[所有 workflow 的路线对照](workflows/README.md) · [38 个 Work 与 10 个 Command 全目录](capabilities.md)
+[所有 workflow 的路线对照](workflows/README.md) · [38 个 Work 与 11 个 Command 全目录](capabilities.md)
 
 ## 安装、恢复与维护
 
@@ -37,6 +37,7 @@ Speculo 把需求澄清、软件开发、学习、运维、决策和内容制作
 | [安装事务与恢复](transaction-recovery.md) | 安装中断、锁、漂移和旧版本数据如何处理？ |
 | [架构与数据布局](architecture.md) | 方法源、投影、业务数据、生成物分别放在哪里？ |
 | [维护者指南](contributing.md) | 如何修改源码和文档、运行对应验证？ |
+| [Workflow 合同、证据与恢复](workflow-integrity.md) | 校验通过证明什么，如何恢复领域事务、核对交付与运行产物评估？ |
 | [Media 可复现示例](media/example/README.md) | 如何从简报得到预览和本地草稿？ |
 | [许可声明](provenance/THIRD-PARTY-NOTICES.md)与[来源映射](provenance/upstream-matrix.md) | 哪些内容来自第三方，许可在哪里？ |
 

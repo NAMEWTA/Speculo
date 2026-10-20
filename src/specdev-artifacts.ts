@@ -2,15 +2,12 @@
 import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { TextDecoder } from "node:util";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 import { DEFAULT_ROOTS, WORKSPACE_PATH, validateWorkspace } from "./paths.js";
 
 export type WorkContext = { projectRoot: string; methodRoot: string; stateRoot: string; specdevRoot: string; installation: "present" | "absent" };
-export type ChangeLocation = { name: string; root: string; kind: "active" | "archive" | "legacy-archive" };
+export type ChangeLocation = { name: string; root: string; kind: "active" | "archive" };
 export type Outcome = "active" | "completed" | "cancelled";
-export type ChangeFacts = { location: ChangeLocation & { kind: "active" | "archive" }; outcome: Outcome; readmePath: string; outcomeLine: number };
-export type LegacyChangeEvidence = { location: ChangeLocation & { kind: "legacy-archive" }; readonly: true; statusPath: string; status: Record<string, unknown> };
+export type ChangeFacts = { location: ChangeLocation; outcome: Outcome; readmePath: string; outcomeLine: number };
 export class ArtifactError extends Error {
   constructor(public code: string, public path: string, message: string, public line?: number) {
     super(`${code}: ${path}${line ? `:${line}` : ""}: ${message}`); this.name = "ArtifactError";
@@ -70,7 +67,7 @@ export function resolveWorkContextSync(input: { projectRoot: string; methodRoot?
   if (installed && (methodRoot !== join(actualProject, DEFAULT_ROOTS.speculo) || stateRoot !== join(actualProject, DEFAULT_ROOTS.state))) fail("root-ambiguous", actualProject, "explicit roots conflict with the validated installed workspace");
   safeWorkPathSync(methodRoot, "", { allowRoot: true, mustExist: true, type: "directory" });
   const specdevRoot = safeWorkPathSync(stateRoot, "specdev", { type: "directory" });
-  if (exists(join(specdevRoot, ".markdown-conversion-pending"))) fail("recovery-required", specdevRoot, "resume the original Markdown conversion");
+  if (exists(join(specdevRoot, ".markdown-conversion-pending"))) fail("recovery-required", specdevRoot, "unfinished data operation; preserve its evidence and resolve it with the original owner before dependent work");
   return { projectRoot: actualProject, methodRoot: realpathSync(methodRoot), stateRoot, specdevRoot, installation: installed ? "present" : "absent" };
 }
 export async function resolveWorkContext(input: Parameters<typeof resolveWorkContextSync>[0]): Promise<WorkContext> { return resolveWorkContextSync(input); }
@@ -142,22 +139,16 @@ function allLocations(root: string): ChangeLocation[] {
     }
   }
   scan("changes", "active"); scan("changes/archive", "archive");
-  const historical = safeWorkPathSync(root, "archive", { type: "directory" });
-  if (exists(historical)) for (const month of readdirSync(historical)) {
-    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) continue;
-    scan(`archive/${month}`, "legacy-archive");
-  }
   const seen = new Map<string, ChangeLocation>();
   for (const location of locations) {
-    if (location.kind === "legacy-archive" && basename(dirname(location.root)) !== location.name.slice(0, 7)) fail("identity-conflict", location.root, "legacy month does not match identity");
     const previous = seen.get(location.name);
     if (previous) fail("identity-conflict", location.root, `duplicate identity also at ${previous.root}`);
     seen.set(location.name, location);
   }
   return locations;
 }
-export function discoverChangesSync(context: WorkContext | string, options: { includeArchived?: boolean; includeLegacy?: boolean } = {}): ChangeLocation[] {
-  return allLocations(specdevRoot(context)).filter(l => l.kind === "active" || (l.kind === "archive" ? options.includeArchived : options.includeLegacy));
+export function discoverChangesSync(context: WorkContext | string, options: { includeArchived?: boolean } = {}): ChangeLocation[] {
+  return allLocations(specdevRoot(context)).filter(l => l.kind === "active" || options.includeArchived);
 }
 export async function discoverChanges(context: WorkContext | string, options: Parameters<typeof discoverChangesSync>[1] = {}): Promise<ChangeLocation[]> { return discoverChangesSync(context, options); }
 export function resolveChangeSync(context: WorkContext | string, name: string, options: { includeArchived?: boolean } = {}): ChangeLocation {
@@ -171,38 +162,20 @@ export function assertMarkdownProtocolSync(context: WorkContext | string, locati
   const root = specdevRoot(context);
   for (const marker of [".markdown-conversion-pending", "status.json"]) {
     const path = safeWorkPathSync(root, marker, { type: "file" });
-    if (exists(path)) fail(marker === "status.json" ? "legacy-active-needs-conversion" : "recovery-required", path, "use the explicit conversion owner; no automatic fallback");
+    if (exists(path)) fail(marker === "status.json" ? "unsupported-specdev-protocol" : "recovery-required", path, "current SpecDev requires Markdown authority with no unfinished data operation; preserve source bytes and inspect with the original owner");
   }
-  if (location && exists(join(location.root, ".status.json"))) fail("mixed-protocol", join(location.root, ".status.json"), "active/new archive still contains legacy business authority");
+  if (location && exists(join(location.root, ".status.json"))) fail("mixed-protocol", join(location.root, ".status.json"), "unsupported JSON business authority beside the current Markdown change; preserve source bytes");
 }
 export function readChangeFactsSync(context: WorkContext | string, nameOrLocation: string | ChangeLocation): ChangeFacts {
   const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
   if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "locator no longer matches actual location");
-  if (location.kind === "legacy-archive") fail("legacy-active-needs-conversion", location.root, "use the separate read-only legacy evidence reader");
   assertMarkdownProtocolSync(context, location);
   const readmePath = safeWorkPathSync(location.root, "README.md", { mustExist: true, type: "file" });
   const parsed = parseOutcome(readUtf8ArtifactSync(readmePath), readmePath);
   if (location.kind === "archive" && parsed.outcome === "active") fail("closure-evidence-missing", readmePath, "active change cannot be in the sealed archive");
-  return { location: location as ChangeFacts["location"], outcome: parsed.outcome, readmePath, outcomeLine: parsed.line };
+  return { location, outcome: parsed.outcome, readmePath, outcomeLine: parsed.line };
 }
 export async function readChangeFacts(context: WorkContext | string, target: string | ChangeLocation): Promise<ChangeFacts> { return readChangeFactsSync(context, target); }
-export function readLegacyChangeEvidenceSync(context: WorkContext | string, nameOrLocation: string | ChangeLocation): LegacyChangeEvidence {
-  const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
-  if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "legacy locator no longer matches actual location");
-  if (location.kind !== "legacy-archive") fail("identity-conflict", location.root, "legacy reader accepts only frozen month archives");
-  const statusPath = safeWorkPathSync(location.root, ".status.json", { mustExist: true, type: "file" });
-  const status = JSON.parse(readUtf8ArtifactSync(statusPath)) as Record<string, unknown>;
-  // Bundled Work runtime and compiled CLI use the same generated, frozen schema.
-  const validatorPaths = [new URL('./legacy-status-validator.cjs', import.meta.url), new URL('../../template/lib/legacy-status-validator.cjs', import.meta.url)];
-  const validatorPath = validatorPaths.map(url => fileURLToPath(url)).find(exists);
-  if (!validatorPath) fail('closure-evidence-missing', statusPath, 'frozen legacy schema validator is missing from the method package');
-  const validate = createRequire(import.meta.url)(validatorPath) as ((value: unknown) => boolean) & {errors?: unknown};
-  if (!validate(status)) fail('closure-evidence-missing', statusPath, `invalid frozen v6 schema: ${JSON.stringify(validate.errors)}`);
-  const expectedArchive = `<Path>{roots.state}/specdev/archive/${location.name.slice(0, 7)}/${location.name}</Path>`;
-  const actualArchive = typeof status.archive_path === 'string' ? status.archive_path.replace(/\/<\/Path>$/, '</Path>') : status.archive_path;
-  if (status.change !== location.name || status.change_status !== "archived" || status.archived !== true || status.current_work !== null || actualArchive !== expectedArchive) fail("closure-evidence-missing", statusPath, "unsupported or inconsistent frozen legacy evidence; inspect with original owner");
-  return { location: location as LegacyChangeEvidence["location"], readonly: true, statusPath, status };
-}
 export function readArtifactSectionSync(path: string, anchor: string): { path: string; section: string; text: string; line: number } {
   if (!/^[a-z][a-z0-9-]*$/.test(anchor)) fail("closure-evidence-missing", path, "invalid section anchor");
   const text = readUtf8ArtifactSync(path), lines = markdownBodyLines(text, path);

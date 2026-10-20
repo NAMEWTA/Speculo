@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, lstatSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "../../../../lib/speculo-runtime.mjs";
+import { homeworkSubmissionDigest, learningPath, validateLearningEvidence } from "./learning-evidence.mjs";
 
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DOMAIN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const WORK_ID = /^learning\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const LOCATOR = /^(?:changes\/.+|archive\/[0-9]{4}-[0-9]{2}\/.+)$/;
-const EXPECTED_WORKS = new Set(["learning-a-archive", "learning-a-assess-and-plan", "learning-c-consolidate", "learning-g-goal", "learning-h-homework", "learning-i-init-setup", "learning-l-lesson", "learning-q-question", "learning-r-review"]);
 const OLD_WORKS = new Set(["specdev-a-archive-and-consolidate", "E-eli5", "P-practice", "Q-quiz"]);
 const PHASE = new Set(["planning", "teaching", "homework", "review", "consolidating", "closed", "archived"]);
 const LIFECYCLE = new Set(["active", "blocked", "closed", "archived"]);
@@ -24,7 +24,7 @@ const LEARNER_PROBE = /(?:^|\n)\s*Response:|(?:^|\n)\s*Submission:|\binquiry\//;
 const SOCRATIC_SKILL_PATH = "{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md";
 
 function options(argv) {
-  const result = { workflowRoot: null, stateRoot: null, stage: null, change: null, selfCheck: false };
+  const result = { workflowRoot: null, stateRoot: null, stage: null, change: null, selfCheck: false, homeworkDigest: null };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--workflow-root") result.workflowRoot = resolve(argv[++i] ?? "");
@@ -32,17 +32,19 @@ function options(argv) {
     else if (arg === "--stage") result.stage = argv[++i] ?? null;
     else if (arg === "--change") result.change = argv[++i] ?? null;
     else if (arg === "--self-check") result.selfCheck = true;
+    else if (arg === "--homework-digest") result.homeworkDigest = resolve(argv[++i] ?? "");
     else throw new Error(`unknown option: ${arg}`);
   }
-  if (!result.workflowRoot && !result.stateRoot && !result.selfCheck) throw new Error("use --workflow-root, --state-root, or --self-check");
+  if (!result.workflowRoot && !result.stateRoot && !result.selfCheck && !result.homeworkDigest) throw new Error("use --workflow-root, --state-root, --self-check, or --homework-digest");
+  if (result.homeworkDigest && (result.workflowRoot || result.stateRoot || result.selfCheck || result.stage || result.change)) throw new Error("--homework-digest is a separate read-only operation");
   if (result.stage && !new Set(["pre-archive", "complete"]).has(result.stage)) throw new Error("--stage must be pre-archive or complete");
   if (result.stage && !result.change) throw new Error("--stage requires --change");
   if (result.change && !CHANGE_NAME.test(result.change)) throw new Error("--change has an invalid name");
   return result;
 }
 
-function isFile(path) { return existsSync(path) && statSync(path).isFile(); }
-function isDir(path) { return existsSync(path) && statSync(path).isDirectory(); }
+function isFile(path) { return existsSync(path) && lstatSync(path).isFile(); }
+function isDir(path) { return existsSync(path) && lstatSync(path).isDirectory(); }
 function readJson(path, label, errors) {
   try { return JSON.parse(readFileSync(path, "utf8")); }
   catch (error) { errors.push(`${label}: invalid JSON (${error.message})`); return null; }
@@ -74,7 +76,9 @@ function validateWorkflowRoot(root, errors) {
   if (!(index.includes("## 主题知识") || index.includes("## 永久知识")) || !index.includes("## 发现与激活") || !index.includes("<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>")) errors.push("SKILL.md: missing passive/activation sections");
   if ((index.match(/AUTO-INDEX-START/g) ?? []).length !== 1 || (index.match(/AUTO-INDEX-END/g) ?? []).length !== 1) errors.push("SKILL.md: requires one AUTO-INDEX marker pair");
   const works = new Set(readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory() && /^learning-[a-z]-/.test(entry.name) && isFile(join(root, entry.name, "SKILL.md"))).map((entry) => entry.name));
-  if (works.size !== EXPECTED_WORKS.size || [...EXPECTED_WORKS].some((work) => !works.has(work))) errors.push(`workflow works mismatch: expected ${[...EXPECTED_WORKS].sort().join(", ")}; found ${[...works].sort().join(", ")}`);
+  const manifest = readJson(join(root, "manifest.json"), "manifest.json", errors);
+  const registered = new Set((manifest?.works ?? []).map((entry) => entry.replace(/\/SKILL\.md$/, "")));
+  if (manifest?.schema_version !== 2 || !registered.size || works.size !== registered.size || [...registered].some((work) => !works.has(work))) errors.push("workflow works mismatch with authoritative manifest");
   for (const old of OLD_WORKS) if (isDir(join(root, old)) && files(join(root, old)).length) errors.push(`${old}: obsolete v1 work is still shipped`);
   for (const work of works) {
     const text = readFileSync(join(root, work, "SKILL.md"), "utf8");
@@ -327,7 +331,10 @@ function validateMastery(value, label, errors) {
   if (!mastery || typeof mastery !== "object") { errors.push(`${label}: mastery is required`); return; }
   if (!["unverified", "immediate", "retention_verified"].includes(mastery.overall) || !EVIDENCE.has(mastery.immediate) || !["not_scheduled", "due", "passed", "needs_review"].includes(mastery.retention) || !EVIDENCE.has(mastery.critical_objectives) || !EVIDENCE.has(mastery.transfer)) errors.push(`${label}: invalid mastery projection`);
   if (mastery.overall === "retention_verified" && mastery.retention !== "passed") errors.push(`${label}: retention_verified requires retention passed`);
+  if (mastery.overall === "immediate" && mastery.immediate !== "passed") errors.push(`${label}: immediate overall requires immediate passed`);
   if (!Array.isArray(mastery.blocking_misconceptions) || !Array.isArray(mastery.evidence)) errors.push(`${label}: mastery arrays are required`);
+  if (mastery.immediate === "passed" && Array.isArray(mastery.blocking_misconceptions) && mastery.blocking_misconceptions.length) errors.push(`${label}: immediate passed contradicts unresolved blocking misconceptions`);
+  if (mastery.immediate === "passed" && value.homework?.status === "needs_revision") errors.push(`${label}: immediate passed contradicts homework needs_revision`);
   if (!(mastery.next_review_at === null || validDate(mastery.next_review_at))) errors.push(`${label}: invalid next_review_at`);
 }
 
@@ -357,10 +364,10 @@ function validateLessons(changeRoot, errors) {
     const meta = frontmatter(text);
     if (!/^L-[0-9]{3}(?:-[a-z0-9-]+)?$/.test(String(meta.lesson_id ?? ""))) errors.push(`${label}: lesson_id is required`);
     if (!Number.isInteger(meta.estimated_minutes) || meta.estimated_minutes < 30 || meta.estimated_minutes > 40) errors.push(`${label}: estimated_minutes must be 30–40`);
-    if (!Array.isArray(meta.time_budget) && !text.includes("time_budget:")) errors.push(`${label}: time_budget is required`);
+    if (!Array.isArray(meta.time_budget)) errors.push(`${label}: time_budget is required`);
     for (const heading of ["宏观", "机制", "精确定义", "English", "正例", "反例", "迁移", "误区", "总结", "来源"]) if (!text.includes(heading)) errors.push(`${label}: missing teaching coverage '${heading}'`);
     if (!/(文字等价物|完整的文字|文字替代)/.test(text)) errors.push(`${label}: visual representation needs a text equivalent`);
-    if (!/source_ids:|\| Source ID \|/.test(text)) errors.push(`${label}: source_ids/source table is required`);
+    if (!Array.isArray(meta.source_ids) || !meta.source_ids.length) errors.push(`${label}: source_ids is required`);
     if (/\bverdict\b|\bmastered\b|^##\s*(?:Answers|Review)/mi.test(text)) errors.push(`${label}: lesson must not contain homework review/mastery fields`);
   }
 }
@@ -371,14 +378,14 @@ function validateHomework(changeRoot, errors) {
   for (const path of files(homeworkRoot).filter((candidate) => /^HW-.*\.md$/.test(candidate.split(sep).pop() ?? ""))) {
     const text = readFileSync(path, "utf8");
     const label = relative(changeRoot, path).split(sep).join("/");
-    const ready = /(^|\n)Submission:\s*ready\s*(?:\n|$)/i.test(text);
+    const submissionLines = text.split(/\r?\n/).filter((line) => /^Submission:/i.test(line.trim()));
+    const ready = submissionLines.length === 1 && submissionLines[0] === "Submission: ready";
     const reviewed = /^##\s+Review\s*$/mi.test(text);
-    if (!/(^|\n)Submission:\s*(?:pending|ready)\s*(?:\n|$)/i.test(text)) errors.push(`${label}: Submission marker is required`);
+    if (submissionLines.length !== 1 || !["Submission: pending", "Submission: ready"].includes(submissionLines[0])) errors.push(`${label}: exactly one literal Submission: pending or Submission: ready marker is required`);
     const questions = [...text.matchAll(/^###\s+Q(\d+)\b/gm)].map((match) => Number(match[1]));
     const answers = [...text.matchAll(/^###\s+A(\d+)\b/gm)].map((match) => Number(match[1]));
     if (!questions.length || questions.length !== answers.length || questions.some((number, index) => number !== index + 1) || answers.some((number, index) => number !== index + 1)) errors.push(`${label}: Q/A numbering must be contiguous and paired`);
     if (reviewed && !ready) errors.push(`${label}: review cannot exist before Submission: ready`);
-    if (reviewed && !/correct|partial|incorrect|uncertain/i.test(text) || reviewed && !/Explain \(English\)/.test(text)) errors.push(`${label}: review needs verdict and Explain (English)`);
   }
 }
 
@@ -408,19 +415,40 @@ function validateStateRoot(root, opts, errors) {
   const ids = all.map((entry) => entry.change_id);
   if (duplicates(ids).length) errors.push("status.json: duplicate or overlapping change ids");
   const byId = new Map(all.map((entry) => [entry.change_id, entry]));
+  const states = new Map();
   for (const entry of all) {
-    const path = join(root, ...String(entry.locator).split("/"), ".status.json");
+    let path;
+    try { path = learningPath(root, String(entry.locator) + "/.status.json"); }
+    catch (error) { errors.push(`${entry.change_id}: ${error.message}`); continue; }
     if (!isFile(path)) { errors.push(`${entry.change_id}: indexed Change is missing ${path}`); continue; }
     const value = readJson(path, `${entry.change_id}/.status.json`, errors);
+    if (value) states.set(entry.change_id, value);
     validateChange(value, entry.change_id, entry.locator, errors);
-    if (value && (value.domain !== entry.domain || value.topic_id !== entry.topic_id || value.parent_change !== entry.parent_change || value.current_work !== entry.current_work || JSON.stringify(value.works_run) !== JSON.stringify(entry.works_run))) errors.push(`${entry.change_id}: global and change projections differ`);
+    if (value && (value.kind !== entry.kind || value.domain !== entry.domain || value.topic_id !== entry.topic_id || value.parent_change !== entry.parent_change || value.root_change !== entry.root_change || value.current_work !== entry.current_work || JSON.stringify(value.works_run) !== JSON.stringify(entry.works_run))) errors.push(`${entry.change_id}: global and change projections differ`);
     const seen = new Set();
     let parent = entry.parent_change;
+    let actualRoot = entry.change_id;
     while (parent !== null) {
       if (seen.has(parent)) { errors.push(`${entry.change_id}: parent cycle detected`); break; }
       seen.add(parent);
       if (!byId.has(parent)) { errors.push(`${entry.change_id}: parent_change ${parent} is not indexed`); break; }
+      actualRoot = parent;
       parent = byId.get(parent).parent_change;
+    }
+    if (entry.root_change !== actualRoot) errors.push(`${entry.change_id}: root_change differs from the actual ancestry`);
+    const directParent = byId.get(entry.parent_change);
+    if (directParent && entry.locator !== `${directParent.locator}/children/${entry.change_id}`) errors.push(`${entry.change_id}: locator differs from parent/children identity`);
+    if (entry.parent_change === null && entry.locator !== `changes/${entry.change_id}` && !new RegExp(`^archive/[0-9]{4}-[0-9]{2}/${entry.change_id}$`).test(entry.locator)) errors.push(`${entry.change_id}: root locator does not match identity`);
+    const children = Array.isArray(value?.children) ? value.children : [];
+    if (duplicates(children.map((child) => child.change_id)).length) errors.push(`${entry.change_id}: duplicate child registrations`);
+    for (const child of children) {
+      const indexed = byId.get(child.change_id);
+      if (!indexed || indexed.parent_change !== entry.change_id || child.locator !== indexed.locator || !/^[a-f0-9]{64}$/.test(child.content_hash ?? "") || !validDate(child.effective_at) || !LIFECYCLE.has(child.lifecycle)) errors.push(`${entry.change_id}: invalid child registration ${child.change_id}`);
+    }
+    for (const child of all.filter((candidate) => candidate.parent_change === entry.change_id)) if (!children.some((candidate) => candidate.change_id === child.change_id)) errors.push(`${entry.change_id}: missing child registration ${child.change_id}`);
+    const childDirectory = join(root, ...String(entry.locator).split("/"), "children");
+    if (isDir(childDirectory)) for (const child of readdirSync(childDirectory, { withFileTypes: true })) {
+      if (child.isSymbolicLink() || !child.isDirectory() || !children.some((candidate) => candidate.change_id === child.name)) errors.push(`${entry.change_id}: unregistered or linked child ${child.name}`);
     }
     const changeRoot = join(root, ...String(entry.locator).split("/"));
     validateLessons(changeRoot, errors);
@@ -437,15 +465,22 @@ function validateStateRoot(root, opts, errors) {
     else if (locations) {
       const locationIds = locations.entries.map((entry) => entry.change_id);
       if (duplicates(locationIds).length) errors.push("locations.json: duplicate change ids");
+      if (locationIds.some((id) => !byId.has(id))) errors.push("locations.json: contains an unindexed Change");
       for (const entry of all) if (!locations.entries.some((candidate) => candidate.change_id === entry.change_id && candidate.locator === entry.locator)) errors.push(`${entry.change_id}: locations.json does not match current locator`);
     }
   }
   if (opts.change && !all.some((entry) => entry.change_id === opts.change)) errors.push(`${opts.change}: Change is not indexed`);
   validateContext(root, errors);
+  validateLearningEvidence(root, all, states, errors);
 }
 
 function main() {
   const opts = options(process.argv.slice(2));
+  if (opts.homeworkDigest) {
+    if (!isFile(opts.homeworkDigest)) throw new Error("homework must be a regular file");
+    console.log(JSON.stringify({ submission_sha256: homeworkSubmissionDigest(readFileSync(opts.homeworkDigest, "utf8")) }));
+    return;
+  }
   const errors = [];
   if (opts.selfCheck) validateWorkflowRoot(resolve(dirname(fileURLToPath(import.meta.url)), "..", ".."), errors);
   if (opts.workflowRoot) validateWorkflowRoot(opts.workflowRoot, errors);
@@ -454,4 +489,13 @@ function main() {
   console.log("Learning validation: OK");
 }
 
-try { main(); } catch (error) { console.error(`Learning validation failed: ${error.message}`); process.exitCode = 1; }
+export function validateLearningState(root, options = {}) {
+  const errors = [];
+  try { validateStateRoot(resolve(root), options, errors); }
+  catch (error) { errors.push(error.message); }
+  return errors;
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try { main(); } catch (error) { console.error(`Learning validation failed: ${error.message}`); process.exitCode = 1; }
+}

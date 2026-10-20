@@ -3,7 +3,7 @@
 本模板记录选定 change-workspace 上的实际实现与验证，不预造 source/candidate/result。Direct Spec 写 evidence/direct-spec.md；所有执行者复用 README 的 Execution Context，提交与合并仅记录实际获授权的结果。
 
 - **Change：** `<change>`
-- **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`
+- **Ticket：** `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` / Direct Spec 无票
 - **Spec：** `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>`
 - **Goal Plan：** `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` / 不适用
 - **Lead：** `<owner-or-session-locator>`
@@ -64,7 +64,7 @@
 
 ### 标准轴
 
-- **固定输入：** `<base_sha>..<source_checkpoint>`
+- **固定输入：** 原 Independent Review 的 input locator、比较模式与实际摘要；已提交交付列固定 base/head，未提交交付列 working-tree 快照及其真实范围
 - **结果：** pass / request-changes
 - **Findings 与修正：** 无 / ...
 
@@ -156,7 +156,7 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 }
 ```
 
-Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。旧活动记录先由原 owner 显式整理，历史原文保留。
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
 
 ## Acceptance Verification
 

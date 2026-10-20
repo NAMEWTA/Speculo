@@ -10,6 +10,7 @@
 | `review/` | R-review | 延迟保持题、原始回答、证据和复习日期 |
 | `children/<id>/` | child Work | 子 Change 原有工件；父只负责根锁、路由、位置登记 |
 | `synthesis/`、topic context | C-consolidate | claim 级综合、冲突、空白、provenance 和版本；不得覆盖原料。`split-lesson` 不得调用 C 或 relocate |
-| `archive/`、locations projection | A-archive | 用户关闭后的物理移动和只读登记；不判断掌握、不写 context |
+| `archive/`、locations projection | A-archive；C 仅其确认迁移 | 用户关闭后的物理移动和只读登记；C 的位置登记限定本次整树迁移，不判断掌握 |
+| `transactions/relocation/`、迁移索引锁 | C 的迁移工具 | 预写恢复清单、精确前后字节和进度；其他 Work 不改写，不作为掌握证据 |
 
 状态 JSON 只是 projection；真实内容、学习者原始回答、评审和 source manifest 是证据权威。

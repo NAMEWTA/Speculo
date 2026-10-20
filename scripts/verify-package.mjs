@@ -25,7 +25,7 @@ try{
   run([cli,'init',project,'--workflows','learning,media,ops,person,specdev','--hub-skills','all','--skill-targets','agents,claude','--skills','all']);
   const doctor=JSON.parse(run([cli,'doctor',project,'--json']));assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
   const assets=join(project,'.agents/speculo'),lib=await import(pathToFileURL(join(assets,'lib/speculo-runtime.mjs')).href);
-  assert.equal((await lib.readAssetCatalog(assets)).assets.length,53);
+  assert.equal((await lib.readAssetCatalog(assets)).assets.length,54);
   assert.equal(JSON.parse(await readFile(join(assets,'workflows/specdev/runtime-contract.json'),'utf8')).state_seed,'optional');
   for (const name of ['status.json','config.json']) await assert.rejects(readFile(join(assets,'.speculo/specdev',name)),/ENOENT/);
   const canonicalRoot=join(installed,'template/canonical');
@@ -40,19 +40,22 @@ try{
   const designCatalog=JSON.parse(await readFile(join(assets,'workflows/specdev/specdev-p-prototype/design-library/catalog.json'),'utf8'));
   assert.equal(designValidators.designCatalog(designCatalog),true);
   assert.equal(designCatalog.templates.length,12);assert.equal(designCatalog.references.length,10);
-  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,116);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,53);
+  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,119);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,54);
   const {discoverHubCatalog}=await import(pathToFileURL(join(installed,'dist/src/hub-catalog.js')).href);
   const {snapshotSkillTree}=await import(pathToFileURL(join(installed,'dist/src/skill-trees.js')).href);
-  const hub=await discoverHubCatalog(installed);assert.equal(hub.size,15);
+  const hub=await discoverHubCatalog(installed);assert.equal(hub.size,16);assert.ok(hub.has('writing/eli5'));
   for(const skill of hub.values()){
     const packaged=skill.tree;
     assert.deepEqual(packaged,await snapshotSkillTree(join(root,'skills-hub',skill.id)),`bundle omitted or changed resources: ${skill.id}`);
     for(const host of ['agents','claude'])assert.deepEqual(await snapshotSkillTree(join(project,`.${host}/skills`,skill.name)),packaged);
   }
-  assert.equal(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages.length,30);
+  assert.equal(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages.length,32);
   await assert.rejects(readdir(join(assets,'skills-hub')),/ENOENT/);
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--self-check']);
   run([join(assets,'workflows/media/common/tools/validate-media.mjs'),'--state-root',join(assets,'.speculo/media')]);
+  if(process.env.MEDIA_RENDER_REQUIRED==='1') {
+    run(['--test',join(assets,'workflows/media/common/tests/test_media_render.mjs')]);
+  }
   run([join(assets,'commands/engineering-standards-builder/scripts/validate-builder.mjs'),'--root',join(assets,'commands/engineering-standards-builder')]);
   const nested=join(project,'src/nested');await mkdir(nested,{recursive:true});
   assert.ok(run([cli,'resolve',nested,'--path','{roots.references}/coordination/coordination-contract.md']).trim().endsWith('coordination-contract.md'));
@@ -64,16 +67,14 @@ try{
   assert.equal(lib.readChangeFactsSync(directContext,'2026-10-14-direct').outcome,'active');
   run([join(assets,'workflows/specdev/common/tools/validate-specdev.mjs'),'--repo',directProject,'--method-root',assets,'--state-root',join(directProject,'data'),'--stage','spec',directChange]);
   assert.deepEqual(await readdir(directChange),['README.md']);
-  const legacyName='2025-01-01-frozen',legacyRoot=join(directContext.specdevRoot,'archive/2025-01',legacyName);
-  await mkdir(legacyRoot,{recursive:true});
-  const legacy={...JSON.parse(await readFile(join(root,'test/fixtures/specdev-legacy-change-v6.json'),'utf8')),change:legacyName,change_status:'archived',archived:true,archive_path:`<Path>{roots.state}/specdev/archive/2025-01/${legacyName}</Path>`};
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify(legacy));
-  assert.equal(lib.readLegacyChangeEvidenceSync(directContext,legacyName).readonly,true);
   const compiledArtifacts=await import(pathToFileURL(join(installed,'dist/src/specdev-artifacts.js')).href);
-  assert.equal(compiledArtifacts.readLegacyChangeEvidenceSync(directContext,legacyName).readonly,true);
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify({...legacy,worktrees:undefined}));
-  assert.throws(()=>lib.readLegacyChangeEvidenceSync(directContext,legacyName),/invalid frozen v6 schema/);
-  await writeFile(join(legacyRoot,'.status.json'),JSON.stringify(legacy));
+  assert.equal(compiledArtifacts.readChangeFactsSync(directContext,'2026-10-14-direct').outcome,'active');
+  assert.equal('readLegacyChangeEvidenceSync' in lib,false);
+  const manifest=JSON.parse(await readFile(join(assets,'workflows/specdev/manifest.json'),'utf8'));
+  lib.validateWorkflowManifest(manifest,'specdev');
+  assert.throws(()=>lib.validateWorkflowManifest({...manifest,schema_version:1},'specdev'),/invalid-domain-manifest/);
+  run([join(assets,'workflows/ops/common/tools/validate-ops.mjs'),'--self-check']);
+  run([join(assets,'workflows/ops/common/tools/validate-ops.mjs'),'--state-root',join(assets,'.speculo/ops')]);
   const preserved=new Map([
     ['design/DESIGN.md',Buffer.from('# User design baseline\r\n\r\nOriginal bytes remain unchanged.\r\n')],
     ['design/revisions/DESIGN-0001.md',Buffer.from('# Immutable historical revision\n')],
@@ -92,7 +93,14 @@ try{
   assert.deepEqual(JSON.parse(await readFile(join(assets,'.speculo/hub-skills.json'),'utf8')).packages,[]);
   for(const [locator,bytes] of preserved)assert.deepEqual(await readFile(join(assets,'.speculo/specdev',locator)),bytes);
   assert.equal(JSON.parse(run([cli,'doctor',project,'--json'])).healthy,true);
-  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 15 complete Hub packages in both targets, 53 assets, 116 projection files, 12 canonical documents, explicit-root direct Work, byte-preserved runtime and nested resolver passed`);
+  await assert.rejects(readFile(join(assets,'workflows/specdev/SKILL.md')),/ENOENT/);
+  assert.ok(coreEntries.includes('speculo-coordination-init'));
+  const scope='.agents/speculo/.speculo/coordination',session='20261018T080000Z',task='001-handoff';
+  const taskRoot=join(project,scope,'sessions',session,task);await mkdir(taskRoot,{recursive:true});
+  await writeFile(join(taskRoot,'TASK.md'),`---\nschema_version: 2\nsession: "${session}"\ntask: "${task}"\nkind: handoff\n---\n\n${['Goal','Inputs','Workspace and Scope','Acceptance','Return'].map(title=>`## ${title}\nExplicit session summary, no business state writes.\n`).join('\n')}`);
+  const dispatched=JSON.parse(run([join(assets,'references/coordination/scripts/validate-dispatch.mjs'),'--repo',project,'--scope-root',scope,'--session',session,'--task',task,'--stage','dispatch']));
+  assert.deepEqual(dispatched.errors,[]);
+  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 16 complete Hub packages in both targets, 54 assets, 119 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
 }finally{
   // The only recursive cleanup target is the exact mkdtemp directory created above.
   assert.ok(resolve(sandbox).startsWith(temporaryRoot+ (process.platform==='win32'?'\\':'/')));

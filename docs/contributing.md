@@ -42,11 +42,15 @@ CLI 构建入口是 `dist/src/cli.js`。根项目规则和适用目录规则优�
 | `pnpm verify-generated` | 两次生成并确认无内容变化 |
 | `pnpm verify-bin` | 检查 CLI 入口行为 |
 | `pnpm verify-package` | 检查打包后隔离使用 |
+| `pnpm eval:run-artifacts` | 在一次性项目中调用真实安装 CLI 与领域工具，保存实际工件、退出码和未运行观察场景 |
+| `pnpm validate-disposition` | 检查当前文件的保留、重写、移动、新增与退役记录；历史原摘要保持不变 |
 | `pnpm check` | 运行测试与资产验证 |
 
 只改文字，核对事实、链接和格式；入口或权限变化增加相关正常/失败场景；状态和事务变化使用一次性夹具验证冲突、恢复与零副作用分支。分发资产变化运行 validate-assets，生成物变化检查二次生成无差异。
 
 结构校验不认证真实宿主、模型判断、浏览器画面或外部平台操作。报告实际运行命令和结果，并把未验证项单独说明。
+
+运行与证据层级详见 [Workflow 合同、证据与恢复](workflow-integrity.md)。`eval:run-artifacts` 接到 CI 的安装产物检查；真正的 observed 评估仍需要操作者信任的独立观察记录。产物通过、观察门资格和发布授权是不同事实。
 
 ## 文档怎样持续保持当前
 

@@ -22,7 +22,8 @@
         "template/workflows/specdev/common/skills/code-review/SKILL.md"
       ],
       "integration_deltas": [
-        "Persists standalone reviews while returning implementation reviews to Evidence"
+        "Persists standalone reviews while returning implementation reviews to Evidence",
+        "Shared C/I/P coordination has one owner; direct review retains its read-only scope and independent evidence requirements."
       ]
     },
     {
@@ -41,7 +42,8 @@
         "template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md"
       ],
       "integration_deltas": [
-        "Diagnosis owns evidence and a repair contract; production changes remain owned by Implement"
+        "Diagnosis owns evidence and a repair contract; production changes remain owned by Implement",
+        "Added a conditional captured-evidence forensics recipe with source offsets, comparable windows and explicit unknowns."
       ]
     },
     {
@@ -74,7 +76,8 @@
         "template/workflows/specdev/specdev-i-implement/SKILL.md"
       ],
       "integration_deltas": [
-        "Adds Ticket readiness, path ownership, deviations and durable Evidence"
+        "Adds Ticket readiness, path ownership, deviations and durable Evidence",
+        "Consumes current Change execution contracts and structured diagnostics; retired per-Ticket execution and status protocols are rejected."
       ]
     },
     {
@@ -96,7 +99,8 @@
         "template/workflows/specdev/specdev-p-prototype/SKILL.md"
       ],
       "integration_deltas": [
-        "Detects project UI evidence, persists incremental style decisions in design-system.md, and materializes an offline HTML/CSS/JS design package without modifying production UI"
+        "Detects project UI evidence, persists incremental style decisions in design-system.md, and materializes an offline HTML/CSS/JS design package without modifying production UI",
+        "Ready design output returns to the original implementation context; worktree snapshots do not require an incidental commit."
       ]
     },
     {
@@ -219,10 +223,13 @@
       "source_sha256": "d83e0daa699b72111b4b49bff3fd59f6e55c0fa8803abfc63f92ade5f94974f1",
       "classification": "adapted",
       "targets": [
-        "template/commands/handoff/COMMAND.md"
+        "template/commands/handoff/COMMAND.md",
+        "template/references/handoff/handoff-contract.md",
+        "template/references/handoff/domain-context.md"
       ],
       "integration_deltas": [
-        "Command-owned immutable report naming replaces temporary output"
+        "Explicit handoff uses a shared method to update change/handoff.md; cross-object or object-free session reports retain immutable command-owned naming, source pointers and original recovery ownership",
+        "Current shared TASK/REPORT and focused consumer examples preserve original business ownership; retired TASK v1 adapters are no longer shipped."
       ]
     },
     {

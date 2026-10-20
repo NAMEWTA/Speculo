@@ -38,7 +38,7 @@ Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 
 ## 启动协议
 
-激活时先解析 roots、读取全局 v2 状态和位置登记；按 stable Change ID 解析当前 locator。已有 root lock、未知 schema、v1 状态、路径越界或 parent cycle 时先阻塞，不创建新 Change。
+激活时先解析 roots、读取全局 v2 状态和位置登记；按 stable Change ID 解析当前 locator。已有 root lock、未知 schema、路径越界或 parent cycle 时先阻塞，不创建新 Change。
 
 ## Change 工件布局
 
@@ -51,6 +51,8 @@ Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 每个 Change 的 `.status.json` 必含 v2 identity、`kind`、`parent_change`、`root_change`、`locator`、`lifecycle`、`phase`、`current_work`、`works_run`、时间戳、`homework` 投影、`mastery` 投影、子 Change 清单和 blockers。`mastery.immediate` 只表示当前作业评审，`mastery.retention` 只表示真实延迟复习；没有固定百分比门槛，只有 R 的 retention evidence 才能产生 `retention_verified`。
 
 状态 JSON 是投影，原始 Lesson、Homework 答案、Review 和 source manifest 才是证据权威。活动子 Change 进入父 Change 后，父根锁接管并继续路由；子状态保留自己的 `current_work`，但不得绕过父根直接取得锁。
+
+根锁的唯一位置是状态根下的 `locks/<root_change>.lock`，以独占创建取得并只由持有者释放；发现 `.consolidate.lock` 时其他写者不得变更全局索引。Lead 持根锁时，派单必须携带同一 owner 与唯一子写集；获该 Lead 派单的子 Work 在该锁内写自己的工件，不再抢锁。独立调用发现他人的根锁只阻塞受影响写入，不删除锁或伪称继承其 owner。
 
 ## 路径分配
 
@@ -82,9 +84,9 @@ C 整合、A 归档或恢复物理移动时，必须读取 `<Path>{roots.workflo
 
 C 组织或发布主题视图时读取 `<Path>{roots.workflows}/learning/common/rules/knowledge-organization.md</Path>`，保留 claim provenance、证据状态和原始材料。
 
-## 破坏式升级
+## 状态格式
 
-Learning v1 不自动迁移。`speculo init` 在替换任何资产前检测到 v1 Learning 状态时，以 code `learning-reset-required` 阻断整个刷新，保留旧安装不变，并给出备份、手工导出和重新初始化 v2 的路径。不会自动删除、移动或覆盖用户旧数据。
+只接受当前 Learning v2。错误或未知格式明确拒绝；本领域不提供旧格式迁移分支，不以升级为由删除、移动或覆盖用户原始材料。
 
 详细 schema、工件所有权、引用和副作用规则位于 `<Path>{roots.workflows}/learning/common/</Path>`；激活与记忆读取规则位于 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`；验证命令为：
 

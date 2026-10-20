@@ -71,7 +71,7 @@ Work 入口通常包含：
 - change `.status.json`；
 - common/rules/domain-runtime.md 激活合同明确声明且由该 work 拥有的长期 namespace。
 
-`template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。Work 不写 command 报告或 docs-sync sidecar。
+`template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。普通 Work 不写 command 报告或 docs-sync sidecar；用户显式 handoff 时切入共享交接方法，由其声明本次会话报告或 change/handoff.md 的唯一作者和路径，不借此改变业务 owner。
 
 每个输出说明：文件名、owner、首次创建/更新时机、原子写入方式、验证和冲突语义。
 

@@ -33,7 +33,7 @@ pnpm verify-package
 - `template/workflows/<workflow>/<workflow>-<letter>-<name>/`：一个可恢复步骤；只读取当前分支需要的规则、schema、模板和工具。
 - `.agents/skills/_shared/memory-retrieval.md`：记忆/永久知识的定位、少量回读和写入网关协议。
 
-当前模板包含 10 个 Command、43 个公开 Skill（5 个领域、38 个 Work）、5 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works、Media 7 works。
+当前模板包含 11 个 Command、43 个公开 Skill（5 个领域、38 个 Work）、5 个 workflows：Learning 9 works、SpecDev 15 works、Ops 5 works、Person 2 works、Media 7 works。
 
 ## 边界与停止条件
 
@@ -50,7 +50,7 @@ pnpm verify-package
 
 ## 发布事实
 
-版本由 `package.json` 和 `CHANGELOG.md` 驱动；`v*` tag 触发 CI release。发布、npm 写入和 GitHub Release 仍受上方授权边界约束。
+版本由 `package.json` 和 `CHANGELOG.md` 驱动；`v*` tag 触发 CI release。CI 使用 NPM_TOKEN 执行 `npm stage publish`，核对暂存记录并创建 GitHub Release；维护者在 npmjs.com → Staged Packages 使用 2FA 确认后才公开上架。Token 可使用 Read and write (stage only)，无需 Bypass 2FA。已有暂存或公开版本不可重复上传。发布、npm 写入和 GitHub Release 仍受上方授权边界约束。
 
 ## 文档重构保真
 

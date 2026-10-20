@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -11,6 +12,7 @@ const script = join(packageRoot, "template", "commands", "upstream-fork-sync", "
 
 function command(cwd: string, ...args: string[]): string {
   const result = spawnSync(args[0], args.slice(1), { cwd, encoding: "utf8" });
+  assert.equal(result.error, undefined);
   assert.equal(result.status, 0, `${args.join(" ")}\n${result.stdout}\n${result.stderr}`);
   return result.stdout.trim();
 }
@@ -26,6 +28,19 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 
 async function readJson(path: string): Promise<Record<string, any>> {
   return JSON.parse(await readFile(path, "utf8")) as Record<string, any>;
+}
+
+async function projectBytes(root: string): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
+  async function visit(dir: string, prefix = ""): Promise<void> {
+    for (const item of await readdir(dir, { withFileTypes: true })) {
+      const key = prefix + item.name, path = join(dir, item.name);
+      if (item.isDirectory()) { files[key + "/"] = "directory"; await visit(path, key + "/"); }
+      else if (item.isSymbolicLink()) files[key] = "symlink:" + await readlink(path);
+      else files[key] = createHash("sha256").update(await readFile(path)).digest("hex");
+    }
+  }
+  await visit(root); return files;
 }
 
 async function createFixture() {
@@ -58,7 +73,7 @@ async function createFixture() {
   command(root, "git", "switch", "main");
   command(root, "git", "update-ref", "refs/remotes/origin/main", firstMerge);
 
-  const stateRoot = join(root, ".agents/speculo", ".speculo", "skills", "upstream-fork-sync");
+  const stateRoot = join(root, ".agents/speculo", ".speculo", "commands", "upstream-fork-sync");
   const repositoryMap = join(stateRoot, "repository-map.json");
   await writeJson(repositoryMap, {
     schema_version: 1,
@@ -86,7 +101,7 @@ function assessArgs(fixture: Awaited<ReturnType<typeof createFixture>>, ...extra
   ];
 }
 
-describe("upstream-fork-sync skill", () => {
+describe("upstream-fork-sync command", () => {
   it("documents command inputs, outputs, and examples", () => {
     const general = runSkill("--help");
     const assess = runSkill("assess", "--help");
@@ -125,17 +140,90 @@ describe("upstream-fork-sync skill", () => {
     }
   });
 
-  it("dry-run writes no change or root state", async () => {
+  it("dry-run preserves every project file including Git objects, index and refs", async () => {
     const fixture = await createFixture();
     try {
-      const before = (await readdir(fixture.stateRoot)).sort();
+      const before = await projectBytes(fixture.root);
       const result = runSkill(...assessArgs(fixture, "--dry-run"));
       assert.equal(result.status, 0, result.stderr);
       assert.equal(JSON.parse(result.stdout).change, "2026-08-24-sync-test");
-      assert.deepEqual((await readdir(fixture.stateRoot)).sort(), before);
+      const snapshot = JSON.parse(result.stdout);
+      assert.equal(snapshot.repositories[0].merge_tree.object_storage, "temporary-discarded");
+      assert.equal(snapshot.repository_map.source, "file");
+      assert.deepEqual(await projectBytes(fixture.root), before);
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
     }
+  });
+
+  it("first dry-run accepts an in-memory candidate from an unrelated cwd without creating configuration", async () => {
+    const fixture = await createFixture();
+    try {
+      const candidate = await readFile(fixture.repositoryMap, "utf8");
+      await rm(join(fixture.root, ".agents"), { recursive: true });
+      const before = await projectBytes(fixture.root);
+      const result = spawnSync(process.execPath, [script, "assess", "--root", fixture.root,
+        "--state-root", fixture.stateRoot, "--repository-map-stdin", "--topic", "first-preview", "--dry-run"], {
+        cwd: tmpdir(), encoding: "utf8", input: candidate,
+      });
+      assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr);
+      const snapshot = JSON.parse(result.stdout);
+      assert.deepEqual(snapshot.repository_map, { source: "stdin", sha256: createHash("sha256").update(candidate).digest("hex"), persisted: false });
+      assert.equal(snapshot.repositories[0].upstream_sha, fixture.upstreamTwo);
+      assert.equal(snapshot.repositories[0].integration.upstream_sha, fixture.upstreamOne);
+      assert.equal(snapshot.repositories[0].freshness, "cached");
+      assert.deepEqual(await projectBytes(fixture.root), before);
+    } finally { await rm(fixture.root, { recursive: true, force: true }); }
+  });
+
+  it("refuses mutating fetch and record-integration modes when dry-run is requested", async () => {
+    const fixture = await createFixture();
+    try {
+      const before = await projectBytes(fixture.root);
+      const fetched = runSkill(...assessArgs(fixture, "--dry-run", "--fetch"));
+      assert.equal(fetched.status, 2); assert.match(fetched.stderr, /cannot be combined with --fetch/);
+      const recorded = runSkill("record-integration", "--dry-run", "--root", fixture.root,
+        "--state-root", fixture.stateRoot, "--repository-map", fixture.repositoryMap);
+      assert.equal(recorded.status, 2); assert.match(recorded.stderr, /apply only to assess/);
+      const candidateWrite = runSkill("assess", "--root", fixture.root, "--state-root", fixture.stateRoot, "--repository-map-stdin", "--topic", "invalid");
+      assert.equal(candidateWrite.status, 2); assert.match(candidateWrite.stderr, /only available with assess --dry-run/);
+      assert.deepEqual(await projectBytes(fixture.root), before);
+    } finally { await rm(fixture.root, { recursive: true, force: true }); }
+  });
+
+  it("rejects invalid candidate maps without manufacturing files or a partial report", async () => {
+    const fixture = await createFixture();
+    try {
+      const map = await readJson(fixture.repositoryMap);
+      await rm(join(fixture.root, ".agents"), { recursive: true });
+      const before = await projectBytes(fixture.root);
+      map.repositories[0].upstream_ref = "refs/remotes/upstream/missing";
+      for (const input of ["not json", "null", JSON.stringify(map)]) {
+        const result = spawnSync(process.execPath, [script, "assess", "--root", fixture.root,
+          "--state-root", fixture.stateRoot, "--repository-map-stdin", "--topic", "invalid", "--dry-run"], { encoding: "utf8", input });
+        assert.equal(result.error, undefined); assert.equal(result.status, 2);
+        assert.equal(result.stdout, "");
+        assert.deepEqual(await projectBytes(fixture.root), before);
+      }
+    } finally { await rm(fixture.root, { recursive: true, force: true }); }
+  });
+
+  it("does not execute configured merge drivers or create temporary objects inside the project", async () => {
+    const fixture = await createFixture();
+    try {
+      const before = await projectBytes(fixture.root);
+      const localTemp = spawnSync(process.execPath, [script, ...assessArgs(fixture, "--dry-run")], {
+        encoding: "utf8", env: { ...process.env, TMPDIR: fixture.root, TMP: fixture.root, TEMP: fixture.root },
+      });
+      assert.equal(localTemp.error, undefined); assert.equal(localTemp.status, 2);
+      assert.match(localTemp.stderr, /temporary directory outside/);
+      assert.deepEqual(await projectBytes(fixture.root), before);
+      command(fixture.root, "git", "config", "merge.fixture.driver", "false");
+      const configured = await projectBytes(fixture.root);
+      const driver = runSkill(...assessArgs(fixture, "--dry-run"));
+      assert.equal(driver.status, 2); assert.match(driver.stderr, /configured custom merge drivers: merge.fixture.driver/);
+      assert.deepEqual(await projectBytes(fixture.root), configured);
+    } finally { await rm(fixture.root, { recursive: true, force: true }); }
   });
 
   it("records only an exact reachable upstream merge parent", async () => {
@@ -233,7 +321,7 @@ describe("upstream-fork-sync skill", () => {
       const linkRoot = join(fixture.root, "linked-state");
       await symlink(join(fixture.root, ".agents/speculo", ".speculo"), linkRoot);
       const linked = runSkill(
-        "assess", "--root", fixture.root, "--state-root", join(linkRoot, "skills", "upstream-fork-sync"),
+        "assess", "--root", fixture.root, "--state-root", join(linkRoot, "commands", "upstream-fork-sync"),
         "--repository-map", fixture.repositoryMap, "--topic", "linked",
       );
       assert.equal(linked.status, 2);

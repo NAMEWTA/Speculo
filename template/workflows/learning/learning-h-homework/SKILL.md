@@ -20,11 +20,13 @@ metadata:
 
 ## 流程
 
+读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+
 1. 用户指定一个或多个 Lesson/OBJ 和题数（默认 5）。按 Lesson/OBJ 索引只读取对应课程正文、目标、来源和背景；不得把题目答案提前写入作业。
 2. 创建 `homework/HW-<NNN>-<slug>-attempt-01.md`，写元数据、Q1…、空白 A1… 和 `Submission: pending`，更新 `homework/INDEX.md`。
-3. 用户填写 A1…并在文件中加入精确行 `Submission: ready` 后再次激活 H。H 校验回答原文和提交标记，冻结问题/答案内容。
-4. 只在同一文件末尾追加 `## Review`：每题给出 `correct|partial|incorrect|uncertain`、证据覆盖、中文详细讲解、`Explain (English)`、误区和下一步，并记录引用的 Lesson/source anchor。
-5. 评审完成后更新 homework/immediate 投影；不写 mastered、不自动启动 R/C/A。重新作答必须创建新的 attempt 文件并链接旧 attempt，旧文件不可改写。
+3. 用户填写 A1…并将原提交标记替换成唯一精确行 `Submission: ready` 后再次激活 H。H 校验回答原文和提交标记，冻结问题/答案内容。
+4. 按证据合同先计算已提交原文指纹，再只在同一文件末尾追加 Review 骨架：记录指纹、实际时间、`Immediate result` 及目标判断依据；每个 `### Review Q<n>` 给出唯一 `verdict:`、证据覆盖、中文详细讲解、`Explain (English)`、误区和下一步，并记录引用的 Lesson/source anchor。
+5. 按实际评审结论更新 homework/immediate 投影；完成评审不自动等于通过，保留阻塞误区时不能标记 immediate passed。不写 mastered、不自动启动 R/C/A。重新作答必须创建新的 attempt 文件并链接旧 attempt，旧文件不可改写。
 
 ## 完成标准
 

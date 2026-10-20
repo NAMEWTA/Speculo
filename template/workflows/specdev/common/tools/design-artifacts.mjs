@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '../../../../lib/speculo-runtime.mjs';
 import * as runtime from '../../../../lib/speculo-runtime.mjs';
-import { resolveToolContext, canonicalToolPath, resolveSnapshotContext } from './plan-contract.mjs';
+import { resolveToolContext, canonicalToolPath } from './plan-contract.mjs';
 import * as schemas from '../../../../lib/design-validators.mjs';
 
 export const sha256 = value => createHash('sha256').update(value).digest('hex');
@@ -74,8 +74,6 @@ export function validateTokens(tokens) {
 }
 
 export function designContext(path, options = {}) {
-  if (options.readOnlySnapshot) return resolveSnapshotContext(options.readOnlySnapshot);
-  if (options.snapshotSpecdev) return resolveSnapshotContext({sourceContext:designContext(path,{...options,snapshotSpecdev:undefined}),specdevRoot:options.snapshotSpecdev});
   if (options.context) return resolveToolContext(path, {context:options.context});
   const stateParameter = options.stateRoot ? (isAbsolute(options.stateRoot) && options.repoRoot ? relative(resolve(options.repoRoot),options.stateRoot) : options.stateRoot) : undefined;
   const context = resolveToolContext(path, {repoRoot:options.repoRoot, methodRoot:options.methodRoot, stateRoot:stateParameter ? dirname(stateParameter) : undefined});
@@ -201,28 +199,22 @@ export async function validateArchived(path, options = {}) {
   const context = designContext(path, options), state = context.specdevRoot, name = basename(path);
   const location = runtime.resolveChangeSync(context, name, {includeArchived:true});
   if (location.root !== canonicalToolPath(context,path) || location.kind === 'active') throw new Error('archived change must resolve to its unique archive location');
-  let receipt={archive_state:'legacy-readonly',readonly:true};
-  if (location.kind === 'legacy-archive') {
-    // Historical evidence is never normalized, upgraded or written by this reader.
-    runtime.readLegacyChangeEvidenceSync(context, location);
-  } else {
-    receipt=await validateArchiveReceipt(context,location,options.sealed === true);
-    const { validateChangeClosure } = await import('./change-artifacts.mjs');
-    const closure = validateChangeClosure({context,change:name,forArchive:true});
-    if (closure.errors.length) throw new Error(closure.errors.join('\n'));
-    if (closure.scope === 'complex-preflight') {
-      const {validateChange} = await import('./validate-specdev.mjs');
-      const result = validateChange(path,'archive-ready',context.projectRoot,null,null,{context,readOnlySnapshot:context.readOnlySnapshot});
-      if (result.errors.length) throw new Error(result.errors.join('\n'));
-    }
+  const receipt = await validateArchiveReceipt(context, location, options.sealed === true);
+  const {validateChangeClosure} = await import('./change-artifacts.mjs');
+  const closure = validateChangeClosure({context, change:name, forArchive:true});
+  if (closure.errors.length) throw new Error(closure.errors.join('\n'));
+  if (closure.scope === 'complex-preflight') {
+    const {validateChange} = await import('./validate-specdev.mjs');
+    const result = validateChange(path, 'archive-ready', context.projectRoot, null, null, {context});
+    if (result.errors.length) throw new Error(result.errors.join('\n'));
   }
-  const cancelled = location.kind !== 'legacy-archive' && runtime.readChangeFactsSync(context,location).outcome === 'cancelled';
+  const cancelled = runtime.readChangeFactsSync(context, location).outcome === 'cancelled';
   if (await lstat(join(path, 'DESIGN.md')).catch(() => null)) {
-    const design = await validateChangeDesign(join(path, 'DESIGN.md'), {context,readOnlySnapshot:context.readOnlySnapshot,requireApproved:!cancelled});
+    const design = await validateChangeDesign(join(path, 'DESIGN.md'), {context,requireApproved:!cancelled});
     const packagePath = await safePath(path, `prototypes/${design.meta.prototype_ref.id}/design-system.md`);
     if (!cancelled && (await readDesign(packagePath)).meta.status !== 'ready') throw new Error('archived design references a prototype that is not ready');
     const { validate } = await import('../../specdev-p-prototype/scripts/validate-design-package.mjs');
-    await validate(packagePath, { checkReady: !cancelled, allowDraft:cancelled, context, readOnlySnapshot:context.readOnlySnapshot });
+    await validate(packagePath, { checkReady: !cancelled, allowDraft:cancelled, context });
   }
   const current = join(state, 'design/DESIGN.md');
   if (await lstat(current).catch(() => null)) {
@@ -260,7 +252,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const options = {};
   for (let i=0;i<args.length;i+=2) {
     if(args[i] === '--sealed' && operation === '--archived' && !options.sealed){options.sealed=true;i--;continue;}
-    const field = {'--repo':'repoRoot','--method-root':'methodRoot','--state-root':'stateRoot','--snapshot-specdev':'snapshotSpecdev'}[args[i]];
+    const field = {'--repo':'repoRoot','--method-root':'methodRoot','--state-root':'stateRoot'}[args[i]];
     if (!field || !args[i+1] || args[i+1].startsWith('--') || field in options) throw new Error('invalid explicit design context arguments');
     options[field] = args[i+1];
   }

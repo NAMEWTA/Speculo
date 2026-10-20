@@ -1,8 +1,10 @@
 ---
 homework_id: HW-<NNN>
 attempt: 01
+previous_attempt: null
 lesson_ids: [L-001]
 objective_ids: [OBJ-01]
+source_ids: [S-001]
 question_count: 5
 created_at: <ISO-8601>
 ---

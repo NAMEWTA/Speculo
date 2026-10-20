@@ -10,7 +10,7 @@ jobs:
   release:
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
-    name: Release to npm
+    name: Stage release for npm approval
     permissions:
       id-token: write
       contents: write
@@ -58,10 +58,30 @@ jobs:
             echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
           fi
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
+      - name: Upgrade npm CLI for staged publishing
+        run: npm install -g npm@latest
+
+      - name: Stage package on npm for maintainer approval
+        run: npm stage publish --provenance --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify npm staging
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const stages = JSON.parse(execFileSync('npm', ['stage', 'list', name, '--json', '--registry=https://registry.npmjs.org'], { encoding: 'utf8' }));
+          const staged = stages.find(item => item.packageName === name && item.version === version && item.tag === 'latest');
+          if (!staged?.id) throw new Error(`No staged latest release found for ${name}@${version}`);
+          const summary = `${name}@${version} staged successfully. Stage ID: ${staged.id}.\n\nAwaiting maintainer approval with 2FA in npmjs.com → Staged Packages. This version is not public until approved.\n`;
+          console.log(summary);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+          appendFileSync('release-notes.md', '\n> npm 包已暂存，等待维护者在 npmjs.com → Staged Packages 使用 2FA 确认。GitHub Release 创建成功不代表 npm 已公开上架。\n');
+          NODE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

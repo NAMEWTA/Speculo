@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:capability-profile:v1",
+  "title": "Declared host facts; structural validity is not a live capability probe or authorization",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "model",
+    "tools",
+    "execution",
+    "memory"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "id",
+        "modalities",
+        "context_window",
+        "max_output",
+        "reasoning_levels"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "modalities": {
+          "$ref": "#/$defs/strings"
+        },
+        "context_window": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "max_output": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "reasoning_levels": {
+          "$ref": "#/$defs/strings"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "if": {
+        "properties": {
+          "id": {
+            "not": {
+              "const": "unknown"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "context_window": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "max_output": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "object",
+      "required": [
+        "classes",
+        "parallel",
+        "programmatic"
+      ],
+      "properties": {
+        "classes": {
+          "$ref": "#/$defs/strings"
+        },
+        "parallel": {
+          "type": "boolean"
+        },
+        "programmatic": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "sandbox",
+        "network",
+        "filesystem_roots",
+        "data_retention"
+      ],
+      "properties": {
+        "sandbox": {
+          "type": "boolean"
+        },
+        "network": {
+          "type": "boolean"
+        },
+        "filesystem_roots": {
+          "$ref": "#/$defs/strings"
+        },
+        "data_retention": {
+          "enum": [
+            "none",
+            "session",
+            "persistent"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "memory": {
+      "type": "object",
+      "required": [
+        "compaction",
+        "persistent",
+        "cache"
+      ],
+      "properties": {
+        "compaction": {
+          "type": "boolean"
+        },
+        "persistent": {
+          "type": "boolean"
+        },
+        "cache": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, validateChange, pathsOverlap } from './validate-specdev.mjs';
 import { CHANGE_ID, digest, findGraphCycle, resolveProjectSource, validateGoalMap, resolveToolContext, validateExecutionPolicy, canonicalToolPath } from './plan-contract.mjs';
 import { readExecutionContext, ticketPolicy } from './execution-context.mjs';
+import { diagnosticErrors, appendDiagnostics, partitionDiagnostics } from './validation-diagnostics.mjs';
 import * as runtime from '../../../../lib/speculo-runtime.mjs';
 
 const terminal = new Set(['done','cancelled']);
@@ -56,7 +57,8 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   mapPath = canonicalToolPath(context, mapPath);
   runtime.readChangeFactsSync(context, basename(root));
   let entry = readArtifact(mapPath);
-  const errors = [], warnings = [], nodes = new Map(), memberRoots = new Map(), serializations = new Set();
+  const errors = diagnosticErrors({code:'dispatch-structure-invalid',scope:'global'});
+  const warnings = [], nodes = new Map(), memberRoots = new Map(), serializations = new Set();
   let parent = false;
   if (entry.meta.artifact === 'goal-tickets-map') {
     errors.push(...validateGoalMap(entry,root));
@@ -123,31 +125,10 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
   // Reuse existing stage gates. Local diagnostics block their owner, structural ones block dispatch.
   const validation = validateChange(root,parent ? 'goal-plan' : 'tickets',repoRoot,null,null,{context});
   warnings.push(...validation.warnings);
-  for (const error of validation.errors) {
-    let assigned = false;
-    for (const node of nodes.values()) {
-      const prefix = parent ? `${node.member}: ` : '';
-      const detail = prefix && error.startsWith(prefix) ? error.slice(prefix.length) : !parent ? error : null;
-      if (detail !== null && (detail.startsWith(`${basename(node.artifact.path)}:`) || detail.startsWith(`${node.artifact.meta.id}:`))) {
-        node.validationErrors.push(error);assigned = true;
-      }
-    }
-    if (!assigned && parent) {
-      for (const member of members) if (error.startsWith(`${member}: `)) {
-        for (const node of nodes.values()) if (node.member === member) node.validationErrors.push(error);
-        assigned = true;
-      }
-      if (error.startsWith('member changes already belong to unfinished parent implementation')) {
-        const bracket = error.indexOf('[');
-        try {
-          const overlapping = JSON.parse(error.slice(bracket));
-          for (const node of nodes.values()) if (overlapping.includes(node.member)) node.validationErrors.push(error);
-          assigned = true;
-        } catch { /* keep an unparseable ownership problem global */ }
-      }
-    }
-    if (!assigned) errors.push(error);
-  }
+  const classified = partitionDiagnostics(validation.diagnostics,
+    new Map([...nodes].map(([id, node]) => [id, {member: node.member, ticket: node.artifact.meta.id}])));
+  appendDiagnostics(errors, {diagnostics: classified.global});
+  for (const [id, records] of classified.byTask) nodes.get(id).validationErrors.push(...records.map(item => item.message));
   for (const node of nodes.values()) {
     node.reasons.push(...node.validationErrors);
     if (!terminal.has(node.artifact.meta.status) && (plan && plan.meta.ready_for_execution !== true)) node.reasons.push('Goal planning gate is not ready for execution');
@@ -225,13 +206,16 @@ export function analyzeMap({ mapPath, repoRoot, methodRoot, stateRoot, context: 
     deferred, in_flight:active.map(node => ({id:node.id,owner:node.artifact.meta.owner})),
     done, cancelled, blocked, invalidated:[...invalidated].sort(),
     eligible_for_final_verification:errors.length === 0 && blocked.length === 0 && active.length === 0 && done.length + cancelled.length === nodes.size,
+    diagnostics:[...errors.diagnostics, ...new Set([...classified.byTask.values()].flat())],
     validation_errors:nodeErrors, errors:[...new Set(errors)], warnings,
     next: 'Lead must verify real authorization, existing transaction/ownership gateways, Skill execution and Goal acceptance; this output does not execute anything.'
   };
   return result;
 }
 function failure(errors) {
-  return {schema_version:2,mode:'read-only-analysis',frontier:[],errors,validation_errors:[],eligible_for_final_verification:false};
+  return {schema_version:2,mode:'read-only-analysis',frontier:[],errors:[...errors],
+    diagnostics:errors.diagnostics ?? errors.map(message=>({code:'dispatch-structure-invalid',scope:'global',message})),
+    validation_errors:[],eligible_for_final_verification:false};
 }
 function main(args) {
   const options = {};

@@ -39,10 +39,7 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 4. 读取目标仓库，做编程库存：C4 Context + Container、公开入口、主数据存储、一条主路径与一条失败路径、按模块归组的范围内函数。琐碎 helper、生成代码、测试夹具标 `covered-by-parent` 或 `deferred`，不为它们开课。Lead 可派只读库存员。
 5. 若本 Change 尚无可用 `course.md`，跟随 `<Path>{roots.workflows}/learning/learning-a-assess-and-plan/SKILL.md</Path>` 写出 `course.md`、`background/foundation.md`、`baseline.md`、`sources.md` 和 Change `INDEX.md`。这些文件仍归 A 所有；本 Work 只在编译计划时走 A 合同。已有课程地图则核对，不默默重写。
 6. 按模式表的 Goal-Plan 模板及 `<Path>{roots.workflows}/learning/learning-g-goal/assets/chain-template.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/assets/coverage-matrix-template.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/assets/progress-template.md</Path>` 写出完整计划，禁止留下「待调研」章节，禁止预写探针题目或深化讲义；按库存把课装进 mine unit（每个 ≤15 节，写入 `chain.md` Units 表）：
-   - `<Path>{roots.state}/learning/changes/{change}/goal/goal-plan.md</Path>`
-   - `<Path>{roots.state}/learning/changes/{change}/goal/chain.md</Path>`
-   - `<Path>{roots.state}/learning/changes/{change}/goal/coverage-matrix.md</Path>`
-   - `<Path>{roots.state}/learning/changes/{change}/goal/progress.md</Path>`（检查点骨架）
+   - 当前 Change locator 下的 `goal/goal-plan.md`、`goal/chain.md`、`goal/coverage-matrix.md` 与 `goal/progress.md`（检查点骨架）。恢复已有 Change 时先按 locations 解析，禁止把已嵌入子树的 Change 重新写到顶层 `changes/`。
 7. 计划必须内嵌可粘贴的 `/goal` 启动块，并列出最小读取清单。覆盖规则读 `<Path>{roots.workflows}/learning/learning-g-goal/references/coverage-bar.md</Path>`；停止规则读 `<Path>{roots.workflows}/learning/learning-g-goal/references/stop-rules.md</Path>`；执行器合同读 `<Path>{roots.workflows}/learning/learning-g-goal/references/external-goal-runner.md</Path>`。
 8. 设置 `ready_for_execution: false`。更新 `learning-log.md` 与 Change `.status.json`：`works_run` 追加 `learning/goal`，清空 `current_work`。向用户打印 Goal-Plan 路径和 `/goal` 粘贴块。
 9. 停止。不写 `lessons/`，不写 `goal/probes/`，不创建 `inquiry/` 批次，不自动激活 L/H/R/C/A-archive，不写 mastered。
