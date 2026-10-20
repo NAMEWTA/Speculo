@@ -8914,6 +8914,7 @@
     "test/helpers/design-fixture.ts",
     "test/helpers/review-fixture.ts",
     "test/hub-skills.test.ts",
+    "test/install-ui-clack.test.ts",
     "test/install-ui.test.ts",
     "test/learning-evidence.test.ts",
     "test/learning-relocation.test.ts",
@@ -8955,6 +8956,6 @@
       "moved": 343,
       "moved-and-rewritten": 313
     },
-    "added": 457
+    "added": 458
   }
 }
