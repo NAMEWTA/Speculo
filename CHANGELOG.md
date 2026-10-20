@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.8] - 2026-10-20
+
 ### Changed
 
 - Unify current workflow manifest and capability-profile validation across discovery, installation, doctor and portable assets. Keep domain lifecycles with their original owners, and regenerate the shared runtime, validators and complete Canonical documents from source.
@@ -14,9 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Share dependency-free OPS resource semantics between installation and standalone tools. Separate package, installed-method and explicit state-root checks; retain unknown probe outcomes with controlled diagnostic categories and project-owned business verification recipes.
 - Connect deterministic installed-CLI artifact scenarios to CI, retaining actual process logs, file inventories and failures. Distinguish fixture readiness, artifact checks, authenticated observed gates and publication authority.
 - Make Command root discovery and domain delegation self-contained. Keep upstream dry-runs byte-preserving even for first-use stdin configuration and Git merge analysis; ship the source packaging entry as CommonJS in both module environments.
+- Upgrade terminal dependencies to `@clack/prompts` 1.8.1, `string-width` 8.3.0 and `wrap-ansi` 10.0.2.
 
 ### Fixed
 
+- Preserve distinct installation completion, cancellation and failure outcomes with the current Clack APIs; retain the existing Chinese keyboard instructions without duplicate prompts and remove the obsolete color-library patch.
 - Make Learning consolidation journaled and recoverable with exact input digests, owned locks, complete descendant locators, idempotent resume/rollback and concurrent-drift protection. Recheck terminal transaction direction instead of accepting the opposite complete image.
 - Validate Learning time budgets, actual source/objective references, exact submission markers, frozen original answers and delayed retention evidence. Require an explicit supported immediate result; reviewed, incorrect or blocked Homework cannot silently certify mastery.
 - Correct the Media Python renderer's shared-tool path in installed packages. Bind reports to actual input and execution identity, and require final delivery to consume complete review gates, preview/still bytes, media signatures and declared artifact dependencies.
@@ -1120,7 +1124,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.8...HEAD
+[2.1.8]: https://github.com/NAMEWTA/Speculo/compare/v2.1.7...v2.1.8
 [2.1.1]: https://github.com/NAMEWTA/Speculo/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/NAMEWTA/Speculo/compare/v2.0.5...v2.0.6
