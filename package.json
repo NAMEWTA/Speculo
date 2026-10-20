@@ -84,7 +84,7 @@
     "picocolors": "1.1.1",
     "read-cmd-shim": "^5.0.0",
     "semver": "^7.8.5",
-    "string-width": "7.2.0",
+    "string-width": "8.3.0",
     "wrap-ansi": "9.0.0",
     "yaml": "^2.9.1"
   }
