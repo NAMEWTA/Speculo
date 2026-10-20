@@ -1,10 +1,11 @@
-import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { assertJsonObject, type JsonObject } from "./config.js";
 import { pathExists } from "./utils.js";
 import { validateOpsResources } from "./ops-resources.js";
 import { validateMediaState } from "./media-state.js";
-import { discoverChangesSync, readChangeFactsSync, safeWorkPathSync } from "./specdev-artifacts.js";
+import { assertMarkdownProtocolSync, discoverChangesSync, readChangeFactsSync, safeWorkPathSync } from "./specdev-artifacts.js";
 
 const CHANGE_NAME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -57,22 +58,91 @@ async function validateSpecdevState(stagedRoot: string): Promise<void> {
   const stateRoot = join(stagedRoot, ".speculo", "specdev");
   if (!(await pathExists(stateRoot))) return;
   safeWorkPathSync(join(stagedRoot, ".speculo"), "specdev", { mustExist: true, type: "directory" });
-  for (const legacy of ["status.json", ".markdown-conversion-pending"]) {
-    if (await pathExists(join(stateRoot, legacy))) throw new Error("SpecDev requires explicit Markdown conversion/recovery before refresh: " + legacy);
-  }
-  for (const location of discoverChangesSync(stateRoot, { includeArchived: true, includeLegacy: true })) {
-    // Frozen historical bytes are deliberately neither upgraded nor rewritten.
-    if (location.kind !== "legacy-archive") readChangeFactsSync(stateRoot, location);
-  }
+  assertMarkdownProtocolSync(stateRoot);
+  for (const location of discoverChangesSync(stateRoot, { includeArchived: true })) readChangeFactsSync(stateRoot, location);
 }
 
-async function validatePersonState(stagedRoot: string): Promise<void> {
-  const statusPath = join(stagedRoot, ".speculo", "person", "status.json");
-  if (!(await pathExists(statusPath))) return;
-  const status = await readObject(statusPath, ".speculo/person/status.json");
-  if (status.schema_version !== 1 || status.workflow !== "person" || !Array.isArray(status.active)) {
-    throw new Error("Person status must use schema v1 with an active array");
+const MAO_WORK = "person/mao-zedong-cognitive-os";
+const STEELMAN_WORK = "person/steelman-deliberation";
+const PERSON_SCALARS = ["problem_type", "primary_framework", "models_applied", "frameworks_applied", "methods_applied", "quotes_cited", "consultation_status"];
+const STEELMAN_PHASES = ["intake", "deliberating", "awaiting-answer", "judging", "completed", "blocked", "reframe-required"];
+type ConsultationStructureValidator = { validateConsultationStructure(state: JsonObject, options: { change: string }): string[] };
+
+function personNeed(ok: unknown, reason: string): asserts ok {
+  if (!ok) throw new Error("unsupported-person-state: " + reason + "; preserve bytes and resolve with the Change owner before refresh");
+}
+function personDate(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(value);
+  return Boolean(parts && Number(parts[2]) >= 1 && Number(parts[2]) <= 12 && Number(parts[3]) >= 1 && Number(parts[3]) <= new Date(Date.UTC(Number(parts[1]), Number(parts[2]), 0)).getUTCDate() && Number(parts[4]) < 24 && Number(parts[5]) < 60 && Number(parts[6]) < 60 && Number.isFinite(Date.parse(value)));
+}
+let consultationValidator: Promise<ConsultationStructureValidator> | undefined;
+function consultationStructureValidator(): Promise<ConsultationStructureValidator> {
+  // Use the immutable package code in either source or compiled npm layout.
+  // Never import a script from the staged/user installation during refresh.
+  const source = "template/workflows/person/person-m-mao-zedong-cognitive-os/scripts/consultation-state.mjs";
+  const url = [new URL("../" + source, import.meta.url), new URL("../../" + source, import.meta.url)].find(path => existsSync(path));
+  if (!url) throw new Error("Person structural validator is missing from the package");
+  return consultationValidator ??= import(url.href) as Promise<ConsultationStructureValidator>;
+}
+async function validatePersonChange(value: JsonObject, change: string): Promise<void> {
+  personNeed(value.schema_version === 1 && value.artifact === "person-work-status" && value.workflow === "person" && value.change === change, "Change identity/schema disagrees with " + change);
+  personNeed([MAO_WORK, STEELMAN_WORK].includes(String(value.work_id)), "unknown Change owner for " + change);
+  if (value.work_id === MAO_WORK) {
+    const errors = (await consultationStructureValidator()).validateConsultationStructure(value, { change });
+    personNeed(!errors.length, change + ": " + errors.join("; "));
+    return;
   }
+  personNeed(typeof value.phase === "string" && STEELMAN_PHASES.includes(value.phase) && ["active", "blocked", "completed"].includes(String(value.status)), "Steelman phase/status for " + change);
+  personNeed((value.phase === "completed") === (value.status === "completed"), "Steelman completion identity for " + change);
+  personNeed(personDate(value.created_at) && personDate(value.updated_at) && Date.parse(value.created_at) <= Date.parse(value.updated_at), "Steelman timestamps for " + change);
+  personNeed(value.completed_at === null || personDate(value.completed_at), "Steelman completed_at for " + change);
+  personNeed((value.phase === "completed") === (value.completed_at !== null), "Steelman completion timestamp for " + change);
+  if (personDate(value.completed_at)) personNeed(Date.parse(value.completed_at) >= Date.parse(value.created_at) && Date.parse(value.completed_at) <= Date.parse(value.updated_at), "Steelman completion timestamp range for " + change);
+  assertUniqueStrings(value.blockers, "Person Steelman blockers");
+  personNeed(value.key_question === null || typeof value.key_question === "string", "Steelman key_question type for " + change);
+  personNeed(typeof value.key_question_asked === "boolean" && typeof value.answer_received === "boolean" && (value.user_answer === null || typeof value.user_answer === "string"), "Steelman question/answer types for " + change);
+  personNeed(value.question_disposition === null || ["asked", "already-answered"].includes(String(value.question_disposition)), "Steelman question_disposition for " + change);
+  // Content, the frozen dossier, answer sufficiency and decision qualification
+  // belong to the Work's publication validator, not the installer.
+}
+
+/** Installation integrity only: read formal per-Change state and its index.
+ * Candidates, dossiers, book sources and publish/recovery tools are not run. */
+async function validatePersonState(stagedRoot: string): Promise<void> {
+  const stateRoot = safeWorkPathSync(stagedRoot, ".speculo/person", { type: "directory" });
+  if (!(await pathExists(stateRoot))) return;
+  const statusPath = safeWorkPathSync(stateRoot, "status.json", { mustExist: true, type: "file" });
+  const status = await readObject(statusPath, ".speculo/person/status.json");
+  personNeed(status.schema_version === 1 && status.workflow === "person" && Array.isArray(status.active), "global schema v1 and active array required");
+  personNeed(!PERSON_SCALARS.some(key => key in status), "consultation fields belong to a Change, not the global index");
+  const entries = new Map<string, JsonObject>();
+  for (const candidate of status.active) {
+    assertJsonObject(candidate, "Person active entry");
+    personNeed(typeof candidate.change === "string" && CHANGE_NAME.test(candidate.change) && !entries.has(candidate.change), "invalid/duplicate active Change ID");
+    personNeed([MAO_WORK, STEELMAN_WORK].includes(String(candidate.work_id)) && typeof candidate.phase === "string" && personDate(candidate.updated_at), "active owner/phase/timestamp for " + candidate.change);
+    personNeed(!PERSON_SCALARS.some(key => key in candidate), "consultation fields belong to the formal Change state");
+    entries.set(candidate.change, candidate);
+  }
+  const changesRoot = safeWorkPathSync(stateRoot, "changes", { type: "directory" });
+  const seen = new Set<string>();
+  if (await pathExists(changesRoot)) for (const entry of await readdir(changesRoot, { withFileTypes: true })) {
+    // Unknown material is retained; only direct Change state is authoritative.
+    // Nested .steelman-stage/.status.json is deliberately outside this scan.
+    if (!CHANGE_NAME.test(entry.name)) continue;
+    const changeRoot = safeWorkPathSync(changesRoot, entry.name, { mustExist: true, type: "directory" });
+    const path = safeWorkPathSync(changeRoot, ".status.json", { type: "file" });
+    if (!(await pathExists(path))) continue;
+    const state = await readObject(path, "Person Change " + entry.name);
+    await validatePersonChange(state, entry.name);
+    seen.add(entry.name);
+    const indexed = entries.get(entry.name);
+    if (indexed) personNeed(state.status !== "completed" && state.work_id === indexed.work_id && state.phase === indexed.phase && state.updated_at === indexed.updated_at, "global/Change projections disagree for " + entry.name);
+    // Steelman's already-answered branch goes directly to judging and never
+    // creates a waiting item. Mao indexes each published active consultation.
+    if ((state.work_id === MAO_WORK && state.status === "active") || state.phase === "awaiting-answer") personNeed(indexed, "missing active projection for " + entry.name);
+  }
+  for (const change of entries.keys()) personNeed(seen.has(change), "indexed Change has no formal state: " + change);
 }
 
 function assertLearningWork(value: unknown, label: string): void {

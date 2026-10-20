@@ -96,8 +96,8 @@ test('retro remediation does not add automatic prompt, knowledge or remote write
   const draft = await read('template/references/retrospective/references/issue-drafting-sop.md');
   assert.match(draft, /"regression"/); assert.match(draft, /不写文件、不调用 `gh`、不创建 issue/);
 });
-test('native OPS self-check still passes without changing its engine or schemas', () => {
+test('OPS installed self-check verifies static assets without implying target acceptance', () => {
   const run = spawnSync(process.execPath, ['template/workflows/ops/common/tools/validate-ops.mjs', '--self-check'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stdout + run.stderr);
-  assert.match(run.stdout, /not live target acceptance/);
+  assert.match(run.stdout, /no state inferred or target contacted/);
 });

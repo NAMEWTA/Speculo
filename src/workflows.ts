@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseFrontmatter, validateSkill } from "./assets.js";
 import { pathExists } from "./utils.js";
+import { validateWorkflowManifest } from "./contracts.js";
 export type WorkflowPackage = { id:string; name:string; displayName:string; description:string };
 export type WorkflowCatalog = Map<string,WorkflowPackage>;
 export type WorkflowSelection = {workflowIds:string[]};
@@ -16,7 +17,8 @@ async function discover(root:string):Promise<WorkflowCatalog>{
   const errors=validateSkill(content,entry.name);if(errors.length)throw new Error(`${folder}: ${errors.join('; ')}`);
   const {fields}=parseFrontmatter(content), metadata=fields.metadata as Record<string,string>;
   const manifest=JSON.parse(await readFile(join(folder,'manifest.json'),'utf8'));
-  if(metadata?.['speculo-id']!==`domain/${entry.name}`||manifest.schema_version!==2||manifest.id!==entry.name)throw new Error(`invalid-domain-manifest: ${entry.name}`);
+  validateWorkflowManifest(manifest, entry.name);
+  if(metadata?.['speculo-id']!==`domain/${entry.name}`)throw new Error(`invalid-domain-manifest: ${entry.name}`);
   catalog.set(entry.name,{id:entry.name,name:entry.name,displayName:entry.name,description:fields.description as string});
  }
  return catalog;

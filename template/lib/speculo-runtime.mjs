@@ -792,7 +792,7 @@ var require_createNode = __commonJS({
       if (value instanceof String || value instanceof Number || value instanceof Boolean || typeof BigInt !== "undefined" && value instanceof BigInt) {
         value = value.valueOf();
       }
-      const { aliasDuplicateObjects, onAnchor, onTagObj, schema, sourceObjects } = ctx;
+      const { aliasDuplicateObjects, onAnchor, onTagObj, schema: schema2, sourceObjects } = ctx;
       let ref = void 0;
       if (aliasDuplicateObjects && value && typeof value === "object") {
         ref = sourceObjects.get(value);
@@ -806,7 +806,7 @@ var require_createNode = __commonJS({
       }
       if (tagName?.startsWith("!!"))
         tagName = defaultTagPrefix + tagName.slice(2);
-      let tagObj = findTagObject(value, tagName, schema.tags);
+      let tagObj = findTagObject(value, tagName, schema2.tags);
       if (!tagObj) {
         if (value && typeof value.toJSON === "function") {
           value = value.toJSON();
@@ -817,7 +817,7 @@ var require_createNode = __commonJS({
             ref.node = node2;
           return node2;
         }
-        tagObj = value instanceof Map ? schema[identity.MAP] : Symbol.iterator in Object(value) ? schema[identity.SEQ] : schema[identity.MAP];
+        tagObj = value instanceof Map ? schema2[identity.MAP] : Symbol.iterator in Object(value) ? schema2[identity.SEQ] : schema2[identity.MAP];
       }
       if (onTagObj) {
         onTagObj(tagObj);
@@ -843,7 +843,7 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path, value) {
+    function collectionFromPath(schema2, path, value) {
       let v = value;
       for (let i = path.length - 1; i >= 0; --i) {
         const k = path[i];
@@ -861,16 +861,16 @@ var require_Collection = __commonJS({
         onAnchor: () => {
           throw new Error("This should not happen, please report a bug.");
         },
-        schema,
+        schema: schema2,
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
     var isEmptyPath = (path) => path == null || typeof path === "object" && !!path[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
-      constructor(type, schema) {
+      constructor(type, schema2) {
         super(type);
         Object.defineProperty(this, "schema", {
-          value: schema,
+          value: schema2,
           configurable: true,
           enumerable: false,
           writable: true
@@ -881,11 +881,11 @@ var require_Collection = __commonJS({
        *
        * @param schema - If defined, overwrites the original's schema
        */
-      clone(schema) {
+      clone(schema2) {
         const copy = Object.create(Object.getPrototypeOf(this), Object.getOwnPropertyDescriptors(this));
-        if (schema)
-          copy.schema = schema;
-        copy.items = copy.items.map((it) => identity.isNode(it) || identity.isPair(it) ? it.clone(schema) : it);
+        if (schema2)
+          copy.schema = schema2;
+        copy.items = copy.items.map((it) => identity.isNode(it) || identity.isPair(it) ? it.clone(schema2) : it);
         if (this.range)
           copy.range = this.range.slice();
         return copy;
@@ -1837,12 +1837,12 @@ var require_Pair = __commonJS({
         this.key = key;
         this.value = value;
       }
-      clone(schema) {
+      clone(schema2) {
         let { key, value } = this;
         if (identity.isNode(key))
-          key = key.clone(schema);
+          key = key.clone(schema2);
         if (identity.isNode(value))
-          value = value.clone(schema);
+          value = value.clone(schema2);
         return new _Pair(key, value);
       }
       toJSON(_, ctx) {
@@ -2035,17 +2035,17 @@ var require_YAMLMap = __commonJS({
       static get tagName() {
         return "tag:yaml.org,2002:map";
       }
-      constructor(schema) {
-        super(identity.MAP, schema);
+      constructor(schema2) {
+        super(identity.MAP, schema2);
         this.items = [];
       }
       /**
        * A generic collection parsing method that can be extended
        * to other node classes that inherit from YAMLMap
        */
-      static from(schema, obj, ctx) {
+      static from(schema2, obj, ctx) {
         const { keepUndefined, replacer } = ctx;
-        const map = new this(schema);
+        const map = new this(schema2);
         const add = (key, value) => {
           if (typeof replacer === "function")
             value = replacer.call(obj, key, value);
@@ -2061,8 +2061,8 @@ var require_YAMLMap = __commonJS({
           for (const key of Object.keys(obj))
             add(key, obj[key]);
         }
-        if (typeof schema.sortMapEntries === "function") {
-          map.items.sort(schema.sortMapEntries);
+        if (typeof schema2.sortMapEntries === "function") {
+          map.items.sort(schema2.sortMapEntries);
         }
         return map;
       }
@@ -2169,7 +2169,7 @@ var require_map = __commonJS({
           onError("Expected a mapping for this tag");
         return map2;
       },
-      createNode: (schema, obj, ctx) => YAMLMap.YAMLMap.from(schema, obj, ctx)
+      createNode: (schema2, obj, ctx) => YAMLMap.YAMLMap.from(schema2, obj, ctx)
     };
     exports.map = map;
   }
@@ -2189,8 +2189,8 @@ var require_YAMLSeq = __commonJS({
       static get tagName() {
         return "tag:yaml.org,2002:seq";
       }
-      constructor(schema) {
-        super(identity.SEQ, schema);
+      constructor(schema2) {
+        super(identity.SEQ, schema2);
         this.items = [];
       }
       add(value) {
@@ -2265,9 +2265,9 @@ var require_YAMLSeq = __commonJS({
           onComment
         });
       }
-      static from(schema, obj, ctx) {
+      static from(schema2, obj, ctx) {
         const { replacer } = ctx;
-        const seq = new this(schema);
+        const seq = new this(schema2);
         if (obj && Symbol.iterator in Object(obj)) {
           let i = 0;
           for (let it of obj) {
@@ -2307,7 +2307,7 @@ var require_seq = __commonJS({
           onError("Expected a sequence for this tag");
         return seq2;
       },
-      createNode: (schema, obj, ctx) => YAMLSeq.YAMLSeq.from(schema, obj, ctx)
+      createNode: (schema2, obj, ctx) => YAMLSeq.YAMLSeq.from(schema2, obj, ctx)
     };
     exports.seq = seq;
   }
@@ -2503,7 +2503,7 @@ var require_schema = __commonJS({
     var bool = require_bool();
     var float = require_float();
     var int = require_int();
-    var schema = [
+    var schema2 = [
       map.map,
       seq.seq,
       string.string,
@@ -2516,7 +2516,7 @@ var require_schema = __commonJS({
       float.floatExp,
       float.float
     ];
-    exports.schema = schema;
+    exports.schema = schema2;
   }
 });
 
@@ -2582,8 +2582,8 @@ var require_schema2 = __commonJS({
         return str;
       }
     };
-    var schema = [map.map, seq.seq].concat(jsonScalars, jsonError);
-    exports.schema = schema;
+    var schema2 = [map.map, seq.seq].concat(jsonScalars, jsonError);
+    exports.schema = schema2;
   }
 });
 
@@ -2687,9 +2687,9 @@ ${cn.comment}` : item.comment;
         onError("Expected a sequence for this tag");
       return seq;
     }
-    function createPairs(schema, iterable, ctx) {
+    function createPairs(schema2, iterable, ctx) {
       const { replacer } = ctx;
-      const pairs2 = new YAMLSeq.YAMLSeq(schema);
+      const pairs2 = new YAMLSeq.YAMLSeq(schema2);
       pairs2.tag = "tag:yaml.org,2002:pairs";
       let i = 0;
       if (iterable && Symbol.iterator in Object(iterable))
@@ -2774,8 +2774,8 @@ var require_omap = __commonJS({
         }
         return map;
       }
-      static from(schema, iterable, ctx) {
-        const pairs$1 = pairs.createPairs(schema, iterable, ctx);
+      static from(schema2, iterable, ctx) {
+        const pairs$1 = pairs.createPairs(schema2, iterable, ctx);
         const omap2 = new this();
         omap2.items = pairs$1.items;
         return omap2;
@@ -2802,7 +2802,7 @@ var require_omap = __commonJS({
         }
         return Object.assign(new YAMLOMap(), pairs$1);
       },
-      createNode: (schema, iterable, ctx) => YAMLOMap.from(schema, iterable, ctx)
+      createNode: (schema2, iterable, ctx) => YAMLOMap.from(schema2, iterable, ctx)
     };
     exports.YAMLOMap = YAMLOMap;
     exports.omap = omap;
@@ -2977,8 +2977,8 @@ var require_set = __commonJS({
     var Pair = require_Pair();
     var YAMLMap = require_YAMLMap();
     var YAMLSet = class _YAMLSet extends YAMLMap.YAMLMap {
-      constructor(schema) {
-        super(schema);
+      constructor(schema2) {
+        super(schema2);
         this.tag = _YAMLSet.tag;
       }
       add(key) {
@@ -3022,9 +3022,9 @@ var require_set = __commonJS({
         else
           throw new Error("Set items must all have null values");
       }
-      static from(schema, iterable, ctx) {
+      static from(schema2, iterable, ctx) {
         const { replacer } = ctx;
-        const set2 = new this(schema);
+        const set2 = new this(schema2);
         if (iterable && Symbol.iterator in Object(iterable))
           for (let value of iterable) {
             if (typeof replacer === "function")
@@ -3041,7 +3041,7 @@ var require_set = __commonJS({
       nodeClass: YAMLSet,
       default: false,
       tag: "tag:yaml.org,2002:set",
-      createNode: (schema, iterable, ctx) => YAMLSet.from(schema, iterable, ctx),
+      createNode: (schema2, iterable, ctx) => YAMLSet.from(schema2, iterable, ctx),
       resolve(map, onError) {
         if (identity.isMap(map)) {
           if (map.hasAllNullValues(true))
@@ -3163,7 +3163,7 @@ var require_schema3 = __commonJS({
     var pairs = require_pairs();
     var set = require_set();
     var timestamp = require_timestamp();
-    var schema = [
+    var schema2 = [
       map.map,
       seq.seq,
       string.string,
@@ -3186,7 +3186,7 @@ var require_schema3 = __commonJS({
       timestamp.floatTime,
       timestamp.timestamp
     ];
-    exports.schema = schema;
+    exports.schema = schema2;
   }
 });
 
@@ -3201,7 +3201,7 @@ var require_tags = __commonJS({
     var bool = require_bool();
     var float = require_float();
     var int = require_int();
-    var schema = require_schema();
+    var schema2 = require_schema();
     var schema$1 = require_schema2();
     var binary = require_binary();
     var merge = require_merge();
@@ -3211,7 +3211,7 @@ var require_tags = __commonJS({
     var set = require_set();
     var timestamp = require_timestamp();
     var schemas = /* @__PURE__ */ new Map([
-      ["core", schema.schema],
+      ["core", schema2.schema],
       ["failsafe", [map.map, seq.seq, string.string]],
       ["json", schema$1.schema],
       ["yaml11", schema$2.schema],
@@ -3295,9 +3295,9 @@ var require_Schema = __commonJS({
     var tags = require_tags();
     var sortMapEntriesByKey = (a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
     var Schema = class _Schema {
-      constructor({ compat, customTags, merge, resolveKnownTags, schema, sortMapEntries, toStringDefaults }) {
+      constructor({ compat, customTags, merge, resolveKnownTags, schema: schema2, sortMapEntries, toStringDefaults }) {
         this.compat = Array.isArray(compat) ? tags.getTags(compat, "compat") : compat ? tags.getTags(null, compat) : null;
-        this.name = typeof schema === "string" && schema || "core";
+        this.name = typeof schema2 === "string" && schema2 || "core";
         this.knownTags = resolveKnownTags ? tags.coreKnownTags : {};
         this.tags = tags.getTags(customTags, this.name, merge);
         this.toStringOptions = toStringDefaults ?? null;
@@ -4886,11 +4886,11 @@ var require_compose_scalar = __commonJS({
         scalar.comment = comment;
       return scalar;
     }
-    function findScalarTagByName(schema, value, tagName, tagToken, onError) {
+    function findScalarTagByName(schema2, value, tagName, tagToken, onError) {
       if (tagName === "!")
-        return schema[identity.SCALAR];
+        return schema2[identity.SCALAR];
       const matchWithTest = [];
-      for (const tag of schema.tags) {
+      for (const tag of schema2.tags) {
         if (!tag.collection && tag.tag === tagName) {
           if (tag.default && tag.test)
             matchWithTest.push(tag);
@@ -4901,18 +4901,18 @@ var require_compose_scalar = __commonJS({
       for (const tag of matchWithTest)
         if (tag.test?.test(value))
           return tag;
-      const kt = schema.knownTags[tagName];
+      const kt = schema2.knownTags[tagName];
       if (kt && !kt.collection) {
-        schema.tags.push(Object.assign({}, kt, { default: false, test: void 0 }));
+        schema2.tags.push(Object.assign({}, kt, { default: false, test: void 0 }));
         return kt;
       }
       onError(tagToken, "TAG_RESOLVE_FAILED", `Unresolved tag: ${tagName}`, tagName !== "tag:yaml.org,2002:str");
-      return schema[identity.SCALAR];
+      return schema2[identity.SCALAR];
     }
-    function findScalarTagByTest({ atKey, directives, schema }, value, token, onError) {
-      const tag = schema.tags.find((tag2) => (tag2.default === true || atKey && tag2.default === "key") && tag2.test?.test(value)) || schema[identity.SCALAR];
-      if (schema.compat) {
-        const compat = schema.compat.find((tag2) => tag2.default && tag2.test?.test(value)) ?? schema[identity.SCALAR];
+    function findScalarTagByTest({ atKey, directives, schema: schema2 }, value, token, onError) {
+      const tag = schema2.tags.find((tag2) => (tag2.default === true || atKey && tag2.default === "key") && tag2.test?.test(value)) || schema2[identity.SCALAR];
+      if (schema2.compat) {
+        const compat = schema2.compat.find((tag2) => tag2.default && tag2.test?.test(value)) ?? schema2[identity.SCALAR];
         if (tag.tag !== compat.tag) {
           const ts = directives.tagString(tag.tag);
           const cs = directives.tagString(compat.tag);
@@ -7510,6 +7510,56 @@ async function pathExists(path) {
   }
 }
 
+// src/contracts.ts
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+var validators;
+function schema(name, value, label) {
+  if (!validators) {
+    const urls = ["./contract-validators.cjs", "../template/lib/contract-validators.cjs", "../../template/lib/contract-validators.cjs"];
+    const path = urls.map((url) => fileURLToPath(new URL(url, import.meta.url))).find(existsSync);
+    if (!path) throw new Error("missing-contract-validators: regenerate the method package");
+    validators = createRequire(import.meta.url)(path);
+  }
+  const validate = validators[name];
+  if (!validate || !validate(value)) throw new Error(`${label}: ${JSON.stringify(validate?.errors ?? "missing validator")}`);
+}
+function validateWorkflowManifest(value, domain) {
+  schema("workflowManifest", value, "invalid-domain-manifest");
+  const manifest = value;
+  const invalid = (detail) => {
+    throw new Error(`invalid-domain-manifest: ${manifest.id}: ${detail}`);
+  };
+  if (domain !== void 0 && manifest.id !== domain) invalid("id does not match directory");
+  const registered = new Set(manifest.works);
+  if (Object.keys(manifest.work_stages).length !== registered.size || Object.keys(manifest.work_stages).some((key) => !registered.has(key))) invalid("work_stages must register exactly the declared Works");
+  for (const entry of manifest.works) {
+    if (!safeRelativePath(entry) || !entry.startsWith(`${manifest.id}-`)) invalid(`Work belongs to another domain: ${entry}`);
+  }
+  for (const path of manifest.persistent_knowledge) {
+    const portable = path.slice("<Path>{roots.state}/".length, -"</Path>".length).replace(/\/$/, "");
+    if (!safeRelativePath(portable) || !portable.startsWith(`${manifest.id}/`) || portable.split("/").some((part) => ["changes", "archive", "_state"].includes(part))) invalid(`invalid knowledge scope: ${path}`);
+  }
+  const stages = new Map(manifest.stages.map((stage) => [stage.id, stage]));
+  if (stages.size !== manifest.stages.length) invalid("duplicate stage identity");
+  const visited = /* @__PURE__ */ new Set(), visiting = /* @__PURE__ */ new Set();
+  function visit(id) {
+    if (visited.has(id)) return;
+    if (visiting.has(id)) invalid(`stage dependency cycle at ${id}`);
+    const stage = stages.get(id);
+    if (!stage) invalid(`missing stage dependency: ${id}`);
+    visiting.add(id);
+    for (const dependency of stage.after) visit(dependency);
+    visiting.delete(id);
+    visited.add(id);
+  }
+  for (const id of stages.keys()) visit(id);
+}
+function validateCapabilityProfile(value) {
+  schema("capabilityProfile", value, "invalid-capability-profile");
+}
+
 // src/assets.ts
 function parseFrontmatter(content) {
   const source = Buffer.isBuffer(content) ? content.toString("utf8") : content;
@@ -7566,7 +7616,7 @@ async function readAssetCatalog(root) {
     const domain = folder.name, prefix = `workflows/${domain}`;
     if (!await pathExists(join2(root, prefix, "SKILL.md")) && !await pathExists(join2(root, prefix, "manifest.json"))) continue;
     const manifest2 = JSON.parse(await readFile2(await containedPath(root, `${prefix}/manifest.json`), "utf8"));
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(domain) || !manifest2 || manifest2.schema_version !== 2 || manifest2.id !== domain || manifest2.entry !== "SKILL.md" || !Array.isArray(manifest2.works) || new Set(manifest2.works).size !== manifest2.works.length || !manifest2.work_stages || typeof manifest2.work_stages !== "object" || Array.isArray(manifest2.work_stages) || Object.keys(manifest2.work_stages).some((k) => !manifest2.works.includes(k))) throw new Error(`invalid-domain-manifest: ${domain}`);
+    validateWorkflowManifest(manifest2, domain);
     await addSkill(`${prefix}/SKILL.md`, "domain-skill", domain);
     for (const entry of manifest2.works) {
       if (!safeRelativePath(entry) || !new RegExp(`^${domain}-[a-z]-[a-z0-9-]+/SKILL\\.md$`).test(entry)) throw new Error(`invalid-work-entry: ${entry}`);
@@ -7677,8 +7727,6 @@ async function readProjectCoordination(stateRoot, catalog, inactive) {
 import { lstatSync as lstatSync2, readFileSync as readFileSync2, readdirSync as readdirSync2, realpathSync } from "node:fs";
 import { basename as basename3, dirname as dirname3, isAbsolute as isAbsolute2, join as join4, relative as relative2, resolve as resolve2, sep as sep2 } from "node:path";
 import { TextDecoder } from "node:util";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 var ArtifactError = class extends Error {
   constructor(code, path, message, line) {
     super(`${code}: ${path}${line ? `:${line}` : ""}: ${message}`);
@@ -7753,7 +7801,7 @@ function resolveWorkContextSync(input) {
   if (installed && (methodRoot !== join4(actualProject, DEFAULT_ROOTS.speculo) || stateRoot !== join4(actualProject, DEFAULT_ROOTS.state))) fail("root-ambiguous", actualProject, "explicit roots conflict with the validated installed workspace");
   safeWorkPathSync(methodRoot, "", { allowRoot: true, mustExist: true, type: "directory" });
   const specdevRoot2 = safeWorkPathSync(stateRoot, "specdev", { type: "directory" });
-  if (exists2(join4(specdevRoot2, ".markdown-conversion-pending"))) fail("recovery-required", specdevRoot2, "resume the original Markdown conversion");
+  if (exists2(join4(specdevRoot2, ".markdown-conversion-pending"))) fail("recovery-required", specdevRoot2, "unfinished data operation; preserve its evidence and resolve it with the original owner before dependent work");
   return { projectRoot: actualProject, methodRoot: realpathSync(methodRoot), stateRoot, specdevRoot: specdevRoot2, installation: installed ? "present" : "absent" };
 }
 async function resolveWorkContext(input) {
@@ -7857,14 +7905,8 @@ function allLocations(root) {
   }
   scan("changes", "active");
   scan("changes/archive", "archive");
-  const historical = safeWorkPathSync(root, "archive", { type: "directory" });
-  if (exists2(historical)) for (const month of readdirSync2(historical)) {
-    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) continue;
-    scan(`archive/${month}`, "legacy-archive");
-  }
   const seen = /* @__PURE__ */ new Map();
   for (const location of locations) {
-    if (location.kind === "legacy-archive" && basename3(dirname3(location.root)) !== location.name.slice(0, 7)) fail("identity-conflict", location.root, "legacy month does not match identity");
     const previous = seen.get(location.name);
     if (previous) fail("identity-conflict", location.root, `duplicate identity also at ${previous.root}`);
     seen.set(location.name, location);
@@ -7872,7 +7914,7 @@ function allLocations(root) {
   return locations;
 }
 function discoverChangesSync(context, options = {}) {
-  return allLocations(specdevRoot(context)).filter((l) => l.kind === "active" || (l.kind === "archive" ? options.includeArchived : options.includeLegacy));
+  return allLocations(specdevRoot(context)).filter((l) => l.kind === "active" || options.includeArchived);
 }
 async function discoverChanges(context, options = {}) {
   return discoverChangesSync(context, options);
@@ -7890,14 +7932,13 @@ function assertMarkdownProtocolSync(context, location) {
   const root = specdevRoot(context);
   for (const marker of [".markdown-conversion-pending", "status.json"]) {
     const path = safeWorkPathSync(root, marker, { type: "file" });
-    if (exists2(path)) fail(marker === "status.json" ? "legacy-active-needs-conversion" : "recovery-required", path, "use the explicit conversion owner; no automatic fallback");
+    if (exists2(path)) fail(marker === "status.json" ? "unsupported-specdev-protocol" : "recovery-required", path, "current SpecDev requires Markdown authority with no unfinished data operation; preserve source bytes and inspect with the original owner");
   }
-  if (location && exists2(join4(location.root, ".status.json"))) fail("mixed-protocol", join4(location.root, ".status.json"), "active/new archive still contains legacy business authority");
+  if (location && exists2(join4(location.root, ".status.json"))) fail("mixed-protocol", join4(location.root, ".status.json"), "unsupported JSON business authority beside the current Markdown change; preserve source bytes");
 }
 function readChangeFactsSync(context, nameOrLocation) {
   const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
   if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "locator no longer matches actual location");
-  if (location.kind === "legacy-archive") fail("legacy-active-needs-conversion", location.root, "use the separate read-only legacy evidence reader");
   assertMarkdownProtocolSync(context, location);
   const readmePath = safeWorkPathSync(location.root, "README.md", { mustExist: true, type: "file" });
   const parsed = parseOutcome(readUtf8ArtifactSync(readmePath), readmePath);
@@ -7906,22 +7947,6 @@ function readChangeFactsSync(context, nameOrLocation) {
 }
 async function readChangeFacts(context, target) {
   return readChangeFactsSync(context, target);
-}
-function readLegacyChangeEvidenceSync(context, nameOrLocation) {
-  const location = resolveChangeSync(context, typeof nameOrLocation === "string" ? nameOrLocation : nameOrLocation.name, { includeArchived: true });
-  if (typeof nameOrLocation !== "string" && (location.root !== nameOrLocation.root || location.kind !== nameOrLocation.kind)) fail("identity-conflict", nameOrLocation.root, "legacy locator no longer matches actual location");
-  if (location.kind !== "legacy-archive") fail("identity-conflict", location.root, "legacy reader accepts only frozen month archives");
-  const statusPath = safeWorkPathSync(location.root, ".status.json", { mustExist: true, type: "file" });
-  const status = JSON.parse(readUtf8ArtifactSync(statusPath));
-  const validatorPaths = [new URL("./legacy-status-validator.cjs", import.meta.url), new URL("../../template/lib/legacy-status-validator.cjs", import.meta.url)];
-  const validatorPath = validatorPaths.map((url) => fileURLToPath(url)).find(exists2);
-  if (!validatorPath) fail("closure-evidence-missing", statusPath, "frozen legacy schema validator is missing from the method package");
-  const validate = createRequire(import.meta.url)(validatorPath);
-  if (!validate(status)) fail("closure-evidence-missing", statusPath, `invalid frozen v6 schema: ${JSON.stringify(validate.errors)}`);
-  const expectedArchive = `<Path>{roots.state}/specdev/archive/${location.name.slice(0, 7)}/${location.name}</Path>`;
-  const actualArchive = typeof status.archive_path === "string" ? status.archive_path.replace(/\/<\/Path>$/, "</Path>") : status.archive_path;
-  if (status.change !== location.name || status.change_status !== "archived" || status.archived !== true || status.current_work !== null || actualArchive !== expectedArchive) fail("closure-evidence-missing", statusPath, "unsupported or inconsistent frozen legacy evidence; inspect with original owner");
-  return { location, readonly: true, statusPath, status };
 }
 function readArtifactSectionSync(path, anchor) {
   if (!/^[a-z][a-z0-9-]*$/.test(anchor)) fail("closure-evidence-missing", path, "invalid section anchor");
@@ -8106,7 +8131,6 @@ export {
   readAssetCatalog,
   readChangeFacts,
   readChangeFactsSync,
-  readLegacyChangeEvidenceSync,
   readProjectCoordination,
   readUtf8ArtifactSync,
   readWorkspace,
@@ -8117,8 +8141,10 @@ export {
   resolveWorkContextSync,
   safeRelativePath,
   safeWorkPathSync,
+  validateCapabilityProfile,
   validateProjectCoordination,
   validateSkill,
+  validateWorkflowManifest,
   validateWorkspace,
   workspaceForPathSync
 };

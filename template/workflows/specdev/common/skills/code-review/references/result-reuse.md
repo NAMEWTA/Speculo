@@ -4,7 +4,7 @@
 
 | 必须相同并可回读 | 核对证据 |
 |---|---|
-| review_mode、实际比较或文件范围 | diff 模式的 fixed_point/head、不可变 SHA、diff 摘要与 commit 范围（legacy 默认三点）；source-files 的路径与原字节摘要；working-tree 的基线、完整范围与实际工作副本快照；不可跨模式复用 |
+| review_mode、实际比较或文件范围 | diff 模式的 fixed_point/head、不可变 SHA、diff 摘要与 commit 范围（baseline 使用三点）；source-files 的路径与原字节摘要；working-tree 的基线、完整范围与实际工作副本快照；不可跨模式复用 |
 | 规范、标准、ADR 和适用项目指令 | 稳定来源路径、原始字节摘要与明确范围 |
 | review Skill 与当前触发的全部参考 | ID、入口/参考字节摘要、风险分支与跳过理由 |
 | 与结论相关的工具、测试环境、配置 | 实际版本/配置摘要与观察证据；未记录不能宣称相同 |

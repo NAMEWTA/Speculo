@@ -27,4 +27,6 @@
 
 用户明确要求委派、跨工具/模型协作，或本 Work 已要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。项目默认方式由公共 command/coordination-init 显式初始化；普通激活不触发问答。
 
+用户要求重要决策的独立复核，或高影响决策存在重大反证且宿主具备相应能力时，按需读取 <Path>{roots.workflows}/person/common/rules/independent-decision-review.md</Path>。原 Work 保持裁决与发布权；复核不增加默认咨询阶段或改写冻结 dossier。
+
 只有用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>。本域未归档 change 允许本次唯一交接作者更新 handoff.md 侧记；无 change 的资源模型使用共享方法定义的会话报告。它反映已有事实，不推进本域状态、完成门或永久知识。

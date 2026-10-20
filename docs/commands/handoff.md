@@ -19,4 +19,8 @@
 
 后续 Agent 先读最新 handoff，再核对原工件、owner、版本和未闭合动作。handoff 不是业务状态或新的授权；总结中会区分完成、未完成、自报和未验证，不自动执行余项或归档。写入前检查漂移，部分失败逐项说明恢复路径。
 
+入口从当前目录向上定位字面 workspace 路径，验证后才解析 roots；不能确认安装时只在会话说明缺口，不猜测持久化位置。切换会话不会结束原 writer；尚未确认退出的对象仍交原 owner 恢复，worker 的 completed 仍等待 Lead 对实际交付验收。
+
+[跨上下文消费示例](../../template/commands/handoff/examples/README.md) 演示新的进程如何从 handoff 回读已有 TASK/REPORT、原 writer、实际 HEAD 和候选字节，再执行唯一明确的只读语法检查。正常与漂移/错误身份场景都检查原件保持不变；它不创建接续状态，不把机械测试宣称为模型理解或真实业务验收。
+
 实现方法位于[共享 handoff reference](../../template/references/handoff/handoff-contract.md)，所有 workflow 和 Agent 都可在用户明确请求后调用；当前 Agent 默认执行，用户也可以指定 worker。派遣过程的 TASK/REPORT 是另一类任务输入与回报，详见[任务交接](../agent-handoffs.md)。

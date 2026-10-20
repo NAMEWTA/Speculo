@@ -37,6 +37,7 @@ Speculo 把需求澄清、软件开发、学习、运维、决策和内容制作
 | [安装事务与恢复](transaction-recovery.md) | 安装中断、锁、漂移和旧版本数据如何处理？ |
 | [架构与数据布局](architecture.md) | 方法源、投影、业务数据、生成物分别放在哪里？ |
 | [维护者指南](contributing.md) | 如何修改源码和文档、运行对应验证？ |
+| [Workflow 合同、证据与恢复](workflow-integrity.md) | 校验通过证明什么，如何恢复领域事务、核对交付与运行产物评估？ |
 | [Media 可复现示例](media/example/README.md) | 如何从简报得到预览和本地草稿？ |
 | [许可声明](provenance/THIRD-PARTY-NOTICES.md)与[来源映射](provenance/upstream-matrix.md) | 哪些内容来自第三方，许可在哪里？ |
 

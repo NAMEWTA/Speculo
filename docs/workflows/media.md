@@ -22,6 +22,8 @@ speculo init . --workflows media --skill-targets agents --skills domain/media
 
 常见路线是 `Brief → Video 或视觉资料 → Publish Draft → 人工发布/人工导入反馈 → Retro`。对标拆解可在 Brief 前进行。安装与依赖检测不会自动安装素材、模型或外部 Skill。
 
+基础 Brief 保存事实、受众和母稿；视频尺寸、帧率等规格在进入 Video 分支时补全。交付按实际请求登记，未要求视频时不用为了通过基础 Brief 校验编造视频规格。
+
 <a id="init-setup"></a>
 ## I · Init Setup：建立创作者档案
 
@@ -97,6 +99,12 @@ AI 至少给出结果、痛点、反常识三类 Hook（开头吸引点），说
 本地参考渲染器使用已安装的 Python Playwright、Chromium 和 FFmpeg，先审查 HTML，不自动安装或加载网络素材。每镜三张静帧、15–30 秒预览和审核分数门用于检查真实输出；不能自动填分当作观察。
 
 没有渲染能力时，交付完整工程和未渲染报告，不能说 MP4 已生成。通过后向 Publish Draft 交当前媒体清单。具体可运行命令见[18 秒示例](../media/example/README.md)。
+
+### 交付证据怎样核对
+
+产物清单关联 owner、版本、依赖和实际文件摘要。视频报告记录实际渲染环境与输入；最终交付重新读取审核标准、分数、阻塞项、预览、审核静帧和编码规格。删掉文件、修改字节或遗漏依赖会使相应完成声明失效，工程文件不能冒充 final MP4。
+
+内容批准与执行环境身份分别核对，工具链变化本身不推翻内容判断。自动化真实渲染证明执行入口能生成可读回的文件，画面质量仍需要针对本次实际预览的审核。具体合同与验证层级见 [Workflow 合同、证据与恢复](../workflow-integrity.md)。
 
 <a id="publish-draft"></a>
 ## P · Publish Draft：导出本地渠道草稿

@@ -1,7 +1,9 @@
 {
+  "schema_version": 2,
   "evidence_kind": "unverified",
   "reviewer": null,
   "input_digest": null,
+  "execution_digest": null,
   "preview": {
     "path": null,
     "sha256": null,

@@ -5,7 +5,7 @@
 本文是可独立上传的单文件能力快照，不依赖 Speculo CLI 的根别名或源目录。执行时统一采用以下逻辑布局：
 
 - 项目根下的 `specdev/` 是业务工件区。普通 Work 的直接使用不要求安装元数据；先明确项目、可读方法资源和获批写入根，不按 cwd 猜测另一个项目。
-- 当前 change 位于 `specdev/changes/{change}/`，其中 `{change}` 使用真实日期 `YYYY-MM-DD-<kebab-topic>`。新归档位于 `specdev/changes/archive/{change}/`；旧月份归档原位只读，同名跨位置冲突必须先解决。
+- 当前 change 位于 `specdev/changes/{change}/`，其中 `{change}` 使用真实日期 `YYYY-MM-DD-<kebab-topic>`。新归档位于 `specdev/changes/archive/{change}/`；同名在当前活动与归档位置冲突时必须先解决；其他历史文件保留原件，不解释成现役对象。
 - 当前 change 的设计、规划和证据工件都写入该目录；永久 ADR、领域上下文和研究分别写入 `specdev/adr/`、`specdev/context/` 和 `specdev/research/`。永久设计位于 `specdev/design/`，消费、确认、离线导出和原 owner 恢复遵守下方 `<design-portability>` 标签。
 - 整体结论只在 `specdev/changes/{change}/README.md` 的唯一正文行 `Outcome: active|completed|cancelled` 中表达。新 change 不创建重复业务状态 JSON，也不默认创建 config；实际工具配置只在使用该分支时读取。正文、真实验收与 owner 证据共同决定能否完成或取消，Outcome 本身不授权。任务进度由 README、Goal 或 Ticket 择一负责。
 - 轻量 README 保留 scope、acceptance、verification 明确锚点、真实 AC 和证据；复杂 Goal/Ticket、并行隔离、Git 集成与 UI 专用合同仍按内联规则执行。当前工程 docs 位于 `docs/` 或引用项目原有负责文档；只在明确请求时建立基线。
@@ -471,15 +471,14 @@ resolution: answered
 
 ## 身份与位置
 
-change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目录名，日期为创建日期，不随归档重命名。真实首次创建时选择未占用名称；检查 active、新 archive 和旧历史，重名或多位置阻塞。只有需要相应内容时才建目录。
+change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目录名，日期为创建日期，不随归档重命名。真实首次创建时选择未占用名称；检查 active 和 archive，重名或多位置阻塞。只有需要相应内容时才建目录。
 
 - 活动/已结束未归档对象：specdev/changes/{change}/README.md。
 - 新封存对象：specdev/changes/archive/{change}/README.md。
-- 既有历史：specdev/archive/YYYY-MM/{change}/，原位只读，保留原 schema、许可、模式和字节。
 - 直接 A 无 change 的必要维护回执：specdev/maintenance/{date}-{topic}[-NN].md，只在跨会话/跨对象恢复需要时创建。
 - 工程 docs：docs/README.md，明确请求基线后按需存在；它是跨领域工程事实，不是 SpecDev 独占知识 store。
 
-归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。新 archive 不嵌套月份。旧历史移动须另有明确计划，验证所有 locator 和 DESIGN 摘要；不可变正文不做路径替换。
+归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。archive 不嵌套月份；移动须验证全部 locator 和 DESIGN 摘要，不可变正文不做路径替换。
 
 实际外部派遣的冻结输入、正式报告与可选会话定位文件按 下方 `<shared-coordination-session-files>` 标签 保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
@@ -503,17 +502,17 @@ Outcome: active
 
 不默认创建 leadership epoch、空批准槽或每 Work 记录。实际交接、并行、worktree/集成发生时，在原计划、Ticket Evidence 或操作回执记录唯一负责者、获批写集、输入、真实交接与下一步。复杂任务 owner 从原 implementation-plan/goal-plan 的 `lead` 读取。无 Goal 且动作确需 owner 时，README 的 `## Ownership` 内保存 `Owner: <session locator>` 与 `Evidence: <对象内相对路径>[#anchor]`，证据指向实际会话/交接；设计 bootstrap 还保存 `Work: specdev/prototype` 且依据正文绑定该 Work。普通只读不预建所有权记录，字段不创造授权。
 
-change README 的 Execution Context 是工作区、branch、base 与 Lead 的唯一事实源；实际执行才创建。每票原 Evidence 的 Workspace Execution Record 引用该上下文，保存实际实现者、固定输入、验证与失败历史；无票沿原 Direct Spec Evidence。格式和兼容边界见 下方 `<ref-common-rules-execution-policy>` 标签。父计划只导航，不复制 workspace 结果。
+change README 的 Execution Context 是工作区、branch、base 与 Lead 的唯一事实源；实际执行才创建。每票原 Evidence 的 Workspace Execution Record 引用该上下文，保存实际实现者、固定输入、验证与失败历史；无票沿原 Direct Spec Evidence。格式和版本边界见 下方 `<ref-common-rules-execution-policy>` 标签。父计划只导航，不复制 workspace 结果。
 
 语言、用户工具和数量来自当前请求/既有项目说明。原 Goal/Implementation Plan 的 Execution Policy Source 说明调度来源；票据并发上限与已配置实现者人数限制分别检查。未知 config 独有字段保留；默认 UI 3 个、配置 2–4、明确用户数量覆盖，均不变。
 
 ## 创建、恢复和历史边界
 
-首次真实任务才创建 README 和实际需要的其他工件。简单形态参考 下方 `<ref-specdev-i-init-setup-assets-change-readme-template>` 标签；实际需要 owner、验证或取消记录时读取 下方 `<ref-specdev-i-init-setup-references-change-record-examples>` 标签，不预填空槽。默认目录发现只枚举 changes 直接子目录，不递归把 ticket、archive 或临时目录当 change。指定历史再查询新 archive/旧月份 archive；同身份多位置报冲突。
+首次真实任务才创建 README 和实际需要的其他工件。简单形态参考 下方 `<ref-specdev-i-init-setup-assets-change-readme-template>` 标签；实际需要 owner、验证或取消记录时读取 下方 `<ref-specdev-i-init-setup-references-change-record-examples>` 标签，不预填空槽。默认目录发现只枚举 changes 直接子目录，不递归把 ticket、archive 或临时目录当 change。指定归档再查询 archive；同身份多位置报冲突。
 
 恢复重读原 owner、输入摘要、实际 writer、Git/工具结果与未决动作。结果未保存不等于操作没发生；超时不证明 writer 结束。仅使受影响证据失效，不清零尝试、不抢锁，不改完成历史。review-only、performance、documentation、evidence-triage 留原报告或 Evidence，不能伪造问题已解决。
 
-新 writer 不新增或更新旧 status 镜像。发现旧活动 status、未知 schema、混合协议或 specdev/.markdown-conversion-pending 时只读盘点，停止重叠写入并交显式转换 owner；不自动升级、不因 README 存在跳过。pending 不证明互斥，也不能按年龄删除。旧 archive 原位冻结，历史 reader 不产生可写新对象。
+writer 只消费当前 Markdown 协议。遇到旧 status、未知 schema 或混合权威时拒绝受影响操作并保留原件，不自动升级或以 README 存在忽略冲突。无法读取旧协议不证明 writer 已停止、数据可删除或任务完成。
 
 CLI 刷新先 staging/验证再原子替换并保全未知 runtime；Work 不修改 back/、安装元数据或命令 sidecar。安装故障只在与本次路径冲突时阻塞相关动作。
 
@@ -533,7 +532,7 @@ CLI 刷新先 staging/验证再原子替换并保全未知 runtime；Work 不修
 4. 按实际分支读取必要参考。创建、恢复、完成、取消或归档时读取 下方 `<workflow-state-and-lifecycle>` 标签；轻量/完整输入或事实冲突读取 下方 `<ref-common-rules-artifact-contract>` 标签；实际交接、并行、父子集成才加载 下方 `<ref-common-rules-operating-governance>` 标签 和 下方 `<ref-common-rules-parent-implementation-orchestration>` 标签。
 5. 写前核对路径、原 owner、实际写入者、相关 pending transaction、lock 和 recovery evidence。失败/阻塞记录在原 README、计划、Evidence 或操作回执；真实交接只更新原负责位置。完成产物、适用验证并回读，返回证据和下一入口。
 
-新普通流程不读写全局 status、change status 或 Work 调用镜像。发现旧活动协议、混合权威或转换 pending 标记时停止受影响写入，保留原件并交显式转换；README 存在不证明转换已完成。旧归档仅走独立历史只读定位。
+普通流程只使用当前 Markdown 协议，不分发全局 status、change status 或 Work 调用镜像。遇到不支持的 schema、混合权威或无法确认的原 writer 时停止受影响写入并保留原件；工具不提供旧协议 reader 或自动转换。归档按当前唯一目录及其完整性回执读取。
 
 ## 工件与能力
 
@@ -2068,7 +2067,7 @@ A 只验证取消结果，不代替用户取消。单 Ticket cancelled 不推导
 
 无 Goal 的 owner 在 README `## Ownership` 写 `Owner` 与 `Evidence`；后者指向实际会话/交接原文或同 README 的独立证据锚点，其 `Owner` 或 `Session` 必须匹配。若动作绑定 `Work`，原证据必须同值；不是每 Work 调用登记。
 
-取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。Ticket 或 Direct Spec 的 active/review/integrating/blocked 执行记录仍须原 owner 处置，不由取消声明抹掉。
+取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。Ticket 或 Direct Spec 的 active/review/blocked 执行记录仍须原 owner 处置，不由取消声明抹掉。
 
 独立 Spec 的无票 Direct Spec 使用原 evidence/direct-spec 的 `## Acceptance Verification` JSON array 逐 AC 回读实际结果：id/result/method/source/observed；command 存在时 exit 为 0，外部 evidence 引用须有匹配 sha256，内联观察无需另建文件。空 Evidence、仅标题或 passed 自评不通过。`--stage complete` 只判本地完成；A 移动前使用 `--stage archive-ready` 同时核对对应 completed/cancelled 门和已承诺远程交付，目标移动后再使用 archived。
 
@@ -2107,11 +2106,11 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 
 验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
 
-## 恢复和旧记录
+## 恢复和版本边界
 
 恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
 
-旧 per-Ticket/source/candidate 执行记录仅作历史只读依据。活动旧记录必须由原 owner 显式整理：停止或交接旧 writer，盘点全部 branch/worktree/checkpoint/未决动作，确认本 change 的唯一工作区；没有合并授权不能收拢代码。将旧记录原字节移存原 Evidence 的历史段并保留引用，经核对后才写新上下文和新记录，重新核验失效的审查/验证。不自动删除旧工作区、不批量改 done，不由安装刷新转换。未处置完毕保持 blocked。
+执行工具只接受当前 Execution Context / Workspace Execution Record v1 与 Goal v8、父 Plan v3；未知版本、旧 source/candidate 字段和混合协议直接拒绝。拒绝不改写原 Evidence、不转换或删除工作区。原 owner 仍须核对实际 writer、代码与未决动作，不能把无法读取的旧协议解释成已停止或已完成。
 
 </ref-common-rules-execution-policy>
 
@@ -2431,10 +2430,9 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 | 大需求包含多个未界定 change 或未知路径 | W-wayfinder | G / P / D / S / T |
 | 需要检测项目 UI、选择设计方向并生成可运行设计包 | P-prototype | G / S / T / I |
 | 固定点 diff、branch 或 PR review | C-code-review | completed / T / S / G |
-| 外部行为已清楚 | S-spec | T-tickets |
+| 外部行为已清楚 | S-spec | I（完整 Ready Spec 且有实现授权）/ T（需要拆票）/ 返回规格 |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
-| 单个已拆票 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
-| 旧 O 调用或恢复键 | P-goal-plan | 统一 P 多 change 模式 |
+| 按需的轻量 Goal、单 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
 | Ready 执行 | I-implement | Triage / A / blocked / deviation |
 | 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |
@@ -2607,7 +2605,13 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 
 # 开发任务的编排边界
 
-SpecDev 实际委派任务时，在共享编排方法之外读取本文件。全局初始化属于 本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化）；普通 Work 和无安装直接模式不要求先初始化编排。
+C/I/P 开始实施、独立审查或调度时读取本文件，并读取 下方 `<shared-coordination-coordination-contract>` 标签 的当前阶段方法。全局初始化属于 本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化）；普通 Work 和无安装直接模式不要求先初始化编排。
+
+## 执行方式与上下文
+
+未明确指定时按当前宿主正常执行，App、CLI 等均可，subagent/team 是宿主能力。明确选择 CLI 交互、Herdr、Orca 或 review 方式时遵循实际选择，只读取所选工具的当前指南；不固定模型，不重复询问仍有效的授权或工作区选择。
+
+lead 上下文维护原业务责任；task 只处理分配目标、阶段和写集，使用相同 Work 方法返回候选、findings、验证与未验证项，不递归启动 Goal 或擅自跨 CLI 派单。宿主原生协作遵守原写集与共享资源 owner。真实入口未曝光到宿主列表不妨碍按准确路径读取，但读取入口不等于执行。
 
 ## 输入与作者
 
@@ -2625,7 +2629,7 @@ Lead 明确任务所用 Work、阶段和必要前置条件：Ticket implementati
 
 有明确授权的 run/resume 完成当前实现、审查、验证和同范围修复后，继续下一 Ready 任务，不逐票要求“继续”。同范围 finding 沿原任务修复；重复 blocker 或达到有效尝试上限时保留证据，只有新证据或实质改变才能重试。业务生命周期门由 owning Work 核对，通用派遣结构通过不等于允许启动已取消或已归档的业务。
 
-新派遣使用共享 TASK v2；存量 TASK v1 继续使用 本地只读交接与会话定位检查（缺工具时按内联合同核对并明确未执行自动检查，不扫描外部日志或认证工具身份） 原接口，保留 active change、固定 kind 与归档冻结检查。它是历史校验适配器，不是其他领域的依赖。
+派遣只使用共享 TASK v2，并按 下方 `<shared-coordination-session-files>` 标签 保存真实冻结输入与原始返回；未知协议拒绝派遣，不转换历史交接文件。
 
 </ref-common-rules-coordination>
 
@@ -3362,7 +3366,7 @@ Ticket/Direct Spec 的 workspace_context 统一引用 `specdev/changes/{change}/
 
 ## 恢复与迁移
 
-核验 checkout 所属 Git common directory、branch、base 可达、工作区路径和实际 writer。未知 owner、路径链接、漂移或旧活动 per-Ticket worktree 记录先阻塞受影响写入。旧记录按 下方 `<ref-common-rules-execution-policy>` 标签 由原 owner 显式整理；历史与旧工作区保留，不自动归并或删除。
+核验 checkout 所属 Git common directory、branch、base 可达、工作区路径和实际 writer。未知 owner、路径链接、漂移或旧活动 per-Ticket worktree 记录先阻塞受影响写入。版本边界按 下方 `<ref-common-rules-execution-policy>` 标签 拒绝不支持的记录；历史与旧工作区保留，不转换、归并或删除。
 
 **完成标准**：change 唯一工作区可定位，记录与 Git 一致，创建次数不随票据/Agent 数增长。
 
@@ -3375,7 +3379,7 @@ Ticket/Direct Spec 的 workspace_context 统一引用 `specdev/changes/{change}/
 本模板记录选定 change-workspace 上的实际实现与验证，不预造 source/candidate/result。Direct Spec 写 evidence/direct-spec.md；所有执行者复用 README 的 Execution Context，提交与合并仅记录实际获授权的结果。
 
 - **Change：** `<change>`
-- **Ticket：** `specdev/changes/{change}/ticket/NN-<ticket-name>.md`
+- **Ticket：** `specdev/changes/{change}/ticket/NN-<ticket-name>.md` / Direct Spec 无票
 - **Spec：** `specdev/changes/{change}/spec.md`
 - **Goal Plan：** `specdev/changes/{change}/goal-plan.md` / 不适用
 - **Lead：** `<owner-or-session-locator>`
@@ -3436,7 +3440,7 @@ Ticket/Direct Spec 的 workspace_context 统一引用 `specdev/changes/{change}/
 
 ### 标准轴
 
-- **固定输入：** `<base_sha>..<source_checkpoint>`
+- **固定输入：** 原 Independent Review 的 input locator、比较模式与实际摘要；已提交交付列固定 base/head，未提交交付列 working-tree 快照及其真实范围
 - **结果：** pass / request-changes
 - **Findings 与修正：** 无 / ...
 
@@ -3528,7 +3532,7 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 }
 ```
 
-Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。旧活动记录先由原 owner 显式整理，历史原文保留。
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
 
 ## Acceptance Verification
 
@@ -4325,7 +4329,7 @@ OPS 交接引用原 Controller/Host/Project、task/Run/Release、immutable plan/
 
 # SpecDev 归档移动
 
-只适用于 A 固定的新协议候选，生命周期由 下方 `<workflow-state-and-lifecycle>` 标签 定义。旧月份归档原位只读，不纳入普通移动。
+只适用于 A 固定的当前协议候选，生命周期由 下方 `<workflow-state-and-lifecycle>` 标签 定义。不支持的旧协议拒绝进入本次移动，不改变其原件。
 
 ## 预检
 
@@ -5317,7 +5321,8 @@ node --version
 DELIVERY_ROOT="temp/task-delivery/${SCOPE_ID}/${TASK_ID}/${DISPATCH_ID}"
 STAGING="${DELIVERY_ROOT}/outbound/staging"
 ARCHIVE="${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.zip"
-ZIP_SCRIPT="speculo/commands/source-code-zip/scripts/zip_source_code.js"
+# 已按公共 workspace 合同解析 project root 后，以真实绝对路径替换下方值。
+ZIP_SCRIPT="${PROJECT_ROOT}/.agents/speculo/commands/source-code-zip/scripts/zip_source_code.cjs"
 ```
 
 若当前执行环境仍位于 template 源树而不是安装后的 workspace，从已解析的公共 roots 定位 用户所选源码 ZIP 工具（本网页快照不内置脚本；不可执行时报告阻塞），不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。

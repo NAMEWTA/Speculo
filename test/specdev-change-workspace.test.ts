@@ -11,6 +11,7 @@ const methodRoot = resolve('template');
 const toolRoot = join(methodRoot,'workflows/specdev/common/tools');
 const {validateChange} = await import(pathToFileURL(join(toolRoot,'validate-specdev.mjs')).href);
 const {analyzeMap} = await import(pathToFileURL(join(toolRoot,'ticket-control.mjs')).href);
+const {partitionDiagnostics} = await import(pathToFileURL(join(toolRoot,'validation-diagnostics.mjs')).href);
 const {readExecutionContext,resolveExecutionWorkspace,ticketPolicy} = await import(pathToFileURL(join(toolRoot,'execution-context.mjs')).href);
 const fence=(heading:string,value:unknown)=>`## ${heading}\n\n\x60\x60\x60json\n${JSON.stringify(value,null,2)}\n\x60\x60\x60\n`;
 const template=(path:string)=>readFileSync(join(methodRoot,'workflows/specdev',path),'utf8');
@@ -132,11 +133,11 @@ test('recovery rejects invalid locators, branch drift and a foreign repository w
   f.context.workspace_ref='foreign';f.context.branch='main';f.saveContext();assert.match(f.validate().join('\n'),/another repository/);
 });
 
-test('old active execution records require explicit reconciliation and remain byte-for-byte intact',t=>{
+test('unsupported execution records fail without changing Evidence or real worktrees',t=>{
   const f=fixture(t),file=join(f.root,'evidence/T-01.md');
   const legacy={ticket_id:'T-01',workspace_ref:`specdev-worktree/${f.change}/T-01`,status:'active'};
   writeFileSync(file,fence('Workspace Execution Record',legacy));const before=readFileSync(file),worktrees=f.git('worktree','list','--porcelain');
-  assert.match(f.validate().join('\n'),/explicit reconciliation/);
+  assert.match(f.validate().join('\n'),/unsupported execution record/);
   assert.deepEqual(readFileSync(file),before);assert.equal(f.git('worktree','list','--porcelain'),worktrees);
 });
 
@@ -155,17 +156,32 @@ test('parent scheduling and final review preserve each member workspace without 
   const members=[a.change,b.change],tasks=[`${a.change}::T-01`,`${b.change}::T-02`];
   const map={schema_version:1,artifact:'implementation-map',change:name,status:'in_progress',revision:1,members,tasks,dependencies:[] as string[],serializations:[] as string[]};
   const plan={schema_version:3,artifact:'implementation-plan',change:name,status:'in_progress',source_map_revision:1,orchestration:'lead-directed',lead:'native:lead',integration_attempt_limit:3,ticket_execution:'auto',max_parallel_tickets:2,ready_for_execution:true};
-  const markdown=(meta:object,headings:string[])=>'---\n'+Object.entries(meta).map(([key,value])=>`${key}: ${JSON.stringify(value)}`).join('\n')+'\n---\n'+headings.map((heading,index)=>`## ${index+1}. ${heading}\nFixture verified.\n`).join('\n');
+  const parentTemplate=(meta:object,kind:'map'|'plan')=>template(`specdev-p-goal-plan/assets/implementation-${kind}-template.md`)
+    .replace(/^---[\s\S]*?---/, '---\n'+Object.entries(meta).map(([key,value])=>`${key}: ${JSON.stringify(value)}`).join('\n')+'\n---')
+    .replaceAll('<YYYY-MM-DD-topic>',name).replaceAll('<owner-or-session-locator>','native:lead')
+    .replace(/## Execution Policy Source[\s\S]*$/, '## Execution Policy Source\nFixture user authorizes dependency-based scheduling in each existing member workspace.\n');
   const saveParent=(outcome='active')=>{
     writeFileSync(join(root,'README.md'),`# Parent\nOutcome: ${outcome}\n## Ownership\nOwner: native:lead\nEvidence: owner.md\n`);
     writeFileSync(join(root,'owner.md'),'Owner: native:lead\nSource: fixture authorization\n');
-    writeFileSync(join(root,'implementation-map.md'),markdown(map,['Members and Source Authority','Composite Ticket Inventory','Implementation Super-DAG','Conflict and Serialization','Contract and Path Coverage','Revision Log']));
-    writeFileSync(join(root,'implementation-plan.md'),markdown(plan,['Outcome and Authority','Ready Frontier and Waves','Workspace and Dispatch Contract','Repository Integration Queue','Gates and Aggregate Verification','Conflict, Drift and Recovery','Progress and Decisions'])+'\n## Execution Policy Source\nFixture user authorizes dependency-based scheduling in each existing member workspace.\n');
+    writeFileSync(join(root,'implementation-map.md'),parentTemplate(map,'map'));
+    writeFileSync(join(root,'implementation-plan.md'),parentTemplate(plan,'plan'));
   };
   const validate=(stage='goal-plan')=>validateChange(root,stage,a.repo,null,null,{methodRoot,stateRoot:'data'}).errors as string[];
   saveParent();const worktrees=a.git('worktree','list','--porcelain');
   const analysis=analyzeMap({mapPath:join(root,'implementation-map.md'),repoRoot:a.repo,methodRoot,stateRoot:'data'});
   assert.deepEqual(analysis.frontier.sort(),[...tasks].sort(),JSON.stringify(analysis));
+  // The published parent templates must not accidentally be ordinary Goal templates.
+  writeFileSync(join(root,'implementation-plan.md'),template('specdev-p-goal-plan/assets/goal-plan-template.md'));
+  assert.match(validate().join('\n'),/implementation-plan\/3/);saveParent();
+  // A competing parent owns only its overlapping member. Independent members remain legal.
+  const other=join(a.repo,'data/specdev/changes/2026-10-15-other-parent');mkdirSync(other);
+  writeFileSync(join(other,'README.md'),'# Other parent\nOutcome: active\n');
+  writeFileSync(join(other,'implementation-map.md'),'---\nmembers: '+JSON.stringify([a.change])+'\n---\n');
+  const conflict=analyzeMap({mapPath:join(root,'implementation-map.md'),repoRoot:a.repo,methodRoot,stateRoot:'data'});
+  assert.deepEqual(conflict.errors,[]);assert.deepEqual(conflict.frontier,[tasks[1]]);
+  assert.deepEqual(conflict.diagnostics.filter((item:any)=>item.code==='parent-ownership-conflict').map((item:any)=>[item.scope,item.change]),[['change',a.change]]);
+  rmSync(other,{recursive:true});
+
   a.setStatus(0,'in_progress');a.save(a.record('T-01'));b.setStatus(1,'in_progress');b.save(b.record('T-02'));
   assert.deepEqual(validate(),[]);
   plan.ticket_execution='serial';saveParent();assert.match(validate().join('\n'),/parent concurrent Ticket limit/);
@@ -177,7 +193,7 @@ test('parent scheduling and final review preserve each member workspace without 
   }
   saveParent('completed');
   const artifact='evidence/implementation-orchestration.md';
-  writeFileSync(join(root,artifact),markdown({},['Parent Plan and Final Revision','Member and Ticket Completion','Dependency and Serialization Audit','Repository Integration Audit','Aggregate Verification','Contract, Drift and Deviation Audit','Residual Risk and Boundary']));
+  writeFileSync(join(root,artifact),template('specdev-p-goal-plan/assets/implementation-evidence-template.md')+'\nObserved: fixture read actual member workspaces, immutable child review inputs, and both completed outcomes.\n');
   const locator=(file:string)=>relative(a.repo,file).split('\\').join('/');
   const sources=[join(root,'implementation-plan.md'),join(root,'implementation-map.md'),join(a.root,'spec.md'),join(b.root,'spec.md')].map(file=>({kind:'specification',locator:locator(file)}));
   sources.push(...[a,b].map((f,index)=>({kind:'specification',locator:locator(join(f.root,`evidence/T-0${index+1}.md`))+'#review-input'})));
@@ -185,4 +201,47 @@ test('parent scheduling and final review preserve each member workspace without 
   appendReviewFixture({repo:a.repo,root,artifact,base:a.base,sourceFiles:true,files:[locator(join(root,'implementation-map.md'))],sourceLocators:sources});
   assert.deepEqual(validate('complete'),[]);assert.equal(a.git('rev-parse','main'),a.base);assert.equal(a.git('worktree','list','--porcelain'),worktrees);
   writeFileSync(join(b.workspace,'two.txt'),'unreviewed member drift\n');assert.match(validate('complete').join('\n'),/drifted/);
+});
+
+
+test('structured Ticket diagnostics keep unrelated Ready work executable and do not depend on message wording',t=>{
+  const f=fixture(t),original=readFileSync(f.files[0],'utf8');
+  writeFileSync(f.files[0],original.replace(/^risk:.*$/m,'risk: unknown-risk'));
+  const result=validateChange(f.root,'tickets',f.repo,null,null,{methodRoot,stateRoot:'data'});
+  const issue=result.diagnostics.find((item:any)=>item.code==='ticket-contract-invalid'&&item.ticket==='T-01');
+  assert.ok(issue,JSON.stringify(result));assert.equal(issue.scope,'ticket');assert.equal(issue.change,f.change);assert.equal(issue.artifact,'ticket/01-implementation.md');
+  assert.deepEqual(result.errors,result.diagnostics.map((item:any)=>item.message));
+  assert.deepEqual(f.analyze().frontier,['T-02']);assert.deepEqual(f.analyze().errors,[]);
+  const tasks=new Map([['T-01',{member:f.change,ticket:'T-01'}],['T-02',{member:f.change,ticket:'T-02'}]]);
+  const owners=(records:any[])=>{
+    const groups=partitionDiagnostics(records,tasks);
+    return {global:groups.global.length,local:[...groups.byTask].map(([id,items]:[string,any[]])=>[id,items.length])};
+  };
+  assert.deepEqual(owners(result.diagnostics),owners(result.diagnostics.map((item:any)=>({...item,message:'任意译文，带换行\nT-02: misleading English prefix ["different-member"]'}))));
+  writeFileSync(f.files[1],readFileSync(f.files[1],'utf8').replace('blocked_by: []','blocked_by: [T-01]'));
+  assert.deepEqual(f.analyze().frontier,[]);assert.match(JSON.stringify(f.analyze().blocked),/dependency/);
+  writeFileSync(f.files[0],original);assert.deepEqual(f.analyze().frontier,['T-01']);
+  writeFileSync(f.files[1],readFileSync(f.files[1],'utf8').replace('blocked_by: [T-01]','blocked_by: []'));
+  writeFileSync(f.files[0],original+'\nUnbalanced artifact link: <Path>src/incomplete\n');
+  const malformed=f.analyze();assert.deepEqual(malformed.errors,[]);assert.deepEqual(malformed.frontier,['T-02']);
+  assert.ok(malformed.diagnostics.some((item:any)=>item.code==='artifact-path-invalid'&&item.scope==='ticket'&&item.ticket==='T-01'));
+});
+
+test('invalid diagnostic scope and unresolved owners fail closed while a real DAG cycle blocks the whole frontier',t=>{
+  const tasks=new Map([['T-01',{member:'2026-10-15-workspace',ticket:'T-01'}]]);
+  for(const diagnostic of [{code:'bad',scope:'unknown',message:'translated'},{code:'bad',scope:'ticket',change:'missing',ticket:'T-01',message:'T-01: apparent owner'}]){
+    const classified=partitionDiagnostics([diagnostic],tasks);assert.equal(classified.global.length,1);assert.deepEqual(classified.byTask.get('T-01'),[]);
+  }
+  assert.equal(partitionDiagnostics(undefined,tasks).global.length,1);
+  const f=fixture(t);
+  for(const [index,dependency] of ['T-02','T-01'].entries())writeFileSync(f.files[index],readFileSync(f.files[index],'utf8').replace('blocked_by: []',`blocked_by: [${dependency}]`));
+  const result=f.analyze();assert.deepEqual(result.frontier,[]);assert.match(result.errors.join('\n'),/cycle/);
+});
+
+test('a completed Outcome cannot re-enable the retired Goal schema',t=>{
+  const f=fixture(t);f.plan();f.saveContext('completed');
+  const path=join(f.root,'goal-plan.md');
+  const obsolete=readFileSync(path,'utf8').replace('schema_version: 8','schema_version: 7');writeFileSync(path,obsolete);
+  assert.match(f.validate('goal-plan').join('\n'),/requires schema v8/);
+  assert.equal(readFileSync(path,'utf8'),obsolete);
 });

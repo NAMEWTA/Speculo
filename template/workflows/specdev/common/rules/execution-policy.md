@@ -29,8 +29,8 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 
 验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
 
-## 恢复和旧记录
+## 恢复和版本边界
 
 恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
 
-旧 per-Ticket/source/candidate 执行记录仅作历史只读依据。活动旧记录必须由原 owner 显式整理：停止或交接旧 writer，盘点全部 branch/worktree/checkpoint/未决动作，确认本 change 的唯一工作区；没有合并授权不能收拢代码。将旧记录原字节移存原 Evidence 的历史段并保留引用，经核对后才写新上下文和新记录，重新核验失效的审查/验证。不自动删除旧工作区、不批量改 done，不由安装刷新转换。未处置完毕保持 blocked。
+执行工具只接受当前 Execution Context / Workspace Execution Record v1 与 Goal v8、父 Plan v3；未知版本、旧 source/candidate 字段和混合协议直接拒绝。拒绝不改写原 Evidence、不转换或删除工作区。原 owner 仍须核对实际 writer、代码与未决动作，不能把无法读取的旧协议解释成已停止或已完成。

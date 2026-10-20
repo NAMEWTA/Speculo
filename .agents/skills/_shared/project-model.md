@@ -15,7 +15,7 @@
 | workflow/_state/ | .agents/speculo/.speculo/domain/；roots.state；仅初始化种子 |
 | 项目原有 Skill | .agents/skills/；roots.skills；保留第三方所有权 |
 
-workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，包含 layout_version=agents-v2、installation_id 与固定 roots。CLI 安装只支持合法当前布局；未知 schema、路径越界、链接或冲突阻塞受影响操作。SpecDev 普通 Work 使用明确 projectRoot/methodRoot/stateRoot，无安装也可使用；已安装时不得放宽 workspace 身份检查。旧活动数据仅经显式转换，旧 archive 保留独立只读 reader，不返回新 writer 对象。CLI 的 staging、锁与恢复日志仅用于安装事务。
+workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，包含 layout_version=agents-v2、installation_id 与固定 roots。CLI 安装只支持合法当前布局；未知 schema、路径越界、链接或冲突阻塞受影响操作。SpecDev 普通 Work 使用明确 projectRoot/methodRoot/stateRoot，无安装也可使用；已安装时不得放宽 workspace 身份检查。只消费现役协议；旧活动和混合状态明确拒绝，历史文件保留但不解释为当前对象；不再分发旧转换器或历史 reader。CLI 的 staging、锁与恢复日志仅用于安装事务。
 
 ## 入口与按需读取
 
@@ -25,7 +25,7 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。公共 command/coordination-init 初始化一个项目默认方式，具体模型与任务由当次请求决定。Worker 可直接写获分配的计划、票据、地图等产物，Lead 核验并协调原 owner/gateway 推进正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
-外部派遣使用共享 TASK v2 / REPORT，单个 change 下使用 sessions/<session>/<task>，跨多个对象或无 change 使用 state/coordination/sessions。范围根一轮固定，原生协作按需采用，Lead 自行执行不造派单。存量 v1 按原合同保留。可选 session-locator.json 只保存经过确认的绝对日志 path，不自动读取历史或恢复工具会话。
+外部派遣使用共享 TASK v2 / REPORT，单个 change 下使用 sessions/<session>/<task>，跨多个对象或无 change 使用 state/coordination/sessions。范围根一轮固定，原生协作按需采用，Lead 自行执行不造派单。只使用当前 TASK v2，不分发 v1 adapter。可选 session-locator.json 只保存经过确认的绝对日志 path，不自动读取历史或恢复工具会话。
 
 用户明确调用 handoff 后，任何 Agent 可使用共享 references/handoff 方法更新实际 change 的 handoff.md；多个对象另有会话摘要，无 change 或归档对象沿 state/commands/handoff 保存报告。侧记可持续更新，会话报告不可覆盖；业务状态和永久知识仍走原网关。
 
@@ -33,13 +33,13 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 Skill 仅用 Agent Skills 标准顶层字段；扩展放 metadata 字符串映射。Work 使用 speculo-id、speculo-domain、speculo-kind=work-skill、speculo-contract-version="2"。name 等于小写目录名，真实 YAML 解析，禁止重复键和不安全 key。
 
-领域 manifest v2 注册入口、全部 Work 和可选阶段。目录、注册和 ID 必须闭合。generate-index 只更新领域 SKILL 的 AUTO-INDEX 路由区，不修改 YAML。用户投影原样复制源 YAML，并强制先读源入口；Command 包装单独生成宿主的显式调用政策。投影选择和文件 hash 在 projections.json v2；不接管第三方文件。
+领域 manifest v2 注册入口、全部 Work 和可选阶段。目录、注册和 ID 必须闭合。generate-index 只更新领域 SKILL 的 AUTO-INDEX 路由区，不修改 YAML。用户投影原样复制源 YAML，并强制先读源入口；Command 包装单独生成宿主的显式调用政策。投影选择和文件 hash 在 projections.json v3；不接管第三方文件。
 
 canonical 共 12 份，是隔离的单文件分发。共享规则、portable adaptation 与源模板是事实源；生成与 --check 必须覆盖全部 12 份。不可写平台输出完整 FILE bundle；不伪造持久化。
 
 ## 状态与授权
 
-Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。SpecDev 新业务整体结论为 README 唯一 Outcome active/completed/cancelled，归档在 changes/archive/<稳定名称>；普通新流程不读写全局 status/change status/Work 调用镜像。config 仅真实工具需要时保留，复杂 Goal Plan 7、Implementation Plan 2 及 Ticket/Map 等有实际消费者的合同不弱化；旧月份 archive 原位冻结。其他领域独立版本化，不强加此模型。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
+Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。SpecDev 新业务整体结论为 README 唯一 Outcome active/completed/cancelled，归档在 changes/archive/<稳定名称>；普通新流程不读写全局 status/change status/Work 调用镜像。config 仅真实工具需要时保留，复杂 Goal Plan 8、Implementation Plan 3 及 Ticket/Map 等有实际消费者的合同不弱化；旧历史文件保留，但不参与当前对象发现。其他领域独立版本化，不强加此模型。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
 
 Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突从 -01 取最小未使用编号，报告不覆盖。只有有恢复需求的 command 才建 state.json。docs-sync sidecar 由命令拥有，延迟创建，不放 workflow/_state。CLI-owned back 不由 prompt 改写。
 

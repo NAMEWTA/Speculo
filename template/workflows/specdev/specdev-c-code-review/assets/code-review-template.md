@@ -18,7 +18,7 @@ created_at: <ISO-8601>
 ## Fixed Input
 
 - **Comparison mode:** baseline / range / commit / pr
-- **Diff:** 实际冻结的 argv；legacy 未声明模式时才采用 `git diff <fixed_point>...<head>`
+- **Diff:** 实际冻结的 argv；baseline 采用 `git diff <fixed_point>...<head>`
 - **Diff digest:** 实际 diff 字节的 SHA-256
 - **Original base/head:** 原始不可变引用；fixed_point 为实际比较起点
 - **Commits:** `git log <fixed_point>..<head> --oneline`

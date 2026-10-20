@@ -98,8 +98,9 @@ MD/HTML/JSON 同批次持久化在 records/views，根 FLEET.md 最后更新。�
 ```sh
 node --test /path/to/ops/common/tests/test_ops_workspace.mjs
 node /path/to/ops/common/tools/validate-ops.mjs --self-check
+node /path/to/ops/common/tools/validate-ops.mjs --state-root "$STATE"
 ```
 
-定向测试使用临时本地状态和注入的执行/SSH 适配器，不构成真实 Linux、SSH 或 APP 验收。原 tests/test_ops.mjs、test_ops_bootstrap.mjs 与仓库完整 check 仍需通过。
+--self-check 只检查已安装静态资产，不猜测运行根；--state-root 检查显式绝对状态根。维护源包时使用 --package-check，额外验证初始化种子。定向测试使用临时本地状态和注入的执行/SSH 适配器，不构成真实 Linux、SSH 或 APP 验收。原 tests/test_ops.mjs、test_ops_bootstrap.mjs 与仓库完整 check 仍需通过。验证范围与项目业务配方见 <Path>{roots.workflows}/ops/common/verification/README.md</Path>。
 
 静态升级不迁移任何业务目录或旧证据，所有新记录由原 opaque preserve 合同保留。新增模块/schema 改变 engine_digest，旧未执行计划须重新生成；未知现场先恢复。仅改 Markdown 而不升级入口、manifest、schema 与验证器不是完整安装。

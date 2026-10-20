@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /** Local-only primitives. No publishing API, installer or network client. */
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, readdirSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join, parse, resolve } from 'node:path';
+import { existsSync, lstatSync, readFileSync, readdirSync, mkdirSync, renameSync, rmSync, writeFileSync, openSync, closeSync, readSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, parse, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 const workflow = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -68,7 +68,190 @@ export function validateStateRoot(root) {
     need(typeof name === 'string' && CHANGE.test(name), 'change-name');
     changes[name] = readJSON(localPath(root, `changes/${name}/.status.json`));
   }
-  return validateStatus(s, changes);
+  validateStatus(s, changes);
+  for (const [name, status] of Object.entries(changes)) {
+    if (status.status === 'cancelled') continue;
+    const changeRoot = localPath(root, `changes/${name}`);
+    if (status.status === 'completed' || status.works_run.length || existsSync(join(changeRoot, 'artifacts.json'))) validateChangeArtifacts(changeRoot, status);
+  }
+  return s;
+}
+
+const SHA256 = /^[a-f0-9]{64}$/;
+const sha256 = value => typeof value === 'string' && SHA256.test(value);
+const artifactKinds = new Set(['document', 'data', 'report', 'prompt', 'image-request', 'image', 'video-project', 'video-preview', 'video-final', 'local-draft']);
+function ownedPath(item) {
+  if (item.root === 'media') {
+    if (item.owner === 'media/init-setup') return ['context/creator.md', 'context/INDEX.md', 'dependency-report.json'].includes(item.path);
+    return item.owner === 'media/retro' && /^context\/(templates|materials)\//.test(item.path);
+  }
+  if (item.root !== 'change') return false;
+  if (item.owner === 'media/init-setup' && item.path.startsWith('context-snapshot/')) return true;
+  if (item.owner === 'media/retro' && item.path.startsWith('knowledge-snapshot/')) return true;
+  const paths = {
+    'media/brief': ['brief.json', 'sources.md', 'claims.json', 'master.md'],
+    'media/deconstruct': ['deconstruction.md'],
+    'media/retro': ['retro.md', 'next-brief.md'],
+    'media/init-setup': ['dependency-report.json'],
+  };
+  if (paths[item.owner]) return paths[item.owner].includes(item.path);
+  const prefix = { 'media/video': 'video/', 'media/hand-drawn': 'visual/', 'media/publish-draft': 'drafts/' }[item.owner];
+  return !!prefix && item.path.startsWith(prefix);
+}
+
+export function fingerprintArtifact(root, relative) {
+  const file = localPath(root, relative), stat = lstatSync(file);
+  need(stat.isFile(), 'artifact-not-file');
+  const hash = createHash('sha256'), buffer = Buffer.allocUnsafe(1024 * 1024), fd = openSync(file, 'r');
+  try { for (let size; (size = readSync(fd, buffer, 0, buffer.length, null)) > 0;) hash.update(buffer.subarray(0, size)); }
+  finally { closeSync(fd); }
+  return { path: relative, bytes: stat.size, sha256: hash.digest('hex') };
+}
+
+function checkImage(root, path, label) {
+  const file = localPath(root, path), head = Buffer.alloc(32), fd = openSync(file, 'r');
+  let size; try { size = readSync(fd, head, 0, head.length, 0); } finally { closeSync(fd); }
+  const png = /\.png$/i.test(path) && size >= 24 && head.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && head.readUInt32BE(16) > 0 && head.readUInt32BE(20) > 0;
+  const jpeg = /\.jpe?g$/i.test(path) && size >= 3 && head[0] === 255 && head[1] === 216 && head[2] === 255;
+  const webp = /\.webp$/i.test(path) && size >= 16 && head.toString('ascii', 0, 4) === 'RIFF' && head.toString('ascii', 8, 12) === 'WEBP';
+  need(png || jpeg || webp, 'image-format:' + label);
+}
+
+function checkEncodedVideo(file, brief, duration, label) {
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false });
+  need(!probe.error && probe.status === 0, 'video-probe-unavailable-or-failed:' + label);
+  const encoded = JSON.parse(probe.stdout), video = encoded.streams?.find(s => s.codec_type === 'video');
+  const rate = video?.avg_frame_rate?.match(/^(\d+)\/(\d+)$/), fps = rate && Number(rate[1]) / Number(rate[2]);
+  need(video && video.width === brief.width && video.height === brief.height && Number.isFinite(fps) && Math.abs(fps - brief.fps) < 1e-6
+    && Math.abs(Number(encoded.format?.duration) - duration) <= 1 / brief.fps + .05, 'video-encoded-mismatch:' + label);
+}
+
+function renderInputs(report, reportArtifact, byId, changeRoot) {
+  need(object(report.inputs) && ['brief', 'plan', 'html'].every(k => sha256(report.inputs[k])) && object(report.inputs.assets)
+    && Object.values(report.inputs.assets).every(sha256) && sha256(report.input_digest) && digest(report.inputs) === report.input_digest, 'video-inputs-required:' + reportArtifact.id);
+  const deps = reportArtifact.depends_on.map(d => byId.get(d.id));
+  const source = (role, predicate) => {
+    const artifact = deps.find(d => d.root === 'change' && d.sha256 === report.inputs[role] && predicate(d));
+    need(artifact && artifact.evidence_kind === 'executed', 'video-input-dependency:' + role);
+    need(fingerprintArtifact(changeRoot, artifact.path).sha256 === report.inputs[role], 'video-input-drift:' + role);
+    return localPath(changeRoot, artifact.path);
+  };
+  const brief = readJSON(source('brief', d => d.owner === 'media/brief' && d.kind === 'data' && d.path === 'brief.json'));
+  const planFile = source('plan', d => d.owner === 'media/video' && d.kind === 'data');
+  const plan = readJSON(planFile), sourceRoot = dirname(planFile);
+  source('html', d => d.owner === 'media/video' && d.kind === 'video-project');
+  validateVideo(brief, plan, sourceRoot);
+  const assets = [...new Set([...plan.shots.flatMap(s => s.assets), ...(plan.audio ? [plan.audio] : []), ...(plan.font_files ?? [])])].sort();
+  need(JSON.stringify(Object.keys(report.inputs.assets).sort()) === JSON.stringify(assets), 'video-input-assets');
+  for (const name of assets) {
+    const path = localPath(sourceRoot, name), hash = fingerprintArtifact(sourceRoot, name).sha256;
+    need(hash === report.inputs.assets[name], 'video-input-drift:' + name);
+    need(deps.some(d => d.root === 'change' && d.sha256 === hash && localPath(changeRoot, d.path) === path), 'video-input-dependency:' + name);
+  }
+  return { brief, plan };
+}
+
+export function validateArtifactManifest(manifest, changeRoot, status) {
+  keys(manifest, ['schema_version', 'change', 'artifacts']);
+  need(manifest.schema_version === 1 && manifest.change === status.change && basename(changeRoot) === status.change
+    && basename(dirname(changeRoot)) === 'changes', 'artifact-change');
+  need(Array.isArray(manifest.artifacts) && manifest.artifacts.length <= 1000, 'artifact-list');
+  if (status.status === 'completed') need(manifest.artifacts.length > 0, 'completion-without-promises');
+  const byId = new Map(), paths = new Set();
+  for (const a of manifest.artifacts) {
+    keys(a, ['id', 'owner', 'kind', 'root', 'path', 'version', 'sha256', 'evidence_kind', 'depends_on']);
+    need(text(a.id) && ID.test(a.id) && !byId.has(a.id), 'artifact-id');
+    need(WORKS.includes(a.owner) && artifactKinds.has(a.kind) && text(a.path) && ownedPath(a), 'artifact-owner:' + a.id);
+    need(status.status !== 'completed' || a.root !== 'media', 'mutable-shared-artifact-needs-snapshot:' + a.id);
+    need(Number.isInteger(a.version) && a.version > 0 && (a.sha256 === null || sha256(a.sha256)), 'artifact-version:' + a.id);
+    need(['executed', 'simulated', 'unverified'].includes(a.evidence_kind) && Array.isArray(a.depends_on), 'artifact-evidence:' + a.id);
+    const root = a.root === 'change' ? changeRoot : resolve(changeRoot, '../..');
+    localPath(root, a.path, false);
+    const key = a.root + ':' + a.path;
+    need(!paths.has(key), 'artifact-path-owned-twice:' + a.id); paths.add(key); byId.set(a.id, a);
+  }
+  const done = new Set();
+  function visit(id, trail = new Set()) {
+    need(!trail.has(id), 'artifact-dependency-cycle:' + id);
+    if (done.has(id)) return;
+    const a = byId.get(id), seen = new Set();
+    for (const dep of a.depends_on) {
+      keys(dep, ['id', 'version', 'sha256']);
+      need(byId.has(dep.id) && !seen.has(dep.id), 'artifact-dependency:' + id); seen.add(dep.id);
+      const source = byId.get(dep.id);
+      need(Number.isInteger(dep.version) && dep.version > 0 && (dep.sha256 === null || sha256(dep.sha256)), 'dependency-version:' + id);
+      if (a.sha256 !== null) need(dep.version === source.version && dep.sha256 !== null && dep.sha256 === source.sha256, 'dependency-stale:' + id);
+      visit(dep.id, new Set([...trail, id]));
+    }
+    done.add(id);
+  }
+  for (const id of byId.keys()) visit(id);
+  for (const a of manifest.artifacts) {
+    const required = status.status === 'completed' || status.works_run.includes(a.owner);
+    if (a.sha256 === null) { need(!required, 'artifact-not-produced:' + a.id); continue; }
+    const root = a.root === 'change' ? changeRoot : resolve(changeRoot, '../..');
+    let observed;
+    try { observed = fingerprintArtifact(root, a.path); }
+    catch (error) { throw new Error(`media:artifact-missing:${a.id}:${a.owner}: ${error.message}`); }
+    need(observed.sha256 === a.sha256, 'artifact-drift:' + a.id + ':' + a.owner);
+    if (required) need(a.evidence_kind === 'executed', 'artifact-not-executed:' + a.id);
+    if (a.kind === 'image') {
+      need(['media/video', 'media/hand-drawn'].includes(a.owner), 'image-owner:' + a.id);
+      checkImage(root, a.path, a.id);
+    }
+    if (['video-preview', 'video-final'].includes(a.kind)) {
+      need(a.owner === 'media/video' && /\.(mp4|webm|mov)$/.test(a.path) && observed.bytes > 0, 'video-file:' + a.id);
+      const reports = a.depends_on.map(d => byId.get(d.id)).filter(d => d.owner === a.owner && d.kind === 'report' && d.root === a.root && basename(d.path) === 'render-report.json');
+      need(reports.length === 1, 'video-report-required:' + a.id);
+      const reportArtifact = reports[0];
+      const report = readJSON(localPath(root, reportArtifact.path));
+      need(report.evidence_kind === 'executed' && report.status === 'rendered-needs-review'
+        && report.mode === (a.kind === 'video-final' ? 'final' : 'preview') && report.output_sha256 === a.sha256
+        && report.schema_version === 2 && sha256(report.execution_digest) && object(report.execution_identity)
+        && digest(report.execution_identity) === report.execution_digest, 'video-report-mismatch:' + a.id);
+      let productionInputs;
+      if (a.kind === 'video-final') {
+        const reviewArtifact = reportArtifact.depends_on.map(d => byId.get(d.id)).find(d => d.owner === a.owner && d.kind === 'report' && d.sha256 === report.review?.sha256);
+        need(reviewArtifact && object(report.review) && sha256(report.review.sha256) && sha256(report.review.preview_sha256)
+          && sha256(report.input_digest) && report.review.input_digest === report.input_digest && report.review.execution_digest === report.execution_digest, 'final-review-required:' + a.id);
+        productionInputs = renderInputs(report, reportArtifact, byId, changeRoot);
+        const { brief, plan } = productionInputs;
+        const reviewRoot = reviewArtifact.root === 'change' ? changeRoot : resolve(changeRoot, '../..');
+        const reviewFile = localPath(reviewRoot, reviewArtifact.path), review = readJSON(reviewFile);
+        need(review.preview?.sha256 === report.review.preview_sha256, 'final-review-mismatch:' + a.id);
+        validateReviewEvidence(review, brief, plan, report.input_digest, report.execution_digest, dirname(reviewFile));
+        for (const item of [review.preview, ...review.stills]) {
+          const path = localPath(dirname(reviewFile), item.path), kind = item === review.preview ? 'video-preview' : 'image';
+          need(reviewArtifact.depends_on.some(d => {
+            const evidence = byId.get(d.id);
+            return evidence.root === 'change' && evidence.owner === 'media/video' && evidence.kind === kind && evidence.sha256 === item.sha256
+              && localPath(changeRoot, evidence.path) === path;
+          }), 'review-evidence-dependency:' + item.path);
+        }
+      }
+      const { brief } = productionInputs ?? renderInputs(report, reportArtifact, byId, changeRoot);
+      need(report.width === brief.width && report.height === brief.height && report.fps === brief.fps
+        && report.duration_seconds === (a.kind === 'video-final' ? brief.duration_seconds : Math.min(30, brief.duration_seconds)), 'video-spec-mismatch:' + a.id);
+      checkEncodedVideo(localPath(root, a.path), brief, report.duration_seconds, a.id);
+    }
+    if (a.kind === 'local-draft') {
+      need(a.owner === 'media/publish-draft' && basename(a.path) === 'package.json', 'draft-package:' + a.id);
+      const pkg = readJSON(localPath(root, a.path));
+      need(pkg.status === 'local-draft-ready' && pkg.publication_performed === false, 'draft-is-not-published:' + a.id);
+      need(Array.isArray(pkg.media_manifest), 'draft-media-manifest:' + a.id);
+      const folder = dirname(localPath(root, a.path));
+      need(readFileSync(localPath(folder, 'draft.md'), 'utf8') === `# ${pkg.title}\n\n${pkg.body}\n\n---\nLocal draft only. No upload, login or publication was performed.\n`, 'draft-body-drift:' + a.id);
+      for (const item of pkg.media_manifest) need(fingerprintArtifact(folder, item.path).sha256 === item.sha256, 'draft-copy-drift:' + a.id);
+    }
+  }
+  for (const work of status.works_run) need(manifest.artifacts.some(a => a.owner === work), 'work-without-owned-artifact:' + work);
+  return { valid: true, change: manifest.change, artifacts: manifest.artifacts.length, scope: 'owned file bytes, image signatures, declared dependency versions and completion promises; not human approval, visual quality or general semantic correctness' };
+}
+
+export function validateChangeArtifacts(changeRoot, status = readJSON(localPath(changeRoot, '.status.json'))) {
+  const terminal = ['completed', 'cancelled'].includes(status.status);
+  validateStatus({ schema_version: 1, workflow: 'media', active: terminal ? [] : [status.change], completed: terminal ? [status.change] : [] }, { [status.change]: status });
+  return validateArtifactManifest(readJSON(localPath(changeRoot, 'artifacts.json')), changeRoot, status);
 }
 export function validateEvidence(claims, sources, final = false) {
   need(Array.isArray(claims) && Array.isArray(sources), 'evidence-arrays');
@@ -90,19 +273,29 @@ export function validateEvidence(claims, sources, final = false) {
 }
 export function validateBrief(b, final = false) {
   need(object(b) && b.schema_version === 1, 'brief-version');
-  need(['content_id', 'topic', 'conclusion', 'audience', 'platform', 'style', 'font'].every(k => text(b[k])), 'missing-input');
+  need(['content_id', 'topic', 'conclusion', 'audience'].every(k => text(b[k])), 'missing-input');
   need(ID.test(b.content_id), 'content-id');
-  need(Number.isFinite(b.duration_seconds) && b.duration_seconds > 0 && b.duration_seconds <= 600, 'duration');
-  for (const k of ['width', 'height']) need(Number.isInteger(b[k]) && b[k] >= 128 && b[k] <= 3840 && b[k] % 2 === 0, 'dimensions');
-  need(Number.isInteger(b.fps) && b.fps >= 1 && b.fps <= 60, 'fps');
-  need(Array.isArray(b.colors) && b.colors.length > 0 && b.colors.every(text), 'colors');
-  need(object(b.voice) && ['silent', 'provided'].includes(b.voice.mode), 'voice');
+  validateVideoFields(b, false);
   const kinds = ['result', 'pain', 'counterintuitive'];
   need(Array.isArray(b.hooks) && b.hooks.every(h => object(h) && text(h.text) && kinds.includes(h.kind)) && kinds.every(k => b.hooks.some(h => h.kind === k)), 'three-hooks');
   validateEvidence(b.claims, b.sources, final); return b;
 }
+function validateVideoFields(b, required) {
+  const present = key => b[key] !== undefined && b[key] !== null;
+  for (const key of ['platform', 'style', 'font']) if (required || present(key)) need(text(b[key]), 'missing-video-' + key);
+  if (required || present('duration_seconds')) need(Number.isFinite(b.duration_seconds) && b.duration_seconds > 0 && b.duration_seconds <= 600, 'duration');
+  for (const k of ['width', 'height']) if (required || present(k)) need(Number.isInteger(b[k]) && b[k] >= 128 && b[k] <= 3840 && b[k] % 2 === 0, 'dimensions');
+  if (required || present('fps')) need(Number.isInteger(b.fps) && b.fps >= 1 && b.fps <= 60, 'fps');
+  if (required || present('colors')) need(Array.isArray(b.colors) && b.colors.length > 0 && b.colors.every(text), 'colors');
+  if (required || present('voice')) need(object(b.voice) && ['silent', 'provided'].includes(b.voice.mode), 'voice');
+}
+export function validateVideoBrief(b) { validateBrief(b, true); validateVideoFields(b, true); return b; }
 export function validateVideo(b, p, root) {
-  validateBrief(b, true); need(object(p) && p.schema_version === 1 && text(p.narration), 'narration-first');
+  validateVideoBrief(b); need(object(p) && p.schema_version === 1 && text(p.narration), 'narration-first');
+  if (p.font_files !== undefined) {
+    need(unique(p.font_files) && p.font_files.length <= 16, 'font-files');
+    for (const font of p.font_files) { need(root, 'font-root'); need(lstatSync(localPath(root, font)).isFile(), 'font-file'); }
+  }
   need(Array.isArray(p.shots) && p.shots.length > 0 && p.shots.length <= 100, 'shots');
   if (b.voice.mode === 'silent') need(p.audio === null && p.transcript === null, 'silent-no-fake-transcript');
   else {
@@ -122,9 +315,10 @@ export function validateVideo(b, p, root) {
   }
   need(new Set(ids).size === ids.length && Math.abs(end - b.duration_seconds) < 1e-6, 'shot-coverage'); return p;
 }
-export function validateReview(r, b, p, inputDigest) {
-  need(object(r) && r.evidence_kind === 'executed' && text(r.reviewer), 'review-not-observed');
-  need(r.input_digest === inputDigest, 'stale-review');
+export function validateReview(r, b, p, inputDigest, executionDigest) {
+  need(object(r) && r.schema_version === 2 && r.evidence_kind === 'executed' && text(r.reviewer), 'review-not-observed');
+  need(sha256(inputDigest) && r.input_digest === inputDigest, 'stale-review');
+  need(SHA256.test(executionDigest ?? '') && r.execution_digest === executionDigest, 'stale-execution-review');
   const asset = x => object(x) && text(x.path) && /^[a-f0-9]{64}$/.test(x.sha256 ?? '');
   need(asset(r.preview) && Number.isFinite(r.preview.duration_seconds), 'preview-evidence');
   const d = r.preview.duration_seconds;
@@ -134,6 +328,18 @@ export function validateReview(r, b, p, inputDigest) {
   need(Array.isArray(r.blockers) && r.blockers.length === 0, 'review-blockers');
   need(Array.isArray(r.stills) && r.stills.length === p.shots.length * 3 && p.shots.every(s => r.stills.filter(f => asset(f) && f.shot_id === s.id && f.accepted === true).length === 3), 'three-stills');
   need(new Set(r.stills.map(s => s.path)).size === r.stills.length, 'duplicate-still'); return r;
+}
+
+/** Consume the same review gate at final rendering and at delivery; declarations alone are insufficient. */
+export function validateReviewEvidence(r, b, p, inputDigest, executionDigest, root) {
+  validateReview(r, b, p, inputDigest, executionDigest);
+  need(fingerprintArtifact(root, r.preview.path).sha256 === r.preview.sha256, 'review-preview-drift');
+  checkEncodedVideo(localPath(root, r.preview.path), b, r.preview.duration_seconds, 'review-preview');
+  for (const item of r.stills) {
+    need(fingerprintArtifact(root, item.path).sha256 === item.sha256, 'review-still-drift:' + item.path);
+    checkImage(root, item.path, item.path);
+  }
+  return r;
 }
 export const styleMenu = () => readJSON(join(workflow, 'media-h-hand-drawn/references/style-catalog.json')).styles;
 export function selectStyle(value) {
@@ -174,7 +380,7 @@ export function renderPrompt({ skillRoot, reviewedDigest, style, variables = {},
 }
 export function detectDependencies() {
   const commands = { node: [process.execPath, ['--version']], python: ['python3', ['-I', '-c', 'import sys; print(sys.version.split()[0]); sys.exit(0 if sys.version_info >= (3,10) else 1)']], ffmpeg: ['ffmpeg', ['-version']], ffprobe: ['ffprobe', ['-version']], uv: ['uv', ['--version']], chromium: ['chromium', ['--version']], playwright: ['python3', ['-I', '-c', 'import importlib.util; print("present" if importlib.util.find_spec("playwright") else "missing")']] };
-  return Object.fromEntries(Object.entries(commands).map(([k, [exe, args]]) => { const r = spawnSync(exe, args, { encoding: 'utf8', timeout: 5000, maxBuffer: 16384, shell: false }); const detail = (r.stdout || r.stderr || '').trim().split('\n')[0]; return [k, { available: r.status === 0 && detail !== 'missing', detail: detail || r.error?.code || 'unavailable' }]; }));
+  return Object.fromEntries(Object.entries(commands).map(([k, [exe, args]]) => { const r = spawnSync(exe, args, { encoding: 'utf8', timeout: 5000, maxBuffer: 16384, shell: false }); const detail = (r.stdout || r.stderr || '').trim().split('\n')[0]; return [k, { available: !r.error && r.status === 0 && detail.length > 0 && detail !== 'missing', detail: detail || r.error?.code || 'unavailable' }]; }));
 }
 export function draftFingerprint(r, sourceRoot) {
   need(object(r) && unique(r.media) && r.media.length <= 50, 'draft-media');
@@ -222,12 +428,15 @@ export function cli(args) {
   if (command === 'detect' && !a.length) return detectDependencies();
   if (command === 'style-menu' && !a.length) return styleMenu();
   if (command === 'check-brief' && a.length === 1) { validateBrief(readJSON(a[0])); return { valid: true }; }
+  if (command === 'check-video-brief' && a.length === 1) { validateVideoBrief(readJSON(a[0])); return { valid: true }; }
   if (command === 'check-video' && a.length === 3) { validateVideo(readJSON(a[0]), readJSON(a[1]), a[2]); return { valid: true }; }
+  if (command === 'check-artifacts' && a.length === 1) return validateChangeArtifacts(resolve(a[0]));
+  if (command === 'fingerprint-artifact' && a.length === 2) return fingerprintArtifact(a[0], a[1]);
   if (command === 'fingerprint-skill' && a.length === 1) return { digest: fingerprintPackage(a[0]), approved: false };
   if (command === 'render-prompt' && a.length === 1) { process.stdout.write(renderPrompt(readJSON(a[0]))); return; }
   if (command === 'fingerprint-draft' && a.length >= 1 && a.length <= 2) return { digest: draftFingerprint(readJSON(a[0]), a[1]), approved: false };
   if (command === 'export-draft' && a.length >= 2 && a.length <= 3) return exportDraft(readJSON(a[0]), a[1], a[2]);
-  throw new Error('usage: media-tools.mjs detect | style-menu | check-brief FILE | check-video BRIEF PLAN SOURCE_ROOT | fingerprint-skill DIR | render-prompt REQUEST | fingerprint-draft REQUEST [SOURCE_ROOT] | export-draft REQUEST EXISTING_OUTPUT_ROOT [SOURCE_ROOT]');
+  throw new Error('usage: media-tools.mjs detect | style-menu | check-brief FILE | check-video-brief FILE | check-video BRIEF PLAN SOURCE_ROOT | check-artifacts CHANGE_ROOT | fingerprint-artifact ROOT RELATIVE_FILE | fingerprint-skill DIR | render-prompt REQUEST | fingerprint-draft REQUEST [SOURCE_ROOT] | export-draft REQUEST EXISTING_OUTPUT_ROOT [SOURCE_ROOT]');
 }
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   try { const result = cli(process.argv.slice(2)); if (result !== undefined) console.log(JSON.stringify(result, null, 2)); }

@@ -73,7 +73,7 @@ export function validateExecutionRecord(change, record, context, {repoRoot=null,
   try {
     const identity = record.ticket_id ? ['ticket_id'] : ['purpose','change'];
     const keys = ['schema_version',...identity,'workspace_context','implementation_owners','status','checkpoint','verification','attempts'];
-    if (record.schema_version !== EXECUTION_VERSION || keys.some(key=>!(key in record)) || Object.keys(record).some(key=>!keys.includes(key))) throw new Error('legacy or invalid execution record; explicit reconciliation required');
+    if (record.schema_version !== EXECUTION_VERSION || keys.some(key=>!(key in record)) || Object.keys(record).some(key=>!keys.includes(key))) throw new Error('invalid execution record: only schema_version: 1 and its declared fields are supported');
     if (record.ticket_id ? !/^T-\d{2,}$/.test(record.ticket_id) : record.purpose !== 'direct-spec' || record.change !== basename(change)) throw new Error('execution identity does not match this change');
     if (!context || record.workspace_context !== EXECUTION_CONTEXT) throw new Error('execution must reference the unique change Execution Context');
     if (!['active','review','verified','blocked','cancelled'].includes(record.status)) throw new Error('invalid execution status');

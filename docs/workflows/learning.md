@@ -70,6 +70,8 @@ speculo init . --workflows learning --skill-targets agents --skills domain/learn
 
 一课是约 30–40 分钟的完整活动预算，包含动机、直觉、精确定义、机制、图解或表格、正例、反例、变式迁移、误区和引用。通俗表达不会删掉边界和不确定性。讲义可以有非评分自检，但不混入正式作业、评分或 mastered。
 
+预算的分段分钟数、合计、OBJ、真实来源和授课时间会由领域工具核对；记录自洽不等于工具已经证明教学效果。
+
 ```text
 使用 learning/lesson，讲课程中的“ETag 与条件请求”。
 以零基础表达完成一课，解释缓存命中与重新验证的差别，给出反例和迁移例子。
@@ -142,6 +144,8 @@ Submission: ready
 
 再请求评审该文件。AI 冻结原始 Q/A，只在末尾追加 `## Review`，逐题给 correct、partial、incorrect 或 uncertain，附中文解释和英文 Explain。
 
+Review 保存原提交摘要、实际评审时间、`Immediate result: passed` 或 `needs_review`，并按 OBJ 说明依据。“已经评审”不自动等于“已经通过”；错误或未解决的记录仍保留为历史，有阻塞误区或需要修订时不能同时声明即时通过。工具不要求所有题全对，也不会因为新建 pending 作业而删除既有通过证据。
+
 **注意：** Homework 用 `Submission`，Question tutor 用 `Response`，两者不要混用。重新作答创建新的 attempt 文件；一次答对是即时表现，不是长期掌握。
 
 <a id="review"></a>
@@ -191,6 +195,8 @@ Submission: ready
 当几个学习 change 指向同一主题，希望看见共同结论、冲突和缺口时使用。提供 domain/topic 和稳定 source Change IDs。
 
 它先列 dry-run：目标父 change、移动清单、来源哈希、证据与 context 计划。获准后把原 change 整棵放进父目录的 `children/`，保留原始 Markdown 字节和各自 owner，再生成 `synthesis/` 中的来源清单、综述、claim 矩阵、概念图与版本。
+
+迁移工具返回计划摘要，执行时核对同一摘要；在移动前保存事务清单，更新全部后代的定位信息。中断可按清单 resume 或 rollback；重复恢复会核对正确终态，外来锁、文件漂移或未知暂存内容会保留并停止受影响操作。具体调用见 [Workflow 合同、证据与恢复](../workflow-integrity.md)。
 
 ```text
 使用 learning/consolidate，把我指定的 HTTP 缓存和 CDN 学习记录整合为“缓存系统”主题。

@@ -46,21 +46,23 @@ describe("work upgrade: evaluation levels and independent observation trust", ()
   it("keeps fixture-ready honest and makes artifact/observed requirements fail closed", async () => {
     const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
     const normal = await evaluateScenarios(scenario());
-    assert.equal(normal.exit_code, 0); assert.equal(normal.evaluation_level, "fixtures"); assert.equal(normal.behavior, "not-evaluated"); assert.equal(normal.release_eligible, false);
+    assert.equal(normal.exit_code, 0); assert.equal(normal.evaluation_level, "fixtures"); assert.equal(normal.behavior, "not-evaluated"); assert.equal(normal.gate_eligible, false); assert.equal(normal.publication_authorized, false);
     for (const requirement of ["artifacts", "observed"]) assert.equal((await evaluateScenarios(scenario(), null, null, { require: requirement })).exit_code, 2);
   });
   it("does not promote supplied traces or model claims to authenticated behavior", async () => fixture(async (f) => {
     const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
     const result = await evaluateScenarios(scenario(), events(), f.artifacts);
-    assert.equal(result.exit_code, 0); assert.equal(result.release_eligible, false); assert.equal(result.evaluation_level, "artifacts");
+    assert.equal(result.exit_code, 0); assert.equal(result.gate_eligible, false); assert.equal(result.evaluation_level, "artifacts");
+    assert.equal(result.artifact_gates_passed, true); assert.equal(result.observed_gates_passed, false); assert.equal(result.publication_authorized, false);
     const claimed = await evaluateScenarios(scenario(), events(), f.artifacts, { require: "observed", authenticated: true });
-    assert.equal(claimed.exit_code, 2); assert.equal(claimed.release_eligible, false);
+    assert.equal(claimed.exit_code, 2); assert.equal(claimed.gate_eligible, false); assert.equal(claimed.publication_authorized, false);
   }));
   it("accepts an operator-trusted signed test observation only for the exact inputs", async () => fixture(async (f) => {
     const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
     const options = { require: "observed", bundleRoot: f.bundle, trustPath: f.trust, repoRoot: f.repo };
     const result = await evaluateScenarios(scenario(), events(), f.artifacts, options);
-    assert.equal(result.exit_code, 0, JSON.stringify(result)); assert.equal(result.evaluation_level, "observed"); assert.equal(result.release_eligible, true);
+    assert.equal(result.exit_code, 0, JSON.stringify(result)); assert.equal(result.evaluation_level, "observed"); assert.equal(result.gate_eligible, true);
+    assert.equal(result.observed_gates_passed, true); assert.equal(result.publication_authorized, false); assert.equal("release_eligible" in result, false);
     assert.equal(result.observation.model.name, "no-model");
     await writeFile(join(f.repo, "INSTRUCTIONS.md"), "changed\n");
     assert.match((await evaluateScenarios(scenario(), events(), f.artifacts, options)).evidence_error, /instruction source drift/);
@@ -78,7 +80,7 @@ describe("work upgrade: evaluation levels and independent observation trust", ()
       const { evaluateScenarios } = await load("scripts/evaluate-scenarios.mjs");
       mutate(f); await f.attest();
       const result = await evaluateScenarios(scenario(), events(), f.artifacts, { require: "observed", bundleRoot: f.bundle, trustPath: f.trust, repoRoot: f.repo });
-      assert.equal(result.exit_code, 2); assert.equal(result.release_eligible, false); assert.match(result.evidence_error, expected);
+      assert.equal(result.exit_code, 2); assert.equal(result.gate_eligible, false); assert.equal(result.publication_authorized, false); assert.match(result.evidence_error, expected);
     }));
   }
   it("rejects forged signatures, edited observer logs and unexpected extra artifacts", async () => fixture(async (f) => {
@@ -131,6 +133,7 @@ describe("work upgrade: evaluation levels and independent observation trust", ()
   }));
   it("fails the CLI observed gate with no evidence, and rejects ambiguous options", async () => {
     const result = spawnSync(process.execPath, ["scripts/evaluate-scenarios.mjs", "--require", "observed"], { encoding: "utf8" });
+    assert.ifError(result.error);
     assert.equal(result.status, 2, result.stderr); assert.equal(JSON.parse(result.stdout).behavior, "not-evaluated");
     const { parseEvaluationArgs } = await load("scripts/evaluate-scenarios.mjs");
     for (const args of [["--unknown"], ["--require"], ["--require", "fixtures", "--require", "observed"], ["f", "t", "a", "--bundle", "b"]]) assert.throws(() => parseEvaluationArgs(args));

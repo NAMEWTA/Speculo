@@ -237,7 +237,7 @@ test('renaming an owned Work never adopts an existing unowned destination direct
  for(const p of ['stage/workflows/sample/sample-a-next','stage/commands','stage/.speculo','.agents/speculo/.speculo','.agents/skills/sample-a-first','.agents/skills/sample-a-next'])await mkdir(join(target,p),{recursive:true});
  const header=(name:string,kind:string,id:string)=>`---\nname: ${name}\ndescription: Sample\nmetadata:\n  speculo-kind: ${kind}\n  speculo-id: ${id}\n  speculo-domain: sample\n  speculo-contract-version: "2"\n---\n`;
  await writeFile(join(staged,'commands/manifest.json'),JSON.stringify({schema_version:1,commands:[]}));
- await writeFile(join(staged,'workflows/sample/manifest.json'),JSON.stringify({schema_version:2,id:'sample',entry:'SKILL.md',works:[entry],work_stages:{[entry]:[]}}));
+ await writeFile(join(staged,'workflows/sample/manifest.json'),JSON.stringify({schema_version:2,id:'sample',version:'1.0.0',entry:'SKILL.md',persistent_knowledge:[],stages:[{id:'run',after:[],inputs:['request'],outputs:['report'],risk:'read-only',context_budget:1000}],works:[entry],work_stages:{[entry]:[]}}));
  await writeFile(join(staged,'workflows/sample/SKILL.md'),header('sample','domain-skill','domain/sample'));
  await writeFile(join(staged,'workflows/sample',entry),header('sample-a-next','work-skill','sample/run'));
  await writeFile(join(target,oldPath),'owned');await writeFile(join(target,'.agents/skills/sample-a-next/user.txt'),'preserve');

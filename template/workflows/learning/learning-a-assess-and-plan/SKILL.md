@@ -20,6 +20,8 @@ metadata:
 
 ## 流程
 
+读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+
 1. 确认 I 已完成，收集学习目标、期望效果、受众、范围、时间、表达基线和深度。缺少会改变课程设计的选择时，一次只问一个问题。
 2. 创建或恢复 `YYYY-MM-DD-<kebab-topic>[-NN]` Change，生成 `.status.json`，设置 `current_work=learning/assess-and-plan`。
 3. 写 `course.md`：可观察 OBJ、先决条件、课程地图、每节 Lesson 的 30–40 分钟预算、可选路径、Homework 映射和成功证据。章节顺序是参考方案，不是强制教学模型。
@@ -37,4 +39,5 @@ metadata:
 
 - Change seed：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/change-status-template.json</Path>`
 - Course 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/course-template.md</Path>`
+- Sources 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/sources-template.md</Path>`
 - Background 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/background-template.md</Path>`

@@ -8,6 +8,8 @@
 
 你知道要归档或整理知识，但不确定该调用哪个领域 Work。这个 Command 负责选择目标、核对授权和汇总回执，实际移动和知识写入由领域 owner 完成。
 
+入口从当前目录向上寻找字面路径 `.agents/speculo/.speculo/workspace.json`，验证当前 schema 和 roots 后用既有 resolver 解析路径；用户明确项目与发现结果不一致时先消歧。无效 workspace 不猜测、不初始化。SpecDev 仍可按自己的根合同接收明确 projectRoot/methodRoot/stateRoot；其他领域沿原安装语义处理缺失。允许采用默认配置的分支会在回执说明。
+
 ## 支持哪些对象
 
 | 对象 | 路由 |

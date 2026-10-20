@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "artifact": "learning-synthesis-manifest",
+  "claims": [
+    {
+      "claim_id": "CLM-001",
+      "evidence_status": "draft",
+      "mastery": "unverified",
+      "sources": [
+        {
+          "change_id": "<source-change-id>",
+          "artifact": "lessons/L-001-topic.md#核心概念与机制",
+          "source_id": "S-001",
+          "objective_ids": [
+            "OBJ-01"
+          ]
+        }
+      ],
+      "unknowns": [
+        "<未决条件；无则空数组>"
+      ],
+      "verified_at": null,
+      "retention_evidence": []
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 ---
 lesson_id: L-<NNN>
+delivered_at: <actual-ISO-8601>
 objective_ids: [OBJ-01]
 estimated_minutes: 35
 time_budget:

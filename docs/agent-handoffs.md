@@ -51,7 +51,7 @@ node .agents/speculo/references/coordination/scripts/validate-dispatch.mjs \
   --session 20261018T080000Z --task 003-explain --stage return
 ```
 
-派遣前用 dispatch，回收时用 return。退出码 0 表示结构通过、1 为结构失败、2 为参数错误。校验器不扫描日志、不认证身份或授权，也不证明业务完成；领域 lifecycle 仍由 owning Work 核对。旧 SpecDev TASK v1 保留原校验接口和原字节。
+派遣前用 dispatch，回收时用 return。退出码 0 表示结构通过、1 为结构失败、2 为参数错误。校验器不扫描日志、不认证身份或授权，也不证明业务完成；领域 lifecycle 仍由 owning Work 核对。只分发当前 TASK v2 校验；历史记录保留原字节，不作为当前派遣输入。
 
 工具断线或结果未知时先查询原任务，确认副作用和 writer 情况后才能继续。当前强制指定的工具不可用时只阻塞相关阶段，不静默替换。共享规则见[编排方法](../template/references/coordination/coordination-contract.md)、[派遣文件合同](../template/references/coordination/session-files.md)和[返回验收](../template/references/coordination/result-and-recovery.md)。
 

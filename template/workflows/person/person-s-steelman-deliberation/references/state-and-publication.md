@@ -19,6 +19,8 @@
 
 读取—合并—写入时保留未知顶层字段、未知 entry 字段和其他 work 的全部条目。写临时文件、重读 JSON、再原子替换。
 
+合并全局 active 前独占创建 `<Path>{roots.state}/person/.person-status.lock</Path>`，只在持有自己的锁时读取—合并—替换索引，并只释放自己的锁；已有他人锁时保留它并延后本次索引写入。咨询专属字段只在所属 Change 中维护。此索引协调不改变 dossier 冻结或 decision 的裁决资格门槛。
+
 ### Change 状态
 
 `<Path>{roots.state}/person/changes/{change}/.status.json</Path>` 至少包含：

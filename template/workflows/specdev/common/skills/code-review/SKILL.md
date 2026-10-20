@@ -13,11 +13,11 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 
 ## 输入
 
-默认 diff 模式使用下列 fixed_point/head/diff/log。C 显式本地文件分支使用 `review_mode: source-files` 与 `source_snapshot`（路径/原始字节 SHA256）；不提供虚假的 Git 字段。各模式均提供规范、标准、范围和独立身份。I 未提交 Direct Spec 使用 `review_mode: working-tree`，按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定完整交付快照。
+默认 diff 模式使用下列 fixed_point/head/diff/log。C 显式本地文件分支使用 `review_mode: source-files` 与 `source_snapshot`（路径/原始字节 SHA256）；不提供虚假的 Git 字段。各模式均提供规范、标准、范围和独立身份。I 的 Ticket 或 Direct Spec 在 current/worktree 未提交交付时使用 `review_mode: working-tree`，按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定完整交付快照。
 
 - `fixed_point`：已解析的 commit SHA；
 - `head`：已解析的 HEAD/checkpoint SHA；
-- `diff_command`：由调用方冻结的实际 argv；legacy 默认三点，显式 range/commit 使用已确认端点，不由 reviewer 换范围；
+- `diff_command`：由调用方冻结的实际 argv；baseline 模式三点，显式 range/commit 使用已确认端点，不由 reviewer 换范围；
 - `commit_log`：固定点之后的 commit 列表；
 - `spec_sources`：零个或多个本地权威来源；
 - `standards_sources`：仓库编码标准来源；

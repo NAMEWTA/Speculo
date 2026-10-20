@@ -2,10 +2,10 @@
 
 # Source Code ZIP
 
-把一个目录压缩为安全、精简、主要只包含源码的 ZIP。实际执行逻辑位于：
+把一个目录按既有过滤规则压缩为精简、主要只包含源码的 ZIP。默认不纳入 JSON，且忽略锁文件、YAML 等，因此默认 ZIP 不承诺是可完整复建的工程包；需要额外材料时按下文显式调整输入，保持默认策略不变。实际执行逻辑位于：
 
 ```text
-scripts/zip_source_code.js
+scripts/zip_source_code.cjs
 ```
 
 该实现只有一个 JavaScript 文件，只使用 Node.js 内置模块：
@@ -39,22 +39,36 @@ util
 node --version
 ```
 
-然后直接运行：
+先定位脚本；`ZIP_SCRIPT` 必须是已核对的绝对文件路径，后面的示例不依赖当前目录恰好位于 Command 包中。已安装项目从当前目录向上找到字面路径 `.agents/speculo/.speculo/workspace.json`，验证后复用现有 resolver：
 
 ```bash
-node scripts/zip_source_code.js "/path/to/project"
+ZIP_SCRIPT="$(speculo resolve --path '{roots.commands}/source-code-zip/scripts/zip_source_code.cjs')"
+```
+
+PowerShell 对应为：
+
+```powershell
+$ZIP_SCRIPT = speculo resolve --path '{roots.commands}/source-code-zip/scripts/zip_source_code.cjs'
+```
+
+若无 Speculo 安装，使用宿主已提供或用户明确指定的独立脚本绝对路径，例如 `ZIP_SCRIPT="/absolute/tool/source-code-zip/scripts/zip_source_code.cjs"`。无需为了 ZIP 创建 workspace 或 npm 项目。脚本名使用 `.cjs`，在普通目录及 `type: module` 项目里都明确按 CommonJS 执行。找不到脚本时报告缺失，不猜测 cwd 下存在 `scripts/`。
+
+后文的源目录和输出目录由用户输入相对当前调用目录解析；跨目录执行前先固定为绝对路径。然后直接运行：
+
+```bash
+node "$ZIP_SCRIPT" "/path/to/project"
 ```
 
 Windows PowerShell：
 
 ```powershell
-node scripts/zip_source_code.js "C:\path\to\project"
+node "$ZIP_SCRIPT" "C:\path\to\project"
 ```
 
 少数 Linux 发行版可能只提供 `nodejs` 命令；只有 `node` 确实不存在时，才回退为：
 
 ```bash
-nodejs scripts/zip_source_code.js "/path/to/project"
+nodejs "$ZIP_SCRIPT" "/path/to/project"
 ```
 
 不要为了运行本 SKILL 创建 npm 项目，也不要执行：
@@ -70,8 +84,8 @@ yarn install
 在 macOS 或 Linux 上，也可以把脚本设为可执行文件后直接运行：
 
 ```bash
-chmod +x scripts/zip_source_code.js
-./scripts/zip_source_code.js "/path/to/project"
+chmod +x "$ZIP_SCRIPT"
+"$ZIP_SCRIPT" "/path/to/project"
 ```
 
 ## 默认过滤行为
@@ -140,20 +154,20 @@ const IGNORE = [
 显示全部默认规则：
 
 ```bash
-node scripts/zip_source_code.js --show-defaults
+node "$ZIP_SCRIPT" --show-defaults
 ```
 
 临时追加一个忽略正则，不修改脚本：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --ignore '(^|/)fixtures?(/|$)'
 ```
 
 追加多个正则：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --ignore '(^|/)fixtures?(/|$)' \
   --ignore '(^|/)generated(/|$)'
 ```
@@ -161,7 +175,7 @@ node scripts/zip_source_code.js ./project \
 也可以从 UTF-8 文本文件读取正则。每行一个规则，空行和以 `#` 开头的行会被忽略：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --ignore-from ./custom-ignore.regex
 ```
 
@@ -183,14 +197,14 @@ node scripts/zip_source_code.js ./project \
 默认只纳入源码。需要额外打包 `package.json` 时：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --include '(^|/)package\.json$'
 ```
 
 同时纳入多个项目清单：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --include '(^|/)package\.json$' \
   --include '(^|/)pyproject\.toml$' \
   --include '(^|/)Cargo\.toml$'
@@ -208,13 +222,13 @@ archive.zip
 需要纳入所有未被 `IGNORE` 排除的普通文件时：
 
 ```bash
-node scripts/zip_source_code.js ./project --all-files
+node "$ZIP_SCRIPT" ./project --all-files
 ```
 
 只有用户明确要求并理解风险时，才可同时禁用默认过滤：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --all-files \
   --no-default-ignore
 ```
@@ -226,21 +240,21 @@ node scripts/zip_source_code.js ./project \
 指定输出位置：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --output ./artifacts/project-source.zip
 ```
 
 `-o` 是 `--output` 的缩写：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   -o ./artifacts/project-source.zip
 ```
 
 输出名称没有 `.zip` 后缀时，脚本会自动补上：
 
 ```bash
-node scripts/zip_source_code.js ./project -o ./artifacts/project-source
+node "$ZIP_SCRIPT" ./project -o ./artifacts/project-source
 ```
 
 实际输出：
@@ -252,7 +266,7 @@ node scripts/zip_source_code.js ./project -o ./artifacts/project-source
 默认拒绝覆盖已有 ZIP。确认允许覆盖后使用：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   -o ./artifacts/project-source.zip \
   --force
 ```
@@ -267,7 +281,7 @@ project/tests/main.test.js
 需要把源目录内容直接放到 ZIP 根目录时：
 
 ```bash
-node scripts/zip_source_code.js ./project --contents-only
+node "$ZIP_SCRIPT" ./project --contents-only
 ```
 
 此时 ZIP 内路径类似：
@@ -282,7 +296,7 @@ tests/main.test.js
 压缩级别范围为 `0` 到 `9`，默认是 `9`：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --compression-level 6
 ```
 
@@ -299,13 +313,13 @@ node scripts/zip_source_code.js ./project \
 只预览，不创建 ZIP：
 
 ```bash
-node scripts/zip_source_code.js ./project --dry-run
+node "$ZIP_SCRIPT" ./project --dry-run
 ```
 
 预览并显示每个排除原因：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --dry-run \
   --verbose
 ```
@@ -313,14 +327,14 @@ node scripts/zip_source_code.js ./project \
 适合自动化脚本的安静模式；成功时只输出 ZIP 绝对路径：
 
 ```bash
-archive_path="$(node scripts/zip_source_code.js ./project --quiet)"
+archive_path="$(node "$ZIP_SCRIPT" ./project --quiet)"
 printf '%s\n' "$archive_path"
 ```
 
 Windows PowerShell：
 
 ```powershell
-$archivePath = node scripts/zip_source_code.js "C:\work\project" --quiet
+$archivePath = node "$ZIP_SCRIPT" "C:\work\project" --quiet
 $archivePath
 ```
 
@@ -331,7 +345,7 @@ $archivePath
 安全预览：
 
 ```bash
-node scripts/zip_source_code.js "/work/my app" \
+node "$ZIP_SCRIPT" "/work/my app" \
   --dry-run \
   --verbose
 ```
@@ -339,7 +353,7 @@ node scripts/zip_source_code.js "/work/my app" \
 打包源码并额外纳入 Node 项目清单：
 
 ```bash
-node scripts/zip_source_code.js "/work/my app" \
+node "$ZIP_SCRIPT" "/work/my app" \
   --include '(^|/)package\.json$' \
   --include '(^|/)tsconfig\.json$' \
   -o "/work/artifacts/my-app-source.zip"
@@ -348,7 +362,7 @@ node scripts/zip_source_code.js "/work/my app" \
 排除测试夹具和自动生成目录：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --ignore '(^|/)fixtures?(/|$)' \
   --ignore '(^|/)generated(/|$)'
 ```
@@ -356,7 +370,7 @@ node scripts/zip_source_code.js ./project \
 纳入所有非敏感普通文件，但仍保留默认安全排除：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --all-files \
   --dry-run
 ```
@@ -364,7 +378,7 @@ node scripts/zip_source_code.js ./project \
 直接将内容写入 ZIP 根目录，并设置中等压缩级别：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --contents-only \
   --compression-level 6
 ```
@@ -372,7 +386,7 @@ node scripts/zip_source_code.js ./project \
 目录名以 `-` 开头时，在选项后使用 `--`：
 
 ```bash
-node scripts/zip_source_code.js -- ./-special-project
+node "$ZIP_SCRIPT" -- ./-special-project
 ```
 
 ## 空目录行为
@@ -382,14 +396,14 @@ node scripts/zip_source_code.js -- ./-special-project
 确认需要空 ZIP 时：
 
 ```bash
-node scripts/zip_source_code.js ./empty-project \
+node "$ZIP_SCRIPT" ./empty-project \
   --allow-empty
 ```
 
 可以结合 `--dry-run` 检查为什么没有文件被纳入：
 
 ```bash
-node scripts/zip_source_code.js ./empty-project \
+node "$ZIP_SCRIPT" ./empty-project \
   --dry-run \
   --verbose \
   --allow-empty
@@ -424,7 +438,7 @@ nodejs --version
 若存在，可运行：
 
 ```bash
-nodejs scripts/zip_source_code.js ./project
+nodejs "$ZIP_SCRIPT" ./project
 ```
 
 若两个命令都不存在，需要先按当前系统或组织规定安装 Node.js。不要因此执行 `npm install`；npm 不能代替 Node.js 运行时。
@@ -438,13 +452,13 @@ nodejs scripts/zip_source_code.js ./project
 先查看默认规则：
 
 ```bash
-node scripts/zip_source_code.js --show-defaults
+node "$ZIP_SCRIPT" --show-defaults
 ```
 
 再预览全部未被忽略的普通文件：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --all-files \
   --dry-run
 ```
@@ -456,7 +470,7 @@ node scripts/zip_source_code.js ./project \
 这是默认行为，因为 JSON 不属于默认源码扩展名。显式添加：
 
 ```bash
-node scripts/zip_source_code.js ./project \
+node "$ZIP_SCRIPT" ./project \
   --include '(^|/)package\.json$'
 ```
 
@@ -491,13 +505,13 @@ node scripts/zip_source_code.js ./project \
 ### 需要查看所有命令参数
 
 ```bash
-node scripts/zip_source_code.js --help
+node "$ZIP_SCRIPT" --help
 ```
 
 版本信息：
 
 ```bash
-node scripts/zip_source_code.js --version
+node "$ZIP_SCRIPT" --version
 ```
 
 ## 参数速查

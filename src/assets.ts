@@ -3,6 +3,7 @@ import { basename, dirname, join } from "node:path";
 import { parseDocument } from "yaml";
 import { safeRelativePath, containedPath } from "./paths.js";
 import { pathExists } from "./utils.js";
+import { validateWorkflowManifest } from "./contracts.js";
 
 export type Frontmatter = { raw: string; fields: Record<string, unknown>; body: string };
 export function parseFrontmatter(content: string | Buffer): Frontmatter {
@@ -49,7 +50,7 @@ export async function readAssetCatalog(root: string): Promise<AssetCatalog> {
     const domain=folder.name, prefix=`workflows/${domain}`;
     if(!await pathExists(join(root,prefix,'SKILL.md'))&&!await pathExists(join(root,prefix,'manifest.json')))continue;
     const manifest=JSON.parse(await readFile(await containedPath(root,`${prefix}/manifest.json`),'utf8'));
-    if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(domain)||!manifest||manifest.schema_version!==2||manifest.id!==domain||manifest.entry!=="SKILL.md"||!Array.isArray(manifest.works)||new Set(manifest.works).size!==manifest.works.length||!manifest.work_stages||typeof manifest.work_stages!=='object'||Array.isArray(manifest.work_stages)||Object.keys(manifest.work_stages).some(k=>!manifest.works.includes(k)))throw new Error(`invalid-domain-manifest: ${domain}`);
+    validateWorkflowManifest(manifest, domain);
     await addSkill(`${prefix}/SKILL.md`,"domain-skill",domain);
     for(const entry of manifest.works) {
       if(!safeRelativePath(entry)||!new RegExp(`^${domain}-[a-z]-[a-z0-9-]+/SKILL\\.md$`).test(entry))throw new Error(`invalid-work-entry: ${entry}`);

@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "source_change_id": "<consolidation-change-id>",
+  "source_manifest": "synthesis/source-manifest.json"
+}

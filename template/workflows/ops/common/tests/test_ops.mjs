@@ -16,6 +16,7 @@ import * as services from "../tools/opslib/services.mjs";
 import * as controlFiles from "../tools/opslib/control_files.mjs";
 import { initialize, analyze, cliHooks } from "../tools/opslib/cli.mjs";
 import { taskFiles } from "../tools/opslib/native_windows.mjs";
+import { verificationRecipe } from "../tools/business-verification.mjs";
 
 const { OpsError, UnknownResult, digest, writeJson, readJson, withLock, relative, identifier, rootPath, targetJoin, emptyStatus, now, resolveSecrets, redact, atomicWrite, canonical } = core;
 const PASSWORD = 'TEST-ONLY-$literal-quote"-slash\\-not-production';
@@ -578,6 +579,24 @@ test("planner contracts", async (t) => {
     assert.equal(value.services.app.env_file[0].format, "raw");
   });
 });
+
+for (const expectedCount of [1, 2]) test("project business recipe checks real state; expected counter " + expectedCount, () => runFx(fx => {
+  const script = join(fx.tmp, "verify-business.mjs");
+  writeFileSync(script, 'import {readFileSync} from "node:fs"; const value=JSON.parse(readFileSync(process.argv[2],"utf8")); if(value.count!==Number(process.argv[3]))throw new Error("business count mismatch"); console.log("BUSINESS_VERIFIED");\n');
+  const recipe = verificationRecipe({ schema_version: 1, script, target: "artifact/verify-business.mjs", args: ["{{data}}/app/storage/value.json", String(expectedCount)], node: process.execPath, success_pattern: "^BUSINESS_VERIFIED" });
+  assert.equal(recipe.evidence_kind, "unverified");
+  assert.deepEqual(recipe.input_paths, [script]);
+  const input = fx.spec();
+  input.deployments[0].files.push(...recipe.deployment_fragment.files);
+  input.deployments[0].health.push(...recipe.deployment_fragment.health);
+  const [info, plan, result] = fx.runSpec(input);
+  const operation = plan.operations.find(o => o.kind === "verify-command" && o.argv.includes(String(expectedCount)));
+  assert.ok(operation, "existing planner must compile a real verify-command");
+  const receipt = readJson(join(dirname(info.plan_path), "execution.json")).steps[operation.step_id];
+  assert.equal(receipt.status, expectedCount === 1 ? "succeeded" : "failed");
+  assert.equal(result.status, expectedCount === 1 ? "completed" : "partial");
+  assert.equal(readJson(join(fx.target, "app-a/data/app/storage/value.json")).count, 1, "a failed verifier must not replay the business operation");
+}));
 
 test("real native and explicitly approved plaintext dual docs", () => runFx((fx) => {
     const input = fx.spec(); input.plaintext_documentation = true;

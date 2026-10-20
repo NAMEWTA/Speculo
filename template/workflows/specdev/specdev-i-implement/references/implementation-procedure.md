@@ -109,7 +109,7 @@ Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 回
 
 ### 6. 双轴审查
 
-调用 `<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`。required Ticket 以 `base_sha` 与 `source_checkpoint` 为固定点；current Ticket 以 Ticket 实施前基线与 implementation commit 为固定点；Direct Spec 以实施前基线与所选 workspace 最终 checkpoint 为固定点：
+调用 `<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`。Ticket 与 Direct Spec 都以实际实施前基线和选定 change 工作区的最终交付为审查范围；有提交授权时固定真实 commit，无提交授权时固定包含本轮实际改动的工作副本快照：
 
 - 标准轴：正确性、模块设计、错误、安全、性能、并发、资源、测试与可维护性；
 - 规范轴：Spec/Ticket IN/OUT、实现合同、路径所有权、验证矩阵与 Goal Gate；UI 还包括已批准 DESIGN、固定基线和页面/状态规则。
@@ -118,7 +118,7 @@ Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 回
 
 默认派遣一位未参与本范围实现的原生 subagent，分别判断标准轴、规范轴并按顺序返回 Lead；明确选择 Herdr/Orca/CLI 时沿该方式派遣。保存真实身份、原始报告和 Lead 工具核验，禁止实现者自审。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须通过。
 
-Direct Spec current 未提交时按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定实际交付快照；HEAD 不能代表未提交内容，也不因审查而自动取得 commit 授权。
+Ticket 或 Direct Spec 的 current/worktree 交付未提交时按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定实际交付快照；HEAD 不能代表未提交内容，也不因审查而自动取得 commit 授权。
 
 ### 7. 最终验证与适用 E2E
 

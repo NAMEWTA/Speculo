@@ -12,6 +12,7 @@ import { assessServer, readiness, checkServer, latestCheck } from "../tools/opsl
 import { assertSpecScope, prepareTask, authorizeTask, runTask } from "../tools/opslib/tasks.mjs";
 import { projectFleet, renderHtml, renderMarkdown, generateFleet } from "../tools/opslib/fleet.mjs";
 import { parseWorkspaceArgs, workspaceCommand } from "../tools/opslib/workspace_cli.mjs";
+import { call as transportCall, transportHooks } from "../tools/opslib/transport.mjs";
 
 function fixture(t) {
   const root = mkdtempSync(join(realpathSync(tmpdir()), "speculo-workspace-"));
@@ -120,6 +121,43 @@ test("failed SSH login never triggers Node probe and is not reported ready", asy
   const f = fixture(t), h = linuxServer(f), kh = join(f.root, "known_hosts"); writeFileSync(kh, "fixture"); Object.assign(h, { transport: "ssh", connection: { hostname: "invalid", username: "deploy", known_hosts: kh } }); f.save();
   const r = await checkServer(f.state, "node-a", {}, { sshArgv: () => ["ssh"], spawn: () => ({ status: 255 }), call: () => { throw new Error("must not probe"); } });
   assert.equal(r.status, "blocked"); assert.equal(r.checks.find(c => c.id === "machine-identity").status, "unknown");
+});
+test("probe failures remain unknown, distinguish causes and never export raw error text", async t => {
+  const f = fixture(t), h = linuxServer(f); f.save();
+  const secret = "SYNTHETIC-CREDENTIAL-MUST-NOT-APPEAR";
+  for (const [error, category] of [
+    [Object.assign(new Error("timeout " + secret), { code: "ETIMEDOUT" }), "timeout"],
+    [Object.assign(new Error(secret), { code: "node-missing" }), "missing-executor"],
+    [new SyntaxError("invalid JSON " + secret), "invalid-response"],
+    [Object.assign(new Error(secret), { code: secret }), "probe-failed"],
+  ]) {
+    const result = await checkServer(f.state, "node-a", {}, { call: () => { throw error; } });
+    assert.equal(result.status, "unknown");
+    const report = JSON.parse(readFileSync(result.report, "utf8"));
+    assert.equal(report.probe_failures[0].category, category);
+    assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
+    const view = projectFleet(f.s, { "node-a": latestCheck(f.state, h) });
+    assert.equal(view.servers[0].readiness, "unknown");
+    assert.equal(view.servers[0].probe_failures[0].category, category);
+    assert.doesNotMatch(renderMarkdown(view) + renderHtml(view), new RegExp(secret));
+  }
+});
+test("real transport decoding preserves diagnostic categories without forwarding simulated subprocess bytes", async t => {
+  const f = fixture(t), h = linuxServer(f); f.save();
+  const secret = "SIMULATED-TRANSPORT-SECRET", previous = transportHooks.spawnSync;
+  try {
+    for (const [response, category] of [
+      [{ status: 0, stdout: "invalid JSON " + secret, stderr: "" }, "invalid-response"],
+      [{ status: null, stdout: "", stderr: secret, error: Object.assign(new Error("spawn ETIMEDOUT " + secret), { code: "ETIMEDOUT" }) }, "timeout"],
+      [{ status: 127, stdout: "", stderr: "node: not found " + secret }, "missing-executor"],
+    ]) {
+      transportHooks.spawnSync = () => response;
+      const result = await checkServer(f.state, "node-a", {}, { call: transportCall });
+      assert.equal(result.status, "unknown"); assert.equal(result.probe_failures[0].category, category);
+      const view = projectFleet(f.s, { "node-a": latestCheck(f.state, h) });
+      assert.doesNotMatch(readFileSync(result.report, "utf8") + renderHtml(view) + renderMarkdown(view), new RegExp(secret));
+    }
+  } finally { transportHooks.spawnSync = previous; }
 });
 test("task preparation does not execute; one authorization runs ordered steps without repeated confirmation", async (t) => {
   const f = fixture(t), a = adapterFor(f), req = request(); req.steps.push({ ...structuredClone(req.steps[0]), id: "verify-root" });

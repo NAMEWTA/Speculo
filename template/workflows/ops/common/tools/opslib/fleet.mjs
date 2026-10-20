@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { atomicWrite, digest, identifier, noSymlinks, OpsError, redact, withLock, writeJson } from "./core.mjs";
 import { catalogUnlocked, ids, readBoundedJson, readRegistry, statePath, targetDigest } from "./workspace.mjs";
 import { rootSummary } from "./onboarding.mjs";
-import { latestCheck, readiness } from "./server_checks.mjs";
+import { latestCheck, readiness, publicProbeFailures } from "./server_checks.mjs";
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), "../../templates/FLEET.html");
 const text = (v) => typeof v === "string" ? redact(v.replace(/[\u0000-\u001f\u007f]/g, " "), []).slice(0, 500) : "";
@@ -74,6 +74,7 @@ export function projectFleet(registry, checks = {}, tasks = [], { at = new Date(
       initialization: { registered: true, directory: checkStatus !== "stale" && checkStatus !== "unknown" ? c?.checks?.find(v => v.id === "deployment-root")?.status ?? "unknown" : "unknown",
         documents: onboarding[h.host_id]?.documents ?? "unknown", runtime: checkStatus === "ready" && c?.profile !== "base" ? c.profile : "unverified" },
       readiness: checkStatus, profile: c?.profile ?? null, checked_at: time(c?.checked_at),
+      probe_failures: publicProbeFailures(c?.probe_failures),
       checks: (c?.checks || []).map((v) => ({ id: v.id, status: v.status, required: v.required })),
       project_ids: [...new Set(own.filter((d) => d.status !== "retired").map((d) => d.project_id))].sort(),
       deployment_ids: own.map((d) => d.deployment_id),
@@ -101,7 +102,7 @@ export function projectFleet(registry, checks = {}, tasks = [], { at = new Date(
 export function renderMarkdown(data, html = "index.html", json = "inventory.json") {
   const table = (headers, rows) => `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n` + (rows.length ? rows.map((r) => `| ${r.map(md).join(" | ")} |`).join("\n") : `| ${headers.map((_, i) => i ? "—" : "暂无记录").join(" | ")} |`) + "\n";
   return `# OPS 服务器与部署清单\n\n[打开离线看板](${html}) · [结构化快照](${json})\n\n生成：${data.generated_at}；资源修订：${data.source_revision}；控制端：${data.controller_id}。\n\n这是离线记录，不是实时监控。ready 仅代表指定检查 profile 的必需项通过；completed 是历史执行结果。未测、过期、身份变化不视为正常。\n\n## 服务器 → 项目\n\n` +
-    table(["服务器", "名称 / 地址", "账号 / 持久化根", "根确认 / 文档", "系统", "检查 / profile", "检查时间", "项目", "主机级服务"], data.servers.map((s) => [s.server_id, `${s.name} / ${s.address}`, `${s.login_account} / ${s.root}`, `${s.root_confirmation.status} / ${s.initialization.documents}`, s.platform, `${s.readiness} / ${s.profile ?? "未检查"}`, s.checked_at, s.project_ids.join(", "), s.host_services.map((v) => v.service_id).join(", ")])) +
+    table(["服务器", "名称 / 地址", "账号 / 持久化根", "根确认 / 文档", "系统", "检查 / profile", "检查时间", "探测原因", "项目", "主机级服务"], data.servers.map((s) => [s.server_id, `${s.name} / ${s.address}`, `${s.login_account} / ${s.root}`, `${s.root_confirmation.status} / ${s.initialization.documents}`, s.platform, `${s.readiness} / ${s.profile ?? "未检查"}`, s.checked_at, s.probe_failures.map(f => `${f.stage}: ${f.category}${f.code ? " (" + f.code + ")" : ""}`).join("; "), s.project_ids.join(", "), s.host_services.map((v) => v.service_id).join(", ")])) +
     `\n## 项目 → 服务器\n\n` + table(["项目", "名称", "类别", "服务器", "部署实例"], data.projects.map((p) => [p.project_id, p.name, p.kind, p.server_ids.join(", "), p.deployment_ids.join(", ")])) +
     `\n## 部署实例\n\n` + table(["部署", "项目", "服务器", "环境", "记录状态", "计划版本", "验证版本", "根目录"], data.deployments.map((d) => [d.deployment_id, d.project_id, d.server_id, d.environment, d.status, d.desired_version, d.observed_version, d.root])) +
     `\n## 任务记录\n\n` + table(["任务", "范围", "状态", "服务器", "Run"], data.tasks.map((t) => [t.task_id, t.scope, t.status, t.server_ids.join(", "), t.run_ids.join(", ")])) +

@@ -2,7 +2,7 @@
 
 ## Output
 
-每次成功 assessment 创建：
+每次成功的普通 assessment 创建；`--dry-run` 只将同一评估的冻结 JSON 输出到 stdout，不创建以下文件、配置或目录：
 
 ```text
 <Path>{roots.state}/commands/upstream-fork-sync/{change}/state.json</Path>
@@ -28,7 +28,9 @@ Agent 使用 customization map 和路径级 diff 增补语义结论；报告不�
 
 ## Conflict report
 
-使用 `git merge-tree --write-tree --messages <product-sha> <upstream-sha>`，不修改 index、worktree 或 refs。该命令可能在对象数据库留下不可达 tree objects。
+使用 `git merge-tree --write-tree --messages <product-sha> <upstream-sha>`。原生 Git 会写合并对象；本工具将 `GIT_OBJECT_DIRECTORY` 指向项目外临时目录，原对象库仅作只读 alternate，成功和失败都清理临时目录。关闭 optional index locks 和 fsmonitor，不执行自定义 merge driver，不修改项目内的 Git 对象、index、worktree 或 refs。
+
+输出 `object_storage: temporary-discarded`；tree SHA 只是可以重新计算的结果摘要，不保证能在原仓库直接读取该对象。报告中的原生复现命令仍保留供独立核验，并明确它会写对象库；要保持零项目写入，重跑本工具的 dry-run 并核对冻结 product/upstream SHAs。输入 refs 后续移动时，不能把新快照冒充旧快照复现。
 
 始终分开：
 

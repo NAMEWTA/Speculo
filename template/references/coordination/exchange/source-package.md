@@ -1,6 +1,6 @@
 # External ZIP Package
 
-选择 `delivery_channel=external-web` 时加载。本 reference 规定 outbound 与 return ZIP 的目录、内容、打包和持久化合同。它引用 `<Path>{roots.commands}/source-code-zip/COMMAND.md</Path>` 及其单文件脚本 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.js</Path>`；不得为打包执行 `npm install`，不得用另一套默认归档规则替换它。
+选择 `delivery_channel=external-web` 时加载。本 reference 规定 outbound 与 return ZIP 的目录、内容、打包和持久化合同。它引用 `<Path>{roots.commands}/source-code-zip/COMMAND.md</Path>` 及其单文件脚本 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>`；不得为打包执行 `npm install`，不得用另一套默认归档规则替换它。
 
 ## 1. 根目录持久化不变量
 
@@ -114,10 +114,11 @@ node --version
 DELIVERY_ROOT="temp/task-delivery/${SCOPE_ID}/${TASK_ID}/${DISPATCH_ID}"
 STAGING="${DELIVERY_ROOT}/outbound/staging"
 ARCHIVE="${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.zip"
-ZIP_SCRIPT="speculo/commands/source-code-zip/scripts/zip_source_code.js"
+# 已按公共 workspace 合同解析 project root 后，以真实绝对路径替换下方值。
+ZIP_SCRIPT="${PROJECT_ROOT}/.agents/speculo/commands/source-code-zip/scripts/zip_source_code.cjs"
 ```
 
-若当前执行环境仍位于 template 源树而不是安装后的 workspace，从已解析的公共 roots 定位 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.js</Path>`，不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。
+若当前执行环境仍位于 template 源树而不是安装后的 workspace，从已解析的公共 roots 定位 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>`，不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。
 
 必须先预览：
 

@@ -55,4 +55,4 @@
 
 ## Ephemeral 分类
 
-被判定为 `ephemeral` 的知识**不删除**。它随归档 change 保留在新 <Path>{roots.state}/specdev/changes/archive/{change}/</Path>；旧月份归档仍原位只读，供未来按需查阅。它不提升到 workflow 级持久化 store。
+被判定为 `ephemeral` 的知识**不删除**。它随归档 change 保留在<Path>{roots.state}/specdev/changes/archive/{change}/</Path>，供未来按原 locator 查阅。它不提升到 workflow 级持久化 store。

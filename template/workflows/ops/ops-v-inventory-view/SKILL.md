@@ -20,6 +20,8 @@ metadata:
 
 ## 流程与完成标准
 
+unknown检查同时展示既有观测时间与probe_failures中的阶段、分类和白名单错误码；分类仅解释探测失败，不变成健康断言。视图只读已有回执，不自动重试、连接目标或增加部署按钮。能力覆盖及实际验证入口按需读取 `<Path>{roots.workflows}/ops/common/verification/README.md</Path>`，不从工具存在推断实机已验收。
+
 必读 `<Path>{roots.workflows}/ops/common/rules/inventory-and-records.md</Path>`。输入为明确的已初始化 state 根，以及可选的检查过期阈值；服务器/项目筛选只影响浏览，不授予执行权。
 
 通过 ops.mjs fleet 生成 state_root/FLEET.md 入口与 records/views/view-id/{inventory.json,FLEET.md,index.html,manifest.json}。HTML 使用 `<Path>{roots.workflows}/ops/common/templates/FLEET.html</Path>`，JSON 遵循 `<Path>{roots.workflows}/ops/common/schemas/fleet-view.schema.json</Path>`；不额外启动服务、安装依赖或访问 CDN。

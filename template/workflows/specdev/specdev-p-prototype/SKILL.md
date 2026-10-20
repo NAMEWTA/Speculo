@@ -43,7 +43,7 @@ P 拥有 `<Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path>` 与 `<P
 4. **先生成 HTML**：加载 `<Path>{roots.workflows}/specdev/specdev-p-prototype/references/generate-design-package.md</Path>`。以相同任务和内容生成候选 HTML、comparison 及推荐 final；将最终 HTML/CSS/JS 具名源码块物化。设计规则写入 change DESIGN 草案，源码包只链接规则。完成真实浏览器检查并通过设计包 --check-preview 后才提出集中确认。
 5. **集中确认与首次基线**：展示同一批准包中的项目基线候选/当前版本、本 change 设计差异、HTML 及交互证据。用户可直接接受、选择其他候选或组合修改；修改后重新验证受影响内容。一次初始确认同时明确 HTML、change DESIGN 与首次永久基线发布范围；已有基线不在此流程自动提升 delta。批准前预绑定候选基线的确定 revision/digest；A 网关发布成功后回读并确认与批准包一致，再登记同一批准记录；缺少批准保持草案或 blocked。
 6. **验证并封板**：运行 `<Path>{roots.workflows}/specdev/specdev-p-prototype/scripts/materialize-prototype.mjs</Path> --check` 与 `<Path>{roots.workflows}/specdev/specdev-p-prototype/scripts/validate-design-package.mjs</Path> --check-ready`。对照 `<Path>{roots.workflows}/specdev/specdev-p-prototype/assets/design-package.schema.json</Path>`，设计绑定、批准、浏览器证据与源码全门通过后才设置 ready；再运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --stage prototype --prototype-id UI-NNN` 并回读，成功后将有效包与下一步导航写回原 README。失败恢复 blocked 并保留当前包与恢复位置。
-7. **返回路由**：返回设计包、comparison 和 final 的完整路径、验证命令与结果、未决问题和下一 Work。需要补足产品决定时返回 G；需要写外部行为合同返回 S；需要拆实施工作返回 Tickets；已有 Ready Ticket 才返回 I。Wayfinder 调用时只把设计包与 comparison locator 写入对应 solution comment。
+7. **返回路由**：返回设计包、comparison 和 final 的完整路径、验证命令与结果、未决问题和下一 Work。需要补足产品决定时返回 G；需要写外部行为合同返回 S；需要拆实施工作返回 Tickets；已有 Ready Ticket 或就绪的完整 Direct Spec，且具有同范围实现授权时返回 I。Wayfinder 调用时只把设计包与 comparison locator 写入对应 solution comment。
 
 ## 完成标准
 
