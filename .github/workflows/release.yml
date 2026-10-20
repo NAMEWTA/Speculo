@@ -5,10 +5,27 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      recovery_tag:
+        description: 'Existing v* tag to recover from main; requires expected_sha'
+        required: false
+        type: string
+      expected_sha:
+        description: 'Exact 40-character source commit of recovery_tag'
+        required: false
+        type: string
+
+concurrency:
+  group: release-${{ inputs.recovery_tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
-    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    if: >-
+      (github.ref_type == 'tag' && startsWith(github.ref_name, 'v') &&
+       inputs.recovery_tag == '' && inputs.expected_sha == '') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+       inputs.recovery_tag != '' && inputs.expected_sha != '')
     runs-on: ubuntu-latest
     name: Stage release for npm approval
     permissions:
@@ -18,6 +35,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.recovery_tag && format('refs/tags/{0}', inputs.recovery_tag) || github.ref }}
           fetch-depth: 0
 
       - name: Setup environment
@@ -25,15 +43,44 @@ jobs:
         with:
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify tag matches package version
+      - name: Verify release source and package version
+        id: release_source
+        env:
+          RECOVERY_TAG: ${{ inputs.recovery_tag }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          set -euo pipefail
+          RELEASE_TAG="${RECOVERY_TAG:-$GITHUB_REF_NAME}"
+          git check-ref-format "refs/tags/$RELEASE_TAG"
+          [[ "$RELEASE_TAG" == v* ]]
+          SOURCE_SHA=$(git rev-parse --verify 'HEAD^{commit}')
+          TAG_SHA=$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")
+          if [ "$SOURCE_SHA" != "$TAG_SHA" ]; then
+            echo 'Checkout does not match the release tag.'
+            exit 1
+          fi
+          RELEASE_MODE=tag
+          if [ -n "$RECOVERY_TAG" ]; then
+            [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && "$GITHUB_REF" == refs/heads/main ]]
+            [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ && "$SOURCE_SHA" == "$EXPECTED_SHA" ]]
+            # Only the permanent release workflow may differ from the tagged source.
+            CHANGED_PATHS=$(git diff --name-only --no-renames "$SOURCE_SHA" "$GITHUB_SHA" --)
+            if [ -n "$CHANGED_PATHS" ] && [ "$CHANGED_PATHS" != '.github/workflows/release.yml' ]; then
+              echo 'Recovery workflow commit changes files beyond .github/workflows/release.yml.'
+              exit 1
+            fi
+            RELEASE_MODE=recovery-from-main
+          else
+            [[ -z "$EXPECTED_SHA" && "$GITHUB_REF_TYPE" == tag && "$SOURCE_SHA" == "$GITHUB_SHA" ]]
+          fi
+          TAG_VERSION="${RELEASE_TAG#v}"
           PACKAGE_VERSION=$(node -e "console.log(require('./package.json').version)")
           if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
             echo "Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
             exit 1
           fi
           echo "Version verified: v$PACKAGE_VERSION"
+          printf 'tag=%s\nsource_sha=%s\nmode=%s\n' "$RELEASE_TAG" "$SOURCE_SHA" "$RELEASE_MODE" >> "$GITHUB_OUTPUT"
 
       - name: Test and validate assets
         run: pnpm check
@@ -44,22 +91,69 @@ jobs:
           pnpm verify-package
 
       - name: Extract release notes from CHANGELOG.md
+        id: release_notes
+        env:
+          RELEASE_TAG: ${{ steps.release_source.outputs.tag }}
+          SOURCE_SHA: ${{ steps.release_source.outputs.source_sha }}
+          RELEASE_MODE: ${{ steps.release_source.outputs.mode }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${RELEASE_TAG#v}"
+          RELEASE_NOTES_PATH="$RUNNER_TEMP/speculo-release-notes.md"
           awk -v v="$VERSION" '
             $0 ~ "^## \\["v"\\]" { found=1; print; next }
             found && /^## \[/ { exit }
             found && /^---[[:space:]]*$/ { next }
             found { print }
-          ' CHANGELOG.md > release-notes.md
+          ' CHANGELOG.md > "$RELEASE_NOTES_PATH"
 
-          if [ ! -s release-notes.md ]; then
+          if [ ! -s "$RELEASE_NOTES_PATH" ]; then
             echo "::warning::CHANGELOG.md 中未找到 [$VERSION] 段落，回退到自动生成。"
-            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > "$RELEASE_NOTES_PATH"
           fi
+          printf 'path=%s\n' "$RELEASE_NOTES_PATH" >> "$GITHUB_OUTPUT"
+          {
+            printf '\n### Release execution\n\n'
+            printf -- '- Source tag: %s\n- Source commit: %s\n' "$RELEASE_TAG" "$SOURCE_SHA"
+            printf -- '- Workflow commit: %s\n- Workflow: %s\n' "$GITHUB_SHA" "$GITHUB_WORKFLOW_REF"
+            printf -- '- Execution mode: %s\n' "$RELEASE_MODE"
+            printf -- '- Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } | tee -a "$RELEASE_NOTES_PATH" "$GITHUB_STEP_SUMMARY"
 
       - name: Upgrade npm CLI for staged publishing
         run: npm install -g npm@latest
+
+      - name: Refuse an existing or unknown release target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_TAG: ${{ steps.release_source.outputs.tag }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const check = (ok, message) => { if (!ok) throw new Error(message + ' Reconcile before retrying.'); };
+          const registry = '--registry=https://registry.npmjs.org';
+          function npmRead(args) {
+            const result = spawnSync('npm', [...args, '--json', registry], { encoding: 'utf8', timeout: 60000 });
+            check(result.status === 0, `npm ${args[0]} read failed (exit ${result.status}).`);
+            try { return JSON.parse(result.stdout); } catch { throw new Error('Invalid npm JSON; reconcile before retrying.'); }
+          }
+          check(Boolean(process.env.NODE_AUTH_TOKEN) && Boolean(process.env.GH_TOKEN), 'Required authentication is unavailable.');
+          const published = npmRead(['view', name, 'versions']);
+          const versions = typeof published === 'string' ? [published] : published;
+          check(Array.isArray(versions) && versions.length > 0 && versions.every(item => typeof item === 'string'), 'Cannot establish published versions.');
+          check(!versions.includes(version), `${name}@${version} is already public.`);
+          const stages = npmRead(['stage', 'list', name]);
+          check(Array.isArray(stages) && stages.every(item => item && item.packageName === name && typeof item.version === 'string' && typeof item.id === 'string' && item.id), 'Cannot establish staged versions.');
+          check(!stages.some(item => item.version === version), `${name}@${version} already has a stage.`);
+          const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${encodeURIComponent(process.env.RELEASE_TAG)}`, {
+            headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28' },
+            signal: AbortSignal.timeout(20000)
+          });
+          check(response.status === 404, response.status === 200 ? 'GitHub Release already exists.' : `Cannot establish GitHub Release absence (HTTP ${response.status}).`);
+          console.log(`No public version, stage or GitHub Release observed for ${name}@${version}.`);
+          NODE
 
       - name: Stage package on npm for maintainer approval
         run: npm stage publish --provenance --access public --tag latest
@@ -69,27 +163,30 @@ jobs:
       - name: Verify npm staging
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_NOTES_PATH: ${{ steps.release_notes.outputs.path }}
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync, appendFileSync } from 'node:fs';
           import { execFileSync } from 'node:child_process';
           const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
           const stages = JSON.parse(execFileSync('npm', ['stage', 'list', name, '--json', '--registry=https://registry.npmjs.org'], { encoding: 'utf8' }));
-          const staged = stages.find(item => item.packageName === name && item.version === version && item.tag === 'latest');
-          if (!staged?.id) throw new Error(`No staged latest release found for ${name}@${version}`);
-          const summary = `${name}@${version} staged successfully. Stage ID: ${staged.id}.\n\nAwaiting maintainer approval with 2FA in npmjs.com → Staged Packages. This version is not public until approved.\n`;
+          const matches = stages.filter(item => item.packageName === name && item.version === version && item.tag === 'latest');
+          if (matches.length !== 1 || !matches[0].id) throw new Error(`No unique staged latest release found for ${name}@${version}`);
+          const staged = matches[0];
+          const digests = ['shasum', 'integrity'].flatMap(key => typeof staged[key] === 'string' && staged[key] ? [`npm stage ${key}: ${staged[key]}\n`] : []).join('');
+          const summary = `${name}@${version} staged successfully. Stage ID: ${staged.id}.\n${digests}\nAwaiting maintainer approval with 2FA in npmjs.com → Staged Packages. This version is not public until approved.\n`;
           console.log(summary);
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
-          appendFileSync('release-notes.md', '\n> npm 包已暂存，等待维护者在 npmjs.com → Staged Packages 使用 2FA 确认。GitHub Release 创建成功不代表 npm 已公开上架。\n');
+          appendFileSync(process.env.RELEASE_NOTES_PATH, `\nStage ID: ${staged.id}.\n${digests}\n> npm 包已暂存，等待维护者在 npmjs.com → Staged Packages 使用 2FA 确认。GitHub Release 创建成功不代表 npm 已公开上架。\n`);
           NODE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         if: success()
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body_path: release-notes.md
+          tag_name: ${{ steps.release_source.outputs.tag }}
+          name: Release ${{ steps.release_source.outputs.tag }}
+          body_path: ${{ steps.release_notes.outputs.path }}
           generate_release_notes: true
           draft: false
           prerelease: false
