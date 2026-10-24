@@ -7,11 +7,11 @@ import { describe, it } from "node:test";
 const load = (): Promise<any> => import(pathToFileURL(join(process.cwd(), "scripts/lib/workflow-document-graph.mjs")).href);
 
 describe("work upgrade: potential reference graph and actual read accounting", () => {
-  it("finds all 38 Work entries without reading evidence corpora as instructions", async () => {
+  it("finds all 39 Work entries without reading evidence corpora as instructions", async () => {
     const { buildDocumentGraph, graphReport } = await load();
     const graph = await buildDocumentGraph(process.cwd());
-    assert.deepEqual(graph.errors, []); assert.equal(graph.entries.length, 38);
-    assert.equal(new Set(graph.entries.map((entry: any) => entry.id)).size, 38);
+    assert.deepEqual(graph.errors, []); assert.equal(graph.entries.length, 39);
+    assert.equal(new Set(graph.entries.map((entry: any) => entry.id)).size, 39);
     assert.deepEqual(graph.entries.map((entry: any) => entry.id).filter((id: string) => id.startsWith("media/")).sort(), [
       "media/brief", "media/deconstruct", "media/hand-drawn", "media/init-setup",
       "media/publish-draft", "media/retro", "media/video",

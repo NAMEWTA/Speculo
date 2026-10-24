@@ -12,8 +12,8 @@ describe("review: standard Skill metadata and honest behavioral evaluation", () 
   it("validates all emitted Skills and rejects nonstandard or duplicate fields", async () => {
     const { validateSkills, validateSkill } = await load("scripts/validate-skills.mjs");
     assert.deepEqual((await validateSkills(process.cwd())).errors, []);
-    for (const header of ["name: Docs Sync\ndescription: sync", "name: docs-sync\nid: docs-sync\ndescription: sync", "name: docs-sync\nname: docs-sync\ndescription: sync", 'name: docs-sync\ndescription: sync\nmetadata: {"version": 1}']) {
-      assert.ok(validateSkill(`---\n${header}\n---\n`, "docs-sync").length > 0);
+    for (const header of ["name: Project Maintenance\ndescription: sync", "name: project-maintenance\nid: project-maintenance\ndescription: sync", "name: project-maintenance\nname: project-maintenance\ndescription: sync", 'name: project-maintenance\ndescription: sync\nmetadata: {"version": 1}']) {
+      assert.ok(validateSkill(`---\n${header}\n---\n`, "project-maintenance").length > 0);
     }
   });
   it("never scores one unrelated event as a successful scenario", async () => {

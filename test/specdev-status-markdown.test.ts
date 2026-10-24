@@ -4,12 +4,12 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,symlinkSync} fro
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
-const script=resolve('template/workflows/specdev/specdev-t-triage/scripts/publish-status.mjs');
+const script=resolve('template/workflows/specdev/specdev-d-delivery/scripts/publish-status.mjs');
 function root(t:{after(fn:()=>void):void}) {const dir=mkdtempSync(join(tmpdir(),'specdev-status-md-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));return dir;}
 function add(base:string,name:string,kind:'active'|'archive',origin='local') {
   const dir=join(base,kind==='active'?'changes':'changes/archive',name);mkdirSync(dir,{recursive:true});
   writeFileSync(join(dir,'README.md'),`# Work\nOutcome: ${kind==='active'?'active':'completed'}\n`);
-  writeFileSync(join(dir,'publish.md'),`---\nchange: ${name}\norigin: ${origin}\npublish_action: published\n---\n| ticket | kind | title | labels | number | url | marker | state |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| T-01 | bug | local fact | bug | 1 | fixture | record | created |\n`);return dir;
+  writeFileSync(join(dir,'publish.md'),`---\nschema_version: 2\nartifact: publish\nmode: publish\nchange: ${name}\norigin: ${origin}\npublish_action: published\n---\n| ticket | kind | title | labels | number | url | marker | state |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| T-01 | bug | local fact | bug | 1 | fixture | record | created |\n`);return dir;
 }
 function run(root:string) {return spawnSync(process.execPath,[script,'--state-root',root,'--json'],{encoding:'utf8'});}
 test('statistics count current changes and archives once and leave unrelated history untouched',t=>{
@@ -24,4 +24,10 @@ test('statistics reject duplicate stable identity, malformed Outcome and linked 
   const base=root(t),name='2026-10-14-same',active=add(base,name,'active');add(base,name,'archive');assert.match(run(base).stderr,/identity-conflict/);rmSync(join(base,'changes/archive'),{recursive:true});
   writeFileSync(join(active,'README.md'),'Outcome: active\nOutcome: completed\n');assert.match(run(base).stderr,/outcome-invalid/);
   writeFileSync(join(active,'README.md'),'Outcome: active\n');rmSync(join(active,'publish.md'));writeFileSync(join(base,'outside.md'),'secret');symlinkSync('../../outside.md',join(active,'publish.md'));assert.match(run(base).stderr,/path-unsafe/);
+});
+
+test('statistics reject old publish records without rewriting their bytes',t=>{
+  const base=root(t),dir=add(base,'2026-10-14-old','active');
+  const file=join(dir,'publish.md'),bytes=readFileSync(file,'utf8').replace('schema_version: 2','schema_version: 1');
+  writeFileSync(file,bytes);assert.match(run(base).stderr,/unsupported publish protocol/);assert.equal(readFileSync(file,'utf8'),bytes);
 });

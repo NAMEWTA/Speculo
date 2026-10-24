@@ -29,7 +29,7 @@ import {
 } from "./plan-contract.mjs";
 
 import { validateChangeClosure, readChangeOwner } from "./change-artifacts.mjs";
-import { validateRecord, validateRecords } from "./delivery-artifacts.mjs";
+import { validateRecord, validateRecords, checkSchema, validatePublish, VALID_TICKET_KIND, FORBIDDEN_PUBLISH_LABELS } from "./delivery-artifacts.mjs";
 import { ticketPolicy } from './execution-context.mjs';
 import { validateChangeExecution } from './execution-validation.mjs';
 import { diagnosticErrors, addDiagnostic, appendDiagnostics, validationResult } from './validation-diagnostics.mjs';
@@ -54,6 +54,7 @@ const EXPECTED_WORKS = new Set([
   "specdev-a-archive-and-consolidate",
   "specdev-c-code-review",
   "specdev-d-diagnose-bugs",
+  "specdev-d-delivery",
   "specdev-g-grill-with-docs",
   "specdev-i-implement",
   "specdev-i-init-setup",
@@ -78,43 +79,10 @@ const VALID_TICKET_STATUS = new Set([
   "deviated",
   "cancelled",
 ]);
-const VALID_TICKET_KIND = new Set([
-  "bug",
-  "feature",
-  "refactor",
-  "investigation",
-  "operations",
-  "documentation",
-  "review",
-]);
-const VALID_TRIAGE_MODE = new Set(["intake", "reconcile", "publish"]);
-const VALID_PUBLISH_ACTION = new Set([
-  "not-requested",
-  "pending",
-  "published",
-  "publish-failed",
-  "waived",
-]);
-const VALID_PUBLISH_ROW_STATE = new Set([
-  "planned",
-  "created",
-  "commented",
-  "closed",
-  "skipped:cancelled",
-  "skipped:excluded",
-  "failed",
-]);
-const FORBIDDEN_PUBLISH_LABELS = new Set([
-  "needs-triage",
-  "needs-info",
-  "ready-for-agent",
-  "ready-for-human",
-  "wontfix",
-  "duplicate",
-  "invalid",
-  "stale",
-]);
-const COUNTED_PUBLISH_STATES = new Set(["closed", "created", "commented"]);
+
+
+
+
 const VALID_CAPTURE_ROW_STATE = new Set([
   "planned",
   "open",
@@ -155,6 +123,7 @@ const VALID_WAYFINDER_RESOLUTION = new Set([
 ]);
 const VALID_STAGES = new Set([
   "triage",
+  "delivery",
   "diagnosis",
   "grill",
   "spec",
@@ -219,6 +188,7 @@ const STATE_ARTIFACT_BASENAMES = new Set([
   "status.json",
   ".status.json",
   "triage.md",
+  "delivery.md",
   "publish.md",
   "capture.md",
   "diagnosis.md",
@@ -775,7 +745,7 @@ function capabilityChecks(root) {
       "triage",
       [
         join(root, "specdev-t-triage", "SKILL.md"),
-        ["intake", "reconcile", "publish", "capture", "capture.md", "pr-delivery", "ci-security", "release-preflight", "recover", "remote-operations.md"],
+        ["intake", "capture", "capture.md", "queue", "ready-for-agent", "github-operations.md", "specdev-d-delivery"],
       ],
     ],
     [
@@ -1117,49 +1087,10 @@ function validateTriage(path, expectedChange, errors) {
     return null;
   }
   const { meta, body } = parseFrontmatter(path);
-  const required = [
-    "schema_version",
-    "artifact",
-    "change",
-    "mode",
-    "source",
-    "classification",
-    "risk",
-    "route",
-    "ready_for_implementation",
-    "external_action",
-    "updated_at",
-  ];
-  const missing = required.filter((key) => !(key in meta));
-  if (missing.length) errors.push(`triage.md: missing keys ${JSON.stringify(missing)}`);
-  if (meta.schema_version !== 2 || meta.artifact !== "triage") {
-    errors.push("triage.md: artifact/schema_version must be triage/2");
-  }
-  if (meta.schema_version === 2) {
-    if (!["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"].includes(meta.disposition)) errors.push("triage.md: invalid disposition");
-    if (!["pending", "passed", "failed", "unknown"].includes(meta.verification)) errors.push("triage.md: invalid verification");
-    if (!Array.isArray(meta.remote_actions) || meta.remote_actions.some(v => typeof v !== "string")) errors.push("triage.md: remote_actions must be an array of locators");
-    if (meta.disposition === "ready-for-agent" && meta.verification !== "passed") errors.push("triage.md: ready-for-agent requires passed verification");
-  }
-  if (meta.change !== expectedChange) errors.push("triage.md: change must equal directory name");
-  if (!VALID_TRIAGE_MODE.has(meta.mode)) errors.push(`triage.md: invalid mode ${meta.mode}`);
-  if (!VALID_RISK.has(meta.risk)) errors.push(`triage.md: invalid risk ${meta.risk}`);
-  if (typeof meta.route !== "string" || !meta.route.startsWith("specdev/")) {
-    errors.push("triage.md: route must be a specdev work id");
-  }
-  if (typeof meta.ready_for_implementation !== "boolean") {
-    errors.push("triage.md: ready_for_implementation must be boolean");
-  }
-  if (!new Set(["not-applicable", "pending-close", "closed", "close-failed", "waived"]).has(meta.external_action)) {
-    errors.push(`triage.md: invalid external_action ${meta.external_action}`);
-  }
-  const publishAction = meta.publish_action == null || meta.publish_action === ""
-    ? "not-requested"
-    : meta.publish_action;
-  if (!VALID_PUBLISH_ACTION.has(publishAction)) {
-    errors.push(`triage.md: invalid publish_action ${meta.publish_action}`);
-  }
-  meta.publish_action = publishAction;
+  checkSchema(meta, JSON.parse(readFileSync(new URL('../schemas/triage.schema.json', import.meta.url), 'utf8')), 'triage.md', errors);
+  if (meta.change !== expectedChange) errors.push('triage.md: change must equal directory name');
+  if (meta.disposition === 'ready-for-agent' && meta.verification !== 'passed') errors.push('triage.md: ready-for-agent requires passed verification');
+  if (meta.ready_for_implementation === true && (meta.verification !== 'passed' || meta.disposition !== 'ready-for-agent')) errors.push('triage.md: implementation readiness requires verified agent-ready assessment');
   const prefix = `<Path>{roots.state}/specdev/changes/${expectedChange}/`;
   const sourceRef = typeof meta.source === "string" ? meta.source.replaceAll("{change}", expectedChange) : "";
   const localSource = sourceRef.startsWith(prefix) && sourceRef.endsWith("</Path>") ? sourceRef.slice(prefix.length, -7) : null;
@@ -1170,118 +1101,14 @@ function validateTriage(path, expectedChange, errors) {
     const previousLocal = previous.startsWith(prefix) && previous.endsWith("</Path>") ? previous.slice(prefix.length,-7) : "";
     if (!/^(?:source\.md|sources\/SRC-[0-9]{3,}\.md)$/.test(previousLocal) || previousLocal === localSource || !isFile(join(dirname(path),previousLocal))) errors.push("triage.md: evolved snapshot requires an existing distinct supersedes_source in this change");
   }
-  for (const heading of ["## 当前判定", "## 未知项", "## 路由", "## 外部动作"]) {
-    if (!body.includes(heading)) errors.push(`triage.md: missing '${heading}'`);
-  }
-  if (publishAction !== "not-requested" && !body.includes("## 发布投影")) {
-    errors.push("triage.md: missing '## 发布投影'");
+  const lines = runtime.markdownBodyLines(body, 'triage.md');
+  for (const heading of ["## 当前判定", "## 未知项", "## 路由", "## 实施简报", "## 打标回执"]) {
+    const matches = lines.filter(line => line.text === heading);
+    if (matches.length !== 1) { errors.push(`triage.md: expected one '${heading}'`); continue; }
+    const end = lines.find(line => line.line > matches[0].line && /^#{1,2} /.test(line.text))?.line;
+    if (!body.split(/\r?\n/).slice(matches[0].line, end ? end - 1 : undefined).join('\n').trim()) errors.push(`triage.md: empty '${heading}'`);
   }
   return { path, meta, body };
-}
-
-function parsePublishLedger(body) {
-  const rows = [];
-  for (const line of body.split(/\r?\n/)) {
-    if (!/^\|/.test(line) || /^\|\s*-+/.test(line) || /^\|\s*ticket\s*\|/i.test(line)) continue;
-    const cells = line.split("|").map((cell) => cell.trim());
-    const inner = cells.slice(1, cells.length - 1);
-    if (inner.length < 8) continue;
-    rows.push({
-      ticket: inner[0],
-      kind: inner[1],
-      labels: inner[2],
-      number: inner[3],
-      url: inner[4],
-      marker: inner[5],
-      sha256: inner[6],
-      state: inner[7],
-    });
-  }
-  return rows;
-}
-
-function validatePublish(path, expectedChange, triage, errors) {
-  if (!isFile(path)) {
-    errors.push("missing publish.md ledger");
-    return null;
-  }
-  const { meta, body } = parseFrontmatter(path);
-  const required = [
-    "schema_version",
-    "artifact",
-    "change",
-    "mode",
-    "repo",
-    "publish_action",
-    "include_cancelled",
-    "origin",
-    "updated_at",
-  ];
-  const missing = required.filter((key) => !(key in meta));
-  if (missing.length) errors.push(`publish.md: missing keys ${JSON.stringify(missing)}`);
-  if (meta.schema_version !== 1 || meta.artifact !== "publish") {
-    errors.push("publish.md: artifact/schema_version must be publish/1");
-  }
-  if (meta.change !== expectedChange) errors.push("publish.md: change must equal directory name");
-  if (meta.mode !== "publish") errors.push(`publish.md: invalid mode ${meta.mode}`);
-  if (!new Set(["pending", "published", "publish-failed", "waived"]).has(meta.publish_action)) {
-    errors.push(`publish.md: invalid publish_action ${meta.publish_action}`);
-  }
-  if (!new Set(["local", "intake"]).has(meta.origin)) {
-    errors.push(`publish.md: invalid origin ${meta.origin}`);
-  }
-  if (typeof meta.repo !== "string" || !/.+\/.+/.test(meta.repo)) {
-    errors.push("publish.md: repo must be owner/repo");
-  }
-  for (const heading of ["## 发布计划", "## 账本", "## 计数", "## 重试"]) {
-    if (!body.includes(heading)) errors.push(`publish.md: missing '${heading}'`);
-  }
-  const rows = parsePublishLedger(body);
-  if (!rows.length) errors.push("publish.md: ledger table has no ticket rows");
-  const mixed = triage && triage.meta.classification === "mixed";
-  for (const row of rows) {
-    if (!/^T-\d{2,}$/.test(row.ticket)) {
-      errors.push(`publish.md: invalid ticket id ${row.ticket}`);
-    }
-    if (!VALID_PUBLISH_ROW_STATE.has(row.state)) {
-      errors.push(`publish.md: ${row.ticket}: invalid state ${row.state}`);
-    }
-    const labels = row.labels.split(",").map((item) => item.trim()).filter(Boolean);
-    for (const label of labels) {
-      if (FORBIDDEN_PUBLISH_LABELS.has(label)) {
-        errors.push(`publish.md: ${row.ticket}: forbidden label ${label}`);
-      }
-    }
-    const skipped = row.state.startsWith("skipped:");
-    if (!skipped && !VALID_TICKET_KIND.has(row.kind)) {
-      errors.push(`publish.md: ${row.ticket}: invalid kind ${row.kind}`);
-    }
-    if (mixed && !skipped && !VALID_TICKET_KIND.has(row.kind)) {
-      errors.push(`publish.md: mixed change requires kind on ${row.ticket}`);
-    }
-    if (COUNTED_PUBLISH_STATES.has(row.state) || row.state === "closed") {
-      if (!/^\d+$/.test(row.number)) {
-        errors.push(`publish.md: ${row.ticket}: ${row.state} row requires issue number`);
-      }
-      if (!String(row.url).startsWith("https://github.com/")) {
-        errors.push(`publish.md: ${row.ticket}: ${row.state} row requires GitHub url`);
-      }
-      const expectedMarker = `specdev:${expectedChange}:${row.ticket}:published`;
-      if (row.marker !== expectedMarker) {
-        errors.push(`publish.md: ${row.ticket}: marker must be ${expectedMarker}`);
-      }
-    }
-    if (row.state === "closed" || row.state === "created" || row.state === "commented") {
-      if (!labels.includes("specdev:published")) {
-        errors.push(`publish.md: ${row.ticket}: missing specdev:published`);
-      }
-      const originLabel = meta.origin === "intake" ? "origin:intake" : "origin:local";
-      if (!labels.includes(originLabel)) {
-        errors.push(`publish.md: ${row.ticket}: missing ${originLabel}`);
-      }
-    }
-  }
-  return { path, meta, body, rows };
 }
 
 function parseCaptureLedger(body) {
@@ -2517,7 +2344,7 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   // Resolve every consumed artifact subtree before individual validators can read it.
   // Unrelated preserved links are not consumers and remain in the archive manifest.
   if(stage !== 'archived') try {
-    for(const name of ['README.md','spec.md','goal-plan.md','implementation-map.md','implementation-plan.md','tickets-map.md','DESIGN.md','design-tree.json','source.md','triage.md','publish.md','diagnosis.md','wayfinder-map.md','LOG.md','ticket','evidence','investigation','learning','reviews','prototypes']) {
+    for(const name of ['README.md','spec.md','goal-plan.md','implementation-map.md','implementation-plan.md','tickets-map.md','DESIGN.md','design-tree.json','source.md','triage.md','delivery.md','publish.md','diagnosis.md','wayfinder-map.md','LOG.md','ticket','evidence','investigation','learning','reviews','prototypes']) {
       const path=runtime.safeWorkPathSync(change,name);
       if(isDirectory(path)) for(const child of walk(path)) runtime.safeWorkPathSync(change,toPosix(relative(change,child)));
     }
@@ -2556,13 +2383,17 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   const triage = isFile(triagePath) || sourceRequired
     ? validateTriage(triagePath, basename(change), errors)
     : null;
-  const publishPath = join(change, "publish.md");
-  const publishRequired = Boolean(
-    triage && new Set(["pending", "published", "publish-failed", "waived"]).has(triage.meta.publish_action),
-  );
-  if (isFile(publishPath) || publishRequired) {
-    validatePublish(publishPath, basename(change), triage, errors);
+  const deliveryPath = join(change, 'delivery.md');
+  const delivery = isFile(deliveryPath) || stage === 'delivery'
+    ? validateRecord(deliveryPath, 'delivery', parseFrontmatter, basename(change)) : null;
+  if (delivery) {
+    errors.push(...delivery.errors);
+    if (delivery.meta.external_action !== 'not-applicable' && (!source || source.meta.source_type !== 'github-issue')) errors.push('delivery.md: reconcile requires a real GitHub Issue source');
   }
+  const publishPath = join(change, 'publish.md');
+  const publishRequired = delivery?.meta.publish === 'publish.md';
+  const publication = isFile(publishPath) || publishRequired ? validatePublish(publishPath, basename(change), errors, parseFrontmatter) : null;
+  if (publication && !publishRequired) errors.push('publish.md: requires delivery.md publish pointer');
   const diagnosisPath = join(change, "diagnosis.md");
   if (isFile(diagnosisPath) || stage === "diagnosis") {
     validateDiagnosis(diagnosisPath, basename(change), errors);
@@ -2911,17 +2742,17 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
   }
   if (
     archiveReady &&
-    triage &&
-    new Set(["pending-close", "close-failed"]).has(triage.meta.external_action)
+    delivery &&
+    new Set(["pending-close", "close-failed"]).has(delivery.meta.external_action)
   ) {
-    errors.push(`complete stage cannot archive external_action=${triage.meta.external_action}`);
+    errors.push(`complete stage cannot archive external_action=${delivery.meta.external_action}`);
   }
   if (
     archiveReady &&
-    triage &&
-    new Set(["pending", "publish-failed"]).has(triage.meta.publish_action)
+    publication &&
+    new Set(["pending", "publish-failed"]).has(publication.meta.publish_action)
   ) {
-    errors.push(`complete stage cannot archive publish_action=${triage.meta.publish_action}`);
+    errors.push(`complete stage cannot archive publish_action=${publication.meta.publish_action}`);
   }
 
   const artifactOwners = new Map([...tickets].flatMap(([id, artifact]) => [
@@ -2966,7 +2797,7 @@ function printResults(errors, warnings) {
 }
 
 function usage() {
-  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--sealed (archived only)] [--prototype-id UI-NNN|LOGIC-NNN] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr|source-files|working-tree> [comparison options or repeated --file <relative-path>] | --self-check | --capture <capture.md> | --triage-run <TRI-NNN.md>");
+  console.error("Usage: node validate-specdev.mjs [--stage <stage>] [--sealed (archived only)] [--prototype-id UI-NNN|LOGIC-NNN] [--repo <project-root>] [--engineering <performance|documentation|incident>] <change-directory> | --review-scope --repo <project-root> --mode <baseline|range|commit|pr|source-files|working-tree> [comparison options or repeated --file <relative-path>] | --self-check | --capture <capture.md> | --delivery-run <DEL-NNN.md>");
   return 2;
 }
 
@@ -2979,7 +2810,7 @@ function main(argv) {
   let repoRoot = null;
   const contextOptions = {};
   let capturePath = null;
-  let triageRunPath = null;
+  let deliveryRunPath = null;
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -3006,8 +2837,8 @@ function main(argv) {
       index += 1;
     } else if (arg.startsWith("--repo=")) {
       repoRoot = arg.slice("--repo=".length);
-    } else if (arg === "--triage-run") {
-      triageRunPath = argv[++index] ?? null;
+    } else if (arg === "--delivery-run") {
+      deliveryRunPath = argv[++index] ?? null;
     } else if (arg === "--capture") {
       capturePath = argv[index + 1] ?? null;
       index += 1;
@@ -3022,10 +2853,10 @@ function main(argv) {
   if (stage !== null && !VALID_STAGES.has(stage)) return usage();
   if(contextOptions.sealed && stage !== 'archived') return usage();
   if (prototypeId && stage !== "prototype") return usage();
-  if (engineeringKind !== null && (selfCheckRequested || capturePath || triageRunPath || positional.length !== 1)) return usage();
-  if (triageRunPath) {
+  if (engineeringKind !== null && (selfCheckRequested || capturePath || deliveryRunPath || positional.length !== 1)) return usage();
+  if (deliveryRunPath) {
     if (selfCheckRequested || positional.length || stage !== null || capturePath || repoRoot) return usage();
-    return printResults(validateRecord(resolve(triageRunPath), "triage-run", parseFrontmatter).errors, []);
+    return printResults(validateRecord(resolve(deliveryRunPath), "delivery-run", parseFrontmatter).errors, []);
   }
   if (selfCheckRequested) {
     if (positional.length || stage !== null || capturePath) return usage();

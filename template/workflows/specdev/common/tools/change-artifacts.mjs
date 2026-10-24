@@ -1,7 +1,9 @@
 /** Read-only completion preflight. Artifact text never authenticates user authority. */
 import { existsSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { basename, join } from 'node:path';
+import { validateRecord, validatePublish, checkSchema } from './delivery-artifacts.mjs';
 import { readChangeExecution } from './plan-contract.mjs';
 import {
   readChangeFactsSync, readArtifactSectionSync, readUtf8ArtifactSync,
@@ -113,15 +115,28 @@ function validateCancellation(facts, owner, errors) {
 }
 export function validateArchiveDelivery(changeRoot) {
   const errors = [];
-  for (const name of ['triage.md','publish.md']) {
-    const path = safeWorkPathSync(changeRoot, name, { type: 'file' }); if (!existsSync(path)) continue;
-    try {
-      const {fields: meta} = parseFrontmatter(readUtf8ArtifactSync(path));
-      if (meta.change !== basename(changeRoot)) errors.push(`${path}: change identity mismatch`);
-      if (name === 'triage.md' && !['closed','waived','not-applicable'].includes(meta.external_action)) errors.push(`${path}: external delivery is not closed`);
-      if (meta.publish_action !== undefined && !['not-requested','published','waived'].includes(meta.publish_action)) errors.push(`${path}: publish delivery is not closed`);
-    } catch (e) { errors.push(String(e)); }
-  }
+  const parse = path => { const { fields: meta, body } = parseFrontmatter(readUtf8ArtifactSync(path)); return { meta, body }; };
+  const deliveryPath = safeWorkPathSync(changeRoot, 'delivery.md', { type: 'file' });
+  const publishPath = safeWorkPathSync(changeRoot, 'publish.md', { type: 'file' });
+  const triagePath = safeWorkPathSync(changeRoot, 'triage.md', { type: 'file' });
+  try {
+    // Cancellation also uses this preflight; unsupported intake data must not bypass its protocol check.
+    if (existsSync(triagePath)) checkSchema(parse(triagePath).meta, JSON.parse(readUtf8ArtifactSync(fileURLToPath(new URL('../schemas/triage.schema.json', import.meta.url)))), 'triage.md', errors);
+    const delivery = existsSync(deliveryPath) ? validateRecord(deliveryPath, 'delivery', parse, basename(changeRoot)) : null;
+    if (delivery) {
+      errors.push(...delivery.errors);
+      if (!['closed','waived','not-applicable'].includes(delivery.meta.external_action)) errors.push(`${deliveryPath}: external delivery is not closed`);
+      if (delivery.meta.external_action !== 'not-applicable') {
+        const source = safeWorkPathSync(changeRoot, 'source.md', {type:'file', mustExist:true});
+        if (parse(source).meta.source_type !== 'github-issue') errors.push(`${deliveryPath}: reconcile requires a real GitHub Issue source`);
+      }
+    }
+    const publication = existsSync(publishPath) || delivery?.meta.publish === 'publish.md' ? validatePublish(publishPath, basename(changeRoot), errors, parse) : null;
+    if (publication) {
+      if (delivery?.meta.publish !== 'publish.md') errors.push(`${publishPath}: missing delivery publish pointer`);
+      if (!['published','waived'].includes(publication.meta.publish_action)) errors.push(`${publishPath}: publish delivery is not closed`);
+    }
+  } catch (e) { errors.push(String(e)); }
   const prs = safeWorkPathSync(changeRoot, 'pull-requests', { type: 'directory' });
   if (existsSync(prs)) for (const name of readdirSync(prs)) {
     try {

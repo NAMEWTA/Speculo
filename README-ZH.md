@@ -29,11 +29,11 @@ speculo doctor .
 
 ## 按领域查看完整教程
 
-5 个 workflow、38 个 Work。每篇指南解释每个 Work 的用途、适用场景、输入、产物、调用示例和下一步。
+5 个 workflow、39 个 Work。每篇指南解释每个 Work 的用途、适用场景、输入、产物、调用示例和下一步。
 
 | 领域 | Work 数 | 能帮你做什么 |
 |---|---:|---|
-| [SpecDev · 软件开发](docs/workflows/specdev.md) | 15 | 需求探索、规格、原型、Ticket、Goal、实现、审查、诊断与交付 |
+| [SpecDev · 软件开发](docs/workflows/specdev.md) | 16 | 需求探索、规格、原型、Ticket、Goal、实现、审查、诊断与交付 |
 | [Learning · 学习](docs/workflows/learning.md) | 9 | 课程规划、完整讲解、先答后讲、主动探究、作业、复习与整合 |
 | [OPS · 运维部署](docs/workflows/ops.md) | 5 | 控制端准备、可信接入、主机环境、项目部署和离线资产视图 |
 | [Person · 分析决策](docs/workflows/person.md) | 2 | 双向钢人论证，以及特定方法论的诊断、战略与行动咨询 |
@@ -50,9 +50,9 @@ speculo doctor .
 | 类别 | 教程 |
 |---|---|
 | [导航与交接](docs/commands/README.md#navigation) | [status](docs/commands/status.md)、[handoff](docs/commands/handoff.md) |
-| [文档、规范与知识](docs/commands/README.md#documentation) | [docs-sync](docs/commands/docs-sync.md)、[工程规范生成](docs/commands/engineering-standards-builder.md)、[归档与沉淀](docs/commands/archive-and-consolidate.md) |
-| [Git 分析与历史](docs/commands/README.md#git) | [仓库审计](docs/commands/git-repository-audit.md)、[历史压缩](docs/commands/git-history-squash.md)、[上游评估](docs/commands/upstream-fork-sync.md) |
-| [源码交换与反馈](docs/commands/README.md#exchange) | [源码 ZIP](docs/commands/source-code-zip.md)、[Speculo 产品反馈](docs/commands/retro.md) |
+| [文档与知识维护](docs/commands/README.md#documentation) | [project-maintenance](docs/commands/project-maintenance.md)：文档、知识与归档 |
+| [Git 分析与历史](docs/commands/README.md#git) | [仓库审计](docs/commands/git-repository-audit.md)、[历史压缩](docs/commands/git-history-squash.md)、[上游评估](docs/commands/upstream-assess.md) |
+| [源码交换与反馈](docs/commands/README.md#exchange) | [源码 ZIP](docs/commands/source-code-zip.md)、[Speculo 产品反馈](docs/commands/speculo-feedback.md) |
 
 ## 数据、权限与其他使用方式
 

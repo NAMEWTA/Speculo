@@ -52,7 +52,7 @@ Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。
 
 DESIGN 的 current、不可变 revision、三类摘要、真实批准、浏览器证据及专用发布锁/恢复继续有效；来源以稳定 change 与 locator 定位，移动不改不可变字节。普通多文件收尾没有全局原子保证。
 
-`state/docs` 按主题保存当前工程事实，已有项目正文只导航，明确基线请求才建立。A/I/init/docs-sync 复用 writing-for-agents 的 current-facts-docs；局部维护不创建命令 state，docs-sync 保持手动全局 audit/update/commit 及其隔离 Git 合同。
+`state/docs` 按主题保存当前工程事实，已有项目正文只导航，明确基线请求才建立。A/I/init/project-maintenance 复用 writing-for-agents 的 current-facts-docs；局部维护不创建命令 state，project-maintenance 保持手动全局 audit/update/commit 及其隔离 Git 合同。
 
 当前 SpecDev runtime-contract 允许无 `_state` 种子，安装不补旧骨架。只支持 README Outcome 和当前 Goal/Ticket/执行协议；旧活动、混合协议和未闭合事务阻塞相关操作并保留原件。本版本不再分发转换器、旧状态 schema 或历史 reader。其他领域由各自的现役合同管理。
 

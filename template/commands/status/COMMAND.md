@@ -26,7 +26,7 @@ description: Summarize installed workflows, active changes, anomalies, and next 
 SpecDev 发布和 inbox 统计复用原工具，传入已解析的 SpecDev state 根：
 
 ```text
-node <absolute-workflows-root>/specdev/specdev-t-triage/scripts/publish-status.mjs --state-root <absolute-specdev-root> --json
+node <absolute-workflows-root>/specdev/specdev-d-delivery/scripts/publish-status.mjs --state-root <absolute-specdev-root> --json
 node <absolute-workflows-root>/specdev/specdev-t-triage/scripts/capture-status.mjs --state-root <absolute-specdev-root> --json
 ```
 

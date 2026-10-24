@@ -33,10 +33,10 @@ test("Learning conditional contracts remain directly reachable without unrelated
   assert.match(await read("template/workflows/learning/learning-g-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
 });
 
-test("Docs Sync keeps effect modes, global coverage and conditional Git contracts", async () => {
-  const operation = await read("template/commands/docs-sync/references/operation-contract.md");
-  const command = await read("template/commands/docs-sync/COMMAND.md");
-  const git = await read("template/commands/docs-sync/references/git-state-contract.md");
+test("Project Maintenance keeps effect modes, global coverage and conditional Git contracts", async () => {
+  const operation = await read("template/commands/project-maintenance/references/operation-contract.md");
+  const command = await read("template/commands/project-maintenance/COMMAND.md");
+  const git = await read("template/commands/project-maintenance/references/git-state-contract.md");
   const modes = operation.split("\n").filter(line => /^\| (audit|update|commit) \|/.test(line));
   assert.equal(modes.length, 3);
   assert.ok(modes.find(line => line.startsWith("| commit |"))?.includes("git-state-contract.md"));

@@ -117,7 +117,7 @@
       "path": "skills/engineering/pr/SKILL.md",
       "classification": "adapted",
       "targets": [
-        "template/workflows/specdev/specdev-t-triage/references/pr-delivery-protocol.md"
+        "template/workflows/specdev/specdev-d-delivery/references/pr-delivery-protocol.md"
       ],
       "rationale": "Summary/evidence/before-after/merge risk with durable authorized delivery."
     },
@@ -193,7 +193,7 @@
       "targets": [
         "template/workflows/specdev/specdev-t-triage/SKILL.md"
       ],
-      "rationale": "Full Issue/PR intake with local authority and isolated remote ledgers."
+      "rationale": "Assess requests and prepare an evidence-based implementation brief; delivery belongs to a separate Work."
     },
     {
       "id": "wayfinder",
@@ -235,11 +235,9 @@
     {
       "id": "setup-ts-deep-modules",
       "path": "skills/in-progress/setup-ts-deep-modules/SKILL.md",
-      "classification": "adapted",
-      "targets": [
-        "template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
-      ],
-      "rationale": "Evidence-based public/private dependency constraints with pass/fail/pass checks."
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "Engineering standards builder removed by explicit project decision; no replacement command."
     },
     {
       "id": "writing-beats",
@@ -286,11 +284,9 @@
     {
       "id": "setup-pre-commit",
       "path": "skills/misc/setup-pre-commit/SKILL.md",
-      "classification": "adapted",
-      "targets": [
-        "template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md"
-      ],
-      "rationale": "Inspect existing guardrails; no implicit dependency or hook installation."
+      "classification": "excluded",
+      "targets": [],
+      "rationale": "Engineering standards builder removed by explicit project decision; no replacement command."
     },
     {
       "id": "grill-me",

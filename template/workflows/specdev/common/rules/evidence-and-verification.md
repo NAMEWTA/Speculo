@@ -35,7 +35,7 @@ Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查�
 
 父 Implementation Orchestration Evidence 不能替代子 Evidence；至少记录最终 Map revision、成员状态/证据引用、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、漂移处置与残余风险。成员未 completed 或整体验证未通过不能完成父 change。
 
-Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按公共投影规则生成，不替代完整记录。
+Evidence 原文不出仓库。对 GitHub 的公共投影由 D-delivery publish 按公共投影规则生成，不替代完整记录。
 
 ## 6. 按改动选择检查与复用证据
 

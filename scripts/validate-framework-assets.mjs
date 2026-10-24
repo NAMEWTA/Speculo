@@ -10,7 +10,7 @@ const packageRoot = resolve(
 const templateRoot = join(packageRoot, "template");
 const workflowsRoot = join(templateRoot, "workflows");
 const workspacePath = join(templateRoot, ".speculo", "workspace.json");
-const docsSyncAssets = join(templateRoot, "commands", "docs-sync", "assets");
+const maintenanceAssets = join(templateRoot, "commands", "project-maintenance", "assets");
 const workflowEntryName = "SKILL.md";
 const allowedRootAliases = new Set([
   "config",
@@ -265,55 +265,55 @@ function validateAgentSkills() {
   }
 }
 
-function validateDocsSyncTemplates() {
-  if (!existsSync(join(templateRoot, "commands", "docs-sync", "COMMAND.md"))) {
+function validateProjectMaintenanceTemplates() {
+  if (!existsSync(join(templateRoot, "commands", "project-maintenance", "COMMAND.md"))) {
     return;
   }
 
   const state = readJson(
-    join(docsSyncAssets, "state-template.json"),
-    "template/commands/docs-sync/assets/state-template.json"
+    join(maintenanceAssets, "state-template.json"),
+    "template/commands/project-maintenance/assets/state-template.json"
   );
   if (state) {
     if (
       state.schema_version !== 4 ||
-      state.command !== "docs-sync" ||
-      state.state_path !== "<Path>{roots.state}/commands/docs-sync/state.json</Path>"
+      state.command !== "project-maintenance" ||
+      state.state_path !== "<Path>{roots.state}/commands/project-maintenance/state.json</Path>"
     ) {
-      fail("docs-sync state template must use schema v4 and the command state path");
+      fail("project-maintenance state template must use schema v4 and the command state path");
     }
     if (
       state.baseline?.mode !== "explicit" ||
       state.baseline?.sha !== null ||
       !Array.isArray(state.project_targets) ||
-      !Array.isArray(state.pending_legacy_targets)
+      Object.hasOwn(state, "pending_legacy_targets")
     ) {
-      fail("docs-sync state template has an invalid baseline or target scope");
+      fail("project-maintenance state template has an invalid baseline or target scope");
     }
   }
 
   const scope = readJson(
-    join(docsSyncAssets, "workflow-scope-template.json"),
-    "template/commands/docs-sync/assets/workflow-scope-template.json"
+    join(maintenanceAssets, "workflow-scope-template.json"),
+    "template/commands/project-maintenance/assets/workflow-scope-template.json"
   );
   if (scope) {
     if (
       scope.schema_version !== 1 ||
       scope.workflow !== "{workflow}" ||
-      scope.manifest_path !== "<Path>{roots.state}/{workflow}/docs-sync.json</Path>" ||
+      scope.manifest_path !== "<Path>{roots.state}/{workflow}/project-maintenance-docs.json</Path>" ||
       !Array.isArray(scope.project_targets) ||
       !Array.isArray(scope.state_targets)
     ) {
-      fail("docs-sync workflow scope template has an invalid v1 shape");
+      fail("project-maintenance workflow scope template has an invalid v1 shape");
     }
   }
 
   for (const entry of readdirSync(workflowsRoot, { withFileTypes: true })) {
     if (
       entry.isDirectory() &&
-      existsSync(join(workflowsRoot, entry.name, "_state", "docs-sync.json"))
+      existsSync(join(workflowsRoot, entry.name, "_state", "project-maintenance-docs.json"))
     ) {
-      fail(`template/workflows/${entry.name}/_state/docs-sync.json: command sidecar must be lazy`);
+      fail(`template/workflows/${entry.name}/_state/project-maintenance-docs.json: command sidecar must be lazy`);
     }
   }
 }
@@ -332,7 +332,7 @@ if (workspace) {
 }
 try { await readAssetCatalog(templateRoot); }catch(error){fail(String(error));}
 validateAgentSkills();
-validateDocsSyncTemplates();
+validateProjectMaintenanceTemplates();
 validateCommandAndSkillPaths();
 validateCommandReportRoots();
 

@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "generator": "engineering-standards-builder",
-  "skills": [
-{{SKILL_ENTRIES}}
-  ]
-}

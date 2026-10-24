@@ -12,7 +12,7 @@ import { planExternalEdits } from "../src/agent-files.js";
 import { image, bytes, type ExternalName, type FileImage } from "../src/external-files.js";
 
 const root = process.cwd(), wf = join(root, "template/workflows/specdev");
-const transportModule = () => import(pathToFileURL(join(wf, "specdev-t-triage/scripts/github-transport.mjs")).href);
+const transportModule = () => import(pathToFileURL(join(wf, "common/tools/github-transport.mjs")).href);
 const artifactModule = () => import(pathToFileURL(join(wf, "common/tools/delivery-artifacts.mjs")).href);
 const validatorModule = () => import(pathToFileURL(join(wf, "common/tools/validate-specdev.mjs")).href);
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
@@ -138,16 +138,16 @@ test("delivery records enforce verification and completed release targets", asyn
     const pp=join(temp,"PR-001.md"), headings=["Summary","Evidence","Before / After","Merge Risk","Authorization","Receipt","Recovery"];
     await writeFile(pp,markdown(pr,headings));assert.deepEqual(validateRecord(pp,"pull-request",parseFrontmatter,id).errors,[]);
     await writeFile(pp,markdown({...pr,verification:"pending"},headings));assert.match(validateRecord(pp,"pull-request",parseFrontmatter,id).errors.join("\n"),/verification/);
-    const rp=join(temp,"TRI-001.md"),rh=["Targets","Plan","Evidence","Authorization","Receipts","Recovery"];
+    const rp=join(temp,"DEL-001.md"),rh=["Targets","Plan","Evidence","Authorization","Receipts","Recovery"];
     const target={kind:"npm",identity:"@scope/package",required:true,version:"2.0.0-beta.1",registry:"https://registry.npmjs.org",dist_tag:"next",observed:"verified",receipt:"registry-read:package@2.0.0-beta.1"};
-    const rec={...common,artifact:"triage-run",id:"TRI-001",mode:"release",status:"completed",repo:"owner/repo",change:null,commit_sha:base,npm_target:"required",targets:[target]};
-    await writeFile(rp,markdown(rec,rh));assert.deepEqual(validateRecord(rp,"triage-run",parseFrontmatter).errors,[]);
-    await writeFile(rp,markdown({...rec,npm_target:"unknown"},rh));assert.match(validateRecord(rp,"triage-run",parseFrontmatter).errors.join("\n"),/unknown/);
+    const rec={...common,artifact:"delivery-run",id:"DEL-001",mode:"release",status:"completed",repo:"owner/repo",change:null,commit_sha:base,npm_target:"required",targets:[target]};
+    await writeFile(rp,markdown(rec,rh));assert.deepEqual(validateRecord(rp,"delivery-run",parseFrontmatter).errors,[]);
+    await writeFile(rp,markdown({...rec,npm_target:"unknown"},rh));assert.match(validateRecord(rp,"delivery-run",parseFrontmatter).errors.join("\n"),/unknown/);
     await writeFile(rp,markdown({...rec,targets:[target,{...target,kind:"github-release",identity:"v2.0.0-beta.1",observed:"failed",receipt:null}]},rh));
-    assert.match(validateRecord(rp,"triage-run",parseFrontmatter).errors.join("\n"),/verified receipt/);
-    await writeFile(rp,markdown({...rec,targets:[{...target,dist_tag:null}]},rh));assert.match(validateRecord(rp,"triage-run",parseFrontmatter).errors.join("\n"),/metadata/);
+    assert.match(validateRecord(rp,"delivery-run",parseFrontmatter).errors.join("\n"),/verified receipt/);
+    await writeFile(rp,markdown({...rec,targets:[{...target,dist_tag:null}]},rh));assert.match(validateRecord(rp,"delivery-run",parseFrontmatter).errors.join("\n"),/metadata/);
     await writeFile(rp,markdown({...rec,mode:"release-preflight",targets:[{...target,observed:"pending",receipt:null}]},rh));
-    assert.deepEqual(validateRecord(rp,"triage-run",parseFrontmatter).errors,[]);
+    assert.deepEqual(validateRecord(rp,"delivery-run",parseFrontmatter).errors,[]);
 
   } finally {await rm(temp,{recursive:true,force:true});}
 });

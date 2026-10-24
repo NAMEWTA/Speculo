@@ -265,7 +265,7 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
   if (approved.plan_digest !== digest(plan) || approved.run_id !== plan.run_id) throw new OpsError("plan differs from approval");
   if (plan.engine_digest !== engineDigest()) throw new OpsError("executor/schema code changed after planning; replan with this implementation");
   const execPath = join(folder, "execution.json");
-  if (existsSync(execPath) && !(resume || docsOnly)) throw new OpsError("run already started; use resume or docs-sync, never a blind second apply");
+  if (existsSync(execPath) && !(resume || docsOnly)) throw new OpsError("run already started; use resume or project-maintenance, never a blind second apply");
   if (!existsSync(execPath) && Date.now() >= Date.parse(plan.expires_at.replace("Z", "+00:00"))) {
     throw new OpsError("approved plan expired before first execution");
   }
@@ -320,7 +320,7 @@ export function apply(state, run, { resume = false, docsOnly = false } = {}) {
           }
         }
       } else if (plan.operations.some((o) => execution.steps[o.step_id]?.status !== "succeeded")) {
-        throw new OpsError("docs-sync only retries documentation after all operation receipts succeeded");
+        throw new OpsError("project-maintenance only retries documentation after all operation receipts succeeded");
       }
       const completeOps = plan.operations.every((o) => execution.steps[o.step_id]?.status === "succeeded");
       execution.status = unknown ? "unknown" : (completeOps ? "docs_pending" : "partial");

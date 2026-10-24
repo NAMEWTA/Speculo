@@ -24,7 +24,7 @@ async function save(path: string, value: string | Buffer) { await mkdir(dirname(
 async function saveJSON(path: string, value: any) { await save(path, JSON.stringify(value, null, 2) + '\n'); }
 
 async function fixture(t: { after: (fn: () => Promise<void>) => void }) {
-  const repo = await mkdtemp(join(tmpdir(), 'speculo-retro-'));
+  const repo = await mkdtemp(join(tmpdir(), 'speculo-speculo-feedback-'));
   t.after(() => rm(repo, { recursive: true, force: true }));
   const options = { projectRoot: repo, methodRoot, stateRoot: 'data' };
   const retroRoot = join(repo, 'data/specdev/retro'), reportRoot = join(retroRoot, reportId), planRoot = join(retroRoot, upgradeId);
@@ -35,17 +35,17 @@ async function fixture(t: { after: (fn: () => Promise<void>) => void }) {
   await save(join(repo, skillPath), originalSkill);
   await save(join(planRoot, 'candidates/project-checks/SKILL.md'), candidateSkill);
   const report: any = {
-    schema_version: 2, artifact: 'retrospective', id: reportId, owner: 'session:author', status: 'completed', outcome: 'findings', updated_at: date,
+    schema_version: 3, artifact: 'retrospective', id: reportId, owner: 'session:author', status: 'completed', outcome: 'findings', updated_at: date, sessions: [],
     sources: [{ id: 'E-001', kind: 'change', change: sourceId, locator: 'evidence/log.md', snapshot: 'sources/E-001.md', sha256: sha(quote), quote }],
     findings: [{ id: 'F-001', category: 'automated-checks', severity: 'high', evidence: ['E-001'], remediation_axis: 'context-pointer' }],
   };
   const writeReport = () => save(join(reportRoot, 'RETRO.md'), markdown(report, reportHeadings));
   await writeReport();
   const plan: any = {
-    schema_version: 1, artifact: 'retro-upgrade', id: upgradeId, owner: 'session:maintainer', created_at: date,
+    schema_version: 2, artifact: 'retro-upgrade', id: upgradeId, owner: 'session:maintainer', created_at: date,
     inputs: [{ report: reportId, sha256: sha(await readFile(join(reportRoot, 'RETRO.md'))) }],
     decisions: [{ report: reportId, finding: 'F-001', disposition: 'adopt', reason: 'Reuse the existing checker and document its discovery.', targets: [skillPath] }],
-    changes: [{ path: skillPath, action: 'update', owner: 'project', before_sha256: sha(originalSkill), after_sha256: sha(candidateSkill), candidate: 'candidates/project-checks/SKILL.md' }],
+    changes: [{ path: skillPath, action: 'update', owner: 'project', root: 'project', target_kind: 'skill', before_sha256: sha(originalSkill), after_sha256: sha(candidateSkill), candidate: 'candidates/project-checks/SKILL.md' }],
     archive_reports: [reportId],
   };
   const writePlan = () => save(join(planRoot, 'PLAN.md'), markdown(plan, planHeadings));
@@ -61,12 +61,12 @@ async function fixture(t: { after: (fn: () => Promise<void>) => void }) {
     const results = [];
     for (let i = 0; i < plan.changes.length; i++) {
       const change = plan.changes[i], content = await readFile(join(planRoot, change.candidate));
-      await save(join(repo, change.path), content);
+      await save(join(change.root === 'state' ? join(repo, 'data') : repo, change.path), content);
       const evidence = `evidence/check-${i}.txt`, output = 'Inspected expected trigger and neighboring non-trigger; references exist.\n';
       await save(join(planRoot, evidence), output);
-      results.push({ path: change.path, result: 'passed', sha256: sha(content), evidence, evidence_sha256: sha(output), method: 'fixture inspection', observed: 'The candidate and its references match the approved change.', command: null, exit: null });
+      results.push({ path: change.path, owner: change.owner, result: 'passed', sha256: sha(content), evidence, evidence_sha256: sha(output), method: 'fixture inspection', observed: 'The candidate and its references match the approved change.', command: null, exit: null });
     }
-    const receipt = { schema_version: 1, plan_sha256: sha(await readFile(join(planRoot, 'PLAN.md'))), approval_sha256: sha(await readFile(join(planRoot, 'approval.json'))), status, results };
+    const receipt = { schema_version: 2, plan_sha256: sha(await readFile(join(planRoot, 'PLAN.md'))), approval_sha256: sha(await readFile(join(planRoot, 'approval.json'))), status, results };
     await saveJSON(join(planRoot, 'execution.json'), receipt); return receipt;
   };
   return { repo, options, retroRoot, reportRoot, planRoot, sourceRoot, report, plan, writeReport, writePlan, approve, execute, check, api };
@@ -89,7 +89,8 @@ test('independent reports preserve quotations and source changes without creatin
 
 test('session, no-findings and insufficient-evidence reports have honest source requirements', async t => {
   const f = await fixture(t);
-  f.report.sources[0] = { ...f.report.sources[0], kind: 'session', change: null, locator: 'session:current:turn-3' }; await f.writeReport();
+  f.report.sessions = [{ id: 'S-001', host: 'codex', session_id: 'thread-1', locator: 'sessions/2026/10/15/rollout-thread-1.jsonl', captured_until: date, availability: 'available' }];
+  f.report.sources[0] = { ...f.report.sources[0], kind: 'session', change: null, locator: 'session:codex:thread-1', session_ref: 'S-001', anchor: {start_line: 2, end_line: 2, timestamp: date, event_id: 'turn-3'} }; await f.writeReport();
   noErrors(f.check('report')); assert.match(f.check('report').warnings.join('\n'), /provenance/);
   f.report.outcome = 'no-findings'; f.report.findings = []; await f.writeReport(); noErrors(f.check('report'));
   f.report.sources = []; await f.writeReport(); rejects(f.check('report'), /evidence is required/);
@@ -202,9 +203,8 @@ test('target traversal, missing references, projection ownership and Builder own
   await saveJSON(join(f.repo, 'data/projections.json'), { schema_version: 3, files: [] }); rejects(f.check(), /invalid Speculo projection manifest/);
   await saveJSON(join(f.repo, 'data/projections.json'), { schema_version: 3, package_version: '2.0.4', targets: ['agents'], asset_ids: ['specdev/retro'], files: [{ path: skillPath, asset_id: 'specdev/retro', sha256: sha(originalSkill) }] }); rejects(f.check(), /managed Speculo projection/);
   await rm(join(f.repo, 'data/projections.json'));
-  await saveJSON(join(f.repo, '.agents/skills/engineering-standards/generated-skill-set.json'), { schema_version: 1, generator: 'engineering-standards-builder', skills: [{ name: 'engineering-standards', path: '.agents/skills/engineering-standards', role: 'router' }, { name: 'project-checks', path: '.agents/skills/project-checks', role: 'domain' }] });
-  rejects(f.check(), /ownership mismatch/);
-  f.plan.changes[0].owner = 'engineering-standards-builder'; await f.writePlan(); noErrors(f.check());
+  f.plan.changes[0].owner = 'engineering-standards-builder'; await f.writePlan(); rejects(f.check(), /invalid enum/);
+  assert.equal(await readFile(join(f.repo, skillPath), 'utf8'), originalSkill);
 });
 
 test('symlink targets are not silently replaced', { skip: process.platform === 'win32' }, async t => {
@@ -248,4 +248,49 @@ test('invalid CLI flags and missing roots fail without creating data', async t =
     const run = spawnSync(process.execPath, [tool, ...args], { encoding: 'utf8' }); assert.notEqual(run.status, 0);
   }
   assert.equal(JSON.stringify(f.api.retroInventory(f.repo)), before);
+});
+
+test('session provenance enforces identity, cutoff and event deduplication across reports', async t => {
+  const f = await fixture(t);
+  f.report.sessions = [{ id: 'S-001', host: 'codex', session_id: 'thread-1', locator: 'sessions/2026/10/15/rollout-thread-1.jsonl', captured_until: date, availability: 'available' }];
+  Object.assign(f.report.sources[0], { kind: 'session', change: null, locator: 'session:codex:thread-1', session_ref: 'S-001', anchor: { start_line: 2, end_line: 3, timestamp: date, event_id: 'event-1' } });
+  await f.writeReport(); noErrors(f.check('report'));
+  const key = f.api.sourceEventKey(f.report, f.report.sources[0]);
+  assert.equal(key, f.api.sourceEventKey({ ...f.report, id: '2026-10-15-another' }, f.report.sources[0]));
+  f.report.sources[0].locator = 'session:codex:wrong'; await f.writeReport(); rejects(f.check('report'), /identity mismatch/);
+  f.report.sources[0].locator = 'session:codex:thread-1'; f.report.sources[0].anchor.timestamp = '2026-10-16T00:00:00Z'; await f.writeReport(); rejects(f.check('report'), /after capture cutoff/);
+  f.report.sources[0].anchor.timestamp = date; f.report.sessions[0].availability = 'unavailable'; f.report.sessions[0].locator = null; await f.writeReport();
+  noErrors(f.check('report')); assert.match(f.check('report').warnings.join('\n'), /unavailable/);
+  f.report.sessions[0].locator = 'sessions/../private.jsonl'; await f.writeReport(); rejects(f.check('report'), /host-relative/);
+});
+
+test('mixed Skill and knowledge promotion verifies each owner and preserves provenance', async t => {
+  const f = await fixture(t), knowledgePath = 'specdev/context/2026-10-16-check-discovery.md';
+  const content = `# Check discovery\n\nType: error-pattern\nScope: CI\nTrigger: the documented command was not wired.\nMethod: inspect the existing workflow.\nSource: ${reportId}/F-001/E-001\n`;
+  await save(join(f.planRoot, 'candidates/knowledge.md'), content);
+  f.plan.changes.push({ root: 'state', target_kind: 'context', owner: 'specdev/archive-and-consolidate', path: knowledgePath, action: 'create', before_sha256: null, after_sha256: sha(content), candidate: 'candidates/knowledge.md' });
+  f.plan.decisions[0].targets.push(knowledgePath); await f.writePlan(); noErrors(f.check());
+  await f.approve(); noErrors(f.check('upgrade', 'apply'));
+  await f.execute(); noErrors(f.check('upgrade', 'verified'));
+  const receipt = JSON.parse(await readFile(join(f.planRoot, 'execution.json'), 'utf8'));
+  receipt.results[1].owner = 'project'; await saveJSON(join(f.planRoot, 'execution.json'), receipt);
+  rejects(f.check('upgrade', 'verified'), /owner mismatch/);
+  receipt.results[1].owner = 'specdev/archive-and-consolidate'; receipt.results[1].result = 'pending'; await saveJSON(join(f.planRoot, 'execution.json'), receipt);
+  rejects(f.check('report', 'archive-ready', { upgrade: upgradeId }), /unverified upgrade/);
+});
+
+test('knowledge cannot escape its store or be adopted without original report provenance', async t => {
+  const f = await fixture(t), path = 'specdev/adr/2026-10-16-check.md';
+  f.plan.changes[0] = { root: 'state', target_kind: 'adr', owner: 'project', path, action: 'create', before_sha256: null, after_sha256: sha('Untraced decision'), candidate: 'candidates/knowledge.md' };
+  f.plan.decisions[0].targets = [path]; await save(join(f.planRoot, 'candidates/knowledge.md'), 'Untraced decision'); await f.writePlan(); rejects(f.check(), /knowledge target\/owner mismatch/);
+  f.plan.changes[0].owner = 'specdev/archive-and-consolidate'; await f.writePlan(); rejects(f.check(), /report\/finding provenance/);
+  f.plan.changes[0].path = 'specdev/design/DESIGN.md'; f.plan.decisions[0].targets = [f.plan.changes[0].path]; await f.writePlan(); rejects(f.check(), /knowledge target\/owner mismatch/);
+});
+
+test('old retrospective and upgrade versions are rejected without rewriting user data', async t => {
+  const f = await fixture(t);
+  f.report.schema_version = 2; await f.writeReport(); const before = await readFile(join(f.reportRoot, 'RETRO.md'));
+  rejects(f.check('report'), /invalid constant/); assert.deepEqual(await readFile(join(f.reportRoot, 'RETRO.md')), before);
+  f.report.schema_version = 3; await f.writeReport(); f.plan.inputs[0].sha256 = sha(await readFile(join(f.reportRoot, 'RETRO.md')));
+  f.plan.schema_version = 1; await f.writePlan(); rejects(f.check(), /invalid constant/);
 });

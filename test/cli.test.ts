@@ -52,10 +52,10 @@ function expectBlocked(error: unknown, code: string): boolean {
 }
 
 describe("Speculo init refresh", () => {
-  it("excludes template Gradle caches on init and refresh while preserving fixtures and runtime bytes", async () => {
+  it("excludes template Gradle caches on init and refresh while preserving source and runtime bytes", async () => {
     const target = await tempProject();
     const pkg = await packageFixture();
-    const fixture = "commands/engineering-standards-builder/examples/fallback/kotlin-gradle";
+    const fixture = "commands/upstream-assess";
     try {
       await mkdir(join(pkg, "template", fixture, ".gradle"), { recursive: true });
       await writeFile(join(pkg, "template", fixture, ".gradle/cache.bin"), "template cache");
@@ -64,7 +64,7 @@ describe("Speculo init refresh", () => {
       for (const mode of ["init", "refresh"]) {
         await initSpeculo(target, { packageRoot: pkg, selection: { workflowIds: ["specdev"] } });
         assert.equal(await pathExists(join(root, fixture, ".gradle")), false, mode);
-        for (const file of ["build.gradle.kts", "expected.json", "src/main/kotlin/example/App.kt"]) {
+        for (const file of ["COMMAND.md", "references/state-schema.md"]) {
           assert.equal(await readFile(join(root, fixture, file), "utf8"), await readFile(join(pkg, "template", fixture, file), "utf8"));
         }
         const managed = await readJson(join(root, ".speculo/managed.json"));
@@ -117,7 +117,7 @@ describe("Speculo init refresh", () => {
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const root = join(target, ".agents/speculo");
-      const opaque = join(root, ".speculo", "skills", "upstream-fork-sync", "state.json");
+      const opaque = join(root, ".speculo", "skills", "upstream-assess", "state.json");
       await mkdir(dirname(opaque), { recursive: true });
       await writeFile(opaque, Buffer.from([0, 255, 10, 123, 0, 1]));
       const before = await hash(opaque);

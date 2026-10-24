@@ -51,4 +51,4 @@ Work 只使用自己的资源与原网关。V 独占 `<Path>{roots.state}/ops/FL
 
 init/register/credential-put 是显式请求的控制端记录操作；probe/analyze 是有边界读取，source-fetch/mirror-probe 必须显式网络标志。H/D 的任务授权不替代 S 的初次 SSH 信任和固定 Node SHA256/ack 网关。SSH 只用已验证 host key 与密钥/agent，不自动信任或传明文密码参数。
 
-目标修改必须摘要绑定真实身份、输入、资源修订、凭据版本和执行器。失败动作不盲目再试，started-only/断线保持 unknown；docs-sync 只补交业务成功后的文档，不重跑迁移。V 失败保留原视图，不重跑业务。校验工具 `<Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path>` 不能授予操作权限。
+目标修改必须摘要绑定真实身份、输入、资源修订、凭据版本和执行器。失败动作不盲目再试，started-only/断线保持 unknown；project-maintenance 只补交业务成功后的文档，不重跑迁移。V 失败保留原视图，不重跑业务。校验工具 `<Path>{roots.workflows}/ops/common/tools/validate-ops.mjs</Path>` 不能授予操作权限。

@@ -1,16 +1,14 @@
 {
   "schema_version": 1,
   "commands": [
-    "archive-and-consolidate/COMMAND.md",
     "coordination-init/COMMAND.md",
-    "docs-sync/COMMAND.md",
-    "engineering-standards-builder/COMMAND.md",
     "git-history-squash/COMMAND.md",
     "git-repository-audit/COMMAND.md",
     "handoff/COMMAND.md",
-    "retro/COMMAND.md",
+    "project-maintenance/COMMAND.md",
     "source-code-zip/COMMAND.md",
+    "speculo-feedback/COMMAND.md",
     "status/COMMAND.md",
-    "upstream-fork-sync/COMMAND.md"
+    "upstream-assess/COMMAND.md"
   ]
 }

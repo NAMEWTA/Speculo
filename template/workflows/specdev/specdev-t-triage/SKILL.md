@@ -1,6 +1,6 @@
 ---
 name: specdev-t-triage
-description: "摄入与核验外部请求、投影本地完成事实、交付 PR，或按明确目标处理 CI、安全告警、npm/GitHub Release 预检、发布和恢复；清晰的本地需求直接进入对应 Work。"
+description: "核验外部 Issue、PR 或请求，创建 change 保存分析、复现和实施简报，并按授权打标；通过评估后交现有 Spec、Tickets、Goal Plan，交付操作使用 Delivery。"
 metadata:
   speculo-kind: work-skill
   speculo-id: specdev/triage
@@ -8,51 +8,31 @@ metadata:
   speculo-contract-version: "2"
 ---
 
-# 请求分诊与 GitHub 交付
+# 请求评估与分诊
 
-激活后读取 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>。本地 Spec/Ticket/Map/Goal/Evidence 始终是开发权威，GitHub 不成为开发 tracker。
+激活后读取 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>。本地工件是开发权威；远程标签表示评估结果，不替代 Ready 或实施授权。
 
-## 选择模式
+## 选择分支
 
-只读取选中分支，publish 专指 Ticket→Issue，release 专指包/GitHub Release。按意图先分组：请求摄入（queue/capture/intake）、完成投影（reconcile/publish）、PR 交付、CI/安全、版本发布（preflight/release）、原记录恢复。组名只是导航，不增加模式或 owner。
-
-| 模式 | 协议 | owner 与结果 |
+| 模式 | 协议 | 产物与边界 |
 |---|---|---|
 | queue | <Path>{roots.workflows}/specdev/specdev-t-triage/references/queue-protocol.md</Path> | 只读候选，不创建 change |
-| intake | <Path>{roots.workflows}/specdev/specdev-t-triage/references/intake-protocol.md</Path> | 冻结 source/triage，验证与路由 |
-| reconcile | <Path>{roots.workflows}/specdev/specdev-t-triage/references/reconcile-protocol.md</Path> | 来源 Issue 的 external_action |
-| publish | <Path>{roots.workflows}/specdev/specdev-t-triage/references/publish-protocol.md</Path> | 已完成 Ticket 的 publish 账本 |
-| capture | <Path>{roots.workflows}/specdev/specdev-t-triage/references/capture-protocol.md</Path> | workspace capture，保持 Issue open |
-| pr-delivery | <Path>{roots.workflows}/specdev/specdev-t-triage/references/pr-delivery-protocol.md</Path> | change 的 PR 记录 |
-| ci-security | <Path>{roots.workflows}/specdev/specdev-t-triage/references/ci-security-protocol.md</Path> | 独立 TRI 操作记录 |
-| release-preflight | <Path>{roots.workflows}/specdev/specdev-t-triage/references/release-preflight.md</Path> | 只读预检与 TRI 记录 |
-| release | <Path>{roots.workflows}/specdev/specdev-t-triage/references/release-protocol.md</Path> | 已授权发布及逐目标回执 |
-| recover | <Path>{roots.workflows}/specdev/specdev-t-triage/references/release-recovery.md</Path> | 恢复指定原记录 |
+| capture | <Path>{roots.workflows}/specdev/specdev-t-triage/references/capture-protocol.md</Path> | workspace <Path>{roots.state}/specdev/capture.md</Path>，保持 Issue open，不创建 change |
+| intake | <Path>{roots.workflows}/specdev/specdev-t-triage/references/intake-protocol.md</Path> | 开始分析即创建/恢复 change，冻结 source，维护 <Path>{roots.state}/specdev/changes/{change}/triage.md</Path> |
 
-远程原语统一见 <Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path>。其他调用方可直接复用该协议，不激活 T，也不初始化 SpecDev。
+capture 不创建也不选择 change；intake 才开始 change 分析。只读选中分支。远程读取和获批写入使用 <Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path>；直接复用该协议不激活 Work。清晰本地需求可直接进入对应 Work。
 
-## 定位与状态
+## 分析与交接
 
-从 workspace 解析 roots。intake 可创建/恢复 change；reconcile/publish 只选择满足 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 的现有 change。多个候选先消歧；冻结来源不覆盖。
+1. 确定来源、项目和 change，按 intake 合同查重并冻结完整可持久化来源；读取命中的 ADR/context、代码、测试与既有评估。来源漂移生成后继快照，保留原件。
+2. 判断请求是否成立、是否已有实现/重复/既往拒绝、是否符合项目方向、影响与可行性。Bug 保存实际复现和定位证据；需求说明现状、目标行为、约束和实现方向；PR 固定 base/head，验证已有 diff 并列剩余工作。
+3. 按 <Path>{roots.workflows}/specdev/specdev-t-triage/references/issue-pr-policy.md</Path> 给出 disposition 和 verification。事实缺失保持 needs-info/needs-triage；维护者明确拒绝才 wontfix。“已经实现”与“拒绝”分开记录依据，不以重复请求自动取消 change。
+4. 使用 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-template.md</Path> 在 <Path>{roots.state}/specdev/changes/{change}/triage.md</Path> 保存实施简报：范围、事实证据、建议、验收、风险和未决项。ready-for-agent 必须 verification=passed 且简报可执行，仍不等于 Ticket Ready 或 run 授权。
+5. 标签通过 config.github.labels 映射，缺映射仅阻塞远程打标。准确动作获授权后执行并重读，将回执写 triage.remote_actions；本地分析不因远程失败丢失。
+6. 有未决决定交 Grill，未知根因交 Diagnose，大范围交 Wayfinder，清晰范围交 Spec/Tickets；用户要求规划或派遣时再交 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>。使用现有 Ready gate 和调度机制，不从标签直接开工。
 
-capture 不创建也不选择 change，不创建工作调用镜像，只使用 <Path>{roots.state}/specdev/capture.md</Path>。queue 只返回候选。CI/发布独立记录写入 <Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path>；T 在首次具体操作时选最小未用 ID，按 <Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-run-template.md</Path> 原子写入并重读，不占用 change 状态。recover 使用原账本 owner。
+## 完成与下一步
 
-intake 使用实际 change README 和来源/分诊工件；有重叠写入者先由原 owner 恢复或交接，失败在原账本保留检查点。已结束 change 的 reconcile/publish 和 PR 交付只更新各自账本，不重开整体 Outcome。PR 不能修改来源关闭、Ticket publish 或 capture 状态。远程失败不能把已完成代码状态改回未完成。
+intake 使用 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> 的 --stage triage；capture 仅账本存在时 --capture，不为校验创建账本。queue 返回覆盖范围、分页和未知项。
 
-## 远程结果与检查有效期
-
-区分本地完成、push、PR created/ready/merged、Issue closed、npm 和 GitHub Release 的逐目标回执。queued、pending、skipped、未启动或环境失败不能写 passed；只重跑真正失效或失败的检查。PR/依赖交付固定真实 base/head、顺序和授权，改写后重新核对审查及 CI。删除来源分支前确认没有未完成依赖，不硬编码宿主必有某个 stack 扩展。
-
-超时先沿原 marker/目标对账，部分成功恢复原账本，不重建、不把远程失败倒灌为代码未完成。CI 资源问题按需读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；升级说明与实际构件、已发布基线和用户迁移步骤一起核对，不在 release 当天补造兼容承诺。
-
-## 验证与返回
-
-使用 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>：
-
-- intake/reconcile/publish：--stage triage，输入当前 change。
-- pr-delivery：--stage pr-delivery，输入当前 change。
-- capture：仅账本存在时 --capture，不为验证创建账本。
-- 独立 TRI：--triage-run，输入原记录。
-- queue：报告检索范围、分页、未知项，不制造完成证据。
-
-回读真实工件、账本和远程回执，返回结果、未完成项、验证命令及完整恢复位置。external_action 的 closed/waived/not-applicable 与 publish_action 的 not-requested/published/waived 各自满足归档门；pending/failed 恢复原模式。PR 仅 requested=true 的未闭合交付挡门，独立发布不自动挡 change 归档。归档交 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>。
+返回 source/triage 实际路径、判断、验证命令/退出码、打标结果及下一 Work。仅接受当前 triage 协议，不转换旧记录。完成回写、Ticket 投影、PR、CI、安全、发布和恢复统一交 <Path>{roots.workflows}/specdev/specdev-d-delivery/SKILL.md</Path>；T 不写 delivery/publish/PR 账本。

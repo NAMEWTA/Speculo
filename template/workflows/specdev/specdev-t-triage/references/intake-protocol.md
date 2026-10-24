@@ -4,7 +4,7 @@
 
 ## 1. 解析来源
 
-按以下优先级确定 `source_type`：GitHub Issue/PR URL、普通 URL、项目相对文件、用户粘贴内容、当前对话。来源为 GitHub 时调用 `<Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path>` 的 `issue-read` 或 `pr-read`；其他 URL 使用当前环境可用的只读读取能力。读取失败时保持 blocked，并请求用户提供导出或粘贴内容。
+按以下优先级确定 `source_type`：GitHub Issue/PR URL、普通 URL、项目相对文件、用户粘贴内容、当前对话。来源为 GitHub 时调用 `<Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path>` 的 `issue-read` 或 `pr-read`；其他 URL 使用当前环境可用的只读读取能力。读取失败时保持 blocked，并请求用户提供导出或粘贴内容。
 
 只记录规范化 URL、项目相对 Path 或 null；不保存机器绝对路径、认证信息、Cookie 或令牌。
 
@@ -40,7 +40,7 @@ GitHub 来源保存 title、body、author、state、labels、created/updated 和
 
 ## 分诊与交接
 
-来源冻结后，按命中条目读取永久 ADR/CONTEXT、当前 change 工件和代码事实；可选输入缺失不补造。使用 `<Path>{roots.workflows}/specdev/specdev-t-triage/references/classification-map.md</Path>` 分类为 bug、feature、refactor、investigation、operations、documentation、review 或 mixed。评估影响、紧急度、事故半径、安全、数据、迁移与人工批准，把未知项区分为可发现事实、待用户决定和低影响实现细节。
+来源冻结后，按命中条目读取永久 ADR/CONTEXT、当前 change 工件和代码事实；可选输入缺失不补造。使用 `<Path>{roots.workflows}/specdev/common/rules/request-classification.md</Path>` 分类为 bug、feature、refactor、investigation、operations、documentation、review 或 mixed。评估影响、紧急度、事故半径、安全、数据、迁移与人工批准，把未知项区分为可发现事实、待用户决定和低影响实现细节。
 
 使用 `<Path>{roots.workflows}/specdev/specdev-t-triage/assets/triage-template.md</Path>` 写入 `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`。按以下条件选择下一 Work，而不是要求每个请求经过全链：
 
@@ -56,8 +56,10 @@ GitHub 来源保存 title、body、author、state、labels、created/updated 和
 
 只有目标、范围、验证、路径和风险全部明确且用户批准 Direct Spec，`ready_for_implementation` 才能为 true。相似的归档拒绝或 ADR 只作为决策证据，不自动 wontfix 或回写远程标签。
 
-## v2 核验与快照演进
+## v3 核验与快照演进
 
 摄入时读取 <Path>{roots.workflows}/specdev/specdev-t-triage/references/issue-pr-policy.md</Path>。填写 disposition、verification、remote_actions；ready-for-agent 仅在 verification=passed 时使用，仍不代替 Ticket Ready。读取 PR 必须获得完整分页、reviews/review comments/diff、base/head SHA 和 fetched_at，缺失或漂移保持 blocked。
 
-<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 不覆盖；后续快照写 sources/SRC-###.md，明确 replaces 和有效版本，按 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path> 管理。活动 triage 只接受 v2；遇到其他版本停止受影响分支，保留原件，不做格式转换。裸编号先查询对象类型；已有实现、重复、明确拒绝分别记录，已有 PR 输出剩余工作 brief。
+<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 不覆盖；后续快照写 sources/SRC-###.md，明确 replaces 和有效版本，按 <Path>{roots.workflows}/specdev/common/rules/artifact-contract.md</Path> 管理。活动 triage 只接受 v3；遇到其他版本停止受影响分支，保留原件，不做格式转换。裸编号先查询对象类型；已有实现、重复、明确拒绝分别记录，已有 PR 输出剩余工作 brief。
+
+实施简报与实际核验写入 <Path>{roots.state}/specdev/changes/{change}/triage.md</Path> 的对应章节；外部标签不授予实施权限。摄入不预建交付账本，只有明确请求交付时由 Delivery 创建。

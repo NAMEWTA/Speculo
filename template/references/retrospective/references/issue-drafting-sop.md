@@ -15,7 +15,7 @@
   "body":         "string, 见正文结构",
   "remediation_axis": "code-defect | deterministic-check-gap | context-pointer | judgment-rule | environment-discovery",
   "regression":   {"positive": "通过样本与可观察结果", "negative": "拒绝/停止样本与不应出现的副作用"},
-  "affected":     ["相对路径，例 .agents/speculo/commands/archive-and-consolidate/COMMAND.md"],
+  "affected":     ["相对路径，例 .agents/speculo/commands/project-maintenance/COMMAND.md"],
   "evidence":     ["证据出处，例当前会话节点或具体工件及段落"],
   "disposition":  "file-issue | lesson-only | discard | duplicate",
   "dup_of":       "number|null, 疑似重复的已存在 issue 编号"

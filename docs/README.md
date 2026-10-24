@@ -26,7 +26,7 @@ Speculo 把需求澄清、软件开发、学习、运维、决策和内容制作
 | 全局初始化并跨 workflow 派遣任务，追踪输入、报告与历史 | [外部 Agent 的任务交接](agent-handoffs.md) |
 | 不使用本地项目，只想在网页 AI 中使用一个方法 | [Canonical 单文件使用](canonical.md) |
 
-[所有 workflow 的路线对照](workflows/README.md) · [38 个 Work 与 11 个 Command 全目录](capabilities.md)
+[所有 workflow 的路线对照](workflows/README.md) · [39 个 Work 与 9 个 Command 全目录](capabilities.md)
 
 ## 安装、恢复与维护
 

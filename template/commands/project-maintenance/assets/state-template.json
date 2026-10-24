@@ -1,0 +1,19 @@
+{
+  "schema_version": 4,
+  "command": "project-maintenance",
+  "state_path": "<Path>{roots.state}/commands/project-maintenance/state.json</Path>",
+  "baseline": {
+    "mode": "explicit",
+    "sha": null
+  },
+  "last_range": {
+    "from_sha": null,
+    "to_sha": null
+  },
+  "project_targets": [],
+  "scope_revision": 0,
+  "scope_confirmed_at": null,
+  "last_sync_run_at": null,
+  "total_syncs": 0,
+  "synced_assets": []
+}

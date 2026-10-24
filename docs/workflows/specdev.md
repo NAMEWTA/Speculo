@@ -19,7 +19,8 @@ SpecDev 管理软件开发中的决定、规格、实施和证据。你不需要
 | 发生 Bug，根因不明 | [Diagnose Bugs](#diagnose-bugs) | 先复现，再用实验确认原因 |
 | 想审查提交、PR 或指定文件 | [Code Review](#code-review) | 固定范围并只读审查 |
 | 想判断架构或性能是否值得改 | [Review Architecture](#review-architecture) | 先给有证据的候选 |
-| 外部 Issue、PR、CI 或版本交付 | [Triage](#triage) | 区分本地开发与远端操作 |
+| 外部 Issue、PR 需要判断与分析 | [Triage](#triage) | 核验价值、复现与实施方向 |
+| PR、CI、来源回写或版本交付 | [Delivery](#delivery) | 独立交付账本与恢复 |
 | 学习需求参考、项目代码或外部资料 | [Learn](#learn) | 给新手讲清功能、实现思路和运行机制 |
 | 想改进开发过程 | [Retro](#retro) | 从实际摩擦得到可验证提案 |
 | 工作已结束，需要整理知识并封存 | [Archive and Consolidate](#archive-and-consolidate) | 先维护现役资料，再归档 |
@@ -99,7 +100,7 @@ Spec 的必需正文为目标、行为、AC、范围与验证策略；用户故�
 请列出可以直接验证的命令和无法确定的内容。
 ```
 
-**下一步：** 目标明确去 Spec，需求取舍未定去 Grill；想生成项目专属工程规范 Skill 时，另行使用 [engineering-standards-builder](../commands/engineering-standards-builder.md)。
+**下一步：** 目标明确去 Spec，需求取舍未定去 Grill；项目特有约束从实际工程事实中提炼，必要时通过 Retro 提出 Skill 改进。
 
 <a id="wayfinder"></a>
 ## W · Wayfinder：探索大需求与拆分边界
@@ -285,31 +286,44 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 **完成怎么看：** 推荐有收益、代价和证据，或诚实返回“没有高置信候选”。报告不自动生成票或授权重构。诊断已发生性能故障用 D，评估优化空间用本入口。
 
 <a id="triage"></a>
-## T · Triage：外部请求与 GitHub 交付
+## T · Triage：核验请求并准备实施
 
 **业务 ID：** `specdev/triage` · [源入口](../../template/workflows/specdev/specdev-t-triage/SKILL.md)
 
-清晰的本地需求可直接用其他 Work。Triage 主要在外部请求与交付边界出现时使用；本地 Spec/Ticket/Evidence 仍是开发权威。
-
-| 模式 | 你什么时候用 | 结果/边界 |
+| 模式 | 什么时候用 | 结果 |
 |---|---|---|
-| `queue` | 想浏览可处理的外部请求 | 只读候选，不建 change |
-| `capture` | 先记录一条待处理事项 | workspace capture，保持来源 Issue open |
-| `intake` | 正式接入一个请求 | 冻结来源、分诊和路由 |
-| `reconcile` | 本地完成后处理来源 Issue | 按原账本与授权投影结果 |
-| `publish` | 把已完成本地 Ticket 投影为 Issue | 不是 npm 包发布 |
-| `pr-delivery` | 推进明确的 PR 交付 | 固定 base/head 与逐步回执 |
-| `ci-security` | 处理指定 CI/安全告警 | 独立操作记录与原权限 |
-| `release-preflight` | 检查包/GitHub Release 是否可发布 | 只读预检与记录 |
-| `release` | 执行明确获准的发布 | 保存逐目标回执 |
-| `recover` | 继续一个失败或部分成功的操作 | 恢复原记录，先核对远端结果 |
+| `queue` | 浏览外部候选 | 只读列表，不建 change |
+| `capture` | 先记录待办 | workspace capture，不关闭来源 Issue |
+| `intake` | 开始分析选中的请求 | 立即建立或恢复 change，冻结来源并完成核验和实施简报 |
+
+Bug 记录复现条件与实际结果，需求判断价值、可行性、已有覆盖和实现方向；PR 固定真实 base/head，区分已有实现与剩余工作。实施简报包括目标、范围、依赖、建议路径、验收与风险。不能复现或证据不足时保留原因，不为了通过而宣称 Ready。
+
+本地 `ready-for-agent` 表示核验通过、简报足够实施。获准时可映射远程标签（例如 `waiting to agent`），并保存重读回执；标签本身不授权 Agent 实施。随后按范围交 Spec、Tickets 或已有 Goal Plan 规划派遣，不增加一套调度器。
 
 ```text
-使用 specdev/triage 的 intake，接入我指定的 Issue URL。
-核对来源和当前实现，给出本地路由；后续远程写入按具体目标确认。
+使用 specdev/triage 的 intake 分析这个 Issue。
+现在创建分析 change；判断是否成立，尝试复现，形成实施方向和验收条件。
+本轮先交付分析，不直接实现或写远程标签。
 ```
 
-本地完成、push、PR 创建/合并、Issue 关闭、npm 发布是不同事实。远端超时先对账，不因一次失败重复创建；也不把远端交付失败改写成代码尚未完成。
+<a id="delivery"></a>
+## D · Delivery：交付与远端恢复
+
+**业务 ID：** `specdev/delivery` · [源入口](../../template/workflows/specdev/specdev-d-delivery/SKILL.md)
+
+| 模式 | 负责什么 |
+|---|---|
+| `reconcile` | 本地完成后处理实际来源 Issue |
+| `publish` | 已完成本地 Ticket 投影为 Issue |
+| `pr-delivery` | 固定 base/head，推进明确的 PR 交付 |
+| `ci-security` | 指定 CI/安全告警与独立操作记录 |
+| `release-preflight` | 包/GitHub Release 的发布预检 |
+| `release` | 已授权发布与逐目标回执 |
+| `recover` | 对账并恢复原失败或部分成功记录 |
+
+首次请求 reconcile/publish 才创建 `delivery.md`；发布进度只保存在 `publish.md`，Delivery 保存其指针。PR 沿原 PR 记录，独立 CI/发布操作使用 `delivery-runs/DEL-###.md`。本地发布不需要补造来源或 Triage 工件。
+
+本地完成、push、PR 创建/合并、Issue 关闭、npm 发布是不同事实。远端超时先对账，部分成功沿原账本恢复；交付失败不重开本地 Outcome，但已承诺未闭合交付阻塞归档。未请求交付不制造空账本或归档障碍。
 
 <a id="learn"></a>
 ## L · Learn：学习与图解
@@ -341,20 +355,22 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 学习完成表示本轮材料已交付，不等于用户已掌握，也不会自动启动规格、任务规划或实现。需要系统课程、作业或周期复习时转 [Learning](learning.md)。
 
 <a id="retro"></a>
-## R · Retro：复盘开发过程
+## R · Retro：复盘整个会话与开发过程
 
 **业务 ID：** `specdev/retro` · [源入口](../../template/workflows/specdev/specdev-r-retro/SKILL.md)
 
-**什么时候用：** 需求来回、CI 不稳、交接遗漏或协作重复等已经发生的摩擦。**准备什么：** 活动范围、相关 change/测试/日志/交接材料。
+复盘目标与结果、需求决策、实现、验证、协作、工具环境以及值得保留的成功做法。使用独立 `specdev/retro/<日期主题>/RETRO.md`，可关联多个 change 和会话；不为复盘新建 review change，也不重开原对象。
 
-**得到什么：** `RETRO-###.md`，区分已观察因果和未验证解释，每项建议有修改位置、owner、正反验收和后续路由。无发现或证据不足也是合法结论。
+每个报告可登记宿主、真实 session ID、日志根相对 locator、捕获截止时间与可用性。每条会话证据通过 session_ref 和行区间／事件时间定位。Codex JSONL 只在明确日志根内按需只读，验证项目与会话身份；追加日志不改变既有截止点，找不到原件诚实记录 unavailable。不会将整份敏感日志复制进永久知识。
 
 ```text
-使用 specdev/retro，复盘这次需求反复和测试遗漏。
-依据现有记录区分规则缺失、检查未接入和环境问题，提出可以验证的改进。
+使用 specdev/retro，复盘这个会话的目标、关键决定、实现和验证。
+为发现登记会话来源及截止点；将可复用的决定、错误教训和执行规范列成晋升候选。
 ```
 
-已完成/归档来源通过新 review change 引用，不能重开原对象。它不自动修代码、提 Issue 或改永久知识；Speculo 产品反馈用 [command/retro](../commands/retro.md)。
+汇总按真实会话事件去重：同一事件被多个报告引用仍是一份证据。需要深入判断时沿 locator 回读少量原文。每项发现区分事实、解释和待验证假设，并保留成功做法、无发现或证据不足等合法结果。
+
+晋升使用一个升级计划：项目 Skill／检查由项目 owner 负责，ADR 与 context 由 SpecDev A 网关负责。长期错误经验写入现有 context 主题文件和索引，不另建全局 ERROR 库。每个目标保留 before-image、实际写入、验证结果与报告/F-ID 来源；部分失败沿原计划恢复，未完成目标阻塞整份计划封存。Speculo 产品反馈另用 [command/speculo-feedback](../commands/speculo-feedback.md)。
 
 <a id="archive-and-consolidate"></a>
 ## A · Archive and Consolidate：整理现役知识与封存

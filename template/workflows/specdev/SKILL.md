@@ -22,6 +22,7 @@ metadata:
 
 - **specdev/archive-and-consolidate** — 归档与沉淀：<Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>
 - **specdev/code-review** — 代码审查：<Path>{roots.workflows}/specdev/specdev-c-code-review/SKILL.md</Path>
+- **specdev/delivery** — 开发交付：<Path>{roots.workflows}/specdev/specdev-d-delivery/SKILL.md</Path>
 - **specdev/diagnose-bugs** — 诊断 Bug：<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/SKILL.md</Path>
 - **specdev/grill-with-docs** — Change 决策访谈：<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>
 - **specdev/implement** — 实现与验收：<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>
@@ -29,11 +30,11 @@ metadata:
 - **specdev/learn** — 学习与图解：<Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>
 - **specdev/goal-plan** — Goal 规划与执行：<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>
 - **specdev/prototype** — 逻辑与 UI 原型：<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>
-- **specdev/retro** — 开发复盘与项目 Skill 迭代：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
+- **specdev/retro** — 整体会话复盘与知识沉淀：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
 - **specdev/review-architecture** — 架构审查：<Path>{roots.workflows}/specdev/specdev-r-review-architecture/SKILL.md</Path>
 - **specdev/spec** — 编写 Spec：<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>
 - **specdev/tickets** — 编写计划型 Tickets：<Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>
-- **specdev/triage** — 请求分诊与 GitHub 交付：<Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path>
+- **specdev/triage** — 请求评估与分诊：<Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path>
 - **specdev/wayfinder** — 探索大需求与 Change 边界：<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>
 
 <!-- AUTO-INDEX-END -->

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.9] - 2026-10-24
+
+### Changed
+
+- Consolidate documentation, knowledge and archive maintenance into `project-maintenance`; replace upstream synchronization with `upstream-assess` and route framework feedback through `speculo-feedback`.
+- Separate SpecDev request assessment from a dedicated Delivery Work owning authorized Issue, PR and release operations, with shared GitHub transport and durable delivery records.
+- Strengthen retrospective session evidence, provenance and knowledge graduation; update workflow routing, canonical exports, installation checks and documentation for nine Commands and 39 Works.
+- Broaden the Clash client profile AI rules template.
+
+### Removed
+
+- Remove the standalone engineering standards builder. Retire superseded Command entry points and document the owners of maintenance, assessment and feedback operations.
+
 ## [2.1.8] - 2026-10-20
 
 ### Changed

@@ -32,4 +32,4 @@ UI 候选缺省 3 个，配置范围 2–4；用户明确数量覆盖默认及�
 
 按当前分支运行 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> 的适用 stage；传明确项目/方法/数据根，不用 CLI 包装器作为普通 Work 前置。prototype 传具体 UI-NNN/LOGIC-NNN；完成/取消按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 核验真实证据，票全 done 不替代整体验收。归档后以实际目标运行 archived 验证。
 
-场景出口见 <Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>。T 的 capture、publish、PR 和独立 TRI 各有原账本 owner；未请求远程动作不创建空账本或新完成门。completed/cancelled 不自动授权外部动作，已承诺而未结束的外部交付仍阻塞封存。开发复盘独立保存在 <Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path>（retro 为日期主题 ID），不创建/重开来源 change；升级与归档按 R 的独立工件合同。
+场景出口见 <Path>{roots.workflows}/specdev/common/rules/workflow-routing.md</Path>。T 拥有 capture/intake，Delivery 拥有 publish、PR 和独立 DEL 原账本；未请求远程动作不创建空账本或新完成门。completed/cancelled 不自动授权外部动作，已承诺而未结束的外部交付仍阻塞封存。开发复盘独立保存在 <Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path>（retro 为日期主题 ID），不创建/重开来源 change；升级与归档按 R 的独立工件合同。

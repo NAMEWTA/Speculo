@@ -20,4 +20,4 @@
 
 以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
 
-实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 docs-sync state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
+实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 project-maintenance state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。

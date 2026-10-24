@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:speculo:specdev:delivery:v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "change",
+    "external_action",
+    "publish",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "artifact": {
+      "const": "delivery"
+    },
+    "change": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "external_action": {
+      "enum": [
+        "not-applicable",
+        "pending-close",
+        "closed",
+        "close-failed",
+        "waived"
+      ]
+    },
+    "publish": {
+      "enum": [
+        null,
+        "publish.md"
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

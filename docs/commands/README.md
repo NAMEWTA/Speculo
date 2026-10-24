@@ -32,9 +32,7 @@ Command 是你明确交给 AI 的一次任务。它的入口是 `COMMAND.md`，�
 
 | Command | 什么时候用 | 产物与边界 |
 |---|---|---|
-| [docs-sync](docs-sync.md) | 全面核对、重组项目文档 | audit/update/commit 分开，默认 audit |
-| [engineering-standards-builder](engineering-standards-builder.md) | 从真实项目生成可复用工程规范 Skill | 一个根路由与必要的领域 Skill，按需调用 |
-| [archive-and-consolidate](archive-and-consolidate.md) | 选择归档或知识整理入口 | 路由 SpecDev/Learning，由领域执行 |
+| [project-maintenance](project-maintenance.md) | 文档维护、知识沉淀与归档 | 一份计划，由原领域 owner 执行，默认 audit |
 
 <a id="git"></a>
 ## Git 分析与历史管理
@@ -43,7 +41,7 @@ Command 是你明确交给 AI 的一次任务。它的入口是 `COMMAND.md`，�
 |---|---|---|
 | [git-repository-audit](git-repository-audit.md) | 分析明确范围的本地历史 | 一个 Markdown 报告，不 fetch 或改 Git |
 | [git-history-squash](git-history-squash.md) | 明确要求压缩一段历史 | plan、本地 apply、远端 publish 分别核验 |
-| [upstream-fork-sync](upstream-fork-sync.md) | 评估 fork 与上游差异 | 冻结检查点与定制风险，不自动集成 |
+| [upstream-assess](upstream-assess.md) | 评估 fork 与上游差异 | 冻结检查点与定制风险，不自动集成 |
 
 <a id="exchange"></a>
 ## 源码交换与产品反馈
@@ -51,7 +49,7 @@ Command 是你明确交给 AI 的一次任务。它的入口是 `COMMAND.md`，�
 | Command | 什么时候用 | 产物与边界 |
 |---|---|---|
 | [source-code-zip](source-code-zip.md) | 需要可审查的源码 ZIP | 先预览，再本地打包，不自动上传 |
-| [retro](retro.md) | 向 Speculo 反馈实际产品摩擦 | 本地提案；确认后才向固定仓库提 Issue |
+| [speculo-feedback](speculo-feedback.md) | 向 Speculo 反馈实际产品摩擦 | 本地提案；确认后才向固定仓库提 Issue |
 
 ## 报告存在哪里
 

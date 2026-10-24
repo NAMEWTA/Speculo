@@ -97,6 +97,7 @@
   "works": [
     "specdev-a-archive-and-consolidate/SKILL.md",
     "specdev-c-code-review/SKILL.md",
+    "specdev-d-delivery/SKILL.md",
     "specdev-d-diagnose-bugs/SKILL.md",
     "specdev-g-grill-with-docs/SKILL.md",
     "specdev-i-implement/SKILL.md",
@@ -139,6 +140,7 @@
     "specdev-s-spec/SKILL.md": [],
     "specdev-t-tickets/SKILL.md": [],
     "specdev-t-triage/SKILL.md": [],
-    "specdev-w-wayfinder/SKILL.md": []
+    "specdev-w-wayfinder/SKILL.md": [],
+    "specdev-d-delivery/SKILL.md": []
   }
 }

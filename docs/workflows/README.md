@@ -8,7 +8,7 @@ workflow 是围绕一类工作组织的方法集合，Work 是其中一个步骤
 
 | 领域 | Work 数 | 最常见的起点 | 教程 |
 |---|---:|---|---|
-| SpecDev | 15 | 明确需求用 Spec；有故障用 Diagnose；需求边界不清用 Wayfinder | [开发、审查与交付](specdev.md) |
+| SpecDev | 16 | 明确需求用 Spec；有故障用 Diagnose；需求边界不清用 Wayfinder | [开发、审查与交付](specdev.md) |
 | Learning | 9 | 系统学习用 Assess；直接问答用 Question | [课程、问答与复习](learning.md) |
 | OPS | 5 | Initialize 准备控制端，Server Connect 接入目标 | [服务器与项目运维](ops.md) |
 | Person | 2 | 选择权衡用 Steelman；系统战略咨询用 Cognitive OS | [问题分析与决策](person.md) |
@@ -26,7 +26,7 @@ workflow 是围绕一类工作组织的方法集合，Work 是其中一个步骤
 | 审查代码正确性与规格符合性 | `specdev/code-review` |
 | 验证几天后还能否回忆和迁移知识 | `learning/review` |
 | 复盘开发协作问题 | `specdev/retro` |
-| 反馈 Speculo 产品使用问题 | `command/retro` |
+| 反馈 Speculo 产品使用问题 | `command/speculo-feedback` |
 | 复盘内容表现并设计下一轮实验 | `media/retro` |
 
 ## 跨领域如何衔接

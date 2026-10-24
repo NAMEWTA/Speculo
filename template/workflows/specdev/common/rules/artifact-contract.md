@@ -13,8 +13,9 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
 | 来源快照 | `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
-| 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求类别、影响、风险、缺失输入、下一 work、源 Issue reconcile 状态和 publish_action | 详细实现方案、开发进度或票级发布账本 |
-| 发布账本 | `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` | 票级 GitHub 投影的编号、标签、marker、state 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
+| 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求是否成立、核验结果、实施简报、风险、缺失输入、下一 Work 和打标回执 | 开发进度、实施授权或交付状态 |
+| 交付 | `<Path>{roots.state}/specdev/changes/{change}/delivery.md</Path>` | 来源 Issue 的 external_action 与 publish 账本指针 | 重复发布进度、本地完成判定或实施简报 |
+| 发布账本 | `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` | 票级 GitHub 投影的编号、标签、marker、state、publish_action 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
 | 捕获账本 | `<Path>{roots.state}/specdev/capture.md</Path>` | 尚未成 Change 的记事项、GitHub inbox 编号、标签、marker 和 inbox 计数；缺失合法 | Change、Ticket、Evidence 或已完成票的发布投影 |
 | 诊断 | `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
@@ -98,8 +99,8 @@ W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只�
 
 ## 新增工件 owner
 
-- T：<Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> 拥有 PR 交付回执；<Path>{roots.state}/specdev/triage-runs/TRI-###.md</Path> 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
-- R-retro：<Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path> 拥有独立复盘及原文来源；<Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path> 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path> 保存，不成为永久知识或 change 完成证据。A 只拥有已批准的移动/封存。
+- Delivery：<Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> 拥有 PR 交付回执；<Path>{roots.state}/specdev/delivery-runs/DEL-###.md</Path> 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
+- R-retro：<Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path> 拥有独立复盘及原文来源；<Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path> 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path> 保存，不成为永久知识或 change 完成证据。A 拥有已批准的 ADR/context 写入及移动/封存。
 - P：<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
 - 来源更新：<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 冻结后保持不变。T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
 

@@ -2,7 +2,7 @@
 
 [手册首页](README.md) · [领域指南](workflows/README.md) · [Command 工具箱](commands/README.md)
 
-当前有 **5 个领域、38 个 Work、11 个 Command**。表中的业务 ID 可用于显式曝光选择；教程用于理解场景，源入口用于核对完整合同。Work 的 Skill name 与业务 ID 的区别见[基本概念](concepts.md)。
+当前有 **5 个领域、39 个 Work、9 个 Command**。表中的业务 ID 可用于显式曝光选择；教程用于理解场景，源入口用于核对完整合同。Work 的 Skill name 与业务 ID 的区别见[基本概念](concepts.md)。
 
 ## 领域入口
 
@@ -21,6 +21,7 @@
 | `specdev/archive-and-consolidate` | 归档与沉淀 | [用法](workflows/specdev.md#archive-and-consolidate) | [specdev-a-archive-and-consolidate](../template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md) |
 | `specdev/code-review` | 代码审查 | [用法](workflows/specdev.md#code-review) | [specdev-c-code-review](../template/workflows/specdev/specdev-c-code-review/SKILL.md) |
 | `specdev/diagnose-bugs` | 诊断 Bug | [用法](workflows/specdev.md#diagnose-bugs) | [specdev-d-diagnose-bugs](../template/workflows/specdev/specdev-d-diagnose-bugs/SKILL.md) |
+| `specdev/delivery` | PR、来源回写与版本交付 | [用法](workflows/specdev.md#delivery) | [specdev-d-delivery](../template/workflows/specdev/specdev-d-delivery/SKILL.md) |
 | `specdev/grill-with-docs` | Change 决策访谈 | [用法](workflows/specdev.md#grill-with-docs) | [specdev-g-grill-with-docs](../template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md) |
 | `specdev/implement` | 实现与验收 | [用法](workflows/specdev.md#implement) | [specdev-i-implement](../template/workflows/specdev/specdev-i-implement/SKILL.md) |
 | `specdev/init-setup` | 初始化设置 | [用法](workflows/specdev.md#init-setup) | [specdev-i-init-setup](../template/workflows/specdev/specdev-i-init-setup/SKILL.md) |
@@ -31,7 +32,7 @@
 | `specdev/review-architecture` | 架构审查 | [用法](workflows/specdev.md#review-architecture) | [specdev-r-review-architecture](../template/workflows/specdev/specdev-r-review-architecture/SKILL.md) |
 | `specdev/spec` | 编写 Spec | [用法](workflows/specdev.md#spec) | [specdev-s-spec](../template/workflows/specdev/specdev-s-spec/SKILL.md) |
 | `specdev/tickets` | 编写计划型 Tickets | [用法](workflows/specdev.md#tickets) | [specdev-t-tickets](../template/workflows/specdev/specdev-t-tickets/SKILL.md) |
-| `specdev/triage` | 请求分诊与 GitHub 交付 | [用法](workflows/specdev.md#triage) | [specdev-t-triage](../template/workflows/specdev/specdev-t-triage/SKILL.md) |
+| `specdev/triage` | 请求核验与实施准备 | [用法](workflows/specdev.md#triage) | [specdev-t-triage](../template/workflows/specdev/specdev-t-triage/SKILL.md) |
 | `specdev/wayfinder` | 探索大需求与 Change 边界 | [用法](workflows/specdev.md#wayfinder) | [specdev-w-wayfinder](../template/workflows/specdev/specdev-w-wayfinder/SKILL.md) |
 
 ## Learning · 学习
@@ -81,17 +82,15 @@
 
 | 业务 ID | 使用手册 | 源入口 |
 |---|---|---|
-| `command/archive-and-consolidate` | [archive-and-consolidate](commands/archive-and-consolidate.md) | [COMMAND.md](../template/commands/archive-and-consolidate/COMMAND.md) |
 | `command/coordination-init` | [coordination-init](commands/coordination-init.md) | [COMMAND.md](../template/commands/coordination-init/COMMAND.md) |
-| `command/docs-sync` | [docs-sync](commands/docs-sync.md) | [COMMAND.md](../template/commands/docs-sync/COMMAND.md) |
-| `command/engineering-standards-builder` | [engineering-standards-builder](commands/engineering-standards-builder.md) | [COMMAND.md](../template/commands/engineering-standards-builder/COMMAND.md) |
+| `command/project-maintenance` | [project-maintenance](commands/project-maintenance.md) | [COMMAND.md](../template/commands/project-maintenance/COMMAND.md) |
 | `command/git-history-squash` | [git-history-squash](commands/git-history-squash.md) | [COMMAND.md](../template/commands/git-history-squash/COMMAND.md) |
 | `command/git-repository-audit` | [git-repository-audit](commands/git-repository-audit.md) | [COMMAND.md](../template/commands/git-repository-audit/COMMAND.md) |
 | `command/handoff` | [handoff](commands/handoff.md) | [COMMAND.md](../template/commands/handoff/COMMAND.md) |
-| `command/retro` | [retro](commands/retro.md) | [COMMAND.md](../template/commands/retro/COMMAND.md) |
+| `command/speculo-feedback` | [speculo-feedback](commands/speculo-feedback.md) | [COMMAND.md](../template/commands/speculo-feedback/COMMAND.md) |
 | `command/source-code-zip` | [source-code-zip](commands/source-code-zip.md) | [COMMAND.md](../template/commands/source-code-zip/COMMAND.md) |
 | `command/status` | [status](commands/status.md) | [COMMAND.md](../template/commands/status/COMMAND.md) |
-| `command/upstream-fork-sync` | [upstream-fork-sync](commands/upstream-fork-sync.md) | [COMMAND.md](../template/commands/upstream-fork-sync/COMMAND.md) |
+| `command/upstream-assess` | [upstream-assess](commands/upstream-assess.md) | [COMMAND.md](../template/commands/upstream-assess/COMMAND.md) |
 
 ## 可移植单文件
 

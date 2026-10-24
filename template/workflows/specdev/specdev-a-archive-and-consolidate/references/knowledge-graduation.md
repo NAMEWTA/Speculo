@@ -1,6 +1,6 @@
 # Knowledge Graduation Criteria
 
-判定 change 中的知识是否值得提取到 workflow state root 声明的持久化 store。默认只提取满足标准的；其余归为 `ephemeral`，留在归档 change 中。
+判定 change 或独立 RETRO 中的知识是否值得提取到 workflow state root 声明的持久化 store。默认只提取满足标准的；其余归为 `ephemeral`，保留在原来源对象中。
 
 ## 毕业标准（三项满足任一即提取）
 
@@ -8,7 +8,7 @@
    - ✅ "认证模块使用 JWT + refresh token 双令牌机制"
    - ❌ "临时绕过了 rate limiter，等待 PR #342 合并后移除"
 
-2. **重复教训**：同一洞察在多个 change 中出现（>1 个 change 引用或触及）。
+2. **重复教训**：同一洞察在多个 change 或会话中独立出现（>1 个独立事件，经会话/来源锚点去重；多份报告引用同一事件只算一次）。
    - ✅ 三个不同 change 都遇到"时区转换必须用 UTC 存储、展示层转换"的坑
    - ❌ 仅在一个 change 的调试过程中发现，未被其他 change 证实
 
@@ -49,10 +49,10 @@
 | **架构决策** | 对未来有持续决策价值，保留真实取舍与依据；不要求三项特征同时满足 | `<Path>{roots.state}/specdev/adr/{date}-{topic}[-NN].md</Path>` |
 | **领域术语** | 项目特有的概念定义，不是通用编程术语 | `context/` 目录（合并到术语文件） |
 | **项目设计规则** | 可跨 change 复用且通过证据评估的 tokens、组件与交互约束 | 仅已声明的 SpecDev `design/`，由 A 设计网关处理 |
-| **领域模型/规则/教训** | 实体关系、显式约束、踩坑经验 | 若 领域 Skill/manifest 声明了对应 store 则映射；否则归入 `adr/`（作为决策记录）或保留 ephemeral |
+| **领域模型/规则/教训** | 稳定约束、成功经验、可复用错误模式 | 已声明的 `context/` 按主题条目与索引维护，证据不足保留 ephemeral |
 
 > **注意**：目标 store 以 领域 Skill/manifest 持久化约定的实际声明为准。上表为默认映射。若 workflow 未声明某个 store，对应知识归入最接近的已声明 store 或保留 ephemeral。
 
 ## Ephemeral 分类
 
-被判定为 `ephemeral` 的知识**不删除**。它随归档 change 保留在<Path>{roots.state}/specdev/changes/archive/{change}/</Path>，供未来按原 locator 查阅。它不提升到 workflow 级持久化 store。
+被判定为 `ephemeral` 的知识**不删除**。change 来源随归档保留在<Path>{roots.state}/specdev/changes/archive/{change}/</Path>；RETRO 来源按其原归档合同保留独立报告，供未来按原 locator 查阅。它不提升到 workflow 级持久化 store。

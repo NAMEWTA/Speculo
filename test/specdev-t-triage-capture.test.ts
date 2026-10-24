@@ -192,7 +192,7 @@ describe("SpecDev T-triage capture inbox", () => {
         join(root, "triage.md"),
         [
           "---",
-          "schema_version: 2",
+          "schema_version: 3",
           "artifact: triage",
           "disposition: needs-triage",
           "verification: pending",
@@ -204,7 +204,6 @@ describe("SpecDev T-triage capture inbox", () => {
           "risk: medium",
           "route: specdev/triage",
           "ready_for_implementation: false",
-          "external_action: not-applicable",
           "updated_at: 2026-09-17T00:00:00Z",
           "---",
           "",
@@ -216,14 +215,16 @@ describe("SpecDev T-triage capture inbox", () => {
           "none",
           "## 路由",
           "capture",
-          "## 外部动作",
+          "## 实施简报",
+      "fixture evidence and bounded next steps",
+      "## 打标回执",
           "none",
           "",
         ].join("\n"),
       );
       const result = runValidator(["--stage", "triage", root]);
       assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /invalid mode capture/);
+      assert.match(result.stdout + result.stderr, /triage.md.mode: invalid constant/);
     } finally {
       await rm(fixtureProject(root), { recursive: true, force: true });
     }
@@ -281,8 +282,8 @@ describe("SpecDev T-triage capture inbox", () => {
     const [entry, protocol, map, projection, intake] = await Promise.all([
       readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/SKILL.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/capture-protocol.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/classification-map.md"), "utf8"),
-      readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/public-projection.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/common/rules/request-classification.md"), "utf8"),
+      readFile(join(packageRoot, "template/workflows/specdev/specdev-d-delivery/references/public-projection.md"), "utf8"),
       readFile(join(packageRoot, "template/workflows/specdev/specdev-t-triage/references/intake-protocol.md"), "utf8"),
     ]);
     assert.match(entry, /\| capture \|/);

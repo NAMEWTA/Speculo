@@ -76,7 +76,7 @@ Command 需要路径时：
 
 Command 写 workflow 范围 sidecar 时，必须由 领域合同 或 command contract 声明。显式 handoff 的 change/handoff.md 是共享交接方法声明的可更新侧记，由当次唯一交接作者写入；跨对象/无对象的会话报告仍遵守不覆盖规则，不成为业务状态。公共 coordination-init 管理 state/coordination/project.json，保留既有有效规则。
 
-当前 `docs-sync.json` 是 docs-sync command 拥有的延迟 sidecar；它不能被其他 command 当作通用写权限。
+当前 `project-maintenance-docs.json` 是 project-maintenance command 拥有的延迟 sidecar；它不能被其他 command 当作通用写权限。
 
 ## 确认
 
@@ -114,4 +114,4 @@ Command 完成需要同时满足：
 - 报告包含足够信息复现选择与结论；
 - 失败不会伪装成部分成功。
 
-archive Command 只为 SpecDev 传明确根/目标并交 A，其完成/取消/知识/移动仍由领域入口负责；其他领域保持原语义。Status 对 SpecDev 按目录与 Outcome 发现，可靠更新时间缺失如实 unknown，不用 mtime 推断停滞。docs-sync 纳入 state/docs 全局盘点，audit 零写、update 不推进游标、commit 仍受原 Git/state 隔离合同约束。
+archive Command 只为 SpecDev 传明确根/目标并交 A，其完成/取消/知识/移动仍由领域入口负责；其他领域保持原语义。Status 对 SpecDev 按目录与 Outcome 发现，可靠更新时间缺失如实 unknown，不用 mtime 推断停滞。project-maintenance 纳入 state/docs 全局盘点，audit 零写、update 不推进游标、commit 仍受原 Git/state 隔离合同约束。

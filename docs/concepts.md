@@ -9,7 +9,7 @@
 | workflow / 领域 | 一组围绕同类工作的方法与产物约定 | SpecDev 管开发，Learning 管学习 |
 | Work | 领域内一个可以启动、停止、恢复的步骤 | 写规格、代码审查、生成一节课 |
 | Skill | AI 可以按需读取的能力说明文件 | 领域与 Work 都有 `SKILL.md` |
-| Command | 用户明确发起的一次工具性请求 | status、handoff、docs-sync |
+| Command | 用户明确发起的一次工具性请求 | status、handoff、project-maintenance |
 | change | 一次具体工作的材料容器 | “增加筛选功能”或“学习缓存” |
 | Evidence / 证据 | 支持完成结论的真实记录 | 测试命令、输出、截图、文件与批准来源 |
 
@@ -19,7 +19,7 @@
 
 终端中的 `speculo` 提供 `init`、`version`、`doctor`、`resolve`、`recover`。它们负责安装、检查和恢复。
 
-[11 个 Command](commands/README.md) 是 AI 读取的 `COMMAND.md`，例如 docs-sync。应对 AI 说“调用 command/docs-sync”，或给入口文件路径；不要把它写成不存在的 `speculo docs-sync`。斜杠命令、`$skill`、技能选择器等快捷方式属于宿主，可用时按宿主方式选择。
+[9 个 Command](commands/README.md) 是 AI 读取的 `COMMAND.md`，例如 project-maintenance。应对 AI 说“调用 command/project-maintenance”，或给入口文件路径；不要把它写成不存在的 `speculo project-maintenance`。斜杠命令、`$skill`、技能选择器等快捷方式属于宿主，可用时按宿主方式选择。
 
 ## 三种调用粒度
 

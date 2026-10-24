@@ -25,7 +25,7 @@ try{
   run([cli,'init',project,'--workflows','learning,media,ops,person,specdev','--hub-skills','all','--skill-targets','agents,claude','--skills','all']);
   const doctor=JSON.parse(run([cli,'doctor',project,'--json']));assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
   const assets=join(project,'.agents/speculo'),lib=await import(pathToFileURL(join(assets,'lib/speculo-runtime.mjs')).href);
-  assert.equal((await lib.readAssetCatalog(assets)).assets.length,54);
+  assert.equal((await lib.readAssetCatalog(assets)).assets.length,53);
   assert.equal(JSON.parse(await readFile(join(assets,'workflows/specdev/runtime-contract.json'),'utf8')).state_seed,'optional');
   for (const name of ['status.json','config.json']) await assert.rejects(readFile(join(assets,'.speculo/specdev',name)),/ENOENT/);
   const canonicalRoot=join(installed,'template/canonical');
@@ -40,7 +40,7 @@ try{
   const designCatalog=JSON.parse(await readFile(join(assets,'workflows/specdev/specdev-p-prototype/design-library/catalog.json'),'utf8'));
   assert.equal(designValidators.designCatalog(designCatalog),true);
   assert.equal(designCatalog.templates.length,12);assert.equal(designCatalog.references.length,10);
-  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,119);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,54);
+  const projections=JSON.parse(await readFile(join(assets,'.speculo/projections.json'),'utf8'));assert.equal(projections.files.length,115);assert.equal(projections.schema_version,3);assert.deepEqual(projections.targets,['agents','claude']);assert.equal(projections.asset_ids.length,53);
   const {discoverHubCatalog}=await import(pathToFileURL(join(installed,'dist/src/hub-catalog.js')).href);
   const {snapshotSkillTree}=await import(pathToFileURL(join(installed,'dist/src/skill-trees.js')).href);
   const hub=await discoverHubCatalog(installed);assert.equal(hub.size,16);assert.ok(hub.has('writing/eli5'));
@@ -56,7 +56,6 @@ try{
   if(process.env.MEDIA_RENDER_REQUIRED==='1') {
     run(['--test',join(assets,'workflows/media/common/tests/test_media_render.mjs')]);
   }
-  run([join(assets,'commands/engineering-standards-builder/scripts/validate-builder.mjs'),'--root',join(assets,'commands/engineering-standards-builder')]);
   const nested=join(project,'src/nested');await mkdir(nested,{recursive:true});
   assert.ok(run([cli,'resolve',nested,'--path','{roots.references}/coordination/coordination-contract.md']).trim().endsWith('coordination-contract.md'));
   const directProject=join(sandbox,'direct-project'),directChange=join(directProject,'data/specdev/changes/2026-10-14-direct');
@@ -100,7 +99,7 @@ try{
   await writeFile(join(taskRoot,'TASK.md'),`---\nschema_version: 2\nsession: "${session}"\ntask: "${task}"\nkind: handoff\n---\n\n${['Goal','Inputs','Workspace and Scope','Acceptance','Return'].map(title=>`## ${title}\nExplicit session summary, no business state writes.\n`).join('\n')}`);
   const dispatched=JSON.parse(run([join(assets,'references/coordination/scripts/validate-dispatch.mjs'),'--repo',project,'--scope-root',scope,'--session',session,'--task',task,'--stage','dispatch']));
   assert.deepEqual(dispatched.errors,[]);
-  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 16 complete Hub packages in both targets, 54 assets, 119 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
+  console.log(`verify-package: ${tarballs[0]}; isolated install/refresh/uninstall, 16 complete Hub packages in both targets, 53 assets, 115 projection files, 12 canonical documents, explicit-root direct Work, core-only shared dispatch, byte-preserved runtime and nested resolver passed`);
 }finally{
   // The only recursive cleanup target is the exact mkdtemp directory created above.
   assert.ok(resolve(sandbox).startsWith(temporaryRoot+ (process.platform==='win32'?'\\':'/')));

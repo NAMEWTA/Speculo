@@ -146,7 +146,7 @@ async function validateArchiveReceipt(context, location, sealed) {
     locator=values[0].text.slice('Receipt: '.length);
   }
   const receipt=archiveLocator(context,location,locator);
-  const commandRoot=join(context.stateRoot,'commands/archive-and-consolidate');
+  const commandRoot=join(context.stateRoot,'commands/project-maintenance');
   const within=(root,path)=>{const rel=relative(root,path);return rel && rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);};
   if (!within(location.root,receipt.path) && !within(commandRoot,receipt.path)) throw new Error('archive receipt is outside the owning change/Command report');
   if (receipt.path !== join(location.root,'archive-receipt.md') && await lstat(join(location.root,'archive-receipt.md')).catch(()=>null)) throw new Error('archive has two receipt authorities');

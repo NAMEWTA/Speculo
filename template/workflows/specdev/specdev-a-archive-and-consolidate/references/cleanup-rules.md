@@ -55,7 +55,7 @@
 - 删除前解析真实路径，确认仍位于目标 workflow state root 和已声明 store 内。
 - 不跨 workflow 合并知识。
 - SpecDev DESIGN 的修改只经 A 设计网关形成新 revision；不删除/改写历史快照。INDEX 是派生投影，缺失或过时交原网关重建，不把它当成规范内容冲突。
-- 不修改 `docs-sync` state（`<Path>{roots.state}/specdev/docs-sync.json</Path>` 由 docs-sync command 专有）。
+- 不修改 `project-maintenance` state（`<Path>{roots.state}/specdev/project-maintenance-docs.json</Path>` 由 project-maintenance command 专有）。
 - 不为了空骨架创建占位文件；既有占位也先核对消费者和删除授权，不顺手移除。
 
 ## 反模式清理

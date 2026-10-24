@@ -103,10 +103,10 @@ node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops status
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops validate
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops inspect-run --run RUN_ID
 node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops resume --run RUN_ID
-node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops docs-sync --run RUN_ID
+node /path/to/ops/common/tools/ops.mjs --state /path/to/.speculo/ops project-maintenance --run RUN_ID
 ```
 
-resume 不重放 failed/started-only；docs-sync 仅重试文档，不能修复真正失败的业务动作。真实文档终态失败需新维护计划；只因网络中断但目标已有成功回执的情况可继续校验交付。具体说明见 rules/recovery.md。
+resume 不重放 failed/started-only；project-maintenance 仅重试文档，不能修复真正失败的业务动作。真实文档终态失败需新维护计划；只因网络中断但目标已有成功回执的情况可继续校验交付。具体说明见 rules/recovery.md。
 
 完成后检查服务端项目 README 中实际 observed_version、UTC 时间、data/env/compose路径；再检查部署机 hosts/id/deployments/id/README、server-files、docs-receipt 和 FLEET-DEPLOYMENTS.md。只有 both-sides-verified 算完整交付。
 

@@ -32,9 +32,9 @@ speculo init . --workflows specdev --skills specdev/implement,command/status
 
 如果目标宿主读取 `.claude/skills/`，使用 `--skill-targets claude`；需要两个位置时使用 `--skill-targets agents,claude`，统一配置 `--skills`。静态投影存在不等于宿主已经加载或认证实际调用。
 
-## 能否在终端输入 speculo implement 或 speculo docs-sync
+## 能否在终端输入 speculo implement 或 speculo project-maintenance
 
-不能。终端 CLI 只提供安装、版本、检查、路径解析和恢复。对 AI 明确请求 `specdev/implement` 或 `command/docs-sync`，或提供安装后的入口文件路径。见[概念说明](concepts.md)。
+不能。终端 CLI 只提供安装、版本、检查、路径解析和恢复。对 AI 明确请求 `specdev/implement` 或 `command/project-maintenance`，或提供安装后的入口文件路径。见[概念说明](concepts.md)。
 
 ## 我用 App，会不会被强制切换到 CLI
 
@@ -82,4 +82,4 @@ Speculo 仓库的 docs 是当前产品手册。版本变化保留在 CHANGELOG/G
 
 ## 如何报告问题
 
-提供版本、操作系统/Node、完整命令、返回码、具体路径和脱敏错误输出，说明预期与实际。涉及本地业务结果时给当前工件和恢复位置；不要上传秘密。Speculo 产品问题可用 [retro](commands/retro.md)先形成提案，确认后才创建远端 Issue。
+提供版本、操作系统/Node、完整命令、返回码、具体路径和脱敏错误输出，说明预期与实际。涉及本地业务结果时给当前工件和恢复位置；不要上传秘密。Speculo 产品问题可用 [retro](commands/speculo-feedback.md)先形成提案，确认后才创建远端 Issue。

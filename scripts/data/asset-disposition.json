@@ -1149,19 +1149,19 @@
     },
     {
       "source": "template/commands/archive-and-consolidate.md",
-      "target": "template/commands/archive-and-consolidate/COMMAND.md",
+      "target": "template/commands/project-maintenance/references/workflow-maintenance.md",
       "action": "moved-and-rewritten",
       "sha256": "ec7f27b99a94deb6c673ce12d36e3887a93f0aff4ab43952d3b998142c003692",
       "bytes": 4558,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/commands/docs-sync.md",
-      "target": "template/commands/docs-sync/COMMAND.md",
+      "target": "template/commands/project-maintenance/COMMAND.md",
       "action": "moved-and-rewritten",
       "sha256": "055d770e8c9c25c3fb2e1e81c6c3de948f92e0d4b4fa1d7bfc8d5a3c290fbe6a",
       "bytes": 2340,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/commands/git-history-squash.md",
@@ -1197,11 +1197,11 @@
     },
     {
       "source": "template/commands/retro.md",
-      "target": "template/commands/retro/COMMAND.md",
+      "target": "template/commands/speculo-feedback/COMMAND.md",
       "action": "moved-and-rewritten",
       "sha256": "f43864cdb5f71ee72b5c12070d846822681d2723b9ac7fa90b57225f3e3e2345",
       "bytes": 4565,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/commands/status.md",
@@ -1285,1155 +1285,1155 @@
     },
     {
       "source": "template/skills/docs-sync/assets/report-template.md",
-      "target": "template/commands/docs-sync/assets/report-template.md",
+      "target": "template/commands/project-maintenance/assets/report-template.md",
       "action": "moved-and-rewritten",
       "sha256": "6d938a790cc01d3d22004531dc9fedfc0255b10960066ed6524636ee31022d83",
       "bytes": 1182,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/assets/state-template.json",
-      "target": "template/commands/docs-sync/assets/state-template.json",
-      "action": "moved",
+      "target": "template/commands/project-maintenance/assets/state-template.json",
+      "action": "moved-and-rewritten",
       "sha256": "170c00c1a4da345df4619afd8a4bf5da0a4b88cbdd2a53afe9668ca0521ffc3e",
       "bytes": 454,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/assets/workflow-scope-template.json",
-      "target": "template/commands/docs-sync/assets/workflow-scope-template.json",
-      "action": "moved",
+      "target": "template/commands/project-maintenance/assets/workflow-scope-template.json",
+      "action": "moved-and-rewritten",
       "sha256": "c9f4239f2ea3146bfa297c0356c788fe5d3c3d596aa204634001add00b188cd2",
       "bytes": 247,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents-contract.md",
-      "target": "template/commands/docs-sync/references/agents-contract.md",
+      "target": "template/commands/project-maintenance/references/agents-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "ecffd7cc91681170fb15c86e254f771cb92008b506b56e75b77ff8935b2beadd",
       "bytes": 4285,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/agent-writing.md",
-      "target": "template/commands/docs-sync/references/agents-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/agents-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "2d388eff1178ea7e2bcc76fb081e84a3bd58c3dac7257280b9c12d12a7d89db7",
       "bytes": 11059,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/claude-redirect.md",
-      "target": "template/commands/docs-sync/references/agents-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/agents-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "65de9a43a546825dd0fb124a54165e6f62e41109818b05eaa7655343daae3c64",
       "bytes": 1497,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/content-contract.md",
-      "target": "template/commands/docs-sync/references/agents-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/agents-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "9a9560b84b6dadcade1b06598d8bbb2e49ada89c9880d77dfa7f2c2f0cdbbfdc",
       "bytes": 6877,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/evidence-collection.md",
-      "target": "template/commands/docs-sync/references/handbook-discovery.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/handbook-discovery.md",
+      "action": "moved-and-rewritten",
       "sha256": "fdebdbd23bc83a62a3ba00259bb14cc034788f7627032615267f9bd090515821",
       "bytes": 6086,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/manifest-discovery.md",
-      "target": "template/commands/docs-sync/references/handbook-discovery.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/handbook-discovery.md",
+      "action": "moved-and-rewritten",
       "sha256": "d32e38bd1a61dbf890b2b837f4ad1351e1c28982e1c190d12d950002bf6e8a17",
       "bytes": 4306,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/role-classification.md",
-      "target": "template/commands/docs-sync/references/handbook-discovery.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/handbook-discovery.md",
+      "action": "moved-and-rewritten",
       "sha256": "afab76cdaa1c7b2d4ae511fbe42054c0567a713d12896c6264b2157a8d97c1a8",
       "bytes": 6182,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/aggregator-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "9475f9a68c5fee12d0f3edd6b8235441c519bb172726eff4afcb67a406da0e1e",
       "bytes": 2022,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/capability-module-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "434c6ab815f555b23169e1f9cbc437016cd049d25b3ba6af96ab301d7e2f8a01",
       "bytes": 2014,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/contract-module-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "ea4965082c2bac7a206b2d532e9c05125a43875411b392eedb5e2ea0003ba31e",
       "bytes": 1804,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/repo-root-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "44d7d973fb5d48c779c623debaa206516cd715fc1d462beb122cb0ddb2b6a8ab",
       "bytes": 2167,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/runnable-app-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "1f0d15a94f34b3a2cac33b35b3d6b4b888aaebfec9a0350ab0f869a1930e2a04",
       "bytes": 2006,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/templates/scripts-docs-AGENTS.md",
-      "target": "template/commands/docs-sync/assets/agents-template.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/assets/agents-template.md",
+      "action": "moved-and-rewritten",
       "sha256": "9a726e97f3f601989e1468c60d03b7c4d494d424889b358ef508ac669343c0d8",
       "bytes": 1749,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/agents/writing-style.md",
-      "target": "template/commands/docs-sync/references/agents-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/agents-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "207074c747fefc5acf9f949667a9ab739d15cbf2d73cab77d211b0405605eae5",
       "bytes": 5293,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/changelog-contract.md",
-      "target": "template/commands/docs-sync/references/changelog-contract.md",
+      "target": "template/commands/project-maintenance/references/changelog-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "748b3457098ed69dab9485fe4b58af0111ebf31b585421086a8e07aece8f5b13",
       "bytes": 2548,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/document-lifecycle-contract.md",
-      "target": "template/commands/docs-sync/references/operation-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/operation-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "5864318cc10a9361f3a22d25864397cc731dd8570fde451020c73a6fa0491f92",
       "bytes": 2765,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/git-state-contract.md",
-      "target": "template/commands/docs-sync/references/git-state-contract.md",
+      "target": "template/commands/project-maintenance/references/git-state-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "030b6e3a630cb14f4a9a72f804190edbd8421bdaddb4a0d856b80170f2a16344",
       "bytes": 4254,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/mode-contract.md",
-      "target": "template/commands/docs-sync/references/operation-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/operation-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "9476fd5bf94545b4cfe140de39b4a5641dd6c8f93779c85520082ac8bfffcab0",
       "bytes": 2621,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/readme-contract.md",
-      "target": "template/commands/docs-sync/references/readme-contract.md",
+      "target": "template/commands/project-maintenance/references/readme-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "89f67d3ae52bb4fa624fbc9dd6ff7e2a08b171e9308d0e846164a937eaf9c5ca",
       "bytes": 2928,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/readme-writing-guide.md",
-      "target": "template/commands/docs-sync/references/readme-contract.md",
-      "action": "merged",
+      "target": "template/commands/project-maintenance/references/readme-contract.md",
+      "action": "moved-and-rewritten",
       "sha256": "05422ccc0cdc0f0d8c7f06c3c60273da6e499fe8b9e72f33b1f74415fd9e4ecc",
       "bytes": 9604,
-      "reason": "Merged into the current docs-sync contract or minimal handbook template; the original baseline digest remains historical evidence."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/references/workflow-scope-contract.md",
-      "target": "template/commands/docs-sync/references/workflow-scope-contract.md",
+      "target": "template/commands/project-maintenance/references/workflow-scope-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "4782ae6305c9b7940877e47536ce0f131079bb47044081d3a55e1e6846430cb9",
       "bytes": 3230,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/docs-sync/SKILL.md",
-      "target": "template/commands/docs-sync/references/operation-contract.md",
+      "target": "template/commands/project-maintenance/references/operation-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "4eedce8b83763197d6e0a62d78fcaf0dcc0b01318d29a8da8e6e0251f8e35ee8",
       "bytes": 3920,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/engineering-standards-builder/agents/openai.yaml",
-      "target": "template/commands/engineering-standards-builder/agents/openai.yaml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "3bf863a8856d04a6a1c4f23b3aae6cbf5388544129662c55cc733c2d9c23bbbf",
       "bytes": 45,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/fallback/kotlin-gradle/build.gradle.kts",
-      "target": "template/commands/engineering-standards-builder/examples/fallback/kotlin-gradle/build.gradle.kts",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "0a623fb3c38767354aed0b8954c716238892a7b6b6480a1c61b4d57a756c7017",
       "bytes": 82,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/fallback/kotlin-gradle/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/fallback/kotlin-gradle/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "f39413803cb994856dd89c3ff121c87eb77e863365ba51c624311191ca420eb6",
       "bytes": 255,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/fallback/kotlin-gradle/src/main/kotlin/example/App.kt",
-      "target": "template/commands/engineering-standards-builder/examples/fallback/kotlin-gradle/src/main/kotlin/example/App.kt",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "5a46f4a2db5765719b48a9d008ecb4de30c244e5ae98cb99ffde42eb53b18f73",
       "bytes": 51,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/.golangci.yml",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/.golangci.yml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "544ed1c939fe027672d8e9864a755cf89261f4382ebfad9dced568e035d21853",
       "bytes": 34,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/cmd/api/main.go",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/cmd/api/main.go",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "f6e19d86126968cd173596b77cfc23aa5108708c53ee1d86a8966ee2c1a21529",
       "bytes": 91,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "2fe1884b7e290e027044f76e0ac7cde9f740b8787bea66650ed1897c1e43541a",
       "bytes": 346,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/go.mod",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/go.mod",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "e99bd57cd69bd478d34da439fa0049fd1ddf4c2232731d5005619c93e3922857",
       "bytes": 38,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/internal/service/service_test.go",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/internal/service/service_test.go",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "579f2adfbc54a981d38356c03ead77efb9b122c0843c4196ccff8f0bfa7c2634",
       "bytes": 73,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/go/service/internal/service/service.go",
-      "target": "template/commands/engineering-standards-builder/examples/go/service/internal/service/service.go",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "329f0bb37eecde92404ee9230353d7438d27c2b844b44d6e2ce2aa00c4e05178",
       "bytes": 32,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/java/spring-boot-maven/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/java/spring-boot-maven/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "cdc47f94f7e4f0b0ef123296531b506300faef1c1eaa00b063c8636fcd5d8dff",
       "bytes": 324,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/java/spring-boot-maven/pom.xml",
-      "target": "template/commands/engineering-standards-builder/examples/java/spring-boot-maven/pom.xml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "6d1c5ce81c29fbae423a9e68bc76956efbe12370eb109e323f403bd0cebbd10d",
       "bytes": 964,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/java/spring-boot-maven/src/main/java/dev/speculo/orders/OrdersApplication.java",
-      "target": "template/commands/engineering-standards-builder/examples/java/spring-boot-maven/src/main/java/dev/speculo/orders/OrdersApplication.java",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "bd1f3b414a6af568aeba8c90e0c03ab58151089e0708a24cd9b901093e678191",
       "bytes": 312,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/java/spring-boot-maven/src/test/java/dev/speculo/orders/OrdersApplicationTest.java",
-      "target": "template/commands/engineering-standards-builder/examples/java/spring-boot-maven/src/test/java/dev/speculo/orders/OrdersApplicationTest.java",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "f8a04d2ef3a02dffa29f7780cb292c7e5846ed5bda5f112c63c01249b5589e73",
       "bytes": 121,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/.github/workflows/ci.yml",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/.github/workflows/ci.yml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "79259e58c82f7fdc1c87231524cfc0617dfceb962189a56a14add4fdc1c4f8c7",
       "bytes": 280,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/apps/web/package.json",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/apps/web/package.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "ce5447d7a48de5fa1616c5a4c4d891626ec1fd6c35784205497693234c071fbc",
       "bytes": 172,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/apps/web/src/App.vue",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/apps/web/src/App.vue",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "368ab21b141237ce55b34bd0df1e10353876373f2daa247e4d0d0736c0b42ff5",
       "bytes": 97,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/apps/web/tsconfig.json",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/apps/web/tsconfig.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "90f9188d9672811755c1ab6414179c24cb0571607b1bf2ac145fb6c81413586c",
       "bytes": 88,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "2bad57ebb0effc86ef447c04ac74ddf4e82aa59b26c609bc331f8c9964a5b71d",
       "bytes": 329,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/package.json",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/package.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "1c181a425f0e10718c531a7627fa7c5187cf241854188cbd4283246c9e3f6907",
       "bytes": 182,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/pnpm-workspace.yaml",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/pnpm-workspace.yaml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "d7c38a1e8c2f2562f28ffaab1bc7e6d616712ab39a77aab4e3d31bf908bf2548",
       "bytes": 25,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/services/orders/pom.xml",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/services/orders/pom.xml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "8928fbaabeb8919ee97de895f43b2ccf9f0faf74248e37196503e08c13ade78e",
       "bytes": 973,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/services/orders/src/main/java/dev/speculo/orders/OrdersApplication.java",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/services/orders/src/main/java/dev/speculo/orders/OrdersApplication.java",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "bd1f3b414a6af568aeba8c90e0c03ab58151089e0708a24cd9b901093e678191",
       "bytes": 312,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/services/worker/go.mod",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/services/worker/go.mod",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "e39464d26f3d39f3ae3ab67fd305892c1e8b9ccd0eef55f3398f2b3ed15da3f9",
       "bytes": 38,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/polyglot/monorepo/services/worker/main.go",
-      "target": "template/commands/engineering-standards-builder/examples/polyglot/monorepo/services/worker/main.go",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "df1b8e08af16d484363f5141c11dcf10ebd90cd6d3fa431c443d4c4c8b0a97f3",
       "bytes": 30,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/README.md",
-      "target": "template/commands/engineering-standards-builder/examples/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "1fcc091cfe0b375f253313a955a1835d9ff6c9921fbb59c963ba93808bda043a",
       "bytes": 1745,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/Cargo.toml",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/Cargo.toml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "75644e7dc374512afea83693d539ac699939c23cbebb82f33a39867850eec633",
       "bytes": 134,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/crates/cli/Cargo.toml",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/crates/cli/Cargo.toml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "9975e36887a19ce9917437ebc7a64df467f9ad549cb53c9cef7f829ce2fc0e5b",
       "bytes": 164,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/crates/cli/src/main.rs",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/crates/cli/src/main.rs",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "2c47bde8e960e206797a419293df4c493b2f52cc76c510fff18ff46d234cec0c",
       "bytes": 54,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/crates/core/Cargo.toml",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/crates/core/Cargo.toml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "ab6055e19c03ab1cb58ac11c85a4612574e73d0d384ac68a8cf6397d525312d2",
       "bytes": 110,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/crates/core/src/lib.rs",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/crates/core/src/lib.rs",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "18cdd9e4231cde2124ac3d77728b900f7e268636d95584fe1c7ece538c484a06",
       "bytes": 125,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "4bb27b0e48000cdfefd8ae445b563c44e85204afc80d7fe6a32e582f404f39ca",
       "bytes": 198,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/rust/workspace/rust-toolchain.toml",
-      "target": "template/commands/engineering-standards-builder/examples/rust/workspace/rust-toolchain.toml",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "7cf1c0529d145533e428bfd514b9734c44d9a433be7cb38f450a4b8c1ad1acd7",
       "bytes": 67,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "ba9c9dfc32d22ac424e9586db8d6666dcb37c2e49291434a757fa9df60425be4",
       "bytes": 303,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/package.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/package.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "e79713698dc5d7b48d6eb09858d3523bb24d0cd7be666012a0ea3517f5284435",
       "bytes": 400,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/src/App.test.tsx",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/src/App.test.tsx",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "7fbc61d55d284c5dc556024730f11c505273c4cf5f732d2dddd3372e34650826",
       "bytes": 122,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/src/App.tsx",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/src/App.tsx",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "e3bc74d8d7698faf088e71123d469cf3a54fc9f468ffbbec92188688c1c73938",
       "bytes": 71,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/src/main.tsx",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/src/main.tsx",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "50292b86fa5cef3bac6d27b629ce833b8862924b657000f350a942a6033f2620",
       "bytes": 119,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/react-vite/tsconfig.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/react-vite/tsconfig.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "75efa7da347c00f43e2da2d747519ca2be4ef2d520884564d909fb08447892e9",
       "bytes": 138,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/expected.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/expected.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "da24dbc23dc9eec28c307341c1ecb0c368c9e901b88b5156a4bdc6454aaa3e88",
       "bytes": 317,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/package.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/package.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "89cc4163fcf9ebee900497d04edfe3ffd0377aeceafd2b5ff9cd34bbb86ae936",
       "bytes": 432,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/src/App.test.ts",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/src/App.test.ts",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "7fbc61d55d284c5dc556024730f11c505273c4cf5f732d2dddd3372e34650826",
       "bytes": 122,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/src/App.vue",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/src/App.vue",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "259e5acdd43398377c6a68d3a8fff33e87d21806d4d592d0c0a799de1943a7c5",
       "bytes": 290,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/src/main.ts",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/src/main.ts",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "9316afbab5462a1685f47a70d830c25befea2fbea8cf821ffadb5fd2f08e3a75",
       "bytes": 148,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/tsconfig.json",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/tsconfig.json",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "4165bf271e37598f078c4bdaf7217398b32b375346c076f1943c92e91ced508f",
       "bytes": 167,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/examples/typescript/vue-vite/vite.config.ts",
-      "target": "template/commands/engineering-standards-builder/examples/typescript/vue-vite/vite.config.ts",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "68d196baec697b2ae5117aa4763a9aabe878d5c21a3b7144bda78c66dd5badfd",
       "bytes": 70,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/manifest.txt",
-      "target": "template/commands/engineering-standards-builder/manifest.txt",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "b8edc755f6970c4d9c679128645d6d1819d59988b6665f207007d98f69aa629c",
       "bytes": 5642,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/README.md",
-      "target": "template/commands/engineering-standards-builder/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "3391abb67af34860849cceee91c376ba29b56a1a07852cff0e49de2b4e6b425b",
       "bytes": 1045,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/00-detection-and-scope.md",
-      "target": "template/commands/engineering-standards-builder/references/go/00-detection-and-scope.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "d38ace910fcd51f82872dde36826d8766f174f925ac0be80a2b608e939477dc1",
       "bytes": 1244,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/01-language-and-idioms.md",
-      "target": "template/commands/engineering-standards-builder/references/go/01-language-and-idioms.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "9275c8277b06a2b48bbb5548680b038a827ecdfb717f2f569bd849b6d45b7200",
       "bytes": 1720,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/02-modules-packages-and-layout.md",
-      "target": "template/commands/engineering-standards-builder/references/go/02-modules-packages-and-layout.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "9b382ec02bb8be603d4ff00d1ff075a49ed67d35fdfaa3904f2fed81dc7d9dd0",
       "bytes": 1688,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/03-errors-context-and-concurrency.md",
-      "target": "template/commands/engineering-standards-builder/references/go/03-errors-context-and-concurrency.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "f830e1a036b9ffaa98ea52f478a5b2245dda2fd34eb2a36b46923ad8c811f9cf",
       "bytes": 2194,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/04-testing-tooling-quality-gates.md",
-      "target": "template/commands/engineering-standards-builder/references/go/04-testing-tooling-quality-gates.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "b154f19affe93a5c9d452d73fe2ee9543e381fa07bf83c95bb0df54cda98715f",
       "bytes": 1806,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/go/README.md",
-      "target": "template/commands/engineering-standards-builder/references/go/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "394a0d5dd8582c8c99491fd1a4331f0ede10c74fa0c3895a8679a25a471a76da",
       "bytes": 423,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/00-detection-and-scope.md",
-      "target": "template/commands/engineering-standards-builder/references/java/00-detection-and-scope.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "5f9abd6bc2c75c5c8f422d3fd6be9ec88ce898ff0ea53dc820442ac65980c7a2",
       "bytes": 1591,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/01-language-packages-and-api.md",
-      "target": "template/commands/engineering-standards-builder/references/java/01-language-packages-and-api.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "d41f6f77c05c6551712c8847fc8e1d9f2885dfc64899cfb6a8d4ec07481635d1",
       "bytes": 2148,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/02-build-modules-and-dependencies.md",
-      "target": "template/commands/engineering-standards-builder/references/java/02-build-modules-and-dependencies.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "b52771eeb1f7be6b8f93324f94591962f51722af9b0742ef51fc0b02a60b4af3",
       "bytes": 1931,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/03-errors-nullability-resources-concurrency.md",
-      "target": "template/commands/engineering-standards-builder/references/java/03-errors-nullability-resources-concurrency.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "6d70da2e0517894848e85bfd8cc0e1a4b7fcfd3a6b13ba8cf4eea094cc8795c4",
       "bytes": 2090,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/04-testing-tooling-quality-gates.md",
-      "target": "template/commands/engineering-standards-builder/references/java/04-testing-tooling-quality-gates.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "1801fbbedcf9ff36d54ef88b05d8ea9c84930959d5c80af139b1eba275e690ac",
       "bytes": 1536,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/frameworks/spring-boot.md",
-      "target": "template/commands/engineering-standards-builder/references/java/frameworks/spring-boot.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "c3bcc0defc7c276c0ee3f0cfef5dea6cdb6c4625ed8dc11bcc124e092c321094",
       "bytes": 4018,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/java/README.md",
-      "target": "template/commands/engineering-standards-builder/references/java/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "daff733bb2955c8d59b18b84283baf72aa7467b67faa22929d3543aba60ce239",
       "bytes": 509,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/00-governance-and-precedence.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/00-governance-and-precedence.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "e00a3aa1ea6807850bb6c040131c41896163821a182150e26cc3facf8d3ae8ea",
       "bytes": 2179,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/01-project-discovery.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/01-project-discovery.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "4c8d5fe5c6b52a5e41f3751c5e58b10a4352b37c05ab115376cd11768d0266d8",
       "bytes": 2383,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/02-evidence-topology-and-scope.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/02-evidence-topology-and-scope.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "05bdbe60567b444f9fdf6e3451afb17a20157f396aa7c5f70f135d20d603cac5",
       "bytes": 1902,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/03-interview-and-decisions.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/03-interview-and-decisions.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "4e81aeb69dbb8efefe333ebc309260e1508892a24ba46600373b66423a578093",
       "bytes": 2863,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/04-architecture-and-dependency-boundaries.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/04-architecture-and-dependency-boundaries.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "a4ba589804fbd00fa6c7693fe7ad90b1f1e8da99a9d42a3c1bed4a6060c8246a",
       "bytes": 1962,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/05-files-directories-and-naming.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/05-files-directories-and-naming.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "420a31642e211de50fd857a0453e84c6bac3d4f3c58216bd123e224487b1d39f",
       "bytes": 1887,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/06-apis-errors-resources-and-concurrency.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/06-apis-errors-resources-and-concurrency.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "4250caf2b2db665e70019f4cc73fa51e24475f2c7ac3da124045e8483cea6306",
       "bytes": 1834,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/07-documentation-and-comments.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/07-documentation-and-comments.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "5b319e80d9a7c589cb3c81e0406efd20991a7aa00f6644a666b04614d7afd7e5",
       "bytes": 1220,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/08-testing-strategy.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/08-testing-strategy.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "0ebd6213aede108fbbaf07408e781b79579e9463816b56f2ad085cf14f18c8ac",
       "bytes": 1841,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/09-mechanical-guardrails.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "36f32f11a76b08bdab1551edf164f8f1ad36e408ea193638d80929c87bf87b85",
       "bytes": 1067,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/09-security-configuration-and-data.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/09-security-configuration-and-data.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "5c89918f9ce8a94a7bbf0d0a8f5709bd4d2e76bc0cde6b459dd17a06b241ca2f",
       "bytes": 1731,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/10-performance-observability-and-i18n.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/10-performance-observability-and-i18n.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "7d86bd062836eb7ab2c562fd990e5ead68f9ea54ede65ec1222eb5f145ccd555",
       "bytes": 1452,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/11-tooling-quality-gates-and-ci.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/11-tooling-quality-gates-and-ci.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "241c9b3a25334083290528bc86ce6e03ada76298f3609fc60272239c30bb87d6",
       "bytes": 1998,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/12-git-review-and-delivery.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/12-git-review-and-delivery.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "94e08728fc2df2bc381c6d0f5e5656bcb41ec11165d792ed35f67aa63a81e515",
       "bytes": 1263,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/13-adoption-exceptions-and-ratchets.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/13-adoption-exceptions-and-ratchets.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "300769013c55a53af431209d57d3569a82d8da39d4f6953b615954c00a9b06ee",
       "bytes": 1593,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/14-generation-contract.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/14-generation-contract.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "523b223d68b40ab9c894293d54b250d74b4d339a7f2f389284349e635e3c8729",
       "bytes": 3422,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/15-validation-contract.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/15-validation-contract.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "f4b717374522566979014389d16609d815dc54a2aae2358927990895282af537",
       "bytes": 1939,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/16-language-adapter-contract.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/16-language-adapter-contract.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "4cacee9400441c1127ab78f82de288d897b9fcace00e265b22ee17534bf85e14",
       "bytes": 1036,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rules/README.md",
-      "target": "template/commands/engineering-standards-builder/references/rules/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "96eaa1143fa7c2f761ceb383d6e3b8bbc3520c45677e9ac978be5271d34dcdb0",
       "bytes": 1388,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/00-detection-and-scope.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/00-detection-and-scope.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "01b162fe95832017eac7dcb0d296418fe53ed430bf3510c1de484b2f407544a7",
       "bytes": 1244,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/01-language-api-and-safety.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/01-language-api-and-safety.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "3f3e237a6160fefb5b5051dcbf9326be6830d03e42d2b5d8aca06645ec84a420",
       "bytes": 1906,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/02-crates-workspaces-and-layout.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/02-crates-workspaces-and-layout.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "46b200ef8a58624f2397283c3bcc6d6e448816075306b3c189a91489ccf77c0a",
       "bytes": 2041,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/03-errors-ownership-and-concurrency.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/03-errors-ownership-and-concurrency.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "995b56e6eeabbfacbd1a3572dc1579d35ce950d5cc7803f651223ea6ab61afea",
       "bytes": 2043,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/04-testing-tooling-quality-gates.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/04-testing-tooling-quality-gates.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "af7571038d7555e1223a775ec0b3823493319f2278318ca2eb75815780aab294",
       "bytes": 1769,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/rust/README.md",
-      "target": "template/commands/engineering-standards-builder/references/rust/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "c78668d2eef84183a371d7bdb08bb0c8eca661ea71027d5218c869256c7328bf",
       "bytes": 444,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/00-detection-and-scope.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/00-detection-and-scope.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "4734d3a35d918cd47edef4175483a15bc7648abac279c70814bdb7a768d1c3c4",
       "bytes": 1927,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/01-language-and-type-system.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/01-language-and-type-system.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "3921f169216d3d4011e35486495fd4f60002e611cff2670888a1119b46c15b4a",
       "bytes": 2609,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/02-modules-packages-and-runtime-boundaries.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/02-modules-packages-and-runtime-boundaries.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "8dc1d4e7d89e3dc916e956a7356c1958567bdcaf452f11897c85d56a203153ba",
       "bytes": 2449,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/03-functions-async-errors-resources.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/03-functions-async-errors-resources.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "92e1c1731dae3e1af1957ede3b44ec21d0ba6e69e226350af32ed82315f221b5",
       "bytes": 2375,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/04-testing-tooling-quality-gates.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/04-testing-tooling-quality-gates.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "3173ffed87ac7c86d5b02a98c0e9370a1fa6566fd17fbd0e179a919853493b9b",
       "bytes": 1909,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/app-types/cli.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/app-types/cli.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "1ac9911f7387b2a34c419b064bf2cb76a9a72dd8b70c9957e58fa0801664f40b",
       "bytes": 874,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/app-types/library.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/app-types/library.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "abd8d809e0925360bc696123fa428ffa94cca3d98a9016d850474ab97d7a9e0b",
       "bytes": 902,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/frameworks/react.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/frameworks/react.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "a5b228237e3058774446adf524737a11d73359a11cc4491d2a8c600a9da92202",
       "bytes": 3732,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/frameworks/vue.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/frameworks/vue.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "15d1388733da0d78d3128d3770ff0c57777960a97bec0e02454fbf189d49184f",
       "bytes": 9215,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/README.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "ae62ab56e3dbd0f670667e30892a4a4addd4aa23e41f0d61cfd80e63b9688c61",
       "bytes": 877,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/runtimes/browser.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/runtimes/browser.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "03411180aa6c404a5b7efa1643d92dbe2393f1e113b9bbbf5829ed3f72588c7c",
       "bytes": 1117,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/runtimes/electron.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/runtimes/electron.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "a23f9b70ed6d4de25cd36d3345dfdac333a80fd61c655dc1376a023f4a952bf6",
       "bytes": 1475,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/references/typescript/runtimes/node.md",
-      "target": "template/commands/engineering-standards-builder/references/typescript/runtimes/node.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "2713ede20e942dc8e95667600ea1ad135750df280d8d1a972029d0f06a80fdba",
       "bytes": 1071,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/scripts/discover-project.mjs",
-      "target": "template/commands/engineering-standards-builder/scripts/discover-project.mjs",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "82139771c047e5dfd010a52fa976fddde33f3836b6a104bf85f4010d74654472",
       "bytes": 48932,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/scripts/self-test.mjs",
-      "target": "template/commands/engineering-standards-builder/scripts/self-test.mjs",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "b71c976baa8384ac49f80c96376a34b2166e7855c8852246e042517099ead976",
       "bytes": 17844,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/scripts/sync-manifest.mjs",
-      "target": "template/commands/engineering-standards-builder/scripts/sync-manifest.mjs",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "5674853feaba10cb4fb5e9e4e01df99ea0b073b98a2a55322e8cfe7a299c6696",
       "bytes": 4455,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/scripts/validate-builder.mjs",
-      "target": "template/commands/engineering-standards-builder/scripts/validate-builder.mjs",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "e04213178d0414fbd284dc3c1f13c42dc9bf2b017d01d7e532d86c733af7fb29",
       "bytes": 13334,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/scripts/validate-generated-skill.mjs",
-      "target": "template/commands/engineering-standards-builder/scripts/validate-generated-skill.mjs",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "c39220faed601b16f6d05b64fa3a10a08773093d3fd38ab08e18bf6010a74827",
       "bytes": 19207,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/SKILL.md",
-      "target": "template/commands/engineering-standards-builder/COMMAND.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "0bf16c7299278c30b3becd799a3c8dae89d5ac516229eccaa4f9188b669095a3",
       "bytes": 8849,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/compatibility/agents-typescript--standards.md",
-      "target": "template/commands/engineering-standards-builder/templates/compatibility/agents-typescript--standards.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "b4dbb874b9a465ad027eeeb4a367b6b139ac20383350da4eec6360e79e7dfa1a",
       "bytes": 257,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/compatibility/agents-typescript-standards.md",
-      "target": "template/commands/engineering-standards-builder/templates/compatibility/agents-typescript-standards.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "14932a4e2284c82f369ada430f00f751ddb46120c9ab6f4d8633250c1509c00f",
       "bytes": 241,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/compatibility/claude-engineering-standards.md",
-      "target": "template/commands/engineering-standards-builder/templates/compatibility/claude-engineering-standards.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "2c21213e11b99b006daf473fd274dd4c78fc9b394d2e42b5947f4e7ec1676da9",
       "bytes": 226,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/compatibility/claude-typescript-standards.md",
-      "target": "template/commands/engineering-standards-builder/templates/compatibility/claude-typescript-standards.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "662e7f17472c913b32dee0c7365a6ae06cefb679e8a7da21f9e5874764603ca2",
       "bytes": 261,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/domain-skill/SKILL.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/domain-skill/SKILL.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "ea49738b5f7bab4e867c46c7a7f4b4788287cbae635408d0abb21c1fe3f388b8",
       "bytes": 762,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/generated-skill-set.json.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/generated-skill-set.json.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "dd6ee2d5fb9313e30f24c63c98e76565cb107cf9b72349b79613b624c84619af",
       "bytes": 118,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/00-project-profile.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/00-project-profile.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "bfaa92ba68699a09faf0777e719c910944cfb7f3d7aec802279af8661e9835ec",
       "bytes": 681,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/01-module-map.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/01-module-map.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "be90d84baafb2e0fd7b41d7ee69bb5ad93829dacaa687f36294f301e1b8c0614",
       "bytes": 508,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/02-decisions-and-exceptions.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/02-decisions-and-exceptions.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "d0302808087ed7cbb9e5a515f9b2126b4595adec17b38c5700309ae560d9d1da",
       "bytes": 598,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/03-skill-map.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/03-skill-map.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "5c27a207b273c9312033ceae23e2a7e56c35ef1d37d2035ebc40cd615c7d68b3",
       "bytes": 431,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/04-source-and-template-map.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/04-source-and-template-map.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "d254710c93846192fffdc04cb8b67bac692ee7baa2295974ddb5a71c8d5541ba",
       "bytes": 604,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/references/project/review-checklist.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/references/project/review-checklist.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "cbff0851836881a418109154a9fa11b26260c3895536b37bea908726755de24a",
       "bytes": 988,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/project-skill/SKILL.md.template",
-      "target": "template/commands/engineering-standards-builder/templates/project-skill/SKILL.md.template",
-      "action": "moved",
+      "target": null,
+      "action": "retired",
       "sha256": "637360edbaa3104bbb790b7a920e72213508a54faf72568c4f689ff9bda9153f",
       "bytes": 1915,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/engineering-standards-builder/templates/README.md",
-      "target": "template/commands/engineering-standards-builder/templates/README.md",
-      "action": "moved-and-rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "6128554b61c6e26571592232ab523f0961fc43b8bbb29717d15dfbae466f0c33",
       "bytes": 1445,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "template/skills/git-history-squash/agents/openai.yaml",
@@ -2541,43 +2541,43 @@
     },
     {
       "source": "template/skills/upstream-fork-sync/references/report-contract.md",
-      "target": "template/commands/upstream-fork-sync/references/report-contract.md",
+      "target": "template/commands/upstream-assess/references/report-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "07b7708bb3bd90062ba09195aa7ce80b359285240f2a790bc0ca968b44f18a54",
       "bytes": 1632,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/upstream-fork-sync/references/repository-contract.md",
-      "target": "template/commands/upstream-fork-sync/references/repository-contract.md",
+      "target": "template/commands/upstream-assess/references/repository-contract.md",
       "action": "moved-and-rewritten",
       "sha256": "ae43cb5863a6ac965441d2751ac3e436cc2cd456d85b81287171cee7fa8a4149",
       "bytes": 2689,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/upstream-fork-sync/references/state-schema.md",
-      "target": "template/commands/upstream-fork-sync/references/state-schema.md",
+      "target": "template/commands/upstream-assess/references/state-schema.md",
       "action": "moved-and-rewritten",
       "sha256": "5169bf0644809dcfcf317ba7598b224845eb1d22e000e2115d7f131efd4318e8",
       "bytes": 1818,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/upstream-fork-sync/scripts/upstream-sync.mjs",
-      "target": "template/commands/upstream-fork-sync/scripts/upstream-sync.mjs",
+      "target": "template/commands/upstream-assess/scripts/upstream-sync.mjs",
       "action": "moved-and-rewritten",
       "sha256": "3a979560987346c6f9f2a8d3e6384142db5c0753e69abe6f982dcce4f026317a",
       "bytes": 38189,
-      "reason": "Align the current owner, actual consumer and validation evidence with workflow contract refactoring; preserve the historical source digest."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/upstream-fork-sync/SKILL.md",
-      "target": "template/commands/upstream-fork-sync/COMMAND.md",
+      "target": "template/commands/upstream-assess/COMMAND.md",
       "action": "moved-and-rewritten",
       "sha256": "a77ba966374024fac515854d13ffaada35c9e5233e444728dd0ab7a28ace8bd0",
       "bytes": 5395,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/skills/writing-for-agents/agents/openai.yaml",
@@ -6709,11 +6709,11 @@
     },
     {
       "source": "template/workflows/specdev/common/schemas/triage-run.schema.json",
-      "target": "template/workflows/specdev/common/schemas/triage-run.schema.json",
-      "action": "preserved",
+      "target": "template/workflows/specdev/common/schemas/delivery-run.schema.json",
+      "action": "moved-and-rewritten",
       "sha256": "bf6e54b4d90068e1649b16b8a99b1c73fe723d08b6afafaf39cac33251d16872",
       "bytes": 2978,
-      "reason": "Preserved current business behavior, evidence or repository support file."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/common/schemas/triage.schema.json",
@@ -7941,19 +7941,19 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/ci-security-protocol.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/ci-security-protocol.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/ci-security-protocol.md",
       "action": "moved-and-rewritten",
       "sha256": "12707e15a249934d03154ee0dab1e34982c13766548e303dc8a85feed65f8fbf",
       "bytes": 1955,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/close-comment-template.md",
-      "target": "template/workflows/specdev/specdev-t-triage/assets/close-comment-template.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/assets/close-comment-template.md",
       "action": "moved-and-rewritten",
       "sha256": "22972b9df18111ab2bbac6ed5093380a11a99511d51d6ff840e34f5efd09b248",
       "bytes": 1201,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/intake-protocol.md",
@@ -7965,11 +7965,11 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/issue-body-template.md",
-      "target": "template/workflows/specdev/specdev-t-triage/assets/issue-body-template.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/assets/issue-body-template.md",
       "action": "moved-and-rewritten",
       "sha256": "6fe3c33d2f9a101c7e01ee9bd013285ebf154b46f95fb464ff7302c9c998c762",
       "bytes": 1042,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/issue-record-template.md",
@@ -7981,35 +7981,35 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/pr-delivery-protocol.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/pr-delivery-protocol.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/pr-delivery-protocol.md",
       "action": "moved-and-rewritten",
       "sha256": "991df1eb4abc6b75fc73ad64f7c507c5b0f886a58109727594af6faf962fbd10",
       "bytes": 2132,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/pr-record-template.md",
-      "target": "template/workflows/specdev/specdev-t-triage/assets/pr-record-template.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/assets/pr-record-template.md",
       "action": "moved-and-rewritten",
       "sha256": "cde3f5b34ee1b060912b56d19a2b7974d6db4c65873ad124a018a7b877569b2e",
       "bytes": 905,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/publish-protocol.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/publish-protocol.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/publish-protocol.md",
       "action": "moved-and-rewritten",
       "sha256": "c2b1b9f530cda33e2926eaf3d4323d2230a619da1f4d01035e516e5113c39420",
       "bytes": 5943,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/publish-template.md",
-      "target": "template/workflows/specdev/specdev-t-triage/assets/publish-template.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/assets/publish-template.md",
       "action": "moved-and-rewritten",
       "sha256": "91b3cbb0ac5776cff57729e5e246d8fe3beebca26fe15f632e437494ff85fe21",
       "bytes": 1407,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/queue-protocol.md",
@@ -8021,19 +8021,19 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/reconcile-protocol.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/reconcile-protocol.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/reconcile-protocol.md",
       "action": "moved-and-rewritten",
       "sha256": "edd603e375640179858b7beaa13e23787cf234ec8e7a1c69391ead7adbccdf87",
       "bytes": 2219,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/references/classification-map.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/classification-map.md",
+      "target": "template/workflows/specdev/common/rules/request-classification.md",
       "action": "moved-and-rewritten",
       "sha256": "5223c920b704ada8ca42912ac0483027ec530baf8edfd9cf0fa5bb2c0f736c2b",
       "bytes": 2993,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/references/issue-pr-policy.md",
@@ -8045,75 +8045,75 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/references/public-projection.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/public-projection.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/public-projection.md",
       "action": "moved-and-rewritten",
       "sha256": "a5781a701d71162c6eb734662ed098162ccaf3b3e86e694cedfb49aa2f78ce91",
       "bytes": 2862,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/references/release-authentication.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/release-authentication.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/release-authentication.md",
       "action": "moved-and-rewritten",
       "sha256": "6e3867b89da802155b078006849b0f58aa5c8cf183786adcb112dbed5424a6a1",
       "bytes": 1062,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/references/release-notes-injection.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/release-notes-injection.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/release-notes-injection.md",
       "action": "moved-and-rewritten",
       "sha256": "c182f890fc339e847e17ab06acda2ed468d203f5fc36618bc4eef139c443948b",
       "bytes": 1557,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/references/workflow-yaml-reference.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/workflow-yaml-reference.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/workflow-yaml-reference.md",
       "action": "moved-and-rewritten",
       "sha256": "a29561dfccc65ebf22a797e8efb1d4eca37126567fbfb24dfcf1ab42dc19d43b",
       "bytes": 2403,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/release-preflight.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/release-preflight.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/release-preflight.md",
       "action": "moved-and-rewritten",
       "sha256": "3e849b058d2e2e9f6292163ae5b56fa4b9a13892820347169cde5f915d482b2a",
       "bytes": 2046,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/release-protocol.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/release-protocol.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/release-protocol.md",
       "action": "moved-and-rewritten",
       "sha256": "4834c25a403832fce9a96f7fceb9da47871c2449331ad1e461fca38b5d88e90a",
       "bytes": 2246,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/release-recovery.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/release-recovery.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/references/release-recovery.md",
       "action": "moved-and-rewritten",
       "sha256": "52e7505b04aeb2276bfb56b903d9e859f67dfaf079d21e88847fe6ad7a7bde84",
       "bytes": 2038,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/remote-operations.md",
-      "target": "template/workflows/specdev/specdev-t-triage/references/remote-operations.md",
+      "target": "template/workflows/specdev/common/rules/github-operations.md",
       "action": "moved-and-rewritten",
       "sha256": "e850cdd9ebba915b82d57e464430d6e15373563f8963bbd9011c7917c5069cbc",
       "bytes": 2249,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/scripts/github-transport.mjs",
-      "target": "template/workflows/specdev/specdev-t-triage/scripts/github-transport.mjs",
-      "action": "moved",
+      "target": "template/workflows/specdev/common/tools/github-transport.mjs",
+      "action": "moved-and-rewritten",
       "sha256": "c0b9ed39535dd45019214312edf574826927bc1fd6acf8435aa77153ee89b045",
       "bytes": 14925,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/source-template.md",
@@ -8141,19 +8141,19 @@
     },
     {
       "source": "template/workflows/specdev/T-triage/tools/publish-status.mjs",
-      "target": "template/workflows/specdev/specdev-t-triage/scripts/publish-status.mjs",
+      "target": "template/workflows/specdev/specdev-d-delivery/scripts/publish-status.mjs",
       "action": "moved-and-rewritten",
       "sha256": "0e2039717f0959c162fb0315e1bfbe0a5a2fff4fb231b46dfb4e17b1f3b04085",
       "bytes": 4380,
-      "reason": "Align the current owner, actual consumer and validation evidence with workflow contract refactoring; preserve the historical source digest."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/triage-run-template.md",
-      "target": "template/workflows/specdev/specdev-t-triage/assets/triage-run-template.md",
+      "target": "template/workflows/specdev/specdev-d-delivery/assets/delivery-run-template.md",
       "action": "moved-and-rewritten",
       "sha256": "86c246019f3dfbab8a9198376fb140842cbe1ecae9c7be5ce3d90bfa9edcc2e1",
       "bytes": 1361,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "template/workflows/specdev/T-triage/triage-template.md",
@@ -8269,11 +8269,11 @@
     },
     {
       "source": "test/engineering-standards-builder.test.ts",
-      "target": "test/engineering-standards-builder.test.ts",
-      "action": "rewritten",
+      "target": null,
+      "action": "retired",
       "sha256": "cb65a982b8199f27d20144f89abfb4fcc1dd187fe3b5437c4a81836009330a68",
       "bytes": 4033,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Removed by the approved command/workflow refactor; user runtime data is not migrated or removed."
     },
     {
       "source": "test/fixtures/learning-inquiry-scenarios.json",
@@ -8413,11 +8413,11 @@
     },
     {
       "source": "test/specdev-t-triage-publish.test.ts",
-      "target": "test/specdev-t-triage-publish.test.ts",
-      "action": "rewritten",
+      "target": "test/specdev-delivery-publish.test.ts",
+      "action": "moved-and-rewritten",
       "sha256": "fe4c1dc7e5113263093ba2fe7d41fe31d39eb8684fe3edf3561cd5034ff42d5c",
       "bytes": 14338,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "test/specdev-upgrade.test.ts",
@@ -8429,11 +8429,11 @@
     },
     {
       "source": "test/upstream-fork-sync.test.ts",
-      "target": "test/upstream-fork-sync.test.ts",
-      "action": "rewritten",
+      "target": "test/upstream-assess.test.ts",
+      "action": "moved-and-rewritten",
       "sha256": "0a96a9d711ff3a0416d55a5fec2f8d621bfbb339ec55521ca87e203cbdbb076e",
       "bytes": 12985,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Relocated to the current assessment, delivery or maintenance owner in the approved refactor; historical source retained in the baseline."
     },
     {
       "source": "test/work-upgrade-contracts.test.ts",
@@ -8495,17 +8495,15 @@
     "docs/capabilities.md",
     "docs/cli.md",
     "docs/commands/README.md",
-    "docs/commands/archive-and-consolidate.md",
     "docs/commands/coordination-init.md",
-    "docs/commands/docs-sync.md",
-    "docs/commands/engineering-standards-builder.md",
     "docs/commands/git-history-squash.md",
     "docs/commands/git-repository-audit.md",
     "docs/commands/handoff.md",
-    "docs/commands/retro.md",
+    "docs/commands/project-maintenance.md",
     "docs/commands/source-code-zip.md",
+    "docs/commands/speculo-feedback.md",
     "docs/commands/status.md",
-    "docs/commands/upstream-fork-sync.md",
+    "docs/commands/upstream-assess.md",
     "docs/concepts.md",
     "docs/contributing.md",
     "docs/getting-started.md",
@@ -8818,6 +8816,7 @@
     "template/workflows/specdev/common/rules/design-portability.md",
     "template/workflows/specdev/common/rules/execution-policy.md",
     "template/workflows/specdev/common/schemas/change-design.schema.json",
+    "template/workflows/specdev/common/schemas/delivery.schema.json",
     "template/workflows/specdev/common/schemas/execution-context.schema.json",
     "template/workflows/specdev/common/schemas/execution-record.schema.json",
     "template/workflows/specdev/common/schemas/project-design.schema.json",
@@ -8843,7 +8842,10 @@
     "template/workflows/specdev/specdev-a-archive-and-consolidate/references/archive-receipt-contract.md",
     "template/workflows/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md",
     "template/workflows/specdev/specdev-a-archive-and-consolidate/references/retro-archive.md",
+    "template/workflows/specdev/specdev-a-archive-and-consolidate/references/retro-knowledge.md",
     "template/workflows/specdev/specdev-c-code-review/references/source-files-review.md",
+    "template/workflows/specdev/specdev-d-delivery/SKILL.md",
+    "template/workflows/specdev/specdev-d-delivery/assets/delivery-template.md",
     "template/workflows/specdev/specdev-d-diagnose-bugs/references/captured-evidence-forensics.md",
     "template/workflows/specdev/specdev-i-init-setup/assets/change-readme-template.md",
     "template/workflows/specdev/specdev-i-init-setup/references/change-record-examples.md",
@@ -8904,10 +8906,11 @@
     "template/workflows/specdev/specdev-r-retro/assets/upgrade-plan-template.md",
     "template/workflows/specdev/specdev-r-retro/references/development-retrospective.md",
     "template/workflows/specdev/specdev-r-retro/references/records.md",
+    "template/workflows/specdev/specdev-r-retro/references/session-provenance.md",
     "template/workflows/specdev/specdev-r-retro/references/skill-upgrade.md",
+    "template/workflows/specdev/specdev-r-retro/scripts/session-evidence.mjs",
     "test/cli-update.test.ts",
     "test/coordination-shared.test.ts",
-    "test/docs-sync-git-contract.test.ts",
     "test/evaluation-artifact-runner.test.ts",
     "test/fixtures/artifact-workspaces.mjs",
     "test/handoff-consumer.test.ts",
@@ -8921,6 +8924,7 @@
     "test/ops-resource-parity.test.ts",
     "test/person-consultation-state.test.ts",
     "test/pnpm-command.test.ts",
+    "test/project-maintenance-git-contract.test.ts",
     "test/self-update.test.ts",
     "test/source-code-zip.test.ts",
     "test/specdev-change-workspace.test.ts",
@@ -8938,6 +8942,7 @@
     "test/specdev-retro.test.ts",
     "test/specdev-review-source-files.test.ts",
     "test/specdev-root-closure.test.ts",
+    "test/specdev-session-evidence.test.ts",
     "test/specdev-status-markdown.test.ts",
     "test/structured-person.test.ts",
     "test/terminal-ui.test.ts",
@@ -8948,14 +8953,14 @@
   ],
   "summary": {
     "baseline_files": 1060,
+    "added": 463,
     "actions": {
-      "rewritten": 224,
-      "preserved": 114,
-      "retired": 48,
-      "merged": 18,
-      "moved": 343,
-      "moved-and-rewritten": 313
-    },
-    "added": 458
+      "rewritten": 221,
+      "preserved": 113,
+      "retired": 168,
+      "merged": 2,
+      "moved": 283,
+      "moved-and-rewritten": 273
+    }
   }
 }

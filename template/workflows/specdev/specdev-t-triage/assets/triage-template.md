@@ -1,5 +1,5 @@
 ---
-schema_version: 2
+schema_version: 3
 artifact: triage
 change: <YYYY-MM-DD-topic>
 mode: intake
@@ -11,9 +11,6 @@ classification: investigation
 risk: medium
 route: specdev/wayfinder
 ready_for_implementation: false
-external_action: not-applicable
-publish_action: not-requested
-publish: null
 updated_at: <ISO-8601>
 ---
 
@@ -37,21 +34,16 @@ updated_at: <ISO-8601>
 - **下一 Work：** `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>`
 - **理由：** 为什么这是最小且正确的下一步
 
-## 外部动作
+## 实施简报
 
-- **远程目标：** 无 / `<Url>https://github.com/owner/repo/issues/123</Url>`
-- **关闭能力：** supported / unsupported / not-applicable
-- **当前状态：** not-applicable / pending-close / closed / close-failed / waived
-- **授权记录：** 无
-- **尝试与结果：** 无
+- **现状与目标：** 当前行为、需要达到的行为；已有实现、重复或拒绝分别说明依据。
+- **核验：** 复现输入、环境、命令/退出码、观察结果和可回读证据；PR 固定 base/head SHA，区分已覆盖行为与剩余工作。
+- **范围与实现方向：** 涉及的能力、关键接口、依赖、建议步骤和明确不包含的工作。
+- **验收：** 可观察的成功/失败条件及验证方法。
+- **风险：** 数据、兼容、权限、恢复影响与仍需维护者决定的事项。
 
-外部动作只投影来源 Issue 的最终完成，不替代本地状态、Ticket、Map 或 Evidence。
+ready-for-agent 要求上述内容可执行且 verification=passed；缺失证据不能靠标签补齐。本简报是评估依据，后续正式规格和 Ticket 由其 owner 负责。
 
-## 发布投影
+## 打标回执
 
-- **publish_action：** not-requested / pending / published / publish-failed / waived
-- **账本：** 无 / `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>`
-- **origin：** local / intake
-- **计数：** 见账本；workspace 汇总用 publish-status
-
-发布投影只记账已完成 Ticket，不把 GitHub 提升为开发权威。`publish_action` 与 `external_action` 分立。
+远程标签映射、确切目标、授权、操作与重读结果；无远程动作时写未请求。remote_actions 只引用真实回执，不记录交付状态。完成关闭与发布交 Delivery。

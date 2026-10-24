@@ -186,7 +186,7 @@ test('new archives require the original receipt and moved bytes before sealed co
     assert.match(validate().errors.join('\n'),/integrity byte drift/);
     await writeFile(join(archived,locator),dispatchFiles.get(locator)!);
     assert.deepEqual(validate().errors,[]);
-    const report=join(f.repo,'data/commands/archive-and-consolidate/2026-10-14-single-fixture.md');await mkdir(dirname(report),{recursive:true});
+    const report=join(f.repo,'data/commands/project-maintenance/2026-10-14-single-fixture.md');await mkdir(dirname(report),{recursive:true});
     const navigated=(await readFile(join(archived,'README.md'),'utf8'))+`\n## Archive Receipt\nReceipt: project:${relative(f.repo,report).split('\\').join('/')}#archive-${name}\n`;
     await writeFile(join(archived,'README.md'),navigated);
     entries.find(entry=>entry.path === 'README.md').sha256=plan.digest(navigated);

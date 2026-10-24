@@ -28,7 +28,7 @@ C 是独立 review 入口，不实施修复。无 change 的明确范围审查�
 
 UI diff 按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 核对批准版本、页面/状态和 `Design Conformance`。标准轴检查可访问性与运行缺陷，规范轴检查设计一致性；未验证渲染不报告视觉已通过，不通过修改设计文件消除 finding。
 
-1. **解析固定点**：先选择 baseline（共同祖先到 head）、range（两个指定端点）、commit（指定提交与其父）或 pr（远程 PR diff）。PR 先通过 <Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path> 的 pr-read 获得完整 base/head SHA。调用 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> 的 `--review-scope --repo <project-root> --mode <mode>`；端点模式传 --base/--head，commit 传 --commit，多父提交明确 --parent。此只读工具冻结本地对象，不抓取、不写状态；根提交没有现有 CR 的 committed baseline 时明确报告限制，不编造父提交。
+1. **解析固定点**：先选择 baseline（共同祖先到 head）、range（两个指定端点）、commit（指定提交与其父）或 pr（远程 PR diff）。PR 先通过 <Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path> 的 pr-read 获得完整 base/head SHA。调用 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> 的 `--review-scope --repo <project-root> --mode <mode>`；端点模式传 --base/--head，commit 传 --commit，多父提交明确 --parent。此只读工具冻结本地对象，不抓取、不写状态；根提交没有现有 CR 的 committed baseline 时明确报告限制，不编造父提交。
 2. **冻结输入**：保存工具返回的实际 diff argv、fixed_point/head、diff_sha256、路径与 commit log，不把单 commit 扩大到当前 HEAD。引用无效则失败；有效空 diff 返回 no-diff，不启动 reviewer、不造 CR、不声称 approved；正常结束本次 Work 并报告固定输入，change 完成仍按原终点规则判断。有差异才继续。
 3. **发现来源**：调用 `<Path>{roots.workflows}/specdev/common/skills/code-review/SKILL.md</Path>`；规范来源缺失时经确认跳过规范轴，标准轴继续。
 4. **独立审查**：按公共 Skill 的完整输入与独立身份门复用已有结果；否则默认派遣一位未参与实现的 Agent 分别审两轴，需要并行时使用两位。保存真实工具凭据和原始输出，Lead 核验后记录 Independent Review；能力不足保持 blocked。

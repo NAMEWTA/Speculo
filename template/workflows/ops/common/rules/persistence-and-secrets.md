@@ -24,6 +24,6 @@ POSIX 账本、env 与明文文档 0600、控制端目录 0700。不含秘密的
 
 服务端 root/project/README 与部署机 hosts/id/deployments/id/README、OPERATIONS、deployment.json、server-files、server/README 要同时存在。运行版本 observed_version 只由成功验证记录。服务端文件写入前核对旧哈希，写入后远端回读；本地原子写后回读，最终生成 both-sides-verified 回执。
 
-docs_pending：业务步骤已成功但文档未完全交付。docs-sync 只补文档，不重跑数据库。unknown：目标动作结果不确定。completed：完整回执确认，不只是一张标题写着“成功”的 README。
+docs_pending：业务步骤已成功但文档未完全交付。project-maintenance 只补文档，不重跑数据库。unknown：目标动作结果不确定。completed：完整回执确认，不只是一张标题写着“成功”的 README。
 
 双边保存的是管理事实、配置、凭据与证据；不暗示把服务器业务 data 全量复制到控制端。真正数据备份必须另有一致性方法、目标、时间、哈希/校验与恢复演练。

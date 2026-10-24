@@ -13,7 +13,7 @@ Revision: f3fc5632f401156837ee3872f14fe33ccf1024ea (checked 2026-10-08); prior s
 | implement-spec | adapted | template/workflows/specdev/specdev-p-goal-plan/SKILL.md | Use existing Lead/frontier and integration gates; no automatic push, merge or cleanup. |
 | implement | adapted | template/workflows/specdev/specdev-i-implement/SKILL.md | Preserve Ready, ownership and durable Evidence. |
 | improve-codebase-architecture | adapted | template/workflows/specdev/specdev-r-review-architecture/SKILL.md | Separate review from selected design and implementation. |
-| pr | adapted | template/workflows/specdev/specdev-t-triage/references/pr-delivery-protocol.md | Summary/evidence/before-after/merge risk with durable authorized delivery. |
+| pr | adapted | template/workflows/specdev/specdev-d-delivery/references/pr-delivery-protocol.md | Summary/evidence/before-after/merge risk with durable authorized delivery. |
 | prototype | adapted | template/workflows/specdev/specdev-p-prototype/SKILL.md | Add offline logic and explicit project preview; retain UI default 3/max 4. |
 | research | adapted | template/workflows/specdev/common/skills/research/SKILL.md | Return evidence to caller-owned artifacts. |
 | retro | adapted | template/workflows/specdev/specdev-r-retro/SKILL.md | Separate development retrospective, reusable analysis and Speculo product feedback. |
@@ -21,20 +21,20 @@ Revision: f3fc5632f401156837ee3872f14fe33ccf1024ea (checked 2026-10-08); prior s
 | tdd | adapted | template/workflows/specdev/specdev-i-implement/references/tdd-rules.md | Preserve behavior-first red-green, independent expected values and landed mutation proof. |
 | to-spec | adapted | template/workflows/specdev/specdev-s-spec/SKILL.md | Synthesize accepted decisions and verified prototype behavior. |
 | to-tickets | adapted | template/workflows/specdev/specdev-t-tickets/SKILL.md | Keep vertical slices, expand-contract, dependencies and path ownership. |
-| triage | adapted | template/workflows/specdev/specdev-t-triage/SKILL.md | Full Issue/PR intake with local authority and isolated remote ledgers. |
+| triage | adapted | template/workflows/specdev/specdev-t-triage/SKILL.md | Assess requests and prepare an evidence-based implementation brief; delivery belongs to a separate Work. |
 | wayfinder | adapted | template/workflows/specdev/specdev-w-wayfinder/SKILL.md | Retain one investigation per session and persistent claims. |
 | wizard | excluded |  | No separate shell-specific execution wizard; owning Work contracts already route and authorize actions. |
 | chief-of-staff | excluded |  | No new recurring orchestration or default delegation. |
 | claude-handoff | excluded |  | Shell/host-specific background launching not adopted; use existing handoff contract. |
 | loop-me | excluded |  | No autonomous persistent loop or scheduler introduced. |
-| setup-ts-deep-modules | adapted | template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md | Evidence-based public/private dependency constraints with pass/fail/pass checks. |
+| setup-ts-deep-modules | excluded | — | Engineering standards builder removed by explicit project decision; no replacement command. |
 | writing-beats | excluded |  | Independent creative writing workflow is outside scope. |
 | writing-fragments | excluded |  | Independent creative writing workflow is outside scope. |
 | writing-shape | excluded |  | Independent creative writing workflow is outside scope. |
 | git-guardrails-claude-code | excluded |  | Regex command matching is not an authorization or containment boundary. |
 | migrate-to-shoehorn | excluded |  | Framework-specific migration is outside the selected SpecDev upgrade. |
 | scaffold-exercises | excluded |  | Exercise scaffolding is not a new SpecDev responsibility. |
-| setup-pre-commit | adapted | template/commands/engineering-standards-builder/references/rules/09-mechanical-guardrails.md | Inspect existing guardrails; no implicit dependency or hook installation. |
+| setup-pre-commit | excluded | — | Engineering standards builder removed by explicit project decision; no replacement command. |
 | grill-me | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Fold interview/clarification into the existing design Work. |
 | grilling | adapted | template/workflows/specdev/specdev-g-grill-with-docs/SKILL.md | Merge clarification without a duplicate entry. |
 | handoff | adapted | template/commands/handoff/COMMAND.md + template/references/handoff/ | Shared explicit handoff preserves source pointers, owner, checkpoints and unresolved actions; change summaries update while whole-session reports remain immutable. |

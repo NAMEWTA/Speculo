@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:triage:v2",
+  "$id": "urn:speculo:specdev:triage:v3",
   "title": "SpecDev Triage Frontmatter",
   "type": "object",
   "required": [
@@ -13,7 +13,6 @@
     "risk",
     "route",
     "ready_for_implementation",
-    "external_action",
     "updated_at",
     "disposition",
     "verification",
@@ -21,7 +20,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 2
+      "const": 3
     },
     "artifact": {
       "const": "triage"
@@ -31,11 +30,7 @@
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
     "mode": {
-      "enum": [
-        "intake",
-        "reconcile",
-        "publish"
-      ]
+      "const": "intake"
     },
     "source": {
       "type": "string",
@@ -68,30 +63,6 @@
     "ready_for_implementation": {
       "type": "boolean"
     },
-    "external_action": {
-      "enum": [
-        "not-applicable",
-        "pending-close",
-        "closed",
-        "close-failed",
-        "waived"
-      ]
-    },
-    "publish_action": {
-      "enum": [
-        "not-requested",
-        "pending",
-        "published",
-        "publish-failed",
-        "waived"
-      ]
-    },
-    "publish": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "updated_at": {
       "type": "string",
       "minLength": 1
@@ -121,5 +92,5 @@
       "uniqueItems": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

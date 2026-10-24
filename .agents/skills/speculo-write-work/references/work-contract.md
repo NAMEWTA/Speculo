@@ -71,7 +71,7 @@ Work 入口通常包含：
 - change `.status.json`；
 - common/rules/domain-runtime.md 激活合同明确声明且由该 work 拥有的长期 namespace。
 
-`template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。普通 Work 不写 command 报告或 docs-sync sidecar；用户显式 handoff 时切入共享交接方法，由其声明本次会话报告或 change/handoff.md 的唯一作者和路径，不借此改变业务 owner。
+`template/workflows/<workflow>/_state/` 是初始化种子，不是运行时目的地。普通 Work 不写 command 报告或 project-maintenance sidecar；用户显式 handoff 时切入共享交接方法，由其声明本次会话报告或 change/handoff.md 的唯一作者和路径，不借此改变业务 owner。
 
 每个输出说明：文件名、owner、首次创建/更新时机、原子写入方式、验证和冲突语义。
 
@@ -118,4 +118,4 @@ Work 完成时：
 
 普通 Work 项目/必要资源明确即可直接使用，不以 CLI/workspace/config/status 为通用前置；安装故障仍按重叠写集停止。简单 change 使用 README 的唯一 Outcome、scope/acceptance/verification；无票 Goal 用原清单，有票进度归 Ticket/Evidence。用户指定独立产物、DESIGN、Ready、Skill binding、完整 Gate/集成证据都保留。
 
-复杂 owner 归原 Plan lead；只有实际交接/高风险动作才在原负责工件记录 owner/依据/写集，不预建 leadership 或批准槽。整体完成/取消由原 owner 判定，A 验证并先维护现役 change/ADR/context/docs 及适用 DESIGN，再最后无覆盖移动。当前 docs 方法跨领域共享，不隐式 docs-sync、Git 或永久知识写入。
+复杂 owner 归原 Plan lead；只有实际交接/高风险动作才在原负责工件记录 owner/依据/写集，不预建 leadership 或批准槽。整体完成/取消由原 owner 判定，A 验证并先维护现役 change/ADR/context/docs 及适用 DESIGN，再最后无覆盖移动。当前 docs 方法跨领域共享，不隐式 project-maintenance、Git 或永久知识写入。

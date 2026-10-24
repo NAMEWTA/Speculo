@@ -71,7 +71,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
     await initSpeculo(target, { packageRoot });
     assert.deepEqual(JSON.parse(await readFile(join(target, ".agents/speculo/.speculo/install.json"), "utf8")).workflows, []);
     assert.match(await readFile(join(target, "AGENTS.md"), "utf8"), /workspace\.json/);
-    assert.match(await readFile(join(target, ".agents/speculo/catalog.json"), "utf8"), /docs-sync/);
+    assert.match(await readFile(join(target, ".agents/speculo/catalog.json"), "utf8"), /project-maintenance/);
     await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
     await initSpeculo(target, { packageRoot });
     const install = JSON.parse(await readFile(join(target, ".agents/speculo/.speculo/install.json"), "utf8"));
@@ -81,7 +81,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
   }));
   it("resolves explicit pointers without shell execution and rejects traversal/placeholders", async () => fixture(async (target) => {
     await initSpeculo(target, opts);
-    assert.equal(await resolvePathReference(target, "<Path>{roots.commands}/docs-sync/references/operation-contract.md</Path>"), join(target, ".agents/speculo/commands/docs-sync/references/operation-contract.md"));
+    assert.equal(await resolvePathReference(target, "<Path>{roots.commands}/project-maintenance/references/operation-contract.md</Path>"), join(target, ".agents/speculo/commands/project-maintenance/references/operation-contract.md"));
     for (const value of ["../outside", "<Path>{roots.state}/../outside</Path>", "<Path>{roots.state}/changes/{change}</Path>", "<Path>{roots.unknown}/x</Path>", "C:\\escape", "<Path>bad"]) await assert.rejects(resolvePathReference(target, value));
   }));
   it("preserves optional coordination preferences and third-party Herdr/Orca skills in both project targets across refresh and retry", async () => fixture(async (target) => {
@@ -118,7 +118,7 @@ describe("review: trustworthy read-only doctor", () => {
   for (const [label, mutate] of [
     ["invalid config", async (root: string) => writeFile(join(root, "config.json"), "not json")],
     ["empty roots", async (root: string) => writeFile(join(root, ".speculo/workspace.json"), JSON.stringify({ schema_version: 1, path_base: "project-root", roots: {} }))],
-    ["missing managed asset", async (root: string) => rm(join(root, "commands/docs-sync/references/operation-contract.md"))],
+    ["missing managed asset", async (root: string) => rm(join(root, "commands/project-maintenance/references/operation-contract.md"))],
     ["missing installed workflow", async (root: string) => { const p = join(root, ".speculo/install.json"), data = JSON.parse(await readFile(p, "utf8")); data.workflows = ["missing"]; await writeFile(p, JSON.stringify(data)); }],
     ["empty managed manifest", async (root: string) => { const p = join(root, ".speculo/managed.json"), data = JSON.parse(await readFile(p, "utf8")); data.files = []; await writeFile(p, JSON.stringify(data)); }],
   ] as const) {

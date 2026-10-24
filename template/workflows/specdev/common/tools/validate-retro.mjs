@@ -60,12 +60,31 @@ function snapshot(root, entry, prefix) {
 function report(context, id, warnings) {
   const record = object(context, id, 'report'), { meta, root } = record;
   unique(meta.sources.map(s => s.id), 'sources');
+  unique(meta.sessions.map(s => s.id), 'session references');
+  unique(meta.sessions.filter(s => s.session_id).map(s => `${s.host}:${s.session_id}`), 'session identities');
+  const sessions = new Map(meta.sessions.map(s => [s.id, s]));
+  for (const session of meta.sessions) {
+    if (session.availability === 'available') requireThat(session.session_id?.trim() && session.locator?.trim(), `${session.id}: available session requires identity and locator`);
+    if (session.locator !== null) {
+      requireThat(!/[\x00-\x1f]/.test(session.locator), `${session.id}: unsafe session locator`);
+      if (session.host === 'codex') requireThat(/^(?:sessions|archived_sessions)\/(?:[^/\\:]+\/)*[^/\\:]+\.jsonl$/.test(session.locator) && !session.locator.split('/').some(p => p === '.' || p === '..'), `${session.id}: expected host-relative Codex JSONL locator`);
+    }
+    if (session.availability !== 'available') warnings.push(`${session.id}: original session ${session.availability}; captured evidence only`);
+    requireThat(Date.parse(session.captured_until) <= Date.parse(meta.updated_at), `${session.id}: capture cutoff is after report time`);
+  }
   unique(meta.findings.map(f => f.id), 'findings');
   requireThat(meta.sources.length || meta.outcome === 'insufficient-evidence', `${id}: evidence is required`);
   requireThat((meta.outcome === 'findings') === (meta.findings.length > 0), `${id}: outcome/findings mismatch`);
   const sourceIds = new Set(meta.sources.map(s => s.id));
   for (const source of meta.sources) {
     snapshot(root, source, 'sources');
+    if (source.session_ref !== undefined || source.kind === 'session') {
+      const session = sessions.get(source.session_ref);
+      requireThat(session?.session_id?.trim(), `${source.id}: missing actual session reference`);
+      requireThat(source.anchor && source.anchor.start_line >= 1 && source.anchor.end_line >= source.anchor.start_line, `${source.id}: invalid session anchor`);
+      requireThat(Date.parse(source.anchor.timestamp) <= Date.parse(session.captured_until), `${source.id}: evidence is after capture cutoff`);
+      if (source.kind === 'session') requireThat(source.locator === `session:${session.host}:${session.session_id}`, `${source.id}: session locator/identity mismatch`);
+    } else requireThat(source.anchor === undefined, `${source.id}: anchor requires session reference`);
     const visibleQuote = record.body.replace(/^> ?/gm, '');
     requireThat(visibleQuote.includes(source.quote) && record.body.includes(source.id), `${source.id}: body must display the original quote and source ID`);
     if (source.change !== null) requireThat(record.body.includes(source.change), `${source.id}: body must identify its source change`);
@@ -91,14 +110,6 @@ function report(context, id, warnings) {
   }
   return record;
 }
-function builderPaths(value) {
-  requireThat(value?.schema_version === 1 && value.generator === 'engineering-standards-builder' && Array.isArray(value.skills), 'invalid Builder ownership manifest');
-  requireThat(Object.keys(value).every(k => ['schema_version', 'generator', 'skills'].includes(k)), 'unknown Builder ownership fields');
-  unique(value.skills.map(s => s.path), 'Builder paths');
-  requireThat(value.skills.filter(s => s.role === 'router').length === 1 && value.skills.some(s => s.role === 'router' && s.name === 'engineering-standards'), 'invalid Builder router');
-  for (const skill of value.skills) requireThat(Object.keys(skill).every(k => ['name', 'path', 'role'].includes(k)) && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(skill.name) && skill.path === `.agents/skills/${skill.name}` && ['router', 'domain'].includes(skill.role), 'invalid Builder owned path');
-  return new Set(value.skills.map(s => s.path));
-}
 function owners(context, record) {
   const projected = new Set();
   const projection = safeWorkPathSync(context.stateRoot, 'projections.json', { type: 'file' });
@@ -113,13 +124,11 @@ function owners(context, record) {
       projected.add(entry.path.split('/').slice(0, 3).join('/'));
     }
   }
-  const manifest = '.agents/skills/engineering-standards/generated-skill-set.json';
-  const original = safeWorkPathSync(context.projectRoot, manifest, { type: 'file' });
-  const before = existsSync(original) ? builderPaths(JSON.parse(readUtf8ArtifactSync(original))) : new Set();
-  const candidate = record.meta.changes.find(c => c.path === manifest);
-  const after = candidate ? builderPaths(JSON.parse(readUtf8ArtifactSync(file(record.root, candidate.candidate)))) : before;
-  for (const path of before) requireThat(after.has(path), 'Skill deletion/renaming needs a separate explicit maintenance plan');
-  return { projected, before, after };
+  return { projected };
+}
+
+function targetRoot(context, change) {
+  return change.root === 'state' ? context.stateRoot : context.projectRoot;
 }
 function candidateLinks(context, record, change, candidates) {
   if (!change.path.endsWith('.md')) return;
@@ -129,9 +138,10 @@ function candidateLinks(context, record, change, candidates) {
     if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(link)) continue;
     const part = decodeURIComponent(link.split('#')[0]);
     requireThat(part && !part.startsWith('/') && !part.includes('\\'), `${change.path}: invalid local link ${link}`);
-    const target = portable(relative(context.projectRoot, resolve(context.projectRoot, dirname(change.path), part)));
-    safeWorkPathSync(context.projectRoot, target);
-    requireThat(candidates.has(target) || existsSync(safeWorkPathSync(context.projectRoot, target)), `${change.path}: broken local link ${link}`);
+    const base = targetRoot(context, change);
+    const target = portable(relative(base, resolve(base, dirname(change.path), part)));
+    safeWorkPathSync(base, target);
+    requireThat((candidates.has(target) && candidates.get(target).root === change.root) || existsSync(safeWorkPathSync(base, target)), `${change.path}: broken local link ${link}`);
   }
 }
 function readExecution(record, targets) {
@@ -142,6 +152,7 @@ function readExecution(record, targets) {
   return receipt;
 }
 function passedResult(record, result, change) {
+  requireThat(result?.owner === change.owner, `${change.path}: execution owner mismatch`);
   requireThat(result?.result === 'passed' && result.sha256 === change.after_sha256, `${change.path}: unverified upgrade`);
   requireThat(result.evidence.startsWith('evidence/'), `${change.path}: evidence must be under evidence/`);
   requireThat(digestFile(file(record.root, result.evidence)) === result.evidence_sha256, `${change.path}: verification evidence drift`);
@@ -184,8 +195,10 @@ function upgrade(context, id, warnings, { live = true, execution = false, approv
   const candidates = new Map(meta.changes.map(c => [c.path, c]));
   for (const change of meta.changes) {
     requireThat(meta.decisions.some(d => d.disposition === 'adopt' && d.targets.includes(change.path)), `${change.path}: target has no adopted finding`);
-    requireThat(/^\.agents\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/.+/.test(change.path), `${change.path}: target must be a project Skill file`);
-    const target = live ? safeWorkPathSync(context.projectRoot, change.path, { type: 'file' }) : null;
+    const skillTarget = change.target_kind === 'skill';
+    if (skillTarget) requireThat(change.root === 'project' && change.owner === 'project' && /^\.agents\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*\/.+/.test(change.path), `${change.path}: target must be a project Skill file`);
+    else requireThat(change.root === 'state' && change.owner === 'specdev/archive-and-consolidate' && new RegExp(`^specdev/${change.target_kind}/[a-zA-Z0-9][a-zA-Z0-9._-]*\\.md$`).test(change.path), `${change.path}: knowledge target/owner mismatch`);
+    const target = live ? safeWorkPathSync(targetRoot(context, change), change.path, { type: 'file' }) : null;
     requireThat(change.candidate.startsWith('candidates/'), `${change.path}: candidate must be under candidates/`);
     const candidate = file(root, change.candidate);
     requireThat(digestFile(candidate) === change.after_sha256, `${change.path}: candidate digest drift`);
@@ -194,9 +207,7 @@ function upgrade(context, id, warnings, { live = true, execution = false, approv
     if (change.action === 'update') requireThat(change.before_sha256 !== change.after_sha256, `${change.path}: unchanged target should be retain`);
     if (live) {
       const skill = change.path.split('/').slice(0, 3).join('/');
-      requireThat(!ownership.projected.has(skill), `${skill}: managed Speculo projection; edit its source through its owner`);
-      const owned = ownership.before.has(skill) || ownership.after.has(skill);
-      requireThat(owned === (change.owner === 'engineering-standards-builder'), `${skill}: ownership mismatch`);
+      if (skillTarget) requireThat(!ownership.projected.has(skill), `${skill}: managed Speculo projection; edit its source through its owner`);
       const current = existsSync(target) ? digestFile(target) : null;
       if (approved && current === change.after_sha256 && current !== change.before_sha256) {
         requireThat(previous, `${change.path}: landed target requires original execution evidence before resuming`);
@@ -204,7 +215,7 @@ function upgrade(context, id, warnings, { live = true, execution = false, approv
       } else requireThat(current === (execution ? change.after_sha256 : change.before_sha256), `${change.path}: target digest drift`);
       candidateLinks(context, record, change, candidates);
     }
-    if (basename(change.path) === 'SKILL.md') {
+    if (skillTarget && basename(change.path) === 'SKILL.md') {
       // Existing host-specific extensions remain owned by the project; never strip them to pass a check.
       const prior = live && existsSync(target) ? parseFrontmatter(readFileSync(target)).fields : {};
       const fields = parseFrontmatter(readFileSync(candidate)).fields;
@@ -215,8 +226,12 @@ function upgrade(context, id, warnings, { live = true, execution = false, approv
       });
       requireThat(!errors.length, `${change.path}: ${errors.join('; ')}`);
     }
+    if (!skillTarget) {
+      const content = readUtf8ArtifactSync(candidate);
+      for (const decision of meta.decisions.filter(d => d.targets.includes(change.path))) requireThat(content.includes(decision.report) && content.includes(decision.finding), `${change.path}: knowledge candidate must preserve report/finding provenance`);
+    }
     const skillRoot = change.path.split('/').slice(0, 3).join('/');
-    if (live) requireThat(candidates.has(`${skillRoot}/SKILL.md`) || existsSync(safeWorkPathSync(context.projectRoot, `${skillRoot}/SKILL.md`, { type: 'file' })), `${skillRoot}: missing Skill entry`);
+    if (live && skillTarget) requireThat(candidates.has(`${skillRoot}/SKILL.md`) || existsSync(safeWorkPathSync(context.projectRoot, `${skillRoot}/SKILL.md`, { type: 'file' })), `${skillRoot}: missing Skill entry`);
   }
   if (execution) {
     const receipt = readExecution(record, targets);
@@ -260,6 +275,12 @@ function archive(context, record, plan, sealed) {
     const observed = actual.get(entry.path);
     requireThat(observed && entry.type === observed.type && entry.mode === observed.mode && entry.sha256 === observed.sha256 && entry.target === observed.target, `${entry.path}: archive integrity drift`);
   }
+}
+export function sourceEventKey(report, source) {
+  const session = report.sessions.find(s => s.id === source.session_ref);
+  if (!session || !source.anchor) return `${source.kind}:${source.change ?? ''}:${source.locator}:${source.sha256}`;
+  const anchor = source.anchor.event_id || `${source.anchor.timestamp}:${source.anchor.start_line}-${source.anchor.end_line}`;
+  return `session:${session.host}:${session.session_id}:${anchor}`;
 }
 export function listRetroReports(input) {
   const context = resolveWorkContextSync(input), root = safeWorkPathSync(context.specdevRoot, 'retro', { type: 'directory' });

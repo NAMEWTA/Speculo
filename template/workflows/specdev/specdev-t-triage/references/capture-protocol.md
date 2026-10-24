@@ -29,15 +29,15 @@ capture **不得**：
 失败即停，零远程写入。已有账本行保持原 state。
 
 1. 每条纳入记录有 id（`YYYY-MM-DD-<kebab>`）、现在时摘要、且 `kind` 为 bug、feature、refactor、investigation、operations、documentation 或 review。禁止 `mixed`。
-2. 调用 `<Path>{roots.workflows}/specdev/specdev-t-triage/references/remote-operations.md</Path>` 能读目标 repo、能 dry-run `issue-create`。本协议只用 `issue-search` / `issue-create`。
-3. 分类映射见 `<Path>{roots.workflows}/specdev/specdev-t-triage/references/classification-map.md</Path>`。缺 type 标签时 dry-run 表列出将创建的标签，授权后才 `gh label create`。
+2. 调用 `<Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path>` 能读目标 repo、能 dry-run `issue-create`。本协议只用 `issue-search` / `issue-create`。
+3. 分类映射见 `<Path>{roots.workflows}/specdev/common/rules/request-classification.md</Path>`。缺 type 标签时 dry-run 表列出将创建的标签，授权后才 `gh label create`。
 4. 用户看见完整 dry-run 表（id、标题、标签、正文、reason）并给出 **本次** 明确确认。
 
 origin 固定 `local`。marker：`specdev:capture:<id>`。
 
 ## 3. 准备记录
 
-按 `<Path>{roots.workflows}/specdev/specdev-t-triage/references/public-projection.md</Path>` 脱敏。现在时，不是完成后的过去时，也不是派工祈使句。
+按 `<Path>{roots.workflows}/specdev/specdev-d-delivery/references/public-projection.md</Path>` 脱敏。现在时，不是完成后的过去时，也不是派工祈使句。
 
 Issue 正文：`<Path>{roots.workflows}/specdev/specdev-t-triage/assets/issue-record-template.md</Path>`。
 

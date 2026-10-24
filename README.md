@@ -30,11 +30,11 @@ Interactive starts check for CLI updates with a two-second network deadline. The
 
 ## Workflow guides
 
-Five domains contain 38 Works. Each guide explains every Work's purpose, use cases, inputs, outputs, example requests and next steps. The detailed manual is currently in Chinese.
+Five domains contain 39 Works. Each guide explains every Work's purpose, use cases, inputs, outputs, example requests and next steps. The detailed manual is currently in Chinese.
 
 | Domain | Works | What it covers |
 |---|---:|---|
-| [SpecDev — software development](docs/workflows/specdev.md) | 15 | Discovery, specifications, prototypes, tickets, goals, implementation, reviews, diagnosis and delivery |
+| [SpecDev — software development](docs/workflows/specdev.md) | 16 | Discovery, specifications, prototypes, tickets, goals, implementation, reviews, diagnosis and delivery |
 | [Learning](docs/workflows/learning.md) | 9 | Course planning, complete lessons, tutor questions, exploration, homework, review and consolidation |
 | [OPS — operations and deployment](docs/workflows/ops.md) | 5 | Controller setup, trusted server access, host environments, project deployment and offline inventory |
 | [Person — analysis and decisions](docs/workflows/person.md) | 2 | Two-sided steelman deliberation and a dedicated diagnostic, strategic and action-planning method |
@@ -46,14 +46,14 @@ External CLI, Herdr and Orca tasks use compact Markdown inputs and reports, with
 
 ## Commands by category
 
-The eleven Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
+The nine Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
 
 | Category | Guides |
 |---|---|
 | [Navigation and handoff](docs/commands/README.md#navigation) | [coordination-init](docs/commands/coordination-init.md), [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
-| [Documentation, standards and knowledge](docs/commands/README.md#documentation) | [docs-sync](docs/commands/docs-sync.md), [engineering-standards-builder](docs/commands/engineering-standards-builder.md), [archive-and-consolidate](docs/commands/archive-and-consolidate.md) |
-| [Git analysis and history](docs/commands/README.md#git) | [git-repository-audit](docs/commands/git-repository-audit.md), [git-history-squash](docs/commands/git-history-squash.md), [upstream-fork-sync](docs/commands/upstream-fork-sync.md) |
-| [Source exchange and feedback](docs/commands/README.md#exchange) | [source-code-zip](docs/commands/source-code-zip.md), [retro](docs/commands/retro.md) |
+| [Documentation and knowledge](docs/commands/README.md#documentation) | [project-maintenance](docs/commands/project-maintenance.md): docs, knowledge and archive |
+| [Git analysis and history](docs/commands/README.md#git) | [git-repository-audit](docs/commands/git-repository-audit.md), [git-history-squash](docs/commands/git-history-squash.md), [upstream-assess](docs/commands/upstream-assess.md) |
+| [Source exchange and feedback](docs/commands/README.md#exchange) | [source-code-zip](docs/commands/source-code-zip.md), [speculo-feedback](docs/commands/speculo-feedback.md) |
 
 ## Data, permissions and portable use
 

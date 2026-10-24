@@ -214,7 +214,7 @@ function parseArgs(argv) {
   else if (command === "source-fetch") { grab("--project"); grab("--repository"); grab("--commit"); out.allow_network = flag("--allow-network"); }
   else if (command === "plan") grab("--file");
   else if (command === "approve") { grab("--run"); grab("--digest"); grab("--by"); grab("--statement"); }
-  else if (["apply", "resume", "docs-sync", "inspect-run"].includes(command)) grab("--run");
+  else if (["apply", "resume", "project-maintenance", "inspect-run"].includes(command)) grab("--run");
   else if (command === "validate") { grab("--file"); grab("--schema"); }
   else if (command === "status") { /* none */ }
   else if (command === "recover-controller-lock") grab("--ack");
@@ -294,8 +294,8 @@ export function main(argv = process.argv.slice(2)) {
       result = fetchSource(state, args.project, args.repository, args.commit, args.allow_network);
     } else if (cmd === "plan") result = compilePlan(state, resolve(args.file));
     else if (cmd === "approve") result = approval(state, args.run, args.digest, args.by, args.statement);
-    else if (cmd === "apply" || cmd === "resume" || cmd === "docs-sync") {
-      result = apply(state, args.run, { resume: cmd === "resume", docsOnly: cmd === "docs-sync" });
+    else if (cmd === "apply" || cmd === "resume" || cmd === "project-maintenance") {
+      result = apply(state, args.run, { resume: cmd === "resume", docsOnly: cmd === "project-maintenance" });
     } else if (cmd === "inspect-run") result = inspectRun(state, args.run);
     else if (cmd === "validate") {
       if (!args.file && state == null) throw new OpsError("validate requires --state or --file --schema");

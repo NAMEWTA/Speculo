@@ -7,7 +7,7 @@
 - Workflow 只写 `<Path>{roots.state}/{workflow}/</Path>` 内声明的 namespace。SpecDev/Learning 使用 Change；OPS v3 使用 hosts/projects/deployments 等资源及其证据，不创建 Change 生命周期。
 - Work 状态和工件先按当前 schema 校验；状态是证据索引，不替代工件。
 - Command 报告位于 `<Path>{roots.state}/commands/{command}/</Path>`，命名 `YYYY-MM-DD-scope-topic[-NN].md`，不覆盖；有跨调用恢复需求时才建立该命令 state.json。
-- docs-sync 拥有 `<Path>{roots.state}/{workflow}/docs-sync.json</Path>` 延迟 sidecar，不进入 workflow `_state`，也不取得领域写入权限。
+- project-maintenance 拥有 `<Path>{roots.state}/{workflow}/project-maintenance-docs.json</Path>` 延迟 sidecar，不进入 workflow `_state`，也不取得领域写入权限。
 - 可选 `<Path>{roots.state}/coordination/project.json</Path>` 仅保存用户要求持久化的编排选择。没有此文件时默认 Lead，不建立编排运行账本。
 - workspace、install、managed、baselines、projections、refresh contract 与 back 由 CLI 拥有。Workflow/Command 不得改写 CLI back。
 - `.config` 只有领域明确声明 owner、创建时机和用途后才使用。

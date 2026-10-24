@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:retro-upgrade:v1",
+  "$id": "urn:speculo:specdev:retro-upgrade:v2",
   "type": "object",
   "required": [
     "schema_version",
@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "artifact": {
       "const": "retro-upgrade"
@@ -107,7 +107,9 @@
           "owner",
           "before_sha256",
           "after_sha256",
-          "candidate"
+          "candidate",
+          "target_kind",
+          "root"
         ],
         "properties": {
           "path": {
@@ -124,7 +126,7 @@
           "owner": {
             "enum": [
               "project",
-              "engineering-standards-builder"
+              "specdev/archive-and-consolidate"
             ]
           },
           "before_sha256": {
@@ -145,6 +147,19 @@
           "candidate": {
             "type": "string",
             "minLength": 1
+          },
+          "target_kind": {
+            "enum": [
+              "skill",
+              "adr",
+              "context"
+            ]
+          },
+          "root": {
+            "enum": [
+              "project",
+              "state"
+            ]
           }
         },
         "additionalProperties": false

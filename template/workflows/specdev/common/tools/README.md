@@ -4,7 +4,7 @@
 
 ```bash
 node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn|retro|pr-delivery|review|prototype|wayfinder|complete|archive-ready|archived> \
+  --stage <triage|diagnosis|grill|spec|tickets|goal-plan|implement|learn|delivery|pr-delivery|review|prototype|wayfinder|complete|archive-ready|archived> \
   --repo <project-root> \
   <Path>{roots.state}/specdev/changes/{change}</Path>
 ```
@@ -95,3 +95,9 @@ Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial
 实际交接只使用共享 TASK v2 与 <Path>{roots.references}/coordination/scripts/validate-dispatch.mjs</Path>；原输入、返回与会话 locator 格式见 <Path>{roots.references}/coordination/session-files.md</Path>。
 
 没有准确日志地址就不创建定位文件，缺失时正常通过；已有文件仅含非空绝对路径 path，须符合 <Path>{roots.references}/coordination/session-locator.schema.json</Path>。不扫描工具缓存、不读取外部历史，不认证 provider 身份、授权或完成。结构错误退出 1，参数错误退出 2。存量交接按原合同回收，归档用原完整性清单，不强制补新版字段。
+
+## 交付与会话来源
+
+Triage 的 `--stage triage` 核验 intake v3；Delivery 的 `--stage delivery` 核验独立交付记录与 publish v2，PR 仍使用 pr-delivery。独立 CI/发布记录使用 `--delivery-run <DEL-NNN.md>`，不创建 change。发布状态只有一个账本权威，归档同时核对未闭合动作；旧版本明确报错，原件保持不变。
+
+会话来源只读工具 <Path>{roots.workflows}/specdev/specdev-r-retro/scripts/session-evidence.mjs</Path> 的定位、有限区间读取与截止点使用见 <Path>{roots.workflows}/specdev/specdev-r-retro/references/session-provenance.md</Path>。报告校验不自动扫描本机会话，真实日志仅按显式根和会话 ID 回读。

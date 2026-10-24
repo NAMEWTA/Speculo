@@ -10,7 +10,7 @@ R 调用的 RETRO 归档沿 [RETRO 窄网关](retro-archive.md)，总决策/执�
 
 | 调用 | 唯一总回执 | 创建与冻结 |
 |---|---|---|
-| Command 调 A | <Path>{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md</Path> | Command 负责总报告，A 只返回逐项结果 |
+| Command 调 A | <Path>{roots.state}/commands/project-maintenance/{date}-{scope}-{topic}[-NN].md</Path> | Command 负责总报告，A 只返回逐项结果 |
 | 直接 A、有 change | <Path>{roots.state}/specdev/changes/{change}/archive-receipt.md</Path> | confirmed 后创建，随目录移至 <Path>{roots.state}/specdev/changes/archive/{change}/archive-receipt.md</Path> |
 | 直接 A、无 change | <Path>{roots.state}/specdev/maintenance/{date}-{topic}[-NN].md</Path> | 仅跨会话/跨对象/恢复需持久化时创建 |
 | dry-run/只读审计 | 会话结果 | 不创建文件 |
@@ -41,7 +41,7 @@ mechanical-only 复用仍有效的四类核对回执，或明确仅移动授权�
 | A7 | 原回执 Result=moved；从唯一目标以 archived 验证清单、字节、模式、链接、DESIGN 来源/批准/原型和实际消费者，源不存在；此时未封存 |
 | A8 | 完成原总报告/回执，Result=verified 且 archived --sealed 通过后宣布封存；否则 partial/blocked 并保留精确恢复点 |
 
-A3–A5 任一本次必需动作未完成则不移动。DESIGN 仅用 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md</Path>，不能通用 append/merge current 或 revision。research/非标准 store 仍归原声明，不从目录名取得权力。A/I 不写 docs-sync state/sidecar、不推进 commit 基线。
+A3–A5 任一本次必需动作未完成则不移动。DESIGN 仅用 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/design-knowledge-gateway.md</Path>，不能通用 append/merge current 或 revision。research/非标准 store 仍归原声明，不从目录名取得权力。A/I 不写 project-maintenance state/sidecar、不推进 commit 基线。
 
 ## 中断与恢复
 

@@ -7,23 +7,21 @@ import { test } from 'node:test';
 const read = async (file: string) => (await readFile(join(process.cwd(), file), 'utf8')).replaceAll('\r\n', '\n');
 const entry = (workflow: string, work: string) => read(`template/workflows/${workflow}/${work}/SKILL.md`);
 // These are source-contract regressions, not a claim of real model execution.
-test('all 38 stable Work identities are registered once', async () => {
+test('all 39 stable Work identities are registered once', async () => {
  const {readAssetCatalog}=await import('../src/assets.js');const c=await readAssetCatalog(join(process.cwd(),'template'));
- const works=c.assets.filter(a=>a.kind==='work-skill');assert.equal(works.length,38);assert.equal(new Set(works.map(w=>w.id)).size,38);
+ const works=c.assets.filter(a=>a.kind==='work-skill');assert.equal(works.length,39);assert.equal(new Set(works.map(w=>w.id)).size,39);
  for(const w of works)assert.match(await read('template/'+w.entry),/speculo-kind: work-skill/);
 });
-test('triage separates all ten modes and capture never selects a change', async () => {
-  const text = await entry('specdev', 'specdev-t-triage');
-  for (const mode of ['intake', 'reconcile', 'publish', 'capture']) {
-    assert.ok(text.includes(`| ${mode} |`)); assert.ok(text.includes(`/specdev-t-triage/references/${mode}-protocol.md`));
+test('triage assesses requests and Delivery owns all delivery branches', async () => {
+  const triage = await entry('specdev', 'specdev-t-triage'), delivery = await entry('specdev', 'specdev-d-delivery');
+  for (const mode of ['queue','capture','intake']) assert.ok(triage.includes(`| ${mode} |`));
+  for (const mode of ['reconcile','publish','pr-delivery','ci-security','release-preflight','release','recover']) {
+    assert.ok(delivery.includes(`| ${mode} |`)); assert.ok(!triage.includes(`| ${mode} |`));
   }
-  for (const mode of ['queue', 'pr-delivery', 'ci-security', 'release-preflight', 'release', 'recover']) assert.ok(text.includes(`| ${mode} |`));
-  assert.match(text, /capture 不创建也不选择 change，不创建工作调用镜像/);
-  assert.match(text, /仅账本存在时 --capture，不为验证创建账本/);
-  assert.match(text, /GitHub 不成为开发 tracker/);
-  const transport = await read('template/workflows/specdev/specdev-t-triage/references/remote-operations.md');
-  assert.match(transport, /--apply/);
-  assert.match(transport, /授权/);
+  assert.match(triage, /不创建 change/); assert.match(triage, /不等于 Ticket Ready/);
+  assert.match(delivery, /不创建空记录/);
+  const transport = await read('template/workflows/specdev/common/rules/github-operations.md');
+  assert.match(transport, /--apply/); assert.match(transport, /授权/);
 });
 test('architecture report is a terminal Work result, not mandatory interview or implementation', async () => {
   const text = await entry('specdev', 'specdev-r-review-architecture');
@@ -59,7 +57,7 @@ test('OPS local views do not enter deployment or secret-reading branches', async
   const layout = await read('template/workflows/ops/common/rules/deployment-layout.md');
   assert.match(layout, /writable_root_justification/); assert.match(layout, /Compose >=2.30/);
   const recovery = await read('template/workflows/ops/common/rules/recovery.md');
-  assert.match(recovery, /started-without-terminal 保持 unknown/); assert.match(recovery, /docs-sync 不重跑任何业务动作/);
+  assert.match(recovery, /started-without-terminal 保持 unknown/); assert.match(recovery, /project-maintenance 不重跑任何业务动作/);
 });
 test('repeat Learning init preserves existing state and retention publication remains C-owned', async () => {
   const init = await entry('learning', 'learning-i-init-setup');

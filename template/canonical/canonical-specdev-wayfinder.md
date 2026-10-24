@@ -554,7 +554,7 @@ UI 候选缺省 3 个，配置范围 2–4；用户明确数量覆盖默认及�
 
 按当前分支运行 Speculo Node 校验器 的适用 stage；传明确项目/方法/数据根，不用 CLI 包装器作为普通 Work 前置。prototype 传具体 UI-NNN/LOGIC-NNN；完成/取消按 下方 `<ref-common-rules-change-completion>` 标签 核验真实证据，票全 done 不替代整体验收。归档后以实际目标运行 archived 验证。
 
-场景出口见 下方 `<ref-common-rules-workflow-routing>` 标签。T 的 capture、publish、PR 和独立 TRI 各有原账本 owner；未请求远程动作不创建空账本或新完成门。completed/cancelled 不自动授权外部动作，已承诺而未结束的外部交付仍阻塞封存。开发复盘独立保存在 specdev/retro/{retro}/RETRO.md（retro 为日期主题 ID），不创建/重开来源 change；升级与归档按 R 的独立工件合同。
+场景出口见 下方 `<ref-common-rules-workflow-routing>` 标签。T 拥有 capture/intake，Delivery 拥有 publish、PR 和独立 DEL 原账本；未请求远程动作不创建空账本或新完成门。completed/cancelled 不自动授权外部动作，已承诺而未结束的外部交付仍阻塞封存。开发复盘独立保存在 specdev/retro/{retro}/RETRO.md（retro 为日期主题 ID），不创建/重开来源 change；升级与归档按 R 的独立工件合同。
 
 </domain-runtime>
 
@@ -1968,21 +1968,21 @@ TASK 与 REPORT 完成候选内容后，使用同目录临时文件与不覆盖�
 
 ## 报告
 
-按 下方 `<ref-common-schemas-retrospective-schema>` 标签 使用 v2 frontmatter；模板中的全部字段替换为真实值。`status` 只表达报告是否完成，不表达修复完成；findings 与 outcome 必须一致。
+按 下方 `<ref-common-schemas-retrospective-schema>` 标签 使用 v3 frontmatter；模板中的全部字段替换为真实值。`status` 只表达报告是否完成，不表达修复完成；findings 与 outcome 必须一致。
 
-每个 source 的 `snapshot` 是对象内 `sources/` 下的真实原文片段，`sha256` 为该文件原始字节摘要，`quote` 必须逐字存在于快照。正文同时展示引用，不能只填 hash。`kind=change` 的 change 必填，locator 为 change 内相对文件路径，可带锚点；`kind=project` 为项目相对路径；`kind=session` 为实际 `session:` locator，change 不存在时填 null。会话日志只读定位不变成自动读取任意绝对路径的工具能力。
+每个 source 的 `snapshot` 是对象内 `sources/` 下的真实原文片段，`sha256` 为该文件原始字节摘要，`quote` 必须逐字存在于快照。正文同时展示引用，不能只填 hash。`kind=change` 的 change 必填，locator 为 change 内相对文件路径，可带锚点；`kind=project` 为项目相对路径；`kind=session` 为实际 `session:<host>:<id>` locator，change 不存在时填 null；sessions/session_ref/anchor 遵守 会话来源（下方 `<local-workflows-specdev-specdev-r-retro-references-session-provenance>` 标签）。会话日志只读定位不变成自动读取任意绝对路径的工具能力。
 
 来源文件后来变化不覆盖快照；升级时另外核实当前事实。源 change 归档后按稳定 ID 查找。校验器只能证明快照完整性及引用结构，真实原文出处由本次采集观察负责。资料完全不足可以 sources/findings 都为空并使用 insufficient-evidence，正文明确限制；有发现必须引用实际 source，不能以空证据支持升级。
 
 ## 升级方案、批准与执行
 
-PLAN 遵守 下方 `<ref-common-schemas-retro-upgrade-schema>` 标签。inputs 固定原报告 ID 和 RETRO.md 摘要；每个发现只有一个处置，所有待写文件均列入 changes。候选必须位于本方案 `candidates/`，目标限定项目 `.agents/skills/`；现有内容前摘要不符即漂移。retain 保留原字节且不产生写操作。先准备完整候选和关联引用，验证通过后才向用户提交方案。
+PLAN 使用 v2，changes 的 root、target_kind 和 owner 明确唯一写入者：skill/project/project，或 adr|context/state/specdev/archive-and-consolidate。path 相对所选 root；知识仅限声明 store 中的 Markdown 文件，目标路径不能越界。代码/CI 改动交 Tickets，未验证前保留 defer。PLAN 遵守 下方 `<ref-common-schemas-retro-upgrade-schema>` 标签。inputs 固定原报告 ID 和 RETRO.md 摘要；每个发现只有一个处置，所有待写文件均列入 changes。候选必须位于本方案 `candidates/`，目标限定目标 root：Skill 为 project 下的 `.agents/skills/`；ADR/context 为 state 下的 `specdev/adr/`、`specdev/context/`；现有内容前摘要不符即漂移。retain 保留原字节且不产生写操作。先准备完整候选和关联引用，验证通过后才向用户提交方案。
 
 用户确认后，在本方案保存不可变的原确认摘录 specdev/retro/{upgrade}/approval/request.md，并按 下方 `<ref-common-schemas-retro-approval-schema>` 标签 写 approval.json：实际 source、snapshot、快照摘要、quote、confirmed_at、PLAN.md 摘要。它记录真实批准，不因字段齐全创造授权。确认涵盖 PLAN 的候选内容和归档清单；候选变化必须更新方案并重新核对批准。
 
-execution.json 按 下方 `<ref-common-schemas-retro-execution-schema>` 标签 引用 PLAN 与 approval.json 摘要，status 为 applying/blocked/verified。results 每项保存实际目标、passed/failed/pending、落地摘要、`evidence/` 下原始验证输出的路径/摘要、method、observed、command 与 exit；非命令检查后二者为 null。实际命令成功 exit 必须为 0。开始前保存需要恢复的 before-image；逐项实际执行后追加结果，全部计划内项通过才 verified。
+execution.json 按 下方 `<ref-common-schemas-retro-execution-schema>` 标签 引用 PLAN 与 approval.json 摘要，status 为 applying/blocked/verified。execution.json 使用 v2。results 每项的 owner 必须与原计划匹配，并保存实际目标、passed/failed/pending、落地摘要、`evidence/` 下原始验证输出的路径/摘要、method、observed、command 与 exit；非命令检查后二者为 null。实际命令成功 exit 必须为 0。开始前保存需要恢复的 before-image；逐项实际执行后追加结果，全部计划内目标通过才 verified。
 
-普通多文件修改不具有整体原子性。恢复先核对已经落地的目标、对应原执行证据与仍未执行的 before-image；不重复已成功动作，不按“回执缺失”推断未执行。未知或漂移只阻塞重叠写集；结果不明先人工核实并补真实记录。
+ADR/context 的写入与索引更新仅由 A 的 retro-knowledge 网关执行，回执证据保留在原方案 evidence/；R 只汇总。普通多文件修改不具有整体原子性。恢复先核对已经落地的目标、对应原执行证据与仍未执行的 before-image；不重复已成功动作，不按“回执缺失”推断未执行。未知或漂移只阻塞重叠写集；结果不明先人工核实并补真实记录。
 
 ## 只读校验入口
 
@@ -2001,6 +2001,8 @@ node <validator> --upgrade <upgrade-id> --stage verified --repo <project> --meth
 list 返回 reports 和 issues。坏报告导致非零退出并列出具体问题，同时保留独立合法报告的 ID；调用方只停止受影响输入，不能把一处错误当成没有其他候选。草稿报告可发现，但不能作为已完成升级输入。
 
 归档门与 `archive-ready / archived / --sealed` 见 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签。输出区分 errors/warnings；schema、hash 和链接成功不代替真实授权、语义审查、验证命令运行或宿主触发观察。
+
+仅接受当前报告及方案协议；旧版本明确报错、保留原件，不在发现/汇总时自动兼容或迁移。
 
 </ref-specdev-r-retro-references-records>
 
@@ -2044,15 +2046,15 @@ Owner 依据来自原 Goal/Implementation Plan、I 的真实会话或非实现�
 
 ## 远程来源与归档
 
-远程动作不参与本地完成判定。Triage `external_action` 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。Triage `publish_action` 为 `pending`/`publish-failed` 时先恢复或结束 publish；`not-requested`、`published` 或 `waived` 才允许 Archive。`not-requested` 是默认，未点过 publish 的 change 不被新模式绑架。归档后工件只读。
+远程动作不参与本地完成判定。Delivery `external_action` 为 `pending-close`/`close-failed` 时先 reconcile；`closed`、`waived` 或 `not-applicable` 才允许 Archive。specdev/changes/{change}/publish.md 的 `publish_action` 为 `pending`/`publish-failed` 时先恢复或结束 publish；`not-requested`、`published` 或 `waived` 才允许 Archive。`not-requested` 是默认，未点过 publish 的 change 不被新模式绑架。归档后工件只读。
 
 **完成标准**：完成声明可由原工件、真实工作区与验证重建，只有一个 owner；完成不自动授权提交、合并或工作区清理。
 
-## 非实现复盘终点与 PR 归档门
+## PR 归档门
 
-仅有 R-retro（可先经 T intake）的 review-only change，以 completed 的 RETRO 报告作为等价验收；不能同时存在 Spec、Ticket、Map、Goal Plan、implementation 工件、Evidence 或 worktree。报告 sources 非空、结果诚实、全部验收完成，owner 按原完成转换规则更新状态；存在实现工件时仍走原实现完成门。insufficient-evidence 仅表示报告完整，不表示问题已解决。
+独立 R-retro 使用 RETRO 报告与原升级计划验收，不为复盘新建 change；关联已有 change 不替代其原完成门。
 
-PR requested=true 且 status=planned/failed 时阻塞归档；delivery_target=ready 时 draft 也保持未闭合。draft 目标可由 draft/ready 满足，ready 目标只由 ready 满足；waived 须记录放弃交付的授权与原因。创建成功不等于已授权 merge。独立 TRI 不因关联 change 就参与完成/归档门。
+PR requested=true 且 status=planned/failed 时阻塞归档；delivery_target=ready 时 draft 也保持未闭合。draft 目标可由 draft/ready 满足，ready 目标只由 ready 满足；waived 须记录放弃交付的授权与原因。创建成功不等于已授权 merge。独立 DEL 不因关联 change 就参与完成/归档门。
 
 ## 整体取消
 
@@ -2235,8 +2237,9 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 工件 | 具体位置 | 必须决定 | 不应决定 |
 |---|---|---|---|
 | 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
-| 分诊 | `specdev/changes/{change}/triage.md` | 请求类别、影响、风险、缺失输入、下一 work、源 Issue reconcile 状态和 publish_action | 详细实现方案、开发进度或票级发布账本 |
-| 发布账本 | `specdev/changes/{change}/publish.md` | 票级 GitHub 投影的编号、标签、marker、state 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
+| 分诊 | `specdev/changes/{change}/triage.md` | 请求是否成立、核验结果、实施简报、风险、缺失输入、下一 Work 和打标回执 | 开发进度、实施授权或交付状态 |
+| 交付 | `specdev/changes/{change}/delivery.md` | 来源 Issue 的 external_action 与 publish 账本指针 | 重复发布进度、本地完成判定或实施简报 |
+| 发布账本 | `specdev/changes/{change}/publish.md` | 票级 GitHub 投影的编号、标签、marker、state、publish_action 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
 | 捕获账本 | `specdev/capture.md` | 尚未成 Change 的记事项、GitHub inbox 编号、标签、marker 和 inbox 计数；缺失合法 | Change、Ticket、Evidence 或已完成票的发布投影 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
 | 设计日志 | `specdev/changes/{change}/LOG.md` | 讨论轨迹、确认、延后、替代与废弃结论 | 当前架构权威摘要 |
@@ -2320,8 +2323,8 @@ W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边�
 
 ## 新增工件 owner
 
-- T：specdev/changes/{change}/pull-requests/PR-###.md 拥有 PR 交付回执；specdev/triage-runs/TRI-###.md 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
-- R-retro：specdev/retro/{retro}/RETRO.md 拥有独立复盘及原文来源；specdev/retro/{upgrade}/PLAN.md 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 下方 `<ref-specdev-r-retro-references-records>` 标签 保存，不成为永久知识或 change 完成证据。A 只拥有已批准的移动/封存。
+- Delivery：specdev/changes/{change}/pull-requests/PR-###.md 拥有 PR 交付回执；specdev/delivery-runs/DEL-###.md 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
+- R-retro：specdev/retro/{retro}/RETRO.md 拥有独立复盘及原文来源；specdev/retro/{upgrade}/PLAN.md 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 下方 `<ref-specdev-r-retro-references-records>` 标签 保存，不成为永久知识或 change 完成证据。A 拥有已批准的 ADR/context 写入及移动/封存。
 - P：specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
 - 来源更新：specdev/changes/{change}/source.md 冻结后保持不变。T 将后续读取写入 specdev/changes/{change}/sources/SRC-###.md，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
 
@@ -2423,8 +2426,8 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 |---|---|---|
 | 需要冻结外部来源或审计摄入 | T-triage intake | D / G / W / P / S / C / T |
 | 尚未成 Change，只要先在 GitHub 留一条仍 open 的记事项 | T-triage capture | 停止 / 以后 intake / W |
-| 本地 change 完成且来源可关闭 | T-triage reconcile | A |
-| 本地 change 完成且要把 Ticket 记到 GitHub | T-triage publish | reconcile / A / 停止 |
+| 本地 change 完成且来源可关闭 | D-delivery reconcile | A |
+| 本地 change 完成且要把 Ticket 记到 GitHub | D-delivery publish | reconcile / A / 停止 |
 | 疑难 bug 或性能回归 | D-diagnose-bugs | S / T / I / R / W |
 | 模糊但可通过决策访谈收敛 | G-grill-with-docs | P / S / T / W |
 | 大需求包含多个未界定 change 或未知路径 | W-wayfinder | G / P / D / S / T |
@@ -2433,7 +2436,7 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 | 外部行为已清楚 | S-spec | I（完整 Ready Spec 且有实现授权）/ T（需要拆票）/ 返回规格 |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
 | 按需的轻量 Goal、单 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
-| Ready 执行 | I-implement | Triage / A / blocked / deviation |
+| Ready 执行 | I-implement | Delivery / A / blocked / deviation |
 | 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |
 
@@ -2444,7 +2447,7 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 
 ## 复盘与交付路由
 
-开发环境/流程复盘、积累独立 RETRO，以及明确要求汇总升级项目 Skills → 下方 `<ref-specdev-r-retro-skill>` 标签。代码与参考资料学习 → “学习与图解阶段”；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → “请求分诊阶段” 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+整体会话及开发过程复盘、积累带会话来源的独立 RETRO，以及明确要求汇总沉淀 ADR、项目知识或 Skills → 下方 `<ref-specdev-r-retro-skill>` 标签。代码与参考资料学习 → “学习与图解阶段”；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈使用 speculo-feedback Command。CI/安全/PR/包发布 → “开发交付阶段” 的对应模式；确定性修复回到 D/I，不由 Delivery 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
 
@@ -2701,12 +2704,47 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
 
 </shared-coordination-report-template>
 
+<local-workflows-specdev-specdev-r-retro-references-session-provenance>
+
+# 会话来源与回读
+
+本协议用于 R 的日常报告与汇总复核。报告不是原始事件；不能用多次转述证明问题多次发生。
+
+## 登记与范围
+
+RETRO v3 的 sessions 为本次实际使用的会话表。每项包含 id（S-001）、host、真实 session_id、locator、captured_until、availability（available/unavailable/unknown）。采集截止点在生成本报告前固定；不把本报告或汇总生成的结论循环当作一手证据。没有可识别会话时保留 unknown 与 null，不编造 ID；仍可使用真实项目/change 证据。
+
+source 的 kind=session 时，locator 为 session:<host>:<session_id>，session_ref 指向 sessions.id，anchor 记录 start_line/end_line、原事件 timestamp，以及可用的 event_id。非会话文件也可通过 session_ref/anchor 说明本会话如何产生它，但文件证据与会话证据不能互相冒充。每项保留可回读原文快照、quote 和 sha256；摘要校验不证明因果或宿主真实性。
+
+一份报告可含多会话；同一会话可被多份报告引用。按宿主、session ID 和事件锚点合并重复事件，必要时核对重叠区间及原文；同一会话中的不同事件仍分别计数。fork 已知存在复制历史时核对 parent 来源，不能将复制的祖先事件重复计数。
+
+## Codex 只读定位
+
+先使用当前宿主提供的真实 thread/session ID，用户明确历史会话则使用其 ID。解析实际 CODEX_HOME（未设置时为用户的 .codex），不写死用户绝对路径。用 本地只读会话证据工具（仅从显式日志根定位匹配项目与会话 ID 的原件，按行区间和截止时间读取；网页环境记录不可用，不伪造日志证据）：
+
+```bash
+node <session-tool> locate --log-root <codex-data-root> --session <actual-id> --repo <project>
+node <session-tool> read --log-root <codex-data-root> --session <actual-id> --repo <project> --locator <host-relative-jsonl> --from-line <first> --to-line <last> --cutoff <ISO-8601>
+```
+
+定位只在 sessions/archived_sessions 中匹配指定 ID，并核对 session_meta 的 ID 和项目。多候选不自动选最新；按时间/来源消歧。read 必须传明确区间和截止点，默认输出上限 65536 字节；结果包含实际覆盖、原始 JSONL 行与片段摘要。退出 2 表示区间/输出不完整，不能写成完整核验。路径越界、链接、身份不符、错误 JSONL 或无时间事件停止该片段读取。校验器只检查报告内来源结构，不自动根据报告字符串读取外部路径。
+
+日志可追加，摘要绑定提取片段而非整个仍在增长的文件。日志移动时以真实会话 ID 重新定位；未找到时记录 unavailable，使用已保存片段并声明缺口，不新建假的原日志。不将会话全量复制进仓库；凭据和无关私人资料不保存，脱敏必须标明且不能冒充未修改原文。
+
+## 汇总中的深挖
+
+先固定报告和发现，再按问题回读引用事件与相邻上下文；因果缺口、相反证据或高影响决定需要时扩大至该指定会话的完整相关过程。仅明确需要时跨会话检索，不默认扫描所有历史。保留“永久条目 → RETRO/F-ID → E-ID → 会话及锚点”的链；已封存报告不回写，来源失效记录在新报告/维护回执。
+
+其他宿主沿同样的 ID、定位、截止点和片段合同；无文件访问时使用用户提供的真实导出并说明限制，不声称访问了本机日志。
+
+</local-workflows-specdev-specdev-r-retro-references-session-provenance>
+
 <ref-common-schemas-retrospective-schema>
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:retrospective:v2",
+  "$id": "urn:speculo:specdev:retrospective:v3",
   "type": "object",
   "required": [
     "schema_version",
@@ -2717,11 +2755,12 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
     "outcome",
     "updated_at",
     "sources",
-    "findings"
+    "findings",
+    "sessions"
   ],
   "properties": {
     "schema_version": {
-      "const": 2
+      "const": 3
     },
     "artifact": {
       "const": "retrospective"
@@ -2802,6 +2841,39 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
           "quote": {
             "type": "string",
             "minLength": 1
+          },
+          "session_ref": {
+            "type": "string",
+            "pattern": "^S-[0-9]{3,}$"
+          },
+          "anchor": {
+            "type": "object",
+            "required": [
+              "start_line",
+              "end_line",
+              "timestamp"
+            ],
+            "properties": {
+              "start_line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "end_line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "event_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -2831,7 +2903,13 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
               "global-instructions",
               "tool-economy",
               "no-ops",
-              "information-access"
+              "information-access",
+              "goal-alignment",
+              "decision-quality",
+              "implementation",
+              "verification",
+              "coordination",
+              "successful-practice"
             ]
           },
           "severity": {
@@ -2857,7 +2935,57 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
               "deterministic-check-gap",
               "context-pointer",
               "judgment-rule",
-              "environment-discovery"
+              "environment-discovery",
+              "architecture-decision",
+              "project-knowledge"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "host",
+          "session_id",
+          "locator",
+          "captured_until",
+          "availability"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^S-[0-9]{3,}$"
+          },
+          "host": {
+            "type": "string",
+            "minLength": 1
+          },
+          "session_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "captured_until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availability": {
+            "enum": [
+              "available",
+              "unavailable",
+              "unknown"
             ]
           }
         },
@@ -2876,7 +3004,7 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:retro-upgrade:v1",
+  "$id": "urn:speculo:specdev:retro-upgrade:v2",
   "type": "object",
   "required": [
     "schema_version",
@@ -2891,7 +3019,7 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "artifact": {
       "const": "retro-upgrade"
@@ -2983,7 +3111,9 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
           "owner",
           "before_sha256",
           "after_sha256",
-          "candidate"
+          "candidate",
+          "target_kind",
+          "root"
         ],
         "properties": {
           "path": {
@@ -3000,7 +3130,7 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
           "owner": {
             "enum": [
               "project",
-              "engineering-standards-builder"
+              "specdev/archive-and-consolidate"
             ]
           },
           "before_sha256": {
@@ -3021,6 +3151,19 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
           "candidate": {
             "type": "string",
             "minLength": 1
+          },
+          "target_kind": {
+            "enum": [
+              "skill",
+              "adr",
+              "context"
+            ]
+          },
+          "root": {
+            "enum": [
+              "project",
+              "state"
+            ]
           }
         },
         "additionalProperties": false
@@ -3097,7 +3240,7 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:retro-execution:v1",
+  "$id": "urn:speculo:specdev:retro-execution:v2",
   "type": "object",
   "required": [
     "schema_version",
@@ -3108,7 +3251,7 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "plan_sha256": {
       "type": "string",
@@ -3138,7 +3281,8 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
           "method",
           "observed",
           "command",
-          "exit"
+          "exit",
+          "owner"
         ],
         "properties": {
           "path": {
@@ -3199,6 +3343,12 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
                 "type": "null"
               }
             ]
+          },
+          "owner": {
+            "enum": [
+              "project",
+              "specdev/archive-and-consolidate"
+            ]
           }
         },
         "additionalProperties": false
@@ -3215,13 +3365,13 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
 
 # RETRO 升级后的归档网关
 
-A 唯一拥有移动与封存；R 提供原升级方案、具体批准和已验证执行回执。本分支不接管 Skill 写入，不创建 change，也不运行 change 的实现完成门或四类资产维护。授权须覆盖 PLAN 中固定的 archive_reports 及方案对象本身，已确认内容直接复用。
+A 唯一拥有移动与封存；R 提供原升级方案、具体批准和已验证执行回执。本分支不执行 Skill/知识写入，不创建 change，也不运行 change 的实现完成门或四类资产维护。授权须覆盖 PLAN 中固定的 archive_reports 及方案对象本身，已确认内容直接复用。
 
 读取 下方 `<ref-specdev-r-retro-references-records>` 标签 的身份和定位合同，以及 下方 `<ref-common-schemas-retro-archive-schema>` 标签。以下复用 原归档规则（下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-archive-rules>` 标签） 的无覆盖、完整性与恢复原则，源/目标替换为 retro 对象，不把报告当成 completed change。
 
 ## 预检与顺序
 
-1. 回读 PLAN.md、approval.json 与实际确认原文，验证候选和批准摘要、执行 owner、实际 writer、相关 lock/pending/recovery；数据字段不是授权。运行独立校验器的升级 `--stage verified`，全部计划内 Skill 项通过才继续。
+1. 回读 PLAN.md、approval.json 与实际确认原文，验证候选和批准摘要、执行 owner、实际 writer、相关 lock/pending/recovery；数据字段不是授权。运行独立校验器的升级 `--stage verified`，全部计划内 Skill/ADR/context 项通过才继续。
 2. 固定 archive_reports 清单。每份报告均 completed，所有发现已有 adopt 且执行通过或 reject 且有明确理由；存在 defer 的报告继续现役。拒绝、无发现、证据不足报告也需要具体归档决定，不能因没有候选自动移动。仅复用仍然匹配原方案的证据。
 3. 对全部待移动报告先运行 `--report <id> --upgrade-plan <upgrade-id> --stage archive-ready`。确认源与唯一目标、同文件系统、无覆盖能力、目录/模式/链接及稳定来源可解析，预检全部通过才开始批量移动。
 4. 在每个原对象内创建 archive.json，保存实际字节、目录模式及链接清单。使用校验器导出的 `retroInventory(objectRoot)` 生成实际清单；它不跟随链接，只排除 archive.json 自身。不得手填摘要或漏掉候选、批准、证据及恢复材料。
@@ -3904,7 +4054,7 @@ Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查�
 
 父 Implementation Orchestration Evidence 不能替代子 Evidence；至少记录最终 Map revision、成员状态/证据引用、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、漂移处置与残余风险。成员未 completed 或整体验证未通过不能完成父 change。
 
-Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按公共投影规则生成，不替代完整记录。
+Evidence 原文不出仓库。对 GitHub 的公共投影由 D-delivery publish 按公共投影规则生成，不替代完整记录。
 
 ## 6. 按改动选择检查与复用证据
 
@@ -4081,17 +4231,17 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 <ref-specdev-r-retro-skill>
 
-# 开发复盘与项目 Skill 迭代
+# 整体会话复盘与知识沉淀
 
-先读 下方 `<domain-runtime>` 标签 和 下方 `<activation-and-memory>` 标签，再读 下方 `<shared-writing-for-agents-writing-contract>` 标签。本 Work 改善后续开发 Agent 的环境；默认只复盘，明确要求迭代才进入方案分支。代码讲解使用 L-learn，Speculo 产品反馈使用 retro Command。
+先读 下方 `<domain-runtime>` 标签 和 下方 `<activation-and-memory>` 标签，再读 下方 `<shared-writing-for-agents-writing-contract>` 标签。本 Work 回顾开发过程及其结果，并改善后续开发 Agent 的环境；默认只复盘，明确要求迭代才进入方案分支。代码讲解使用 L-learn，Speculo 产品反馈使用 speculo-feedback Command。
 
 ## 流程
 
 1. 识别用户要日常复盘，还是梳理/执行升级方案。日常复盘未指定会话时使用当前会话；批量梳理默认使用当前项目尚未归档的 RETRO。只有用户指定才扩大来源范围。
-2. 日常复盘按 开发复盘方法（下方 `<local-workflows-specdev-specdev-r-retro-references-development-retrospective>` 标签） 定位一手记录、检查七类环境问题，并给每个发现保留原文、来源 change 或会话、根因或假设、影响、频率、owner 和正反验收。按严重程度呈现候选，允许没有发现。
+2. 日常复盘按 开发复盘方法（下方 `<local-workflows-specdev-specdev-r-retro-references-development-retrospective>` 标签） 定位一手记录、梳理整个会话的工作脉络，再按实际信号检查目标、决策、实现、验证、协作和七类环境问题，并给每个发现保留原文、来源 change 或会话、根因或假设、影响、频率、owner 和正反验收。按严重程度呈现候选，允许没有发现。
 3. 按 报告模板（下方 `<local-workflows-specdev-specdev-r-retro-assets-retro-template>` 标签） 和 独立工件合同（下方 `<ref-specdev-r-retro-references-records>` 标签） 保存 specdev/retro/{retro}/RETRO.md。`retro` 为首次创建时未占用的日期主题 ID；证据快照只保留相关原文。原子写后回读并运行独立校验；不创建 change，不修改来源 change 的 Outcome。
-4. 明确要求集中迭代时读取 升级流程（下方 `<local-workflows-specdev-specdev-r-retro-references-skill-upgrade>` 标签），固定未归档报告清单、去重并复核当前项目事实，形成 specdev/retro/{upgrade}/PLAN.md。先交付完整具体方案；确认前仅保存方案及候选，不更新项目 Skill、不归档。
-5. 用户确认方案后，用 下方 `<shared-writing-for-agents-references-project-skill-maintenance>` 标签 更新或新增获批项目 Skill，逐项验证并保存原方案的执行回执。只有全部计划内升级通过，才调用 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签 归档方案指定且全部发现已处置的报告；仍有待处理项的报告留在现役目录。
+4. 明确要求集中迭代时读取 升级流程（下方 `<local-workflows-specdev-specdev-r-retro-references-skill-upgrade>` 标签），固定未归档报告清单、去重并复核当前项目事实，形成 specdev/retro/{upgrade}/PLAN.md。先交付完整具体方案；确认前仅保存方案及候选，不更新项目 Skill、ADR/context 或归档。
+5. 用户确认方案后，按目标 owner 执行：项目 Skill 使用 下方 `<shared-writing-for-agents-references-project-skill-maintenance>` 标签；ADR/context 交 A 的 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-knowledge>` 标签 窄网关，逐项验证并保存原方案的执行回执。只有全部计划内目标通过，才调用 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签 归档方案指定且全部发现已处置的报告；仍有待处理项的报告留在现役目录。
 
 ## 改进必须能被证伪
 
@@ -4101,11 +4251,11 @@ Evidence 原文不出仓库。对 GitHub 的公共投影由 T-triage publish 按
 
 报告 outcome 为 findings、no-findings、insufficient-evidence；报告完成不表示建议已实施。方案逐项 adopt / reject / defer，合并项通过共同目标与理由保留全部来源。事实不足时保持 defer，不用多数历史记录覆盖当前相反证据。
 
-代码问题交 “Bug 诊断阶段”，代码/CI 检查实施交 “拆分 Tickets 阶段”，远程反馈交 “请求分诊阶段”；ADR/context 写入交 “归档与沉淀阶段” 的原网关。这些动作不由 Skill 升级授权隐式覆盖。
+代码问题交 “Bug 诊断阶段”，代码/CI 检查实施交 “拆分 Tickets 阶段”，远程反馈交 “请求分诊阶段”；ADR/context 的实际写入交 “归档与沉淀阶段” 的原网关。方案必须逐项声明目标与 owner；Skill 更新批准不隐式覆盖代码、远程操作或永久知识写入。
 
 ## 完成标准
 
-日常复盘的范围、原文来源、全部候选与未知可追溯，报告已保存并通过校验。升级方案确认前返回具体候选及未决项；确认后返回实际更新/新增/保留的 Skill、命令及退出码、未验证项、归档结果和恢复入口。未通过验证或存在漂移的分支保持阻塞，已落地结果据实保留；语法验证不认证宿主触发、用户授权或未来效果。
+日常复盘的范围、原文来源、全部候选与未知可追溯，报告已保存并通过校验。升级方案确认前返回具体候选及未决项；确认后返回实际更新/新增/保留的 Skill、ADR/context、命令及退出码、未验证项、归档结果和恢复入口。未通过验证或存在漂移的分支保持阻塞，已落地结果据实保留；语法验证不认证宿主触发、用户授权或未来效果。
 
 </ref-specdev-r-retro-skill>
 
@@ -4317,7 +4467,7 @@ CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-re
 
 ## SpecDev
 
-交接范围包含 SpecDev change 时，引用 README 的唯一 Outcome、接续点和当前 owning 工件，并按实际存在情况链接 `source.md`、`triage.md`、`publish.md`（若请求过），不复制正文、不创建业务状态镜像。旧归档只读引用原件；混合状态或未结束转换交原 owner 恢复。若 `external_action` 为 `pending-close` 或 `close-failed`，必须记录准确远程 locator、已完成步骤、授权状态和恢复入口 `T-triage`；不得把待关闭误报为本地未完成。若 `publish_action` 为 `pending` 或 `publish-failed`，必须记录账本路径、失败行和下一步，恢复入口仍是 T-triage publish。交接范围包含尚未成 Change 的 inbox 记事项时，引用 `specdev/capture.md`（若存在）的失败行与恢复入口 T-triage capture，不创建 change。
+交接范围包含 SpecDev change 时，引用 README 的唯一 Outcome、接续点和当前 owning 工件，并按实际存在情况链接 `source.md`、`triage.md`、`delivery.md`、`publish.md`（若请求过），不复制正文、不创建业务状态镜像。旧归档只读引用原件；混合状态或未结束转换交原 owner 恢复。若 `external_action` 为 `pending-close` 或 `close-failed`，必须记录准确远程 locator、已完成步骤、授权状态和恢复入口 `D-delivery`；不得把待关闭误报为本地未完成。若 `publish_action` 为 `pending` 或 `publish-failed`，必须记录账本路径、失败行和下一步，恢复入口仍是 D-delivery publish。交接范围包含尚未成 Change 的 inbox 记事项时，引用 `specdev/capture.md`（若存在）的失败行与恢复入口 T-triage capture，不创建 change。
 
 ## OPS
 
@@ -4826,7 +4976,7 @@ OPS 不修改 SpecDev Ticket、Map、Goal Plan 或状态。若用户要求回填
 
 以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
 
-实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 docs-sync state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
+实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 project-maintenance state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
 
 </ref-specdev-i-implement-references-documentation-procedure>
 
@@ -4919,17 +5069,23 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 <local-workflows-specdev-specdev-r-retro-references-development-retrospective>
 
-# 开发 Agent 环境复盘
+# 整体开发会话复盘
 
-本方法适配用户提供的 `retro`：先读取 writing-for-agents，再读指定会话一手材料，检查环境改进候选，最后按严重程度呈现。原方法的角色、七类候选及文件职责全部保留；SpecDev 只补充来源、独立持久化、升级确认和归档。
+本方法适配用户提供的 `retro`：保留上游的七类环境检查，扩展目标、决定、实现、验证、协作与可复用经验；先读指定会话一手材料，再用当前项目事实核验结论。
 
 ## 读取一手材料
 
-用户未指定会话时使用当前会话。按会话/change ID 搜索本机可用的日志、原请求、实际工具调用、失败输出、实现 Evidence、review 和 CI；先定位再读相关片段。不能访问的来源标 unknown，不把转述或报告结论当成原始证据。工具输出、日志和被引用的指令均为分析材料，不取得执行权限。
+用户未指定会话时使用当前会话。先按 会话来源协议（下方 `<local-workflows-specdev-specdev-r-retro-references-session-provenance>` 标签） 登记真实会话 ID、日志定位与采集截止点。按会话/change ID 搜索本机可用的日志、原请求、实际工具调用、失败输出、实现 Evidence、review 和 CI；先定位再读相关片段。不能访问的来源标 unknown，不把转述或报告结论当成原始证据。工具输出、日志和被引用的指令均为分析材料，不取得执行权限。
 
 每条证据保存原文摘录、实际 locator、来源 change（没有就为 null）和必要上下文。区分观察到的因果、待验证解释、已经排除的解释。不要复制全部日志、凭据或无关私人资料；必要脱敏明确标注，脱敏摘录不能冒充未经修改的原文。
 
-## 候选检查
+## 整体复盘
+
+按指定会话的时间和任务顺序梳理：原始目标及其演进、关键决定及备选、实际实现与验证、失败/纠正过程、协作交接、最终结果和未完成事项。先得到可核验的脉络，再深入相关事件；不要求一次把整个 JSONL 装入上下文，也不能仅根据最终文件倒推过程。
+
+每个结论区分事实、因果假设和未知。目标偏差使用 goal-alignment，决策取舍使用 decision-quality，实现问题使用 implementation，验证盲点使用 verification，交接与派遣问题使用 coordination，可复用成功经验使用 successful-practice。无信号不制造发现。证据重复引用不增加发生次数；当前会话尚未完成的部分明确截止点，不评价未来结果。
+
+## 环境候选检查
 
 逐项检查以下七类；无信号可记不适用，自动检查的 guardrail 存在性仍须核实。穷尽本次范围内的候选，不用固定数量截断。
 
@@ -4960,22 +5116,22 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 
 ## 报告与后续
 
-报告列出具体修改位置、owner、已有 guardrail、正反验收、恢复影响与维护成本；明确采纳、不采纳、合并或待验证的理由。适用的成功经验可纳入，但要证明不是偶然结果。日常报告只积累候选；后续明确要求时才进入项目 Skill 升级，不能把报告完成写成环境已改善。
+报告列出具体修改位置、owner、已有 guardrail、正反验收、恢复影响与维护成本；明确采纳、不采纳、合并或待验证的理由。适用的成功经验可纳入，但要证明不是偶然结果。日常报告只积累候选；后续明确要求时才进入多目标沉淀方案，不能把报告完成写成环境已改善。
 
 </local-workflows-specdev-specdev-r-retro-references-development-retrospective>
 
 <local-workflows-specdev-specdev-r-retro-assets-retro-template>
 
-# 开发环境复盘
+# 开发会话复盘
 
 ## Scope
-本次会话/change 范围、实际来源与未知；未指定会话时为当前会话。本报告属于独立 retro 对象，不改变来源 change。
+本次会话/change 范围、目标和关键事件脉络、实际来源、采集截止点与未知；未指定会话时为当前会话。本报告属于独立 retro 对象，不改变来源 change。
 
 ## Evidence
 逐项列 E-ID、来源 change/会话 locator、原文引用与必要上下文。原文使用 blockquote；snapshot 保存同一相关片段，不整份复制日志。source change 与对象内路径分开保存，归档移动后按稳定 change ID 定位。
 
 ## Findings
-按严重程度排序。七类检查各有结论或不适用依据；特别核实项目检查命令、hook 和 CI 是否真实接入。无发现时 findings 为 []、outcome 为 no-findings；资料不足时为 insufficient-evidence，并说明缺什么、为什么不能判断。
+按严重程度排序。按实际信号审视目标、决定、实现、验证、协作、成功经验与七类环境问题，无信号可记不适用；特别核实项目检查命令、hook 和 CI 是否真实接入。无发现时 findings 为 []、outcome 为 no-findings；资料不足时为 insufficient-evidence，并说明缺什么、为什么不能判断。
 
 ## F-001
 原始现象与证据、根因/假设、影响与独立发生频率、已有约束、建议位置、owner、维护成本、合并关系及不采纳理由。经验应能复用，机械规则进入检查工具，判断性标准交 reviewer。没有发现时删除本节。
@@ -4984,22 +5140,22 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 每项建议的正例、目标反例、验证命令/方法、恢复影响与完成条件。尚未实施的建议不能写成已修复。
 
 ## Routes
-候选的下一入口、具体所需授权、未完成项和恢复条件。仅生成报告不自动升级 Skill；报告已保存不等于问题已解决。
+候选的下一入口、具体所需授权、未完成项和恢复条件。仅生成报告不自动更新永久知识、Skill 或检查工具；报告已保存不等于问题已解决。
 
 </local-workflows-specdev-specdev-r-retro-assets-retro-template>
 
 <local-workflows-specdev-specdev-r-retro-references-skill-upgrade>
 
-# 汇总未归档 RETRO 并升级
+# 汇总未归档 RETRO 并沉淀
 
-仅在用户明确要求从积累记录筛选、迭代项目 Skills，或恢复一份已批准方案时进入。默认日常 retro 不进入此分支。
+仅在用户明确要求从积累记录筛选、沉淀 ADR/context、迭代项目 Skills，或恢复一份已批准方案时进入。默认日常 retro 不进入此分支。
 
 1. 读取 独立工件合同（下方 `<ref-specdev-r-retro-references-records>` 标签），用独立校验器 `--list` 枚举当前项目 retro 下的现役报告，排除 archive 和方案对象。不递归采集全部 changes/历史会话；用户限定主题或报告时先过滤。没有候选返回 no-candidates。草稿或错误报告列为覆盖缺口，不静默当成完整经验。
 2. 固定本轮完整报告 ID/摘要清单，逐份读原文与 findings，再按根因/适用能力聚合。按报告/F-ID 搜索先前方案的相关处置及回执，复用已验证结论；同一原始事件不因多次引用增加频率。尚未归档报告有既往部分成果时，复核成果是否仍有效，必要目标用 retain，不能重复写规则。
 3. 按 下方 `<shared-writing-for-agents-references-project-skill-maintenance>` 标签 对照当前代码、模板、测试、检查配置和已有 Skill。明确旧结论仍有效、已解决、已过时、相反证据或待验证；保留有证据的成功经验，不能只追加错误清单。
-4. 使用 升级方案模板（下方 `<local-workflows-specdev-specdev-r-retro-assets-upgrade-plan-template>` 标签） 保存具体方案与完整候选。逐个 finding 采纳、合并、拒绝或延期，说明理由；合并项仍保留各自 ID。自动检查/代码/CI 问题交原实施入口，未完成时 defer，不能用 Skill 禁令冒充 guardrail。项目 Skill 默认更新已有，缺失且有独立复用价值才新增。
+4. 使用 升级方案模板（下方 `<local-workflows-specdev-specdev-r-retro-assets-upgrade-plan-template>` 标签） 保存具体方案与完整候选。逐个 finding 采纳、合并、拒绝或延期，说明理由；合并项仍保留各自 ID。自动检查/代码/CI 问题交原实施入口，未完成时 defer，不能用 Skill 禁令冒充 guardrail。项目 Skill 默认更新已有，缺失且有独立复用价值才新增。架构取舍进入 ADR，项目规则、经验与错误模式进入 context；按 A 的毕业标准筛选并保留来源链。对疑点按 会话来源（下方 `<local-workflows-specdev-specdev-r-retro-references-session-provenance>` 标签） 回读原始过程。
 5. 展示按严重程度排序的证据、精确 diff、验证与拟归档清单，等待该方案的明确确认。申请的是已可审阅的结果，不是笼统“允许优化”。仅要求梳理时交付方案后结束；确认前不写目标、不移动报告。已覆盖当前完整方案的确认直接复用。
-6. 确认后冻结原方案和候选，记录实际批准，保存 before-image，运行 apply 预检。由唯一 writer 写项目 Skill，逐项回读与验证，结果写 execution.json。并行 writer、目标漂移、owner 冲突、引用失效只停止依赖分支。未完成项不能标 verified。
+6. 确认后冻结原方案和候选，记录实际批准，保存 before-image，运行 apply 预检。每项由计划指定 writer 执行：Skill 由 R 调用共享维护方法，ADR/context 交 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-knowledge>` 标签；逐项回读与验证，结果写 execution.json。并行 writer、目标漂移、owner 冲突、引用失效只停止依赖分支。未完成项不能标 verified。
 7. verified 校验通过后，调用 下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签 的 A-owned 窄网关。只移动 PLAN.archive_reports；每份报告全部发现均已验证采纳或明确拒绝才可列入。还有 defer 的报告继续现役；不另复制一份“下期待办”。全部报告封存后，最后封存本方案对象。
 
 原方案是这次决策与执行的唯一负责工件。升级失败不归档待处理报告；归档部分失败保留已移动位置和原回执，从真实检查点恢复。最终给出更新/新增/保留列表、验证命令/退出码、已归档和仍待处理报告，以及下一入口。
@@ -5018,7 +5174,7 @@ S 把适用保证写成行为合同，T-tickets 指定验证，I 落实和记录
 4. 修订调用方与生成器，按行为变化测试适用的正常、近邻不触发、缺失输入、失败与恢复；语法通过不代表实际宿主行为。
 5. 交付实际差异、验证和未验证项；评估重构时附全源字符统计。没有实际用量证据不声称 token 或额度节省。
 
-当前工程事实维护或明确基线请求直接读取 局部事实方法（下方 `<shared-writing-for-agents-references-current-facts-docs>` 标签）；它不包含 docs-sync 的全局/Git/state 编排。
+当前工程事实维护或明确基线请求直接读取 局部事实方法（下方 `<shared-writing-for-agents-references-current-facts-docs>` 标签）；它不包含 project-maintenance 的全局/Git/state 编排。
 
 明确要求根据项目事实或复盘经验创建、更新 `.agents/skills/` 时读取 项目 Skill 维护（下方 `<shared-writing-for-agents-references-project-skill-maintenance>` 标签）。它负责证据筛选、已有能力优先升级与缺失能力新增；具体方案、批准和记录归调用方，不因一次文档编辑自动迭代 Skills。
 
@@ -5040,7 +5196,8 @@ AGENTS 放项目独有事实与作用域约束，工具可检验的规则交机�
 
 1. 先枚举 `.agents/skills/` 的名称和 description，再读取匹配的入口及必要 reference。查现有项目标准、源码/模板、消费者、配置、测试和 CI，核对旧结论现在是否成立。
 2. 按职责与触发匹配已有 Skill，优先升级。新增须同时具备独立触发、重复使用价值、充分项目证据及清晰边界；仅局部解释放入原 Skill reference。语言或目录数量不决定 Skill 数量。
-3. 区分项目自有源、Builder 管理内容和宿主投影。已安装 Speculo 的投影清单位于 `projections.json`，投影不能直接修改；回到真实源/安装 owner。Builder 管理的内容使用 下方 `<command-ref-engineering-standards-builder-references-rules-14-generation-contract>` 标签 的清单、刷新和验证合同，采用当前调用的窄范围，不隐式启动全仓扫描或接管清单外 Skill。没有对应资源时仅阻塞该分支。
+3. 区分项目自有源与宿主投影。已安装 Speculo 的投影清单位于 projections.json，投影不能直接修改；回到真实源/安装 owner。已有项目 Skill 保留用户内容、模式、元数据和所有权边界；仅编辑当前具体方案授权的文件，不因目录或旧生成标记接管其他 Skill。不再依赖规范生成器、旧清单格式或其 validator。
+
 
 ## 形成候选
 
@@ -5058,11 +5215,27 @@ AGENTS 放项目独有事实与作用域约束，工具可检验的规则交机�
 
 候选先通过 YAML、名称、触发、引用及适用宿主格式验证，随后原子替换单个文件并回读；跨文件不声称整体原子。更新保留原模式，失败依据 before-image 与实际落地结果恢复。新目标默认无覆盖创建，不能将软链接替换为普通文件。
 
-验证既包括应触发/近邻不触发，也包括正常、缺失输入和失败边界；运行项目现有相关检查，记录命令/退出码。Builder 内容运行其原生成物 validator。只有静态验证时明确未观察宿主真实调用。相同证据、事实与决定重复执行应无无意义差异，不为更新时间戳重写整个 Skill。
+验证既包括应触发/近邻不触发，也包括正常、缺失输入和失败边界；运行项目现有相关检查，记录命令/退出码。只有静态验证时明确未观察宿主真实调用。相同证据、事实与决定重复执行应无无意义差异，不为更新时间戳重写整个 Skill。
 
 返回实际更新/新增/保留、验证结果、未完成项和恢复位置。代码、CI、远程操作及 ADR/context 写入仍由调用方路由到原 owner；本合同不授予这些动作权限。
 
 </shared-writing-for-agents-references-project-skill-maintenance>
+
+<ref-specdev-a-archive-and-consolidate-references-retro-knowledge>
+
+# RETRO 永久知识写入网关
+
+仅在 R 已形成具体沉淀方案且有覆盖 ADR/context 候选及写集的批准时进入。A 是知识 writer，R 保留原 PLAN/approval/execution 总回执；不创建 change，不运行实现完成门，也不自动归档。
+
+1. 读取 R 的 下方 `<ref-specdev-r-retro-references-records>` 标签，按原 PLAN inputs 的报告/发现/证据核对当前项目事实；疑点沿会话锚点回读。按本 Work 的 毕业标准（下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-knowledge-graduation>` 标签） 与 合并规则（下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-consolidation-rules>` 标签） 核对适用价值、冲突和目标。
+2. 只接受 root=state、target_kind=adr/context、owner=specdev/archive-and-consolidate 的明确目标。按 operation contract（下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-operation-contract>` 标签） 检查同写集 pending/lock/recovery；不接管他人事务。原方案中列出需要变更的索引，不能为索引另开未批准写集。
+3. 核对 PLAN/批准/候选摘要，保存 before-image。运行 R 校验器 apply 后，逐项原子写入并回读目标和索引。条目包含适用条件、真实来源 RETRO/F-ID/E-ID、判断依据及验证，不复制整个会话。
+4. 将每个目标的 owner、落地摘要、实际验证命令/退出码或观察、原始输出证据返回 R，并保存在原方案 evidence/。R 据此追加 execution.results；已有成果只从真实回执恢复，不重复改写。
+5. 全部计划内目标验证通过后 R 才能请求 RETRO 归档（下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签）。部分失败保留已完成结果，未完成发现不能作为已处置归档。
+
+本窄调用复用已覆盖该目标的批准；Skill 更新批准不能代替知识写入批准。路径/候选漂移只阻塞受影响写集，任何元数据不创造授权。
+
+</ref-specdev-a-archive-and-consolidate-references-retro-knowledge>
 
 <shared-coordination-exchange-external-web>
 
@@ -5497,7 +5670,7 @@ A7 实际移动后把 Result 记为 moved，运行 `--stage archived` 及其他�
 
 # 当前工程事实文档
 
-跨领域局部方法，由实际调用方拥有范围、授权与原 Evidence/报告。只在建立或修改当前工程文档时读取；A/I/init/docs-sync 复用同一方法，不触发全局整理或增加常驻状态。
+跨领域局部方法，由实际调用方拥有范围、授权与原 Evidence/报告。只在建立或修改当前工程文档时读取；A/I/init/project-maintenance 复用同一方法，不触发全局整理或增加常驻状态。
 
 ## 六步
 
@@ -5508,7 +5681,7 @@ A7 实际移动后把 Result 记为 moved，运行 `--stage archived` 及其他�
 5. 按变化验证事实、链接、例子、类型或行为；生成物重建并验证幂等。明确实际层级：源码核对、静态检查、隔离测试、真实运行/浏览器。没有执行不能写通过，未覆盖平台/状态保留具体限制。
 6. 回读正文与入站引用，在调用方原 Evidence/报告中交付变化、命令/退出码、事实核对、未验证项与下一 owner。输入漂移只重验受影响项；未知结果不伪装成功。
 
-本方法不做全局盘点、Git 暂存/commit、同步游标、语言镜像调度、永久知识发布或定时审计；这些继续归原 owning 入口。I/A 不创建 docs-sync state/sidecar，也不推进其 commit 基线。正式知识候选交 ADR/context/DESIGN/research 原网关，不能借 docs 修正越权。
+本方法不做全局盘点、Git 暂存/commit、同步游标、语言镜像调度、永久知识发布或定时审计；这些继续归原 owning 入口。I/A 不创建 project-maintenance state/sidecar，也不推进其 commit 基线。正式知识候选交 ADR/context/DESIGN/research 原网关，不能借 docs 修正越权。
 
 ## 明确请求全面基线时
 
@@ -5569,7 +5742,7 @@ description 写真实触发时机、任务范围和相近但不适用的场景�
 
 <local-workflows-specdev-specdev-r-retro-assets-upgrade-plan-template>
 
-# 项目 Skill 升级方案
+# 复盘沉淀方案
 
 ## Scope
 冻结本轮未归档 RETRO 清单、原文来源与当前项目事实；列合并、相反证据及覆盖缺口。没有输入时返回 no-candidates，不创建空方案。
@@ -5578,7 +5751,7 @@ description 写真实触发时机、任务范围和相近但不适用的场景�
 每份报告的每个 F-ID 必须有且仅有一个 adopt/reject/defer。adopt 指向精确目标；合并发现共用目标并说明理由。reject 说明不采纳原因；defer 说明下一入口和缺失条件，两者 targets 均为 []。无发现的报告也可在明确确认后归档。
 
 ## Changes
-逐项给出更新/新增/保留的 Skill、完整候选与可审阅 diff、原 owner、触发和行为变化、当前事实依据与恢复原件。create 的 before_sha256 为 null；retain 的前后摘要相同且不写入；update 的摘要必须不同。Builder 内容的 owner 为 engineering-standards-builder，清单与全部关联文件一起列入候选。
+逐项给出更新/新增/保留的 Skill、ADR 或 context、完整候选与可审阅 diff、原 owner、触发和行为变化、当前事实依据与恢复原件。create 的 before_sha256 为 null；retain 的前后摘要相同且不写入；update 的摘要必须不同。ADR/context 使用 root: state、target_kind: adr/context、owner: specdev/archive-and-consolidate，path 为 specdev/adr 或 specdev/context 下的相对路径；索引涉及更新时也列入 candidates。代码/CI 检查任务在实际实施并验收前保持 defer。
 
 ## Validation
 逐项列正反例、现有检查命令、预期结果、宿主实际调用是否可观察。所有 changes 都必须被 adopt 关联；只改格式不视为已解决问题。方案批准后冻结 PLAN.md 与 candidates；执行结果单独记录，不修改批准所绑定的字节。
@@ -5901,96 +6074,493 @@ _避免使用：_ redundant instruction, restating the obvious, belaboring
 
 </local-references-writing-for-agents-glossary>
 
-<command-ref-engineering-standards-builder-references-rules-14-generation-contract>
+<local-workflows-specdev-specdev-a-archive-and-consolidate-references-knowledge-graduation>
 
-# 项目 Skill Set 生成合同
+# Knowledge Graduation Criteria
 
-## 最小结构
+判定 change 或独立 RETRO 中的知识是否值得提取到 workflow state root 声明的持久化 store。默认只提取满足标准的；其余归为 `ephemeral`，保留在原来源对象中。
 
-必须生成 `.agents/skills/engineering-standards/`，它是项目工程规范的权威入口和路由器。只有存在独立触发价值时才生成同级领域 Skill。
+## 毕业标准（三项满足任一即提取）
 
-```text
-.agents/skills/
-  engineering-standards/
-    SKILL.md
-    generated-skill-set.json
-    references/project/
-      00-project-profile.md
-      01-module-map.md
-      02-decisions-and-exceptions.md
-      03-skill-map.md
-      04-source-and-template-map.md
-      review-checklist.md
-  <optional-domain-skill>/
-    SKILL.md
-    references/...
+1. **稳定机制**：知识描述的是持久架构模式、设计原则或系统约束，不是临时实现细节或过渡方案。
+   - ✅ "认证模块使用 JWT + refresh token 双令牌机制"
+   - ❌ "临时绕过了 rate limiter，等待 PR #342 合并后移除"
+
+2. **重复教训**：同一洞察在多个 change 或会话中独立出现（>1 个独立事件，经会话/来源锚点去重；多份报告引用同一事件只算一次）。
+   - ✅ 三个不同 change 都遇到"时区转换必须用 UTC 存储、展示层转换"的坑
+   - ❌ 仅在一个 change 的调试过程中发现，未被其他 change 证实
+
+3. **接手者必知**：缺少此知识会导致后续开发者做出错误决策或重复已解决的争论。
+   - ✅ "选择 PostgreSQL 而非 MongoDB 的原因：需要 ACID 事务和 JSONB 的混合查询能力"
+   - ❌ "lint 配置将 max-line-length 设为 120 而非 100"
+
+## 反毕业标准（满足任一项则不提取）
+
+- 仅适用于单次 change 的实现细节（具体行号、临时变量名、中间重构步骤）。
+- 已解决的临时变通方案（workaround 已被正式修复取代）。
+- 调试日志、故障排查过程记录（除非提炼出可复用的诊断方法）。
+- 脱离完整 change 上下文会产生误导的内容。
+- 纯个人偏好且无项目级约束力（"我习惯用 X"）。
+
+## 候选去重
+
+同一决定已由 specdev/changes/{change}/ADR.md 充分捕获时，以该 ADR 作为唯一毕业候选，不再从 LOG、Evidence 或其他工件生成重复候选。这只消除重复，不跳过永久知识毕业评估；通过标准的 change ADR 仍应进入永久 `adr/` 合并计划。
+
+同一设计结论已由 change DESIGN.md 捕获时，以其稳定规则 ID 为唯一设计候选，LOG/原型/Evidence 只作为来源。只有证据明确支持的规则才可标为 implemented；页面批准与 completed 状态都不是生产实现证据。首次基线 bootstrap 是 A 设计网关规定的 approved-intent 例外，不放宽其他知识的毕业标准。
+
+## 决策流程
+
+对每段待评估知识：
+
+```
+1. 满足任一毕业标准？ → 否 → ephemeral（留在归档 change）
+2. 触发任一反毕业标准？ → 是 → ephemeral
+3. 提取 → 进入合并计划
 ```
 
-根入口使用 `templates/project-skill/SKILL.md.template`；领域入口使用 `templates/domain-skill/SKILL.md.template`。详细内容只创建有证据且被入口路由的文件。
+## 知识分类与目标映射
 
-## Skill 拆分门
+新 ADR/context 对象使用 `YYYY-MM-DD-topic[-NN]` 稳定名称；已有编号/历史名称原位保留，不批量重命名。目标目录须由领域声明。
 
-领域 Skill 必须同时具备：独立触发场景、重复使用价值、项目证据、清晰责任边界和上下文缩减收益。语言、目录、Agent 数量或“看起来完整”都不是拆分理由。
+| 知识类型 | 判定特征 | 目标 store |
+|---------|---------|-----------|
+| **架构决策** | 对未来有持续决策价值，保留真实取舍与依据；不要求三项特征同时满足 | `specdev/adr/{date}-{topic}[-NN].md` |
+| **领域术语** | 项目特有的概念定义，不是通用编程术语 | `context/` 目录（合并到术语文件） |
+| **项目设计规则** | 可跨 change 复用且通过证据评估的 tokens、组件与交互约束 | 仅已声明的 SpecDev `design/`，由 A 设计网关处理 |
+| **领域模型/规则/教训** | 稳定约束、成功经验、可复用错误模式 | 已声明的 `context/` 按主题条目与索引维护，证据不足保留 ephemeral |
 
-根 Skill 维护跨域规范、项目画像、模块地图、决策/例外、Skill Map 和来源地图。领域 Skill 维护特定开发工作流、关键源码/模板导航、集成点和验证方式；不得重新定义根 Skill 的冲突规则。
+> **注意**：目标 store 以 领域 Skill/manifest 持久化约定的实际声明为准。上表为默认映射。若 workflow 未声明某个 store，对应知识归入最接近的已声明 store 或保留 ephemeral。
 
-## 项目源码与模板引用
+## Ephemeral 分类
 
-每个重要来源使用项目根相对路径，并说明：
+被判定为 `ephemeral` 的知识**不删除**。change 来源随归档保留在specdev/changes/archive/{change}/；RETRO 来源按其原归档合同保留独立报告，供未来按原 locator 查阅。它不提升到 workflow 级持久化 store。
 
-- 何时读取；
-- 它负责的能力或生成范围；
-- 输出目标；
-- 生成后需要的注册、import、配置或补充实现；
-- 对应消费者、测试或 validator；
-- 发现 legacy 或不适用场景时如何处理。
+</local-workflows-specdev-specdev-a-archive-and-consolidate-references-knowledge-graduation>
 
-项目 FM、scaffold 和源码保持唯一事实源。Skill 不复制 `.ftl`、源码文件或大段代码；只做精准导航和行为约束。
+<local-workflows-specdev-specdev-a-archive-and-consolidate-references-consolidation-rules>
 
-## 所有权清单
+# Consolidation Rules
 
-根目录中的 `generated-skill-set.json` 使用 `templates/project-skill/generated-skill-set.json.template`，最小 schema：
+从选定 change 或独立维护的真实来源中提取、纠错和替代已声明知识；整体完成/取消不是所有条目自动毕业的证明。
 
-```json
-{
-  "schema_version": 1,
-  "generator": "engineering-standards-builder",
-  "skills": [
-    {
-      "name": "engineering-standards",
-      "path": ".agents/skills/engineering-standards",
-      "role": "router"
-    }
-  ]
-}
-```
+## 提取来源
 
-允许的 role 只有 `router` 和 `domain`。必须恰有一个 router；path 必须等于 `.agents/skills/<name>`。不要加入时间戳、hash、模型、扫描计数或可从文件树重新推导的字段。
+对选定 change 先枚举实际存在的有关产物，按候选问题读取以下来源，不要求空工件。独立维护按主题读取真实来源及有关现役条目，无须创建 change：
 
-## 安全刷新
+1. Evidence 与 Goal Plan — 交付边界、验证证据和残余风险
+2. specdev/changes/{change}/ADR.md — 架构决策记录
+3. specdev/changes/{change}/LOG.md — 设计决策日志（可能含未正式记录的 ADR）
+4. specdev/changes/{change}/CONTEXT.md — 项目规范术语
+5. Change DESIGN — 本 change 唯一视觉与交互合同；以规则 ID 去重，原型与 Evidence 只提供佐证
+6. diagnosis、reviews、prototypes、questionnaires 和任何 workflow 自定义知识产物
 
-- create：目标名称与已有未登记 Skill 冲突时不得覆盖；
-- refresh：只管理旧清单列出的 Skill，保留其他 `.agents/skills/*`；
-- legacy 根 Skill 无清单时，只可在计划中声明接管 `engineering-standards` 本身，不能顺带接管同级 Skills；
-- 删除和重命名必须在计划中列出；
-- 先形成完整候选并验证，再替换已登记内容；失败时保持或恢复旧 Skill Set；
-- 保留仍有效的用户决策、例外、公共 API 和项目特有知识；
-- 相同输入重复刷新不得产生无意义 diff。
+## Store 映射与合并策略
 
-兼容入口只在用户要求或旧路径已存在时使用 `templates/compatibility/`，并保持一句单向路由；它们不进入项目规范正文。
+新对象命名使用 `YYYY-MM-DD-topic[-NN]`，已有历史名称保持不变；change 使用本次固定候选。
 
-## 规则格式
+### adr/（架构决策记录目录）
 
-所有 MUST/SHOULD 至少包含：
+- **提取条件**：有持续决策价值，保留真实理由、备选、后果、负向保证与恢复义务；不可逆/令人意外/真实权衡是线索，不要求同时满足。
+- **名称分配**：实际创建时按日期/主题选择未占用名称，必要时加 `-NN`，不创建编号注册中心。
+- **文件命名**：`specdev/adr/{date}-{topic}[-NN].md`。
+- **内容格式**：标题、状态（Accepted）、日期、决策上下文、决策内容、后果。
+- **Supersede 处理**：若新 ADR 取代旧 ADR，在旧 ADR 开头添加 Superseded by 与新 ADR 的完整指针 `specdev/adr/{date}-{topic}[-NN].md`；不删除旧 ADR。
+- **从 LOG 提升**：specdev/changes/{change}/LOG.md 中满足 ADR 标准且尚未写入 specdev/changes/{change}/ADR.md 的决策 → 创建正式 ADR，注明"从 specdev/changes/{change}/LOG.md 提升"；已有 change ADR 时只评估该唯一候选，不重复生成。
 
-```text
-Scope:
-Level: MUST | SHOULD
-Source:
-Rule:
-Verification:
-```
+### context/（领域术语、项目规则与经验）
 
-项目命令只能来自现有配置/CI 或用户明确决定。尚未实现的命令标记 `planned`，不能报告为当前门禁。
+- **提取条件**：项目特有领域术语、稳定规则、可复用经验或错误模式；通用编程常识、单次未证实猜测不提升。
+- **合并方式**：将新术语合并到 `context/` 目录下的现有术语文件中。若目录为空，创建首个术语文件。
+- **术语条目格式**：遵循 `**术语名**：定义` + `_Avoid_: 同义词` 格式。
+- **冲突检测**：若术语已在 context/ 中存在定义，比较两者：
+  - 一致 → 跳过（记录"已存在"）
+  - 不同 → 标记 `needs-confirmation`，展示两个版本
+- **保留现有**：已有的 `_Avoid_` 标注和术语分组不覆盖。
+- **术语更名**：若新术语取代旧术语，在旧术语的 `_Avoid_` 中保留旧名称，创建新术语条目。
 
-</command-ref-engineering-standards-builder-references-rules-14-generation-contract>
+经验/错误模式按主题使用 specdev/context/{date}-{topic}[-NN].md，记录类型（lesson/error-pattern）、适用条件、触发信号、处理方法、验证及来源 RETRO/F-ID/E-ID；同主题优先更新已有条目。context/INDEX.md 记录稳定条目、类型、主题、适用范围与来源索引，条目和索引都须在获批写集中。缺索引不默认整读知识树，可先按文件/关键词定位；创建后每次仅检索命中行。
+
+错误经验不写成全局无条件禁令；成功经验保留适用边界，机械规则交自动检查。索引是导航，正文与来源是知识权威；不另建 ERROR store。引用报告归档后按稳定 ID 在现役/archive 中唯一解析。
+
+### design/（仅已声明的 SpecDev 项目设计知识）
+
+按 下方 `<design-portability>` 标签的设计检查、发布与恢复协议 进行规则级毕业、冲突确认与发布。稳定 tokens、组件约束、跨页面交互模式可以毕业；单次页面、未落地候选、临时实验不提升。每条 implemented 规则必须有可定位实现证据，completed 状态本身不够。
+
+DESIGN.md 是唯一 current，revisions 不可变，INDEX 可重建。首次不存在时只由该网关按已批准计划 lazy 创建；本 Work 的通用合并步骤不 append、覆盖、清理 revision，也不将新规范写回已归档 change。
+
+### 其他知识 store（若领域声明）
+
+若领域 Skill/manifest 持久化约定声明了 `adr/`、`context/` 和上述专有网关以外的知识 store：
+
+- **提取条件**：按知识类型匹配最合适的 store。
+- **合并方式**：按已声明的 store 格式与网关处理；未声明写法只提出候选，不猜测 append 权限。
+- **冲突处理**：与已有内容矛盾 → 标记 `needs-confirmation`。
+- **未声明则跳过**：不向领域持久化约定未声明的路径写入。
+
+## 保护规则
+
+- **不盲覆盖**：按具体批准原地纠错、merge 或后继替代，保留 before-image；不是每次只许 append 使错误长期存在。
+- **目录 store（adr/、context/）**：首次写入时若目录不存在则自动创建。
+- **不创建未声明 store**：只写入领域 Skill/manifest 持久化约定声明的 store。
+- **来源溯源**：所有合并内容保留真实来源和日期；有 change 时使用其稳定名称，独立维护使用原材料、决定或会话证据，不虚构 change 来源。
+- **禁止跨 workflow**：合并范围限定于当前 workflow 声明的 stores。
+
+## Store 创建策略
+
+仅在领域已声明并允许创建时：
+
+| store | 行为 |
+|-------|------|
+| `adr/` | 首次写入时自动创建目录 |
+| `context/` | 首次写入时自动创建目录 |
+| SpecDev `design/` | 只由 A 设计网关按具体批准 lazy 创建 |
+| 其他已声明 store | 若不存在则跳过并警告；不自动创建 |
+
+## 完成标准
+
+- 每个选定 change 的有关知识产物，或独立维护固定主题的来源，均有分类结论。
+- 每个提取候选项已评定毕业状态和目标 store。
+- 冲突项已标记 `needs-confirmation` 并提供双方版本。
+- 合并计划中每项都有真实来源、目标 store、动作和判定理由；已有条目的纠错、替代或删除还须满足下节及 cleanup 的保真要求。
+
+
+## 完整替代、部分替代和历史
+
+小纠错原地更新现役条目；真实决策反转创建后继 ADR 并说明替代范围。完整替代须逐项证明全部有效内容已承接或失效，旧记录保留独有理由、被拒方案、负向保证、验证与恢复义务。部分替代只退出已承接部分，剩余约束继续现役并保留双向引用，不能仅加 superseded 布尔值或整组归档。
+
+context 实质含义变化记录后继与适用范围；旧数据/兼容消费者尚在时保留所需解释。docs 当前参考原地更新，只有退役协议、事故或旧数据说明有独立价值才建历史快照。现役退出可在具体授权后移到各自 archive，冻结历史不做格式整理、翻译或重命名。没有历史依据不能由当前代码编造“当初为了什么放弃什么”。
+
+</local-workflows-specdev-specdev-a-archive-and-consolidate-references-consolidation-rules>
+
+<local-workflows-specdev-specdev-a-archive-and-consolidate-references-operation-contract>
+
+# SpecDev 统一收尾操作合同
+
+A 单一拥有本合同；Command 只路由领域入口，不作为通用知识执行器。默认 dry-run 返回会话计划、零文件写入；confirmed 仅执行真实具体批准覆盖的动作。
+
+R 调用的 RETRO 归档沿 RETRO 窄网关（下方 `<ref-specdev-a-archive-and-consolidate-references-retro-archive>` 标签），总决策/执行回执留在原升级方案，逐对象移动回执随对象保存；不创建 change 回执或触发以下四类维护。
+
+## 输入、范围与唯一回执
+
+输入是验证过的 WorkContext（projectRoot/methodRoot/stateRoot）、固定目标/主题清单、模式、批准来源和写集。未指定 change 时只读目录/README 候选消歧，不读旧全局索引决定新身份。独立知识审计/维护无需虚构 change。资料缺失或网关不明只阻塞依赖动作。归档没有候选返回 no-candidates；不创建访谈 change 或空回执。
+
+| 调用 | 唯一总回执 | 创建与冻结 |
+|---|---|---|
+| Command 调 A | commands/project-maintenance/{date}-{scope}-{topic}[-NN].md | Command 负责总报告，A 只返回逐项结果 |
+| 直接 A、有 change | specdev/changes/{change}/archive-receipt.md | confirmed 后创建，随目录移至 specdev/changes/archive/{change}/archive-receipt.md |
+| 直接 A、无 change | specdev/maintenance/{date}-{topic}[-NN].md | 仅跨会话/跨对象/恢复需持久化时创建 |
+| dry-run/只读审计 | 会话结果 | 不创建文件 |
+
+新报告无覆盖创建；实际归档的导航、结果段和完整性清单按 下方 `<ref-specdev-a-archive-and-consolidate-references-archive-receipt-contract>` 标签。恢复先核对原 owner、输入摘要、批准范围与已落地结果。原操作未结束时只补真实检查点，不能改原请求/验收/结论。所有检查完成并写完原回执才冻结；后续纠错写外部补充记录引用原件。DESIGN 用不可变批准快照绑定摘要，可变回执只引用它，不能因追加日志使批准失效。
+
+## 计划
+
+1. 归档按 下方 `<ref-common-rules-change-completion>` 标签 验证 completed/cancelled 原证据、owner、实际 writer 和直接依赖；父子/远程门按实际存在读取。取消不是授权回滚或清理。独立维护只核对本主题事实与原 gateway。
+2. 按 下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-archive-rules>` 标签 预检身份、源/目标、链接/模式及来源移动后可解析。batch 全部固定候选预检通过才执行，不扩大到新发现对象。
+3. 对 change、ADR、context、当前 docs 四类逐项写结论，UI 再核对 DESIGN。按候选 ID/关键词定位相关知识与 provenance，不全库扫描。可选工件缺失说明后跳过；已知有关错误不得留到封存后。
+4. 每项计划列源/目标、动作、依据、内容 owner、执行 owner、批准、before-image/输入摘要、结果与恢复点。知识依 下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-knowledge-graduation>` 标签、下方 `<local-workflows-specdev-specdev-a-archive-and-consolidate-references-consolidation-rules>` 标签；清理候选依 下方 `<ref-specdev-a-archive-and-consolidate-references-cleanup-rules>` 标签。没有晋升候选合法，不凑数量。
+5. 用 下方 `<ref-specdev-a-archive-and-consolidate-assets-archive-plan-template>` 标签 承载计划和结果；有知识整合候选时再读 下方 `<ref-specdev-a-archive-and-consolidate-assets-consolidation-plan-template>` 标签，有清理候选时再读 下方 `<ref-specdev-a-archive-and-consolidate-assets-cleanup-candidate-template>` 标签。同一具体批准统一复用，新增副作用或漂移只重开受影响确认。
+
+mechanical-only 复用仍有效的四类核对回执，或明确仅移动授权；必须报告未授权维护与已知相关错误。它免除重复知识读取，不允许把未知写成无需维护；必需维护未完成时移动阻塞。
+
+## 执行顺序与检查点
+
+| 步骤 | 动作与通过条件 |
+|---|---|
+| A0 | 重验原对象/结束证据/owner/依赖/相关事务锁；不接管他人任务 |
+| A1 | 固定四类资产及适用 DESIGN 计划、源目标和候选范围 |
+| A2 | 核对授权、来源摘要、before-image 与实际写入者；保存可恢复原件 |
+| A3 | 执行获批现役 docs/ADR/context 维护，每项写后回读；docs 使用共享 current-facts-docs 方法 |
+| A4 | 必要 DESIGN 通过专用网关发布，记录 candidate、expected current、批准与三类摘要及真实工具检查点 |
+| A5 | 核验当前资产、链接和完整/部分替代承接，执行已批准清理，预检移动后 locator |
+| A6 | 最后整体无覆盖移动 change，重验源字节、目标空缺、同文件系统与单写入者/隔离 |
+| A7 | 原回执 Result=moved；从唯一目标以 archived 验证清单、字节、模式、链接、DESIGN 来源/批准/原型和实际消费者，源不存在；此时未封存 |
+| A8 | 完成原总报告/回执，Result=verified 且 archived --sealed 通过后宣布封存；否则 partial/blocked 并保留精确恢复点 |
+
+A3–A5 任一本次必需动作未完成则不移动。DESIGN 仅用 下方 `<design-portability>` 标签的设计检查、发布与恢复协议，不能通用 append/merge current 或 revision。research/非标准 store 仍归原声明，不从目录名取得权力。A/I 不写 project-maintenance state/sidecar、不推进 commit 基线。
+
+## 中断与恢复
+
+普通收尾没有多文件整体原子性。已维护知识或设计发布成功而移动失败，保留已发布事实，按原回执继续；不得自动回滚规范。移动已发生则从目标恢复，只补原操作验证/回执，不再次移动。DESIGN 以 revision/current/INDEX 与原 operation 的真实状态续作，不跳号、覆盖或重复发布；锁按专用原 owner 协议处理，不按年龄清除。
+
+结果不明先检查真实系统，报告缺失不证明动作未发生。跨文件系统失败不降级复制删除；另迁移须独立授权与保真计划。恢复有冲突保留原件，停止重叠写集及依赖，独立已授权工作继续。只有本次获批范围的全部动作和检查有结论才 `verified`。
+
+</local-workflows-specdev-specdev-a-archive-and-consolidate-references-operation-contract>
+
+<ref-specdev-a-archive-and-consolidate-references-cleanup-rules>
+
+# Cleanup Rules
+
+知识合并计划形成后，审计目标 change 涉及的已声明知识条目，生成清理候选清单。默认只分析，不自行修改文件。
+
+## 扫描范围
+
+1. 从已经解析的 workflow 激活合同取得持久化约定，结合 INDEX 永久知识指针确认 store 与写入 owner；不能假定 INDEX 包含运行合同或仅凭目录名称取得写入权。
+2. 尚未创建的 lazy store 记为 `missing`，不为清理而创建。
+3. 按本次候选 ID/名称搜索代码、文档、active changes 和 archive 中的引用，仅回读命中证据；用户明确要求全域清理时才扩大候选清单。
+4. 删除候选须核对归档引用、来源与保留义务；无法证明可删则保留或 propose-only。
+
+## 候选生成
+
+多个来源冲突时，先按 下方 `<ref-common-rules-artifact-contract>` 标签 的权威顺序区分当前实现、已批准目标、ADR 取舍、context 兼容范围和历史。代码只证明当前实现；偏离仍有效的目标或 ADR 时记录偏差并交原 owner，不能据此退役义务。部分替代须保留剩余内容及受支持消费者；仅在全部有效内容已失效或已由明确后继承接时才提出退出现役。无法裁决的候选归 `needs-confirmation`，保留双方依据和原件。
+
+### 可删除（delete）
+
+- 已被替代且经引用与历史保留义务核对可移除的冗余副本；原 ADR 默认保留 supersedes 链，年龄不作为删除依据。
+- 已无实际用途的占位文件；核对模板/恢复消费者后才列候选，不按年龄裁决。
+- 误生成或准确重复且所有独有内容已有负责位置的条目；退役/无引用只是审查线索，仍需删除证据与具体授权。
+- 已完成待办仍列为开放项（核实后删除，不保留流水账）。
+- 多个位置复制的同一规则（保留权威真身，其余删除或替换为指针）。
+
+### 可合并（merge）
+
+- `adr/` 中多条内容相似的 ADR（合并为一条，注明多个来源）。
+- `context/` 中同一概念在多处有不同表述但实质相同（指定权威版本，其余加指针）。
+- 被新 ADR 或规则完全吸收的旧 lesson（合并到对应 ADR 引用）。
+
+### 可改写（rewrite）
+
+- 仍现役且确需修正格式的条目；冻结历史不整理格式。
+- 含有相对时间表述（"recently"、"两个月前"）的条目 → 改为绝对日期。
+- 历史是否有独立价值须核对来源、兼容与保留义务；无引用、年龄或体量不单独构成删除依据。
+
+### 需确认（needs-confirmation）
+
+- 规则修改或删除（若 领域 Skill/manifest 声明了规则相关 store）。
+- 术语定义冲突（`context/` 中同一术语有不同定义）。
+- ADR/context 内容的实质性改写。
+- 非标准知识 store 的任何修改建议。
+- 矛盾规则无法自动裁决。
+
+### 保留（keep）
+
+- 仍被代码、文档、archive 或 active change 引用的内容。
+- 仍有决策理由、来源或历史保留价值的 ADR，包括被 supersede 的原记录。
+- 单次出现但满足毕业标准的知识（可能是新领域，引用尚未积累）。
+- SpecDev `design/revisions/` 的已发布不可变快照，无论年龄；活动或历史 change 的基线摘要依赖它。
+
+## 保护规则
+
+`store` 是领域声明且本次选中的知识目录相对路径。
+
+- 删除前解析真实路径，确认仍位于目标 workflow state root 和已声明 store 内。
+- 不跨 workflow 合并知识。
+- SpecDev DESIGN 的修改只经 A 设计网关形成新 revision；不删除/改写历史快照。INDEX 是派生投影，缺失或过时交原网关重建，不把它当成规范内容冲突。
+- 不修改 `project-maintenance` state（`specdev/project-maintenance-docs.json` 由 project-maintenance command 专有）。
+- 不为了空骨架创建占位文件；既有占位也先核对消费者和删除授权，不顺手移除。
+
+## 反模式清理
+
+扫描并标记以下反模式（继承自 neat-freak sync-matrix）：
+
+| 反模式 | 处理 |
+|--------|------|
+| 主规则顶部"某日 X 上线"历史叙事 | 纯历史迁 git/changelog；现役约束就地融合 |
+| 主规则抄完整架构/公式 | 留边界和权威文档指针，详细机制回 docs |
+| 多个版本都自称"现役" | 按问题类型及有效范围核对权威、替代关系与消费者；未裁决前保留双方，不以当前代码统一退役 |
+| 已完成待办仍列开放项 | 核实后删除或改为当前约束 |
+| 单次事故长篇常驻 | 提炼可复用教训；机制进 docs，过程进 incident/git |
+| 会话残留（一次性计划、调试脚本、`_old`/`_backup` 副本） | 有效内容并进正式文档；文件列删除候选 |
+
+## 完成标准
+
+- 本次获批范围全部有结论；普通收尾不隐含扫描所有 store。
+- 每个候选属于恰好一个分类（`delete | merge | rewrite | keep | needs-confirmation`）。
+- 每个候选有来源路径、证据和风险说明。
+- 未确认时文件系统未发生变化。
+
+</ref-specdev-a-archive-and-consolidate-references-cleanup-rules>
+
+<ref-specdev-a-archive-and-consolidate-assets-archive-plan-template>
+
+# 本次收尾
+
+范围：<固定对象/主题、archive-single/archive-batch/knowledge-maintenance>
+Owner 与依据：<实际会话/原计划 locator>
+结论门：<completed/cancelled 的原工件及验证，或独立维护依据>
+授权：<真实请求、具体目标/动作/范围、时间及原批准摘要>
+
+## 资产计划
+
+| 资产 | 源/目标 | 动作或无变更依据 | 内容 owner / 执行 owner | 批准与 before-image | 验证/恢复 |
+|---|---|---|---|---|---|
+| change | <稳定名称和实际位置> | <移动/保留> | <owner> | <依据> | <完成/取消、依赖与外部门> |
+| ADR | <相关条目> | <新建/纠错/部分替代/完整替代/无变更> | <owner> | <依据> | <理由/负向保证/恢复义务承接> |
+| context | <相关条目> | <维护或无变更> | <owner> | <依据> | <旧数据与兼容范围> |
+| docs | <唯一负责文档> | <当前事实修正或无变更> | <owner> | <依据> | <实际命令/链接/未验证> |
+| DESIGN（相关时） | <current/revision/candidate> | <网关动作/跳过> | <A/来源 owner> | <不可变批准及摘要> | <来源、原型、发布恢复> |
+
+## 执行检查点
+
+按 A0–A8 记录实际结果：固定范围 → 具体批准及原件 → 现役 docs/ADR/context → 适用 DESIGN → 引用和批准清理 → 最后无覆盖移动 → 目标消费者验证 → 原回执完成。每步填写真实命令/退出码、已落地路径、未完成项；不预填通过。
+
+源：specdev/changes/{change}/
+目标：specdev/changes/archive/{change}/
+移动能力：<无覆盖、同文件系统、单写入者/隔离证据>
+
+## 恢复与余项
+
+<原 owner、原批准/输入摘要、before-image、实际唯一位置、下一核验步骤与不可自动回滚的结果。完成封存后只写外部补充，不改历史。>
+
+## 实际归档时的结果段
+
+confirmed 且进入移动分支后，按 下方 `<ref-specdev-a-archive-and-consolidate-references-archive-receipt-contract>` 标签 在此原回执添加每个对象的唯一 anchor、批准引用和摘要、原/目标路径、真实 Result 与完整性清单。A7 的 moved 不代表封存，A8 的 verified 还须通过 archived --sealed。独立知识维护或 dry-run 不生成空移动结果段。
+
+</ref-specdev-a-archive-and-consolidate-assets-archive-plan-template>
+
+<ref-specdev-a-archive-and-consolidate-assets-consolidation-plan-template>
+
+# Consolidation Plan
+
+> 生成时间：<YYYY-MM-DD HH:MM>
+> Workflow：<workflow-name>
+> 扫描 change 数：<N>
+> 知识产物数：<N>
+> 目标 stores：<领域 Skill/manifest 声明的知识 store 列表>
+
+## 提取摘要
+
+| 目标 Store | 新建 | 合并 | 冲突(需确认) | 跳过(Ephemeral) |
+|------------|------|------|-------------|----------------|
+| adr/ | <N> | <N> | <N> | <N> |
+| context/ | <N> | <N> | <N> | <N> |
+| <其他已声明 store> | <N> | <N> | <N> | <N> |
+
+---
+
+## adr/
+
+### [NEW] <YYYY-MM-DD>-<topic>[-NN].md
+- **来源 change**：<change-name>
+- **决策标题**：<title>
+- **毕业判定**：<stable-mechanism / repeated-lesson / must-know>
+- **内容摘要**：<1-2 句总结>
+- **Supersedes**：<如有，列出被取代的 ADR 稳定名称及完整/部分范围>
+
+### [SUPERSEDE] <YYYY-MM-DD>-<topic>[-NN].md
+- **被取代原因**：<新 ADR 编号和简要理由>
+
+---
+
+## context/
+
+### [ADD] 术语 "<term>"
+- **来源 change**：<change-name>
+- **定义**：<definition>
+- **_Avoid_（避免使用）**：<synonyms>
+- **毕业判定**：<stable-mechanism / must-know>
+- **目标文件**：<context/ 下的目标文件路径>
+
+### [CONFLICT] 术语 "<term>"
+- **现有定义**：<existing definition>
+- **新定义**：<new definition from change>
+- **建议**：<resolution suggestion>
+
+---
+
+## <其他已声明 store>
+
+### [ADD] <条目标题>
+- **来源 change**：<change-name>
+- **内容摘要**：<summary>
+- **毕业判定**：<criterion>
+
+### [CONFLICT] <冲突描述>
+- **现有内容**：<existing>
+- **新内容**：<new>
+- **建议**：<resolution suggestion>
+
+---
+
+## SpecDev DESIGN（存在设计提升时）
+
+- 批准来源与时间：<原用户确认 locator / ISO 时间>
+- 计划摘要：<sha256>
+- 当前 revision / 字节摘要：<revision / sha256 或 absent>
+- 候选 revision / 字节摘要：<revision / sha256>
+- 规则级决定：<rule ID、create/merge/supersede/skip、approved-intent/implemented、来源 locator/digest>
+- 发布检查点：<validated / revision-written / current-published / index-written>
+- 归档 locator：<移动后的稳定来源>
+- 实际结果与恢复：<已落地、未完成、原 owner 与下一核验动作>
+
+## Ephemeral（不提取，留在归档 change 中）
+
+| Change | 知识项 | 跳过原因 |
+|--------|--------|---------|
+| <change> | <item> | <未通过毕业标准/触发反毕业标准> |
+
+</ref-specdev-a-archive-and-consolidate-assets-consolidation-plan-template>
+
+<ref-specdev-a-archive-and-consolidate-assets-cleanup-candidate-template>
+
+# Cleanup Candidates
+
+> 生成时间：<YYYY-MM-DD HH:MM>
+> Workflow：<workflow-name>
+> 扫描 store 数：<N>
+> 候选总数：<N>
+
+## 分类摘要
+
+| 分类 | 数量 |
+|------|------|
+| delete | <N> |
+| merge | <N> |
+| rewrite | <N> |
+| keep | <N> |
+| needs-confirmation | <N> |
+
+---
+
+## Delete 候选
+
+| # | 文件/条目 | 理由 | 风险 | 最后引用日期 |
+|---|----------|------|------|------------|
+| 1 | `specdev/adr/0001-old-auth.md` | 冗余副本；来源、引用及保留义务已核对 | low | 2026-06-01 |
+| 2 | `specdev/context/legacy-term.md` | 代码和 archive 中无引用证据 | low | — |
+
+---
+
+## Merge 候选
+
+| # | 源 | 目标 | 理由 |
+|---|-----|------|------|
+| 1 | `specdev/adr/0002-timeout.md` | `specdev/adr/0005-timeout-v2.md` | 主题相同（超时处理），0005 更完整，合并并注明来源 |
+| 2 | `context/` 中重复的规则描述 | `adr/` 对应决策 | 保留 adr/ 为权威版本，context/ 中改为指针 |
+
+---
+
+## Rewrite 候选
+
+| # | 文件/条目 | 当前问题 | 建议改写 |
+|---|----------|---------|---------|
+| 1 | `specdev/context/terms.md#term:Session` | 含相对时间"两个月前上线" | 改为绝对日期"2026-05-15 上线" |
+| 2 | `specdev/adr/0002-caching.md` | 格式不符合 ADR 模板 | 补全"后果"部分 |
+
+---
+
+## Needs-Confirmation 候选
+
+| # | 文件/条目 | 冲突/问题 | 选项 |
+|---|----------|----------|------|
+| 1 | `specdev/context/terms.md#max-retry` | 规则"最多重试 3 次"与 change 中"建议 5 次"矛盾 | A) 保留 3 次 B) 改为 5 次 C) 按场景区分 |
+| 2 | `specdev/context/terms.md#term:Token` | 定义"JWT access token"与 change 中"包括 refresh token"不一致 | A) 扩大定义 B) 拆分为两个术语 |
+
+---
+
+## Keep（保留，无动作）
+
+| # | 文件/条目 | 保留原因 |
+|---|----------|---------|
+| 1 | `specdev/adr/0003-jwt-auth.md` | 仍为现役决策或保留独有理由 |
+| 2 | `specdev/context/terms.md` | 仍被变更和代码引用 |
+
+---
+
+## 反模式标记
+
+| # | 位置 | 反模式 | 建议 |
+|---|------|--------|------|
+| 1 | `specdev/context/terms.md` 顶部 | "2026-03-01 上线 v2，详见..." 历史叙事 | 纯历史迁 CHANGELOG；现役约束就地融合 |
+
+</ref-specdev-a-archive-and-consolidate-assets-cleanup-candidate-template>

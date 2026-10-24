@@ -5,8 +5,8 @@
 |---|---|---|
 | 需要冻结外部来源或审计摄入 | T-triage intake | D / G / W / P / S / C / T |
 | 尚未成 Change，只要先在 GitHub 留一条仍 open 的记事项 | T-triage capture | 停止 / 以后 intake / W |
-| 本地 change 完成且来源可关闭 | T-triage reconcile | A |
-| 本地 change 完成且要把 Ticket 记到 GitHub | T-triage publish | reconcile / A / 停止 |
+| 本地 change 完成且来源可关闭 | D-delivery reconcile | A |
+| 本地 change 完成且要把 Ticket 记到 GitHub | D-delivery publish | reconcile / A / 停止 |
 | 疑难 bug 或性能回归 | D-diagnose-bugs | S / T / I / R / W |
 | 模糊但可通过决策访谈收敛 | G-grill-with-docs | P / S / T / W |
 | 大需求包含多个未界定 change 或未知路径 | W-wayfinder | G / P / D / S / T |
@@ -15,7 +15,7 @@
 | 外部行为已清楚 | S-spec | I（完整 Ready Spec 且有实现授权）/ T（需要拆票）/ 返回规格 |
 | Ready Spec 需要垂直切片 | T-tickets | P-goal-plan / I |
 | 按需的轻量 Goal、单 change 或多个 Ready change 的 Goal 规划、持续实现与恢复 | P-goal-plan | I / verify / completed / blocked |
-| Ready 执行 | I-implement | Triage / A / blocked / deviation |
+| Ready 执行 | I-implement | Delivery / A / blocked / deviation |
 | 学习需求参考、本项目代码、已有 change 或外部项目与文章 | L-learn | 返回用户 / 继续提问；另有开发请求再选 G / W / S |
 | 架构健康扫描 | R-review-architecture | G / T |
 
@@ -26,7 +26,7 @@
 
 ## 复盘与交付路由
 
-开发环境/流程复盘、积累独立 RETRO，以及明确要求汇总升级项目 Skills → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码与参考资料学习 → <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈仍为 retro command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 T 接管代码。
+整体会话及开发过程复盘、积累带会话来源的独立 RETRO，以及明确要求汇总沉淀 ADR、项目知识或 Skills → <Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>。代码与参考资料学习 → <Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>；可在实现前直接进入，用户未指定 change 时由 L 新建学习载体。Speculo 产品反馈使用 speculo-feedback Command。CI/安全/PR/包发布 → <Path>{roots.workflows}/specdev/specdev-d-delivery/SKILL.md</Path> 的对应模式；确定性修复回到 D/I，不由 Delivery 接管代码。
 
 长任务在阶段边界按产物与待决问题选择继续、压缩上下文或 handoff；交接只携带准确 owner、SHA、输入和未闭合动作，不硬编码特定模型的上下文阈值，不自动启动其他会话。
 

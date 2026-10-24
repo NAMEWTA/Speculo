@@ -345,6 +345,7 @@ const portableDesignReferences = new Set([
 ]);
 
 const capabilityNames = new Map([
+  ["specdev-d-delivery/SKILL.md", "开发交付阶段"],
   ["specdev-a-archive-and-consolidate/SKILL.md", "归档与沉淀阶段"],
   ["specdev-c-code-review/SKILL.md", "独立代码审查阶段"],
   ["specdev-d-diagnose-bugs/SKILL.md", "Bug 诊断阶段"],
@@ -466,6 +467,7 @@ function workflowPathToCanonical(value, tagsBySource) {
   if (relative === "common/tools/ticket-control.mjs") return "本地只读 Goal 控制器（不含于网页快照）";
   if (relative === "common/tools/plan-contract.mjs") return "本地 Plan 合同校验库（不含于网页快照）";
   if (relative === "common/tools/change-artifacts.mjs") return "本地只读工件与完成证据检查（缺工具时按内联合同核对并明确未执行自动检查）";
+  if (relative === "specdev-r-retro/scripts/session-evidence.mjs") return "本地只读会话证据工具（仅从显式日志根定位匹配项目与会话 ID 的原件，按行区间和截止时间读取；网页环境记录不可用，不伪造日志证据）";
   if (relative === "common/tools/validate-retro.mjs") return "本地只读复盘与升级证据检查（缺工具时按内联合同逐项核对并明确未执行自动检查，不伪造批准、写入或封存）";
 
   if (relative === "common/tools/README.md") {

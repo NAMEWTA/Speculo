@@ -10,7 +10,7 @@
 
 ## 生命周期与所有权
 
-逐字段定义必需/可选、类型、owner、初值、更新时机、枚举及与工件的关系。初始化、选择/恢复、开始、完成、阻塞、取消、归档各有前置条件与唯一 owner。OPS 等已有资源模型按原域合同处理，不套用 SpecDev。_state 只含种子，不包含实例、报告或 docs-sync sidecar。
+逐字段定义必需/可选、类型、owner、初值、更新时机、枚举及与工件的关系。初始化、选择/恢复、开始、完成、阻塞、取消、归档各有前置条件与唯一 owner。OPS 等已有资源模型按原域合同处理，不套用 SpecDev。_state 只含种子，不包含实例、报告或 project-maintenance sidecar。
 
 每个 Work 要有稳定业务 ID、输入来源、可选输入、产物、写集、状态变化、成功/失败/恢复路由。每项 required input 有生产者，每项产物有消费者。未知 namespace 不创建；永久知识按 gateway 写，CLI back 不接管。
 

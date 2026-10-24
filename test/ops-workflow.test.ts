@@ -130,6 +130,6 @@ describe("OPS five-entry resource workspace",()=>{
   const status=await readFile(join(packageRoot,"template/commands/status/COMMAND.md"),"utf8");
   assert.match(status,/ops\/common\/tools\/ops\.mjs/);assert.match(status,/`--state <absolute-ops-root> status` \/ `validate`/);
   assert.match(status,/`inspect-run` 会联系目标，`fleet` 会写视图，Status 不自动调用它们/);assert.doesNotMatch(status,/ops\/projects\/\{project_id\}\/changes/);
-  const archive=await readFile(join(packageRoot,"template/commands/archive-and-consolidate/COMMAND.md"),"utf8");assert.match(archive,/OPS 资源运行记录/);
+  const archive=await readFile(join(packageRoot,"template/commands/project-maintenance/COMMAND.md"),"utf8");assert.match(archive,/OPS、Person、Media 的通用归档返回 unsupported/);
  });
 });

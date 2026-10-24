@@ -305,7 +305,7 @@ export async function runTask(state, taskId, adapter = null) {
       progress.error = redact(error.message || String(error), []).slice(0, 2000);
     }
     progress.updated_at = now();
-    progress.recovery = progress.status === "completed" ? "none" : "Inspect progress and the original run with inspect-run; no automatic resume, docs-sync or migration retry. New actions need a new bounded task.";
+    progress.recovery = progress.status === "completed" ? "none" : "Inspect progress and the original run with inspect-run; no automatic resume, project-maintenance or migration retry. New actions need a new bounded task.";
     writeJson(join(folder, "progress.json"), progress);
     writeJson(join(folder, "result.json"), progress, { exclusive: true });
     return { ...progress, record: folder };

@@ -264,7 +264,7 @@ async function writeSourceAndTriage(root: string, externalAction = "pending-clos
     join(root, "triage.md"),
     [
       "---",
-      "schema_version: 2",
+      "schema_version: 3",
       "artifact: triage",
       "disposition: needs-triage",
       "verification: pending",
@@ -276,7 +276,6 @@ async function writeSourceAndTriage(root: string, externalAction = "pending-clos
       "risk: medium",
       "route: specdev/diagnose-bugs",
       "ready_for_implementation: false",
-      `external_action: ${externalAction}`,
       "updated_at: 2026-08-07T00:00:00Z",
       "---",
       "",
@@ -288,11 +287,28 @@ async function writeSourceAndTriage(root: string, externalAction = "pending-clos
       "none",
       "## 路由",
       "diagnosis",
-      "## 外部动作",
+      "## 实施简报",
+      "fixture evidence and bounded next steps",
+      "## 打标回执",
       externalAction,
       "",
     ].join("\n"),
   );
+  await writeFile(join(root, 'delivery.md'), `---
+schema_version: 1
+artifact: delivery
+change: ${changeName}
+external_action: ${externalAction}
+publish: null
+updated_at: 2026-08-07T00:00:00Z
+---
+## 来源完成回写
+${externalAction}
+## 发布投影
+未请求
+## 恢复
+真实 fixture 回执
+`);
 }
 
 function runValidator(root: string, stage?: string, repo?: string) {
@@ -614,7 +630,7 @@ describe("SpecDev local-first contracts", () => {
 
     const workDirs = (await readdir(workflowRoot, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory() && /^specdev-[a-z]-/.test(entry.name));
-    assert.equal(workDirs.length, 15);
+    assert.equal(workDirs.length, 16);
     for (const workDir of workDirs) {
       const entry = await readFile(join(workflowRoot, workDir.name, "SKILL.md"), "utf8");
       assert.match(entry, new RegExp(activationRef.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -1256,7 +1272,7 @@ fs.writeFileSync(path, JSON.stringify(state));
 `,
       );
       await chmod(fakeGh, 0o755);
-      const transport = join(packageRoot, "template/workflows/specdev/specdev-t-triage/scripts/github-transport.mjs");
+      const transport = join(packageRoot, "template/workflows/specdev/common/tools/github-transport.mjs");
       const args = [
         transport,
         "issue-comment-close",

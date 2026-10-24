@@ -14,6 +14,6 @@
 
 文档结构、行为、迁移或所有权变化时，读取 `<Path>{roots.references}/writing-for-agents/references/document-contract.md</Path>`。普通修正直接核对相关事实、链接与格式；其他验证按改动风险选择。真实源优先，保留软链接、文件模式、许可、必要元数据、用户指定数量、默认工具和失败边界。重构保留可恢复的编辑前内容；字符统计仅用于重构评估。交付实际修改、验证和未完成项，不把字符变化当作 Token 或额度收益。
 
-SpecDev 普通 Work 不要求全局初始化或重复业务 status；新对象从实际目录与 README 唯一 Outcome 发现，进度只由原 README/Goal/Ticket 之一负责。工程事实按需查看 <Path>{roots.state}/docs/README.md</Path>，缺失不妨碍普通工作。明确基线请求或本次文档修改时使用 <Path>{roots.references}/writing-for-agents/references/current-facts-docs.md</Path>；全局整理另由 docs-sync 显式调用。
+SpecDev 普通 Work 不要求全局初始化或重复业务 status；新对象从实际目录与 README 唯一 Outcome 发现，进度只由原 README/Goal/Ticket 之一负责。工程事实按需查看 <Path>{roots.state}/docs/README.md</Path>，缺失不妨碍普通工作。明确基线请求或本次文档修改时使用 <Path>{roots.references}/writing-for-agents/references/current-facts-docs.md</Path>；全局整理另由 project-maintenance 显式调用。
 
 跨领域编排：用户明确要求协作或当前 Work 要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>。项目默认编排方式由公共 command/coordination-init 初始化；具体工具、模型、任务顺序和 Skill 由当次请求决定。用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>，更新实际 change 的 handoff.md 或整体会话报告。

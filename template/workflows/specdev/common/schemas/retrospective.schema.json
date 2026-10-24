@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:specdev:retrospective:v2",
+  "$id": "urn:speculo:specdev:retrospective:v3",
   "type": "object",
   "required": [
     "schema_version",
@@ -11,11 +11,12 @@
     "outcome",
     "updated_at",
     "sources",
-    "findings"
+    "findings",
+    "sessions"
   ],
   "properties": {
     "schema_version": {
-      "const": 2
+      "const": 3
     },
     "artifact": {
       "const": "retrospective"
@@ -96,6 +97,39 @@
           "quote": {
             "type": "string",
             "minLength": 1
+          },
+          "session_ref": {
+            "type": "string",
+            "pattern": "^S-[0-9]{3,}$"
+          },
+          "anchor": {
+            "type": "object",
+            "required": [
+              "start_line",
+              "end_line",
+              "timestamp"
+            ],
+            "properties": {
+              "start_line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "end_line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "event_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -125,7 +159,13 @@
               "global-instructions",
               "tool-economy",
               "no-ops",
-              "information-access"
+              "information-access",
+              "goal-alignment",
+              "decision-quality",
+              "implementation",
+              "verification",
+              "coordination",
+              "successful-practice"
             ]
           },
           "severity": {
@@ -151,7 +191,57 @@
               "deterministic-check-gap",
               "context-pointer",
               "judgment-rule",
-              "environment-discovery"
+              "environment-discovery",
+              "architecture-decision",
+              "project-knowledge"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "host",
+          "session_id",
+          "locator",
+          "captured_until",
+          "availability"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^S-[0-9]{3,}$"
+          },
+          "host": {
+            "type": "string",
+            "minLength": 1
+          },
+          "session_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "captured_until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availability": {
+            "enum": [
+              "available",
+              "unavailable",
+              "unknown"
             ]
           }
         },

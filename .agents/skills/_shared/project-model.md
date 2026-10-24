@@ -21,7 +21,7 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 五个领域根 Skill 只做发现、路由和永久知识定位；用户指定 Work 时可直接读 Work Skill，再读 activation-and-memory 与该领域运行合同。根 README/INDEX 不承担激活。
 
-38 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。11 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
+39 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。9 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
 
 跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。公共 command/coordination-init 初始化一个项目默认方式，具体模型与任务由当次请求决定。Worker 可直接写获分配的计划、票据、地图等产物，Lead 核验并协调原 owner/gateway 推进正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
@@ -41,7 +41,7 @@ canonical 共 12 份，是隔离的单文件分发。共享规则、portable ada
 
 Workflow 仅写领域声明的 namespace；Work 的 change 工件、schema、owner 以各域合同为准，OPS 资源模型不强制变成 Change。SpecDev 新业务整体结论为 README 唯一 Outcome active/completed/cancelled，归档在 changes/archive/<稳定名称>；普通新流程不读写全局 status/change status/Work 调用镜像。config 仅真实工具需要时保留，复杂 Goal Plan 8、Implementation Plan 3 及 Ticket/Map 等有实际消费者的合同不弱化；旧历史文件保留，但不参与当前对象发现。其他领域独立版本化，不强加此模型。并发字段为 max_concurrent_implementations / concurrent_implementation_limit，Lead 实现时也计数，current workspace 单写入者。
 
-Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突从 -01 取最小未使用编号，报告不覆盖。只有有恢复需求的 command 才建 state.json。docs-sync sidecar 由命令拥有，延迟创建，不放 workflow/_state。CLI-owned back 不由 prompt 改写。
+Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突从 -01 取最小未使用编号，报告不覆盖。只有有恢复需求的 command 才建 state.json。project-maintenance sidecar 由命令拥有，延迟创建，不放 workflow/_state。CLI-owned back 不由 prompt 改写。
 
 永久知识先检索 ID/关键词定位，再回读少量原文及 provenance；写前解析 owner/gateway、pending transaction、lock、recovery evidence。未知网关只阻塞该写入。提交、推送、合并、删除分支/worktree、发布、部署、归档移动与不可逆迁移由拥有该动作的入口取得明确授权并回读验证。
 
@@ -49,7 +49,7 @@ Command 报告位于 state/commands/id/YYYY-MM-DD-scope-topic[-NN].md，冲突�
 
 先读真实调用方、当前 schema 和测试，再改作者参考。按 [验证选择](validation-gates.md) 检查受影响的格式、catalog、links、disclosure 与领域行为；安装/恢复变化才增加对应测试，涉及生成物才生成两次确认无 diff。未知字段和用户 runtime bytes 遵循各 schema 的保留规则，不能为了通过测试减掉业务门禁。记录命令、退出码、未验证宿主行为、恢复入口，不将字符数变化当 Token/额度收益。
 
-当前工程 docs 位于 state/docs 或项目已有负责正文，按主题归属；明确请求才建全面基线，A/I 用共享 current-facts-docs 局部维护，docs-sync 才手动全局整理并拥有 Git/state。A 先核对 change/ADR/context/docs 与适用 DESIGN，维护现役资产后最后移动；无 change 知识维护仅需持久化恢复时建 maintenance 回执。
+当前工程 docs 位于 state/docs 或项目已有负责正文，按主题归属；明确请求才建全面基线，A/I 用共享 current-facts-docs 局部维护，project-maintenance 才手动全局整理并拥有 Git/state。A 先核对 change/ADR/context/docs 与适用 DESIGN，维护现役资产后最后移动；无 change 知识维护仅需持久化恢复时建 maintenance 回执。
 
 ## Skills Hub 分发
 

@@ -20,7 +20,7 @@ describe("command report roots", () => {
   it("declares a state-root report path for every command", () => {
     const files = commandFiles();
     assert.ok(files.includes("git-history-squash/COMMAND.md"));
-    assert.equal(files.length, 11);
+    assert.equal(files.length, 9);
     for (const name of files) {
       const content = readFileSync(join(commandsDir, name), "utf8");
       const id = content.match(/^id:\s*(\S+)/m)?.[1];
@@ -30,7 +30,7 @@ describe("command report roots", () => {
   });
 
   it("routes archive execution to domain owners and keeps command receipts separate", () => {
-    const command = read("template/commands/archive-and-consolidate/COMMAND.md");
+    const command = read("template/commands/project-maintenance/COMMAND.md");
     const owner = "{roots.workflows}/specdev/specdev-a-archive-and-consolidate";
     const work = read("template/workflows/specdev/specdev-a-archive-and-consolidate/SKILL.md");
     const operation = read("template/workflows/specdev/specdev-a-archive-and-consolidate/references/operation-contract.md");
@@ -39,7 +39,7 @@ describe("command report roots", () => {
     assert.ok(commandPaths.includes("{roots.workflows}/learning/learning-a-archive/SKILL.md"));
     assert.ok(commandPaths.includes("{roots.workflows}/learning/learning-c-consolidate/SKILL.md"));
     const reportPaths = commandPaths.filter(path => path.includes("{date}"));
-    assert.deepEqual(reportPaths, ["{roots.state}/commands/archive-and-consolidate/{date}-{scope}-{topic}[-NN].md"]);
+    assert.deepEqual(reportPaths, ["{roots.state}/commands/project-maintenance/{date}-{scope}-{topic}[-NN].md"]);
     assert.ok(command.includes(".agents/speculo/.speculo/workspace.json"));
     assert.ok(work.includes(`${owner}/references/operation-contract.md`));
     assert.ok(operation.includes("{roots.state}/specdev/changes/{change}/archive-receipt.md"));

@@ -23,7 +23,7 @@ export function initializeHostSpec(state, hid) {
   return { schema_version: 1, worker: "H", operation: "prepare", hosts: [hid], host_actions: actions,
     acknowledged_consumers: Object.values(status.deployments).filter((d) => d.host_id === hid && d.status !== "retired").map((d) => d.deployment_id).sort(),
     reason: "Minimal Host initialization: managed directories and verified bilateral host documents; project runtimes are prepared only when needed",
-    rollback_note: "Preserve all existing directories and data. Inspect unknown runs; docs-sync repairs documents without reinstalling anything.", risk: "external-mutation" };
+    rollback_note: "Preserve all existing directories and data. Inspect unknown runs; project-maintenance repairs documents without reinstalling anything.", risk: "external-mutation" };
 }
 
 export function connectionSpec(state, hid, endpoint) {

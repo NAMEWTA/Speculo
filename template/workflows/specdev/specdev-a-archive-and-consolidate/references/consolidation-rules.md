@@ -26,16 +26,20 @@
 - **Supersede 处理**：若新 ADR 取代旧 ADR，在旧 ADR 开头添加 Superseded by 与新 ADR 的完整指针 `<Path>{roots.state}/specdev/adr/{date}-{topic}[-NN].md</Path>`；不删除旧 ADR。
 - **从 LOG 提升**：<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path> 中满足 ADR 标准且尚未写入 <Path>{roots.state}/specdev/changes/{change}/ADR.md</Path> 的决策 → 创建正式 ADR，注明"从 <Path>{roots.state}/specdev/changes/{change}/LOG.md</Path> 提升"；已有 change ADR 时只评估该唯一候选，不重复生成。
 
-### context/（领域词汇表目录）
+### context/（领域术语、项目规则与经验）
 
-- **提取条件**：项目特有的领域术语，不是通用编程概念。
+- **提取条件**：项目特有领域术语、稳定规则、可复用经验或错误模式；通用编程常识、单次未证实猜测不提升。
 - **合并方式**：将新术语合并到 `context/` 目录下的现有术语文件中。若目录为空，创建首个术语文件。
-- **条目格式**：遵循 `**术语名**：定义` + `_Avoid_: 同义词` 格式。
+- **术语条目格式**：遵循 `**术语名**：定义` + `_Avoid_: 同义词` 格式。
 - **冲突检测**：若术语已在 context/ 中存在定义，比较两者：
   - 一致 → 跳过（记录"已存在"）
   - 不同 → 标记 `needs-confirmation`，展示两个版本
 - **保留现有**：已有的 `_Avoid_` 标注和术语分组不覆盖。
 - **术语更名**：若新术语取代旧术语，在旧术语的 `_Avoid_` 中保留旧名称，创建新术语条目。
+
+经验/错误模式按主题使用 <Path>{roots.state}/specdev/context/{date}-{topic}[-NN].md</Path>，记录类型（lesson/error-pattern）、适用条件、触发信号、处理方法、验证及来源 RETRO/F-ID/E-ID；同主题优先更新已有条目。context/INDEX.md 记录稳定条目、类型、主题、适用范围与来源索引，条目和索引都须在获批写集中。缺索引不默认整读知识树，可先按文件/关键词定位；创建后每次仅检索命中行。
+
+错误经验不写成全局无条件禁令；成功经验保留适用边界，机械规则交自动检查。索引是导航，正文与来源是知识权威；不另建 ERROR store。引用报告归档后按稳定 ID 在现役/archive 中唯一解析。
 
 ### design/（仅已声明的 SpecDev 项目设计知识）
 
