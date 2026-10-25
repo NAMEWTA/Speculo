@@ -8,6 +8,8 @@ lead: <actual-session-locator>
 
 范围和验收由本 change README 的 scope/acceptance/verification 负责。仅单 change、非 Deep、无真实并行、无独立 Ticket/Map/Implementation 的简单 Goal 使用本模板；用户明确要求完整工件时使用完整模板。
 
+任务实际采用外部依据时，就近保留原研究条目、关键原始 URL 和适用限制；已有 README 负责的决定继续链接原位置。
+
 ## Tasks
 
 - [ ] <有明确产物与验收引用的一项任务>

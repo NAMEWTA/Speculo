@@ -8787,6 +8787,7 @@
     "template/references/handoff/domain-context.md",
     "template/references/handoff/handoff-contract.md",
     "template/references/handoff/handoff-template.md",
+    "template/references/research-and-reuse/research-contract.md",
     "template/references/writing-for-agents/references/current-facts-docs.md",
     "template/references/writing-for-agents/references/project-skill-maintenance.md",
     "template/workflows/learning/common/rules/evidence-integrity.md",
@@ -8953,7 +8954,7 @@
   ],
   "summary": {
     "baseline_files": 1060,
-    "added": 463,
+    "added": 464,
     "actions": {
       "rewritten": 221,
       "preserved": 113,

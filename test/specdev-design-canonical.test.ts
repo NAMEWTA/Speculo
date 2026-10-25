@@ -40,7 +40,15 @@ test('all existing design consumers retain exact schemas and executable-independ
   }
 });
 
-test('isolated design canonical generation is deterministic and fails on missing schema dependencies', async () => {
+test('all portable SpecDev consumers include the complete shared research and citation contract', async () => {
+  const policy = (await readFile(join(root, 'template/references/research-and-reuse/research-contract.md'), 'utf8')).trim();
+  for (const name of outputs) {
+    const content = await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8');
+    assert.equal(inline(content, 'shared-research-and-reuse-research-contract'), policy, `${name}: shared policy must survive standalone compilation`);
+  }
+});
+
+test('isolated design canonical generation is deterministic and fails on missing shared or schema dependencies', async () => {
   const target = await mkdtemp(join(tmpdir(), 'specdev-canonical-design-'));
   try {
     await mkdir(join(target, 'scripts'), { recursive: true });
@@ -54,6 +62,12 @@ test('isolated design canonical generation is deterministic and fails on missing
     result = run(true);
     assert.equal(result.status, 0, result.stderr);
     for (const name of outputs) assert.equal(await readFile(join(target, `template/canonical/canonical-specdev-${name}.md`), 'utf8'), await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8'));
+    const policy = 'template/references/research-and-reuse/research-contract.md';
+    await rm(join(target, policy));
+    result = run();
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /research-contract\.md/);
+    await cp(join(root, policy), join(target, policy));
     await rm(join(target, 'template/workflows/specdev/common/schemas/change-design.schema.json'));
     result = run();
     assert.notEqual(result.status, 0);

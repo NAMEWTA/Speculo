@@ -17,7 +17,7 @@ ready_for_execution: false
 
 ## 1. Outcome and Authority
 
-说明整体成功与伪完成、非目标、用户决定来源及唯一 Lead。父 Map 拥有组合依赖；子 Spec/Ticket/Evidence 保持原权威。
+说明整体成功与伪完成、非目标、用户决定来源及唯一 Lead。编排采用外部依据时保留原研究定位、关键原始 URL 和适用限制。父 Map 拥有组合依赖；子 Spec/Ticket/Evidence 保持原权威。
 
 ## 2. Ready Frontier and Waves
 

@@ -12,6 +12,24 @@
 
 普通流程只使用当前 Markdown 协议，不分发全局 status、change status 或 Work 调用镜像。遇到不支持的 schema、混合权威或无法确认的原 writer 时停止受影响写入并保留原件；工具不提供旧协议 reader 或自动转换。归档按当前唯一目录及其完整性回执读取。
 
+## 调研与来源传递
+
+规划、访谈、设计、文档、实现和审查先核对相关既有实现、决定与来源。出现知识缺口、需要比较复用方案或转写含引用内容时，读取 <Path>{roots.references}/research-and-reuse/research-contract.md</Path>；已有且仍有效的依据可直接复用，直接调用 Work 也遵守此合同。
+
+需要具体外部研究时调用 <Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>，传入本 Work 的完整业务 ID、当前问题和唯一接收目标。研究只返回材料，由原 owner 写回；只读分支可交付当前回复，普通研究不新增共享 namespace。
+
+| 当前阶段 | 接收与传递位置 |
+|---|---|
+| W 探索 | 原调查及 solution comment 保留研究答案和原始来源，下游 change 引用相关条目 |
+| G 访谈 | 推荐选项就近给依据，原 LOG 保存讨论；接受的决定由 ADR/CONTEXT 保留适用来源 |
+| P 原型 | 沿用原型包 sources 与 change DESIGN 的来源导航，保留借鉴维度、版本和适配边界 |
+| S 规格、T 票据 | 在实际采用的行为、约束或 REUSE 内容处继承原研究定位和关键原始 URL |
+| P Goal 规划 | 原计划只记录编排所用依据，成员的决定与完整研究仍由原工件负责 |
+| I 实现 | 读取当前票或规格的相关依据，新增局部研究和适配记录进入原 Evidence；改变上层合同返回原 owner |
+| C/R 审查 | 原报告保留实际采用来源；入口允许的只读分支可在回复交付 |
+| L 学习 | 来源随讲解文档保存，继续遵守原学习 change、编号与索引合同 |
+| A 归档与沉淀 | 保留被采用结论的来源和替代关系，永久提升仍经原知识网关 |
+
 ## 工件与能力
 
 小请求使用 README 中等价范围、AC 与验证；用户明确要求 Spec/Ticket/Goal 时交付指定工件。复杂需求可经 W → G → S → T → P → I 逐步形成合同，不要求全部 Work 串行必跑。Ticket frontmatter 拥有本票状态、依赖、写集与 Skill binding；有票的 Map/Goal 只管导航、依赖、Gate、集成和恢复，无票 Goal 由计划清单负责进度。整体结论只在 README，归档事实只在目录位置与回执。

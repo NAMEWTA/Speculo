@@ -53,7 +53,7 @@
 
 查找*事实*是 Agent 的工作，永远不是用户的。先探索相关代码、配置、接口、schema、测试、历史 ADR 和相邻实现。
 
-当前沿问题需要来自环境的事实时，派遣独立探索去查找。不要阻塞等待：一次进行中的探索是一个未解决的前置条件，所以只有它下游的问题等待结果；现在就继续处理 frontier 的其余部分。不熟悉的外部技术使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
+当前沿问题需要来自环境的事实时，派遣独立探索去查找。不要阻塞等待：一次进行中的探索是一个未解决的前置条件，所以只有它下游的问题等待结果；现在就继续处理 frontier 的其余部分。陌生功能、交互模式或外部技术存在证据缺口时，使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>` 支撑选项比较，结果由 G 写入原 LOG。推荐答案就近保留采用的原始链接与适用限制，接受的决定同步到 ADR/CONTEXT 时继续保留相关引用。
 
 将未知项分为：
 

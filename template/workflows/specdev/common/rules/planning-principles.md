@@ -10,7 +10,7 @@ SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”
 - **高影响偏好或取舍**：无法从仓库推导，且会改变行为、架构、风险、范围、迁移或验收时才询问；
 - **低影响实现细节**：由实现者遵循现有惯例决定。
 
-外部事实研究使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`。
+知识缺口、复用方案比较及引用传递遵循 <Path>{roots.references}/research-and-reuse/research-contract.md</Path>。先继承有效依据；需要补充外部研究时使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，在形成推荐和锁定决定前完成相关查证。
 
 ## 2. 决策完备
 

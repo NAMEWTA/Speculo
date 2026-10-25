@@ -15,6 +15,8 @@
 
 从 <Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/INDEX.md</Path> 按标签定位候选，只展开选中条目和所需源 DESIGN。产品布局需特殊模式时读取 <Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/product-pattern-index.md</Path>。参考项目提供可复用系统和设计纪律，不授权复制商标、虚构客户或加载外部执行代码。
 
+已有基线和库资料不足以支持当前交互或复用判断时，调用 <Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path> 补查具体缺口，P 将结果写入当前原型包的来源与候选说明。资料足够时复用已有来源；关键原始 URL 与借鉴维度按 <Path>{roots.references}/research-and-reuse/research-contract.md</Path> 传递到实际采用的设计内容。
+
 每个候选记录稳定 `id`、`template_id`、`primary_reference`、`auxiliaries`、适合原因 `rationale`、`structural_difference`、共同 `task_id` 与离线 `entry`。每个辅助来源只负责明确 `dimension`，如排版、密度、导航或反馈。来源 `sources` 保存 locator，以及已核实的 URL/revision/license/digest；未知值不能编造。
 
 一个候选必须统一字体角色、色彩语义、间距/密度、形状/深度、导航与状态词汇。主模板拥有整体视觉语言；辅助模板的规则需转译到同一 token/组件语法。组合说明列出继承、调整、替换与冲突裁决，不把多个完整风格叠加到同一页面。不同候选应有任务结构或交互上的实质差异，不能只换配色。

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.10] - 2026-10-25
+
+### Changed
+
+- Add a shared research and reuse contract to the installed project handbook, making existing implementation discovery, targeted external research and original source citations available across planning, design, documentation and implementation.
+- Connect every direct SpecDev Work and the reusable research skill to the shared contract. Preserve source links and reuse decisions through interviews, prototypes, Specs, tickets, implementation and review in their existing owned artifacts.
+- Regenerate portable SpecDev Canonical documents with the complete shared contract, and verify core-only installation, handbook refresh, direct Work references and isolated compilation dependencies.
+
 ## [2.1.9] - 2026-10-24
 
 ### Changed
@@ -1137,7 +1145,9 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.8...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.10...HEAD
+[2.1.10]: https://github.com/NAMEWTA/Speculo/compare/v2.1.9...v2.1.10
+[2.1.9]: https://github.com/NAMEWTA/Speculo/compare/v2.1.8...v2.1.9
 [2.1.8]: https://github.com/NAMEWTA/Speculo/compare/v2.1.7...v2.1.8
 [2.1.1]: https://github.com/NAMEWTA/Speculo/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/NAMEWTA/Speculo/compare/v2.0.6...v2.1.0

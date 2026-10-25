@@ -33,6 +33,21 @@ describe("work upgrade: potential reference graph and actual read accounting", (
     assert.equal(refs[0].kind, "conditional"); assert.equal(refs[0].condition, "写 Spec 时");
     assert.equal(refs[1].role, "runtime"); assert.match(refs[2].error, /escaping/); assert.match(refs[3].error, /no trigger/);
   });
+  it("connects every direct SpecDev Work to the shared research policy without entering initialization", async () => {
+    const { buildDocumentGraph } = await load();
+    const graph = await buildDocumentGraph(process.cwd());
+    const runtime = "template/workflows/specdev/common/rules/domain-runtime.md";
+    const policy = "template/references/research-and-reuse/research-contract.md";
+    const pointsTo = (source: string, target: string) => graph.edges.some((edge: any) => edge.source === source && edge.target === target && edge.role === "source");
+    assert.ok(graph.files.get(policy)?.content, "shared policy must be an available source");
+    assert.ok(pointsTo(runtime, policy), "runtime must disclose the shared policy directly");
+    const entries = graph.entries.filter((entry: any) => entry.id.startsWith("specdev/"));
+    assert.ok(entries.length > 0);
+    for (const entry of entries) assert.ok(pointsTo(entry.path, runtime), `${entry.id} must reach the policy through its direct runtime contract`);
+    const research = "template/workflows/specdev/common/skills/research/SKILL.md";
+    assert.ok(pointsTo(runtime, research));
+    assert.ok(pointsTo(research, policy));
+  });
   it("reports missing targets, navigation cycles and reverse callers, not automatic deletion", async () => {
     const { buildDocumentGraph, affectedCallers } = await load();
     const root = await mkdtemp(join(tmpdir(), "speculo-graph-"));

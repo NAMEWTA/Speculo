@@ -38,6 +38,26 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
       assert.throws(() => updateAgentsContent(content, refs), /invalid-agent-markers/);
     }
   });
+  it("installs the shared research policy without a workflow and refreshes only the owned handbook block", async () => fixture(async (target) => {
+    const prefix = "# Project rules\r\n\r\nKeep this policy and whitespace.  \r\n";
+    const suffix = "\r\nUser appendix.  \r\n";
+    const legacy = `${prefix}<!-- SPECULO-BOOTSTRAP:START -->\r\nPrevious discovery instructions.\r\n<!-- SPECULO-BOOTSTRAP:END -->${suffix}`;
+    await writeFile(join(target, "AGENTS.md"), legacy);
+    await initSpeculo(target, opts);
+    const handbook = await readFile(join(target, "AGENTS.md"), "utf8");
+    assert.ok(handbook.startsWith(prefix));
+    assert.ok(handbook.endsWith(suffix));
+    assert.doesNotMatch(handbook, /(?<!\r)\n/);
+    const contract = "references/research-and-reuse/research-contract.md";
+    const links = [...handbook.matchAll(/\]\((\.\/\.agents\/speculo\/references\/[^)]+)\)/g)].map(match => match[1]);
+    assert.equal(links.filter(link => link === `./.agents/speculo/${contract}`).length, 1);
+    for (const link of links) assert.ok((await readFile(join(target, link), "utf8")).length > 0);
+    assert.equal(await readFile(join(target, ".agents/speculo", contract), "utf8"), await readFile(join(packageRoot, "template", contract), "utf8"));
+    const install = JSON.parse(await readFile(join(target, ".agents/speculo/.speculo/install.json"), "utf8"));
+    assert.deepEqual(install.workflows, []);
+    await initSpeculo(target, opts);
+    assert.equal(await readFile(join(target, "AGENTS.md"), "utf8"), handbook);
+  }));
   it("rejects external/dangling/same-project handbooks links without changing the link or target", { skip: process.platform === "win32" }, async () => {
     for (const name of ["AGENTS.md", "CLAUDE.md", ".gitignore"]) await fixture(async (target) => {
       const outside = await mkdtemp(join(tmpdir(), "speculo-handbook-source-"));

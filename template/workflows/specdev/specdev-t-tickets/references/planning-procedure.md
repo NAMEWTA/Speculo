@@ -47,7 +47,7 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 - 对照 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 使用项目领域词汇；
 - 对照 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>` 避免重新争论已接受决策。
 
-遇到不熟悉的模块、外部依赖或第三方库时，使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，再继续拆分。
+先继承上游已经核实的复用依据。遇到陌生模块、方案或外部依赖且依据不足时，使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，再继续拆分。把本票实际使用的研究条目、关键原始 URL 和适配边界写入目标与来源或执行约束；不能只保留 Spec 名称而丢失支持具体实现约束的出处。
 
 #### 项目 Skill 路由
 
