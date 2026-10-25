@@ -12,6 +12,8 @@ SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”
 
 知识缺口、复用方案比较及引用传递遵循 <Path>{roots.references}/research-and-reuse/research-contract.md</Path>。先继承有效依据；需要补充外部研究时使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，在形成推荐和锁定决定前完成相关查证。
 
+规划既有功能的变更时，按 <Path>{roots.references}/change-scope/change-contract.md</Path> 检查调用关系和依赖，在原范围、风险与验证内容中简列预计修改及可能受影响的文件和依据；已有有效分析直接引用。必要前置重构说明它解除的具体阻碍，影响清单与可写授权分别维护。
+
 ## 2. 决策完备
 
 一个 Plan 或 Ticket 达到以下状态才可执行：
@@ -24,7 +26,7 @@ SpecDev 的规划目标是“决策完备、细节最小充分、能够验证”
 - 验证方式和 Evidence 位置明确；
 - 不存在会改变上述内容的高影响未决问题。
 
-决策完备不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
+决策完备需要已查证的关键影响路径，不要求逐文件穷举、逐函数步骤、逐行代码、重复代码库事实或虚构未来路径。
 
 ## 3. 最小充分细节
 

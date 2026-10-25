@@ -12,6 +12,10 @@
 
 普通流程只使用当前 Markdown 协议，不分发全局 status、change status 或 Work 调用镜像。遇到不支持的 schema、混合权威或无法确认的原 writer 时停止受影响写入并保留原件；工具不提供旧协议 reader 或自动转换。归档按当前唯一目录及其完整性回执读取。
 
+## 变更影响与范围
+
+规划、修改或审查现有功能时，先按 <Path>{roots.references}/change-scope/change-contract.md</Path> 核对相关入口、调用方、依赖和验证范围；修改前简列预计修改及可能受影响的文件，按原授权与工件确定最小充分修改范围。直接调用 Work 同样适用，分析由当前负责工件或入口允许的回复接收。
+
 ## 调研与来源传递
 
 规划、访谈、设计、文档、实现和审查先核对相关既有实现、决定与来源。出现知识缺口、需要比较复用方案或转写含引用内容时，读取 <Path>{roots.references}/research-and-reuse/research-contract.md</Path>；已有且仍有效的依据可直接复用，直接调用 Work 也遵守此合同。

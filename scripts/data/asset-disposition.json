@@ -8772,6 +8772,7 @@
     "template/lib/contract-validators.cjs",
     "template/lib/design-validators.mjs",
     "template/lib/speculo-runtime.mjs",
+    "template/references/change-scope/change-contract.md",
     "template/references/contracts/README.md",
     "template/references/coordination/initialization.md",
     "template/references/coordination/modes/cli.md",
@@ -8954,7 +8955,7 @@
   ],
   "summary": {
     "baseline_files": 1060,
-    "added": 464,
+    "added": 465,
     "actions": {
       "rewritten": 221,
       "preserved": 113,

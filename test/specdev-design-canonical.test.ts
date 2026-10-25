@@ -7,6 +7,10 @@ import { test } from 'node:test';
 
 const root = process.cwd();
 const outputs = ['grill-with-docs', 'spec', 'tickets', 'goal-plan', 'wayfinder'];
+const sharedContracts = {
+  'shared-research-and-reuse-research-contract': 'template/references/research-and-reuse/research-contract.md',
+  'shared-change-scope-change-contract': 'template/references/change-scope/change-contract.md',
+};
 const schemaSources = {
   'project-design-schema': 'common/schemas/project-design.schema.json',
   'change-design-schema': 'common/schemas/change-design.schema.json',
@@ -40,11 +44,13 @@ test('all existing design consumers retain exact schemas and executable-independ
   }
 });
 
-test('all portable SpecDev consumers include the complete shared research and citation contract', async () => {
-  const policy = (await readFile(join(root, 'template/references/research-and-reuse/research-contract.md'), 'utf8')).trim();
+test('all portable SpecDev consumers include complete shared research and change-scope contracts', async () => {
   for (const name of outputs) {
     const content = await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8');
-    assert.equal(inline(content, 'shared-research-and-reuse-research-contract'), policy, `${name}: shared policy must survive standalone compilation`);
+    for (const [tag, source] of Object.entries(sharedContracts)) {
+      const policy = (await readFile(join(root, source), 'utf8')).trim();
+      assert.equal(inline(content, tag), policy, `${name}: ${tag} must survive standalone compilation`);
+    }
   }
 });
 
@@ -62,12 +68,13 @@ test('isolated design canonical generation is deterministic and fails on missing
     result = run(true);
     assert.equal(result.status, 0, result.stderr);
     for (const name of outputs) assert.equal(await readFile(join(target, `template/canonical/canonical-specdev-${name}.md`), 'utf8'), await readFile(join(root, `template/canonical/canonical-specdev-${name}.md`), 'utf8'));
-    const policy = 'template/references/research-and-reuse/research-contract.md';
-    await rm(join(target, policy));
-    result = run();
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /research-contract\.md/);
-    await cp(join(root, policy), join(target, policy));
+    for (const policy of Object.values(sharedContracts)) {
+      await rm(join(target, policy));
+      result = run();
+      assert.notEqual(result.status, 0);
+      assert.ok(result.stderr.includes(policy.split('/').at(-1)!), result.stderr);
+      await cp(join(root, policy), join(target, policy));
+    }
     await rm(join(target, 'template/workflows/specdev/common/schemas/change-design.schema.json'));
     result = run();
     assert.notEqual(result.status, 0);

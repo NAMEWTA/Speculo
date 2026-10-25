@@ -12,6 +12,8 @@
 
 详细状态、所有权和副作用合同由各 workflow 的 领域/Work `SKILL.md`、manifest、`common/rules/` 和 schema 定义。
 
+规划、修改或审查现有功能时，按 <Path>{roots.references}/change-scope/change-contract.md</Path> 核对调用关系与依赖，简列预计修改及可能受影响的文件与验证范围，明确最小充分修改范围。普通代码任务同样适用，不要求激活 workflow；影响清单不扩大可写权限。
+
 规划、设计、文档和实现先检查已有实现与决策；出现知识缺口、复用比较或含引用内容的转写时，读取 <Path>{roots.references}/research-and-reuse/research-contract.md</Path>，用于确定研究范围和保留采用内容的原始来源。普通项目任务也适用，不要求激活 workflow。
 
 文档结构、行为、迁移或所有权变化时，读取 `<Path>{roots.references}/writing-for-agents/references/document-contract.md</Path>`。普通修正直接核对相关事实、链接与格式；其他验证按改动风险选择。真实源优先，保留软链接、文件模式、许可、必要元数据、用户指定数量、默认工具和失败边界。重构保留可恢复的编辑前内容；字符统计仅用于重构评估。交付实际修改、验证和未完成项，不把字符变化当作 Token 或额度收益。

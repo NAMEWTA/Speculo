@@ -42,10 +42,12 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 
 - 找到行为入口、稳定接口、测试接缝、数据流和错误路径；
 - 查找相邻或类似实现，优先复用项目现有模式；
-- 识别可能修改的模块、公共路径、共享文件、迁移索引和全局注册点；
+- 沿调用关系和依赖识别预计修改的模块、公共路径、共享文件、迁移索引和全局注册点，以及只需读取或验证的消费者；
 - 查找现有测试命令、夹具、类型检查、构建和 CI 门禁；
 - 对照 `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>` 使用项目领域词汇；
 - 对照 `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>` 避免重新争论已接受决策。
+
+按 <Path>{roots.references}/change-scope/change-contract.md</Path> 将预计修改写入各票 `expected_changes`；只需读取的相关文件按原路径合同记入 `read_only_paths`，在原行为与范围、验证方法中说明消费者和验证依据或引用有效的上游分析。`writable_paths` 和 shared owner 仍按真实授权确定，不把影响清单整体复制成可写范围。
 
 先继承上游已经核实的复用依据。遇到陌生模块、方案或外部依赖且依据不足时，使用 `<Path>{roots.workflows}/specdev/common/skills/research/SKILL.md</Path>`，再继续拆分。把本票实际使用的研究条目、关键原始 URL 和适配边界写入目标与来源或执行约束；不能只保留 Spec 名称而丢失支持具体实现约束的出处。
 

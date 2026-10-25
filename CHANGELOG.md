@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.11] - 2026-10-25
+
+### Changed
+
+- Add a shared change impact and scope contract to the installed project handbook, requiring caller and dependency checks, affected-file identification and minimal sufficient changes before modifying existing functionality.
+- Apply the contract across SpecDev planning, tickets, implementation and review while preserving existing artifact ownership and authorization boundaries and excluding unrelated refactoring.
+- Regenerate portable SpecDev Canonical documents and verify core-only installation, handbook refresh, direct Work references and isolated compilation dependencies.
+
 ## [2.1.10] - 2026-10-25
 
 ### Changed
@@ -1145,7 +1153,8 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.10...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.11...HEAD
+[2.1.11]: https://github.com/NAMEWTA/Speculo/compare/v2.1.10...v2.1.11
 [2.1.10]: https://github.com/NAMEWTA/Speculo/compare/v2.1.9...v2.1.10
 [2.1.9]: https://github.com/NAMEWTA/Speculo/compare/v2.1.8...v2.1.9
 [2.1.8]: https://github.com/NAMEWTA/Speculo/compare/v2.1.7...v2.1.8
