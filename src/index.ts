@@ -18,6 +18,7 @@ import {
   discoverWorkflowCatalog,
   isInteractive,
   scanInstalledWorkflows,
+  readInstalledWorkflowIds,
   type WorkflowSelection,
 } from "./workflows.js";
 
@@ -185,7 +186,7 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
 
     const catalog = await discoverWorkflowCatalog(packageRoot);
     const hubCatalog = await discoverHubCatalog(packageRoot), hubManifest = await readHubManifest(target);
-    const installedBefore = await scanInstalledWorkflows(root);
+    const installedBefore = await readInstalledWorkflowIds(root);
     let workflowIds = [...new Set(options.selection?.workflowIds ?? installedBefore)].sort();
     for (const id of workflowIds) if (!catalog.has(id)) throw new Error("Unavailable workflow: " + id + "; explicitly select a new list or none");
     const priorHubIds = [...new Set(hubManifest?.packages.map(p => p.id) ?? [])];

@@ -535,12 +535,21 @@ async function preserveUnmanagedStatic(previousRoot:string, stagedRoot:string, r
     for(const entry of await readdir(dir,{withFileTypes:true})){
       const source=join(dir,entry.name),p=toPosix(relative(previousRoot,source));
       if(p==='.speculo'||p==='config.json'||retained.some(id=>p===`workflows/${id}`))continue;
-      if(entry.isDirectory()){await visit(source);continue;}
-      if(owned.has(p))continue;
+      if(owned.has(p)){
+        const stat=await lstat(source);
+        if(!stat.isFile()||stat.nlink!==1||!(stat.mode&0o200)||stat.mode&0o7000)throw new RefreshBlockedError([{code:'unsafe-managed-asset',path:p,message:'owned asset is linked, readonly or has unsafe permissions; preserve and resolve before refresh'}]);
+        continue;
+      }
+      if(entry.isDirectory()){
+        const target=await containedPath(stagedRoot,p);
+        if(![...owned].some(path=>typeof path==='string'&&path.startsWith(p+'/'))&&!await pathExists(target)){
+          await mkdir(target,{recursive:true});
+          if(process.platform!=='win32')await chmod(target,(await lstat(source)).mode&0o777);
+        }
+        await visit(source);continue;
+      }
       const target=await containedPath(stagedRoot,p);
       if(await pathExists(target)){
-        const a=await lstat(source),b=await lstat(target);
-        if(a.isFile()&&b.isFile()&&(await readFile(source)).equals(await readFile(target)))continue;
         throw new RefreshBlockedError([{code:'unmanaged-asset-conflict',path:p,message:'a new packaged asset conflicts with an unowned file; existing file preserved'}]);
       }
       if(entry.isSymbolicLink())throw new RefreshBlockedError([{code:'unmanaged-asset-conflict',path:p,message:'preserve unowned symlink; resolve its ownership before refresh'}]);

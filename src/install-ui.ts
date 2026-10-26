@@ -41,7 +41,7 @@ export async function promptPackages(options: { workflows: WorkflowCatalog; hub:
   const categories = options.chooseHub ? [...new Set([...options.hub.values()].map(skill => skill.id.split("/")[0]))].sort() : [];
   const availableWorkflows = options.chooseWorkflows ? [...options.workflows.values()].sort((a, b) => a.id.localeCompare(b.id)) : [];
   if (!categories.length && !availableWorkflows.length) return { workflowIds: options.workflowIds, hubIds: options.hubIds };
-  ui.note("进入 Hub 分类选择 Skill；选择 Workflow 可切换安装状态。\n取消勾选将卸载未修改的受管包；配置、change、知识与历史数据保留。冲突包整包保留并报告。\nEsc / Ctrl+C 取消安装。", "选择安装内容");
+  ui.note("进入 Hub 分类选择 Skill；选择 Workflow 可切换安装状态。\n受管能力按当前安装包刷新，覆盖本地修改；取消勾选移除受管文件。配置、change、知识、历史与用户附加文件保留；归属或安全冲突保留并报告。\nEsc / Ctrl+C 取消安装。", "选择安装内容");
   let cursor: string | undefined;
   for (;;) {
     const selected = answer(await ui.select({
@@ -96,7 +96,7 @@ const workflowLabel = (id: string) => WORKFLOW_LABELS[id] ?? id;
 export async function promptWorkflows(
   catalog: WorkflowCatalog, installed: Set<string>, ui: PromptPort = prompts,
 ): Promise<WorkflowSelection> {
-  ui.note("取消勾选会卸载未修改的受管 workflow；运行时数据保留。\nCtrl+C / Esc 取消安装。", "选择安装内容");
+  ui.note("受管 workflow 按当前安装包刷新；取消勾选移除受管方法，运行时数据和用户附加文件保留。\nCtrl+C / Esc 取消安装。", "选择安装内容");
   return { workflowIds: answer(await ui.multiselect({
     message: "选择本次安装或刷新的 workflow",
     options: [...catalog.values()].sort((a, b) => a.id.localeCompare(b.id)).map(w => ({
@@ -132,7 +132,7 @@ export async function promptExposureConfiguration(
   validateExposureRequest(options.targets, options.request);
   let targets = options.targets;
   if (targets === undefined) {
-    ui.note("Skills Hub 与曝光入口共用以下安装位置。\n空选关闭全部曝光；取消勾选的位置会清理未被人工修改的旧入口。\n所有位置共用一份能力清单，只需选择一次。", "选择安装位置");
+    ui.note("Skills Hub 与曝光入口共用以下安装位置。\n空选关闭全部曝光；取消勾选的位置会清理受管旧入口，包括本地修改。\n所有位置共用一份能力清单，只需选择一次。", "选择安装位置");
     do {
     targets = answer(await ui.multiselect({
       message: "选择 Skill 安装位置",
@@ -166,7 +166,7 @@ export async function promptExposure(
   const draft = new Set(existing);
   const available = new Set(catalog.assets.map(a => a.id));
   ui.note(
-    `当前已选择 ${existing.length} 个入口。完整内容保存在 .agents/speculo/。\n曝光位置：${targets.map(host => `.${host}/skills/`).join("、")}。\n所有选中位置共用下面这份能力清单，不会卸载 workflow。\n所选范围将替换当前清单；人工修改和同名第三方文件会保留并报告冲突。`,
+    `当前已选择 ${existing.length} 个入口。完整内容保存在 .agents/speculo/。\n曝光位置：${targets.map(host => `.${host}/skills/`).join("、")}。\n所有选中位置共用下面这份能力清单，不会卸载 workflow。\n所选范围将替换当前清单；受管入口覆盖本地修改，同名第三方文件保留并报告冲突。`,
     "配置统一的能力曝光",
   );
   for (;;) {

@@ -143,7 +143,7 @@ export async function planSkillProjection(options: {
     }
     for(const p of new Set([...owned.map(f=>f.path),...Object.keys(desired)])){
      const before=await snapshot(options.target,p),prior=owned.find(f=>f.path===p);
-     if(prior ? before.kind!=='file'||sha256Buffer(Buffer.from(before.content,'base64'))!==prior.sha256 || prior.mode!==undefined && before.mode!==prior.mode : before.kind!=='absent')throw new Error(`file differs from ownership record: ${p}`);
+     if(!prior && before.kind!=='absent')throw new Error(`unmanaged projection collision: ${p}`);
      const after=desired[p]===undefined?{kind:'absent' as const}:fileNode(desired[p]);
      if(JSON.stringify(before)!==JSON.stringify(after))pending.push({name:p,before,after});
      if(desired[p]!==undefined)registered.push({path:p,asset_id:id,sha256:sha256Buffer(desired[p]),mode:after.kind==='file'?after.mode:undefined});
@@ -164,7 +164,7 @@ export async function inspectProjectedSkills(target:string,_installed:string[]):
  try{
   const manifest=await readProjectionManifest(target);if(!manifest)return [];
   const catalog=await readAssetCatalog(join(target,INSTALL_ROOT)),checks=[];
-  for(const record of manifest.files){const node=await snapshot(target,record.path);if(node.kind!=='file'||sha256Buffer(Buffer.from(node.content,'base64'))!==record.sha256||record.mode!==undefined&&node.mode!==record.mode)checks.push({id:`projection-file:${record.path}`,ok:false,message:'owned projection drifted; preserve and reconcile explicitly'});}
+  for(const record of manifest.files){const node=await snapshot(target,record.path);const reason=node.kind!=='file'?'missing':sha256Buffer(Buffer.from(node.content,'base64'))!==record.sha256?'content differs':record.mode!==undefined&&node.mode!==record.mode?'mode differs':null;if(reason)checks.push({id:`projection-file:${record.path}`,ok:false,message:`owned projection ${reason}; run init to refresh`});}
   for(const record of manifest.files)if(!manifest.targets.some(host=>record.path.startsWith(`.${host}/skills/`))||!manifest.asset_ids.includes(record.asset_id))checks.push({id:`projection-retained:${record.path}`,ok:false,message:'disabled projection retained due to conflict; preserve and reconcile explicitly'});
   for(const host of manifest.targets)for(const id of manifest.asset_ids){
    const asset=catalog.assets.find(a=>a.id===id);let ok=!!asset;

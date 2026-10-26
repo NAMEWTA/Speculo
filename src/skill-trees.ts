@@ -10,6 +10,39 @@ export const sameNode = (a: SkillNode, b: SkillNode): boolean => a.kind === b.ki
   (a.kind === "absent" || b.kind !== "absent" && a.mode === b.mode &&
     (a.kind !== "file" || b.kind === "file" && a.content === b.content));
 
+/** Ownership authorizes replacement; the actual snapshot remains the transaction precondition. */
+export function reconcileOwnedTree(before: Map<string, SkillNode>, owned: readonly {path: string; kind: "file" | "directory"}[], desired: Map<string, SkillNode>): Map<string, SkillNode> {
+  const ownership = new Map(owned.map(node => [node.path, node]));
+  for (const node of owned) {
+    const current = before.get(node.path);
+    if (current && current.kind !== node.kind) throw new Error("owned resource node type changed: " + node.path);
+    if (current?.kind === "file" && !(current.mode & 0o200)) throw new Error("readonly owned resource: " + node.path);
+  }
+  const after = new Map(desired);
+  for (const [path, node] of before) {
+    if (ownership.has(path)) continue;
+    if (desired.has(path)) throw new Error("unmanaged resource collision: " + path);
+    after.set(path, node);
+  }
+  // Keep ancestor directories needed by user additions, without adopting those additions.
+  for (const path of [...after.keys()]) {
+    let parent = path;
+    while (parent) {
+      parent = parent.includes("/") ? parent.slice(0, parent.lastIndexOf("/")) : "";
+      if (!after.has(parent)) {
+        const node = before.get(parent);
+        if (node?.kind !== "directory") throw new Error("missing resource parent: " + parent);
+        after.set(parent, node);
+      }
+    }
+  }
+  for (const [path, node] of after) {
+    const current = before.get(path);
+    if (current && current.kind !== node.kind) throw new Error("resource node type changed: " + path);
+  }
+  return after;
+}
+
 export function validSkillPath(path: string): boolean {
   return safeRelativePath(path) && !path.endsWith("/") && /^\.(agents|claude)\/skills\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[^/]+)*$/.test(path);
 }

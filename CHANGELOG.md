@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.12] - 2026-10-26
+
+### Fixed
+
+- Refresh managed Workflow, Command, Work, Hub and discovery files from the running package even when local content, ordinary permissions or file presence differ. Repair the mode-only projection conflict that repeatedly retained unchanged entries.
+- Remove edited owned files when deselecting capabilities while preserving runtime data and user additions. Keep third-party collisions, unsafe nodes and concurrent transaction drift protected, and restore actual pre-refresh contents on rollback.
+- Discover installed workflows from installation records so damaged method entrypoints can be repaired; clarify refresh and doctor guidance.
+
 ## [2.1.11] - 2026-10-25
 
 ### Changed

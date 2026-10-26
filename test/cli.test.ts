@@ -322,16 +322,15 @@ describe("Speculo init refresh", () => {
     }
   });
 
-  it("replaces symlinked selected static assets instead of treating them as runtime", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
+  it("preserves symlinked selected static assets and blocks unsafe replacement", { skip: isWindows ? "requires Windows Developer Mode symlink privileges" : false }, async () => {
     const target = await tempProject();
     try {
       await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
       const command = join(target, ".agents/speculo", "commands", "status", "COMMAND.md");
       await rm(command);
       await symlink("../config.json", command);
-      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
-      assert.equal((await lstat(command)).isSymbolicLink(), false);
-      assert.match(await readFile(command, "utf8"), /status/i);
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), (error) => expectBlocked(error, "unsafe-managed-asset"));
+      assert.equal((await lstat(command)).isSymbolicLink(), true);
     } finally {
       await rm(target, { recursive: true, force: true });
     }

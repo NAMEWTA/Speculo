@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AssetCatalog } from "./assets.js";
 import { readProjectionManifest, sha256Buffer } from "./agent-skills.js";
-import { snapshotSkillTree, type SkillRecord } from "./skill-trees.js";
+import { snapshotSkillTree, reconcileOwnedTree, absent, type SkillRecord } from "./skill-trees.js";
 import { containedPath } from "./paths.js";
 import { validateRetainedWorkflows, type RetainedWorkflow } from "./retained-workflows.js";
 export { validateRetainedWorkflows, retainedAssets } from "./retained-workflows.js";
@@ -29,13 +29,10 @@ export async function planWorkflowRemoval(target: string, root: string, installe
       const prefix = `workflows/${id}/`, owned = result.priorFiles.filter(f => f.path.startsWith(prefix));
       if (!owned.length) throw new Error("workflow has no ownership records");
       const tree = await snapshotSkillTree(join(root, "workflows", id));
-      const expectedDirs = new Set([""]);
       for (const f of owned) {
-        const name = f.path.slice(prefix.length), node = tree.get(name);
-        if (node?.kind !== "file" || sha256Buffer(Buffer.from(node.content, "base64")) !== f.sha256 || f.mode !== undefined && f.mode !== node.mode) throw new Error("managed workflow file modified or missing: " + f.path);
-        const parts = name.split("/"); parts.pop(); while (parts.length) { expectedDirs.add(parts.join("/")); parts.pop(); }
+        const node = tree.get(f.path.slice(prefix.length));
+        if (node && (node.kind !== "file" || !(node.mode & 0o200))) throw new Error("unsafe owned workflow resource: " + f.path);
       }
-      for (const [path, node] of tree) if (node.kind === "directory" ? !expectedDirs.has(path) : !owned.some(f => f.path === prefix + path)) throw new Error("unmanaged workflow resource: " + path);
       const assetIds = catalog.assets.filter(a => a.domain === id).map(a => a.id);
       const projectionRecords = new Map<string, SkillRecord>();
       for (const p of projections?.files.filter(f => assetIds.includes(f.asset_id)) ?? []) {
@@ -43,14 +40,14 @@ export async function planWorkflowRemoval(target: string, root: string, installe
         const ownedProjection = projections!.files.filter(f => f.path.startsWith(parent + "/"));
         const directories = new Set([""]);
         for (const file of ownedProjection) { const parts = file.path.slice(parent.length + 1).split("/"); parts.pop(); while (parts.length) { directories.add(parts.join("/")); parts.pop(); } }
-        for (const [path, node] of projected) {
-          const record = ownedProjection.find(f => f.path === parent + "/" + path);
-          if (node.kind === "directory" ? !directories.has(path) : node.kind !== "file" || !record || sha256Buffer(Buffer.from(node.content, "base64")) !== record.sha256 || record.mode !== undefined && node.mode !== record.mode || !(node.mode & 0o200)) throw new Error("workflow projection modified or contains unmanaged resources: " + parent);
-        }
-        if (!projected.has(p.path.slice(parent.length + 1))) throw new Error("workflow projection missing: " + p.path);
-        for (const [path, before] of projected) {
+        const ownership = [
+          ...ownedProjection.map(file => ({ path: file.path.slice(parent.length + 1), kind: "file" as const })),
+          ...[...directories].map(path => ({ path, kind: "directory" as const })),
+        ];
+        const after = reconcileOwnedTree(projected, ownership, new Map());
+        for (const path of new Set([...projected.keys(), ...ownership.map(n => n.path)])) {
           const name = parent + (path ? "/" + path : "");
-          projectionRecords.set(name, { name, before, after: { kind: "absent" } });
+          projectionRecords.set(name, { name, before: projected.get(path) ?? absent, after: after.get(path) ?? absent });
         }
       }
       result.removed.push(id); result.removedAssetIds.push(...assetIds);

@@ -88,26 +88,46 @@ test("full package updates add/remove nested files and preserve executable modes
   const updated = await initSpeculo(target, options);
   assert.deepEqual(updated.hub.updated, ["agents:coding/sample-helper"]);
   assert.deepEqual(await snapshotSkillTree(installed), await snapshotSkillTree(skill)); await healthy(target);
+  const collision=join(installed,"references/deep/local.md");
+  await writeFile(collision,"user bytes");
+  await writeFile(join(skill,"references/deep/local.md"),"user bytes");
+  const installedBefore=await fingerprintTree(installed);
+  const conflict=await initSpeculo(target,options);
+  assert.deepEqual(conflict.hub.conflicts,["agents:coding/sample-helper"]);
+  assert.equal(await fingerprintTree(installed),installedBefore);
+  assert.ok(!(await readHubManifest(target))!.packages[0].nodes.some(n=>n.path==='references/deep/local.md'));
+  await rm(join(skill,"references/deep/local.md"));
   const before = await fingerprintTree(target);
   await writeFile(join(skill, "SKILL.md"), "---\nname: sample-helper\ndescription: Example helper\n---\n[Missing](references/missing.md)\n");
   await assert.rejects(initSpeculo(target, options), /hub-resource-link/);
   assert.equal(await fingerprintTree(target), before);
 }));
 
-for (const change of ["content", "extra", "symlink", "mode"] as const) test(`Hub ${change} conflict preserves the whole package while a sibling uninstalls`, { skip: process.platform === "win32" && ["symlink", "mode"].includes(change) }, () => fixture(async target => {
+for (const change of ["content", "extra", "symlink", "mode", "readonly", "type"] as const) test(`Hub uninstall handles ${change} according to ownership`, { skip: process.platform === "win32" && ["symlink", "mode"].includes(change) }, () => fixture(async target => {
   await initSpeculo(target, { ...core, hubSkills: hub(["automation/herdr", "automation/orca"]) });
   const root = join(target, ".agents/skills/herdr"), file = join(root, "SKILL.md");
   if (change === "content") await writeFile(file, "user edit");
   if (change === "extra") await writeFile(join(root, "user.txt"), "mine");
   if (change === "mode") await chmod(file, 0o600);
+  if (change === "readonly") await chmod(file, 0o444);
+  if (change === "type") { await rm(file); await mkdir(file); }
   if (change === "symlink") { await rm(file); await symlink(join(packageRoot, "skills-hub/automation/herdr/SKILL.md"), file); }
   const before = await fingerprintTree(root);
   const result = await initSpeculo(target, { ...core, hubSkills: { mode: "none" } });
-  assert.deepEqual(result.hub.conflicts, ["agents:automation/herdr"]);
-  assert.deepEqual(result.hub.removed, ["agents:automation/orca"]);
-  assert.equal(await fingerprintTree(root), before);
-  assert.equal((await readHubManifest(target))?.packages.length, 1);
-  assert.equal((await doctorSpeculo(target)).healthy, false);
+  if (["symlink", "readonly", "type"].includes(change)) {
+    assert.deepEqual(result.hub.conflicts, ["agents:automation/herdr"]);
+    assert.deepEqual(result.hub.removed, ["agents:automation/orca"]);
+    assert.equal(await fingerprintTree(root), before);
+    assert.equal((await readHubManifest(target))?.packages.length, 1);
+    assert.equal((await doctorSpeculo(target)).healthy, false);
+  } else {
+    assert.deepEqual(result.hub.conflicts, []);
+    assert.equal(result.hub.removed.length, 2);
+    await assert.rejects(readFile(file), /ENOENT/);
+    if (change === "extra") assert.equal(await readFile(join(root, "user.txt"), "utf8"), "mine");
+    assert.equal((await readHubManifest(target))?.packages.length, 0);
+    await healthy(target);
+  }
 }));
 
 test("unmanaged same-name Skill is never adopted, and no target is rejected before installation", () => fixture(async target => {
@@ -156,16 +176,24 @@ test("workflow deselection removes methods, projections and navigation but retai
   assert.equal((await doctorSpeculo(target)).healthy, false);
 }));
 
-test("modified workflow prevents whole-package removal; unrelated workflow can uninstall", () => fixture(async target => {
+test("workflow uninstall preserves added files without retaining methods", () => fixture(async target => {
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ["person", "learning"] }, skills: { mode: "all" } });
   const root = join(target, ".agents/speculo/workflows/person");
   await writeFile(join(root, "local.txt"), "mine");
-  const before = await fingerprintTree(root);
+  await mkdir(join(root, "user-empty"));
+  const pointerRoot=join(target,".agents/skills/person");
+  await writeFile(join(pointerRoot,"SKILL.md"),"edited pointer");
+  await writeFile(join(pointerRoot,"user.txt"),"preserve pointer addition");
+  await writeFile(join(root, "SKILL.md"), "edited method");
   const result = await initSpeculo(target, core);
-  assert.deepEqual(result.removedWorkflowIds, ["learning"]);
-  assert.ok(result.warnings.some(w => w.includes("workflow-removal-conflict person")));
-  assert.equal(await fingerprintTree(root), before);
-  assert.ok((await readProjectionManifest(target))?.asset_ids.includes("domain/person"));
+  assert.deepEqual(result.removedWorkflowIds, ["learning", "person"]);
+  assert.deepEqual(result.warnings, []);
+  assert.equal(await readFile(join(root, "local.txt"), "utf8"), "mine");
+  await assert.rejects(readFile(join(root, "SKILL.md")), /ENOENT/);
+  assert.deepEqual(await readdir(join(root,"user-empty")),[]);
+  assert.equal(await readFile(join(pointerRoot,"user.txt"),"utf8"),"preserve pointer addition");
+  await healthy(target);
+  assert.ok(!(await readProjectionManifest(target))?.asset_ids.includes("domain/person"));
 }));
 
 test("workflow resource symlink conflict is retained verbatim while a sibling uninstalls", { skip: process.platform === "win32" }, () => fixture(async target => {
@@ -226,4 +254,33 @@ test("schema 3 file-only transaction fixture remains recoverable", { skip: proce
   assert.equal((await readTransaction(target)).schema_version, 3);
   await recoverInstall(target, journal.id);
   assert.equal(await fingerprintTree(join(target, ".agents/speculo")), before); await healthy(target);
+}));
+
+test('Hub repairs edits and missing files, preserves additions without adopting them',()=>fixture(async target=>{
+ await initSpeculo(target,{...core,hubSkills:hub(['automation/grok-bot-team-steward']),skillTargets:['agents','claude']});
+ for(const host of ['agents','claude']){
+  const root=join(target,`.${host}/skills/grok-bot-team-steward`);
+  await writeFile(join(root,'SKILL.md'),'local edit');
+  const manifest=(await readHubManifest(target))!.packages.find(p=>p.host===host)!;
+  const resource=manifest.nodes.find(n=>n.kind==='file'&&n.path!=='SKILL.md')!;
+  await rm(join(root,resource.path));
+  await mkdir(join(root,'user/nested'),{recursive:true});await writeFile(join(root,'user/nested/notes.txt'),'keep');
+ }
+ const refreshed=await initSpeculo(target,{packageRoot});
+ assert.deepEqual(refreshed.warnings,[]);assert.equal(refreshed.hub.updated.length,2);await healthy(target);
+ for(const p of (await readHubManifest(target))!.packages)assert.ok(!p.nodes.some(n=>n.path.startsWith('user')));
+ assert.deepEqual((await initSpeculo(target,{packageRoot})).hub.updated,[]);
+ const removed=await initSpeculo(target,{...core,hubSkills:{mode:'none'}});assert.equal(removed.hub.removed.length,2);
+ for(const host of ['agents','claude'])assert.equal(await readFile(join(target,`.${host}/skills/grok-bot-team-steward/user/nested/notes.txt`),'utf8'),'keep');
+ await healthy(target);
+}));
+
+for(const phase of ['skills-applying','skills-projected','external-finalized'] as const)test(`repair rollback restores actual edited contents, modes and additions at ${phase}`,()=>fixture(async target=>{
+ await initSpeculo(target,{...core,hubSkills:hub(['automation/herdr']),skills:hub(['command/handoff'])});
+ await writeFile(join(target,'.agents/skills/herdr/SKILL.md'),'hub edit');
+ await writeFile(join(target,'.agents/skills/herdr/user.txt'),'user data');
+ const pointer=join(target,'.agents/skills/speculo-handoff/SKILL.md');await writeFile(pointer,'pointer edit');await chmod(pointer,0o664);
+ const before=await fingerprintTree(target);
+ await assert.rejects(initSpeculo(target,{packageRoot,transactionHook:async p=>{if(p===phase)throw Error('repair fault');}}),/repair fault/);
+ assert.equal(await fingerprintTree(target),before);
 }));

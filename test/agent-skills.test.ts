@@ -89,7 +89,7 @@ test('Windows file-image normalization produces no updates for unchanged owned p
  } finally { Object.defineProperty(process,'platform',platform); }
 }));
 
-test('disabling a target preserves edited and third-party files and keeps conflict evidence',()=>fixture(async target=>{
+test('disabling a target removes edited owned files and preserves third-party files',()=>fixture(async target=>{
  await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skillTargets:['agents','claude'],skills:{mode:'set',assetIds:['command/status','command/handoff']}});
  const edited=join(target,'.claude/skills/speculo-status/SKILL.md');
  await writeFile(edited,'user modification');
@@ -97,16 +97,16 @@ test('disabling a target preserves edited and third-party files and keeps confli
  await mkdir(dirname(thirdParty));await writeFile(thirdParty,'third party');
  const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skillTargets:['agents']});
  assert.deepEqual(result.exposure.assetIds,['command/handoff','command/status']);
- assert.equal(result.projections.claude.deleted,1);
- assert.deepEqual(result.projections.claude.conflicts,['command/status']);
+ assert.equal(result.projections.claude.deleted,2);
+ assert.deepEqual(result.projections.claude.conflicts,[]);
  assert.equal(result.projections.agents.ready,2);
- assert.equal(await readFile(edited,'utf8'),'user modification');
+ await assert.rejects(readFile(edited),/ENOENT/);
  assert.equal(await readFile(thirdParty,'utf8'),'third party');
- assert.ok((await readProjectionManifest(target))!.files.some(f=>f.path==='.claude/skills/speculo-status/SKILL.md'));
- assert.equal((await doctorSpeculo(target)).healthy,false);
+ assert.ok(!(await readProjectionManifest(target))!.files.some(f=>f.path==='.claude/skills/speculo-status/SKILL.md'));
+ assert.equal((await doctorSpeculo(target)).healthy,true);
  const refreshed=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
- assert.deepEqual(refreshed.projections.claude.conflicts,['command/status']);
- assert.equal(await readFile(edited,'utf8'),'user modification');
+ assert.deepEqual(refreshed.projections.claude.conflicts,[]);
+ await assert.rejects(readFile(edited),/ENOENT/);
 }));
 
 test('failed target removal rolls back both projections and their unified configuration',()=>fixture(async target=>{
@@ -172,13 +172,13 @@ test('unmanaged collision only blocks that projection, preserving source install
  assert.equal(await readFile(file,'utf8'),'user owned');await readFile(join(target,'.agents/speculo/workflows/specdev/specdev-i-implement/SKILL.md'));
  assert.equal((await doctorSpeculo(target)).healthy,false);
 }));
-test('edited projection is preserved, unaffected projections refresh, explicit disable removes only owned files',()=>fixture(async target=>{
+test('edited projection refreshes, explicit disable removes only owned files',()=>fixture(async target=>{
  await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning']},skills:{mode:'set',assetIds:['learning/lesson','learning/goal']}});
  const edited=join(target,'.agents/skills/learning-l-lesson/SKILL.md');await writeFile(edited,'edited');
- const kept=await initSpeculo(target,{packageRoot});assert.equal(kept.warnings.length,1);assert.equal(await readFile(edited,'utf8'),'edited');
+ const kept=await initSpeculo(target,{packageRoot});assert.equal(kept.warnings.length,0);assert.match(await readFile(edited,'utf8'),/权威入口/);
  const sibling=join(target,'.agents/skills/learning-g-goal/user.txt');await writeFile(sibling,'keep');
- const removed=await initSpeculo(target,{packageRoot,skills:{mode:'none'}});assert.equal(removed.warnings.length,1);
- assert.equal(await readFile(sibling,'utf8'),'keep');assert.equal(await readFile(edited,'utf8'),'edited');
+ const removed=await initSpeculo(target,{packageRoot,skills:{mode:'none'}});assert.equal(removed.warnings.length,0);
+ assert.equal(await readFile(sibling,'utf8'),'keep');await assert.rejects(readFile(edited),/ENOENT/);
  await assert.rejects(readFile(join(target,'.agents/skills/learning-g-goal/SKILL.md')),/ENOENT/);
 }));
 for(const phase of ['skills-applying','skills-projected','external-finalized'] as const)test(`projection rollback at ${phase}`,()=>fixture(async target=>{
@@ -273,4 +273,43 @@ test('current command identities have no aliases and refresh preserves retired r
  await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skills:{mode:'all'}});
  for(const id of retired) assert.equal(await readFile(join(stateRoot,'commands',id,'state.json'),'utf8'),`original:${id}\n`);
  await assert.rejects(initSpeculo(target,{packageRoot,skills:{mode:'set',assetIds:['command/docs-sync']}}),/unknown|unavailable|not installed|未知|不存在|blocked/i);
+}));
+
+test('twelve selected entries repair thirteen mode-only drifts and remain idempotent', {skip:process.platform==='win32'},()=>fixture(async target=>{
+ const assetIds=['command/handoff',...['archive-and-consolidate','code-review','diagnose-bugs','grill-with-docs','implement','learn','prototype','retro','spec','tickets','triage'].map(id=>`specdev/${id}`)];
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds}});
+ const manifest=(await readProjectionManifest(target))!;
+ assert.equal(manifest.files.length,13);
+ for(const file of manifest.files)await chmod(join(target,file.path),0o664);
+ assert.equal((await doctorSpeculo(target)).checks.filter(c=>!c.ok&&c.id.startsWith('projection-file:')).length,13);
+ const refreshed=await initSpeculo(target,{packageRoot});
+ assert.deepEqual(refreshed.warnings,[]);assert.equal(refreshed.projections.agents.ready,12);assert.equal(refreshed.projections.agents.updated,12);
+ assert.equal((await doctorSpeculo(target)).healthy,true);
+ const again=await initSpeculo(target,{packageRoot});assert.equal(again.projections.agents.updated,0);
+}));
+
+test('missing pointers and corrupted workflow discovery files repair without changing runtime bytes',()=>fixture(async target=>{
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:['command/handoff','specdev/implement']}});
+ const root=join(target,'.agents/speculo'),state=join(root,'.speculo/specdev');
+ for(const name of ['adr/local.md','changes/local/evidence.bin','context/local.md','history/local.md']){
+  const path=join(state,name);await mkdir(dirname(path),{recursive:true});await writeFile(path,Buffer.from([0,255,42,10]));await chmod(path,0o600);
+ }
+ const before=await fingerprintTree(state);
+ for(const name of ['workflows/specdev/SKILL.md','workflows/specdev/manifest.json','commands/handoff/COMMAND.md'])await writeFile(join(root,name),'broken local method');
+ await rm(join(root,'workflows/specdev/specdev-i-implement/SKILL.md'));
+ for(const file of (await readProjectionManifest(target))!.files)await rm(join(target,file.path));
+ const result=await initSpeculo(target,{packageRoot});
+ assert.deepEqual(result.warnings,[]);assert.equal(result.projections.agents.ready,2);
+ assert.equal(await fingerprintTree(state),before);assert.equal((await doctorSpeculo(target)).healthy,true);
+ const removed=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
+ assert.deepEqual(removed.removedWorkflowIds,['specdev']);assert.equal(await fingerprintTree(state),before);
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']}});
+ assert.equal(await fingerprintTree(state),before);
+}));
+
+test('projection changes after preview are not overwritten by repair',()=>fixture(async target=>{
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skills:{mode:'set',assetIds:['command/handoff']}});
+ const file=join(target,'.agents/skills/speculo-handoff/SKILL.md');await writeFile(file,'old edit');
+ await assert.rejects(initSpeculo(target,{packageRoot,confirmInstall:async()=>{await writeFile(file,'concurrent edit');return true;}}),/drift/);
+ assert.equal(await readFile(file,'utf8'),'concurrent edit');
 }));

@@ -4,7 +4,7 @@ import type { HubCatalog } from "./hub-catalog.js";
 export { discoverHubCatalog, type HubCatalog } from "./hub-catalog.js";
 import { assertProjectionCasing, normalizeSkillTargets, parseSkillSpec, sha256Buffer, type ProjectionHost, type SkillRequest } from "./agent-skills.js";
 import { containedPath, INSTALL_ROOT } from "./paths.js";
-import { absent, sameNode, snapshotSkillTree, validSkillPath, type SkillNode, type SkillRecord } from "./skill-trees.js";
+import { absent, sameNode, snapshotSkillTree, reconcileOwnedTree, validSkillPath, type SkillNode, type SkillRecord } from "./skill-trees.js";
 
 type OwnedNode = { path: string; kind: "file" | "directory"; mode: number; sha256?: string };
 type OwnedPackage = { id: string; host: ProjectionHost; name: string; nodes: OwnedNode[] };
@@ -29,7 +29,7 @@ function ownedNodes(tree: Map<string, SkillNode>): OwnedNode[] {
 }
 function matches(tree: Map<string, SkillNode>, nodes: OwnedNode[]): boolean {
   const actual = new Map(ownedNodes(tree).map(n => [n.path, n]));
-  return actual.size === nodes.length && nodes.every(n => {
+  return nodes.every(n => {
     const a = actual.get(n.path); return a?.kind === n.kind && a.mode === n.mode && a.sha256 === n.sha256;
   });
 }
@@ -76,16 +76,17 @@ export async function planHubSkills(options: { target: string; stagedRoot: strin
         const names = await readdir(await containedPath(options.target, `.${host}/skills`)).catch((e: NodeJS.ErrnoException) => { if (e.code === "ENOENT") return []; throw e; });
         if (names.some(n => n.toLowerCase() === name.toLowerCase() && n !== name)) throw new Error("ambiguous Skill directory casing");
         const before = await snapshotSkillTree(await containedPath(options.target, root));
-        if (prior ? !matches(before, prior.nodes) : before.size > 0) throw new Error(prior ? "package content, mode or resource list differs from ownership" : "unmanaged same-name directory exists");
-        const after = desired.includes(id) ? skill!.tree : new Map<string, SkillNode>();
+        if (!prior && before.size > 0) throw new Error("unmanaged same-name directory exists");
+        const packaged = desired.includes(id) ? skill!.tree : new Map<string, SkillNode>();
+        const after = reconcileOwnedTree(before, prior?.nodes ?? [], packaged);
         const pending: SkillRecord[] = [];
         for (const path of new Set([...before.keys(), ...after.keys()])) {
           const a = before.get(path) ?? absent, b = after.get(path) ?? absent;
           if (a.kind !== "absent" && b.kind !== "absent" && a.kind !== b.kind) throw new Error("resource node type changed: " + path);
           pending.push({ name: root + (path ? "/" + path : ""), before: a, after: b });
         }
-        if (after.size) {
-          next.packages.push({ id, name, host, nodes: ownedNodes(after) }); summary.installed.push(label);
+        if (packaged.size) {
+          next.packages.push({ id, name, host, nodes: ownedNodes(packaged) }); summary.installed.push(label);
           if (!prior) summary.created.push(label);
           else if (pending.some(r => !sameNode(r.before, r.after))) summary.updated.push(label);
         } else if (prior) summary.removed.push(label);

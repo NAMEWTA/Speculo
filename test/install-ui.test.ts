@@ -341,7 +341,7 @@ test("first-install rejection leaves no installation or external files", () => f
   await assert.rejects(readFile(join(target, "AGENTS.md")), /ENOENT/);
 }));
 
-test("preview matches application across hosts and distinguishes conflicted removals", () => fixture(async target => {
+test("preview matches application across hosts including removal of edited owned files", () => fixture(async target => {
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skills: { mode: "all" } });
   const edited = join(target, ".agents/skills/learning-l-lesson/SKILL.md");
   await writeFile(edited, "manual edit");
@@ -354,16 +354,16 @@ test("preview matches application across hosts and distinguishes conflicted remo
   });
   assert.deepEqual(result.projections, seen!.projections);
   assert.deepEqual(phases, ["staging", "staged", "committing", "committed"]);
-  assert.deepEqual(result.projections.agents.conflicts, ["learning/lesson"]);
+  assert.deepEqual(result.projections.agents.conflicts, []);
   assert.equal(result.projections.agents.ready, 1);
   assert.deepEqual(result.projections.agents.retained, ["command/status"]);
   assert.equal(result.projections.agents.removed.length, 18);
   assert.deepEqual(result.projections.claude.selected, ["command/status"]);
-  assert.equal(await readFile(edited, "utf8"), "manual edit");
+  await assert.rejects(readFile(edited), /ENOENT/);
   const manifest = (await readProjectionManifest(target))!;
   assert.deepEqual(manifest.targets, ["agents", "claude"]);
   assert.deepEqual(manifest.asset_ids, ["command/status"]);
-  assert.equal(result.projections.agents.deleted, 17);
+  assert.equal(result.projections.agents.deleted, 18);
   assert.equal(result.projections.claude.created, 1);
   assert.equal(formatInstallPreview(seen!).match(/command\/status/g)?.length, 1);
   await assert.rejects(readFile(join(target, ".agents/skills/learning-g-goal/SKILL.md")), /ENOENT/);
