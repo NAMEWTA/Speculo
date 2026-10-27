@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.13] - 2026-10-27
+
+### Changed
+
+- Default agent coordination to the current host, including its native subagent and team capabilities; retain direct AI CLI, Herdr and Orca as separately selected modes.
+- Allow project CLI preferences to record the selected tool and headless or interactive invocation. External dispatch continues to preserve TASK, REPORT and optional verified session locators, with Lead acceptance and independent review unchanged.
+- Update CI to actions/setup-python v6 and actions/upload-artifact v7. Merge the read-cmd-shim update branch while retaining 5.x to preserve the declared Node.js compatibility range.
+- Rebuild portable SpecDev Canonical documents and the shared runtime from the updated coordination contracts.
+
+### Upgrade Notes
+
+- Project coordination preferences now use schema v2 and `host` replaces the previous `lead` mode. Existing v1 coordination files are preserved but rejected, not automatically migrated; review and back up the old choices before establishing a v2 configuration.
+
 ## [2.1.12] - 2026-10-26
 
 ### Fixed
@@ -1161,7 +1174,9 @@ AI assistance was used for this implementation, review, and release preparation.
 - Legacy config files: RULES.md, LESSONS.md under `.speculo/.config/`.
 - Legacy skills: handoff, write-a-skill, caveman (superseded by standalone skill assets in `template/skills/`).
 
-[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.11...HEAD
+[Unreleased]: https://github.com/NAMEWTA/Speculo/compare/v2.1.13...HEAD
+[2.1.13]: https://github.com/NAMEWTA/Speculo/compare/v2.1.12...v2.1.13
+[2.1.12]: https://github.com/NAMEWTA/Speculo/compare/v2.1.11...v2.1.12
 [2.1.11]: https://github.com/NAMEWTA/Speculo/compare/v2.1.10...v2.1.11
 [2.1.10]: https://github.com/NAMEWTA/Speculo/compare/v2.1.9...v2.1.10
 [2.1.9]: https://github.com/NAMEWTA/Speculo/compare/v2.1.8...v2.1.9
