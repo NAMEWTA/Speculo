@@ -81,7 +81,7 @@ ready_for_execution: false
 
 ### Lead Orchestration
 
-执行方式独立于下方工作区策略：默认按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 属于宿主能力；明确指定 CLI 交互、Herdr 等方式才按共享编排合同接入。记录本次选择与来源，不逐任务重新询问。
+执行方式独立于下方工作区策略：默认按当前宿主正常执行（mode: host），App、CLI 等均可，subagent/team 属于宿主能力；明确指定 CLI 调用、Herdr 等方式才按共享编排合同接入。记录本次选择与来源，不逐任务重新询问。
 
 | 项目 | 决定 | 事实依据 |
 |---|---|---|

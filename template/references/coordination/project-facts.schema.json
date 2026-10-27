@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:speculo:coordination:project:v1",
+  "$id": "urn:speculo:coordination:project:v2",
   "type": "object",
   "required": [
     "schema_version",
@@ -10,7 +10,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "defaults": {
       "$ref": "#/$defs/choice"
@@ -50,7 +50,7 @@
       "properties": {
         "mode": {
           "enum": [
-            "lead",
+            "host",
             "orca",
             "herdr",
             "cli"
@@ -64,22 +64,28 @@
         },
         "tool": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "model": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "guide": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "interaction": {
+          "enum": ["headless", "interactive"]
         },
         "fallback": {
           "type": "array",
           "uniqueItems": true,
           "items": {
             "enum": [
-              "lead",
+              "host",
               "orca",
               "herdr",
               "cli"
@@ -88,6 +94,10 @@
         }
       },
       "allOf": [
+        {
+          "if": { "required": ["interaction"], "properties": { "interaction": {} } },
+          "then": { "properties": { "mode": { "const": "cli" } } }
+        },
         {
           "if": {
             "required": [

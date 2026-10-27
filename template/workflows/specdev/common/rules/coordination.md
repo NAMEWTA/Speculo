@@ -20,7 +20,7 @@ Lead 明确任务所用 Work、阶段和必要前置条件：Ticket implementati
 
 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分开决定票据调度、Agent 编排和工作区。一个 change 复用 README 的唯一工作区，默认 current；serial 逐票推进但允许同票协作，parallel/auto 按 DAG、路径与实际资源推进。协作者数量和工具选择不触发额外 worktree。
 
-双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；用户选定的可用工具和 review 安排优先。核对真实实现者、reviewer 与派遣/返回证据；同一实现者改名或清空会话不构成独立。缺少独立 reviewer 时阻塞审查完成，回退 lead 也不能自审替代。正式 Evidence、集成和整体 E2E 仍由原 owner 核验。
+双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；用户选定的可用工具和 review 安排优先。核对真实实现者、reviewer 与派遣/返回证据；同一实现者改名或清空会话不构成独立。缺少独立 reviewer 时阻塞审查完成，回退 host 也不能由实现者自审替代。正式 Evidence、集成和整体 E2E 仍由原 owner 核验。
 
 有明确授权的 run/resume 完成当前实现、审查、验证和同范围修复后，继续下一 Ready 任务，不逐票要求“继续”。同范围 finding 沿原任务修复；重复 blocker 或达到有效尝试上限时保留证据，只有新证据或实质改变才能重试。业务生命周期门由 owning Work 核对，通用派遣结构通过不等于允许启动已取消或已归档的业务。
 

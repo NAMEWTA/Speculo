@@ -7664,7 +7664,7 @@ function retainedAssets(registry) {
 }
 
 // src/coordination.ts
-var ORCHESTRATION_MODES = ["lead", "orca", "herdr", "cli"];
+var ORCHESTRATION_MODES = ["host", "orca", "herdr", "cli"];
 function object(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -7673,17 +7673,18 @@ function exact(value, keys) {
 }
 function choice(value) {
   if (!object(value)) throw new Error("coordination-policy-conflict: choice must be an object");
-  exact(value, ["mode", "selection", "tool", "model", "guide", "fallback"]);
+  exact(value, ["mode", "selection", "tool", "model", "guide", "interaction", "fallback"]);
   if (!ORCHESTRATION_MODES.includes(value.mode)) throw new Error("coordination-policy-conflict: unknown orchestration mode");
-  if (value.selection !== void 0 && !["required", "preferred"].includes(String(value.selection))) throw new Error("coordination-policy-conflict: invalid selection");
+  if (value.selection !== void 0 && (typeof value.selection !== "string" || !["required", "preferred"].includes(value.selection))) throw new Error("coordination-policy-conflict: invalid selection");
   for (const key of ["tool", "model", "guide"]) if (value[key] !== void 0 && (typeof value[key] !== "string" || !value[key].trim())) throw new Error(`coordination-policy-conflict: invalid ${key}`);
+  if (value.interaction !== void 0 && (value.mode !== "cli" || typeof value.interaction !== "string" || !["headless", "interactive"].includes(value.interaction))) throw new Error("coordination-policy-conflict: invalid CLI interaction");
   if (value.fallback !== void 0 && (!Array.isArray(value.fallback) || new Set(value.fallback).size !== value.fallback.length || value.fallback.some((m) => !ORCHESTRATION_MODES.includes(m)))) throw new Error("coordination-policy-conflict: invalid fallback");
   if (value.selection === "required" && Array.isArray(value.fallback) && value.fallback.length) throw new Error("coordination-policy-conflict: required choice cannot allow fallback");
 }
 function validateProjectCoordination(value, catalog, inactive = []) {
   if (!object(value)) throw new Error("coordination-policy-conflict: project facts must be an object");
   exact(value, ["schema_version", "defaults", "rules"]);
-  if (value.schema_version !== 1 || !Array.isArray(value.rules)) throw new Error("coordination-policy-conflict: expected schema 1 and rules");
+  if (value.schema_version !== 2 || !Array.isArray(value.rules)) throw new Error("coordination-policy-conflict: expected schema 2 and rules; preserve older configuration and establish a new v2 configuration explicitly");
   choice(value.defaults);
   const seen = /* @__PURE__ */ new Set();
   for (const rule of value.rules) {

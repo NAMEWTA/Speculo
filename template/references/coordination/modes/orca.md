@@ -11,7 +11,7 @@
 3. 缺失时报告未安装，保留偏好与原目标，引导用户重新运行 `speculo init`，在 **SKILLS-HUB** 中勾选 `automation/orca` 并选择项目 `.agents/skills/` 或 `.claude/skills/`。唯一分发源是随 Speculo 包发布的 `skills-hub/automation/orca/` 完整目录；不下载 GitHub main，不从全局缓存复制。无 CLI 的直接模式也据实报告缺失，独立事实发现继续。
 4. 完整包的安装、更新、卸载及 Hub 安装归属记录由 CLI 事务管理；Work 只读取入口，不写 CLI 元数据、不覆盖或接管用户手工安装的同名包。安装器保留原文、frontmatter、许可、资源与文件模式；冲突时整包保留并报告。
 
-初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前智能体（lead）；强制要求 Orca 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
+初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前宿主（host）；强制要求 Orca 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
 
 ## 运行与返回
 

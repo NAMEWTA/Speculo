@@ -49,15 +49,15 @@ test('path resolver rejects a linked reference directory', () => fixture(async r
   try { await symlink(external,join(root,DEFAULT_ROOTS.references),process.platform==='win32'?'junction':'dir'); await assert.rejects(resolvePathReference(root,'{roots.references}/file'),/path-symlink/); }
   finally { await rm(external,{recursive:true,force:true}); }
 }));
-test('coordination accepts Lead, named tools and registered per-stage choices without probing tools', () => {
-  for (const mode of ['lead','orca','herdr','cli']) validateProjectCoordination({schema_version:1,defaults:{mode},rules:[]},catalog);
+test('coordination accepts host, named tools and registered per-stage choices without probing tools', () => {
+  for (const mode of ['host','orca','herdr','cli']) validateProjectCoordination({schema_version:2,defaults:{mode},rules:[]},catalog);
   const work=catalog.assets.find(a=>a.kind==='work-skill'&&a.stages.length)!;
-  validateProjectCoordination({schema_version:1,defaults:{mode:'lead'},rules:[{work_id:work.id,stage:work.stages[0],choice:{mode:'cli',selection:'preferred',tool:'user chosen CLI',model:'user chosen model',guide:'local help',fallback:['lead']}}]},catalog);
+  validateProjectCoordination({schema_version:2,defaults:{mode:'host'},rules:[{work_id:work.id,stage:work.stages[0],choice:{mode:'cli',selection:'preferred',tool:'user chosen CLI',model:'user chosen model',guide:'local help',interaction:'headless',fallback:['host']}}]},catalog);
 });
 test('coordination rejects unknown fields, retired modes, duplicate rules, invalid stages and unauthorized fallback', () => {
-  const defaults={mode:'lead'}, base={schema_version:1,defaults,rules:[]};
-  const rule={work_id:'specdev/implement',choice:{mode:'lead'}};
-  for (const v of [{...base,runner:{}},{...base,schema_version:2},{...base,defaults:{mode:'native'}},{...base,defaults:{mode:'cli',selection:'required',fallback:['lead']}},{...base,defaults:{mode:'cli',fallback:['lead','lead']}},{...base,rules:[rule,rule]},{...base,rules:[{...rule,stage:'unknown'}]},{...base,rules:[{...rule,work_id:'missing/work'}]}]) assert.throws(()=>validateProjectCoordination(v,catalog),/coordination-policy-conflict/);
+  const defaults={mode:'host'}, base={schema_version:2,defaults,rules:[]};
+  const rule={work_id:'specdev/implement',choice:{mode:'host'}};
+  for (const v of [{...base,runner:{}},{...base,schema_version:1},{...base,defaults:{mode:'lead'}},{...base,defaults:{mode:'native'}},{...base,defaults:{mode:'host',interaction:'headless'}},{...base,defaults:{mode:'cli',interaction:'unknown'}},{...base,defaults:{mode:'cli',interaction:['headless']}},{...base,defaults:{mode:'cli',selection:'required',fallback:['host']}},{...base,defaults:{mode:'cli',fallback:['host','host']}},{...base,rules:[rule,rule]},{...base,rules:[{...rule,stage:'unknown'}]},{...base,rules:[{...rule,work_id:'missing/work'}]}]) assert.throws(()=>validateProjectCoordination(v,catalog),/coordination-policy-conflict/);
 });
 test('initialization example and all optional choices remain schema-compatible and read-only without tools or skills', () => fixture(async root => {
   const require = createRequire(import.meta.url), Ajv = require('ajv/dist/2020.js').default;
@@ -74,15 +74,15 @@ test('initialization example and all optional choices remain schema-compatible a
   assert.equal(await readProjectCoordination(root, catalog), null);
   assert.equal(await fingerprintTree(root), beforeMissing);
 
-  const defaults: CoordinationChoice[] = [{ mode: 'lead' }, { mode: 'cli', selection: 'preferred', fallback: ['lead'] }];
+  const defaults: CoordinationChoice[] = [{ mode: 'host' }, { mode: 'cli', selection: 'preferred', fallback: ['host'] }, { mode: 'cli', tool: 'chosen CLI', interaction: 'headless' }, { mode: 'cli', interaction: 'interactive' }];
   for (const mode of ['herdr', 'orca'] as const) for (const host of ['agents', 'claude']) {
-    defaults.push({ mode, selection: 'preferred', fallback: ['lead'], guide: `.${host}/skills/${mode}/SKILL.md` });
+    defaults.push({ mode, selection: 'preferred', fallback: ['host'], guide: `.${host}/skills/${mode}/SKILL.md` });
   }
-  const rules = [{ work_id: 'specdev/code-review', choice: { mode: 'cli', selection: 'required', tool: 'explicit-reviewer', guide: 'local help' } }];
+  const rules = [{ work_id: 'specdev/code-review', choice: { mode: 'cli', selection: 'required', tool: 'explicit-reviewer', guide: 'local help', interaction: 'headless' } }];
   await mkdir(join(root, 'coordination'));
   const file = join(root, 'coordination/project.json');
   for (const choice of defaults) {
-    const value = { schema_version: 1, defaults: choice, rules };
+    const value = { schema_version: 2, defaults: choice, rules };
     assert.equal(validate(value), true, JSON.stringify(validate.errors));
     await writeFile(file, JSON.stringify(value, null, 2) + '\n');
     const before = await fingerprintTree(root);
@@ -90,8 +90,8 @@ test('initialization example and all optional choices remain schema-compatible a
     assert.deepEqual(await readProjectCoordination(root, catalog), value);
     assert.equal(await fingerprintTree(root), before);
   }
-  const invalid = [{ ...example, schema_version: 2 }, { ...example, defaults: { mode: 'herdr', selection: 'required', fallback: ['lead'] } }];
-  for (const value of invalid) assert.equal(validate(value), false);
+  const invalid = [{ ...example, schema_version: 1 }, { ...example, defaults: { mode: 'lead' } }, { ...example, defaults: { mode: 'host', interaction: 'headless' } }, { ...example, defaults: { mode: 'cli', interaction: ['headless'] } }, { ...example, defaults: { mode: 'cli', selection: ['preferred'] } }, { ...example, defaults: { mode: 'cli', tool: '   ' } }, { ...example, defaults: { mode: 'herdr', selection: 'required', fallback: ['host'] } }];
+  for (const value of invalid) { assert.equal(validate(value), false); assert.throws(() => validateProjectCoordination(value, catalog)); }
   for (const source of ['{ invalid', ...invalid.map(value => JSON.stringify(value))]) {
     await writeFile(file, source);
     const before = await fingerprintTree(root);

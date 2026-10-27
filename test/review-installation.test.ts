@@ -126,7 +126,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
     await initSpeculo(target, { ...setup, skillTargets: [...setup.skillTargets] });
     const stateRoot = join(target, ".agents/speculo/.speculo");
     await mkdir(join(stateRoot, "coordination"));
-    const choices = JSON.stringify({ schema_version: 1, defaults: { mode: "orca", selection: "preferred", guide: ".claude/skills/orca/SKILL.md", fallback: ["lead"] }, rules: [{ work_id: "specdev/code-review", choice: { mode: "lead" } }] }, null, 2) + "\n";
+    const choices = JSON.stringify({ schema_version: 2, defaults: { mode: "orca", selection: "preferred", guide: ".claude/skills/orca/SKILL.md", fallback: ["host"] }, rules: [{ work_id: "specdev/code-review", choice: { mode: "host" } }] }, null, 2) + "\n";
     await writeFile(join(stateRoot, "coordination/project.json"), choices);
     const refresh = { ...setup, skillTargets: ["agents"] as Array<"agents" | "claude"> };
     await assert.rejects(initSpeculo(target, { ...refresh, beforeCommit: async () => { throw new Error("injected coordination refresh interruption"); } }), /injected coordination refresh interruption/);

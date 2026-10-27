@@ -153,7 +153,7 @@ test("workflow deselection removes methods, projections and navigation but retai
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning", "specdev"] }, skills: { mode: "all" }, skillTargets: ["agents", "claude"] });
   const state = join(target, ".agents/speculo/.speculo");
   await mkdir(join(state, "coordination"), { recursive: true });
-  await writeFile(join(state, "coordination/project.json"), JSON.stringify({ schema_version: 1, defaults: { mode: "lead" }, rules: [{ work_id: "learning/lesson", choice: { mode: "lead" } }] }));
+  await writeFile(join(state, "coordination/project.json"), JSON.stringify({ schema_version: 2, defaults: { mode: "host" }, rules: [{ work_id: "learning/lesson", choice: { mode: "host" } }] }));
   await writeFile(join(state, "learning/custom.bin"), Buffer.from([0, 255, 42]));
   const runtime = await fingerprintTree(join(state, "learning"));
   const removed = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });

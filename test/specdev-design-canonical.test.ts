@@ -93,7 +93,7 @@ test('optional orchestration in canonical retains both host targets without nati
       assert.match(contract, /fallback|回退/);
     }
     assert.match(content, /selection: preferred/);
-    assert.match(content, /fallback: \[lead\]/);
+    assert.match(content, /fallback: \[host\]/);
     assert.doesNotMatch(content, /command\/(?:coordination-init|handoff)/);
     assert.match(content, /网页环境只记录本次选择，不宣称持久化/);
     assert.match(content, /无本地写入能力时输出完整交接内容/);

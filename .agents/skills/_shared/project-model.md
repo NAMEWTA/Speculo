@@ -23,7 +23,7 @@ workspace v2 位于项目根相对 `.agents/speculo/.speculo/workspace.json`，�
 
 39 个 Work 各自包含职责、必要输入、权威、owner、步骤、完成与停止条件。分支放 references，机械动作放 scripts，schema/模板放 assets；共享业务规则放 common。9 个 Command 各自拥有一次调用、scope、确认、报告及必要 state，资源收纳在该命令目录。
 
-跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: lead），兼容 App、CLI 等；明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。公共 command/coordination-init 初始化一个项目默认方式，具体模型与任务由当次请求决定。Worker 可直接写获分配的计划、票据、地图等产物，Lead 核验并协调原 owner/gateway 推进正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
+跨领域共享方法放 references。编排读取 coordination-contract，未指定时按当前宿主正常执行（mode: host），兼容 App、CLI 等；明确指定 CLI 调用、Herdr、Orca 等方式时按选择执行，与 workspace 独立；Herdr 按需安装项目第三方 Skill 后检查受管会话；只有使用时读取当前工具指南。项目选择可选保存在 state/coordination/project.json，不创建执行控制平面。公共 command/coordination-init 初始化项目默认方式，CLI 的工具和调用方式可选保存为偏好，具体任务由当次请求决定。Worker 可直接写获分配的计划、票据、地图等产物，Lead 核验并协调原 owner/gateway 推进正式状态和 Evidence，按原权限处理提交、集成与外部副作用。
 
 外部派遣使用共享 TASK v2 / REPORT，单个 change 下使用 sessions/<session>/<task>，跨多个对象或无 change 使用 state/coordination/sessions。范围根一轮固定，原生协作按需采用，Lead 自行执行不造派单。只使用当前 TASK v2，不分发 v1 adapter。可选 session-locator.json 只保存经过确认的绝对日志 path，不自动读取历史或恢复工具会话。
 

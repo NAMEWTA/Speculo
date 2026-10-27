@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
-  "defaults": { "mode": "lead" },
+  "schema_version": 2,
+  "defaults": { "mode": "host" },
   "rules": []
 }

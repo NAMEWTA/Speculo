@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
 import { initSpeculo } from '../src/index.js';
 import { readProjectCoordination } from '../src/coordination.js';
+import { doctorSpeculo } from '../src/doctor.js';
 import { readAssetCatalog } from '../src/assets.js';
 import { fingerprintTree } from '../src/manifest.js';
 
@@ -112,7 +113,7 @@ test('shared validation rejects malformed identities, versions and paths without
   }
   await writeFile(join(f.dir, 'TASK.md'), taskText());
   for (const extra of [{scopeRoot:'../escape'}, {scopeRoot:f.projectRoot}, {scopeRoot:'data/Coordination'}, {session:'20260230T080000Z'}, {task:'../task'}, {stage:'execute'}]) assert.ok(f.check(extra).errors.length);
-  await symlink(join(f.projectRoot, 'data/coordination'), join(f.projectRoot, 'linked'));
+  await symlink(join(f.projectRoot, 'data/coordination'), join(f.projectRoot, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
   assert.ok(f.check({scopeRoot:'linked'}).errors.length);
   await mkdir(join(f.dir, '..', '001-collision'));
   assert.match(f.check().errors.join(), /occupied/);
@@ -159,7 +160,7 @@ test('core, Learning and OPS installations expose common commands and preserve c
     const methods = join(root, '.agents/speculo'), state = join(methods, '.speculo');
     await assert.rejects(readFile(join(methods, 'workflows/specdev/SKILL.md')), {code:'ENOENT'});
     for (const file of ['commands/coordination-init/COMMAND.md', 'references/handoff/handoff-contract.md', relativeScript]) assert.ok((await readFile(join(methods,file))).length);
-    const choices = '{"schema_version":1,"defaults":{"mode":"cli","selection":"preferred","fallback":["lead"]},"rules":[]}\n';
+    const choices = '{"schema_version":2,"defaults":{"mode":"cli","selection":"preferred","interaction":"headless","fallback":["host"]},"rules":[]}\n';
     const retained = new Map([
       ['coordination/project.json', choices],
       [`coordination/sessions/${session}/${task}/TASK.md`, taskText()],
@@ -174,6 +175,22 @@ test('core, Learning and OPS installations expose common commands and preserve c
     const catalog = await readAssetCatalog(methods);
     assert.deepEqual(await readProjectCoordination(state,catalog), JSON.parse(choices));
   }
+});
+
+test('refresh preserves v1 coordination bytes and doctor reports the unsupported configuration', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'speculo-old-coordination-'));
+  t.after(() => rm(root, {recursive:true, force:true}));
+  const options = {packageRoot:process.cwd(), selection:{workflowIds:[]}};
+  await initSpeculo(root, options);
+  const state = join(root, '.agents/speculo/.speculo'), file = join(state, 'coordination/project.json');
+  const old = '{"schema_version":1,"defaults":{"mode":"orca","fallback":["lead"]},"rules":[]}\n';
+  await mkdir(join(state, 'coordination'), {recursive:true});
+  await writeFile(file, old);
+  await initSpeculo(root, options);
+  assert.equal(await readFile(file, 'utf8'), old);
+  const doctor = await doctorSpeculo(root);
+  assert.ok(doctor.checks.some(check => !check.ok && check.id === 'catalog-and-coordination' && /expected schema 2/.test(check.message)));
+  assert.equal(await readFile(file, 'utf8'), old);
 });
 
 test('shared handoff is explicitly routed and domain state remains separate from its mutable summary', async () => {

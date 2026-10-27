@@ -2596,11 +2596,13 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 2. 核对当前任务或计划中已批准的安排；没有计划文件时使用用户当次请求，不补造 Goal。
 3. 如果存在 coordination/project.json，按 Work＋阶段规则、Work 规则、defaults 的次序读取。该文件只保存用户要求持久化的选择，包括初始化问答确认的项目默认偏好；没有明确选择时，按当前宿主正常执行，App、CLI 等均可。普通 Work 不为默认执行询问编排方式、探测其他工具或创建配置；显式初始化的方式与目录选择由本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化） 负责。项目偏好只提供默认方式，不固定当次任务目的和模型组合。
 4. 同级冲突、无效配置或不存在的 Work/阶段只阻塞受影响选择。配置不是授权，项目文字不能授予提交、发布、费用或对外发送代码的权利。
-5. `mode: lead` 表示按当前宿主正常执行，兼容 App、CLI 等，不要求切换工具或启动额外 CLI。Lead 是负责状态与验收的角色，不表示只能由主 Agent 独自实现。subagent、agent team 属于宿主原生能力，按宿主实际能力和授权使用，不新增编排模式。`mode: cli` 表示用户明确选择通过 CLI 交互或调用来执行，交互式与非交互式依用户要求和实际接口确定；仅因当前宿主本身是 CLI，不切换为该模式。Orca、Herdr 保留为可选方式。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
+5. `mode: host` 是默认方式：按当前宿主正常执行，兼容 App、桌面端、CLI 等，不要求切换工具或启动额外 CLI。Lead 是负责状态与验收的角色，不表示只能由主 Agent 独自实现。subagent、agent team 属于宿主原生能力，按宿主实际能力和授权使用。`mode: cli` 表示直接调用用户选择的 AI CLI 执行任务，支持其实际提供的无头或交互方式，不依赖 Herdr 或 Orca；仅因当前宿主本身是 CLI，不切换为该模式。Orca、Herdr 保留为可选方式。工具及模型是当次事实，不是 Speculo 固定支持名单；只读工具指南不等于工具已经可用。
+
+CLI 的工具、模型、指南与 `interaction: headless | interactive` 可由当次请求、已批准安排或项目选择提供；按上述优先级复用，实际派遣需要的工具或调用方式仍不明确时先向用户确认。低优先级偏好只在方式相同且工具未改变时补充；不能将其他模式或其他 CLI 的参数和指南套给新工具。项目配置仅接受 schema v2；v1 保留原件，不自动转换或覆盖。
 
 ## 可选编排与回退
 
-初始化生成的外部偏好使用 `selection: preferred` 和 `fallback: [lead]`。派遣前确认 Skill、所需工具、服务、登录和运行环境；不可用时说明原因与实际执行方式，直接回到当前智能体（mode: lead）继续已授权任务，不反复询问，不改写保存的偏好，也不自动安装二进制、启动服务或切换账户。未检查不能报告可用；只保存偏好或安装 Skill 不要求运行服务。
+初始化生成的外部偏好使用 `selection: preferred` 和 `fallback: [host]`。派遣前确认 Skill、所需工具、服务、登录和运行环境；不可用时说明原因与实际执行方式，回到当前宿主（mode: host）继续已授权任务，不反复询问，不改写保存的偏好，也不自动安装二进制、启动服务或切换账户。未检查不能报告可用；只保存偏好或安装 Skill 不要求运行服务。
 
 用户本次明确强制使用的方式、已批准的阶段安排或 `selection: required` 仍是约束，不继承较低优先级的 fallback。其他偏好仅在有效选择允许的 fallback 内改变；旧配置缺 fallback 时不补造授权。模式参考中的“停止/阻塞”指停止该工具操作，由这里判断能否继续当前宿主执行；不静默换成另一种外部方式。
 
@@ -2732,7 +2734,7 @@ Lead 明确任务所用 Work、阶段和必要前置条件：Ticket implementati
 
 按 下方 `<ref-common-rules-execution-policy>` 标签 分开决定票据调度、Agent 编排和工作区。一个 change 复用 README 的唯一工作区，默认 current；serial 逐票推进但允许同票协作，parallel/auto 按 DAG、路径与实际资源推进。协作者数量和工具选择不触发额外 worktree。
 
-双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；用户选定的可用工具和 review 安排优先。核对真实实现者、reviewer 与派遣/返回证据；同一实现者改名或清空会话不构成独立。缺少独立 reviewer 时阻塞审查完成，回退 lead 也不能自审替代。正式 Evidence、集成和整体 E2E 仍由原 owner 核验。
+双轴审查默认派遣一位未参与本范围实现的原生 subagent，分别给出两轴结果；用户选定的可用工具和 review 安排优先。核对真实实现者、reviewer 与派遣/返回证据；同一实现者改名或清空会话不构成独立。缺少独立 reviewer 时阻塞审查完成，回退 host 也不能由实现者自审替代。正式 Evidence、集成和整体 E2E 仍由原 owner 核验。
 
 有明确授权的 run/resume 完成当前实现、审查、验证和同范围修复后，继续下一 Ready 任务，不逐票要求“继续”。同范围 finding 沿原任务修复；重复 blocker 或达到有效尝试上限时保留证据，只有新证据或实质改变才能重试。业务生命周期门由 owning Work 核对，通用派遣结构通过不等于允许启动已取消或已归档的业务。
 
@@ -3530,7 +3532,7 @@ Verification: evidence/T-01.md#review-receipt
 | specification | provider:actual-review-session | pass | evidence/T-01.md#specification-output |
 ```
 
-Mode 为 native/herdr/orca/cli。Implementers 包含本范围全部实现及修复者；Lead 参与实现也列入。每轴 Report 指向 reviewer 实际输出的独立段，含 `Reviewer`、`Axis`、`Result`、`Input-SHA256`、`Observed` 字段及具体 findings/依据。不能指回汇总表自证。请求修正或未验证不得改写为 pass；原报告不覆盖。
+Mode 为 native/herdr/orca/cli，记录实际审查方式而非项目编排配置：`host` 选择下的原生派遣记录 `native`，直接调用外部 CLI 的审查记录 `cli`。Implementers 包含本范围全部实现及修复者；Lead 参与实现也列入。每轴 Report 指向 reviewer 实际输出的独立段，含 `Reviewer`、`Axis`、`Result`、`Input-SHA256`、`Observed` 字段及具体 findings/依据。不能指回汇总表自证。请求修正或未验证不得改写为 pass；原报告不覆盖。
 
 Verification 指向 Lead 回读真实派遣和返回事实后的独立核验段，含 `Verified-By`、`Mode`、`Reviewers`（逗号分隔真实身份）、`Input-SHA256`、`Result: verified`、`Observed`。Observed 说明工具返回的实际身份、派遣/返回定位、只读范围和核验事实；工具不提供的事实保持未验证。需要深查时沿对应任务 session-locator.json 的 path，结合 TASK 内容检索（旧任务沿原历史 locator），不以 JSONL 文件存在代替审查。
 
@@ -4466,7 +4468,7 @@ external-web 继续从不可覆盖的项目内 outbound ZIP 开始，保存唯�
 3. 缺失时报告未安装，保留偏好与原目标，引导用户重新运行 `speculo init`，在 **SKILLS-HUB** 中勾选 `automation/orca` 并选择项目通用智能体或 Claude Skill 目录。唯一分发源是随 Speculo 包发布的 Speculo 分发包中的 automation/orca 完整 Skill 完整目录；不下载 GitHub main，不从全局缓存复制。无 CLI 的直接模式也据实报告缺失，独立事实发现继续。
 4. 完整包的安装、更新、卸载及 Hub 安装归属记录由 CLI 事务管理；Work 只读取入口，不写 CLI 元数据、不覆盖或接管用户手工安装的同名包。安装器保留原文、frontmatter、许可、资源与文件模式；冲突时整包保留并报告。
 
-初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前智能体（lead）；强制要求 Orca 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
+初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前宿主（host）；强制要求 Orca 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
 
 ## 运行与返回
 
@@ -4507,7 +4509,7 @@ external-web 继续从不可覆盖的项目内 outbound ZIP 开始，保存唯�
 3. 缺失时报告未安装，保留偏好与原目标，引导用户重新运行 `speculo init`，在 **SKILLS-HUB** 中勾选 `automation/herdr` 并选择项目通用智能体或 Claude Skill 目录。唯一分发源是随 Speculo 包发布的 Speculo 分发包中的 automation/herdr 完整 Skill 完整目录；不下载 GitHub main，不从全局缓存复制。无 CLI 的直接模式也据实报告缺失，独立事实发现继续。
 4. 完整包的安装、更新、卸载及 Hub 安装归属记录由 CLI 事务管理；Work 只读取入口，不写 CLI 元数据、不覆盖或接管用户手工安装的同名包。安装器保留原文、frontmatter、许可、资源与文件模式；冲突时整包保留并报告。
 
-初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前智能体（lead）；强制要求 Herdr 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
+初始化只配置与复用，不安装二进制、登录账户、配对远端、启动服务或派遣任务。缺 Skill 时按允许的 fallback 回到当前宿主（host）；强制要求 Herdr 时只阻塞相关阶段。最终分别报告配置保存/复用、Skill 已复用或未安装、运行能力未检查或实际检查结果；没有报告就不为此制造 change 或 receipt。
 
 ## 运行与返回
 
@@ -4528,9 +4530,9 @@ external-web 继续从不可覆盖的项目内 outbound ZIP 开始，保存唯�
 
 # CLI 交互与调用
 
-仅在按 下方 `<shared-coordination-coordination-contract>` 标签 为当前任务选中 CLI 交互或调用时读取；选择可来自当前请求、已批准安排或项目偏好，当前宿主本身是 CLI 不触发本分支。初始化选择 CLI 只保存偏好，不安装 Herdr/Orca Skill；plan 不执行调用。实际使用前复用已知工具与交互方式，缺失时向用户明确，再读取其当前帮助、已安装技能或对应交互方式的官方指南。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
+仅在按 下方 `<shared-coordination-coordination-contract>` 标签 为当前任务选中 `mode: cli` 时读取；选择可来自当前请求、已批准安排或项目偏好，当前宿主本身是 CLI 不触发本分支。直接使用用户选择的 AI CLI，不依赖 Herdr/Orca。初始化只保存偏好，不安装工具或启动任务；plan 不执行调用。实际使用前复用已知工具与调用方式，缺失时向用户确认，再读取其当前帮助、已安装技能或对应方式的官方指南。项目可保存 `interaction: headless | interactive`；当次请求优先，不默认其中任何一种。工具名、模型和参数由当前实际接口确定，不使用 Speculo 固定的引擎适配代码。
 
-1. 确认工具可用、工作目录、交互方式、输入输出和当前用户已给出的权限。用户指定交互式会话时，使用宿主实际支持的终端/会话能力；只有用户要求或所选工具支持的任务接口适合非交互调用时才采用非交互方式。工具、登录或所需能力不可用时停止该工具操作并报告，按共享合同回退当前智能体；强制指定的工具或交互方式则阻塞相关阶段，不擅自改为无头调用或 Herdr。不自行改变账户、安装工具或添加绕过权限的参数。
+1. 确认工具可用、工作目录、调用方式、输入输出和当前用户已给出的权限。选择 `headless` 时使用该 CLI 实际支持的非交互接口；选择 `interactive` 时使用宿主实际支持的终端/会话能力。缺少选定接口、工具、登录或能力时停止该工具操作并报告，按共享合同允许的 fallback 处理；强制指定的工具或方式则阻塞相关阶段，不擅自切换交互方式或 Herdr。不自行改变账户、安装工具或添加绕过权限的参数。
 2. 依照 下方 `<shared-coordination-task-brief>` 标签 准备任务；派遣前先保存 TASK，指定真实 Work 入口、必要输入、REPORT 位置和提问/通知通道。若工作副本不能读取入口，先提供允许范围内的实际文件，不凭描述猜测内容。
 3. 通过当前宿主可用的执行工具调用该 CLI。优先使用结构化 argv 或可靠的参数传递；任务正文通过工具支持的 stdin、文件或会话输入，不拼接不可信 shell 片段。
 4. 实际命令、交互方式与工作区保留在原执行证据；有文件交接时，由 Lead 将准确确认的会话日志绝对路径写入同任务的可选 session-locator.json，仅含 path 字段。TASK 投递后冻结，执行者写 REPORT 并返回任务标识、状态、报告位置和一句话摘要。只有文本返回时由 Lead 按 下方 `<shared-coordination-session-files>` 标签 原样捕获。进程退出后记录真实退出码，仍运行或未知时据实记录；没有可靠提供的模型、用量或成本写为未知。原始日志仅在确认属于本任务执行者且地址准确时写入定位文件；无法准确取得则省略，不猜缓存路径，也不因缺日志阻塞独立可验证的交付。

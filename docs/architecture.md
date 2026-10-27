@@ -6,7 +6,7 @@
 
 ## 产品边界
 
-Speculo 分发可供 AI 读取的提示词、方法、领域合同和确定性工具。AI 使用用户当前环境的工具完成任务。未明确指定执行方式时，按当前宿主正常执行（mode: lead），App、CLI 等均可，subagent/team 属于宿主能力。明确指定 CLI 交互、Herdr、Orca 等方式时按选择执行，与 current/worktree 独立；仅在使用所选工具时读取其当前指南。
+Speculo 分发可供 AI 读取的提示词、方法、领域合同和确定性工具。AI 使用用户当前环境的工具完成任务。未明确指定执行方式时，按当前宿主正常执行（mode: host），App、CLI 等均可，subagent/team 属于宿主能力。明确指定直接调用 CLI、Herdr、Orca 等方式时按选择执行，与 current/worktree 独立；仅在使用所选工具时读取其当前指南。
 
 Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。可选项目选择保存在 `.agents/speculo/.speculo/coordination/project.json`。实际业务进度继续使用 Goal Plan、Ticket、Evidence 和各领域原有状态；工具返回的 session/attempt locator 只作为证据。
 

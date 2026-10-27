@@ -116,7 +116,7 @@ speculo init . --hub-skills none --workflows none
 
 两类 Skill 共用安装位置。CLI 用 `.agents/speculo/.speculo/hub-skills.json` 记录 Hub 选择与每个包的文件、目录、摘要和模式归属；workflow/Command 入口继续使用 `projections.json`。同名非受管目录不自动接管；受管文件的内容或普通权限修改不阻止更新或卸载，用户额外文件保留且不纳入归属清单。新包文件与非受管文件重名、symlink、hardlink、只读保护或节点类型冲突时整包保留并报告，其余包继续。卸载后若留下用户文件，再次安装仍按非受管同名目录处理，不自动接管。
 
-SpecDev 初始化仍可选择 Herdr / Orca / CLI / 暂时都不要，并保存允许回到 lead 的偏好。Herdr/Orca 只复用指定位置已有的 Skill；缺失时提示通过安装器勾选对应 Hub 包，不下载 GitHub main，不检查或启动服务。
+公共编排初始化可选择当前宿主 / CLI / Herdr / Orca；默认建议当前宿主，外部方式可保存允许回到 host 的偏好。CLI 可选保存工具与无头或交互方式，实际调用仍按工具指南。Herdr/Orca 只复用指定位置已有的 Skill；缺失时提示通过安装器勾选对应 Hub 包，不下载 GitHub main，不检查或启动服务。
 
 ## 刷新与升级
 
