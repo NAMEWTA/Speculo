@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -10,7 +10,9 @@ const scenarios = JSON.parse(await readFile(join(process.cwd(), "test/fixtures/a
 
 // Synthetic unit-test data checks the evaluator contract, NOT a host/model run.
 async function declaredFixture(t: { after: (fn: () => Promise<unknown>) => void }, scenario: any) {
-  const root = await mkdtemp(join(tmpdir(), "speculo-agent-led-evaluation-"));
+  // Canonicalize the fixture root: macOS temp paths may traverse /var aliases.
+  // The production evaluator must continue rejecting aliased artifact paths.
+  const root = await realpath(await mkdtemp(join(tmpdir(), "speculo-agent-led-evaluation-")));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, scenario.id));
   const values = Object.fromEntries(Object.entries(scenario.assertions.artifacts[0].json).map(([key, value]) => [key.slice(1), value]));
