@@ -3,6 +3,7 @@
 Session: <本轮编排标识>
 Task: <本次派遣标识>
 Status: <completed / blocked / failed / cancelled 中的实际值>
+Session log: <可选。准确确认的会话日志绝对路径；不知道就删除本行>
 
 ## 聚焦交接
 三至五句话说明完成内容、关键决定、当前停点和下一安全动作。
@@ -15,4 +16,4 @@ Status: <completed / blocked / failed / cancelled 中的实际值>
 ## 问题与下一步
 阻塞/失败/取消事实、已尝试内容、需要谁提供什么及恢复条件；无问题写“无”。
 
-仅当同目录 session-locator.json 已存在时引用它，不重复维护其中字段。没有日志入口不影响报告成立。completed 只表示候选交回，业务完成由 Lead 验收。
+没有 `Session log` 行不影响报告成立。不要在任务目录另建日志、校验、清单或压缩包。completed 只表示候选交回，业务完成由 Lead 验收。

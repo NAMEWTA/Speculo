@@ -20,15 +20,15 @@
 
 先读分配的真实 Work/Skill，执行指定范围；没有需要调用的 Skill 时依据明确用户目标和验收执行。Worker 可以直接写指定的计划、票据、地图、说明或代码等产物，不接管 Lead、不擅自再次派遣或扩大目标。正式状态、批准、Evidence、集成和永久知识仍由原 owner/gateway 在验收后处理；领域工具自己的事务记录按其原协议生成。缺输入、权限或 owner 冲突时返回问题与证据。
 
-采用文件交接时只写分配产物与自己的 REPORT，不改 TASK 或定位文件；TASK 投递后冻结，Lead 不与 worker 并写业务产物。上下文变化影响目标、基线或权限时先确认旧 writer 停写，再建立新 task，不能覆盖旧记录。共享资源和 Git index 由 owner 串行协调；审查输入漂移后重新核验。
+采用文件交接时只写分配产物与自己的 REPORT，不改 TASK，也不在任务目录添加其他文件；TASK 投递后冻结，Lead 不与 worker 并写业务产物。上下文变化影响目标、基线或权限时先确认旧 writer 停写，再建立新 task，不能覆盖旧记录。共享资源和 Git index 由 owner 串行协调；审查输入漂移后重新核验。
 
 ## 返回
 
 交付实际文件/内容、关键决定、检查命令和退出码、真实环境、未验证项、问题和下一安全动作；研究给来源，review 给 findings，说明任务给解释与依据。即时只读结果关联真实 call/task；持久交接依 <Path>{roots.references}/coordination/report-template.md</Path> 形成 REPORT。Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 核验。
 
-历史信息先读前序报告的聚焦交接，细节不足再按对应定位文件检索少量日志。准确日志路径仅由 Lead 写入可选 session-locator.json；取不到时省略，不猜路径。
+历史信息先读前序报告的聚焦交接，细节不足再按该报告里的可选 `Session log` 行检索少量日志。准确路径只写在这一行；取不到时省略整行，不猜路径，不另建文件。
 
 ## 外部网页分支
 
-仅在用户选择外部网页交付时读取 <Path>{roots.references}/coordination/exchange/external-web.md</Path> 与 <Path>{roots.references}/coordination/exchange/source-package.md</Path>，沿用 ZIP-only、发送范围授权、清单/hash 与唯一 attempt。其他派遣不生成 ZIP 或独立 Packet JSON。
+仅在用户选择外部网页交付时读取 <Path>{roots.references}/coordination/exchange/external-web.md</Path> 与 <Path>{roots.references}/coordination/exchange/source-package.md</Path>。传输可以用临时压缩包，传完立即删除；交接目录仍然只有 TASK.md 与 REPORT.md。其他派遣不生成压缩包。
 

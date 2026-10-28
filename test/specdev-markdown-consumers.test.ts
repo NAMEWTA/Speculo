@@ -141,8 +141,6 @@ test('new archives require the original receipt and moved bytes before sealed co
     const dispatchFiles=new Map([
       [`${session}/001-implement-T01/TASK.md`,Buffer.from('# Input\nImplement the assigned change.\r\n')],
       [`${session}/001-implement-T01/REPORT.md`,Buffer.from('# Report\nStatus: completed\nCandidate awaits Lead acceptance.\n')],
-      [`${session}/001-implement-T01/history-01.jsonl`,Buffer.from('{"id":"message-1","role":"assistant","text":"候选已交付"}\n')],
-      [`${session}/002-review-T01/session-locator.json`,Buffer.from(JSON.stringify({path:'/external/provider-review.jsonl'})+'\n')],
       [`${session}/002-review-T01/TASK.md`,Buffer.from(`# Review\nChange: ${name}\nInput: change:${session}/001-implement-T01/REPORT.md\n`)],
       [`${session}/002-review-T01/REPORT.md`,Buffer.from('# Review report\nStatus: completed\nNo findings; observed checks are in the owning Evidence.\n')],
     ]);
@@ -173,18 +171,10 @@ test('new archives require the original receipt and moved bytes before sealed co
     }
     await writeFile(join(archived,'archive-receipt.md'),receipt.replace('Result: moved','Result: verified'));
     const sealed=validator.validateChange(archived,'archived',f.repo,null,null,{...f.options,sealed:true});assert.deepEqual(sealed.errors,[]);assert.equal(sealed.archive.sealed,true);
-    const workerReport=`${session}/001-implement-T01/REPORT.md`,history=`${session}/001-implement-T01/history-01.jsonl`;
+    const workerReport=`${session}/001-implement-T01/REPORT.md`;
     await writeFile(join(archived,workerReport),'Status: failed\n');
     assert.match(validate().errors.join('\n'),/integrity byte drift/);
     await writeFile(join(archived,workerReport),dispatchFiles.get(workerReport)!);
-    await rm(join(archived,history));
-    assert.notDeepEqual(validate().errors,[]);
-    await writeFile(join(archived,history),dispatchFiles.get(history)!);
-    assert.deepEqual(validate().errors,[]);
-    const locator=`${session}/002-review-T01/session-locator.json`;
-    await writeFile(join(archived,locator),'{}\n');
-    assert.match(validate().errors.join('\n'),/integrity byte drift/);
-    await writeFile(join(archived,locator),dispatchFiles.get(locator)!);
     assert.deepEqual(validate().errors,[]);
     const report=join(f.repo,'data/commands/project-maintenance/2026-10-14-single-fixture.md');await mkdir(dirname(report),{recursive:true});
     const navigated=(await readFile(join(archived,'README.md'),'utf8'))+`\n## Archive Receipt\nReceipt: project:${relative(f.repo,report).split('\\').join('/')}#archive-${name}\n`;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -119,20 +119,74 @@ test('shared validation rejects malformed identities, versions and paths without
   assert.match(f.check().errors.join(), /occupied/);
 });
 
-test('shared optional locator remains path-only and report validation cannot replay a dispatch', async t => {
+test('report validation cannot replay a dispatch', async t => {
   const f = await fixture(t);
-  await writeFile(join(f.dir, 'session-locator.json'), JSON.stringify({path:'/unavailable/worker.jsonl'}));
-  assert.deepEqual(f.check().errors, []); // Never opens this external path.
   for (const report of [reportText('002-other'), reportText(task, 'idle'), reportText().replace('Status: completed', 'Status: completed\nStatus: failed')]) {
     await writeFile(join(f.dir, 'REPORT.md'), report);
     assert.ok(f.check({stage:'return'}).errors.length);
-    assert.ok(f.check().errors.length);
+    assert.match(f.check().errors.join('\n'), /already delivered/);
   }
   await writeFile(join(f.dir, 'REPORT.md'), reportText());
-  for (const locator of [{path:'relative.jsonl'}, {path:'/a',status:'done'}, {path:''}]) {
-    await writeFile(join(f.dir, 'session-locator.json'), JSON.stringify(locator));
-    assert.ok(f.check({stage:'return'}).errors.length);
+  assert.deepEqual(f.check({stage:'return'}).errors, []);
+});
+
+test('task directory allows only TASK.md and, at return, REPORT.md', async t => {
+  const f = await fixture(t);
+  for (const name of ['session-locator.json', 'MANIFEST.json', 'packet.sha256', 'outbound.zip', 'notes.tar', 'bundle.tar.gz', 'SESSION.md', 'ACCEPTANCE.md', 'TASK.md.tmp', 'history-01.jsonl']) {
+    await writeFile(join(f.dir, name), 'x\n');
+    assert.match(f.check().errors.join('\n'), /task directory may contain only TASK\.md; found /, name);
+    await rm(join(f.dir, name));
   }
+  for (const directory of ['raw', 'extracted']) {
+    await mkdir(join(f.dir, directory));
+    assert.match(f.check().errors.join('\n'), new RegExp(`found ${directory}`));
+    await rm(join(f.dir, directory), { recursive: true });
+  }
+  assert.deepEqual(f.check().errors, []);
+  await writeFile(join(f.dir, 'REPORT.md'), reportText());
+  assert.deepEqual(f.check({ stage: 'return' }).errors, []);
+  await writeFile(join(f.dir, 'REPORT.md'), reportText().replace('Status: completed\n', 'Status: completed\nSession log: /var/log/worker.jsonl\n'));
+  assert.deepEqual(f.check({ stage: 'return' }).errors, []);
+  await writeFile(join(f.dir, 'REPORT.md'), reportText());
+  await writeFile(join(f.dir, 'session-locator.json'), '{}\n');
+  assert.match(f.check({ stage: 'return' }).errors.join('\n'), /TASK\.md and REPORT\.md; found session-locator\.json/);
+});
+
+test('dispatch and handoff specs no longer require locator, checksum, manifest or log snapshot files', async () => {
+  async function filesIn(root: string): Promise<string[]> {
+    const found: string[] = [];
+    async function visit(dir: string) {
+      for (const entry of await readdir(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) await visit(path);
+        else found.push(path);
+      }
+    }
+    await visit(root);
+    return found;
+  }
+  const roots = [
+    join(process.cwd(), 'template/references/coordination'),
+    join(process.cwd(), 'template/references/handoff'),
+    join(process.cwd(), 'template/commands/handoff'),
+  ];
+  const paths = [join(process.cwd(), 'docs/agent-handoffs.md'), ...(await Promise.all(roots.map(filesIn))).flat()];
+  const forbidden = [/session-locator/, /\.sha256/i, /MANIFEST\.json/, /\.history-/, /Source SHA-256/, /SESSION\.md/, /ACCEPTANCE\.md/, /SHA-256/];
+  for (const path of paths) {
+    const text = await readFile(path, 'utf8');
+    for (const pattern of forbidden) assert.doesNotMatch(text, pattern, path);
+  }
+  const mentions = [
+    'template/workflows/specdev/common/rules/path-reference-contract.md',
+    'template/workflows/specdev/common/rules/workflow-state-and-lifecycle.md',
+    'template/workflows/specdev/common/tools/README.md',
+    'template/workflows/specdev/specdev-i-implement/assets/evidence-template.md',
+  ];
+  for (const relative of mentions) {
+    const text = (await readFile(join(process.cwd(), relative), 'utf8')).replaceAll('owner-or-session-locator', '').replaceAll('actual-session-locator', '');
+    assert.doesNotMatch(text, /session-locator/, relative);
+  }
+  await assert.rejects(readFile(join(process.cwd(), 'template/references/coordination/session-locator.schema.json')), { code: 'ENOENT' });
 });
 
 test('shared CLI is standalone with only core references and runtime', async t => {

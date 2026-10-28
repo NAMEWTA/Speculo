@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /** Fixed, read-only documentation example. Not a general runner or a workflow state authority. */
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +8,6 @@ import { workspaceForPathSync, resolvePathReference, readUtf8ArtifactSync, safeW
 import { validateDispatch } from '../../../references/coordination/scripts/validate-dispatch.mjs';
 
 const requireThat = (ok, message) => { if (!ok) throw new Error(message); };
-const hash = value => createHash('sha256').update(value).digest('hex');
 function field(body, name) {
   const values = body.split(/\r?\n/).filter(line => line.startsWith(name + ': ')).map(line => line.slice(name.length + 2));
   requireThat(values.length === 1 && values[0].trim(), 'example requires one ' + name + ' locator'); return values[0];
@@ -38,15 +36,16 @@ export async function consumeExample(handoffPath) {
   const head = field(body, 'HEAD');
   requireThat(/^[a-f0-9]{40,64}$/.test(head), 'handoff requires an actual full HEAD');
   requireThat(execute(projectRoot, 'git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--verify', 'HEAD']) === head, 'HEAD drift; reread original owner and baseline');
-  const sourcePath = field(body, 'Source'), expected = field(body, 'Source SHA-256');
-  requireThat(field(reportBody, 'Candidate source') === sourcePath && field(reportBody, 'Candidate SHA-256') === expected, 'candidate report differs from handoff source identity');
+  const sourcePath = field(body, 'Source'), expected = field(body, 'Source text');
+  requireThat(field(reportBody, 'Candidate source') === sourcePath && field(reportBody, 'Candidate text') === expected, 'candidate report differs from handoff source identity');
   // The operation is fixed here. Free-form commands in handoff/TASK/REPORT are never evaluated.
   const sourceFile = safeWorkPathSync(projectRoot, sourcePath, { mustExist: true, type: 'file' });
-  requireThat(/^[a-f0-9]{64}$/.test(expected) && hash(readFileSync(sourceFile)) === expected, 'source drift; preserve the current file');
+  const sourceText = readFileSync(sourceFile, 'utf8');
+  requireThat(sourceText === expected || sourceText === `${expected}\n`, 'source drift; preserve the current file');
   execute(projectRoot, process.execPath, ['--check', sourceFile]);
-  requireThat(readUtf8ArtifactSync(handoffPath) === body && read(reportPath) === reportBody && hash(readFileSync(sourceFile)) === expected, 'input changed during read-only validation');
+  requireThat(readUtf8ArtifactSync(handoffPath) === body && read(reportPath) === reportBody && readFileSync(sourceFile, 'utf8') === sourceText, 'input changed during read-only validation');
   return { example: 'read-only handoff consumption', project_root: projectRoot, installation_id: workspace.installation_id, config: configStatus,
-    task: taskPath, report: reportPath, source: { path: sourcePath, sha256: expected }, baseline_head: head,
+    task: taskPath, report: reportPath, source: { path: sourcePath, text: expected }, baseline_head: head,
     check: { command: 'node --check', path: sourcePath, exit_code: 0 },
     unresolved_writer: { task: unresolvedPath, disposition: 'preserve original owner; do not redispatch' },
     lead_acceptance: 'pending; structure and syntax checks do not accept the business task', writes: [], caveat: validation.caveat };

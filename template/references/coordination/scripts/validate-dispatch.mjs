@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Shared read-only dispatch checks. Never opens or authenticates external transcripts. */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { posix, resolve } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   markdownBodyLines, parseFrontmatter, readUtf8ArtifactSync,
@@ -10,7 +10,6 @@ import {
 const requireThat = (condition, message) => { if (!condition) throw new Error(message); };
 const real = value => typeof value === 'string' && value.trim() === value && value.length > 0 && !/^(?:unknown|unassigned|pending|todo|tbd|\.\.\.)$/i.test(value) && !/[<>\x00-\x1f]|\{[^}]*\}/.test(value);
 const readFile = (root, path) => readUtf8ArtifactSync(safeWorkPathSync(root, path, {mustExist:true, type:'file'}));
-const readJson = path => JSON.parse(readUtf8ArtifactSync(path));
 
 function utc(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value)) return false;
@@ -33,18 +32,17 @@ function headings(text, names) {
   }
 }
 
-/** Only a log path is stored; correspondence to this task is checked before writing. */
-export function validateSessionLocator(value) {
-  const errors = [];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return ['session-locator: expected an object'];
-  const unknown = Object.keys(value).filter(key => key !== 'path');
-  if (unknown.length) return unknown.map(key => `session-locator: unknown ${key}`);
-  if (!Object.hasOwn(value, 'path') || typeof value.path !== 'string' || !value.path.length) return ['session-locator: expected a nonempty path'];
-  const path = value.path;
-  if (!real(path) || /(?:^|[\\/])(?:\.\.\.|unknown|todo|tbd)(?:[\\/]|$)/i.test(path)) errors.push('path: placeholder or empty locator');
-  // Accept source paths on either platform; do not access the external file here.
-  if (!(posix.isAbsolute(path) || /^[A-Za-z]:[\\/]/.test(path) || /^\\\\[^\\/]+[\\/][^\\/]+[\\/]/.test(path))) errors.push('path must be an absolute file path');
-  return errors;
+/** Dispatch allows only TASK.md. Return also allows REPORT.md. Any other file or directory fails. */
+function assertTaskDirectory(root, stage) {
+  const allowed = stage === 'return' ? 'TASK.md and REPORT.md' : 'TASK.md';
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name === 'TASK.md') continue;
+    if (entry.isFile() && entry.name === 'REPORT.md') {
+      requireThat(stage === 'return', 'already delivered; create a new task instead of redispatch');
+      continue;
+    }
+    requireThat(false, `task directory may contain only ${allowed}; found ${entry.name}`);
+  }
 }
 
 /** A bounded synchronous read-only return needs no session directory. Flags are
@@ -95,9 +93,8 @@ export function validateDispatch(input) {
     if (meta.change !== undefined) requireThat(real(meta.change) && (input.change === undefined || meta.change === input.change), 'TASK change mismatch');
     if (meta.ticket !== undefined) requireThat(real(meta.ticket), 'TASK: invalid ticket');
     headings(body,['Goal','Inputs','Workspace and Scope','Acceptance','Return']);
-    const report = safeWorkPathSync(root,'REPORT.md',{type:'file'});
-    if (input.stage === 'dispatch') requireThat(!existsSync(report), 'already delivered; create a new task instead of redispatch');
-    else {
+    assertTaskDirectory(root, input.stage);
+    if (input.stage === 'return') {
       const text = readFile(root,'REPORT.md'), lines = markdownBodyLines(text);
       const headerEnd = lines.find(line => /^## /.test(line.text))?.line ?? Infinity;
       const fields = {};
@@ -110,8 +107,6 @@ export function validateDispatch(input) {
       requireThat(['completed','blocked','failed','cancelled'].includes(fields.Status), 'REPORT: invalid terminal status');
       headings(text,['聚焦交接','产物与验证','问题与下一步']);
     }
-    const path = safeWorkPathSync(root,'session-locator.json',{type:'file'});
-    if (existsSync(path)) errors.push(...validateSessionLocator(readJson(path)));
   } catch (error) { errors.push(String(error.message ?? error)); }
   return {errors,warnings,caveat:'Read-only structure checks do not authenticate tool identity, transcript content, authorization or completion; external histories are never opened.'};
 }
@@ -124,7 +119,7 @@ export function dispatchCLI(argv) {
   }
   const names = {'--repo':'projectRoot','--scope-root':'scopeRoot','--session':'session','--task':'task','--stage':'stage'}, input = {};
   if (argv.length === 1 && argv[0] === '--help') {
-    console.log('Usage: node validate-dispatch.mjs --repo <project> --scope-root <project-relative-owner-root> --session <round> --task <id> --stage dispatch|return\nOr: node validate-dispatch.mjs --inline < bounded-return.json (JSON may be piped, no file required). Validates durable TASK v2 under scope-root/sessions or a correlated inline return. Read-only; no workflow required, log discovery or external transcript access.'); return 0;
+    console.log('Usage: node validate-dispatch.mjs --repo <project> --scope-root <project-relative-owner-root> --session <round> --task <id> --stage dispatch|return\nOr: node validate-dispatch.mjs --inline < bounded-return.json (JSON may be piped, no file required). Validates durable TASK v2 under scope-root/sessions or a correlated inline return. A task directory may contain only TASK.md; return may also contain REPORT.md. Read-only; no workflow required, log discovery or external transcript access.'); return 0;
   }
   try {
     for (let i=0;i<argv.length;i++) {
