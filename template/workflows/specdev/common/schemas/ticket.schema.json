@@ -140,13 +140,7 @@
         "required": [
           "id",
           "path",
-          "sha256",
-          "phase",
-          "operation",
-          "inputs",
-          "outputs",
-          "required",
-          "on_failure"
+          "required"
         ],
         "properties": {
           "id": {
@@ -206,9 +200,7 @@
             "items": {
               "type": "object",
               "required": [
-                "path",
-                "sha256",
-                "when"
+                "path"
               ],
               "properties": {
                 "path": {
@@ -241,9 +233,26 @@
               ]
             },
             "then": {
+              "required": [
+                "sha256",
+                "phase",
+                "operation",
+                "inputs",
+                "outputs",
+                "on_failure"
+              ],
               "properties": {
                 "on_failure": {
                   "const": "block-ticket"
+                },
+                "references": {
+                  "items": {
+                    "required": [
+                      "path",
+                      "sha256",
+                      "when"
+                    ]
+                  }
                 }
               }
             }
@@ -260,9 +269,11 @@
               ]
             },
             "then": {
-              "required": [
-                "condition"
-              ]
+              "properties": {
+                "on_failure": {
+                  "const": "report-and-continue"
+                }
+              }
             }
           }
         ],
@@ -316,6 +327,20 @@
         "acceptance"
       ],
       "additionalProperties": false
+    },
+    "review_independence": {
+      "enum": [
+        "required",
+        "not-required"
+      ]
+    },
+    "review_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
     }
   },
   "$defs": {
@@ -338,8 +363,6 @@
       },
       "then": {
         "required": [
-          "skill_scan",
-          "skill_bindings",
           "resource_claims"
         ]
       }

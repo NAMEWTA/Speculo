@@ -29,6 +29,17 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node }}
+      - name: Regenerate portable runtime for review
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        run: pnpm generate-runtime
+      - name: Retain generated portable runtime
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-portable-runtime
+          path: template/lib/speculo-runtime.mjs
+          if-no-files-found: error
+          retention-days: 1
       - name: Test and validate all source assets
         run: pnpm check
       - name: Verify CLI entry and isolated tarball

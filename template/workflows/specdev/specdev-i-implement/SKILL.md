@@ -24,10 +24,10 @@ metadata:
 
 UI Ticket 或 Direct Spec 必须读取 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 与当前批准 DESIGN，核验 design_ref（revision/digest/pages/acceptance）、原型和基线。页面任务按已批准规则实现，不重新选择模板；实际实现证据写入 `Design Conformance`，原型截图不替代生产页面验证。
 
-1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 实际调用绑定能力并记录证据。票缺调用契约时先由 Lead 补齐，不猜测。
+1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 履行必需安全/权限/验收方法并记录证据；必需合同缺失时返回 owner，不猜测。普通可选 Skill 可执行中发现和使用，不为其补造审批或停票。
 2. 保持 codebase-design、design-it-twice 和 TDD 的适用门禁；进入对应实现步骤再读其 reference。派单时调用 共享编排方法；Lead 是唯一 SpecDev 状态写入者。
 3. Ticket 和 Direct Spec 的全部执行者复用选定 change 工作区；票据调度和 Agent 编排分别决定。E2E 由 Lead 在稳定输入上验收；checkpoint 可为实际 commit 或工作副本快照，提交/合并按明确授权执行。
-4. 安全、并发、公共接口、数据迁移或用户要求全面审查时展开 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`；不为省上下文删减必要检查或限制发现数量。
+4. 两轴质量判断与执行者解耦：普通低风险可由主 Agent 自查；高风险/高影响、证据不足或原用户/项目独立要求时采用真正独立 reviewer。安全、并发、公共接口、数据迁移或用户要求全面审查时展开 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`；不为省上下文删减必要检查或限制发现数量。
 5. 写 Evidence、运行适用校验并回读后才推进状态；必需 Skill 失败、验收失败、越界或归属冲突暂停本票及依赖它的分支。无关工作仍由总控继续，不接管他人事务。
 
 ## 专业分支与工程判断
@@ -43,3 +43,4 @@ UI Ticket 或 Direct Spec 必须读取 <Path>{roots.workflows}/specdev/common/ru
 ## 编排与执行上下文
 
 开始实施或独立审查前读取 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，绑定当前 Ticket/Direct Spec、真实写集与原 owner。task 按分配实施并返回事实，正式状态与 Evidence 由原 Lead 验收后维护。
+

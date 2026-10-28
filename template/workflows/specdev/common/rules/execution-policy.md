@@ -25,7 +25,7 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 
 每票原 Evidence 保存自己的 `Workspace Execution Record`，引用 `<Path>{roots.state}/specdev/changes/{change}/README.md</Path>` 的 execution-context 锚点，只记录实际实现者、checkpoint、验证与失败次数；Direct Spec 使用原 evidence/direct-spec.md，不造 Ticket/Map/Goal。使用 <Path>{roots.workflows}/specdev/specdev-i-implement/assets/evidence-template.md</Path>。Lead 是正式状态/Evidence owner，implementation_owners 可有多人。
 
-完成以真实改动、AC、独立双轴审查和适用验证为准。未授权提交时使用固定工作副本快照；不要求 empty commit、每票 commit、父分支 result 或额外 candidate checkout。明确承诺的提交、合并、发布等仍按原目标与授权执行；完成声明不得冒充这些动作已发生。整体完成仍按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>。
+完成以真实改动、AC、风险适配双轴审查和适用验证为准。未授权提交时使用固定工作副本快照；不要求 empty commit、每票 commit、父分支 result 或额外 candidate checkout。明确承诺的提交、合并、发布等仍按原目标与授权执行；完成声明不得冒充这些动作已发生。整体完成仍按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path>。
 
 验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
 
@@ -34,3 +34,4 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
 
 执行工具只接受当前 Execution Context / Workspace Execution Record v1 与 Goal v8、父 Plan v3；未知版本、旧 source/candidate 字段和混合协议直接拒绝。拒绝不改写原 Evidence、不转换或删除工作区。原 owner 仍须核对实际 writer、代码与未决动作，不能把无法读取的旧协议解释成已停止或已完成。
+

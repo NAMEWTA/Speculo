@@ -39,7 +39,7 @@ ready_for_execution: false
 | Gate | 开启条件 | 验证命令/观察与固定输入 | owner | 失败阻塞范围 |
 |---|---|---|---|---|
 
-成员完成后按 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-evidence-template.md</Path> 记录实际整体验证。独立双轴审查覆盖全部组合交付；子通过或模板字段齐全不代替 aggregate Evidence。
+成员完成后按 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/implementation-evidence-template.md</Path> 记录实际整体验证。风险适配双轴审查覆盖全部组合交付；子通过或模板字段齐全不代替 aggregate Evidence。
 
 ## 6. Conflict, Drift and Recovery
 
@@ -52,3 +52,4 @@ ready_for_execution: false
 ## Execution Policy Source
 
 填写真实用户/项目要求、ticket_execution、尝试上限及已有明确的票数/实现者限制出处；不能把模板缺省当成用户授权。完整路径与验收见 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/multi-change-plan.md</Path>。
+

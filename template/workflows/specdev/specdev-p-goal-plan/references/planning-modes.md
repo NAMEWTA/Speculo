@@ -2,7 +2,7 @@
 
 规划模式描述 Goal 额外解决的工程问题；票据调度、Agent 编排与 change 工作区独立，默认 auto 和复用 current。
 
-本文件定义单 change 的规划与全局执行门。多 change 父编排创建仍要求成员全员 Ready，遵守 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`。
+本文件定义单 change 的规划与全局执行门。多 change 父图也可包含合法 draft/deferred 消费者；父级结构完整与逐节点可执行性分别检查，遵守 `<Path>{roots.workflows}/specdev/common/rules/parent-implementation-orchestration.md</Path>`。
 
 ## 1. 输入门禁
 
@@ -52,7 +52,7 @@ Goal 全局执行门与 Ticket DoR 分开判断。以下任一全局条件未满
 - 整体迁移、发布、不可逆动作或恢复存在高影响未知项；
 - 实现或 integration attempt 上限无真实来源，或超过实际存在的 config 或平台能力。
 
-全局门通过后仍只调度自身 Ready、依赖成功完成、owner 明确且资源/并发条件满足的 Ticket。上游 done 不自动修改消费者 Ready；Lead 回读真实产物，按 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/ticket-readiness.md</Path>` 重审后才能更新该票。frontier 为空且仍有未完成票时报告精确缺口与重审条件。
+全局门通过后仍只调度自身 Ready、依赖成功完成、owner 明确且资源/并发条件满足的 Ticket。上游 done 不自动修改消费者 Ready；Lead 回读真实产物，按 `<Path>{roots.workflows}/specdev/specdev-t-tickets/references/ticket-readiness.md</Path>` 重审后才能更新该票。从 eligible 中结合 conflicts、配额与当前资源选择本轮合法组合；suggested_batch 只是一个建议，不是唯一执行顺序。没有合法可执行组合且仍有未完成票时报告精确缺口与重审条件。
 
 ## 5. 执行字段
 

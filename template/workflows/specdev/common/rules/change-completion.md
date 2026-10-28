@@ -4,13 +4,13 @@
 
 ## 完成门
 
-实现型完成必须按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 有覆盖实际最终交付的独立双轴通过证据。多单元组合使用整体审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
+实现型完成必须按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 有覆盖实际最终交付的风险适配双轴验收证据。普通低风险可由主 Agent 自查，高风险或原用户/项目要求独立时必须有真正独立 reviewer。多单元组合使用整体风险与审查；单单元固定输入相同可复用，未提交内容使用工作副本快照。非实现学习、复盘及取消沿各自等价验收，不制造代码审查。
 
 
 一个 change 只有同时满足以下条件才能 completed：
 
 1. 所有计划内 Ticket 为 done，或因权威事实无需改动而有依据地 cancelled；Direct Spec/非实现流程有等价验收。
-2. 每票的原执行记录 verified，实际改动、AC、checkpoint、独立审查和验证证据完整；Direct Spec 有等价证据。未提交工作副本快照可作为交付，不强制 commit 或合并。
+2. 每票的原执行记录 verified，实际改动、AC、checkpoint、适用审查策略和验证证据完整；Direct Spec 有等价证据。未提交工作副本快照可作为交付，不强制 commit 或合并。
 3. 每个行为有 Lead Evidence，全部 Spec 合同与 Goal Gate 可定位。
 4. 选定 change 工作区中的适用单元/组件、集成/回归和 Lead-owned E2E 已通过；not-required 有真实理由。
 5. 迁移、发布、监控、恢复和不可逆批准已完成或明确不适用。
@@ -62,3 +62,4 @@ A 只验证取消结果，不代替用户取消。单 Ticket cancelled 不推导
 取消在 README `<a id="cancellation"></a>` 下保留 `Source`、`Scope`、`Time`（实际 ISO 时间）、`Confirmed-By`（原 owner）、`Undelivered`、`Landed`、`Writers`、`Dependencies`、`Checkpoints`、`External`、`Next`。Source 指向真实取消决定原件或同 README 的独立原请求锚点，不能以取消结论自证。Writers 为 `none: <依据>` 或 `stopped: <停止/交接证据 locator>`；后者原件须有 `Writers: stopped` 与真实 Observed。Dependencies/Checkpoints/External 使用 `none|resolved|transferred|waived: <处置依据>`，不能把未知写成已解决。Ticket 或 Direct Spec 的 active/review/blocked 执行记录仍须原 owner 处置，不由取消声明抹掉。
 
 独立 Spec 的无票 Direct Spec 使用原 evidence/direct-spec 的 `## Acceptance Verification` JSON array 逐 AC 回读实际结果：id/result/method/source/observed；command 存在时 exit 为 0，外部 evidence 引用须有匹配 sha256，内联观察无需另建文件。空 Evidence、仅标题或 passed 自评不通过。`--stage complete` 只判本地完成；A 移动前使用 `--stage archive-ready` 同时核对对应 completed/cancelled 门和已承诺远程交付，目标移动后再使用 archived。
+

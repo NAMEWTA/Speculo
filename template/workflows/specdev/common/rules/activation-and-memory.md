@@ -33,4 +33,4 @@ UI 工作先按 <Path>{roots.state}/specdev/design/</Path> 的索引条目或 sc
 
 只有用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>。本域未归档 change 允许本次唯一交接作者更新 handoff.md 侧记；无 change 的资源模型使用共享方法定义的会话报告。它反映已有事实，不推进本域状态、完成门或永久知识。
 
-SpecDev 实际派遣时另读 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，补足开发工作区、领域前置和独立双轴审查边界。
+SpecDev 实际派遣时另读 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，补足开发工作区、领域前置和风险适配双轴审查边界。

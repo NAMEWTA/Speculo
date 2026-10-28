@@ -29,12 +29,12 @@ Ready documentation Ticket 或获批 Direct Spec 需要维护项目文档时读�
 
 Ticket 模式必须按以下顺序读取：
 
-1. `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 的总体实施背景和完整项目 Skill 读取矩阵；
-2. 矩阵中适用于 `ALL` 或当前 Ticket ID 的全部项目 Skill；
+1. `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 的总体实施背景和本票所需方法与可选知识导航；
+2. 适用于 `ALL` 或当前 Ticket ID 的必需安全/权限/验收方法，以及当下需要的可选 Skill；
 3. 当前 Ticket `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>`；
 4. 存在的 `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>`，以及父 Implementation Map 声明当前 change 时的父 Map/Plan。
 
-矩阵是发布时确认的最低必读集合，不是 allowlist。项目 Agent 指令或实际实现范围触发新的项目 Skill 时，先读取该 Skill、停止项目写入，由 Lead 更新 Tickets Map 并重新运行 tickets 校验后恢复。Direct Spec 模式读取同范围直接实现的实际授权、唯一规格与命中的项目 Skill；完整 Spec 的实现不要求补 Ticket/Map/Goal。
+必需方法集合不是普通知识 allowlist。执行中发现适用可选 Skill 可按需读取并记录实际使用，不因新增普通知识或可选摘要变化停票、重写 Map；只有影响权限、范围、外部行为、依赖或验收时才由原 owner deviation/replan。必需安全/权限/验收方法的真实漂移仍阻塞受影响票。Direct Spec 模式读取同范围直接实现的实际授权、唯一规格与命中的项目 Skill；完整 Spec 的实现不要求补 Ticket/Map/Goal。
 
 按存在情况读取：
 
@@ -67,7 +67,7 @@ Git 已处于 merge/rebase 冲突时，先加载 `<Path>{roots.workflows}/specde
 
 按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>，用户/项目/当前 Work 要求优先，Lead 根据任务事实和宿主能力安排单 Agent、subagent 或团队。同票协作不改变 serial 票据顺序；跨票并行仍须 DAG 与写集/资源无冲突。只读探索不占票据执行槽。
 
-派单读取 <Path>{roots.references}/coordination/task-brief.md</Path>；外部 CLI/Herdr/Orca 按 <Path>{roots.references}/coordination/session-files.md</Path> 保存冻结 TASK/正式 REPORT 和派遣后可选 session-locator.json；新派遣在投递前与回收时分别运行交接校验的 dispatch/return 阶段，原 Evidence 只导航与验收。Packet 绑定同一 change workspace、票据/规格、实际写集、固定输入、验证与停止条件。多个实现者明确细分写集；Git index 操作由 Lead 协调串行，不暂存他人改动。
+派单读取 <Path>{roots.references}/coordination/task-brief.md</Path>；按 <Path>{roots.references}/coordination/session-files.md</Path> 根据恢复需要选择交接：短时同步只读且实际工具返回可关联任务时直接返回；异步、写入、长时或正式恢复任务保留冻结 TASK/REPORT 与准确 locator，并运行适用 dispatch/return 校验。未派遣不造空 session，原 Evidence 只导航与验收。Packet 绑定同一 change workspace、票据/规格、实际写集、固定输入、验证与停止条件。多个实现者明确细分写集；Git index 操作由 Lead 协调串行，不暂存他人改动。
 
 **完成标准**：实现者与路径归属可回读，正式状态仍只由 Lead 写入，派遣不创建额外 worktree。
 
@@ -118,7 +118,7 @@ Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 回
 
 标准轴同时复核 `<Path>{roots.workflows}/specdev/common/rules/code-commenting-rule.md</Path>`：公共 API 契约完整，内部注释只保留非显然的 Why、Invariant 和 Risk，且相关注释与当前行为一致。
 
-默认派遣一位未参与本范围实现的原生 subagent，分别判断标准轴、规范轴并按顺序返回 Lead；明确选择 Herdr/Orca/CLI 时沿该方式派遣。保存真实身份、原始报告和 Lead 工具核验，禁止实现者自审。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须通过。
+按真实风险与原用户/项目要求决定审查执行者，普通低风险由主 Agent 自查且继续同一上下文；高风险/高影响、证据不足或明确要求独立时，使用真正未参与本范围实现的 reviewer。两轴内容不绑定固定人数。独立策略保存真实身份、固定输入、原始报告与 Lead 工具核验，自查不得冒称独立。局部 finding 在当前模式的实现 workspace 修正、创建新 checkpoint 并重跑；改变上层契约则登记 deviation。Ticket 进入 `review` 或 Direct Spec 进入最终验证前，两轴必须有适用通过结果；无关检查仅在具体理由和原验收允许时标 not-applicable，未知或失败不能这样处理。
 
 Ticket 或 Direct Spec 的 current/worktree 交付未提交时按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定实际交付快照；HEAD 不能代表未提交内容，也不因审查而自动取得 commit 授权。
 
@@ -126,7 +126,7 @@ Ticket 或 Direct Spec 的 current/worktree 交付未提交时按 <Path>{roots.w
 
 Lead 在同一 change 工作区按 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path> 核验固定交付、集成/回归和适用 E2E。此方法 current/worktree 均适用，不创建候选 checkout、不自动提交或合并。无提交授权时先按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定工作副本输入。
 
-最终输入变化、冲突修正或多单元组合时，按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 补充整体独立审查；单票记录不能代替全部交付的验收。
+最终输入变化、冲突修正或多单元组合时，按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 按整体风险补充适用审查，仅重验受影响证据；单票记录不能代替全部交付的验收。
 
 同一 blocker 反复出现且无新证据，或 attempts 达到有效上限时，保留当前工作区、checkpoint 和失败历史，将本票 blocked 并返回有效 Lead。Lead 记录共同失败模式、可能原因、下一轮实质改变和 owner/路由后才可重置 attempts。父 Lead 可继续其他不受影响的 Ready 票；不通过新开 worktree 或仅更换 Agent 绕过停止点。
 
@@ -136,7 +136,7 @@ Lead 使用 <Path>{roots.workflows}/specdev/specdev-i-implement/assets/evidence-
 
 UI Evidence 必须包含 `## Design Conformance`，列出 design_ref 的准确 digest、pages 与 acceptance ID，逐项连接实现位置、真实浏览器任务、桌面/窄屏截图和状态观察。对照批准原型说明允许的实现差异；未知与未通过项保持未验证，不能仅凭原型证据完成实施。
 
-Ticket 正常状态：ready → in_progress → review → done。done 要求执行记录 verified、实际改动/AC、独立双轴审查和适用验证通过；无每票 commit/父分支推进要求。blocked/deviated/cancelled 沿原语义，Direct Spec 由原 I owner 按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 完成。
+Ticket 正常状态：ready → in_progress → review → done。done 要求执行记录 verified、实际改动/AC、风险适配双轴审查和适用验证通过；无每票 commit/父分支推进要求。blocked/deviated/cancelled 沿原语义，Direct Spec 由原 I owner 按 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 完成。
 
 按实际存在的负责位置更新：Ticket/Evidence 拥有本票进度，Goal 拥有整体 Gate 与集成，Map/README 只导航；轻量输入把当前清单与验证写原 README，Direct Spec 不创建缺失的 Ticket/Map/Goal Plan。最后一个计划内 Ticket 完成后，Goal Plan 的 Lead 按 change completion 关闭；无 Goal Plan 的当前 I owner 承担同一门禁。需要远程 reconcile 或把已完成 Ticket 投影为 GitHub Issue 时返回 T-triage，否则进入 Archive。
 
@@ -157,4 +157,5 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 
 ## 计划型票扩展
 
-实施前按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 执行绑定；恢复或上游变化按 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/replan-and-recovery.md</Path>` 核验。不以读取替代调用，不因他人任务冲突暂停独立已授权工作。
+实施前按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 履行必需方法绑定、按需发现可选知识；恢复或上游变化按 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/replan-and-recovery.md</Path>` 核验。不以读取替代调用，不因他人任务冲突暂停独立已授权工作。
+

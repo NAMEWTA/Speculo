@@ -20,4 +20,5 @@
 
 SpecDev 普通 Work 不要求全局初始化或重复业务 status；新对象从实际目录与 README 唯一 Outcome 发现，进度只由原 README/Goal/Ticket 之一负责。工程事实按需查看 <Path>{roots.state}/docs/README.md</Path>，缺失不妨碍普通工作。明确基线请求或本次文档修改时使用 <Path>{roots.references}/writing-for-agents/references/current-facts-docs.md</Path>；全局整理另由 project-maintenance 显式调用。
 
-跨领域编排：用户明确要求协作或当前 Work 要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>。项目默认编排方式由公共 command/coordination-init 初始化；具体工具、模型、任务顺序和 Skill 由当次请求决定。用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>，更新实际 change 的 handoff.md 或整体会话报告。
+跨领域编排：用户要求协作，或主 Agent 判断独立上下文、真实并行收益、工具能力差异或独立验证值得委派时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>。先评估直接执行与普通工具并行，不因 Ticket 数或并行自动组队。公共 command/coordination-init 仅初始化可选偏好；主 Agent 在用户要求、已批准阶段、required、实际能力和授权内自主选择通道，不新造 Router、Goal 或工作区。用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>，更新实际 change 的 handoff.md 或整体会话报告。
+

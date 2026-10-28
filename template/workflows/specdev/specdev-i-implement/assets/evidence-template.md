@@ -20,7 +20,7 @@
 - **执行选择与来源：** ticket_execution=auto/serial/parallel；单 Agent/subagent/team/指定工具的要求来源；README 工作区引用；验证尝试上限缺省 3
 - **Implementation owners：** 实际实现及修复者身份；同票多人时列明各自写集
 - **Dispatch Packet/checkpoint：** Lead direct / `<locator + immutable checkpoint>`
-- **文件交接（实际外部派遣时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`，以及实际存在的 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/session-locator.json</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；Lead direct 不创建空目录
+- **文件交接（异步/写入/恢复需要时）：** `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/TASK.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/REPORT.md</Path>`，以及实际存在的 `<Path>{roots.state}/specdev/changes/{change}/sessions/{session}/{task}/session-locator.json</Path>`；绑定稳定 change 身份与 change 根相对 locator，修正交付引用新任务及旧报告；短时同步只读且实际返回可关联时可直接回传；Lead direct 不创建空目录
 - **允许动作：** 授权路径写入、检查；commit/merge 仅明确授权时
 - **返回：** checkpoint/快照、dirty 状态、实际实现者、修改路径、命令/退出码、未验证项与恢复条件
 - **Lead 独立核对：** pass / fail；实际读取与命令摘要
@@ -66,7 +66,7 @@
 
 ### 标准轴
 
-- **固定输入：** 原 Independent Review 的 input locator、比较模式与实际摘要；已提交交付列固定 base/head，未提交交付列 working-tree 快照及其真实范围
+- **固定输入：** 原 Review 的 input locator、比较模式与实际摘要；已提交交付列固定 base/head，未提交交付列 working-tree 快照及其真实范围
 - **结果：** pass / request-changes
 - **Findings 与修正：** 无 / ...
 
@@ -76,7 +76,7 @@
 - **结果：** pass / request-changes / blocked:missing-spec
 - **Findings 与修正：** 无 / ...
 
-两个轴分别判断并按上述顺序记录；默认同一位未参与实现的 reviewer 完成两轴。
+两个轴分别判断并按上述顺序记录；普通低风险可由主 Agent 自查两轴；需要独立时同一位真正独立 reviewer 可完成两轴。
 
 ## 7. Integration Verification
 
@@ -115,7 +115,7 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 
 ## Skill Execution Records
 
-按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 从真实执行轨迹填写以下 JSON 数组；每个 required 调用必须唯一匹配 Ticket 的 id、phase、operation 和 sha256，并有 passed 状态及可回读证据。没有绑定时保留空数组。仅阅读入口不能写 passed；失败/未执行保持 blocker，不伪造工具结果。
+按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 从真实执行轨迹填写以下 JSON 数组；每个 required 安全/权限/验收调用唯一匹配约束且有可回读结果。可选知识可渐进发现并记录实际使用，不为普通新 Skill 中断整个 Ticket。没有实际使用时保留空数组。仅阅读入口不能写 passed；失败/未执行保持 blocker，不伪造工具结果。
 
 ```json
 []
@@ -127,7 +127,7 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 
 ## 审查证据复用（仅实际发生时填写）
 
-记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、审查者独立身份与派遣/返回核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
+记录原 CR/Evidence locator、fixed/head/diff、规范/标准/指令与 Skill/reference 摘要、工具/环境相关证据、审查策略、适用独立身份与派遣/返回核对、复用或重跑的轴与原因。未发生时写“不适用”；本节不是通过声明，也不改变原始审查结果。
 
 ## OPS 交付（仅用户请求时）
 
@@ -158,12 +158,13 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 }
 ```
 
-Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、独立双轴审查和 E2E 全部通过。checkpoint 指向原 Independent Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、风险适配双轴审查和 E2E 全部通过。checkpoint 指向原 Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
 
 ## Acceptance Verification
 
 Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
 
-## 独立审查记录的填写
+## 审查策略与实际记录
 
-按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在本文实际生成 `Independent Review`、固定输入、原始 reviewer 输出和 Lead 核验段。完成前必须有真实独立身份与两轴结果；不要预填通过或用模板段落替代证据。
+按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在本文实际生成 `Review`（Strategy、Risk、Independence、Basis）、固定输入和两轴原始结果；普通自查不建额外配置或 dispatch receipt。高风险或原用户/项目 required 时必须有真正独立身份、固定输入和 Lead 工具核验；不得由本表自称低风险覆盖原要求。不要预填通过或用模板段落替代证据。
+

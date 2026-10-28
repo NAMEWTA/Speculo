@@ -1,44 +1,48 @@
-# 独立审查证据
+# 风险适配审查证据
 
-供 C、I 和最终集成审查使用。只在原 CR、I Evidence、轻量 README 或原整体 Evidence 中记录，不创建 Agent 注册表、状态镜像或完整聊天副本。外部派遣复用已有 TASK/REPORT；原生工具可把必要原始输出及 Lead 核验摘录保存在同一 Markdown 的独立锚点。工具提供的真实身份统一写成 `provider:agent-or-session-id`，如原生工具句柄；不得使用任意角色名或 session 目录名代替。
+C、I、文档和最终集成共用此合同。记录放原 CR、I Evidence、轻量 README 或整体 Evidence，不新建配置、审批表、Agent 注册表或状态镜像。审查内容与执行者分离：普通自查复用主 Agent，真正需要独立判断时保留真实独立身份和派遣核验。
 
-## 冻结输入
+## 固定实际输入
 
-在报告中建立独立的 `review-input` 锚点，用一个 JSON 对象保存 `scope`（review-scope 的完整原始返回值）、`sources` 和适用的 `exclusions`。sources 每项为 `kind: standards|specification|instructions`、项目根相对 `locator` 和实际 UTF-8 原文字节的 `sha256`。locator 可带显式锚点；轻量 README 只摘要其 scope/acceptance 等合同段，不能摘要包含审查记录的整份 README。来源必须覆盖本轮实际规范、标准及适用指令。规范来源 locator 相对明确项目根，代码 scope 相对选定 change 工作区；两者不同时，校验器分别使用 sourceRoot 与 repoRoot，不复制规范进 worktree、不用 .. 穿越 locator。
+在原文 `review-input` 锚点保存一个 JSON：`scope` 为 review-scope 完整返回值，`sources` 为实际 standards/specification/instructions 的项目根相对 locator 与原文 sha256，必要时写 exclusions。代码 scope 相对选定工作区，来源相对 sourceRoot；不复制规范进 worktree、不使用 .. 越界。轻量 README 只摘要 scope/acceptance 等合同锚点，不能摘要包含审查记录的整份自身。
 
-`Input-SHA256` 为该对象经 JSON.parse 后再 JSON.stringify 的 UTF-8 SHA256，由工具计算，不手写猜测。将同一对象及摘要交给 reviewer。摘要证明输入一致，不证明审查真的发生。
+Input-SHA256 是对象 JSON.parse 后 JSON.stringify 的 UTF-8 SHA256。冻结记录支持定位与失效判定，不证明实际审查已经发生。未提交交付按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path> 固定实际工作副本，不用 HEAD 冒充脏文件。自查同样核对最终交付，但无需额外 reviewer 或文件目录。
 
-未提交的 Ticket 或 Direct Spec 先读取 <Path>{roots.workflows}/specdev/common/skills/code-review/references/working-tree-review.md</Path>。Git diff 使用实际工具返回的不可变端点；规范/标准和相关指令变化也会使受影响结论失效。
-
-## 最小记录
-
-下列字段和表头置于原 owning 工件；locator 相对当前 change。无 change 时返回相同信息和真实工具输出，沿调用方原报告位置保存，不为审查制造 change。
+## 原工件内的最小策略与结果
 
 ```markdown
-## Independent Review
-
+## Review
+Strategy: self
+Risk: low
+Independence: not-required
+Basis: 局部文档修正，原范围没有独立要求；事实与链接已按实际输入核验。
 Input: evidence/T-01.md#review-input
 Implementers: provider:actual-implementation-session
-Mode: native
-Verified-By: provider:actual-lead-session
-Verification: evidence/T-01.md#review-receipt
+Mode: self
+Verified-By: provider:actual-implementation-session
 
 | Axis | Reviewer | Result | Report |
 |---|---|---|---|
-| standards | provider:actual-review-session | pass | evidence/T-01.md#standards-output |
-| specification | provider:actual-review-session | pass | evidence/T-01.md#specification-output |
+| standards | provider:actual-implementation-session | pass | evidence/T-01.md#standards-output |
+| specification | provider:actual-implementation-session | pass | evidence/T-01.md#specification-output |
 ```
 
-Mode 为 native/herdr/orca/cli，记录实际审查方式而非项目编排配置：`host` 选择下的原生派遣记录 `native`，直接调用外部 CLI 的审查记录 `cli`。Implementers 包含本范围全部实现及修复者；Lead 参与实现也列入。每轴 Report 指向 reviewer 实际输出的独立段，含 `Reviewer`、`Axis`、`Result`、`Input-SHA256`、`Observed` 字段及具体 findings/依据。不能指回汇总表自证。请求修正或未验证不得改写为 pass；原报告不覆盖。
+Strategy 为 self/independent；Risk 为 low/medium/high/critical；Independence 为 required/not-required。Basis 说明当次实际判断，不套空话。self 是主 Agent 在当前上下文核对，不声称独立；其 Mode 为 self。真正独立审查使用 Strategy independent 和实际 Mode native/herdr/orca/cli，Implementers 列全部实现及修复者，reviewer 不得在其中。
 
-Verification 指向 Lead 回读真实派遣和返回事实后的独立核验段，含 `Verified-By`、`Mode`、`Reviewers`（逗号分隔真实身份）、`Input-SHA256`、`Result: verified`、`Observed`。Observed 说明工具返回的实际身份、派遣/返回定位、只读范围和核验事实；工具不提供的事实保持未验证。需要深查时沿对应任务 session-locator.json 的 path，结合 TASK 内容检索（旧任务沿原历史 locator），不以 JSONL 文件存在代替审查。
+每轴 Report 指向实际输出独立段，含 Reviewer、Axis、Result、Input-SHA256、Observed 与具体依据。可与原 Evidence 同文件不同锚点，不能指向汇总表自证。Result 为 pass/request-changes/not-applicable，后者须有具体 Reason；必需 AC、测试和风险检查仍由各自原门约束，不以 N/A 隐藏失败。
 
-## 完成与复用
+原 Ticket risk=high/critical，以及原 Spec/Goal/README/Ticket 的 `review_independence: required` 或正文 `Review-Independence: required`，强制独立。可在原范围内用 review_risk 或正文 Review-Risk 记录无 Ticket 的风险；不要求为每次低风险任务新增这些字段。任何已批准独立要求优先于 Evidence 自评，缺少需要的独立能力/真实身份就保持阻塞。策略与规范输入变化时重判适用性。
 
-完成前回读输入、原报告和工具核验。实现范围内的 reviewer 不独立；一轴失败或 I 缺规范都阻塞完成。改变角色名或重新开启同一实现者的上下文不能绕过。
+## 仅独立审查需要的核验
 
-单票结果以本票实际 checkpoint 为准。多个实现单元组合或冲突修正后，Lead 对实际最终整体范围调用同一独立审查能力，在 <Path>{roots.state}/specdev/changes/{change}/evidence/final-review.md</Path> 记录；跨 change 父编排使用原 <Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>。单 Direct Spec/单票最终输入完全相同可沿用原 Evidence；候选变化先补审再推进父分支或宣布完成。整体输入以最初实施基线为起点，覆盖所有成员实际交付，不只审最后一票。
+独立策略额外写 `Verification: <原 locator>`，指向 Lead 回读实际派遣/返回事实的段落，含 Verified-By、Mode、Reviewers（真实身份列表）、Input-SHA256、Result: verified、Observed。真实身份使用工具返回的 provider:agent-or-session-id；不能用任意角色名、目录、同一实现者新会话伪造独立性。self 不要求此字段，也不制造空 receipt。
 
-C 可以只审明确的不可变 commit；I 完成时还必须确认实际工作副本与该交付一致。存在未提交代码时转入 working-tree 审查，不能沿用旧 commit 的通过结论。原 change 的 Markdown 执行记录可在审查后更新；规范与标准段仍需摘要一致。父编排的输入包含原 Implementation Plan/Map 和各成员 Spec，并纳入成员实际实现/冲突修复者及共同起始基线。纯学习或 triage 调查依据原 Ownership/Work 和非实现产物判定，附加 learning 索引不能豁免实现审查。
+短时只读 reviewer 可使用真实工具即时返回与可靠关联；需要恢复的外部任务复用已有 TASK/REPORT 和 locator，不复制完整聊天日志。Lead 从工具事实核验独立性、范围和原输出，报告自称完成不是证明。`Independent Review` 显式记录仍按严格独立合同校验；不能把它改名来规避策略。
 
-旧报告可只读展示；作为本轮完成或复用依据时，缺少独立性与固定输入证据就重新审查。静态校验仅验证记录、原文匹配和版本一致性，真实执行仍由 Lead 核对工具事实；工具不可用不能从格式通过推导完成。
+## 完成与有界复用
+
+单票/Direct Spec 固定输入相同可沿用原结果；多票组合、冲突修复或最终整体输入改变时，按整体风险选择 self/independent，在原 evidence/final-review.md 或父 evidence/implementation-orchestration.md 验收，不能只审最后一票。整体范围从最初实施基线开始，涵盖全部成员交付与实现者。父级还核对原 Implementation Plan/Map、成员 Spec 与成员实际审查输入，不允许父记录降低子级独立要求。
+
+C 可只审明确不可变 commit；I 完成还须确认实际工作副本与交付相同。后来脏代码使旧 commit 通过失效，必须重新冻结并核验受影响部分。原 change 的 Markdown 记录更新本身不要求重新审代码，但被摘要的规范/标准仍须一致。不得无差别重跑无影响的检查，亦不得复用已漂移的证据。
+
+完成校验验证记录、原文和输入一致性，不代替语义判断、实际测试、Lead-owned E2E 或重大迁移验收。未验证事项明示，不将静态通过写成实际宿主/模型成功。

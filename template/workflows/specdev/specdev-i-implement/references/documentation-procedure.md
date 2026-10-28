@@ -1,6 +1,6 @@
 # 文档维护执行分支
 
-仅在已授权的 Ready documentation Ticket 或满足原条件的 Direct Spec 中使用；当前 Work 仍为 `specdev/implement`，权限、workspace、commit 和验收仍走 I。文档建议或审查请求不授权写入。入口预检和两轴审查不因选择本分支消失。
+仅在已授权的 Ready documentation Ticket 或满足原条件的 Direct Spec 中使用；当前 Work 仍为 `specdev/implement`，权限、workspace、commit 和验收仍走 I。文档建议或审查请求不授权写入。入口预检和两轴内容不因选择本分支消失，但普通低风险文档由主 Agent 自查即可，不因缺 Subagent 阻塞；高风险或明确独立要求按公共风险审查合同执行。
 
 ## 定位事实与修改范围
 
@@ -21,3 +21,4 @@
 以原 Ticket/Spec、文档 owner、源摘要和已运行证据恢复；输入漂移使相应验证失效，不覆盖旧证据。上层行为合同冲突返回原 owner。required 验证未运行时不能以“只改文档”越过 Gate；不适用须说明原因。结果明确区分修改了什么、实际运行了什么、只核对了什么和仍待验证什么。
 
 实现改变源码入口、接口、持久化、默认行为、错误或恢复时，核对本次范围内 docs 的当前事实；已有负责正文只更新原处。命令、事实核对和未验证项放原 Evidence，轻量任务放 README verification。不创建 project-maintenance state/sidecar，不推进其 commit 基线，不因此取得 Git 或永久知识权限。
+

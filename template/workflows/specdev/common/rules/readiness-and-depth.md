@@ -4,7 +4,7 @@
 
 ### Lite
 
-适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需并行协调。
+适用条件通常全部满足：范围局部、行为明确、沿用既有模式、无公共接口或数据迁移、无安全或高事故半径影响、易回滚、无需持续跨任务协调。普通并行工具调用不改变深度。
 
 最低内容：目标、垂直行为切片、范围、项目路径授权、验收标准和验证方法。局部实现由 I 决定。
 
@@ -46,7 +46,7 @@ Ticket 只有同时满足以下适用条件才可设置 `ready: true`：
 
 UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和页面/状态 AC 映射；纯后端或 LOGIC-only 无此要求。
 
-轻量 README 的 scope/acceptance/verification 使用同样的外部行为、风险与可判定 AC 门；没有独立票不要求 Spec YAML 或 Map。Deep、真实并行、跨 change 或复杂设计依赖必须使用完整工件；用户明确产物要求不因轻量分支降低。
+轻量 README 的 scope/acceptance/verification 使用同样的外部行为、风险与可判定 AC 门；没有独立票不要求 Spec YAML 或 Map。Deep 风险需要相应完整合同；持久依赖图、跨会话恢复、多写入 owner、共享资源或跨 Ticket/change 集成 Gate 才触发完整 Goal 编排。普通只读工具并行或短时无状态任务不触发升级；用户明确产物要求不因轻量分支降低。
 
 ## 4. 假设规则
 
@@ -54,3 +54,4 @@ UI 范围的 Ready Spec 同样要求已批准且未漂移的 change DESIGN 和�
 - 高影响假设不得用于强行通过 Ready；
 - 实现者发现假设不成立时，按 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 处理；
 - 假设必须有适用范围和验证方式。
+

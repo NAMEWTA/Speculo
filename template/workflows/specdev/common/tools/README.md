@@ -38,13 +38,13 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --
 node <Path>{roots.workflows}/specdev/common/tools/ticket-control.mjs</Path> --map <map-file> --repo <project-root>
 ```
 
-接受普通 tickets-map、父 goal-tickets-map 入口或 Implementation Map。可选 --previous 读取上轮 JSON 输出作漂移检查；该输出应保存到调用方已有 Evidence，不建立第二套权威状态。输出 frontier、blocked、deferred、in_flight、invalidated 与逐票契约摘要。
+接受普通 tickets-map、父 goal-tickets-map 入口或 Implementation Map。可选 --previous 读取上轮 JSON 输出作漂移检查；该输出应保存到调用方已有 Evidence，不建立第二套权威状态。输出 eligible（全部满足静态执行条件的候选）、conflicts（候选间冲突）、suggested_batch（非唯一的建议批次）、blocked、deferred、in_flight、invalidated 与逐票契约摘要；schema_version 为 3，不输出旧 eligible。
 
-单 change 的 Goal Ready 不要求所有未来票同时 Ready。合法 draft 票保留缺口与重审条件，只阻塞自身及依赖闭包；`ready/in_progress/review` 却没有 `ready=true` 是逐票错误。frontier 只包含自身 Ready、依赖成功完成、owner/资源/并发条件满足的票；上游 done 不自动修改消费者状态。全局执行门未满足时无可派单票，空 frontier 的 blocked/deferred 说明恢复条件。多 change 父创建的全员 Ready 输入门保持不变。
+单 change 的 Goal Ready 不要求所有未来票同时 Ready。合法 draft 票保留缺口与重审条件，只阻塞自身及依赖闭包；`ready/in_progress/review` 却没有 `ready=true` 是逐票错误。eligible 只包含自身 Ready、依赖成功完成、owner/资源/并发条件满足的票；上游 done 不自动修改消费者状态。全局执行门未满足时无可派单票，空 eligible 的 blocked/deferred 说明恢复条件。多 change 父图同样允许合法 draft/deferred 消费者，父整体合同、成员身份、依赖图与逐节点 DoR 仍强制。
 
-校验 API 返回同源的 `errors`（展示文本）与 `diagnostics`（稳定结构）。每项 diagnostic 携带 code、scope（global / change / ticket）、必要的 change/ticket 和实际 artifact；owner 在发现错误时确定。<Path>{roots.workflows}/specdev/common/tools/validation-diagnostics.mjs</Path> 负责保留子项归属与分派，controller 不再解析英文前缀或嵌入 JSON。未知 scope、缺失结构或无法定位 owner 的错误按全局阻塞处理，文案翻译不改变 frontier。
+校验 API 返回同源的 `errors`（展示文本）与 `diagnostics`（稳定结构）。每项 diagnostic 携带 code、scope（global / change / ticket）、必要的 change/ticket 和实际 artifact；owner 在发现错误时确定。<Path>{roots.workflows}/specdev/common/tools/validation-diagnostics.mjs</Path> 负责保留子项归属与分派，controller 不再解析英文前缀或嵌入 JSON。未知 scope、缺失结构或无法定位 owner 的错误按全局阻塞处理，文案翻译不改变 eligible。
 
-只读工具不调用 Skill、不执行实现、不检查真实授权/正式记忆网关，不获取锁或自动解锁；Lead 必须在 dispatch 前完成这些检查。结构错误返回非零；局部错误仍可能带独立 frontier，调用方必须检查节点和全局 diagnostics。结构检查成功的退出码 0 不代表任务完成，且业务门禁可能仍阻塞全部票。eligible_for_final_verification 只表示可进入最终验收，不是 Goal completed。
+只读工具不调用 Skill、不执行实现、不检查真实授权/正式记忆网关，不获取锁或自动解锁；Lead 必须在 dispatch 前完成这些检查。结构错误返回非零；局部错误仍可能带独立 eligible，调用方必须检查节点和全局 diagnostics。结构检查成功的退出码 0 不代表任务完成，且业务门禁可能仍阻塞全部票。eligible_for_final_verification 只表示可进入最终验收，不是 Goal completed。
 
 `<Path>{roots.workflows}/specdev/common/tools/plan-contract.mjs</Path>` 是两个工具共用的只读校验库：新 Ticket 的真实 Skill 名称/摘要、必需调用证据、Map 数量合同、父入口与 W 候选图。普通 --repo 仍支持原 Git 事实验证；存在未完成票的真实项目 Skill 绑定时必须提供项目根。Ticket/Map 必须满足当前 Plan 合同；已完成历史证据不要求当前 Skill 包仍与历史版本相同。
 
