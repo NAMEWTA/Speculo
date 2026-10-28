@@ -516,7 +516,9 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.suggested_batch, []);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
-      assert.match(JSON.stringify(result.deferred), /Ticket scheduling concurrency limit/);
+      assert.deepEqual(result.eligible, []);
+      assert.deepEqual(result.deferred, []);
+      assert.match(JSON.stringify(result.blocked.find((node: {id: string}) => node.id === "T-03")), /Ticket scheduling concurrency limit occupied by in-flight work/);
 
       await writeFile(firstPath, first.replace("owner: lead-session", "owner: unassigned"));
       result = analyzeMap(input);
@@ -901,7 +903,8 @@ describe("SpecDev local-first contracts", () => {
     assert.match(lead, /达到有效尝试上限时停止重复派单/);
     assert.match(lead, /有实质变化的新 Dispatch Packet/);
     assert.match(completion, /单个 Ticket 进入 Lead 复盘不自动终止整个父循环/);
-    assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 ready frontier/);
+    assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 eligible 节点，在冲突与配额允许时执行/);
+    assert.match(executionLoop, /原执行结果未知或 writer 未停止时不得重复派发/);
   });
 
   it("validates Triage before downstream Ticket artifacts exist", async () => {
