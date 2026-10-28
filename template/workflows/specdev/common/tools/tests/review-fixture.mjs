@@ -29,3 +29,17 @@ export function appendReviewFixture({repo,sourceRoot=repo,root,artifact='evidenc
   writeFileSync(path,prior+text);
   return {input,digest,path,text:prior+text};
 }
+
+
+/** Synthetic main-loop checks; deliberately creates no dispatch/return receipt. */
+export function appendSelfReviewFixture(options) {
+  const implementers=options.implementers ?? ['native:implementer'];
+  const review=appendReviewFixture({...options,mode:'self',reviewer:implementers[0],implementers});
+  const text=review.text
+    .replace(/<a id="review-receipt"><\/a>\n## Original dispatch and verification\n[\s\S]*?(?=\n## Independent Review)/,'')
+    .replace('## Independent Review',`## Review\nStrategy: self\nRisk: ${options.risk ?? 'low'}\nIndependence: not-required\nBasis: Local fixture change with observed acceptance tests and no independent-review requirement.`)
+    .replace(/^Verification: .*\n/m,'')
+    .replace('Verified-By: native:lead',`Verified-By: ${implementers[0]}`);
+  writeFileSync(review.path,text);
+  return {...review,text};
+}

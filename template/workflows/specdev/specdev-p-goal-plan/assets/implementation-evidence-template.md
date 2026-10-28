@@ -26,7 +26,7 @@
 | 验收/Gate | 固定输入和环境 | 实际命令/方法 | 退出码/观察 | 原始输出 | 结论 |
 |---|---|---|---|---|---|
 
-适用 E2E 由 Lead 执行，not-required 说明真实理由。按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在本文件实际生成 Independent Review、固定输入、原始双轴输出和 Lead 回执；实现者不自审，结构通过不认证派遣执行。
+适用 E2E 由 Lead 执行，not-required 说明真实理由。按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path> 确定整体风险与适用策略，再按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 在本文件记录 Review、固定输入和原始双轴结果。需要独立审查时保存真实独立身份与 Lead 派遣核验，参与实现或冲突修正者不能充当独立 reviewer；允许自查时不制造派遣回执。结构通过不认证实际审查执行。
 
 ## 6. Contract, Drift and Deviation Audit
 

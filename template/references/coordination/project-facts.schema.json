@@ -38,6 +38,20 @@
           }
         }
       }
+    },
+    "allowed_modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "host",
+          "orca",
+          "herdr",
+          "cli"
+        ]
+      },
+      "description": "Optional project channel limit, not authorization. Omitted means no extra project restriction."
     }
   },
   "$defs": {
@@ -78,7 +92,10 @@
           "pattern": "\\S"
         },
         "interaction": {
-          "enum": ["headless", "interactive"]
+          "enum": [
+            "headless",
+            "interactive"
+          ]
         },
         "fallback": {
           "type": "array",
@@ -95,8 +112,21 @@
       },
       "allOf": [
         {
-          "if": { "required": ["interaction"], "properties": { "interaction": {} } },
-          "then": { "properties": { "mode": { "const": "cli" } } }
+          "if": {
+            "required": [
+              "interaction"
+            ],
+            "properties": {
+              "interaction": {}
+            }
+          },
+          "then": {
+            "properties": {
+              "mode": {
+                "const": "cli"
+              }
+            }
+          }
         },
         {
           "if": {

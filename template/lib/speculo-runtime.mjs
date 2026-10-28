@@ -7683,14 +7683,20 @@ function choice(value) {
 }
 function validateProjectCoordination(value, catalog, inactive = []) {
   if (!object(value)) throw new Error("coordination-policy-conflict: project facts must be an object");
-  exact(value, ["schema_version", "defaults", "rules"]);
+  exact(value, ["schema_version", "defaults", "rules", "allowed_modes"]);
+  if (value.allowed_modes !== void 0 && (!Array.isArray(value.allowed_modes) || !value.allowed_modes.length || new Set(value.allowed_modes).size !== value.allowed_modes.length || value.allowed_modes.some((mode) => !ORCHESTRATION_MODES.includes(mode)))) throw new Error("coordination-policy-conflict: invalid allowed_modes");
   if (value.schema_version !== 2 || !Array.isArray(value.rules)) throw new Error("coordination-policy-conflict: expected schema 2 and rules; preserve older configuration and establish a new v2 configuration explicitly");
   choice(value.defaults);
+  const withinLimits = (selected) => {
+    if (selected.selection === "required" && Array.isArray(value.allowed_modes) && !value.allowed_modes.includes(selected.mode)) throw new Error("coordination-policy-conflict: required choice outside allowed_modes");
+  };
+  withinLimits(value.defaults);
   const seen = /* @__PURE__ */ new Set();
   for (const rule of value.rules) {
     if (!object(rule)) throw new Error("coordination-policy-conflict: invalid rule");
     exact(rule, ["work_id", "stage", "choice"]);
     choice(rule.choice);
+    withinLimits(rule.choice);
     const asset = [...catalog.assets, ...inactive].find((a) => a.kind === "work-skill" && a.id === rule.work_id);
     if (!asset || rule.stage !== void 0 && (typeof rule.stage !== "string" || !asset.stages.includes(rule.stage))) throw new Error("coordination-policy-conflict: unknown Work or stage");
     const key = `${rule.work_id}:${rule.stage ?? "*"}`;

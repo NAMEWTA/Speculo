@@ -1,4 +1,4 @@
-/** Strict, additive Plan contracts. Read-only; no authorization or state writes. */
+/** Required-method Plan contracts with progressive optional Skills. Read-only; no authorization or state writes. */
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, realpathSync, readdirSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -44,49 +44,55 @@ export function resolveProjectSource(repoRoot, taggedPath) {
 
 export function validateBindings(meta, repoRoot) {
   const errors = [];
+  // No mandatory catalogue scan or empty binding ceremony for ordinary knowledge.
+  if (meta.skill_bindings === undefined) return errors;
   if (!Array.isArray(meta.skill_bindings)) return ['skill_bindings must be a JSON array'];
-  const active = meta.ready === true || ['in_progress', 'review', 'done'].includes(meta.status);
-  if (!nonempty(meta.skill_scan) || (active && placeholder(meta.skill_scan))) errors.push('skill_scan must record actual source discovery and applicability, not unreviewed');
   const seen = new Set();
   const allowed = new Set(['id','path','sha256','phase','operation','inputs','outputs','required','on_failure','condition','references']);
   for (const [index, binding] of meta.skill_bindings.entries()) {
     const label = `skill_bindings[${index}]`;
     if (!plainObject(binding)) { errors.push(`${label} must be an object`); continue; }
     for (const key of Object.keys(binding)) if (!allowed.has(key)) errors.push(`${label}: unknown field ${key}`);
-    for (const key of ['id','path','operation']) if (placeholder(binding[key])) errors.push(`${label}.${key} must be explicit`);
-    if (!DIGEST.test(binding.sha256 ?? '')) errors.push(`${label}.sha256 must be a SHA-256 digest`);
-    if (!['plan','implement','verify'].includes(binding.phase)) errors.push(`${label}.phase is invalid`);
-    for (const key of ['inputs','outputs']) if (!strings(binding[key]) || !binding[key].length || binding[key].some(placeholder)) errors.push(`${label}.${key} must be a nonempty explicit string array`);
+    for (const key of ['id','path']) if (placeholder(binding[key])) errors.push(`${label}.${key} must be explicit`);
     if (typeof binding.required !== 'boolean') errors.push(`${label}.required must be boolean`);
-    if (!['block-ticket','report-and-continue'].includes(binding.on_failure)) errors.push(`${label}.on_failure is invalid`);
-    if (binding.required === true && binding.on_failure !== 'block-ticket') errors.push(`${label}: required Skill failure must block-ticket`);
-    if (binding.required === false && placeholder(binding.condition)) errors.push(`${label}: optional Skill requires an explicit condition`);
-    const key = `${binding.id}\0${binding.path}\0${binding.phase}\0${binding.operation}`;
+    const required = binding.required === true;
+    if (required || binding.operation !== undefined) if (placeholder(binding.operation)) errors.push(`${label}.operation must be explicit`);
+    if (required || binding.sha256 !== undefined) if (!DIGEST.test(binding.sha256 ?? '')) errors.push(`${label}.sha256 must be a SHA-256 digest`);
+    if (required || binding.phase !== undefined) if (!['plan','implement','verify'].includes(binding.phase)) errors.push(`${label}.phase is invalid`);
+    for (const key of ['inputs','outputs']) if (required || binding[key] !== undefined) {
+      if (!strings(binding[key]) || !binding[key].length || binding[key].some(placeholder)) errors.push(`${label}.${key} must be a nonempty explicit string array`);
+    }
+    if (required && binding.on_failure !== 'block-ticket') errors.push(`${label}: required Skill failure must block-ticket`);
+    if (!required && binding.on_failure !== undefined && binding.on_failure !== 'report-and-continue') errors.push(`${label}: optional knowledge cannot introduce a completion gate`);
+    if (binding.condition !== undefined && placeholder(binding.condition)) errors.push(`${label}.condition must be explicit when supplied`);
+    const key = `${binding.id}\0${binding.path}\0${binding.phase ?? ''}\0${binding.operation ?? ''}`;
     if (seen.has(key)) errors.push(`${label}: duplicate Skill invocation`);
     seen.add(key);
-    try { projectPathSyntax(binding.path); } catch (error) { errors.push(`${label}: ${error.message}`); }
+    let safe = true;
+    try { projectPathSyntax(binding.path); } catch (error) { safe = false; errors.push(`${label}: ${error.message}`); }
     if (!pathText(binding.path)?.endsWith('/SKILL.md')) errors.push(`${label}: entry must end with /SKILL.md`);
-    if (meta.status !== "done") try {
+    // Resolve/read only actual required methods. Optional descriptions are not an
+    // allowlist and their missing/stale source does not block unrelated execution.
+    if (required && safe && meta.status !== 'done') try {
       const source = resolveProjectSource(repoRoot, binding.path);
       const bytes = readFileSync(source);
-      const text = bytes.toString('utf8');
-      const header = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text)?.[1];
+      const header = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(bytes.toString('utf8'))?.[1];
       const name = header ? /^name:\s*["']?([^\r\n"']+)["']?\s*$/m.exec(header)?.[1]?.trim() : null;
       if (name !== binding.id) errors.push(`${label}: Skill id does not match entry name (${name ?? 'missing'})`);
       if (digest(bytes) !== binding.sha256) errors.push(`${label}: Skill source digest drift: ${binding.path}`);
     } catch (error) { errors.push(`${label}: ${error.message}`); }
     if (binding.references !== undefined && !Array.isArray(binding.references)) errors.push(`${label}.references must be an array`);
-    const references = Array.isArray(binding.references) ? binding.references : [];
     const refsSeen = new Set();
-    for (const [refIndex, ref] of references.entries()) {
+    for (const [refIndex, ref] of (Array.isArray(binding.references) ? binding.references : []).entries()) {
       const refLabel = `${label}.references[${refIndex}]`;
       if (!plainObject(ref)) { errors.push(`${refLabel} must be an object`); continue; }
       if (Object.keys(ref).some(key => !['path','sha256','when'].includes(key))) errors.push(`${refLabel}: unknown reference field`);
       try { projectPathSyntax(ref.path); } catch (error) { errors.push(`${refLabel}: ${error.message}`); }
-      if (placeholder(ref.when) || !DIGEST.test(ref.sha256 ?? '')) errors.push(`${refLabel}: explicit when and sha256 required`);
+      if (required || ref.when !== undefined) if (placeholder(ref.when)) errors.push(`${refLabel}: explicit when required`);
+      if (required || ref.sha256 !== undefined) if (!DIGEST.test(ref.sha256 ?? '')) errors.push(`${refLabel}: sha256 required`);
       if (refsSeen.has(ref.path)) errors.push(`${refLabel}: duplicate reference`);
       refsSeen.add(ref.path);
-      if (meta.status !== "done") try {
+      if (required && meta.status !== 'done') try {
         if (digest(readFileSync(resolveProjectSource(repoRoot, ref.path))) !== ref.sha256) errors.push(`${refLabel}: reference digest drift`);
       } catch (error) { errors.push(`${refLabel}: ${error.message}`); }
     }
@@ -125,7 +131,7 @@ export function validateTicketPlan(artifact, { repoRoot = null, requirePlan = fa
   if (!strings(meta.resource_claims) || new Set(meta.resource_claims).size !== meta.resource_claims.length) errors.push('resource_claims must be a unique string array');
   // Skill invocation is enforced by the structured bindings and real completion
   // records below, not by repeating generic instructions in every Ticket body.
-  if (checkEvidence && meta.status === 'done' && meta.skill_bindings?.some(binding => binding?.required === true)) {
+  if (checkEvidence && meta.status === 'done' && Array.isArray(meta.skill_bindings) && meta.skill_bindings.some(binding => binding?.required === true)) {
     try {
       const evidencePath = join(dirname(dirname(path)), 'evidence', `${meta.id}.md`);
       if (lstatSync(evidencePath).isSymbolicLink()) throw new Error('Skill evidence must not be a symlink');
@@ -178,10 +184,18 @@ export function validateInvocationCoverage(tickets, matrix) {
   const errors = [];
   for (const [id, ticket] of tickets) {
     if (ticket.meta.plan_contract_version !== 1 || ticket.meta.ready !== true) continue;
-    const paths = new Set((ticket.meta.skill_bindings ?? []).map(binding => pathText(binding?.path)).filter(Boolean));
-    const listed = new Set((matrix ?? []).filter(entry => entry.appliesTo.has('ALL') || entry.appliesTo.has(id)).map(entry => entry.path).filter(Boolean));
-    for (const skill of listed) if (!paths.has(skill)) errors.push(`${id}: project Skill in Map has no invocation binding: ${skill}`);
-    for (const skill of paths) if (!listed.has(skill)) errors.push(`${id}: invocation binding is absent from Map project Skill routing: ${skill}`);
+    if (ticket.meta.skill_bindings !== undefined && !Array.isArray(ticket.meta.skill_bindings)) {
+      errors.push(`${id}: skill_bindings must be a JSON array`);
+      continue;
+    }
+    const requiredPaths = new Set((ticket.meta.skill_bindings ?? []).filter(binding => binding?.required === true).map(binding => pathText(binding.path)));
+    // The Map is discovery/navigation, not a closed list of usable Skills.
+    // Only an explicitly required method in that upstream contract must be pinned.
+    for (const entry of matrix ?? []) {
+      if (entry.required === true && entry.path && (entry.appliesTo.has('ALL') || entry.appliesTo.has(id)) && !requiredPaths.has(entry.path)) {
+        errors.push(`${id}: required project Skill in Map has no required invocation binding: ${entry.path}`);
+      }
+    }
   }
   return errors;
 }
@@ -396,3 +410,4 @@ export function validateAcceptanceEvidence(changeRoot, artifact, contractIds) {
   } catch(error) { errors.push(`${artifact}: ${error.message}`); }
   return errors;
 }
+

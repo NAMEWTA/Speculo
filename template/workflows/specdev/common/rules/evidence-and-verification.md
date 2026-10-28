@@ -5,7 +5,7 @@ I、C、P 验收时读取。环境由 change README 的执行上下文定位，�
 | 检查 | 执行位置 | owner | 证据 |
 |---|---|---|---|
 | 单元、组件、类型、lint/build、正常/失败路径 | change-workspace | 实际实现者 | 原 Ticket/Direct Spec Evidence |
-| 独立双轴审查 | 选定工作区的固定 commit 或工作副本快照 | 未参与本范围实现的 reviewer | 原 Independent Review 与工具核验 |
+| 风险适配双轴审查 | 选定工作区的固定 commit 或工作副本快照 | 按风险选择自查或未参与本范围实现的 reviewer | 原 Review / Independent Review 与工具核验 |
 | 集成/回归及适用 E2E | change-workspace 的稳定交付输入 | Lead | 命令、退出码、观察、E2E disposition |
 | 整体 AC/Gate | 同一 change 工作区；跨 change 按明确 aggregate 合同 | Lead | 原整体 Evidence |
 
@@ -13,7 +13,7 @@ I、C、P 验收时读取。环境由 change README 的执行上下文定位，�
 
 共享工作区验收前协调相关 writer 停写，测试资源/生成输出独占或明确隔离。Git index 操作串行；当前交付与固定输入、规范或标准不一致时重验受影响项。必需 E2E 未运行/失败不能写 passed，not-required 必须给理由。E2E Gate 仍由 Lead 拥有，不接受执行者自报代替。
 
-Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查与独立审查；不要求每票提交、父分支推进或 candidate worktree。Direct Spec 同样逐 AC 验收，不制造票据。明确承诺的 Git/发布交付按原授权单列，失败不伪造成功。
+Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查与适用双轴审查；审查策略按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path> 判断。不要求每票提交、父分支推进或 candidate worktree。Direct Spec 同样逐 AC 验收，不制造票据。明确承诺的 Git/发布交付按原授权单列，失败不伪造成功。
 
 重复失败按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 保留历史并复盘。恢复读原 Evidence、Git 和工具事实，不从 REPORT completed 或进程退出推断验收通过。
 
@@ -31,7 +31,7 @@ Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查�
 
 ## Evidence 最低内容
 
-记录 Lead、实际派遣/返回、唯一 change 工作区引用、基线与实际 checkpoint/快照、真实修改路径、逐命令环境/退出结果、AC 映射、独立双轴审查、E2E disposition、未运行项、失败分类、偏差和残余风险。Direct Spec 同时保留实际授权和唯一获批规格，不制造 Ticket。
+记录 Lead、实际派遣/返回、唯一 change 工作区引用、基线与实际 checkpoint/快照、真实修改路径、逐命令环境/退出结果、AC 映射、风险适配双轴审查、E2E disposition、未运行项、失败分类、偏差和残余风险。Direct Spec 同时保留实际授权和唯一获批规格，不制造 Ticket。
 
 父 Implementation Orchestration Evidence 不能替代子 Evidence；至少记录最终 Map revision、成员状态/证据引用、dependency/serialization 实际顺序、跨 change 合同检查、aggregate 命令/环境/结果、漂移处置与残余风险。成员未 completed 或整体验证未通过不能完成父 change。
 

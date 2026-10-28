@@ -1,27 +1,31 @@
-# 可验证的 Skill 调用契约
+# 按需 Skill 与必需方法
 
-本规则用于 T 规划、P 调度和 I 执行。Map 维护最低读取路由；每票 `skill_bindings` 才定义本票调用，二者不得互相代替。
+用于 T 规划、P 调度与 I 执行。Skill 是知识和方法，不等于一个 Agent。主 Agent 按当前任务读取适用内容；不要求事前枚举、哈希全部 Skill，也不要求为了普通发现创建配置或暂停 Ticket。
 
-## 定位与绑定
+## 先区分义务与知识
 
-1. 从项目 Agent 指令解析真实 Skill 根，先枚举元数据和触发条件，再读取命中入口及当前阶段要求的参考；不整读所有 Skills。
-2. 保留逻辑路径、解析真实源，检查不存在的路径、越界软链接、缓存和入口 `name`。默认不使用插件缓存或 node_modules 充当项目可维护源；用户维护的项目内软链接保持原状。仓库外技能需要先取得明确源域授权并由项目网关处理，控制器不会自行扩大根目录。
-3. 每个绑定必须包含真实 `id`（SKILL 的 name）、Path 标签 `path`、入口字节 `sha256`、`phase`（plan/implement/verify）、`operation`、非空 `inputs`、`outputs`、`required` 与 `on_failure`。引用较长参考时在 references 字段 中记录明确 Path、sha256 与 `when`；相关参考在调用前按条件回读。
-4. 必需绑定失败固定为 `block-ticket`；可选绑定只有说明 `condition` 与不适用原因才允许 `report-and-continue`。可选标记不能覆盖用户要求或技能自身硬门禁。
-5. 在模板 frontmatter 中，数组对象用单行 JSON；不使用自定义 YAML 对象语法。缺失 Skill、摘要漂移、占位符或入口 ID 不符，票不得进入 ready。没有适用项目 Skill 时 `skill_bindings: []`，`skill_scan` 必须写真实扫描范围与不适用理由，Map 同步无适用项。
+- 用户、项目安全/权限规则或验收合同指定的方法是**必需方法**。在原 Ticket 的 `skill_bindings` 固定真实 `id`、Path `path`、`sha256`、`phase`、`operation`、`inputs`、`outputs`、`required: true` 和 `on_failure: block-ticket`。相关参考按触发条件固定 `path/sha256/when`。不可把已知义务重新标记可选来通过完成门。
+- 普通可选 Skill 是执行中可发现的知识。无需预绑定；如需要导航，可只写 `id/path/required: false`。可记录条件、摘要和实际使用，但旧摘要或可选源消失不阻塞无关工作。可选项不能自行引入完成硬门。
+- `skill_scan` 只在实际研究有价值时记录，不是每票 Ready 必填。Map 的项目 Skill 矩阵可省略，是导航而非 allowlist；仅 Purpose 以 `required:` 或 `必需：` 开头的条目表达上游必需方法，须在相关 Ready Ticket 保持 required 绑定。Ticket 的已知必需方法不因 Map 省略而失效。
 
-## 示例形状（生成真实票时全部替换）
+## 发现与使用
+
+先按项目指令和当前 scope、路径、技术域、风险定位相关入口。读取命中 Skill 和当前分支参考；执行中发现新的可选方法可直接使用，并把实际方法与相关产物记录到原 Evidence，不先修改 Map 或重新申请整个计划。
+
+使用前核对路径、真实源和授权：项目相对 Path，不越界软链接、不以 node_modules/插件缓存充当项目维护源，不假装拥有不存在的宿主能力。仓库外技能需已有源域授权；可选提示的结构通过不是源路径或实际调用的认证。
+
+只有新方法改变权限、范围、外部行为、依赖或验收时，按 deviation-control 重新确认受影响部分。必需方法缺失、ID 不符或源/相关参考漂移时，暂停对应 Ticket 和依赖闭包，由 Lead 检查变更并更新原绑定；不暂停独立分支，不自动接受最新文件，不改写历史已完成 Evidence。
+
+## 完成证据
+
+实际使用技能步骤或宿主调用，保留输入定位、操作、输出与可回读工具证据。“读过”、展示 `@skill` 或复制入口不是完成。
+
+存在必需绑定时，在本票 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` 的 `## Skill Execution Records` 后记录 JSON 数组。每个必需项须有唯一 `id/phase/operation/sha256/status: passed/evidence`，其中 evidence 为非空定位数组。可选方法只记录实际有助验收的信息，无需制造未使用条目。校验器检查合同和摘要，Lead 仍负责实际过程与 AC 验证。
+
+绑定示例（需替换为真实项目源）：
 
 ```json
-{"id":"project-test","path":"<Path>.agents/skills/project-test/SKILL.md</Path>","sha256":"<真实64位摘要>","phase":"verify","operation":"run-regression","inputs":["当前Ticket与定向diff"],"outputs":["含命令、退出码和验收映射的Evidence"],"required":true,"on_failure":"block-ticket","references":[]}
+{"id":"project-test","path":"<Path>.agents/skills/project-test/SKILL.md</Path>","sha256":"<真实64位摘要>","phase":"verify","operation":"run-regression","inputs":["当前Ticket与定向diff"],"outputs":["验收Evidence"],"required":true,"on_failure":"block-ticket"}
 ```
 
-此示例不是项目已存在的 Skill，不得复制为可执行绑定。SpecDev 自带技能在 Work 中按明确 Path 调用，不能伪装为项目 Skill。
-
-## 执行证据
-
-到相应阶段后，实际调用宿主能力或执行该 Skill 明确的步骤。记录技能 ID、phase、operation、所用摘要、输入定位、执行轨迹、输出与结果。仅展示 `@skill`、复制入口、声明“已读”都不是完成证据。
-
-新版票 done 前，在本票 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` 增加 `## Skill Execution Records`，紧接一个 JSON 数组代码块。每项有 `id`、`phase`、`operation`、`sha256`、`status`（passed/failed/skipped）、非空 `evidence` 字符串数组。required 项必须 passed；验证器只能检查记录结构与摘要一致，Lead 仍需回读真实工具/过程证据，不能把结构通过称为宿主调用已经被认证。
-
-摘要变更先由 Lead 检查影响、更新绑定和 map 后重验；不自动接受最新文件，不回写已完成旧证据。
+SpecDev 自带 Work 方法按各自入口读取，不伪装为项目 Skill。数组对象使用单行 JSON。

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {test, type TestContext} from 'node:test';
+import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -67,7 +68,7 @@ function fixture(t:TestContext,worktree=false,shared?:{repo:string,base:string})
 
 for(const worktree of [false,true]) test(`${worktree?'change worktree':'current main'} supports independent concurrent Tickets without extra checkouts or commits`,t=>{
   const f=fixture(t,worktree),before=f.git('worktree','list','--porcelain');
-  assert.deepEqual(f.analyze().errors,[]);assert.deepEqual(f.analyze().frontier,['T-01','T-02']);
+  assert.deepEqual(f.analyze().errors,[]);assert.deepEqual(f.analyze().suggested_batch,['T-01','T-02']);
   for(const [i,id] of ['T-01','T-02'].entries()){f.setStatus(i,'in_progress');f.save(f.record(id));}
   writeFileSync(join(f.workspace,'one.txt'),'after one\n');writeFileSync(join(f.workspace,'two.txt'),'after two\n');
   assert.deepEqual(f.validate(),[]);assert.deepEqual(f.validate(),[]);
@@ -76,25 +77,76 @@ for(const worktree of [false,true]) test(`${worktree?'change worktree':'current 
 
 test('serial Ticket scheduling permits several implementers on the current Ticket',t=>{
   const f=fixture(t);f.plan('serial');f.setStatus(0,'in_progress');f.save(f.record('T-01',['native:first','native:second']));
-  assert.deepEqual(f.validate(),[]);assert.deepEqual(f.analyze().frontier,[]);
+  assert.deepEqual(f.validate(),[]);assert.deepEqual(f.analyze().suggested_batch,[]);
   assert.equal(f.analyze().max_parallel_tickets,1);
   f.setStatus(1,'in_progress');f.save(f.record('T-02'));assert.match(f.validate().join('\n'),/Ticket limit/);
 });
 
 test('Agent counts, Ticket counts and workspaces are independent constraints',t=>{
   const f=fixture(t);f.plan('parallel',2);
-  assert.deepEqual(f.analyze().frontier,['T-01','T-02']);
+  assert.deepEqual(f.analyze().suggested_batch,['T-01','T-02']);
   const before=f.git('worktree','list','--porcelain');
   f.context.concurrent_implementation_limit=1;f.saveContext();
-  assert.deepEqual(f.analyze().frontier,['T-01','T-02']); // The read-only analyzer never invents an Agent topology.
+  assert.deepEqual(f.analyze().suggested_batch,['T-01','T-02']); // The read-only analyzer never invents an Agent topology.
   assert.equal(f.git('worktree','list','--porcelain'),before);
   assert.deepEqual(ticketPolicy({ticket_execution:'parallel',max_parallel_tickets:3},{ticket_execution:'serial'}),{ticket_execution:'serial',max_parallel_tickets:1});
+});
+
+test('eligible exposes alternative legal batches instead of authorizing only the greedy suggestion',t=>{
+  const f=fixture(t);f.plan('parallel');
+  for(let i=0;i<2;i++)writeFileSync(f.files[i],readFileSync(f.files[i],'utf8').replace('resource_claims: []','resource_claims: ["db:shared"]'));
+  const before=f.files.map(file=>readFileSync(file,'utf8'));
+  const result=f.analyze();
+  assert.equal(result.schema_version,3);assert.equal(result.batch_is_authoritative,false);
+  assert.equal(result.authorization_checked,false);assert.equal(result.transaction_gateway_checked,false);
+  assert.equal('frontier' in result,false);
+  assert.deepEqual(result.eligible,['T-01','T-02']);
+  assert.deepEqual(result.suggested_batch,['T-01']);
+  assert.deepEqual(result.conflicts,[{left:'T-01',right:'T-02',reason:'semantic resource: db:shared / db:shared'}]);
+  assert.deepEqual(result.deferred,[{id:'T-02',reason:'semantic resource: db:shared / db:shared',scope:'suggestion-only'}]);
+  assert.deepEqual(result.blocked,[]);
+  // The owner may actually start T-02 rather than the suggested T-01.
+  f.setStatus(1,'in_progress');f.save(f.record('T-02'));
+  assert.deepEqual(f.validate(),[]);
+  const running=f.analyze();assert.deepEqual(running.eligible,[]);
+  assert.match(JSON.stringify(running.blocked),/in-flight owner/);
+  assert.equal(readFileSync(f.files[0],'utf8'),before[0]);
+});
+
+test('eligible contains all choices under a batch cap without mistaking them for concurrent permission',t=>{
+  const f=fixture(t);f.plan('serial');
+  const result=f.analyze();
+  assert.deepEqual(result.eligible,['T-01','T-02']);assert.deepEqual(result.suggested_batch,['T-01']);
+  assert.equal(result.capacity.global,1);assert.deepEqual(result.conflicts,[]);
+  f.setStatus(1,'in_progress');f.save(f.record('T-02'));
+  assert.deepEqual(f.validate(),[]);assert.deepEqual(f.analyze().eligible,[]);
+  assert.match(JSON.stringify(f.analyze().blocked),/concurrency limit occupied/);
+});
+
+test('checkpoints ignore optional Skill discovery and drift but invalidate required methods',t=>{
+  const f=fixture(t),path='.agents/skills/helper/SKILL.md',source='---\nname: helper\ndescription: fixture knowledge\n---\nOriginal advice.\n';
+  mkdirSync(join(f.repo,'.agents/skills/helper'),{recursive:true});writeFileSync(join(f.repo,path),source);
+  const original=readFileSync(f.files[0],'utf8');
+  const optional={id:'helper',path:`<Path>${path}</Path>`,required:false,sha256:createHash('sha256').update(source).digest('hex')};
+  const analyze=(previous?:any)=>analyzeMap({mapPath:join(f.root,'tickets-map.md'),repoRoot:f.repo,methodRoot,stateRoot:'data',previous});
+  const before=analyze();assert.deepEqual(before.errors,[]);
+  writeFileSync(f.files[0],original.replace(/^---\n/,'---\nskill_bindings: '+JSON.stringify([optional])+'\nskill_scan: discovered only relevant helper knowledge\n'));
+  let result=analyze(before);assert.deepEqual(result.errors,[]);assert.deepEqual(result.invalidated,[]);
+  writeFileSync(join(f.repo,path),source+'New ordinary advice.\n');
+  result=analyze(before);assert.deepEqual(result.invalidated,[]);assert.deepEqual(result.eligible,['T-01','T-02']);
+  writeFileSync(join(f.repo,path),source);
+  const required={...optional,required:true,phase:'verify',operation:'check security boundary',inputs:['actual diff'],outputs:['check result'],on_failure:'block-ticket'};
+  writeFileSync(f.files[0],original.replace(/^---\n/,'---\nskill_bindings: '+JSON.stringify([required])+'\n'));
+  const pinned=analyze();assert.deepEqual(pinned.errors,[]);assert.deepEqual(pinned.validation_errors,[]);
+  writeFileSync(join(f.repo,path),source+'Changed required boundary.\n');
+  result=analyze(pinned);assert.deepEqual(result.invalidated,['T-01']);assert.deepEqual(result.eligible,['T-02']);
+  assert.match(JSON.stringify(result.blocked),/digest drift|contract drift/);
 });
 
 test('path and semantic resource conflicts block overlapping writers in either scheduling mode',t=>{
   const f=fixture(t);f.plan('parallel');
   for(let i=0;i<2;i++)writeFileSync(f.files[i],readFileSync(f.files[i],'utf8').replace('resource_claims: []','resource_claims: ["db:shared"]'));
-  assert.deepEqual(f.analyze().frontier,['T-01']);assert.match(JSON.stringify(f.analyze().deferred),/semantic resource/);
+  assert.deepEqual(f.analyze().suggested_batch,['T-01']);assert.match(JSON.stringify(f.analyze().deferred),/semantic resource/);
   for(let i=0;i<2;i++){f.setStatus(i,'in_progress');f.save(f.record(`T-0${i+1}`));}
   assert.match(f.validate().join('\n'),/semantic resources/);
   writeFileSync(f.files[1],readFileSync(f.files[1],'utf8').replaceAll('two.txt','one.txt'));
@@ -169,7 +221,23 @@ test('parent scheduling and final review preserve each member workspace without 
   const validate=(stage='goal-plan')=>validateChange(root,stage,a.repo,null,null,{methodRoot,stateRoot:'data'}).errors as string[];
   saveParent();const worktrees=a.git('worktree','list','--porcelain');
   const analysis=analyzeMap({mapPath:join(root,'implementation-map.md'),repoRoot:a.repo,methodRoot,stateRoot:'data'});
-  assert.deepEqual(analysis.frontier.sort(),[...tasks].sort(),JSON.stringify(analysis));
+  assert.deepEqual(analysis.suggested_batch.sort(),[...tasks].sort(),JSON.stringify(analysis));
+  // Creating a Ready parent does not require a draft downstream consumer to be executable.
+  const originalB=readFileSync(b.files[1],'utf8');
+  map.status='ready';plan.status='ready';map.dependencies=[`${tasks[1]} <- ${tasks[0]}`];saveParent();
+  writeFileSync(b.files[1],originalB.replace('status: ready','status: draft').replace('ready: true','ready: false')+'\nDeferred until the producer publishes its actual contract.\n');
+  assert.deepEqual(validate(),[]);
+  const progressive=analyzeMap({mapPath:join(root,'implementation-map.md'),repoRoot:a.repo,methodRoot,stateRoot:'data'});
+  assert.deepEqual(progressive.errors,[]);assert.deepEqual(progressive.validation_errors,[]);
+  assert.deepEqual(progressive.eligible,[tasks[0]]);assert.deepEqual(progressive.suggested_batch,[tasks[0]]);
+  assert.match(JSON.stringify(progressive.blocked),/not Ready: draft/);
+  assert.equal(progressive.eligible_for_final_verification,false);
+  assert.deepEqual(progressive.dependencies[tasks[1]],[tasks[0]]);
+  // Merely changing its status cannot bypass the unresolved producer dependency.
+  writeFileSync(b.files[1],originalB.replace('status: ready','status: in_progress'));b.save(b.record('T-02'));
+  assert.match(validate().join('\n'),/prerequisite is not done/);
+  rmSync(join(b.root,'evidence/T-02.md'));writeFileSync(b.files[1],originalB);
+  map.status='in_progress';plan.status='in_progress';map.dependencies=[];saveParent();
   // The published parent templates must not accidentally be ordinary Goal templates.
   writeFileSync(join(root,'implementation-plan.md'),template('specdev-p-goal-plan/assets/goal-plan-template.md'));
   assert.match(validate().join('\n'),/implementation-plan\/3/);saveParent();
@@ -178,7 +246,7 @@ test('parent scheduling and final review preserve each member workspace without 
   writeFileSync(join(other,'README.md'),'# Other parent\nOutcome: active\n');
   writeFileSync(join(other,'implementation-map.md'),'---\nmembers: '+JSON.stringify([a.change])+'\n---\n');
   const conflict=analyzeMap({mapPath:join(root,'implementation-map.md'),repoRoot:a.repo,methodRoot,stateRoot:'data'});
-  assert.deepEqual(conflict.errors,[]);assert.deepEqual(conflict.frontier,[tasks[1]]);
+  assert.deepEqual(conflict.errors,[]);assert.deepEqual(conflict.suggested_batch,[tasks[1]]);
   assert.deepEqual(conflict.diagnostics.filter((item:any)=>item.code==='parent-ownership-conflict').map((item:any)=>[item.scope,item.change]),[['change',a.change]]);
   rmSync(other,{recursive:true});
 
@@ -211,7 +279,7 @@ test('structured Ticket diagnostics keep unrelated Ready work executable and do 
   const issue=result.diagnostics.find((item:any)=>item.code==='ticket-contract-invalid'&&item.ticket==='T-01');
   assert.ok(issue,JSON.stringify(result));assert.equal(issue.scope,'ticket');assert.equal(issue.change,f.change);assert.equal(issue.artifact,'ticket/01-implementation.md');
   assert.deepEqual(result.errors,result.diagnostics.map((item:any)=>item.message));
-  assert.deepEqual(f.analyze().frontier,['T-02']);assert.deepEqual(f.analyze().errors,[]);
+  assert.deepEqual(f.analyze().suggested_batch,['T-02']);assert.deepEqual(f.analyze().errors,[]);
   const tasks=new Map([['T-01',{member:f.change,ticket:'T-01'}],['T-02',{member:f.change,ticket:'T-02'}]]);
   const owners=(records:any[])=>{
     const groups=partitionDiagnostics(records,tasks);
@@ -219,12 +287,48 @@ test('structured Ticket diagnostics keep unrelated Ready work executable and do 
   };
   assert.deepEqual(owners(result.diagnostics),owners(result.diagnostics.map((item:any)=>({...item,message:'任意译文，带换行\nT-02: misleading English prefix ["different-member"]'}))));
   writeFileSync(f.files[1],readFileSync(f.files[1],'utf8').replace('blocked_by: []','blocked_by: [T-01]'));
-  assert.deepEqual(f.analyze().frontier,[]);assert.match(JSON.stringify(f.analyze().blocked),/dependency/);
-  writeFileSync(f.files[0],original);assert.deepEqual(f.analyze().frontier,['T-01']);
+  assert.deepEqual(f.analyze().suggested_batch,[]);assert.match(JSON.stringify(f.analyze().blocked),/dependency/);
+  writeFileSync(f.files[0],original);assert.deepEqual(f.analyze().suggested_batch,['T-01']);
   writeFileSync(f.files[1],readFileSync(f.files[1],'utf8').replace('blocked_by: [T-01]','blocked_by: []'));
   writeFileSync(f.files[0],original+'\nUnbalanced artifact link: <Path>src/incomplete\n');
-  const malformed=f.analyze();assert.deepEqual(malformed.errors,[]);assert.deepEqual(malformed.frontier,['T-02']);
+  const malformed=f.analyze();assert.deepEqual(malformed.errors,[]);assert.deepEqual(malformed.suggested_batch,['T-02']);
   assert.ok(malformed.diagnostics.some((item:any)=>item.code==='artifact-path-invalid'&&item.scope==='ticket'&&item.ticket==='T-01'));
+});
+
+for(const status of ['draft','ready']) test(`malformed Skill bindings in a ${status} Ticket block only its dependency closure and recover without granting readiness`,t=>{
+  const f=fixture(t),original=readFileSync(f.files[0],'utf8');
+  const current=status==='draft'?original.replace('status: ready','status: draft').replace('ready: true','ready: false'):original;
+  writeFileSync(f.files[0],current);
+  const second=readFileSync(f.files[1],'utf8');
+  writeFileSync(f.files[1],second.replace('blocked_by: []','blocked_by: [T-01]'));
+  writeFileSync(join(f.root,'ticket','03-independent.md'),second.replaceAll('T-02','T-03').replaceAll('two.txt','three.txt'));
+  const map=join(f.root,'tickets-map.md');writeFileSync(map,readFileSync(map,'utf8')+'\nT-03 is independent.\n');
+  const input={mapPath:map,repoRoot:f.repo,methodRoot,stateRoot:'data'},baseline=analyzeMap(input);
+  assert.deepEqual(baseline.errors,[]);assert.deepEqual(baseline.validation_errors,[]);
+  assert.deepEqual(baseline.eligible,status==='draft'?['T-03']:['T-01','T-03']);
+  for(const value of ['not-a-list','null','{}']){
+    writeFileSync(f.files[0],current.replace(/^---\n/,`---\nskill_bindings: ${value}\n`));
+    const result=analyzeMap({...input,previous:baseline});
+    assert.deepEqual(result.errors,[]);assert.deepEqual(result.eligible,['T-03']);
+    assert.deepEqual(result.suggested_batch,['T-03']);assert.deepEqual(result.invalidated,['T-01','T-02']);
+    assert.ok(result.validation_errors.length>0);
+    assert.ok(result.validation_errors.every((item:any)=>item.id==='T-01'&&/skill_bindings must be a JSON array/.test(item.message)));
+    assert.deepEqual(result.blocked.map((item:any)=>item.id).sort(),['T-01','T-02']);
+    assert.equal(result.eligible_for_final_verification,false);
+    assert.equal(readFileSync(f.files[0],'utf8'),current.replace(/^---\n/,`---\nskill_bindings: ${value}\n`));
+  }
+  writeFileSync(f.files[0],current);
+  let recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.validation_errors,[]);assert.deepEqual(recovered.invalidated,[]);
+  assert.deepEqual(recovered.eligible,baseline.eligible);
+  writeFileSync(f.files[0],original);
+  recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.eligible,['T-01','T-03']);
+  assert.ok(recovered.blocked.some((item:any)=>item.id==='T-02'&&item.reasons.some((reason:string)=>/dependency not successfully satisfied/.test(reason))));
+  writeFileSync(join(f.workspace,'one.txt'),'verified producer output\n');f.setStatus(0,'done');f.save(f.record('T-01'),true);
+  recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.errors,[]);assert.deepEqual(recovered.validation_errors,[]);
+  assert.deepEqual(recovered.done,['T-01']);assert.deepEqual(recovered.eligible,['T-02','T-03']);
 });
 
 test('invalid diagnostic scope and unresolved owners fail closed while a real DAG cycle blocks the whole frontier',t=>{
@@ -235,7 +339,7 @@ test('invalid diagnostic scope and unresolved owners fail closed while a real DA
   assert.equal(partitionDiagnostics(undefined,tasks).global.length,1);
   const f=fixture(t);
   for(const [index,dependency] of ['T-02','T-01'].entries())writeFileSync(f.files[index],readFileSync(f.files[index],'utf8').replace('blocked_by: []',`blocked_by: [${dependency}]`));
-  const result=f.analyze();assert.deepEqual(result.frontier,[]);assert.match(result.errors.join('\n'),/cycle/);
+  const result=f.analyze();assert.deepEqual(result.suggested_batch,[]);assert.match(result.errors.join('\n'),/cycle/);
 });
 
 test('a completed Outcome cannot re-enable the retired Goal schema',t=>{

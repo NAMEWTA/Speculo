@@ -1,6 +1,20 @@
 # 派遣文件与聚焦交接
 
-通过 CLI、Herdr、Orca 等外部工具实际派遣任意领域任务时读取。宿主原生协作按需采用，Lead 自行执行不创建虚构派遣。跨多个 change 或无 change 时使用全局交接位置，不补造 change。external-web 继续使用原 ZIP 交付合同。
+实际委派前按恢复与审计需要选择交接形式，通道名称本身不决定文件要求。Lead 自行执行与普通工具并行不创建虚构派遣。external-web 继续使用原 ZIP 交付合同。
+
+## 先选即时返回或持久交接
+
+短时、同步、只读、没有远程副作用/并行写入/跨会话恢复/正式交付要求，且实际工具返回能关联 task 与 call 的任务，可以直接提供必要输入并接收结构化结果，不建 session 目录。返回记录实际 task、callId、status、summary、findings、checks、unverified；未运行项写明，idle/超时不等于 completed。即时结果保留在原工具返回与 owning 工件需要的引用中，不复制另一套运行状态。
+
+长时、异步、跨会话、并行写入、可能中断恢复或正式交付，使用下文持久 TASK/REPORT。短任务一旦范围扩大、开始写入或需要恢复，先停止新增动作，由原 owner 明确新范围并建立持久交接；不能先发生副作用再用只读标签追认。外部结果不明先查询原调用，不凭没有 session 文件重复派遣。
+
+只读结构检查可调用 validate-dispatch.mjs 的 `--inline`，从 stdin 接收 JSON（不要求保存 JSON 文件）：
+
+```json
+{"handoff":"inline","stage":"return","task":"read-api-contract","callId":"tool-call-17","scope":{"synchronous":true,"readOnly":true,"externalEffects":false,"parallelWrites":false,"recoveryRequired":false,"formalDelivery":false},"result":{"task":"read-api-contract","callId":"tool-call-17","status":"completed","summary":"已核对接口声明","findings":[],"checks":["读取公开接口"],"unverified":["未执行服务请求"]}}
+```
+
+派遣前 `stage: dispatch` 不含 result；交回时必须匹配真实 callId/task。范围旗标与结构校验不能认证授权、无副作用或结果真实性，Lead 必须回读真实工具返回。持久任务仍用下列文件校验，不能用即时分支绕过路径、writer 与恢复证据。
 
 ## 目录与身份
 
@@ -10,7 +24,7 @@
 
 
 
-- `{session}` 是一轮编排的交接分组，使用 UTC `YYYYMMDDTHHMMSSZ`，首次实际派遣才创建；同秒冲突追加最小未使用后缀 `-01`、`-02`。同一编排计划的实施、审查与修复沿用原轮次，恢复 Lead 或更换工具会话不自动新建轮次；另起独立编排或已收束后的新一轮执行才新建。
+- `{session}` 是一轮编排的交接分组，使用 UTC `YYYYMMDDTHHMMSSZ`，首次需要持久交接的实际派遣才创建；同秒冲突追加最小未使用后缀 `-01`、`-02`。同一编排计划的实施、审查与修复沿用原轮次，恢复 Lead 或更换工具会话不自动新建轮次；另起独立编排或已收束后的新一轮执行才新建。
 - `{task}` 是一次具体派遣，使用轮内最大编号加一，至少三位，后接小写英文主题，如 `001-implement-a1`、`002-implement-a2`、`003-review-a1`。Lead 分配编号，不回收、不从未经检查的标题直接拼路径。具体 Work、任务类型、change/Ticket 写入 TASK。
 - 一轮可以只有一个 task，也可以并行或依次派遣多个 task；目录不是父子 Agent 拓扑。编排标识与工具的 Run、Dispatch、pane、provider session ID 分开，不能从临时目录 UUID 推导工具会话。
 - 普通提问、进度通知与未交付任务的正常恢复沿用原 task。正式交付后的修复、重新派遣、更换执行者或实质改变输入时建立新编号并引用旧报告，不覆盖旧输入与结果，不增加 attempt 子目录。工具状态未知时先查询原调用，不能以新编号为由重复派遣仍可能写入的任务。
@@ -90,3 +104,4 @@ TASK 与 REPORT 完成候选内容后，使用同目录临时文件与不覆盖�
 新派遣采用此合同；存量 TASK、REPORT、旧历史文字及已有快照保持原状，按原合同回收，不批量升级或补字段。旧 v1 继续由原领域的历史适配器校验，新版校验器不把 v1 或无版本 TASK 当作 v2 通过，历史不纳入新派遣扫描；后续重试使用新任务。
 
 位于 change 内的输入、定位文件与报告随所属对象保留并进入原归档完整性清单；全局记录保持原位置。既有历史副本按原字节保留，不再新建。归档前仍确认相关 writer 已停止，REPORT completed 不是业务完成或移动许可。归档后只读，外部工具日志的寿命由工具决定，引用不承诺永久可用。
+

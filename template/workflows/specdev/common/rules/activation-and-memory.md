@@ -29,8 +29,8 @@ UI 工作先按 <Path>{roots.state}/specdev/design/</Path> 的索引条目或 sc
 
 ## 跨领域编排与显式交接
 
-用户明确要求委派、跨工具/模型协作，或本 Work 已要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。项目默认方式由公共 command/coordination-init 显式初始化；普通激活不触发问答。
+用户要求协作，或主 Agent 判断独立上下文、真实并行收益、工具能力差异或独立验证值得委派时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；先按共享合同判断是否委派，再在当前授权与 required 约束内选择通道。编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。公共 command/coordination-init 仅在明确调用时保存可选偏好；普通激活不触发问答。
 
 只有用户明确要求 handoff 时读取 <Path>{roots.references}/handoff/handoff-contract.md</Path>。本域未归档 change 允许本次唯一交接作者更新 handoff.md 侧记；无 change 的资源模型使用共享方法定义的会话报告。它反映已有事实，不推进本域状态、完成门或永久知识。
 
-SpecDev 实际派遣时另读 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，补足开发工作区、领域前置和独立双轴审查边界。
+SpecDev 实际派遣时另读 <Path>{roots.workflows}/specdev/common/rules/coordination.md</Path>，补足开发工作区、领域前置和风险适配双轴审查边界。

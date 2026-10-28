@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Shared read-only dispatch checks. Never opens or authenticates external transcripts. */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -47,7 +47,34 @@ export function validateSessionLocator(value) {
   return errors;
 }
 
+/** A bounded synchronous read-only return needs no session directory. Flags are
+ * checked structure, not proof of authorization or actual side-effect freedom. */
+export function validateInlineDispatch(input) {
+  const errors = [], warnings = [];
+  try {
+    requireThat(input && input.handoff === 'inline', 'expected inline handoff');
+    requireThat(['dispatch','return'].includes(input.stage), 'expected dispatch or return stage');
+    requireThat(real(input.task), 'inline task identity required');
+    const scope = input.scope;
+    requireThat(scope && typeof scope === 'object' && !Array.isArray(scope), 'inline scope required');
+    requireThat(scope.synchronous === true && scope.readOnly === true, 'inline handoff requires synchronous read-only work');
+    for (const key of ['externalEffects','parallelWrites','recoveryRequired','formalDelivery']) requireThat(scope[key] === false, `${key} requires durable handoff`);
+    requireThat(!input.session && !input.scopeRoot, 'inline handoff must not manufacture a session');
+    if (input.stage === 'dispatch') requireThat(input.result === undefined, 'already returned; do not redispatch');
+    else {
+      const result = input.result;
+      requireThat(real(input.callId), 'actual tool call identity required');
+      requireThat(result && result.task === input.task && result.callId === input.callId, 'inline return correlation mismatch');
+      requireThat(['completed','blocked','failed','cancelled'].includes(result.status), 'inline return needs terminal status, not idle');
+      requireThat(real(result.summary), 'inline return summary required');
+      for (const key of ['findings','checks','unverified']) requireThat(Array.isArray(result[key]) && result[key].every(real), `inline return ${key} must contain concrete strings`);
+    }
+  } catch (error) { errors.push(String(error.message ?? error)); }
+  return {errors,warnings,caveat:'Read-only structure checks do not authenticate tool identity, authorization, side effects or completion; verify the actual correlated tool return.'};
+}
+
 export function validateDispatch(input) {
+  if (input?.handoff === 'inline') return validateInlineDispatch(input);
   const errors = [], warnings = [];
   try {
     requireThat(['dispatch','return'].includes(input.stage), 'expected dispatch or return stage');
@@ -90,9 +117,14 @@ export function validateDispatch(input) {
 }
 
 export function dispatchCLI(argv) {
+  if (argv[0] === '--inline') {
+    if (argv.length !== 1) { console.error('inline JSON on stdin includes its stage; no other arguments'); return 2; }
+    let input; try { input = JSON.parse(readFileSync(0,'utf8')); } catch { console.error('invalid inline JSON'); return 2; }
+    const result = validateInlineDispatch(input); console.log(JSON.stringify(result,null,2)); return result.errors.length ? 1 : 0;
+  }
   const names = {'--repo':'projectRoot','--scope-root':'scopeRoot','--session':'session','--task':'task','--stage':'stage'}, input = {};
   if (argv.length === 1 && argv[0] === '--help') {
-    console.log('Usage: node validate-dispatch.mjs --repo <project> --scope-root <project-relative-owner-root> --session <round> --task <id> --stage dispatch|return\nValidates TASK v2 under scope-root/sessions. Read-only; no workflow required, log discovery or external transcript access.'); return 0;
+    console.log('Usage: node validate-dispatch.mjs --repo <project> --scope-root <project-relative-owner-root> --session <round> --task <id> --stage dispatch|return\nOr: node validate-dispatch.mjs --inline < bounded-return.json (JSON may be piped, no file required). Validates durable TASK v2 under scope-root/sessions or a correlated inline return. Read-only; no workflow required, log discovery or external transcript access.'); return 0;
   }
   try {
     for (let i=0;i<argv.length;i++) {
@@ -105,3 +137,4 @@ export function dispatchCLI(argv) {
   const result = validateDispatch(input); console.log(JSON.stringify(result,null,2)); return result.errors.length ? 1 : 0;
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = dispatchCLI(process.argv.slice(2));
+

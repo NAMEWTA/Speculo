@@ -19,7 +19,7 @@ status: draft
 
 ## 1. 目标与拆分策略
 
-**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`，再按当前输入实际调用适用项目 Skill。I 负责实现、风险适配双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
 
 引用主要用户故事、验收合同和架构决策，说明所有 Ticket 共同交付的目标、切片原则、prefactor 和 expand-contract 选择。不要复制整个 Spec。
 
@@ -29,13 +29,13 @@ status: draft
 
 ### 项目 Skill 读取矩阵
 
-每个 Ticket 的 Lead 或 实现执行者 都必须先完整读取本 Map，再读取候选项目 Skill 的 frontmatter 与入口；只有适用于 `ALL` 或当前 Ticket ID、且 scope/路径/技术域/验证条件命中的 Skill 才完整读取，最后进入当前 Ticket。下表是发布时已确认的**最低必读集合，不是 Skill allowlist**；项目 Agent 指令或实现范围触发其他项目 Skill 时，先定位并读取其入口，由 Lead 更新本 Map、重新校验后继续。
+本节可省略，只记录对恢复有价值的项目 Skill 导航；不是最低全覆盖清单或 allowlist。普通 Skill 可执行中发现并记录实际使用，不先修改 Map。Purpose 以 `required:` 或 `必需：` 开头才表达原用户/安全/验收要求，相关 Ready Ticket 必须有 required 绑定；不得用可选标记覆盖已有义务。
 
-项目 Skill 使用项目根相对 Path，例如 `<Path>.agents/skills/{skill-name}/SKILL.md</Path>`；不得写机器绝对路径。若没有适用项目 Skill，保留一行 `无（已扫描项目 Skill 入口，未发现适用项）`，并在 Trigger / Scope 中记录实际扫描范围。
+路径使用真实项目根相对 Path；使用前检查源域与软链接安全。没有适用项时不虚构扫描记录。
 
 | Applies To | Project Skill | Trigger / Scope | Read Timing | Purpose |
 |---|---|---|---|---|
-| ALL | 无（已扫描项目 Skill 入口，未发现适用项） | `<Path>.agents/skills/**/SKILL.md</Path>` 与项目 Agent 指令声明的 Skill 根 | Map 后、Ticket 前 | 明确当前 change 没有额外项目 Skill 读取要求 |
+| ALL | 无（尚无已知必需方法，可选知识按需发现） | 当前任务范围 | 命中条件时 | 普通知识导航不构成执行义务 |
 
 ## 2. 执行清单
 
@@ -102,3 +102,4 @@ T-tickets 可以标注候选 Wave 和行为里程碑；单票 E2E disposition �
 - 变更范围或验收后递增 plan_revision 并重算受影响闭包；原完成证据保留，失效证据不得复用。
 - 共享语义资源在 Ticket resource_claims 声明（例如 API、表、迁移序列、正式记忆写集）；不把“不同文件”视为互不冲突。
 - 未闭合事务先查原网关，其他任务冲突只暂停相关部分；全部票 done 后仍需整体 Gate、数量和集成验收。
+

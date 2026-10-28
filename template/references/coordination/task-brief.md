@@ -4,13 +4,13 @@
 
 ## 输入
 
-外部工具派遣按 <Path>{roots.references}/coordination/session-files.md</Path> 保存 TASK；原生协作按需采用。较大资料引用真实位置，不复制整库。
+按 <Path>{roots.references}/coordination/session-files.md</Path> 的恢复需要选择即时只读返回或持久 TASK/REPORT，不按通道名称强制文件。较大资料引用真实位置，不复制整库。
 
 | 内容 | 要求 |
 |---|---|
 | 目标与身份 | 用户目标、任务用途、交付物、用户指定的交付数量和成功定义；存在的业务对象使用实际 ID，跨领域区分 workflow 与对象，不制造 Goal/Ticket |
 | 能力与依赖 | 实际 Work/Skill 入口、所需前置、原规格和已锁定决定、上游产物或报告；不假定接收方能读取 Lead 的对话 |
-| 工具与模型 | 当次用户选择、当前接口和原生通信方式；检查可用性，不固化厂商或模型名 |
+| 工具与模型 | 用户约束与主 Agent 当次获准选择、当前接口和原生通信方式；检查可用性，不固化厂商或模型名 |
 | 工作区与写集 | 项目根、实际执行位置、基线/固定审查输入；逐项允许写入、只读与共享路径及 owner，包括报告位置 |
 | 权限与验收 | 已授权动作、停止条件、实际检查、未执行 Gate 及其 owner；状态/审批/知识等原 gateway，Lead 的最终验收 |
 
@@ -24,10 +24,11 @@
 
 ## 返回
 
-交付实际文件/内容、关键决定、检查命令和退出码、真实环境、未验证项、问题和下一安全动作；研究给来源，review 给 findings，说明任务给解释与依据。依 <Path>{roots.references}/coordination/report-template.md</Path> 形成 REPORT，Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 核验。
+交付实际文件/内容、关键决定、检查命令和退出码、真实环境、未验证项、问题和下一安全动作；研究给来源，review 给 findings，说明任务给解释与依据。即时只读结果关联真实 call/task；持久交接依 <Path>{roots.references}/coordination/report-template.md</Path> 形成 REPORT。Lead 按 <Path>{roots.references}/coordination/result-and-recovery.md</Path> 核验。
 
 历史信息先读前序报告的聚焦交接，细节不足再按对应定位文件检索少量日志。准确日志路径仅由 Lead 写入可选 session-locator.json；取不到时省略，不猜路径。
 
 ## 外部网页分支
 
 仅在用户选择外部网页交付时读取 <Path>{roots.references}/coordination/exchange/external-web.md</Path> 与 <Path>{roots.references}/coordination/exchange/source-package.md</Path>，沿用 ZIP-only、发送范围授权、清单/hash 与唯一 attempt。其他派遣不生成 ZIP 或独立 Packet JSON。
+

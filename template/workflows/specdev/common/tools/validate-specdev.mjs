@@ -34,7 +34,7 @@ import { ticketPolicy } from './execution-context.mjs';
 import { validateChangeExecution } from './execution-validation.mjs';
 import { diagnosticErrors, addDiagnostic, appendDiagnostics, validationResult } from './validation-diagnostics.mjs';
 import { reviewScopeCLI } from "./review-scope.mjs";
-import { hasIndependentReview, validateIndependentReview } from "./review-evidence.mjs";
+import { hasReview, validateReviewRecord, validateCompletionReview, readReviewRequirements } from "./review-evidence.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
@@ -1263,16 +1263,21 @@ function validateReviews(change, required, errors, repoRoot = null) {
     }
     if (meta.fixed_point === meta.head) errors.push(`${basename(path)}: fixed_point and head must differ`);
     if (!new Set(["approved", "request-changes", "blocked"]).has(meta.status)) errors.push(`${basename(path)}: invalid status`);
-    if (!new Set(["pass", "request-changes", "skipped"]).has(meta.standards_result)) errors.push(`${basename(path)}: invalid standards_result`);
-    if (!new Set(["pass", "request-changes", "skipped"]).has(meta.specification_result)) errors.push(`${basename(path)}: invalid specification_result`);
+    if (!new Set(["pass", "request-changes", "skipped", "not-applicable"]).has(meta.standards_result)) errors.push(`${basename(path)}: invalid standards_result`);
+    if (!new Set(["pass", "request-changes", "skipped", "not-applicable"]).has(meta.specification_result)) errors.push(`${basename(path)}: invalid specification_result`);
     for (const heading of ["## Fixed Input", "## 标准", "## 规范", "## Summary"]) {
       if (!body.includes(heading)) errors.push(`${basename(path)}: missing '${heading}'`);
     }
-    // Historical CRs remain readable. Only the current review or an explicitly
-    // supplied new record is checked against the independent execution contract.
-    if (required && path === latest || hasIndependentReview(path)) {
-      errors.push(...validateIndependentReview(change, toPosix(relative(change,path)), {repoRoot,requirePassed:meta.status === 'approved',expectedResults:{standards:meta.standards_result,specification:meta.specification_result},expectedHead:meta.head,checkCurrent:required && path === latest}));
-      if (meta.status === 'approved' && (meta.standards_result !== 'pass' || meta.specification_result !== 'pass')) errors.push(`${basename(path)}: approved requires both review axes to pass`);
+    // Historical records keep their original result and identity checks. Only
+    // the report adopted by this review stage inherits today's scope policy.
+    const current = required && path === latest;
+    if (current || hasReview(path)) {
+      const artifact = toPosix(relative(change,path));
+      const options = {repoRoot,requirePassed:meta.status === 'approved',expectedResults:{standards:meta.standards_result,specification:meta.specification_result},expectedHead:meta.head};
+      errors.push(...(current
+        ? validateCompletionReview(change,artifact,{...options,final:true,checkCurrent:true})
+        : validateReviewRecord(change,artifact,options)));
+      if (meta.status === 'approved' && (!['pass','not-applicable'].includes(meta.standards_result) || !['pass','not-applicable'].includes(meta.specification_result))) errors.push(`${basename(path)}: approved requires both review axes to pass`);
     }
   }
   return paths;
@@ -1541,9 +1546,6 @@ function validateProjectSkillMatrix(body, label, errors, repoRoot = null) {
 
     const skillValue = stripInlineCode(cells[1]);
     if (skillValue.startsWith("无")) {
-      if (!`${skillValue} ${cells[2]}`.includes("已扫描")) {
-        errors.push(`${label}: no-project-Skill row must record the scanned scope`);
-      }
       entries.push({ appliesTo: new Set(appliesTo), path: null });
       continue;
     }
@@ -1569,7 +1571,8 @@ function validateProjectSkillMatrix(body, label, errors, repoRoot = null) {
     }
     seenSkillPaths.add(skillPath);
 
-    if (repoRoot && !pathIssue && !skillPath.includes("{roots.") && !PLACEHOLDER_RE.test(skillPath)) {
+    const required = /^(?:required|必需)[:：]/i.test(cells[4]);
+    if (required && repoRoot && !pathIssue && !skillPath.includes("{roots.") && !PLACEHOLDER_RE.test(skillPath)) {
       const resolvedRepo = resolve(repoRoot);
       const resolvedSkill = resolve(resolvedRepo, normalizeProjectPath(skillPath));
       const relativeSkill = relative(resolvedRepo, resolvedSkill);
@@ -1582,10 +1585,9 @@ function validateProjectSkillMatrix(body, label, errors, repoRoot = null) {
         catch (error) { errors.push(`${label}: ${error.message}`); }
       }
     }
-    entries.push({ appliesTo: new Set(appliesTo), path: skillPath });
+    entries.push({ appliesTo: new Set(appliesTo), path: skillPath, required });
   }
 
-  if (!entries.length) errors.push(`${label}: project Skill matrix contains no data rows`);
   const allNoSkill = entries.some((entry) => entry.path === null && entry.appliesTo.has("ALL"));
   if (allNoSkill && entries.some((entry) => entry.path !== null)) {
     errors.push(`${label}: an ALL no-project-Skill row conflicts with listed project Skills`);
@@ -1601,11 +1603,6 @@ function validateProjectSkillCoverage(matrix, ticketIds, label, errors) {
       if (appliesTo !== "ALL" && !knownTicketIds.has(appliesTo)) {
         errors.push(`${label}: project Skill matrix references missing Ticket ${appliesTo}`);
       }
-    }
-  }
-  for (const ticketId of knownTicketIds) {
-    if (!matrix.some((entry) => entry.appliesTo.has("ALL") || entry.appliesTo.has(ticketId))) {
-      errors.push(`${label}: project Skill matrix does not cover ${ticketId}`);
     }
   }
 }
@@ -1626,7 +1623,6 @@ function validateMap(path, errors, repoRoot = null) {
   }
   for (const heading of [
     "### 总体实施背景",
-    "### 项目 Skill 读取矩阵",
     "## 2. 执行清单",
     "## 3. 依赖 DAG",
     "## 4. 合同覆盖矩阵",
@@ -2091,17 +2087,13 @@ function validateParentImplementation(change, parentStatus, stage, errors, warni
       ticketByTask.set(taskId, { artifact, member, memberRoot, status });
       const terminal = new Set(["done", "cancelled"]).has(artifact.meta.status);
       if (!terminal) {
-        if (map.meta.status === "ready" && (artifact.meta.status !== "ready" || artifact.meta.ready !== true)) {
-          localErrors.push(`${ticketId}: parent creation requires status=ready and ready=true`);
-        } else if (new Set(["ready", "in_progress", "review"]).has(artifact.meta.status) && artifact.meta.ready !== true) {
+        if (new Set(["ready", "in_progress", "review"]).has(artifact.meta.status) && artifact.meta.ready !== true) {
           localErrors.push(`${ticketId}: executable Ticket must keep ready=true`);
-        } else if (new Set(["blocked", "deviated"]).has(artifact.meta.status)) {
-          // A local blocker does not revoke unrelated nodes' execution gate.
-          // The controller excludes this node and its dependency closure; only a
-          // global blocker or an empty legal frontier pauses the whole parent.
-        } else if (artifact.meta.status === "draft") {
-          localErrors.push(`${ticketId}: draft Ticket cannot belong to a parent implementation`);
         }
+        // Parent readiness certifies the goal, inventory and shared contracts, not
+        // universal execution readiness. A legal draft/deferred consumer remains
+        // in its original Ticket and cannot enter eligible until its own DoR holds.
+        // Local blocked/deviated work only stops itself and its dependency closure.
       }
     }
 
@@ -2573,7 +2565,14 @@ function validateChange(change, stage = null, repoRoot = null, engineeringKind =
           return units.length ? `${sourceLocator(join(units[0].memberRoot,'evidence',units.length>1?'final-review.md':`${units[0].artifact.meta.id}.md`))}#review-input` : null;
         }).filter(Boolean)]
         : spec ? [specLocator] : [`${specLocator}#scope`,`${specLocator}#acceptance`];
-      errors.push(...validateIndependentReview(change,finalArtifact,{repoRoot:deliveryRoot,sourceRoot:workspace.context.projectRoot,expectedHead:isParentImplementation?null:head,expectedBase:isParentImplementation?null:expectedBase,requiredImplementers:owners,requiredSpecifications,checkCurrent:true,requireDelivery:!isParentImplementation,allowSourceFiles:isParentImplementation}));
+      const memberReviewRequirements = isParentImplementation
+        ? [...new Set([...(parentImplementation?.ticketByTask?.values() ?? [])].map(unit=>unit.memberRoot))]
+          .map(root=>readReviewRequirements(root,{final:true,projectRoot:workspace.context.projectRoot})) : [];
+      const riskLevels = ['low','medium','high','critical'];
+      const requiredRisk = memberReviewRequirements.map(requirement=>requirement.requiredRisk).filter(Boolean)
+        .sort((a,b)=>riskLevels.indexOf(b)-riskLevels.indexOf(a))[0] ?? null;
+      const requireIndependent = memberReviewRequirements.some(requirement=>requirement.requireIndependent);
+      errors.push(...validateCompletionReview(change,finalArtifact,{final:true,requiredRisk,requireIndependent,repoRoot:deliveryRoot,sourceRoot:workspace.context.projectRoot,expectedHead:isParentImplementation?null:head,expectedBase:isParentImplementation?null:expectedBase,requiredImplementers:owners,requiredSpecifications,checkCurrent:true,requireDelivery:!isParentImplementation,allowSourceFiles:isParentImplementation}));
     } catch(error) { errors.push(`independent-review: final delivery checkpoint unavailable: ${error.message}`); }
   }
 
@@ -2884,3 +2883,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try { process.exitCode = main(process.argv.slice(2)); }
   catch (error) { console.error(`ERROR: ${error.message}`); process.exitCode = 1; }
 }
+

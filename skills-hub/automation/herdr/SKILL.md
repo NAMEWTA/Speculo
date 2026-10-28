@@ -1,12 +1,11 @@
 ---
 name: herdr
-description: 控制 Herdr（面向编程智能体的终端复用器）。仅当用户明确提到 Herdr，或要求用 Herdr 查看/控制窗格、标签页、工作区、命令或另一个智能体时使用。不要只因为任务适合后台终端、委派或并行就启用。需要 HERDR_ENV=1。
+description: 控制 Herdr（面向编程智能体的终端复用器）。用户指定 Herdr，或主 Agent 在已授权范围内判断任务需要其真实终端、会话与受监督协作能力时使用。先判断是否值得委派，不因任务可并行就启用；不覆盖 required 通道。需要 HERDR_ENV=1。
 license: MIT
 compatibility: Requires HERDR_ENV=1 and a working Herdr CLI (checked against herdr 0.9.4) in the actual managed host/session; commands must match local --help.
 metadata:
   author: NAMEWTA
-  wta-format-reviewed: '2026-10-14'
-  wta-explicit-only: 'true'
+  wta-format-reviewed: '2026-10-28'
   wta-single-file: 'true'
 ---
 # Herdr
@@ -134,7 +133,7 @@ herdr pane split --current --direction right --cwd "$PWD" --no-focus
 herdr agent start reviewer --kind codex --pane <returned-pane-id>
 ```
 
-使用用户要求的 kind；Claude 和 Codex 的启动命令以文末“Claude 与 Codex 的启动方式”为准。运行 `herdr agent` 查看已安装的 kind 列表和选项。原生智能体参数只能放在 `--` 之后：
+使用用户要求或当次获准选择的 kind；启动参数按文末“Claude 与 Codex 的启动方式”核对。运行 `herdr agent` 查看已安装的 kind 列表和选项。原生智能体参数只能放在 `--` 之后：
 
 ```bash
 herdr agent start reviewer --kind codex --pane <returned-pane-id> -- <agent-args...>
@@ -205,7 +204,7 @@ herdr pane read <returned-pane-id> --source recent-unwrapped --lines 120
 
 `--lines` 向 Herdr 请求更多行，来源是窗格可用的屏幕和主机回滚缓冲区。备用屏幕（alternate screen）的行不会进入普通主机回滚。对受支持的 idle 智能体，Herdr 可以收集应用自身保存的历史，之后恢复视口，但不是每个应用或每条回复都能这样取回。
 
-如果加大读取范围后仍看不到完整回复，让智能体把回复写成临时目录中的 Markdown 文件，只回复文件路径，然后在同一台机器上读取该文件。这只是兜底方法；不要在第一次 prompt 中就要求输出到文件。
+短时同步只读任务可直接读取能关联本次 call/task 的结构化结果，无需先建报告文件。长时、异步、跨会话、并行写入、恢复或正式交付任务在派遣前明确冻结输入、持久报告位置及 owner；文件交接是按恢复需求选择，不只是终端截断兜底。即时返回不完整时再要求可核验的文件输出，不能据 idle/屏幕残留宣称本任务完成。
 
 ## 安全与协调规则
 
@@ -221,26 +220,48 @@ herdr pane read <returned-pane-id> --source recent-unwrapped --lines 120
 
 ## Claude 与 Codex 的启动方式
 
-**重点：** 用户要求 Claude 或 Codex 时，必须使用下面对应的命令，不要自行改用其他参数。`<name>` 换成唯一名字，`<returned-pane-id>` 换成 `pane split` 实际返回的窗格 ID。
+通过 `herdr agent start` 在已有 shell pane 中启动 Claude Code 或 Codex。用户要求和 approved/required 的模型、工具、工作区与交互方式优先。
 
-### 要求 Claude 时
+### Herdr 中要求 Claude Code 时
+
+确认本会话满足前文 Herdr 环境检查，并已取得可用 shell pane；`<name>` 换成唯一名字，`<returned-pane-id>` 换成实际返回的 pane ID。默认不附加权限绕过参数：
+
+```bash
+herdr agent start <name> --kind claude --pane <returned-pane-id>
+```
+
+保留原来的具体启动写法：**仅当用户明确授权跳过审批，且当前 Claude Code CLI 支持该参数时**，才可选用以下命令；它不是默认或必需参数，本说明不授予执行权限：
 
 ```bash
 herdr agent start <name> --kind claude --pane <returned-pane-id> -- --dangerously-skip-permissions
 ```
 
-相当于在该窗格运行 `claude --dangerously-skip-permissions`。`--dangerously-skip-permissions` 必须放在 `--` 之后，作为 Claude 的原生参数传入。
+`--dangerously-skip-permissions` 必须放在 Herdr 的 `--` 之后，作为 Claude Code 原生参数传入，而不是 Herdr 选项。
 
-### 要求 Codex 时
+### Herdr 中要求 Codex 时
+
+默认启动：
+
+```bash
+herdr agent start <name> --kind codex --pane <returned-pane-id>
+```
+
+保留用户原来的 Codex 启动示例：**仅当用户明确授权绕过审批与沙箱，且当前 Codex CLI 帮助同时确认支持以下两个参数时**，才可选用；不得把历史示例当作所有版本的能力：
 
 ```bash
 herdr agent start <name> --kind codex --pane <returned-pane-id> -- --no-daemon --dangerously-bypass-approvals-and-sandbox
 ```
 
-相当于在该窗格运行 `codex --no-daemon --dangerously-bypass-approvals-and-sandbox`。这两个参数必须放在 `--` 之后，作为 Codex 的原生参数传入。`--no-daemon` 绕过共享后台服务，避免切换账号后复用仍保留旧账号的后台服务。
+这两个参数都在 Herdr 的 `--` 之后传给 Codex。`--no-daemon` 是用户历史示例中为避免切换账号后复用旧账号后台服务而采用的选项；它不是默认必需参数，不能据此声称当前所有 Codex CLI 都支持它或使用相同后台机制。先核对本机帮助与账号状态，不自动改变后台账户或重启服务；不支持时不猜替代参数，也不盲目重试。
 
-### 两者通用
+### 权限与后续协调
 
-- 启动前，窗格必须停在交互 shell 提示符。
-- 启动后用 `herdr agent prompt <name> "..." --wait --timeout 120000` 下发任务，用 `herdr agent read <name> --source recent-unwrapped --lines 120` 读取结果。
-- 返回 `agent_not_ready` 时，先用 `herdr agent read <name>` 查看启动界面（例如确认或信任对话框），询问用户后再处理，不要自动确认。
+- 当前安装的 Herdr 与所选 CLI 帮助是实际语法权威。只读检查 `herdr agent start --help`、`claude --help` 或 `codex --help`；不运行裸 `herdr` 探测。
+- 启动前，目标 pane 必须停在交互 shell 提示符，原进程不会继续写入；不接管未知或用户前台会话。`agent start` 不创建、拆分或移动 pane。
+- Herdr 的 `--kind` 选择对应可执行文件，`--` 后的原生参数原样透传；不是用 `herdr agent` 启动 Herdr 服务。参见 [Herdr 官方 agent automation](https://herdr.dev/docs/agent-automation/)，实际执行仍以本机帮助为准。
+- 不自动附加跳过审批、禁用沙箱、信任仓库或改变后台账户的参数。权限由独立授权与宿主环境决定，选择 Herdr 不授予任何额外访问、登录、安装、启动服务或付费。
+- Herdr 启动后用 `herdr agent prompt <name> "..." --wait --timeout 120000` 下发任务，用 `herdr agent read <name> --source recent-unwrapped --lines 120` 读取结果。
+- 返回 `agent_not_ready` 或 blocked 时，先用 `herdr agent read <name>` 查看准确界面（例如确认或信任对话框），所需新增授权交用户，不自动确认；从实际结果确认身份与就绪。
+- 按任务恢复需求选择即时返回或持久交接。Task worker 不默认再派 Agent；跨级委派必须由原 owner 明确能力、预算、权限与责任。
+
+缺能力或环境时停止该操作，由调用方合同判断允许回退或 required 阻塞，不伪称已派遣。

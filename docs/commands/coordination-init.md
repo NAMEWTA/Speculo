@@ -1,11 +1,11 @@
-# Coordination Init：项目默认编排方式
+# Coordination Init：项目默认编排偏好
 
 [手册首页](../README.md) · [Command 目录](README.md) · [源入口](../../template/commands/coordination-init/COMMAND.md)
 
 所有 workflow 共用这个初始化入口。安装并曝光 `command/coordination-init` 后，明确让 AI 调用；安装和发现入口本身不会执行初始化。
 
 ```text
-调用 command/coordination-init，将项目默认编排方式设为 Herdr，
+调用 command/coordination-init，将项目默认编排偏好设为 Herdr，
 使用项目 .agents/skills/ 中的入口。
 ```
 
@@ -41,3 +41,6 @@
 ```
 
 工具和模型需在实际环境中可用。Worker 可以直接写入获分配的文档或代码，Lead 核验后协调原领域 owner 更新状态。详见[通用编排与任务交接](../agent-handoffs.md)。需要交接整个会话时另行明确调用 [handoff](handoff.md)。
+
+
+默认偏好不等于强制派遣。主 Agent 先判断直接完成、普通工具并行或独立执行者，再在当前授权与 required 约束内选通道；没有 project.json 也能正常执行。可选 allowed_modes 只收窄项目候选范围，不授予安装、登录、远程写入、付费或权限绕过。

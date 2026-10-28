@@ -1,6 +1,6 @@
 # Herdr 编排
 
-仅在初始化明确选择 Herdr 接入分支，或按 <Path>{roots.references}/coordination/coordination-contract.md</Path> 为当前任务选中 Herdr 时读取；选择可来自当前请求、已批准安排或项目偏好。plan 只说明接入步骤，不安装、不启动。Herdr 选择不隐含 worktree、模型或拓扑选择。
+仅在初始化明确选择 Herdr 接入分支，或按 <Path>{roots.references}/coordination/coordination-contract.md</Path> 为当前任务选中 Herdr 时读取；选择可来自当前请求、已批准安排、项目偏好或主 Agent 在已授权范围内的任务相关判断。plan 只说明接入步骤，不安装、不启动。Herdr 选择不隐含 worktree、模型或拓扑选择。
 
 ## 复用项目 Skill
 
@@ -18,10 +18,11 @@
 实际使用时必须读取所选位置的项目 Skill，再检查 `HERDR_ENV=1`；不满足就停止 Herdr 控制，按共享合同允许的 fallback 回退当前智能体；强制要求 Herdr 或原选择未允许回退时阻塞相关阶段并说明需要从受管会话恢复。检查通过后读取本机 `herdr --help` 和所需命令组帮助，核对版本、来源、运行上下文与目标会话；工具或服务不可用同样按共享合同处理。不同 fork 或同名工具不推定兼容。宿主技能列表是否已刷新不替代读取真实项目文件；也不把安装成功报告成运行可用。
 
 1. 遵守当前指南对 Herdr 环境和会话操作范围的要求。若当前环境无法控制目标，只阻塞此任务方式；不接管其他前台会话。
-2. 根据用户指定的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
+2. 根据用户要求及当前已获允许的编程工具和模型，在指南支持的范围内选择调用。Herdr 是编排方式，不是模型；不得固化某家 CLI 的参数。
 3. 使用实际返回的 pane/session 标识，确认对应项目和工作区，等待当前指南定义的就绪条件。不要默认切换用户焦点。
-4. 每个任务使用能明确归属的目标会话，并按 <Path>{roots.references}/coordination/task-brief.md</Path> 提供输入。派遣时提供已保存 TASK 和准确 REPORT 位置，准确确认日志绝对路径后，由 Lead 在可选 session-locator.json 中只记录 path，冻结 TASK 不补写运行信息；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
+4. 每个任务使用能明确归属的目标会话，并按 <Path>{roots.references}/coordination/task-brief.md</Path> 提供输入。按 session-files.md 判断即时返回或持久交接；需要持久交接时提供已保存 TASK 和准确 REPORT 位置，准确确认日志绝对路径后，由 Lead 在可选 session-locator.json 中只记录 path，冻结 TASK 不补写运行信息；独立工作区先核对文件可读写。前一任务尚未结束时，不将其活动或 idle 信号误认成新任务的完成。
 5. 通过工具当前支持的返回读取方式取得结果。有文件交接时按 <Path>{roots.references}/coordination/session-files.md</Path> 交回 REPORT 及“任务标识、状态、报告位置、一句话摘要”；只能返回文本时由 Lead 原样捕获并标明来源。执行 CLI 的原始日志能确认属于本任务执行者且地址准确时，由 Lead 将绝对路径写入定位文件；不把 pane 标识或终端输出冒充 JSONL，无法核验时省略地址，不影响独立可验证的交付。输入、提问和通知仍遵守工具原生接口。
 6. 超时或投递结果不明时先检查原目标，不盲目重发。取消按当前工具说明进行；不要宽泛结束所有 pane 或服务。
 
 任务完成、会话空闲、会话保留是不同事实。只有确认本任务不会继续冲突写入，并由 Lead 完成原验收，才释放业务占用、更新原 Evidence 和继续下一任务。
+

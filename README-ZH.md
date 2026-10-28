@@ -1,6 +1,6 @@
 # Speculo
 
-把软件开发、学习、运维、决策和内容创作的方法，交给你当前使用的 AI App 或 CLI。Speculo 提供可读取的 Skill、显式 Command 和可恢复的项目产物；未指定执行方式时，按当前宿主正常工作，明确指定 CLI 交互或 Herdr 等方式时再按选择执行。
+把软件开发、学习、运维、决策和内容创作的方法，交给你当前使用的 AI App 或 CLI。Speculo 提供可读取的 Skill、显式 Command 和可恢复的项目产物；当前 Agent 在真实能力与授权范围内选择直接执行、普通工具并行或有价值的委派，用户明确要求与已批准的执行安排优先。
 
 [English](README.md) · **[完整使用手册](docs/README.md)** · [快速入门](docs/getting-started.md) · [全部能力](docs/capabilities.md) · [常见问题](docs/troubleshooting.md)
 
@@ -41,7 +41,7 @@ speculo doctor .
 
 不必每次跑完整条流程。完整获批 Spec 和 Ready Ticket 都可以直接进入实现；执行方式与 current/worktree 独立选择。见[领域路线对照](docs/workflows/README.md)。
 
-通过 CLI、Herdr、Orca 派遣任务时，以简短 Markdown 保存输入与报告，附聚焦摘要和可检索的历史会话入口。见[外部 Agent 的任务交接](docs/agent-handoffs.md)。
+短时同步只读委派可即时返回与调用可靠关联的结果；需要恢复或审计的任务保存持久 Markdown 输入、报告和可检索的会话引用，宿主原生、CLI、Herdr、Orca 均按实际需求选择。见[Agent 的任务交接](docs/agent-handoffs.md)。
 
 ## 按 Command 类别找工具
 

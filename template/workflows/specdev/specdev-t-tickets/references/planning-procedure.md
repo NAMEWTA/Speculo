@@ -53,11 +53,7 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 
 #### 项目 Skill 路由
 
-1. 读取项目 Agent 指令，确定项目声明的 Skill 根；至少枚举 `<Path>.agents/skills/**/SKILL.md</Path>`，存在其他项目级 Skill 根时一并枚举；
-2. 先读取候选 Skill 的 frontmatter 与入口路由；只有命中当前 change 的 scope、路径、技术域或验证条件时才完整读取，并按其 Skill Map 路由到当前 change 需要的领域 Skill；
-3. 根据 change 索引、每个 Ticket 的 frontmatter、路径、技术域、公共契约、迁移与验证范围，确定 `ALL` 或具体 Ticket 的最低必读集合；只把真实存在且触发条件匹配的项目 Skill 纳入；
-4. 使用项目根相对 Path 记录每个 Skill 的入口文件，同时记录触发 scope、读取时机和用途；不得把 Speculo 自带 Skill 或机器绝对路径伪装成项目 Skill；
-5. 未发现适用项目 Skill 时，记录已扫描的 Skill 根和“无适用项”，不生成虚假路径；项目 Skill 清单是最低集合而非 allowlist。
+按 <Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path> 区分必需方法和可选知识。先按当前范围定位相关项目 Skill，不强制全库扫描。用户/安全/验收指定的方法在 Ticket 绑定；普通 Skill 可执行中渐进发现，不预列完整最低路由。Map 可记录导航，未列出的可选方法仍可用；没有适用方法不制造“已扫描”形式记录。
 
 #### Prefactor
 
@@ -106,11 +102,11 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 
 ### 5. 写成可交接的垂直切片 Ticket
 
-必须按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 填写本票真实调用绑定；Map 中的读取路由不能代替调用。
+仅对必需方法按 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>` 填写真实绑定；可选知识按需使用并记录。Map 导航不能替代实际调用。
 
 使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/ticket-template.md</Path>`：正文只写目标与来源、垂直行为与范围、验收和验证、本票执行约束及适用风险。依赖、路径、资源和项目 Skill 调用以原 frontmatter 为准；不在正文维护镜像。
 
-引用上游 AC/ADR，只补充本票差异。公共合同、关键安全顺序和验收必须确定；局部实现选择交给 I。Lite/Standard/Deep 决定需要展开的实际风险，不规定执行步数，也不要求无关栏目逐项填“不适用”。通用实现、独立审查、集成、停止与恢复沿 I 入口执行。
+引用上游 AC/ADR，只补充本票差异。公共合同、关键安全顺序和验收必须确定；局部实现选择交给 I。Lite/Standard/Deep 决定需要展开的实际风险，不规定执行步数，也不要求无关栏目逐项填“不适用”。通用实现、风险适配审查、集成、停止与恢复沿 I 入口执行。
 
 ### 6. 构建依赖 DAG、合同覆盖与并发检查
 
@@ -122,7 +118,7 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 6. 共享路径必须指定唯一 owner，通常由专门 Ticket 或明确的集成 owner 修改；
 7. 不得用依赖边表达“可能更方便”或纯粹的人员交接。
 
-使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/tickets-map-template.md</Path>` 草拟总体 Map；写入所有 Ticket 共享的总体实施背景与项目 Skill 读取矩阵。矩阵中的每个 Ticket 必须由 `ALL` 或自己的 Ticket ID 覆盖。
+使用 `<Path>{roots.workflows}/specdev/specdev-t-tickets/assets/tickets-map-template.md</Path>` 草拟总体 Map；写入所有 Ticket 共享的总体实施背景；项目 Skill 导航按需记录，不要求每票完整覆盖。明确标记的必需方法仍须绑定。
 
 ### 7. Definition of Ready
 
@@ -135,11 +131,11 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 - 可写路径不明确或并行所有权冲突；
 - 验证方法不能执行且没有批准的替代证据；
 - Ticket 未声明 E2E required/not-required 及理由，或未指定 Lead 在稳定 change-workspace 上验收；
-- Tickets Map 缺少总体实施背景或项目 Skill 读取矩阵，项目 Skill 路径不存在、不是项目根相对路径，或当前 Ticket 未被 `ALL`/自身 ID 覆盖；
-- 无法冻结真实交付、完成独立审查或提供适用验收证据；未获提交授权本身不阻塞快照验收；
+- Tickets Map 缺少总体实施背景，或必需方法缺失、漂移、路径越界；普通可选方法的发现/更新不阻塞 Ready；
+- 无法冻结真实交付、满足风险适用的审查要求或提供验收证据；未获提交授权本身不阻塞快照验收；
 - 单个新上下文无法完成；
-- Standard/Deep 缺少有序执行路线；
-- Deep 缺少迁移、兼容、监控、回滚或批准点。
+- 真实迁移、安全操作等不可交换顺序未明确；
+- Deep 实际风险需要的迁移、兼容、恢复或批准点未闭合。
 
 ### 8. 与用户核对
 
@@ -153,7 +149,7 @@ UI 范围同时读取 <Path>{roots.workflows}/specdev/common/rules/design-contra
 - Ready 状态；
 - 关键未决问题；
 - 预计并行组和共享路径 owner；
-- `ALL` 与逐 Ticket 的项目 Skill 最低必读集合。
+- 适用的必需方法及可选知识导航。
 
 核对：
 
@@ -221,3 +217,4 @@ node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
 ## 下一步
 
 满足任一情况时建议运行 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>`：Ticket 数量达到或超过 10、存在多个 implementation owner 的并行写入协调、Deep Ticket、迁移、共享契约、多个 Gate 或高风险发布。只读 review/research 并行本身不触发 Goal Plan；少量线性 Ready Ticket 可直接进入 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`。
+

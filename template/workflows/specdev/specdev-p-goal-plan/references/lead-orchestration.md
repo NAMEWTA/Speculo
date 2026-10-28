@@ -14,7 +14,7 @@ serial 完成一票的实现、审查和验证后再开始下一票，同票内�
 
 所有本 change 执行者使用 README 的同一工作区；细分授权写集，shared path 有唯一 owner。Git index、commit/checkout/merge 串行协调；没有具体授权不操作。计划、Ticket、Map 可由获分配的 worker 直接写入；正式状态、审批、Evidence 和 Outcome 由原 owner 在验收后维护。
 
-实际派遣按 <Path>{roots.references}/coordination/task-brief.md</Path> 绑定票据/Spec、依赖证据、不可变基线、选定工作区、允许路径/动作、验证、停止条件和返回位置。外部交接使用原 sessions；TASK 派遣前冻结，派遣后准确确认的会话日志绝对路径只写同任务 session-locator.json 的 path 字段，新合同在投递/回收时分别运行交接校验。原生协作按需交接，不建 Agent 注册表。返回包含实际实现者、路径、checkpoint 或快照、dirty 状态、命令结果、未验证项及 blocker。
+实际派遣按 <Path>{roots.references}/coordination/task-brief.md</Path> 绑定票据/Spec、依赖证据、不可变基线、选定工作区、允许路径/动作、验证、停止条件和返回位置。按 <Path>{roots.references}/coordination/session-files.md</Path> 根据实际恢复与审计需要选择即时返回或持久 TASK/REPORT，外部 CLI/Orca/Herdr 与原生协作遵循同一规则；持久任务的冻结输入、可选日志定位及投递/回收校验沿该合同，不建 Agent 注册表。返回包含实际实现者、路径、checkpoint 或快照、dirty 状态、命令结果、未验证项及 blocker。
 
 ## 验收与恢复
 

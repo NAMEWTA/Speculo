@@ -4,7 +4,7 @@
 
 ## 其他必要偏好
 
-语言、用户工具和明确产物数量复用当次请求或现有项目说明。实现并发、worktree、集成尝试上限只在原 Goal/Implementation Plan 真正启用时明确，由计划 `## Execution Policy Source` 记录实际来源；默认 current 单写入者。Lead 自己实现计入实现并发，只读协作者不设新数字上限。UI 缺省 3、配置 2–4、用户明确数量覆盖上限；一次 override 留当前设计包，不改全局偏好。
+语言、用户工具和明确产物数量复用当次请求或现有项目说明。实现并发、worktree、集成尝试上限只在原 Goal/Implementation Plan 真正启用时明确，由计划 `## Execution Policy Source` 记录实际来源；工作区默认 current，并发与共享资源约束按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 独立判断。Lead 自己实现计入实现并发，只读协作者不设新数字上限。UI 缺省 3、配置 2–4、用户明确数量覆盖上限；一次 override 留当前设计包，不改全局偏好。
 
 现有 <Path>{roots.state}/specdev/config.json</Path> 中 GitHub labels/include_external_prs、验证/planning 等真实消费者配置，可按 <Path>{roots.workflows}/specdev/common/schemas/config.schema.json</Path> 验证和保留；只有确需该工具时才创建，必要结构参考 <Path>{roots.workflows}/specdev/specdev-i-init-setup/assets/config-template.json</Path>。不把旧配置整份机械改写为 config.md；未知独有字段保留并报告。无标签只阻塞相关远程写入。
 

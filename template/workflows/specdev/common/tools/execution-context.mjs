@@ -3,7 +3,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { basename, join, relative, resolve } from 'node:path';
 import * as runtime from '../../../../lib/speculo-runtime.mjs';
-import { validateIndependentReview } from './review-evidence.mjs';
+import { validateCompletionReview } from './review-evidence.mjs';
 
 export const EXECUTION_VERSION = 1;
 export const EXECUTION_CONTEXT = 'README.md#execution-context';
@@ -96,9 +96,10 @@ export function validateExecutionRecord(change, record, context, {repoRoot=null,
       }
       const artifact = `evidence/${record.ticket_id ?? 'direct-spec'}.md`;
       const source = readFileSync(runtime.safeWorkPathSync(change,artifact,{mustExist:true,type:'file'}),'utf8');
-      if (!source.split('\n').some(line=>line.trim() === `Input: ${record.checkpoint}`)) throw new Error('checkpoint must match the actual Independent Review input');
-      errors.push(...validateIndependentReview(change,artifact,{repoRoot,sourceRoot,requiredImplementers:record.implementation_owners,checkCurrent,requireDelivery:checkCurrent}));
+      if (!source.split('\n').some(line=>line.trim() === `Input: ${record.checkpoint}`)) throw new Error('checkpoint must match the actual Review input');
+      errors.push(...validateCompletionReview(change,artifact,{repoRoot,sourceRoot,ticketId:record.ticket_id,requiredImplementers:record.implementation_owners,checkCurrent,requireDelivery:checkCurrent}));
     }
   } catch(error) { errors.push(`${unit}: ${error.message}`); }
   return errors;
 }
+

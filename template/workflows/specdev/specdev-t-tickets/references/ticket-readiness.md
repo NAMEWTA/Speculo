@@ -5,9 +5,9 @@
 ## 通用门禁
 
 - [ ] frontmatter 字段完整，Ticket ID、文件名和 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 一致。
-- [ ] Tickets Map 包含总体实施背景与项目 Skill 读取矩阵；当前 Ticket 被 `ALL` 或自身 Ticket ID 覆盖。
-- [ ] 矩阵中的项目 Skill 均使用真实存在的项目根相对 `<Path>.../SKILL.md</Path>`，并声明 Trigger / Scope、读取时机和用途；没有适用项时记录实际扫描范围而不生成虚假路径。
-- [ ] Ticket 明确要求 Lead 与 实现执行者 按 Map -> 适用项目 Skill -> 当前 Ticket 的顺序读取；矩阵是最低必读集合而非 allowlist。
+- [ ] Tickets Map 提供总体实施背景；项目 Skill 矩阵是可选导航，不要求扫描全目录或覆盖每票。
+- [ ] 已知必需方法按 `required:` 矩阵项和 Ticket required binding 保留真实来源、版本、调用及验收责任；未发现可选知识不阻止 Ready。
+- [ ] 普通知识按任务命中条件渐进发现，记录实际使用；新增可选 Skill 不自动重规划。
 - [ ] 可观察产出单一、明确且可验证。
 - [ ] 来源和验收合同映射存在。
 - [ ] UI Ticket 的 ui_change/design_ref 固定批准 DESIGN 的 revision、digest、pages 与 acceptance；实际 UI 文件范围不能靠省略标记绕过，非 UI 票无此门禁。
@@ -21,7 +21,7 @@
 - [ ] 正常、失败和回归至少各有一条验证，或有可信的不适用原因。
 - [ ] 明确 `E2E disposition: required | not-required: reason`；required 场景、预期和接缝可执行。
 - **运行环境：** change README 选定的 change-workspace；本票的检查和 Lead-owned E2E 在固定输入上执行，所有执行者复用该工作区。
-- [ ] Ticket 已明确进入 I，由其负责真实实现、checkpoint/快照、独立双轴审查、验证和 Lead Evidence；不强制每票 commit/merge。
+- [ ] Ticket 已明确进入 I，由其负责真实实现、checkpoint/快照、风险适配双轴审查、验证和 Lead Evidence；不强制每票 commit/merge。
 - [ ] Evidence 位置明确为 `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>`。
 - [ ] 单个全新上下文能够完成；否则已拆分。
 - [ ] 所有内部文件与目录引用使用完整根变量 Path 标签。

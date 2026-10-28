@@ -472,7 +472,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       let result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.validation_errors, []);
-      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.deepEqual(result.suggested_batch, ["T-01"]);
       assert.match(JSON.stringify(result.blocked), /not Ready: draft/);
       assert.equal(result.authorization_checked, false);
       assert.equal(result.transaction_gateway_checked, false);
@@ -482,12 +482,12 @@ describe("SpecDev Goal routing and progressive readiness", () => {
 
       await writeFile(consumer, before.replace("status: draft", "status: ready").replace("ready: false", "ready: true"));
       result = analyzeMap(input);
-      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.deepEqual(result.suggested_batch, ["T-01"]);
       assert.match(JSON.stringify(result.blocked), /dependency not successfully satisfied: T-01/);
       const goalPath = join(root, "goal-plan.md");
       await writeFile(goalPath, (await readFile(goalPath, "utf8")).replace("status: ready", "status: draft").replace("ready_for_execution: true", "ready_for_execution: false"));
       result = analyzeMap(input);
-      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.suggested_batch, []);
       assert.match(JSON.stringify(result.blocked), /Goal planning gate is not ready/);
     } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
@@ -506,7 +506,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const input = { mapPath: join(root, "tickets-map.md"), repoRoot: fixtureProject(root) };
       let result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
-      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.deepEqual(result.suggested_batch, ["T-01"]);
       assert.match(JSON.stringify(result.deferred), /semantic resource: db:users/);
 
       await writeGoalPlan(root, 3);
@@ -514,19 +514,21 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       await writeFile(firstPath, first.replace("status: ready", "status: in_progress"));
       result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
-      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.suggested_batch, []);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
-      assert.match(JSON.stringify(result.deferred), /Ticket scheduling concurrency limit/);
+      assert.deepEqual(result.eligible, []);
+      assert.deepEqual(result.deferred, []);
+      assert.match(JSON.stringify(result.blocked.find((node: {id: string}) => node.id === "T-03")), /Ticket scheduling concurrency limit occupied by in-flight work/);
 
       await writeFile(firstPath, first.replace("owner: lead-session", "owner: unassigned"));
       result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
-      assert.deepEqual(result.frontier, ["T-03"]);
+      assert.deepEqual(result.suggested_batch, ["T-03"]);
       assert.match(JSON.stringify(result.blocked), /implementation owner not assigned/);
     } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
-  it("still rejects draft members when creating a multi-change parent", async () => {
+  it("accepts structurally valid draft consumers when creating a multi-change parent", async () => {
     const root = await fixture();
     const members = ["2026-09-08-api", "2026-09-08-ui"];
     try {
@@ -536,8 +538,8 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       const file = join(dirname(root), members[1], "ticket", "01-implementation.md");
       await writeFile(file, (await readFile(file, "utf8")).replace("status: ready", "status: draft").replace("ready: true", "ready: false"));
       const result = runValidator(root, "goal-plan");
-      assert.equal(result.status, 1);
-      assert.match(result.stdout + result.stderr, /2026-09-08-ui: T-01: parent creation requires status=ready and ready=true/);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.doesNotMatch(result.stdout + result.stderr, /parent creation requires status=ready/);
     } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 
@@ -553,7 +555,7 @@ describe("SpecDev Goal routing and progressive readiness", () => {
         await writeFile(firstPath, first.replace("status: ready", `status: ${status}`).replace("ready: true", `ready: ${ready}`));
         const result = analyzeMap({ mapPath: join(root, "tickets-map.md"), repoRoot: fixtureProject(root) });
         assert.deepEqual(result.errors, []);
-        assert.deepEqual(result.frontier, ["T-03"]);
+        assert.deepEqual(result.suggested_batch, ["T-03"]);
         assert.ok(result.validation_errors.some((error: any) => error.id === "T-01" && /executable Ticket must keep ready=true/.test(error.message)), JSON.stringify(result));
         assert.ok(result.blocked.some((node: any) => node.id === "T-02"));
       }
@@ -586,14 +588,14 @@ describe("SpecDev Goal routing and progressive readiness", () => {
       assert.deepEqual(result.errors, []);
       assert.deepEqual(result.validation_errors, []);
       assert.deepEqual(result.done, ["T-01"]);
-      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.suggested_batch, []);
       assert.deepEqual(result.blocked, [{ id: "T-02", reasons: ["not Ready: draft"] }]);
       assert.equal(result.eligible_for_final_verification, false);
       assert.equal(await readFile(consumer, "utf8"), before);
       await writeFile(consumer, before.replace("status: draft", "status: ready").replace("ready: false", "ready: true"));
       result = analyzeMap(input);
       assert.deepEqual(result.errors, []);
-      assert.deepEqual(result.frontier, ["T-02"]);
+      assert.deepEqual(result.suggested_batch, ["T-02"]);
     } finally { await rm(fixtureProject(root), { recursive: true, force: true }); }
   });
 });
@@ -645,7 +647,7 @@ describe("SpecDev local-first contracts", () => {
     assert.deepEqual(context.properties.workspace_policy.enum,["current","worktree"]);
   });
 
-  it("requires every Ticket to be covered by valid project Skill routing", async () => {
+  it("keeps optional discovery open and validates explicit required project Skill routing", async () => {
     const root = await fixture();
     const repo = fixtureProject(root);
     const mapPath = join(root, "tickets-map.md");
@@ -667,15 +669,15 @@ describe("SpecDev local-first contracts", () => {
         "",
       ].join("\n"));
 
-      const noSkillRow = "| ALL | 无（已扫描项目 Skill 入口，未发现适用项） | `<Path>.agents/skills/**/SKILL.md</Path>` 与项目 Agent 指令声明的 Skill 根 | Map 后、Ticket 前 | 明确当前 change 没有额外项目 Skill 读取要求 |";
-      const skillRow = `| ALL | \`<Path>${skillRelative}</Path>\` | all project code | Map 后、Ticket 前 | apply project engineering standards |`;
+      const noSkillRow = "| ALL | 无（尚无已知必需方法，可选知识按需发现） | 当前任务范围 | 命中条件时 | 普通知识导航不构成执行义务 |";
+      const skillRow = `| ALL | \`<Path>${skillRelative}</Path>\` | all project code | Map 后、Ticket 前 | required: apply project engineering standards |`;
       const originalMap = await readFile(mapPath, "utf8");
       const validMap = originalMap.replace(noSkillRow, skillRow);
       assert.notEqual(validMap, originalMap);
       await writeFile(mapPath, validMap);
       const invocation = { id: "engineering-standards", path: `<Path>${skillRelative}</Path>`, sha256: createHash("sha256").update(await readFile(join(repo, skillRelative))).digest("hex"), phase: "implement", operation: "apply project standards", inputs: ["Ticket implementation contract"], outputs: ["standards checks and evidence"], required: true, on_failure: "block-ticket" };
       const ticketPath = join(root, "ticket", "01-implementation.md");
-      await writeFile(ticketPath, (await readFile(ticketPath,"utf8")).replace("skill_bindings: []", `skill_bindings: ${JSON.stringify([invocation])}`));
+      await writeFile(ticketPath, (await readFile(ticketPath,"utf8")).replace(/^---\n/, `---\nskill_bindings: ${JSON.stringify([invocation])}\n`));
 
       result = runValidator(root, "tickets", repo);
       assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -694,14 +696,12 @@ describe("SpecDev local-first contracts", () => {
       result = runValidator(root, "tickets", repo);
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /references missing Ticket T-02/);
-      assert.match(result.stdout + result.stderr, /does not cover T-01/);
 
       const legacyMap = validMap.replace(/### 总体实施背景[\s\S]*?(?=## 2\. 执行清单)/, "");
       await writeFile(mapPath, legacyMap);
       result = runValidator(root, "tickets", repo);
       assert.equal(result.status, 1);
       assert.match(result.stdout + result.stderr, /missing '### 总体实施背景'/);
-      assert.match(result.stdout + result.stderr, /missing '### 项目 Skill 读取矩阵'/);
     } finally {
       await rm(fixtureProject(root), { recursive: true, force: true });
       await rm(repo, { recursive: true, force: true });
@@ -903,7 +903,8 @@ describe("SpecDev local-first contracts", () => {
     assert.match(lead, /达到有效尝试上限时停止重复派单/);
     assert.match(lead, /有实质变化的新 Dispatch Packet/);
     assert.match(completion, /单个 Ticket 进入 Lead 复盘不自动终止整个父循环/);
-    assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 ready frontier/);
+    assert.match(executionLoop, /父 Lead 可以继续其他不受影响的 eligible 节点，在冲突与配额允许时执行/);
+    assert.match(executionLoop, /原执行结果未知或 writer 未停止时不得重复派发/);
   });
 
   it("validates Triage before downstream Ticket artifacts exist", async () => {
@@ -1319,14 +1320,14 @@ fs.writeFileSync(path, JSON.stringify(state));
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const result = analyzeMap({mapPath:join(root,"tickets-map.md"),repoRoot:fixtureProject(root)});
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.validation_errors,[]);
-      assert.deepEqual(result.frontier,["T-01"]);
+      assert.deepEqual(result.suggested_batch,["T-01"]);
       assert.equal(result.authorization_checked,false); assert.equal(result.transaction_gateway_checked,false);
       assert.equal(result.eligible_for_final_verification,false);
       assert.deepEqual(await Promise.all(files.map(file => readFile(file,"utf8"))),before);
       const planFile = join(root,"goal-plan.md");
       await writeFile(planFile,(await readFile(planFile,"utf8")).replace("status: ready","status: draft").replace("ready_for_execution: true","ready_for_execution: false"));
       const blocked = analyzeMap({mapPath:join(root,"tickets-map.md"),repoRoot:fixtureProject(root)});
-      assert.deepEqual(blocked.frontier,[]); assert.match(JSON.stringify(blocked),/not ready for execution/);
+      assert.deepEqual(blocked.suggested_batch,[]); assert.match(JSON.stringify(blocked),/not ready for execution/);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
@@ -1343,11 +1344,11 @@ fs.writeFileSync(path, JSON.stringify(state));
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const input = {mapPath:join(root,"implementation-map.md"),repoRoot:fixtureProject(root)};
       const before=analyzeMap(input);
-      assert.deepEqual(before.errors,[]); assert.deepEqual(before.frontier,members.map(member => `${member}::T-01`));
+      assert.deepEqual(before.errors,[]); assert.deepEqual(before.suggested_batch,members.map(member => `${member}::T-01`));
       const file=join(dirname(root),members[0],"ticket","01-implementation.md");
-      await writeFile(file,(await readFile(file,"utf8")).replace("skill_scan: fixture inspected project roots; no applicable Skills","skill_scan: unreviewed"));
+      await writeFile(file,(await readFile(file,"utf8")).replace(/^---\n/, '---\nskill_bindings: [{"id":"required-check","path":"<Path>.agents/skills/required-check/SKILL.md</Path>","required":true}]\n'));
       const result=analyzeMap(input);
-      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.suggested_batch,[`${members[1]}::T-01`]);
       assert.ok(result.blocked.some((node:any) => node.id === `${members[0]}::T-01`));
       assert.ok(result.validation_errors.length);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
@@ -1366,7 +1367,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       const { analyzeMap } = await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const input={mapPath:join(root,"implementation-map.md"),repoRoot:fixtureProject(root)};
       let result=analyzeMap(input);
-      assert.deepEqual(result.errors,[]); assert.equal(result.frontier.length,1); assert.match(JSON.stringify(result.deferred),/semantic resource/);
+      assert.deepEqual(result.errors,[]); assert.equal(result.suggested_batch.length,1); assert.match(JSON.stringify(result.deferred),/semantic resource/);
       assert.equal(result.max_parallel_tickets,3);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
@@ -1391,7 +1392,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       await writeFile(file,(await readFile(file,"utf8"))+"\nContract changed: new API requirement.\n");
       result=analyzeMap({...input,previous});
       assert.deepEqual(result.invalidated,[`${members[0]}::T-01`,`${members[1]}::T-01`]);
-      assert.deepEqual(result.frontier,[`${members[2]}::T-01`]);
+      assert.deepEqual(result.suggested_batch,[`${members[2]}::T-01`]);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
@@ -1406,7 +1407,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       await writeImplementationArtifacts(root,members,{dependencies:[`${members[1]}::T-01 <- ${members[0]}::T-01`]});
       const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:fixtureProject(root)});
-      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[]);
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.suggested_batch,[]);
       assert.match(JSON.stringify(result.blocked),/dependency not successfully satisfied/); assert.equal(result.eligible_for_final_verification,false);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
@@ -1426,7 +1427,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:fixtureProject(root)});
       assert.deepEqual(result.errors,[]); assert.deepEqual(result.validation_errors,[]);
-      assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.deepEqual(result.suggested_batch,[`${members[1]}::T-01`]);
       assert.match(JSON.stringify(result.blocked),/not Ready: blocked/);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
@@ -1448,7 +1449,7 @@ fs.writeFileSync(path, JSON.stringify(state));
       const before=await Promise.all(competingFiles.map(file=>readFile(file,"utf8")));
       const { analyzeMap }=await import(pathToFileURL(join(packageRoot,"template/workflows/specdev/common/tools/ticket-control.mjs")).href);
       const result=analyzeMap({mapPath:join(root,"implementation-map.md"),repoRoot:fixtureProject(root)});
-      assert.deepEqual(result.errors,[]); assert.deepEqual(result.frontier,[`${members[1]}::T-01`]);
+      assert.deepEqual(result.errors,[]); assert.deepEqual(result.suggested_batch,[`${members[1]}::T-01`]);
       assert.match(JSON.stringify(result.blocked),/unfinished parent implementation/);
       assert.deepEqual(await Promise.all(competingFiles.map(file=>readFile(file,"utf8"))),before);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
@@ -1470,8 +1471,9 @@ fs.writeFileSync(path, JSON.stringify(state));
       assert.deepEqual(analyzeMap({...input,previous}).invalidated,[]);
       await writeFile(plan,text.replace("### Overall Definition of Done","### Overall Definition of Done\n\nNew approved shared acceptance gate."));
       const result=analyzeMap({...input,previous});
-      assert.deepEqual(result.invalidated,["T-01"]);assert.deepEqual(result.frontier,[]);
+      assert.deepEqual(result.invalidated,["T-01"]);assert.deepEqual(result.suggested_batch,[]);
     } finally { await rm(fixtureProject(root),{recursive:true,force:true}); }
   });
 
 });
+

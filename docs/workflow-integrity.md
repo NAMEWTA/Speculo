@@ -10,7 +10,7 @@ Speculo 的工具检查实际文件、身份、版本和关系；各 Work 继续
 |---|---|---|
 | 一个 workflow 的身份、Works 与阶段依赖 | [manifest v2 schema](../template/workflows/workflow-manifest.schema.json)，由发现、安装、资产校验共用 [contracts.ts](../src/contracts.ts) | 注册完整、目录归属正确、阶段依赖无缺失或环路 |
 | 宿主声明的模型与工具能力 | [capability profile schema](../template/references/contracts/capability-profile.schema.json)，由 doctor 检查 | 声明结构合法；实际可调用性仍以当前宿主证据为准 |
-| SpecDev 的规划、实施与完成 | Change Markdown、Goal Plan 8、Implementation Plan 3、execution context/record 1 及领域工具 | 当前工件与已登记证据自洽；Ready、完成、独立审查仍按各自合同判断 |
+| SpecDev 的规划、实施与完成 | Change Markdown、Goal Plan 8、Implementation Plan 3、execution context/record 1 及领域工具 | 当前工件与已登记证据自洽；逐节点 Ready、完成及风险适配审查按各自合同判断 |
 | Learning 的位置与学习记录 | Change 状态、locations、来源工件及 Learning 工具 | 位置、预算、引用、原答和掌握证据之间没有已知矛盾 |
 | OPS 的资源与执行结果 | OPS 资源 schema、纯资源校验核心及 ops.mjs | 资源描述合法；执行、验收、提交与可见记录各有自己的证据 |
 | Person 的咨询进度 | 每个 Change 的 .status.json 与对应 Work 工件 | 当前咨询具备进入所声明阶段的登记材料 |
@@ -24,7 +24,7 @@ Speculo 的工具检查实际文件、身份、版本和关系；各 Work 继续
 
 [结构化诊断](../template/workflows/specdev/common/tools/validation-diagnostics.mjs) 提供稳定 code、scope、change 和 ticket 身份。[ticket-control](../template/workflows/specdev/common/tools/ticket-control.mjs) 依据这些字段计算可执行范围，message 只用于展示。单票问题保留在该票；能可靠归属的成员问题保留在该成员；未知归属和全局图错误阻止依赖这项全局事实的调度。改变错误文案不改变 frontier。
 
-Ready 的完整 Direct Spec 可直接交 Implement；原型完成后，获准继续真实实现时也回到 Implement。工作区是当前实际交付的输入：验证快照应覆盖本次未提交改动，并明确排除用户原有 dirty 写集。HEAD 不能代替完整工作树，也不因为验收而额外要求提交。固定输入、独立审查与实际 Evidence 继续由原领域网关消费。
+Ready 的完整 Direct Spec 可直接交 Implement；原型完成后，获准继续真实实现时也回到 Implement。工作区是当前实际交付的输入：验证快照应覆盖本次未提交改动，并明确排除用户原有 dirty 写集。HEAD 不能代替完整工作树，也不因为验收而额外要求提交。原领域网关检查固定输入、两轴结果与实际 Evidence；普通低风险可由主 Agent 自查，高风险或明确独立要求保留真实独立资格与派遣核验。
 
 复杂分支按需读取 [代表性首票](../template/workflows/specdev/specdev-p-goal-plan/references/representative-ticket.md) 或 [已采集材料取证](../template/workflows/specdev/specdev-d-diagnose-bugs/references/captured-evidence-forensics.md)。编排公共规则放在 [coordination](../template/workflows/specdev/common/rules/coordination.md)，入口保留自身触发、产物和停止条件。
 

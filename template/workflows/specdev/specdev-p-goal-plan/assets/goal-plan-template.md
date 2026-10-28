@@ -77,7 +77,7 @@ ready_for_execution: false
 
 ## 4. Execution and Integration Protocol
 
-**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`，再按当前输入实际调用适用项目 Skill。I 负责实现、独立双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
+**执行入口：** 获得实现授权后，Lead 与实现执行者读取并执行 `<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>`，再按当前输入实际调用适用项目 Skill。I 负责实现、风险适配双轴审查、验证与 Evidence；计划本身不授予实现或 Git 操作权限。
 
 ### Lead Orchestration
 
@@ -104,7 +104,7 @@ serial 完成当前票的实现、审查和验证后开始下一票；auto/paral
 |---|---|---|
 | Change workspace implementation | allowed / not-authorized | 授权范围和唯一写集 owner |
 | Change worktree creation | allowed / not-requested | 一个 change 的明确选择，不从并行继承 |
-| Change workspace verification | allowed / not-authorized | 固定输入、独立审查与 Lead E2E |
+| Change workspace verification | allowed / not-authorized | 固定输入、适用双轴审查与 Lead E2E |
 | Implementation commit | allowed / not-requested | 仅明确要求且获授权时执行 |
 | Merge / parent update | allowed / not-requested | 具体目标与交付约定，不是每票默认门 |
 | Push / PR / remote merge | allowed / not-authorized | 不从实现授权继承 |
@@ -151,3 +151,4 @@ serial 完成当前票的实现、审查和验证后开始下一票；auto/paral
 ## Execution Policy Source
 
 记录用户/项目约定的可回读出处；说明 ticket_execution、可选票据上限、明确人数限制和验证尝试上限。缺少人数或票数要求时不填固定数字；工作区引用 change README。轻量无票 Goal 继续使用必要清单和验收，不预造运行记录。
+

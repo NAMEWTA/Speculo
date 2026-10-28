@@ -25,7 +25,7 @@
 
 ## 跨领域编排与显式交接
 
-用户明确要求委派、跨工具/模型协作，或本 Work 已要求独立协作者时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。项目默认方式由公共 command/coordination-init 显式初始化；普通激活不触发问答。
+用户要求协作，或主 Agent 判断独立上下文、真实并行收益、工具能力差异或独立验证值得委派时，读取 <Path>{roots.references}/coordination/coordination-contract.md</Path>；先按共享合同判断是否委派，再在当前授权与 required 约束内选择通道。编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。公共 command/coordination-init 仅在明确调用时保存可选偏好；普通激活不触发问答。
 
 用户要求重要决策的独立复核，或高影响决策存在重大反证且宿主具备相应能力时，按需读取 <Path>{roots.workflows}/person/common/rules/independent-decision-review.md</Path>。原 Work 保持裁决与发布权；复核不增加默认咨询阶段或改写冻结 dossier。
 

@@ -43,12 +43,12 @@ describe("SpecDev Plan contracts", () => {
       }
     } finally { await rm(f.root, { recursive: true, force: true }); }
   });
-  it("blocks unresolved discovery, fake names, missing skills and digest drift", async () => {
+  it("blocks fake names, missing required skills and digest drift without demanding catalogue scans", async () => {
     const f = await fixture();
     try {
       const original = structuredClone(f.artifact);
       f.artifact.meta.skill_scan = "unreviewed";
-      assert.match(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }).join("\n"), /skill_scan/);
+      assert.deepEqual(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }), []);
       for (const overrides of [{ id: "fake" }, { path: "<Path>.agents/skills/missing/SKILL.md</Path>" }, { sha256: "0".repeat(64) }, { on_failure: "report-and-continue" }]) {
         const artifact = structuredClone(original);
         Object.assign(artifact.meta.skill_bindings[0], overrides);
@@ -78,18 +78,20 @@ describe("SpecDev Plan contracts", () => {
       for (const path of ["<Path>outside/SKILL.md</Path>", "<Path>node_modules/cached/SKILL.md</Path>", "<Path>../SKILL.md</Path>", "<Path>/tmp/SKILL.md</Path>"]) assert.throws(() => contract.resolveProjectSource(f.root, path));
     } finally { await rm(f.root, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true }); }
   });
-  it("validates optional invocation conditions and pinned reference sources", async () => {
+  it("permits optional knowledge drift but preserves required reference pins", async () => {
     const f = await fixture();
     try {
       const binding: any = f.binding;
       binding.required = false; binding.on_failure = "report-and-continue";
-      assert.match(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }).join("\n"), /condition/);
+      assert.deepEqual(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }), []);
       binding.condition = "Only when the Ticket changes the public API";
       const ref = ".agents/skills/project-check/references/api.md";
       await mkdir(dirname(join(f.root, ref)), { recursive: true }); await writeFile(join(f.root, ref), "API review\n");
       binding.references = [{ path: `<Path>${ref}</Path>`, sha256: contract.digest("API review\n"), when: "public API changes" }];
       assert.deepEqual(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }), []);
       await writeFile(join(f.root, ref), "changed\n");
+      assert.deepEqual(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }), []);
+      binding.required = true; binding.on_failure = "block-ticket";
       assert.match(contract.validateTicketPlan(f.artifact, { repoRoot: f.root }).join("\n"), /reference digest drift/);
     } finally { await rm(f.root, { recursive: true, force: true }); }
   });
@@ -116,15 +118,45 @@ describe("SpecDev Plan contracts", () => {
     legacy.meta.status = "done";
     assert.match(contract.validateTicketPlan(legacy, { requirePlan: true }).join("\n"), /plan_contract_version/);
   });
-  it("checks the invocation matrix in both directions", () => {
+  it("keeps Map discovery open while enforcing explicitly required methods", () => {
     const skill = ".agents/skills/check/SKILL.md";
     const ticket = { meta: { plan_contract_version: 1, ready: true, skill_bindings: [] as any[] } };
     const tickets = new Map([["T-01", ticket]]);
-    const matrix = [{ appliesTo: new Set(["ALL"]), path: skill }];
-    assert.match(contract.validateInvocationCoverage(tickets, matrix).join("\n"), /no invocation binding/);
-    ticket.meta.skill_bindings = [{ path: `<Path>${skill}</Path>` }];
+    const matrix = [{ appliesTo: new Set(["ALL"]), path: skill, required: false }];
     assert.deepEqual(contract.validateInvocationCoverage(tickets, matrix), []);
-    assert.match(contract.validateInvocationCoverage(tickets, []).join("\n"), /absent from Map/);
+    matrix[0].required = true;
+    assert.match(contract.validateInvocationCoverage(tickets, matrix).join("\n"), /no required invocation binding/);
+    ticket.meta.skill_bindings = [{ path: `<Path>${skill}</Path>`, required: false }];
+    assert.ok(contract.validateInvocationCoverage(tickets, matrix).length);
+    ticket.meta.skill_bindings[0].required = true;
+    assert.deepEqual(contract.validateInvocationCoverage(tickets, matrix), []);
+    assert.deepEqual(contract.validateInvocationCoverage(tickets, []), []);
+  });
+  it("reports malformed binding collections during coverage and completion without treating them as empty", async () => {
+    const f=await fixture();
+    try {
+      for(const value of ["not-a-list",null,{}]) {
+        const artifact:any=structuredClone(f.artifact);artifact.meta.skill_bindings=value;
+        const tickets=new Map([["T-01",artifact]]);
+        assert.match(contract.validateInvocationCoverage(tickets,[]).join("\n"),/T-01: skill_bindings must be a JSON array/);
+        artifact.meta.status="done";
+        assert.match(contract.validateTicketPlan(artifact,{repoRoot:f.root}).join("\n"),/skill_bindings must be a JSON array/);
+      }
+    } finally {await rm(f.root,{recursive:true,force:true});}
+  });
+  it("allows new optional Skills without replan, digest pins, or scanning unrelated packages", async () => {
+    const f = await fixture();
+    try {
+      const meta: any = f.artifact.meta;
+      delete meta.skill_scan; delete meta.skill_bindings;
+      assert.deepEqual(contract.validateTicketPlan(f.artifact), []);
+      meta.skill_bindings = [{ id: "discovered", path: "<Path>.agents/skills/discovered/SKILL.md</Path>", required: false }];
+      assert.deepEqual(contract.validateTicketPlan(f.artifact), []);
+      meta.skill_bindings[0].path = "<Path>../outside/SKILL.md</Path>";
+      assert.match(contract.validateTicketPlan(f.artifact).join("\n"), /invalid project source Path/);
+      meta.skill_bindings = [f.binding];
+      assert.match(contract.validateTicketPlan(f.artifact).join("\n"), /requires --repo/);
+    } finally { await rm(f.root, { recursive: true, force: true }); }
   });
   it("does not accept reduced, duplicate or missing explicitly quantified deliverables", async () => {
     const f = await fixture();
@@ -163,6 +195,31 @@ describe("SpecDev Plan contracts", () => {
       await save(); assert.deepEqual(contract.validateInitiative(directory), []);
       data.changes[1].target = change; await save(); assert.match(contract.validateInitiative(directory).join("\n"), /self target/);
     } finally { await rm(f.root, { recursive: true, force: true }); }
+  });
+});
+
+describe("planning entry contract closure", () => {
+  it("keeps optional Skill discovery free of publishing-time binding and scan gates", async () => {
+    const root=join(process.cwd(),"template/workflows/specdev");
+    const entry=await readFile(join(root,"specdev-t-tickets/SKILL.md"),"utf8");
+    const review=await readFile(join(root,"common/skills/plan-quality-review/SKILL.md"),"utf8");
+    const checklist=await readFile(join(root,"common/skills/plan-quality-review/references/checklist.md"),"utf8");
+    for(const source of [entry,review,checklist]) {
+      assert.doesNotMatch(source,/为每票解析实际 Skill ID|没有适用项目 Skill 时记录扫描证据|Skill 最低路由|无适用项有扫描依据/);
+      assert.match(source,/必需方法/);assert.match(source,/可选/);
+    }
+    assert.match(entry,/common\/rules\/skill-invocation\.md/);
+    assert.match(review,/common\/rules\/skill-invocation\.md/);
+    assert.doesNotMatch(checklist,/接缝、有序步骤、公共契约/);
+  });
+  it("uses persistent coordination needs throughout lightweight Goal entry and templates", async () => {
+    const root=join(process.cwd(),"template/workflows/specdev");
+    for(const path of ["specdev-p-goal-plan/SKILL.md","specdev-p-goal-plan/assets/lightweight-goal-plan-template.md","specdev-p-goal-plan/references/single-change-plan.md","common/rules/artifact-contract.md","specdev-s-spec/SKILL.md"]) {
+      const source=await readFile(join(root,path),"utf8");
+      assert.doesNotMatch(source,/无真实并行|多个 Ticket 可以或需要并行|真实并行或复杂设计依赖使用完整工件|复杂设计\/Deep\/并行\/跨 change/);
+      assert.match(source,/持久依赖图|持续协调/);
+      assert.match(source,/只读.*并行|并行.*只读/);
+    }
   });
 });
 
@@ -219,19 +276,25 @@ describe("Ticket authority and execution policy without config", () => {
       assert.doesNotMatch(executionTable.split("\n").filter(line => line.startsWith("|")).join("\n"), /\b(?:Status|Ready|Owner)\b/);
       let result = controller.analyzeMap(f.input);
       assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
+      const toolsReadme = await readFile(join(toolRoot, "README.md"), "utf8");
+      const documentedSchemaVersions = [...toolsReadme.matchAll(/schema_version\s*(?:为|:)\s*(\d+)/g)].map(match => Number(match[1]));
+      assert.ok(documentedSchemaVersions.length > 0);
+      assert.ok(documentedSchemaVersions.every(version => version === result.schema_version), "tools README must document the current controller schema");
+      assert.doesNotMatch(toolsReadme, /创建时要求每个成员已有 Ready Spec\/Tickets|不输出旧 eligible/);
       assert.equal(result.ticket_execution, "serial"); assert.equal(result.max_parallel_tickets, 1);
-      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.deepEqual(result.suggested_batch, ["T-01"]);
+      assert.deepEqual(result.eligible, ["T-01", "T-02", "T-03"]);
       const previous = result;
       const original = await readFile(f.tickets[0], "utf8");
       await writeFile(f.tickets[0], original.replace("status: ready", "status: in_progress"));
       result = controller.analyzeMap({ ...f.input, previous });
       assert.deepEqual(result.invalidated, []);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
-      assert.deepEqual(result.frontier, []);
+      assert.deepEqual(result.suggested_batch, []);
       await writeFile(f.tickets[0], original);
       result = controller.analyzeMap({ ...f.input, previous });
       assert.deepEqual(result.errors, []); assert.deepEqual(result.invalidated, []);
-      assert.deepEqual(result.frontier, ["T-01"]);
+      assert.deepEqual(result.suggested_batch, ["T-01"]);
       assert.equal(await readFile(f.input.mapPath, "utf8"), f.map);
       assert.equal(await readFile(join(f.root, "goal-plan.md"), "utf8"), f.plan);
       await assert.rejects(readFile(join(f.repo, "facts/specdev/config.json")), /ENOENT/);
@@ -242,17 +305,17 @@ describe("Ticket authority and execution policy without config", () => {
     const f = await controllerFixture("required");
     try {
       let result = controller.analyzeMap(f.input);
-      assert.deepEqual(result.errors, []); assert.deepEqual(result.frontier, ["T-01", "T-02"]);
+      assert.deepEqual(result.errors, []); assert.deepEqual(result.suggested_batch, ["T-01", "T-02"]);
       await writeFile(f.tickets[0], (await readFile(f.tickets[0], "utf8")).replace("status: ready", "status: in_progress"));
       result = controller.analyzeMap(f.input);
       assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
       assert.equal(result.max_parallel_tickets, 2);
       assert.deepEqual(result.in_flight, [{ id: "T-01", owner: "lead-session" }]);
-      assert.deepEqual(result.frontier, ["T-02"]);
+      assert.deepEqual(result.suggested_batch, ["T-02"]);
       assert.ok(result.deferred.some((node: any) => node.id === "T-03" && /concurrency limit/.test(node.reason)));
       await writeFile(join(f.root, "goal-plan.md"), f.plan.replace(/## Execution Policy Source[\s\S]*$/, ""));
       const missingSource = controller.analyzeMap(f.input);
-      assert.deepEqual(missingSource.frontier, []);
+      assert.deepEqual(missingSource.suggested_batch, []);
       assert.match(missingSource.errors.join("\n"), /Execution Policy Source/);
       await assert.rejects(readFile(join(f.repo, "facts/specdev/config.json")), /ENOENT/);
     } finally { await rm(f.repo, { recursive: true, force: true }); }
@@ -293,3 +356,4 @@ describe("progressive command references", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 });
+

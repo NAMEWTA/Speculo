@@ -1,10 +1,10 @@
 # Parent Implementation Orchestration
 
-本规则只约束 Ready Spec/Tickets 之后的跨 change 实现，供统一 P-goal-plan、I-implement 与 A-archive-and-consolidate 读取。
+本规则约束规格与整体 Ticket 图结构就绪之后的跨 change 实现，供统一 P-goal-plan、I-implement 与 A-archive-and-consolidate 读取。
 
 ## 输入边界
 
-父实现 change 只能在所有成员通过 Ready Spec/Tickets 输入门后创建。父 Work 不调用或代行 Triage、Grill、Wayfinder、Spec、Tickets 或普通 Goal Plan；输入不足时不留下父状态或父工件。
+父实现 change 只能在所有成员通过规格、完整合同覆盖、DAG 与唯一所有权结构门后创建；合法 draft/deferred 消费者可留在图内，只有自身 Ready 且依赖满足的节点进入 eligible。父 Work 不调用或代行 Triage、Grill、Wayfinder、Spec、Tickets 或普通 Goal Plan；输入不足时不留下父状态或父工件。
 
 ## 权威边界
 
@@ -30,4 +30,4 @@
 
 ## 局部阻塞不升级为全局停机
 
-父创建前仍全部成员预检且 all-or-nothing。父开始运行后，单票 blocked/deviated、他人资源冲突或必需 Skill 失效只阻塞该票及其依赖闭包，父 Map/Plan 可保持 in_progress 与有效的全局执行门，继续独立已授权 frontier。只有共享的全局门禁失败、计划整体失效或没有合法 frontier 时，才将父运行暂停；不得为继续运行接管其他任务。
+父创建前全部成员通过结构预检，结构无效时 all-or-nothing；不要求所有未来节点同时可执行。父开始运行后，单票 blocked/deviated、他人资源冲突或必需 Skill 失效只阻塞该票及其依赖闭包，父 Map/Plan 可保持 in_progress 与有效的全局执行门，继续独立已授权 eligible 节点。只有共享的全局门禁失败、计划整体失效或没有可执行 eligible 节点 时，才将父运行暂停；不得为继续运行接管其他任务。
