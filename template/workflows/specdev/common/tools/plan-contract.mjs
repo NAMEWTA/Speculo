@@ -131,7 +131,7 @@ export function validateTicketPlan(artifact, { repoRoot = null, requirePlan = fa
   if (!strings(meta.resource_claims) || new Set(meta.resource_claims).size !== meta.resource_claims.length) errors.push('resource_claims must be a unique string array');
   // Skill invocation is enforced by the structured bindings and real completion
   // records below, not by repeating generic instructions in every Ticket body.
-  if (checkEvidence && meta.status === 'done' && meta.skill_bindings?.some(binding => binding?.required === true)) {
+  if (checkEvidence && meta.status === 'done' && Array.isArray(meta.skill_bindings) && meta.skill_bindings.some(binding => binding?.required === true)) {
     try {
       const evidencePath = join(dirname(dirname(path)), 'evidence', `${meta.id}.md`);
       if (lstatSync(evidencePath).isSymbolicLink()) throw new Error('Skill evidence must not be a symlink');
@@ -184,6 +184,10 @@ export function validateInvocationCoverage(tickets, matrix) {
   const errors = [];
   for (const [id, ticket] of tickets) {
     if (ticket.meta.plan_contract_version !== 1 || ticket.meta.ready !== true) continue;
+    if (ticket.meta.skill_bindings !== undefined && !Array.isArray(ticket.meta.skill_bindings)) {
+      errors.push(`${id}: skill_bindings must be a JSON array`);
+      continue;
+    }
     const requiredPaths = new Set((ticket.meta.skill_bindings ?? []).filter(binding => binding?.required === true).map(binding => pathText(binding.path)));
     // The Map is discovery/navigation, not a closed list of usable Skills.
     // Only an explicitly required method in that upstream contract must be pinned.

@@ -104,7 +104,7 @@ serial 完成当前票的实现、审查和验证后开始下一票；auto/paral
 |---|---|---|
 | Change workspace implementation | allowed / not-authorized | 授权范围和唯一写集 owner |
 | Change worktree creation | allowed / not-requested | 一个 change 的明确选择，不从并行继承 |
-| Change workspace verification | allowed / not-authorized | 固定输入、独立审查与 Lead E2E |
+| Change workspace verification | allowed / not-authorized | 固定输入、适用双轴审查与 Lead E2E |
 | Implementation commit | allowed / not-requested | 仅明确要求且获授权时执行 |
 | Merge / parent update | allowed / not-requested | 具体目标与交付约定，不是每票默认门 |
 | Push / PR / remote merge | allowed / not-authorized | 不从实现授权继承 |

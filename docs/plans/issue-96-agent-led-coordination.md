@@ -12,7 +12,7 @@ The [single-agent-loop-kit](https://github.com/anthropics/single-agent-loop-kit)
 ## Design decisions
 
 1. The Lead retains context and responsibility. Work boundaries, worker count, workspaces and execution channels are separate dimensions. Direct work and parallel ordinary tools are first-class outcomes.
-2. The coordination resolver remains a read-only decision/validation helper. Required current instructions and approved phase choices outrank preferences. Capability configuration limits choices but is not authorization. Only the chosen external capability is checked; no eager installs, logins, service starts or recursive worker delegation.
+2. The current Agent makes coordination choices using the shared contract; configuration validators check saved structure and do not select execution channels. Required current instructions and approved phase choices outrank preferences. Capability configuration limits choices but is not authorization. Only the chosen external capability is checked; no eager installs, logins, service starts or recursive worker delegation.
 3. Review content and reviewer identity are separate. Both applicable standards/specification axes remain. Low-risk work can self-check the actual frozen delivery. High-risk or explicit independent-review obligations still require a genuinely different implementer/reviewer identity, readable evidence and current inputs. An Evidence declaration cannot lower upstream risk or explicit independence.
 4. Required user/safety/acceptance methods retain pins and actual execution evidence. Optional knowledge is progressively discovered without a Map replan or full catalogue hash scan. Path safety and consequential deviations remain enforced.
 5. Parent graphs may express valid draft/deferred consumers. Per-node readiness, dependency success, writer ownership, shared resources and global gates decide execution. A cancelled prerequisite is never success.
@@ -24,7 +24,7 @@ The [single-agent-loop-kit](https://github.com/anthropics/single-agent-loop-kit)
 
 | Slice | Authoritative source | Verification |
 |---|---|---|
-| Coordination and handoff | `src/coordination.ts`, shared coordination references, dispatch validator, command, Herdr Skill | direct/tools/delegate, required/preferred, denied/unavailable route, inline vs durable handoff, no implicit side effects |
+| Coordination and handoff | shared coordination references, `src/coordination.ts` configuration validation, dispatch validator, command, Herdr/Orca Skills | configuration constraints and inline vs durable validation are executable checks; channel choice, lazy capability checks and actual fallback remain host-observation obligations |
 | Review policy | review evidence validator, execution context, completion validator, schemas/templates and I/C methods | low-risk self review, high-risk and explicit independent blocks, identity/frozen-input/stale-final-delivery negatives |
 | Skills and planning | plan-contract, Ticket schema/template, Map validator, T/P/I methods | optional discovery/drift accepted, required method drift/missing evidence rejected, path traversal rejected |
 | Progressive parent graph and scheduler | parent validator, ticket-control, parent planning and execution policy references | Ready producer plus draft consumer, cancelled dependency, conflicts, alternate legal batch, immutable checkpoint/read-only state |
@@ -38,13 +38,13 @@ The 16 entrance scenarios requested in Issue #96 are mapped below. **Determinist
 
 | Issue entrance | Deterministic executable coverage | Host-observation fixture suffix (all unobserved) |
 |---|---|---|
-| ① Single Agent small edit | `specdev-risk-review.test.ts`: complete entry accepts low-risk self review without Ticket/Goal/session; `coordination-autonomy.test.ts`: direct work needs no delegate or probes | `low-risk-self-review` |
-| ② Single Agent successive Tickets | `coordination-autonomy.test.ts`: successive direct work resolutions; `specdev-plan-contract.test.ts`: reads/resumes Ticket progress without rewriting Map or Goal. This checks resolver/state contracts, not a model completing several tickets | `single-agent-multiple-tickets` |
-| ③ Ordinary parallel tools | `coordination-autonomy.test.ts`: `parallel-tools` resolution has no delegation or capability probes. Actual parallel search/tool execution remains unobserved | `parallel-ordinary-tools`, `none-ordinary-tools` |
-| ④ Native Subagent independent research | `coordination-autonomy.test.ts`: authorized native proposal and bounded inline return validation. Actual independent research remains unobserved | `host-native-authorized` |
+| ① Single Agent small edit | `specdev-risk-review.test.ts`: complete entry accepts low-risk self review without Ticket/Goal/session. Actual Agent selection of direct work remains unobserved | `low-risk-self-review` |
+| ② Single Agent successive Tickets | `specdev-plan-contract.test.ts`: reads/resumes Ticket progress without rewriting Map or Goal. This checks saved state contracts; a model completing several tickets remains unobserved | `single-agent-multiple-tickets` |
+| ③ Ordinary parallel tools | Shared coordination and Goal sources permit ordinary parallel tools without delegation or Goal escalation. Source consistency is checked; actual parallel search/tool execution remains unobserved | `parallel-ordinary-tools`, `none-ordinary-tools` |
+| ④ Native Subagent independent research | `coordination-autonomy.test.ts`: bounded inline return validation. Actual native capability selection, authorization and independent research remain unobserved | `host-native-authorized` |
 | ⑤ CLI asynchronous writes and collection | `coordination-autonomy.test.ts`: async/effects cannot use inline handoff; `coordination-shared.test.ts`: durable return identities and replay guards. No actual external CLI writer is run | `cli-async-write-recovery` |
-| ⑥ Orca/Herdr capability choice and fallback | `coordination-autonomy.test.ts`: available proposals and allowed fallback with injected capability checker, not real providers | `capability-fallback` |
-| ⑦ Required tool forbids fallback | `coordination-autonomy.test.ts`: required request/approved stage unavailable blocks and cannot silently switch | `required-tool-no-fallback` |
+| ⑥ Orca/Herdr capability choice and fallback | `coordination-autonomy.test.ts`: saved preference schema; shared contract and provider entries define lazy capability checks and permitted fallback. Actual provider calls and fallback remain unobserved | `capability-fallback` |
+| ⑦ Required tool forbids fallback | `coordination-autonomy.test.ts`: configuration rejects a required route with fallback. Enforcement of a required current instruction or approved phase choice during actual dispatch remains unobserved | `required-tool-no-fallback` |
 | ⑧ Low-risk self review completion | `specdev-risk-review.test.ts`: actual completion validator with disposable self-review evidence; review policy tests check applicable axes | `low-risk-self-review` |
 | ⑨ High-risk independent review blocked/passed | `specdev-risk-review.test.ts` and distributed `review-policy.test.mjs`: required independence cannot be downgraded; independent fixture accepted | `high-risk-independent-review`, `high-risk-review-unavailable` |
 | ⑩ Snapshot invalidated after fixes | Distributed `review-evidence.test.mjs`: changed code, sources and final HEAD invalidate review, unrelated reports do not | `review-snapshot-stale` |
@@ -57,7 +57,23 @@ The 16 entrance scenarios requested in Issue #96 are mapped below. **Determinist
 
 `eligible` means static candidate readiness only: the analyzer explicitly reports `authorization_checked: false` and `transaction_gateway_checked: false`. Actual dispatch still requires current authorization and transaction gates; a static candidate is never an authorization grant. Draft nodes, unresolved dependencies and known local/global blockers cannot become executable merely by appearing in a suggested batch.
 
-Local verification for this matrix: `node --experimental-transform-types --test test/agent-led-evaluation.test.ts` passed 20/20; `node --experimental-transform-types --test test/specdev-plan-contract.test.ts test/specdev-independent-review.test.ts` passed 35/35. The workspace suite passed 19/19 using a temporary source-only import extension substitution. The remaining linked suites and final-head checks are reported separately by integration/CI; their presence in this table is not a claim that a real host ran them. No keyword check is counted as behavioral evidence.
+Historical local verification during the initial implementation: `node --experimental-transform-types --test test/agent-led-evaluation.test.ts` passed 20/20; `node --experimental-transform-types --test test/specdev-plan-contract.test.ts test/specdev-independent-review.test.ts` passed 35/35. The workspace suite passed 19/19 using a temporary source-only import extension substitution. These counts do not describe the later review-fix head. Current integration results and exact-head CI are recorded in the fix PR; a linked test or source-consistency assertion is not evidence that a real host ran the scenario.
+
+## Review corrections
+
+The follow-up to [PR #97](https://github.com/NAMEWTA/Speculo/pull/97) fixes requirements that the first implementation did not carry through its actual entry points. It does not preserve obsolete restrictions or introduce another runtime coordinator.
+
+| Review finding | Correction and verification |
+|---|---|
+| Completion still unconditionally demanded independent reviewers | Finalize, merge-conflict recovery, parent Evidence and governance sources now use the same risk-adapted review policy as I/C. Both applicable axes, frozen input and required independence remain enforced. Existing complete-entry and independent-review tests remain authoritative. |
+| Orca's callable Skill still required an explicit user request or an existing Dispatch | The hub Skill and workflow activation sources allow a first dispatch selected by the current Agent within existing authorization and real capability. Ownership transfer and required-route boundaries remain. Source consistency is checked; real Orca execution remains unobserved. |
+| Later risk invalidated all historical CRs | Historical records validate their original inputs, identity and results; the currently adopted report must satisfy current risk, independence and source freshness. Full `validateChange` regressions cover policy escalation, historical corruption and current-report selection across CR-999/CR-1000. |
+| Malformed Skill fields crashed the entire controller | Ticket hashing and invocation coverage reject malformed values locally without traversing them as arrays. Regressions cover draft and Ready errors, dependent blocking, independent candidates and recovery after repair. Invalid values remain invalid and participate in the contract digest. |
+| T/P entries still required optional Skill pins and scan rituals | Ticket and plan-review sources distinguish required methods from optional knowledge; an empty optional selection needs no catalogue scan proof. Contract tests retain required-method pins, evidence and path checks. |
+| Lightweight Goal still excluded all real parallelism | Lightweight sources allow bounded parallel work; escalation depends on persistent dependencies, recovery, shared writers/resources or cross-task gates. Source assertions check the actual templates and planning entry, not model behavior. |
+| Goal delegation still forced external TASK/REPORT | Goal orchestration and user handoff docs choose inline or durable handoff by recovery and audit needs. Existing inline/durable validator tests remain; cross-session host recovery remains unobserved. |
+| User docs retained the removed workspace model | User guides and initialization sources describe current/worktree as a change-level choice, allow disjoint authorized writers, coordinate shared resources/Git operations and remove per-unit source/candidate worktrees. |
+| Unused coordination resolver overstated runtime coverage | The unconsumed helper, its types and helper-only tests are removed. Real configuration and dispatch validators remain; the acceptance matrix now distinguishes their executable coverage from unobserved host selection. |
 
 ## Verification and reporting
 

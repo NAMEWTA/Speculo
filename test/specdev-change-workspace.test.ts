@@ -295,6 +295,42 @@ test('structured Ticket diagnostics keep unrelated Ready work executable and do 
   assert.ok(malformed.diagnostics.some((item:any)=>item.code==='artifact-path-invalid'&&item.scope==='ticket'&&item.ticket==='T-01'));
 });
 
+for(const status of ['draft','ready']) test(`malformed Skill bindings in a ${status} Ticket block only its dependency closure and recover without granting readiness`,t=>{
+  const f=fixture(t),original=readFileSync(f.files[0],'utf8');
+  const current=status==='draft'?original.replace('status: ready','status: draft').replace('ready: true','ready: false'):original;
+  writeFileSync(f.files[0],current);
+  const second=readFileSync(f.files[1],'utf8');
+  writeFileSync(f.files[1],second.replace('blocked_by: []','blocked_by: [T-01]'));
+  writeFileSync(join(f.root,'ticket','03-independent.md'),second.replaceAll('T-02','T-03').replaceAll('two.txt','three.txt'));
+  const map=join(f.root,'tickets-map.md');writeFileSync(map,readFileSync(map,'utf8')+'\nT-03 is independent.\n');
+  const input={mapPath:map,repoRoot:f.repo,methodRoot,stateRoot:'data'},baseline=analyzeMap(input);
+  assert.deepEqual(baseline.errors,[]);assert.deepEqual(baseline.validation_errors,[]);
+  assert.deepEqual(baseline.eligible,status==='draft'?['T-03']:['T-01','T-03']);
+  for(const value of ['not-a-list','null','{}']){
+    writeFileSync(f.files[0],current.replace(/^---\n/,`---\nskill_bindings: ${value}\n`));
+    const result=analyzeMap({...input,previous:baseline});
+    assert.deepEqual(result.errors,[]);assert.deepEqual(result.eligible,['T-03']);
+    assert.deepEqual(result.suggested_batch,['T-03']);assert.deepEqual(result.invalidated,['T-01','T-02']);
+    assert.ok(result.validation_errors.length>0);
+    assert.ok(result.validation_errors.every((item:any)=>item.id==='T-01'&&/skill_bindings must be a JSON array/.test(item.message)));
+    assert.deepEqual(result.blocked.map((item:any)=>item.id).sort(),['T-01','T-02']);
+    assert.equal(result.eligible_for_final_verification,false);
+    assert.equal(readFileSync(f.files[0],'utf8'),current.replace(/^---\n/,`---\nskill_bindings: ${value}\n`));
+  }
+  writeFileSync(f.files[0],current);
+  let recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.validation_errors,[]);assert.deepEqual(recovered.invalidated,[]);
+  assert.deepEqual(recovered.eligible,baseline.eligible);
+  writeFileSync(f.files[0],original);
+  recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.eligible,['T-01','T-03']);
+  assert.ok(recovered.blocked.some((item:any)=>item.id==='T-02'&&item.reasons.some((reason:string)=>/dependency not successfully satisfied/.test(reason))));
+  writeFileSync(join(f.workspace,'one.txt'),'verified producer output\n');f.setStatus(0,'done');f.save(f.record('T-01'),true);
+  recovered=analyzeMap({...input,previous:baseline});
+  assert.deepEqual(recovered.errors,[]);assert.deepEqual(recovered.validation_errors,[]);
+  assert.deepEqual(recovered.done,['T-01']);assert.deepEqual(recovered.eligible,['T-02','T-03']);
+});
+
 test('invalid diagnostic scope and unresolved owners fail closed while a real DAG cycle blocks the whole frontier',t=>{
   const tasks=new Map([['T-01',{member:'2026-10-15-workspace',ticket:'T-01'}]]);
   for(const diagnostic of [{code:'bad',scope:'unknown',message:'translated'},{code:'bad',scope:'ticket',change:'missing',ticket:'T-01',message:'T-01: apparent owner'}]){

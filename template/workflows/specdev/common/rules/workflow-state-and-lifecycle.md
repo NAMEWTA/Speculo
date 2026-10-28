@@ -13,7 +13,7 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 
 归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。archive 不嵌套月份；移动须验证全部 locator 和 DESIGN 摘要，不可变正文不做路径替换。
 
-实际外部派遣的冻结输入、正式报告与可选会话定位文件按 <Path>{roots.references}/coordination/session-files.md</Path> 保存在 <Path>{roots.state}/specdev/changes/{change}/sessions/</Path>，随 change 整体归档并进入原完整性清单；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
+交接形式与范围根先按 <Path>{roots.references}/coordination/session-files.md</Path> 确定；只有本 change 承载的持久任务才将冻结输入、正式报告与可选会话定位文件保存在 <Path>{roots.state}/specdev/changes/{change}/sessions/</Path>，随 change 整体归档并进入原完整性清单。即时返回不创建此目录；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
 ## 独立开发复盘
 

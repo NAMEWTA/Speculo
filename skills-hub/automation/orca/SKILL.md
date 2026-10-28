@@ -1,10 +1,10 @@
 ---
 name: orca
-description: 使用 stablyai/Orca 编辑器的 CLI 管理工作区与 worktree、智能体及终端、受监督编排、内置浏览器、自动化、远程运行时和 Orca 集成。用户提到 Orca CLI，或任务明确需要读写 Orca 状态时使用；不用于 GNOME Orca 屏幕阅读器、其他同名项目或普通 shell/Git 任务。
+description: 使用 stablyai/Orca 编辑器的 CLI 管理工作区与 worktree、智能体及终端、受监督编排、内置浏览器、自动化、远程运行时和 Orca 集成。用户提到 Orca CLI、任务明确需要读写 Orca 状态，或主 Agent 在已授权范围内判断任务需要其会话与受监督协作能力时使用；不用于 GNOME Orca 屏幕阅读器、其他同名项目或普通 shell/Git 任务。
 license: MIT
 metadata:
   author: NAMEWTA
-  wta-format-reviewed: '2026-10-15'
+  wta-format-reviewed: '2026-10-28'
   wta-single-file: 'true'
 ---
 # Orca
@@ -128,7 +128,7 @@ ORCA file open-changed --mode both --worktree <selector> --json
 
 ## 5. 启动智能体与移交
 
-先明确当前 checkout 还是新 checkout、用户选择的 agent，以及是否需要持续监督。使用已安装且被 Orca 支持的 agent ID；不要自行替换模型、推理强度、账号或关闭审批。
+先明确当前 checkout 还是新 checkout、用户要求或主 Agent 在授权范围内选定的 agent，以及是否需要持续监督。使用已安装且被 Orca 支持的 agent ID；不要覆盖用户指定的模型、推理强度、账号或关闭审批。
 
 较新版本支持统一启动（先核对帮助）：
 
@@ -181,7 +181,7 @@ ORCA terminal close --terminal <handle> --json
 
 ## 7. 受监督编排
 
-只有用户要求 Orca 协作、监督或当前已有真实 Dispatch 时进入。读取 `skills get orchestration` 与本次涉及的 reference；不用其他子智能体工具冒充 Orca 的执行结果。
+用户要求 Orca 协作/监督、主 Agent 在已授权范围内判断任务需要 Orca 的真实受监督执行能力，或需要恢复当前真实 Dispatch 时进入。先核对委派收益、用户指定或已批准的 required 通道、当前权限与本机能力；任务可并行本身不要求建立 Run/Task，选择 Orca 不转移 Lead 所有权。读取 `skills get orchestration` 与本次涉及的 reference；不用其他子智能体工具冒充 Orca 的执行结果。
 
 Run 是协调者邮箱与持久命名空间；Task 是任务；Dispatch 是一次有权提交结果的尝试。它们不同于 UI tab、terminal 和 worktree。从响应或当前运行时的任务上下文取得身份，不能根据标题或历史文本伪造 worker 身份。
 

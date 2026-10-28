@@ -51,15 +51,15 @@ Ready 的完整 Direct Spec 可直接交 Implement，不必先补 Goal 或 Ticke
 
 ## 从目标到实现与审查
 
-Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可独立验证的垂直切片。Goal Plan 负责确有需要的跨任务调度和整体交付。获批后，Goal、Map 或 Ticket 都明确进入 Implement，实际调用匹配的项目 Skill，并完成独立双轴审查；仅列出 Skill 名称不代表已经执行。
+Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可独立验证的垂直切片。Goal Plan 负责持续依赖、恢复、共享资源或跨任务 Gate 等协调需要，普通只读并行不自动升级完整 Goal。获批后，Goal、Map 或 Ticket 都明确进入 Implement，履行必需方法、按需使用可选 Skill，并完成风险适配的双轴审查；仅列出 Skill 名称不代表已经执行。
 
-双轴默认由一位**未参与当前范围实现的 Agent**完成，分别报告标准轴和规范轴；需要并行时可派两位。默认使用宿主原生 subagent；当前任务选择 Herdr、Orca 或 CLI 编排时，审查沿该方式派遣，明确的 review 阶段安排优先。实现者的测试与自查不能充当独立审查；工具不可用或身份不明时保留成果并报告阻塞。
+标准轴与规范轴分别判断，执行者由实际风险和原用户/项目约束决定。普通低风险任务可由主 Agent 在同一上下文自查；高风险、高影响或明确要求独立时，使用未参与当前范围实现的 reviewer，沿已授权且实际可用的通道执行。只有必要独立能力或身份缺失才阻塞该审查；自查不能冒称独立。具体规则见[审查策略](../../template/workflows/specdev/common/skills/code-review/references/reviewer-contracts.md)。
 
-实现者、审查者真实身份、固定输入、原始两轴报告和 Lead 工具核验写入原 Evidence。外部派遣沿用 [会话交接](../agent-handoffs.md)；深查历史只按需读取真实会话 locator。单票审查之外，多单元组合或冲突修正后的实际交付也须覆盖；整体审查保存在原 Evidence 目录的 `final-review.md`，父编排使用原整体 Evidence。
+实际实现者、审查策略、固定输入和原始两轴结果写入原 Evidence；独立审查另保留真实 reviewer 身份和 Lead 对实际派遣/返回的核验。委派按恢复需要选择[即时或持久交接](../agent-handoffs.md)。多单元组合或冲突修正后的实际交付按整体风险验收，整体审查使用原 `final-review.md` 或父整体 Evidence；只重验受影响证据。
 
 未提交的 Direct Spec 可使用只读 `working-tree` 审查范围，包含新增、修改、删除及模式变化；固定的 HEAD 不代表未提交内容。它不提交代码、不暂存、不改 index，完成前重验范围内字节与规范。指定文件阅读的 `source-files` 模式仍保留原用途。
 
-Spec 的必需正文为目标、行为、AC、范围与验证策略；用户故事、NFR、迁移和风险按需展开。Ticket 只补充本票的行为、验收、验证及必要约束，路径、依赖和 Skill 绑定以 frontmatter 为准。Standard/Deep 不再要求预写固定数量的实现步骤；重要迁移或安全顺序仍须明确。旧长模板可继续读取，旧报告若缺独立审查证据，作为新的完成依据前需要补审；归档历史保持只读。
+Spec 的必需正文为目标、行为、AC、范围与验证策略；用户故事、NFR、迁移和风险按需展开。Ticket 只补充本票的行为、验收、验证及必要约束，路径、依赖和必需方法绑定以 frontmatter 为准。可选 Skill 允许执行中发现，不为没有适用项制造扫描证明。Standard/Deep 按真实风险展开，迁移或安全操作的不可交换顺序仍须明确。历史审查保留原输入和结果；只有被用于当前验收的证据需要满足当前范围与独立性要求，归档历史保持只读。
 
 本次方法对照固定于 Matt Pocock skills 的 `49dd158d1076134a641b33efb035946536778336`：参考 [to-spec](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-spec/SKILL.md)、[to-tickets](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-tickets/SKILL.md) 的行为合同和垂直切片，[implement-spec](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/implement-spec/SKILL.md)、[implement](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/implement/SKILL.md) 的执行衔接，以及 [domain-modeling](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/domain-modeling/SKILL.md)、[code-review](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/skills/engineering/code-review/SKILL.md) 的领域语言与两轴审查。保留 Speculo 的状态 owner、路径授权、可恢复证据与永久知识网关；ADR 默认短写决定和理由，重要的可逆决定仍可保留。现有上游引入清单和许可保持原固定版本，本段记录此次比较来源。
 
@@ -78,7 +78,7 @@ Spec 的必需正文为目标、行为、AC、范围与验证策略；用户故�
 | `tickets-map.md`、Ticket 文件 | 工作怎样拆分、依赖谁、每票由谁负责？ |
 | `goal-plan.md` | 整体如何推进、哪些跨任务条件必须满足？ |
 | `evidence/` | 实际实现、测试、审查和集成证据在哪里？ |
-| `reviews/`、`diagnosis.md`、`learning/` | 独立审查、诊断、代码讲解的结果 |
+| `reviews/`、`diagnosis.md`、`learning/` | 审查、诊断、代码讲解的结果 |
 
 `AC` 是验收条件，例如“切到已完成筛选后，只显示完成任务”。`Ready` 表示当前输入已足够进入下一步，不表示已经做完。`Outcome` 是整个 change 的 `active / completed / cancelled`；进度由实际 README、Goal 清单或 Ticket/Evidence 负责，不要求你手工维护全局 status 镜像。
 
@@ -242,9 +242,9 @@ Spec 讲“为什么、为谁、应当怎样表现”，不负责逐文件施工
 
 **什么时候用：** 要评估文件、一次提交、两个端点、相对基线的变化或 PR。明确本地文件审查不要求 Git；PR 请求不能被降级成随意读几个文件。
 
-**准备什么：** 精确文件清单，或 commit/range/base/head/PR；存在规格、设计、标准时同时提供。**得到什么：** 标准轴和规范轴的独立审查结果；有 change 或获准保存时写报告，否则会话返回。
+**准备什么：** 精确文件清单，或 commit/range/base/head/PR；存在规格、设计、标准时同时提供。**得到什么：** 标准轴和规范轴的结果及实际审查策略；需要独立时另核验真实身份和派遣证据。有 change 或获准保存时写报告，否则会话返回。
 
-标准轴看正确性与工程风险，规范轴看是否符合需求和设计。两轴隔离，不能先看对方 finding。有效空差异返回 `no-diff`，不假称批准；没有规范来源时先说明，按合同处理该轴。
+标准轴看正确性与工程风险，规范轴看是否符合需求和设计，两轴各自给出依据与结论。执行者与证据复用遵循上述风险策略。有效空差异返回 `no-diff`，不假称批准；没有规范来源时先说明，按合同处理该轴。
 
 ```text
 使用 specdev/code-review，只读审查 src/cache.ts 和 test/cache.test.ts。
@@ -390,37 +390,37 @@ Bug 记录复现条件与实际结果，需求判断价值、可行性、已有�
 
 ## 执行方式与工作区
 
-项目默认编排方式由公共 [coordination-init](../commands/coordination-init.md) 初始化，所有 workflow 共用；本域初始化仅处理工程事实与开发配置。每次可指定不同工具、模型和 Skill。
+项目编排偏好可由公共 [coordination-init](../commands/coordination-init.md) 初始化，所有 workflow 共用；没有配置时照常执行。主 Agent 先判断是否委派，再在当前明确要求、已批准安排、required 选择及真实授权内选择通道。本域初始化仅处理工程事实与开发配置。
 
-这是两个独立选择：
+工作切分、执行者数量、工具通道和工作区相互独立：
 
 | 执行方式 | 说明 |
 |---|---|
-| 未指定 / host | 按当前 App、桌面端或 CLI 宿主正常执行 |
-| 明确选择 cli | 直接调用 AI CLI，按用户选择与实际接口使用无头或交互方式 |
-| 明确指定 Herdr | 按项目 Skill 和当前工具指南编排多个 AI CLI |
-| 明确指定 Orca | 按当前工具指南派遣、接收和查询任务 |
+| host | 主 Agent 正常执行，或确有需要且宿主提供能力时使用原生协作 |
+| cli | 已获允许且任务需要时直接调用实际可用的 AI CLI，按真实接口选择无头或交互方式 |
+| herdr | 需要其终端和会话能力时读取已安装 Skill，按当前工具指南派遣 |
+| orca | 需要其会话与受监督协调能力时读取已安装 Skill，按当前工具指南派遣和回收 |
 
 | 工作区 | 说明 |
 |---|---|
-| `current`（默认） | 当前工作副本；同一时刻只有一个代码 writer |
-| `required` | 每个独立实现单元使用 source worktree，并在 candidate 中验证后集成 |
+| `current`（默认） | 复用当前工作副本；授权写集不相交且资源无冲突时可并行，共享路径和 Git 全局写操作由唯一 owner 或串行阶段协调 |
+| `worktree` | 明确选择时为整个 change 使用一个工作副本；本 change 执行者复用它，不因票据数量或委派增加工作区 |
 
-完整 Spec 不拆票也可以用 worktree，整个 change 是一个实现单元。只读审查不为此创建实现 worktree。使用 worktree 需要核对实现提交和本地集成授权，清理仍是单独动作。
+完整 Spec 不拆票也可以明确选择 worktree。验收在选定工作区冻结实际交付，可使用未提交快照；不为验收自动创建 candidate、提交或合并。Git 交付与清理分别核对实际授权。现役规则见[执行策略](../../template/workflows/specdev/common/rules/execution-policy.md)。
 
-由单个 change 承载的外部派遣输入与回报位于该 change 的 `sessions/<session>/<task>/TASK.md` 和 `REPORT.md`，原 Evidence 保存链接与 Leader 验收。报告包含聚焦摘要和按需回查的历史入口，结构与例子见[外部 Agent 的任务交接](../agent-handoffs.md)。跨多个 change 或无 change 时使用全局 coordination/sessions。任务回报状态不替代 change Outcome；原始日志默认只引用，交接文件随所属 change 保留。
+短时同步只读委派可直接使用与真实调用关联的结构化返回。需要持久交接时，单 change 使用其 `sessions/<session>/<task>/`，跨 change 或无 change 使用全局 coordination/sessions，原 Evidence 保存验收。任务回报不替代业务完成，原始日志按需引用；完整规则见[Agent 的任务交接](../agent-handoffs.md)。
 
 ```text
 按当前 App 正常实施这个 Ready Spec，使用独立 worktree。
-先列清所需的本地提交、候选验证与集成动作，复用我已有的对应授权。
+在该工作区冻结实际交付并执行适用验证，复用我已有的授权；明确列出仍需单独授权的 Git 交付动作。
 ```
 
 ```text
 这个 change 的实现采用 Herdr，审查也采用 Herdr。
-工作区使用 current，保持单代码 writer；按所选工具的当前指南执行。
+工作区使用 current，协调写集、共享资源和 Git 全局操作；按所选工具的当前指南执行。
 ```
 
-选择 Herdr 后才按需获取项目 `.agents/skills/herdr/`，从 Speculo 安装器的 SKILLS-HUB 选择随包分发的 `automation/herdr`；已有有效包复用，冲突不覆盖。安装与受管会话检查分别进行，`HERDR_ENV=1` 等运行条件仍须满足。具体流程见 [Herdr 方法](../../template/references/coordination/modes/herdr.md)。不必因为安装 Speculo 就安装 Herdr。
+选用 Herdr 时先读取已安装的项目 Skill，核验当前 CLI、真实会话能力和权限。缺包或工具不可用时按允许的 fallback 继续，required 通道则保留阻塞；不擅自安装、登录或启动服务。明确要求安装 Skill 时由 Speculo 安装器的 SKILLS-HUB 提供随包分发的 `automation/herdr`，已有有效包复用、冲突保留。具体流程见 [Herdr 方法](../../template/references/coordination/modes/herdr.md)。
 
 ## 三个完整练习
 

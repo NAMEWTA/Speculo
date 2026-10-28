@@ -34,7 +34,7 @@ import { ticketPolicy } from './execution-context.mjs';
 import { validateChangeExecution } from './execution-validation.mjs';
 import { diagnosticErrors, addDiagnostic, appendDiagnostics, validationResult } from './validation-diagnostics.mjs';
 import { reviewScopeCLI } from "./review-scope.mjs";
-import { hasReview, validateCompletionReview, readReviewRequirements } from "./review-evidence.mjs";
+import { hasReview, validateReviewRecord, validateCompletionReview, readReviewRequirements } from "./review-evidence.mjs";
 import { ENGINEERING_KINDS, validateEngineeringArtifacts, validateEngineeringPackage } from "./engineering-evidence.mjs";
 
 const DOMAIN_SCHEMA_VERSION = 3;
@@ -1268,10 +1268,15 @@ function validateReviews(change, required, errors, repoRoot = null) {
     for (const heading of ["## Fixed Input", "## 标准", "## 规范", "## Summary"]) {
       if (!body.includes(heading)) errors.push(`${basename(path)}: missing '${heading}'`);
     }
-    // Historical CRs remain readable. Only the current review or an explicitly
-    // supplied new record is checked against the independent execution contract.
-    if (required && path === latest || hasReview(path)) {
-      errors.push(...validateCompletionReview(change, toPosix(relative(change,path)), {repoRoot,final:true,requirePassed:meta.status === 'approved',expectedResults:{standards:meta.standards_result,specification:meta.specification_result},expectedHead:meta.head,checkCurrent:required && path === latest}));
+    // Historical records keep their original result and identity checks. Only
+    // the report adopted by this review stage inherits today's scope policy.
+    const current = required && path === latest;
+    if (current || hasReview(path)) {
+      const artifact = toPosix(relative(change,path));
+      const options = {repoRoot,requirePassed:meta.status === 'approved',expectedResults:{standards:meta.standards_result,specification:meta.specification_result},expectedHead:meta.head};
+      errors.push(...(current
+        ? validateCompletionReview(change,artifact,{...options,final:true,checkCurrent:true})
+        : validateReviewRecord(change,artifact,options)));
       if (meta.status === 'approved' && (!['pass','not-applicable'].includes(meta.standards_result) || !['pass','not-applicable'].includes(meta.specification_result))) errors.push(`${basename(path)}: approved requires both review axes to pass`);
     }
   }

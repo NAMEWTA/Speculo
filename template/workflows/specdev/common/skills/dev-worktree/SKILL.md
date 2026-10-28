@@ -23,7 +23,7 @@ create/restore 读取 <Path>{roots.workflows}/specdev/common/skills/dev-worktree
 
 ## 核验
 
-finalize 读取 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>。它只验收选定工作区，不创建 candidate checkout、不合并或推进其他分支。每票和整个 change 通过各自 AC、独立审查及验证门。
+finalize 读取 <Path>{roots.workflows}/specdev/common/skills/dev-worktree/references/finalize.md</Path>。它只验收选定工作区，不创建 candidate checkout、不合并或推进其他分支。每票和整个 change 通过各自 AC、风险适配双轴审查及验证门。
 
 ## 授权清理
 

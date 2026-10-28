@@ -1,6 +1,6 @@
 # Speculo
 
-Reusable methods for software development, learning, operations, decisions and content creation, used by your current AI app or CLI. Speculo provides readable Skills, explicit Commands and recoverable project artifacts. Without an explicit execution choice, work proceeds normally in the current host; requests for CLI interaction, Herdr or another method select that route.
+Reusable methods for software development, learning, operations, decisions and content creation, used by your current AI app or CLI. Speculo provides readable Skills, explicit Commands and recoverable project artifacts. The current Agent chooses direct work, ordinary parallel tools or useful delegation within actual capabilities and authorization. Explicit user instructions and approved execution choices take precedence.
 
 [中文说明](README-ZH.md) · **[User manual (中文)](docs/README.md)** · [Getting started (中文)](docs/getting-started.md) · [All capabilities](docs/capabilities.md) · [Troubleshooting](docs/troubleshooting.md)
 
@@ -42,7 +42,7 @@ Five domains contain 39 Works. Each guide explains every Work's purpose, use cas
 
 Enter the Work you need; there is no mandatory end-to-end sequence. Complete approved Specs and Ready Tickets can enter implementation directly. Execution method and current/worktree selection remain independent. See the [workflow comparison](docs/workflows/README.md).
 
-External CLI, Herdr and Orca tasks use compact Markdown inputs and reports, with focused summaries and searchable session references. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
+Short synchronous read-only delegation can return correlated results inline. Work that needs recovery or audit uses durable Markdown tasks, reports and searchable session references, whether it runs through the host, an external CLI, Herdr or Orca. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
 
 ## Commands by category
 

@@ -37,13 +37,16 @@ function contractHash(node) {
   const meta = { ...node.artifact.meta };
   for (const key of ['status','ready','owner','skill_scan']) delete meta[key];
   // Optional knowledge discovery is not a frozen execution contract.
-  const requiredBindings = (meta.skill_bindings ?? []).filter(binding => binding?.required === true);
+  const bindings = meta.skill_bindings;
+  const requiredBindings = Array.isArray(bindings) ? bindings.filter(binding => binding?.required === true) : [];
+  // Validation already attributes malformed bindings to this Ticket. Preserve the
+  // invalid value in its digest, but do not let traversing it stop unrelated nodes.
   delete meta.skill_bindings;
-  meta.skill_bindings = requiredBindings;
+  meta.skill_bindings = bindings === undefined || Array.isArray(bindings) ? requiredBindings : bindings;
   const sources = [];
   {
-    for (const binding of meta.skill_bindings) {
-      for (const item of [binding, ...(binding.references ?? [])]) {
+    for (const binding of requiredBindings) {
+      for (const item of [binding, ...(Array.isArray(binding.references) ? binding.references : [])]) {
         try { sources.push([item.path,terminal.has(node.artifact.meta.status) ? item.sha256 : digest(readFileSync(resolveProjectSource(node.repoRoot,item.path)))]); }
         catch { sources.push([item?.path ?? null,'unavailable']); }
       }

@@ -6,7 +6,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 整体结论仅在 change README 顶层唯一 `Outcome: active | completed | cancelled` 行；简单任务的范围、可判定 AC、当前清单、真实验证与下一步也由 README 负责。被工具引用的章节使用唯一显式 `<a id="scope"></a>`、`<a id="acceptance"></a>`、`<a id="verification"></a>` 锚点。无 Ticket 的 Goal 只在原计划维护清单；有独立 Ticket 的进度在票及 Evidence，README/Goal/Map 不复制状态。
 
-工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。
+工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep 或复杂设计依赖保留适用的完整行为与验收合同；持久依赖图、跨会话恢复、多写入 owner、共享资源或集成 Gate 等持续协调需要完整编排工件。普通只读工具并行或短时无状态任务不单独触发完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。
 
 ## 1. 工件职责
 
@@ -24,9 +24,9 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Change 架构决策 | `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `<Path>{roots.state}/specdev/changes/{change}/spec.md</Path>` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `<Path>{roots.state}/specdev/changes/{change}/ticket/{ticket-file}.md</Path>` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理或远程 Issue 编号 |
-| Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Gate 导航、并行候选和路径冲突 | 单 Ticket 的完整实现契约、Ready、状态或执行 owner 副本 |
+| Tickets Map | `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` | 总体实施背景、必需方法覆盖及有用的可选知识导航、依赖 DAG、合同覆盖、Gate 导航、并行候选和路径冲突 | 单 Ticket 的完整实现契约、Ready、状态或执行 owner 副本 |
 | Goal Plan | `<Path>{roots.state}/specdev/changes/{change}/goal-plan.md</Path>` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
-| Implementation Map | `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
+| Implementation Map | `<Path>{roots.state}/specdev/changes/{change}/implementation-map.md</Path>` | 成员 Ready Spec、组合 Ticket inventory（允许合法 draft/deferred）、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `<Path>{roots.state}/specdev/changes/{change}/implementation-plan.md</Path>` | 父 Lead、全局 workspace/实现上限、eligible/conflicts/suggested_batch、locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
 | Implementation Orchestration Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
@@ -93,7 +93,7 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 
 W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只拥有候选 change 的边界、未知、依赖和目标指针；每个物化 child 的 Grill、Spec、Ticket 和状态仍独立。候选图不是实施 DAG，也不是共享可写设计树。
 
-新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有经过核实的 Skill 调用绑定、语义资源和执行计划；Map 路由是其投影。规则为 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
+新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有必需方法的已核实调用绑定、语义资源和执行计划；可选知识按需发现，实际使用保留相关证据，Map 的方法覆盖与导航是其投影。规则为 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
 
 父 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 

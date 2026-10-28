@@ -132,6 +132,18 @@ describe("SpecDev Plan contracts", () => {
     assert.deepEqual(contract.validateInvocationCoverage(tickets, matrix), []);
     assert.deepEqual(contract.validateInvocationCoverage(tickets, []), []);
   });
+  it("reports malformed binding collections during coverage and completion without treating them as empty", async () => {
+    const f=await fixture();
+    try {
+      for(const value of ["not-a-list",null,{}]) {
+        const artifact:any=structuredClone(f.artifact);artifact.meta.skill_bindings=value;
+        const tickets=new Map([["T-01",artifact]]);
+        assert.match(contract.validateInvocationCoverage(tickets,[]).join("\n"),/T-01: skill_bindings must be a JSON array/);
+        artifact.meta.status="done";
+        assert.match(contract.validateTicketPlan(artifact,{repoRoot:f.root}).join("\n"),/skill_bindings must be a JSON array/);
+      }
+    } finally {await rm(f.root,{recursive:true,force:true});}
+  });
   it("allows new optional Skills without replan, digest pins, or scanning unrelated packages", async () => {
     const f = await fixture();
     try {
@@ -183,6 +195,31 @@ describe("SpecDev Plan contracts", () => {
       await save(); assert.deepEqual(contract.validateInitiative(directory), []);
       data.changes[1].target = change; await save(); assert.match(contract.validateInitiative(directory).join("\n"), /self target/);
     } finally { await rm(f.root, { recursive: true, force: true }); }
+  });
+});
+
+describe("planning entry contract closure", () => {
+  it("keeps optional Skill discovery free of publishing-time binding and scan gates", async () => {
+    const root=join(process.cwd(),"template/workflows/specdev");
+    const entry=await readFile(join(root,"specdev-t-tickets/SKILL.md"),"utf8");
+    const review=await readFile(join(root,"common/skills/plan-quality-review/SKILL.md"),"utf8");
+    const checklist=await readFile(join(root,"common/skills/plan-quality-review/references/checklist.md"),"utf8");
+    for(const source of [entry,review,checklist]) {
+      assert.doesNotMatch(source,/为每票解析实际 Skill ID|没有适用项目 Skill 时记录扫描证据|Skill 最低路由|无适用项有扫描依据/);
+      assert.match(source,/必需方法/);assert.match(source,/可选/);
+    }
+    assert.match(entry,/common\/rules\/skill-invocation\.md/);
+    assert.match(review,/common\/rules\/skill-invocation\.md/);
+    assert.doesNotMatch(checklist,/接缝、有序步骤、公共契约/);
+  });
+  it("uses persistent coordination needs throughout lightweight Goal entry and templates", async () => {
+    const root=join(process.cwd(),"template/workflows/specdev");
+    for(const path of ["specdev-p-goal-plan/SKILL.md","specdev-p-goal-plan/assets/lightweight-goal-plan-template.md","specdev-p-goal-plan/references/single-change-plan.md","common/rules/artifact-contract.md","specdev-s-spec/SKILL.md"]) {
+      const source=await readFile(join(root,path),"utf8");
+      assert.doesNotMatch(source,/无真实并行|多个 Ticket 可以或需要并行|真实并行或复杂设计依赖使用完整工件|复杂设计\/Deep\/并行\/跨 change/);
+      assert.match(source,/持久依赖图|持续协调/);
+      assert.match(source,/只读.*并行|并行.*只读/);
+    }
   });
 });
 
@@ -239,6 +276,11 @@ describe("Ticket authority and execution policy without config", () => {
       assert.doesNotMatch(executionTable.split("\n").filter(line => line.startsWith("|")).join("\n"), /\b(?:Status|Ready|Owner)\b/);
       let result = controller.analyzeMap(f.input);
       assert.deepEqual(result.errors, []); assert.deepEqual(result.validation_errors, []);
+      const toolsReadme = await readFile(join(toolRoot, "README.md"), "utf8");
+      const documentedSchemaVersions = [...toolsReadme.matchAll(/schema_version\s*(?:为|:)\s*(\d+)/g)].map(match => Number(match[1]));
+      assert.ok(documentedSchemaVersions.length > 0);
+      assert.ok(documentedSchemaVersions.every(version => version === result.schema_version), "tools README must document the current controller schema");
+      assert.doesNotMatch(toolsReadme, /创建时要求每个成员已有 Ready Spec\/Tickets|不输出旧 eligible/);
       assert.equal(result.ticket_execution, "serial"); assert.equal(result.max_parallel_tickets, 1);
       assert.deepEqual(result.suggested_batch, ["T-01"]);
       assert.deepEqual(result.eligible, ["T-01", "T-02", "T-03"]);

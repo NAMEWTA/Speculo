@@ -10,7 +10,7 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 ## 简单无票 Goal
 
-用户要求 Goal，但范围只含一个非 Deep、无真实并行/复杂设计依赖的轻量 change 时，使用 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/lightweight-goal-plan-template.md</Path>：frontmatter 为 `artifact: lightweight-goal-plan`、`change`、`lead`，正文 `## Tasks`、`## Integration and Verification`、`## Next Steps`。README 保留 scope/acceptance/verification 的规格/验收，任务进度唯一在 Goal 清单。此分支不创建 Ticket/Map/Implementation，也不调用 analyzeMap；完整 Goal 不能因字段缺失自动降级。实际工作和完成仍走原 I/完成门。
+用户要求 Goal，且单 change 无需独立 Ticket 或持续协调时，使用 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/assets/lightweight-goal-plan-template.md</Path>：frontmatter 为 `artifact: lightweight-goal-plan`、`change`、`lead`，正文 `## Tasks`、`## Integration and Verification`、`## Next Steps`。普通只读工具并行或短时无状态任务不改变此选择；Deep 风险仍需适用的完整验收合同。README 保留 scope/acceptance/verification 的规格/验收，任务进度唯一在 Goal 清单。此分支不创建 Ticket/Map/Implementation，也不调用 analyzeMap；完整 Goal 不能因字段缺失自动降级。实际工作和完成仍走原 I/完成门。
 
 下面的 Ticket 输入与完整 schema 只适用于有票的完整模式。
 
@@ -18,14 +18,14 @@ Goal Plan 只拥有单个 Ticket 无法独立决定的事情：整体 Outcome、
 
 满足任一条件时运行：
 
-- 多个 Ticket 可以或需要并行；
+- 跨 Ticket 工作需要持续协调或跨会话恢复；
 - 存在 shared path、共享合同或集中 owner；
-- 存在 Deep Ticket、expand-contract、迁移、兼容窗口或不可逆步骤；
-- 存在多个 Gate、外部审批、发布窗口或高事故半径；
+- Deep 风险、expand-contract、迁移、兼容窗口或不可逆步骤需要跨 Ticket 的阶段控制；
+- 多个 Gate、外部审批或发布窗口需要持续协调；
 - Ticket DAG 的关键路径、汇合点或恢复策略无法由 Tickets Map 安全表达；
 - 用户明确要求正式跨 Ticket Plan。
 
-少量线性 Ready Tickets 可直接进入 I，不要求最小 Goal Plan；workspace、Lead、验证和原授权引用由 I 写原 Evidence。完整获批 Direct Spec 也可以直接执行并独立选择 worktree；需要独立调度或逐票追踪才运行 T-tickets。高风险要求相应 Gate，不以增加工件数量代替风险控制。
+少量线性或短时独立的 Ready Tickets 可直接进入 I，不要求最小 Goal Plan；workspace、Lead、验证和原授权引用由 I 写原 Evidence。并行可能性本身不触发完整 Goal。完整获批 Direct Spec 也可以直接执行并独立选择 worktree；需要独立调度或逐票追踪才运行 T-tickets。高风险要求相应 Gate，不以增加工件数量代替风险控制。
 
 ## 输入
 

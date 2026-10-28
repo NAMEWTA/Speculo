@@ -480,7 +480,7 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 
 归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。archive 不嵌套月份；移动须验证全部 locator 和 DESIGN 摘要，不可变正文不做路径替换。
 
-实际外部派遣的冻结输入、正式报告与可选会话定位文件按 下方 `<shared-coordination-session-files>` 标签 保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
+交接形式与范围根先按 下方 `<shared-coordination-session-files>` 标签 确定；只有本 change 承载的持久任务才将冻结输入、正式报告与可选会话定位文件保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单。即时返回不创建此目录；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内 locator 解析，历史原件不回填或清理。
 
 ## 独立开发复盘
 
@@ -638,7 +638,7 @@ UI 工作先按 specdev/design/ 的索引条目或 scope/规则 ID 定位，再�
 
 ## 跨领域编排与显式交接
 
-用户明确要求委派、跨工具/模型协作，或本 Work 已要求独立协作者时，读取 下方 `<shared-coordination-coordination-contract>` 标签；编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。项目默认方式由本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化） 显式初始化；普通激活不触发问答。
+用户要求协作，或主 Agent 判断独立上下文、真实并行收益、工具能力差异或独立验证值得委派时，读取 下方 `<shared-coordination-coordination-contract>` 标签；先按共享合同判断是否委派，再在当前授权与 required 约束内选择通道。编排可调用任意已选 workflow，实际产物和状态仍遵守本域 owner/gateway。本地编排设置入口（仅显式调用；网页环境只记录本次选择，不宣称持久化） 仅在明确调用时保存可选偏好；普通激活不触发问答。
 
 只有用户明确要求 handoff 时读取 下方 `<shared-handoff-handoff-contract>` 标签。本域未归档 change 允许本次唯一交接作者更新 handoff.md 侧记；无 change 的资源模型使用共享方法定义的会话报告。它反映已有事实，不推进本域状态、完成门或永久知识。
 
@@ -2174,7 +2174,7 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 
 - 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 表示规格就绪，不强制拆票。README 替代独立 Spec 仍限原轻量边界；明确要求的 Spec/Ticket/Goal 必须交付。
 - 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
-- 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、独立审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
+- 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、适用双轴审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
 - `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
 - Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。一张票可以由 Lead、subagent 或团队完成。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
 - 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
@@ -2348,7 +2348,7 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 
 整体结论仅在 change README 顶层唯一 `Outcome: active | completed | cancelled` 行；简单任务的范围、可判定 AC、当前清单、真实验证与下一步也由 README 负责。被工具引用的章节使用唯一显式 `<a id="scope"></a>`、`<a id="acceptance"></a>`、`<a id="verification"></a>` 锚点。无 Ticket 的 Goal 只在原计划维护清单；有独立 Ticket 的进度在票及 Evidence，README/Goal/Map 不复制状态。
 
-工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep、真实并行或复杂设计依赖使用完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 下方 `<ref-common-rules-execution-policy>` 标签。
+工具用临时 `{path, section?}` 定位原文，不创建登记表。存在独立 Spec 默认读取它；仅当前合同允许且 README 等价章节完整时读取 README。两份都自称规格权威时停止裁决，不按时间挑一份。跨 change 集成、Deep 或复杂设计依赖保留适用的完整行为与验收合同；持久依赖图、跨会话恢复、多写入 owner、共享资源或集成 Gate 等持续协调需要完整编排工件。普通只读工具并行或短时无状态任务不单独触发完整工件，迁出位置改成导航；用户明确要求 Spec/Ticket/Goal 时照办。UI 小任务同样保留 DESIGN、具体批准及真实浏览器；LOGIC-only 保留独立验证。无需独立调度或追踪的任务不制造 Ticket/Map；完整获批 Spec 可直接实现，轻量 README 替代规格仍遵守原边界。执行策略见 下方 `<ref-common-rules-execution-policy>` 标签。
 
 ## 1. 工件职责
 
@@ -2366,9 +2366,9 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Change 架构决策 | `specdev/changes/{change}/ADR.md` | 已成为本 change 下游合同的架构决策、原因、后果和替代关系 | 永久项目 ADR 或尚未决定的方案集合 |
 | Spec | `specdev/changes/{change}/spec.md` | 用户问题、外部行为、范围、验收合同、非功能要求和已锁定实现约束 | 文件级施工步骤 |
 | Ticket | `specdev/changes/{change}/ticket/NN-<ticket-name>.md` | 单一垂直切片的行为、决策、范围、路径所有权、执行路线和验证证据 | 跨 Ticket 里程碑治理或远程 Issue 编号 |
-| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 总体实施背景、项目 Skill 最低调用路由、依赖 DAG、合同覆盖、Gate 导航、并行候选和路径冲突 | 单 Ticket 的完整实现契约、Ready、状态或执行 owner 副本 |
+| Tickets Map | `specdev/changes/{change}/tickets-map.md` | 总体实施背景、必需方法覆盖及有用的可选知识导航、依赖 DAG、合同覆盖、Gate 导航、并行候选和路径冲突 | 单 Ticket 的完整实现契约、Ready、状态或执行 owner 副本 |
 | Goal Plan | `specdev/changes/{change}/goal-plan.md` | 跨 Ticket 调度、Gate、共享所有权、迁移顺序、集成和偏差治理 | 复制 Ticket 全文 |
-| Implementation Map | `specdev/changes/{change}/implementation-map.md` | Ready 成员、组合 Ticket inventory、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
+| Implementation Map | `specdev/changes/{change}/implementation-map.md` | 成员 Ready Spec、组合 Ticket inventory（允许合法 draft/deferred）、跨 change dependency/serialization 与 revision | 创建或改写子 Spec、Ticket 或实现细节 |
 | Implementation Plan | `specdev/changes/{change}/implementation-plan.md` | 父 Lead、全局 workspace/实现上限、eligible/conflicts/suggested_batch、locks/integration queue 和可恢复进度投影 | 改写子 change 权威或伪造完成 |
 | Implementation Orchestration Evidence | `specdev/changes/{change}/evidence/implementation-orchestration.md` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
@@ -2435,7 +2435,7 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 
 W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边界、未知、依赖和目标指针；每个物化 child 的 Grill、Spec、Ticket 和状态仍独立。候选图不是实施 DAG，也不是共享可写设计树。
 
-新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有经过核实的 Skill 调用绑定、语义资源和执行计划；Map 路由是其投影。规则为 下方 `<ref-common-rules-skill-invocation>` 标签。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
+新 Ticket/普通 Map 保持原 schema_version，并使用 plan_contract_version: 1 扩展。Ticket 拥有必需方法的已核实调用绑定、语义资源和执行计划；可选知识按需发现，实际使用保留相关证据，Map 的方法覆盖与导航是其投影。规则为 下方 `<ref-common-rules-skill-invocation>` 标签。计划、产物数量与完成证据漂移必须由对应 owner 修订；不能仅改 map 状态。
 
 父 `specdev/changes/{change}/tickets-map.md` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 
@@ -2474,7 +2474,7 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 11. **本地执行权威**：远程 Issue/PR/URL 只作为来源或完成投影；Spec、Ticket、Map、Goal Plan、Evidence 和状态始终以本地工件为准。
 12. **完成与归档分离**：本地完成按 change completion 合同决定；远程 close 失败不回滚完成，但必须 reconcile 或 waive 后才归档。
 13. **Lead 与隔离正交**：Lead 固定拥有原计划、Evidence 与父分支；是否派遣 任务执行者 由 Lead 动态决定。执行方式与工作区按 下方 `<ref-common-rules-execution-policy>` 标签 独立选择，执行方式默认当前宿主正常执行，工作区默认 current；无 Goal 时由 I 在原 Evidence 承接，已有选择不重复询问。
-14. **策略化验收**：按 下方 `<ref-common-rules-execution-policy>` 标签 在选定 change 工作区冻结真实输入、完成独立审查和验证。票据串并行不决定工作区或 Agent 拓扑，不强制每票提交/合并。
+14. **策略化验收**：在选定 change 工作区冻结真实输入，按 下方 `<ref-common-skills-code-review-references-reviewer-contracts>` 标签 完成适用双轴审查和验证。票据串并行不决定工作区或 Agent 拓扑，不强制每票提交/合并。
 15. **父子权威隔离**：父实现 change 只拥有 Ready 子 change 的组合 Ticket DAG、serialization、全局 workspace/资源和实现进度投影；子 change 继续拥有全部行为与实现合同。一个未完成子 change 只能属于一个未完成父实现 change。
 
 共享规则：
@@ -2605,13 +2605,11 @@ R.performance 的测量卡、原始样本引用和优化候选仍由 architectur
 ## 通道与约束优先级
 
 - 本次明确要求优先；其次是已批准阶段安排，再是项目 Work＋阶段规则、Work 规则与 defaults。required 选择必须遵守，不能以“自主”为由换路。请求或已批准安排未明确 selection: preferred 时按 required 处理，不继承低优先级 fallback；未写 preferred 却同时给 fallback 作为冲突停止。
-- 保存偏好可来自 coordination/project.json；没有文件照常执行，不补建配置。有效的软默认不是必须派遣的命令，主 Agent 可用有理由的当次 proposal 选择另一获准通道；不能覆盖本次用户要求、已批准安排或 required。
+- 保存偏好可来自 coordination/project.json；没有文件照常执行，不补建配置。有效的软默认不是必须派遣的命令，主 Agent 可基于当次任务理由选择另一获准通道；不能覆盖本次用户要求、已批准安排或 required。
 - 可选 `allowed_modes` 只限制项目可选通道，不授予权限。配置中的 tool/model/guide/interaction 是事实与偏好，不证明工具已安装、已登录或已获付费、远程写入、发送代码权限。
 - `mode: host` 可表示主 Agent 正常执行或已决定的宿主原生委派；只有后者才检查真实 subagent 能力。当前宿主是 CLI，不意味着要二次启动同家 CLI。`mode: cli` 是直接调用所选实际 AI CLI，不要求 Herdr/Orca。
 - 具体工具、模型和 `interaction: headless | interactive` 由要求、现有事实和当前接口决定。只有缺失决定影响目标或授权且不能从上下文确定时才询问。不同模式/工具之间不继承私有参数、指南或模型字段。
 - 同级冲突、无效配置与未知 Work/阶段只阻塞受影响选择。项目 schema v2 由 下方 `<shared-coordination-project-facts-schema>` 标签 定义；旧配置保留原件，不能自动覆盖用户数据。
-
-`src/coordination.ts` 的只读解析守卫表达上述约束并接受调用方提供的当次授权与懒能力检查；它不探测工具、不选择模型、不派发、不建立业务状态。判断“值得委派”仍属于主 Agent，结构通过不是执行授权。
 
 ## 仅展开选中的方式
 
@@ -3549,6 +3547,8 @@ Strategy 为 self/independent；Risk 为 low/medium/high/critical；Independence
 
 C 可只审明确不可变 commit；I 完成还须确认实际工作副本与交付相同。后来脏代码使旧 commit 通过失效，必须重新冻结并核验受影响部分。原 change 的 Markdown 记录更新本身不要求重新审代码，但被摘要的规范/标准仍须一致。不得无差别重跑无影响的检查，亦不得复用已漂移的证据。
 
+历史 CR 保留当时的策略、固定输入与原结果，只读核验记录自身完整性。将其重新采用为当前审查或完成证据时，才按本轮权威范围与风险重验适用性；后来新增的要求不改写旧报告，也不能靠保留旧报告跳过当前门。
+
 完成校验验证记录、原文和输入一致性，不代替语义判断、实际测试、Lead-owned E2E 或重大迁移验收。未验证事项明示，不将静态通过写成实际宿主/模型成功。
 
 </ref-common-skills-code-review-references-review-evidence>
@@ -3574,7 +3574,7 @@ create/restore 读取 下方 `<ref-common-skills-dev-worktree-references-create>
 
 ## 核验
 
-finalize 读取 下方 `<ref-common-skills-dev-worktree-references-finalize>` 标签。它只验收选定工作区，不创建 candidate checkout、不合并或推进其他分支。每票和整个 change 通过各自 AC、独立审查及验证门。
+finalize 读取 下方 `<ref-common-skills-dev-worktree-references-finalize>` 标签。它只验收选定工作区，不创建 candidate checkout、不合并或推进其他分支。每票和整个 change 通过各自 AC、风险适配双轴审查及验证门。
 
 ## 授权清理
 
@@ -3969,6 +3969,38 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 
 </ref-common-rules-documentation-standard>
 
+<ref-common-skills-code-review-references-reviewer-contracts>
+
+# 风险适配双轴审查
+
+## 选择执行者，而不是固定角色拓扑
+
+先依据本轮原 Spec/Ticket/README、用户与项目要求、影响范围和现有证据判断审查风险。在原 CR/Evidence 的 `Review` 段内说明 Risk、Independence、Strategy 与 Basis，不建立额外配置或审批表。普通低风险代码或文档修改可由当前主 Agent 自查，继续同一上下文和适用测试；两个判断轴不等于两名 Agent，也不要求另一会话。
+
+高风险/高影响、安全或重大迁移、证据不足以自行判断，以及用户或项目明确要求独立审查时，采用实际未参与本范围实现的 reviewer。原 Ticket 的 high/critical risk、原 Spec/Goal/README 的 `review_independence: required` 或正文 `Review-Independence: required` 是上游约束，不能被 Evidence 自称 low 覆盖。风险发生变化时更新原决定及受影响证据，不通过降级记录绕过门。
+
+需要独立性时，先按共享协调合同选择真实可用且获允许的通道；通常一位 reviewer 可完成两轴，只有有独立并行收益才拆开。实现者包括代码、配置、模型可见指令及修复/冲突解决的所有 Agent。改名、切换角色、重新开会话不改变实现参与事实。Reviewer 保持只读，参与修复后须换真正独立者。
+
+只有明确需要独立性的任务才因独立能力/身份缺失而 blocked/unverified。普通自查不制造 dispatch receipt、TASK/REPORT、session 或额外 Agent。worker 不默认递归派单；跨级委派必须有明确能力、预算、权限与责任约定。Lead 始终回读实际结果并承担最终验收。
+
+## 标准轴
+
+依据固定 diff/log 或工作副本/文件快照、仓库标准与适用 Fowler 启发式，判断正确性、可维护性及真实风险。引用来源、代码和反例，区分 hard violation 与 heuristic；工具已强制的纯格式不重复模拟人工审查。
+
+既有功能按 下方 `<shared-change-scope-change-contract>` 标签 追踪调用方、依赖和测试，对照影响分析与实际改动。缺少分析时重建并说明限制；文件快照不伪称历史 diff 或完整变更覆盖。
+
+## 规范轴
+
+以同一固定输入和实际规范判断需求完整性、越界、失败及边界语义，引用 AC/合同/决定。必要前置重构须有目的、范围与验证；获批重构按真实目标验收。影响清单不是写入授权。
+
+## 结果与适用性
+
+两轴分别判断、按 standards/specification 顺序记录，不用一轴结论替代另一轴，也不设置任意 finding 上限。两位 reviewer 时各自形成结论再汇总。每轴返回 `pass | request-changes | not-applicable`；不适用必须在原报告写具体 Reason，不得把未运行、未知或必需验收伪装成不适用。独立 C 确实没有规范时仍可 `skipped:no-spec`，但不能宣称完整规范验收；I 始终保留真实 AC 与其逐项验证。
+
+按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 保存固定输入、实际结果及适用独立性证据。自查不是独立审查证书，独立报告也不是自动通过证书。
+
+</ref-common-skills-code-review-references-reviewer-contracts>
+
 <ref-common-rules-planning-principles>
 
 # 规划原则
@@ -4153,7 +4185,7 @@ I、C、P 验收时读取。环境由 change README 的执行上下文定位，�
 
 共享工作区验收前协调相关 writer 停写，测试资源/生成输出独占或明确隔离。Git index 操作串行；当前交付与固定输入、规范或标准不一致时重验受影响项。必需 E2E 未运行/失败不能写 passed，not-required 必须给理由。E2E Gate 仍由 Lead 拥有，不接受执行者自报代替。
 
-Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查与独立审查；不要求每票提交、父分支推进或 candidate worktree。Direct Spec 同样逐 AC 验收，不制造票据。明确承诺的 Git/发布交付按原授权单列，失败不伪造成功。
+Ticket 的 verified 执行记录和 done 状态基于真实改动、AC、检查与适用双轴审查；审查策略按 下方 `<ref-common-skills-code-review-references-reviewer-contracts>` 标签 判断。不要求每票提交、父分支推进或 candidate worktree。Direct Spec 同样逐 AC 验收，不制造票据。明确承诺的 Git/发布交付按原授权单列，失败不伪造成功。
 
 重复失败按 下方 `<ref-common-rules-execution-policy>` 标签 保留历史并复盘。恢复读原 Evidence、Git 和工具事实，不从 REPORT completed 或进程退出推断验收通过。
 
@@ -4666,7 +4698,7 @@ CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-re
 宿主技能列表是否已刷新不替代读取真实项目文件；安装成功也不证明 CLI 或远端可用。入口、权限、服务或目标能力失败时保留原错误，停止此工具操作并由共享合同判断回退当前智能体或阻塞强制的 Orca 阶段；不静默切换生产/开发版或本地/远端入口，不自行安装升级或重启服务。已派发而结果不明时先恢复核验，不直接重复执行。
 
 1. 确认用户项目、当前工作区以及当前 Lead 的责任。需要保留 Lead 连续推进时使用受监督任务方式；Orca 的控制权 handoff 会转移责任，只有用户明确要求转移 Lead 所有权时才使用。请求生成交接摘要不授权转移控制权。
-2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。工具和模型沿用户选择及当前指南确定，不固化 agent/runner 清单；保留用户焦点，不复用 Herdr 参数。
+2. 沿当前工具提供的任务、工作区、会话和消息接口建立目标。Orca 管理的 worktree 由 Orca 操作；允许工具支持的 folder workspace，不凭空要求所有项目必须有 Git worktree。工具和模型沿用户要求、当次获准选择及当前指南确定，不固化 agent/runner 清单；保留用户焦点，不复用 Herdr 参数。
 3. 使用 下方 `<shared-coordination-task-brief>` 标签 的真实入口和任务说明。按 session-files.md 判断即时返回或持久交接；需要持久交接时派遣前保存 TASK 并提供 REPORT 位置；Lead 仅在准确确认本任务会话日志的绝对路径后，创建只有 path 字段的 session-locator.json，TASK 投递后冻结，不以标题猜句柄。
 4. 区分投递已接收、任务开始、任务返回、写入停止和业务验收。Run、Task、Dispatch 与终端、工作区分别使用真实返回的身份；已有 Run/Dispatch 按指南恢复，不重复创建。工具已有生命周期由工具管理，不再建调度器，也不用其他 subagent 工具冒充 Orca 派遣。
 5. 处理该任务的 question、完成及升级请求；已有权威答案由 Lead 回答，额外权限或产品决定再交用户。即时结果或持久报告交回后按当前原生完成协议发送摘要及适用的报告位置；支持 report-path 时传真实路径。REPORT 的 completed/blocked/failed/cancelled 不直接代替 Orca 的 outcome 参数；按本版 worker 协议提交原 Task/Dispatch 的结果，已结算的不再补写第二次完成。处理必要消息与资源归属后才确认收件，不因超时重建同一问题。
@@ -4759,38 +4791,6 @@ CLI 退出码只说明调用结果。Lead 仍按 下方 `<shared-coordination-re
 OPS 交接引用原 Controller/Host/Project、task/Run/Release、immutable plan/approval/journal/目标 receipt 和 progress；不写凭据值或复制私密配置。started-only、终态失败、docs_pending 分别回到原恢复协议，不能包装成新 task 再试。只向接收方传递已授权范围内必要的 locator 与脱敏证据。
 
 </shared-handoff-domain-context>
-
-<ref-common-skills-code-review-references-reviewer-contracts>
-
-# 风险适配双轴审查
-
-## 选择执行者，而不是固定角色拓扑
-
-先依据本轮原 Spec/Ticket/README、用户与项目要求、影响范围和现有证据判断审查风险。在原 CR/Evidence 的 `Review` 段内说明 Risk、Independence、Strategy 与 Basis，不建立额外配置或审批表。普通低风险代码或文档修改可由当前主 Agent 自查，继续同一上下文和适用测试；两个判断轴不等于两名 Agent，也不要求另一会话。
-
-高风险/高影响、安全或重大迁移、证据不足以自行判断，以及用户或项目明确要求独立审查时，采用实际未参与本范围实现的 reviewer。原 Ticket 的 high/critical risk、原 Spec/Goal/README 的 `review_independence: required` 或正文 `Review-Independence: required` 是上游约束，不能被 Evidence 自称 low 覆盖。风险发生变化时更新原决定及受影响证据，不通过降级记录绕过门。
-
-需要独立性时，先按共享协调合同选择真实可用且获允许的通道；通常一位 reviewer 可完成两轴，只有有独立并行收益才拆开。实现者包括代码、配置、模型可见指令及修复/冲突解决的所有 Agent。改名、切换角色、重新开会话不改变实现参与事实。Reviewer 保持只读，参与修复后须换真正独立者。
-
-只有明确需要独立性的任务才因独立能力/身份缺失而 blocked/unverified。普通自查不制造 dispatch receipt、TASK/REPORT、session 或额外 Agent。worker 不默认递归派单；跨级委派必须有明确能力、预算、权限与责任约定。Lead 始终回读实际结果并承担最终验收。
-
-## 标准轴
-
-依据固定 diff/log 或工作副本/文件快照、仓库标准与适用 Fowler 启发式，判断正确性、可维护性及真实风险。引用来源、代码和反例，区分 hard violation 与 heuristic；工具已强制的纯格式不重复模拟人工审查。
-
-既有功能按 下方 `<shared-change-scope-change-contract>` 标签 追踪调用方、依赖和测试，对照影响分析与实际改动。缺少分析时重建并说明限制；文件快照不伪称历史 diff 或完整变更覆盖。
-
-## 规范轴
-
-以同一固定输入和实际规范判断需求完整性、越界、失败及边界语义，引用 AC/合同/决定。必要前置重构须有目的、范围与验证；获批重构按真实目标验收。影响清单不是写入授权。
-
-## 结果与适用性
-
-两轴分别判断、按 standards/specification 顺序记录，不用一轴结论替代另一轴，也不设置任意 finding 上限。两位 reviewer 时各自形成结论再汇总。每轴返回 `pass | request-changes | not-applicable`；不适用必须在原报告写具体 Reason，不得把未运行、未知或必需验收伪装成不适用。独立 C 确实没有规范时仍可 `skipped:no-spec`，但不能宣称完整规范验收；I 始终保留真实 AC 与其逐项验证。
-
-按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 保存固定输入、实际结果及适用独立性证据。自查不是独立审查证书，独立报告也不是自动通过证书。
-
-</ref-common-skills-code-review-references-reviewer-contracts>
 
 <local-workflows-specdev-specdev-a-archive-and-consolidate-references-archive-rules>
 
@@ -4952,7 +4952,7 @@ Lead 在原 change workspace 上执行；本过程不创建 candidate worktree�
 1. 核对原 README 执行上下文、实际 Git、允许路径、原票据/Spec、owner、验证合同和已有授权。
 2. 协调相关 writer 停写，冻结实际 commit 或未提交工作副本快照。检查全部交付范围，保留其他票和原有用户改动的归属，不暂存或覆盖它们。
 3. 对固定输入执行必要集成/回归、类型/lint/build 和 Lead-owned E2E；记录命令、退出码和观察，not-required 给真实理由。
-4. 按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 核验独立双轴审查；冲突修正者和参与实现的 Lead 均不能作为独立 reviewer。输入变化只复用未失效的证据。
+4. 按 下方 `<ref-common-skills-code-review-references-reviewer-contracts>` 标签 确定最终范围的审查策略，再按 下方 `<ref-common-skills-code-review-references-review-evidence>` 标签 核验两轴和固定输入。需要独立审查时，冲突修正者和参与实现的 Lead 均不能作为独立 reviewer；允许自查的范围由主 Agent 核验。输入变化只复用未失效的证据。
 5. 回读真实交付与固定输入，验证通过后由 Lead 将本票执行记录标 verified、Ticket 标 done；整个 change 仍需整体 AC/Gate 和最终审查。没有提交授权时快照足够，不伪造 commit/result。
 6. 失败保留实际工作区、快照、报告和命令；同一 blocker 无新证据或 attempts 达到有效上限时返回 Lead 复盘。记录共同失败模式、可能原因、下一轮实质改变及 owner/路由后才可重试，保留旧轮次。
 

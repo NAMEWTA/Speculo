@@ -17,13 +17,11 @@
 ## 通道与约束优先级
 
 - 本次明确要求优先；其次是已批准阶段安排，再是项目 Work＋阶段规则、Work 规则与 defaults。required 选择必须遵守，不能以“自主”为由换路。请求或已批准安排未明确 selection: preferred 时按 required 处理，不继承低优先级 fallback；未写 preferred 却同时给 fallback 作为冲突停止。
-- 保存偏好可来自 <Path>{roots.state}/coordination/project.json</Path>；没有文件照常执行，不补建配置。有效的软默认不是必须派遣的命令，主 Agent 可用有理由的当次 proposal 选择另一获准通道；不能覆盖本次用户要求、已批准安排或 required。
+- 保存偏好可来自 <Path>{roots.state}/coordination/project.json</Path>；没有文件照常执行，不补建配置。有效的软默认不是必须派遣的命令，主 Agent 可基于当次任务理由选择另一获准通道；不能覆盖本次用户要求、已批准安排或 required。
 - 可选 `allowed_modes` 只限制项目可选通道，不授予权限。配置中的 tool/model/guide/interaction 是事实与偏好，不证明工具已安装、已登录或已获付费、远程写入、发送代码权限。
 - `mode: host` 可表示主 Agent 正常执行或已决定的宿主原生委派；只有后者才检查真实 subagent 能力。当前宿主是 CLI，不意味着要二次启动同家 CLI。`mode: cli` 是直接调用所选实际 AI CLI，不要求 Herdr/Orca。
 - 具体工具、模型和 `interaction: headless | interactive` 由要求、现有事实和当前接口决定。只有缺失决定影响目标或授权且不能从上下文确定时才询问。不同模式/工具之间不继承私有参数、指南或模型字段。
 - 同级冲突、无效配置与未知 Work/阶段只阻塞受影响选择。项目 schema v2 由 <Path>{roots.references}/coordination/project-facts.schema.json</Path> 定义；旧配置保留原件，不能自动覆盖用户数据。
-
-`src/coordination.ts` 的只读解析守卫表达上述约束并接受调用方提供的当次授权与懒能力检查；它不探测工具、不选择模型、不派发、不建立业务状态。判断“值得委派”仍属于主 Agent，结构通过不是执行授权。
 
 ## 仅展开选中的方式
 

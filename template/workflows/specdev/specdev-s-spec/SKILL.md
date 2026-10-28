@@ -20,7 +20,7 @@ metadata:
 4. **绑定验证接缝**：优先复用稳定接缝，通常从用户端到端行为、公共 API/CLI、事件/集成、稳定单元接缝选择；按实际风险与项目先例决定，不机械追求最高测试层级。每个接缝注明入口类型/位置、触发方式、可观察结果、覆盖 AC 和实际测试先例/命令。选择显著改变可测试性、事故半径或范围时聚焦确认；可由已有代码推导时记录依据即可。证据遵守 `<Path>{roots.workflows}/specdev/common/rules/evidence-and-verification.md</Path>`。
 5. **Readiness**：对照 <Path>{roots.workflows}/specdev/specdev-s-spec/references/spec-readiness.md</Path>；完整 Spec 再校验 <Path>{roots.workflows}/specdev/common/schemas/spec.schema.json</Path>。高影响未决问题使 `ready_for_tickets: false`；低影响、可逆默认值可作为带验证方式的显式假设。每个 AC 必须可观察、可判定、绑定接缝；只展开实际适用影响；已识别风险若不采取检查，说明依据。
 
-简单单 change 可使用 README 的 scope/acceptance/verification 等价章节承载规格，仍须通过同一行为/AC/Ready 语义；独立 <Path>{roots.state}/specdev/changes/{change}/spec.md</Path> 存在时默认使用它，双权威先裁决。用户明确要求 Spec 或存在复杂设计/Deep/并行/跨 change 时交付完整 Spec。迁出 README 规格改为导航。
+简单单 change 可使用 README 的 scope/acceptance/verification 等价章节承载规格，仍须通过同一行为/AC/Ready 语义；独立 <Path>{roots.state}/specdev/changes/{change}/spec.md</Path> 存在时默认使用它，双权威先裁决。用户明确要求 Spec，或涉及复杂设计、Deep、跨 change 集成及需要持续协调的多写入 owner 时交付完整 Spec；普通只读工具并行或短时无状态任务不单独触发完整工件。迁出 README 规格改为导航。
 
 ## 失败与兼容合同
 

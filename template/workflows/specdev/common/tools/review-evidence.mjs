@@ -33,8 +33,12 @@ function readLocator(root, locator) {
 }
 export function reviewInputDigest(input) { return hash(JSON.stringify(input)); }
 
-/** Sources use project-relative locators; an anchor avoids a README hashing itself. */
-function validateReviewRecord(root, artifact, {independentOnly=false, requireIndependent=false, requiredRisk=null, repoRoot=null, sourceRoot=repoRoot, requirePassed=true, expectedHead=null, expectedBase=null, expectedResults=null, requiredImplementers=[], requiredSpecifications=[], checkCurrent=false, requireDelivery=false, allowSourceFiles=false} = {}) {
+/** Check a record's frozen input, declared strategy and original results.
+ * Current completion or reuse must also apply the owning scope's requirements
+ * through validateCompletionReview; historical integrity alone is not approval.
+ * Sources use project-relative locators; an anchor avoids a README hashing itself.
+ */
+export function validateReviewRecord(root, artifact, {independentOnly=false, requireIndependent=false, requiredRisk=null, repoRoot=null, sourceRoot=repoRoot, requirePassed=true, expectedHead=null, expectedBase=null, expectedResults=null, requiredImplementers=[], requiredSpecifications=[], checkCurrent=false, requireDelivery=false, allowSourceFiles=false} = {}) {
   const errors = [], label = `independent-review: ${artifact}`;
   try {
     const path = safeWorkPathSync(root, artifact, {mustExist:true, type:'file'});
@@ -110,7 +114,7 @@ function validateReviewRecord(root, artifact, {independentOnly=false, requireInd
         const {excluded_paths, inventory_sha256, input_sha256, ...selected} = value;
         return selected;
       };
-      if (JSON.stringify(comparable(current)) !== JSON.stringify(comparable(scope))) throw new Error('frozen review input drifted; run independent review again');
+      if (JSON.stringify(comparable(current)) !== JSON.stringify(comparable(scope))) throw new Error('frozen review input drifted; refresh the affected review evidence');
       if (requireDelivery && scope.mode !== 'working-tree' && scope.mode !== 'source-files') {
         // A commit report certifies that tree, not later local edits. Markdown
         // bookkeeping in the owning change may advance after the code review;
