@@ -5609,7 +5609,415 @@
       "action": "moved",
       "sha256": "0bdc18574e03280fe1454bf91a47ed7757ae531ae4e72b91d31c006533732f3e",
       "bytes": 1508,
-      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layource entry, callers, contracts, validators and generated output with the v2 layout."
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/169-中国人民志愿军要爱护朝鲜的一山一水一草一木.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/169-中国人民志愿军要爱护朝鲜的一山一水一草一木.md",
+      "action": "moved",
+      "sha256": "7631424509b0b4642199b5782167479f43285c12c8c2537f70914c289c228620",
+      "bytes": 753,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/170-中共中央政治局扩大会议决议要点.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/170-中共中央政治局扩大会议决议要点.md",
+      "action": "moved",
+      "sha256": "946bb6fad6e469cc66f83c8f8d19cff4a194ae95f6ed7e521b52977845306b55",
+      "bytes": 6015,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/171-镇压反革命必须实行党的群众路线.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/171-镇压反革命必须实行党的群众路线.md",
+      "action": "moved",
+      "sha256": "2f8cc51bb1a217bfd2f07b853a20d65d9f867c145fab64b950184a7bed8934f3",
+      "bytes": 4436,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/172-镇压反革命必须打得稳，打得准，打得狠.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/172-镇压反革命必须打得稳，打得准，打得狠.md",
+      "action": "moved",
+      "sha256": "73dd5e147c5bae26bcdab8935aeeaa0aa83af3e79674ca283481ec6b17729d8e",
+      "bytes": 5319,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/173-应当重视电影《武训传》的讨论.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/173-应当重视电影《武训传》的讨论.md",
+      "action": "moved",
+      "sha256": "56a06467c6d007094cbf857e895af96f036884fb49efde911e94ee8d89fb274b",
+      "bytes": 3039,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/174-三大运动的伟大胜利.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/174-三大运动的伟大胜利.md",
+      "action": "moved",
+      "sha256": "03cf24e178831971546dfb7a4903d241902592a07396f02091945ced040d62f6",
+      "bytes": 8674,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/175-关于“三反”、“五反”的斗争.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/175-关于“三反”、“五反”的斗争.md",
+      "action": "moved",
+      "sha256": "f2630b47b328651b25c257074eda96d14a6a565b2d87dd8dc435566132e0f968",
+      "bytes": 9176,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/176-把农业互助合作当作一件大事去做.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/176-把农业互助合作当作一件大事去做.md",
+      "action": "moved",
+      "sha256": "d31af7d11c7de490bed7c6d6118388059e78b10626143dac7d9a30c036912025",
+      "bytes": 1397,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/177-元旦祝词.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/177-元旦祝词.md",
+      "action": "moved",
+      "sha256": "15a1c50151e7fb775c7adf7623a592921acc47f26d52947db45f483e51541776",
+      "bytes": 1463,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/178-中共中央关于西藏工作方针的指示.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/178-中共中央关于西藏工作方针的指示.md",
+      "action": "moved",
+      "sha256": "92648ca3c08d94dab086b4e5f7b4a8afc1d1783b4df963aade3cd7516275e41b",
+      "bytes": 6142,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/179-工人阶级与资产阶级的矛盾是国内的主要矛盾.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/179-工人阶级与资产阶级的矛盾是国内的主要矛盾.md",
+      "action": "moved",
+      "sha256": "01f8a00f54a58f0c4598ecef4cb87a55f7049d13e2f56d7f528064aecc043d99",
+      "bytes": 627,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/180-团结起来，划清敌我界限.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/180-团结起来，划清敌我界限.md",
+      "action": "moved",
+      "sha256": "b23d01178f613a302fef727bc82ffa2c985fb3ad5c0041f225991db598ea5aeb",
+      "bytes": 5571,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/181-祝贺中国人民志愿军的重大胜利.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/181-祝贺中国人民志愿军的重大胜利.md",
+      "action": "moved",
+      "sha256": "90e3254766bce9d00c17b6cc6818416cf065d52875022eeee8aa77d836079274",
+      "bytes": 1976,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/182-反对官僚主义、命令主义和违法乱纪.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/182-反对官僚主义、命令主义和违法乱纪.md",
+      "action": "moved",
+      "sha256": "fb6592b3b19e54acb8cbf59d501cc1265447a13c144f04f27de18d963b766769",
+      "bytes": 3892,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/183-批判大汉族主义.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/183-批判大汉族主义.md",
+      "action": "moved",
+      "sha256": "3c6e4c140e71a5d903434b38cfa786fc0e858e7b4f536ec8255ffcbd7474ee71",
+      "bytes": 1823,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/184-解决“五多”问题.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/184-解决“五多”问题.md",
+      "action": "moved",
+      "sha256": "9b91d1dbe34f330fac5b43fe70c281ce77b17b906404588bbec5429eea3733d6",
+      "bytes": 4585,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/185-对刘少奇、杨尚昆破坏纪律擅自以中央名义发出文件的批评.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/185-对刘少奇、杨尚昆破坏纪律擅自以中央名义发出文件的批评.md",
+      "action": "moved",
+      "sha256": "9e5cd4a836ba240faf7d3e6fae9a0d6e4e8d2a9261d595002bc6e443530e5c75",
+      "bytes": 897,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/186-批判离开总路线的右倾观点.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/186-批判离开总路线的右倾观点.md",
+      "action": "moved",
+      "sha256": "4ef8b3f2ad547200bddd22dbc303747421582665eadc98879117a9b45b00a39d",
+      "bytes": 3284,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/187-青年团的工作要照顾青年的特点.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/187-青年团的工作要照顾青年的特点.md",
+      "action": "moved",
+      "sha256": "9295eb6103bfd47623a86fd9ce9972b29d4e994d435c78f4f56a6da428515b4c",
+      "bytes": 9080,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/188-关于国家资本主义.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/188-关于国家资本主义.md",
+      "action": "moved",
+      "sha256": "018ec5c98063e40e3a6d4095b5a561768d375b9f6532735bfda530320a5e737a",
+      "bytes": 1185,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/189-党在过渡时期的总路线.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/189-党在过渡时期的总路线.md",
+      "action": "moved",
+      "sha256": "19b2680d9af87bd0f331f8c736cfba5792e8f8f5185f181e77895f4724a4bc36",
+      "bytes": 1112,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/190-反对党内的资产阶级思想.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/190-反对党内的资产阶级思想.md",
+      "action": "moved",
+      "sha256": "41fc28216fde92ed6721fe4605e1b7769c637f38d00c6a8568581f2b6440382a",
+      "bytes": 15144,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/191-改造资本主义工商业的必经之路.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/191-改造资本主义工商业的必经之路.md",
+      "action": "moved",
+      "sha256": "e63b94e83ff862d44d78811b4e43ed4566664d5fbf03813747383e2df7b3ac94",
+      "bytes": 4659,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/192-抗美援朝的伟大胜利和今后的任务.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/192-抗美援朝的伟大胜利和今后的任务.md",
+      "action": "moved",
+      "sha256": "4a14dace86d40adda530f12f0483fad5599bb54d5da61f9d6b1a26e9c0e6fbd3",
+      "bytes": 9806,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/193-批判梁漱溟的反动思想.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/193-批判梁漱溟的反动思想.md",
+      "action": "moved",
+      "sha256": "7809d5c356f3d39e5cd9b6ad335174bb3cfd782f068c0ac0e51d25063970cefd",
+      "bytes": 17396,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/194-关于农业互助合作的两次谈话.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/194-关于农业互助合作的两次谈话.md",
+      "action": "moved",
+      "sha256": "bed028259653716bde802526093e54e2bb8ca88d63300b584907919fb469ebaa",
+      "bytes": 16056,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/195-关于中华人民共和国宪法草案.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/195-关于中华人民共和国宪法草案.md",
+      "action": "moved",
+      "sha256": "e43c65e7f0ebdb9fb321000b89cc45264dafc6c445241939ee65b274abe74814",
+      "bytes": 12937,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/196-为建设一个伟大的社会主义国家而奋斗.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/196-为建设一个伟大的社会主义国家而奋斗.md",
+      "action": "moved",
+      "sha256": "6e3ec314236d3111d5c201bac3bb08c28bace75dcf0e592a6a08af06a4d88e87",
+      "bytes": 2649,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/197-关于《红楼梦》研究问题的信.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/197-关于《红楼梦》研究问题的信.md",
+      "action": "moved",
+      "sha256": "4d530659cf3b8e058cbca6f3a8ba9fb2c121ea69d24a63ab591e0d328d11e59d",
+      "bytes": 2420,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/198-原子弹吓不倒中国人民.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/198-原子弹吓不倒中国人民.md",
+      "action": "moved",
+      "sha256": "7ae5194c2ad5fad7ba461c326dba594298b2ff501d594978e721fea032170be5",
+      "bytes": 2897,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/199-在中国共产党全国代表会议上的讲话.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/199-在中国共产党全国代表会议上的讲话.md",
+      "action": "moved",
+      "sha256": "4de2d1e563eeded400bf287f039c6cef93ffd916ebbc104fbf3839e09ca79eb5",
+      "bytes": 33609,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/200-驳“舆论一律”.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/200-驳“舆论一律”.md",
+      "action": "moved",
+      "sha256": "708bdbd49268912fafabd72e77c7eef486f4da2f751e5132faf284c292699dd6",
+      "bytes": 5552,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/201-《关于胡风反革命集团的材料》的序言和按语.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/201-《关于胡风反革命集团的材料》的序言和按语.md",
+      "action": "moved",
+      "sha256": "02ca7a4b3cbb24f0e482e925dd8b00182e4d76117528b726c7a14ade901f90cb",
+      "bytes": 12580,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/202-关于农业合作化问题.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/202-关于农业合作化问题.md",
+      "action": "moved",
+      "sha256": "d24b53d745323ee7648fecbe60c22c6413233dca2dd11776779121e99cd847ad",
+      "bytes": 43603,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/203-农业合作化必须依靠党团员和贫农下中农.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/203-农业合作化必须依靠党团员和贫农下中农.md",
+      "action": "moved",
+      "sha256": "5104ceb52793c6e52fdd4cbd19aa25554dd3c3221aa600065f6018a48c8c3b1e",
+      "bytes": 3942,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/204-农业合作化的一场辩论和当前的阶级斗争.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/204-农业合作化的一场辩论和当前的阶级斗争.md",
+      "action": "moved",
+      "sha256": "c06daaad2d062f0fc41aa89b00afb7a6d18371daaf349f34270141754a1710ef",
+      "bytes": 42869,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/205-《中国农村的社会主义高潮》的序言.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/205-《中国农村的社会主义高潮》的序言.md",
+      "action": "moved",
+      "sha256": "01452e53042d74f2b6e0dd56b64feada88f4e2267901b79a67d95115fa941c70",
+      "bytes": 12847,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/206-《中国农村的社会主义高潮》的按语.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/206-《中国农村的社会主义高潮》的按语.md",
+      "action": "moved",
+      "sha256": "7e878165a0a73abef2b8a6687159c1144279d70eec3abc1ac61acc904bc44711",
+      "bytes": 58538,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/207-征询对农业十七条的意见.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/207-征询对农业十七条的意见.md",
+      "action": "moved",
+      "sha256": "08dacee2728cff0d9bea88b6ce44369bef74821ca9f116105c05a0444e5782b9",
+      "bytes": 6318,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/208-加快手工业的社会主义改造.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/208-加快手工业的社会主义改造.md",
+      "action": "moved",
+      "sha256": "fd219ed0485070aa101001dddd9ee04b45bfbab8329b53b52f0464cd32fe4ee9",
+      "bytes": 4663,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/209-论十大关系.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/209-论十大关系.md",
+      "action": "moved",
+      "sha256": "df07181d51bbb33115f46f927faeeb075c6f664315ecf45e1cec8da8e361b747",
+      "bytes": 39682,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/210-美帝国主义是纸老虎.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/210-美帝国主义是纸老虎.md",
+      "action": "moved",
+      "sha256": "d6bc96dbeb9732969481ebe4105ae00e3e8e2fd0ad12028652023ef1dca02a40",
+      "bytes": 6758,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/211-增强党的团结，继承党的传统.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/211-增强党的团结，继承党的传统.md",
+      "action": "moved",
+      "sha256": "83af92f604e569bd6815f0f6b7f3629ef108bc15214becd3cb48d491c28b4928",
+      "bytes": 22961,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/212-我们党的—些历史经验.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/212-我们党的—些历史经验.md",
+      "action": "moved",
+      "sha256": "99ae19cd9bd60aadc793a557f087550a7d4d837e5a7cb827096dd3032beb6b45",
+      "bytes": 10875,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/213-纪念孙中山先生.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/213-纪念孙中山先生.md",
+      "action": "moved",
+      "sha256": "f724703fbf08e59964bc1b7e6d1c44ee464902029b2eff62e9e9f584e3528e1f",
+      "bytes": 2495,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/214-在中国共产党第八届中央委员会第二次全体会议上的讲话.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/214-在中国共产党第八届中央委员会第二次全体会议上的讲话.md",
+      "action": "moved",
+      "sha256": "1f84dbf8142fd165a1d03b64a03fd5803c75bb340b1bd8197f1484e93552c999",
+      "bytes": 32040,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/215-在省市自治区党委书记会议上的讲话.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/215-在省市自治区党委书记会议上的讲话.md",
+      "action": "moved",
+      "sha256": "a8c0852987f5626bf81d9357426c97565d437d56342b15e2a59e8645aaa017be",
+      "bytes": 62332,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/216-关于正确处理人民内部矛盾的问题.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/216-关于正确处理人民内部矛盾的问题.md",
+      "action": "moved",
+      "sha256": "9eca184d85cf4ad8bad65a66fef402db3770eafe7da51b835cb865235ad8ed36",
+      "bytes": 73749,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/217-在中国共产党全国宣传工作会议上的讲话.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/217-在中国共产党全国宣传工作会议上的讲话.md",
+      "action": "moved",
+      "sha256": "48cf2fa9ac5f7cea172667264c3e093930292220c16c5801c08902b555e5ddea",
+      "bytes": 30652,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/218-坚持艰苦奋斗，密切联系群众.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/218-坚持艰苦奋斗，密切联系群众.md",
+      "action": "moved",
+      "sha256": "ce15bc7fabcba2a6fb57c9a2bbb4bf1d0e4affb21789432c144a3b11403922e5",
+      "bytes": 6638,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
+    },
+    {
+      "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/219-事情正在起变化.md",
+      "target": "template/workflows/person/person-m-mao-zedong-cognitive-os/books/src/219-事情正在起变化.md",
+      "action": "moved",
+      "sha256": "afb39403ebe19443dad2256b3b8d094f57d8f1a5fc87a4419393ad3de9e2e527",
+      "bytes": 11955,
+      "reason": "Aligned source entry, callers, contracts, validators and generated output with the v2 layout."
     },
     {
       "source": "template/workflows/person/M-mao-zedong-cognitive-os/books/src/220-中国共产党是全中国人民的领导核心.md",
