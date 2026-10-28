@@ -6,7 +6,7 @@
 
 一个 worker 已交回 `src/example.mjs` 候选和 TASK v2 / REPORT；另一个 writer 的任务尚未确认退出。handoff 保留背景、决定、原 owner 和这两个事实，然后给出唯一独立的下一动作：对已知候选做 `node --check`。与 unresolved writer 相关的路径保持原 owner，不重派、不清锁。
 
-该示例在七节正文中使用以下定位信息；写入实际 handoff 前，通过现有 resolver 将路径标记解析为项目相对路径。测试从新建的隔离项目计算 UUID、HEAD 和源码 SHA-256，不把占位符当作证据：
+该示例在七节正文中使用以下定位信息；写入实际 handoff 前，通过现有 resolver 将路径标记解析为项目相对路径。测试从新建的隔离项目计算 UUID、HEAD 和源码文本，不把占位符当作证据：
 
 ```text
 Installation: 当前 workspace 的 installation_id
@@ -14,7 +14,7 @@ HEAD: 当前 Git 完整 SHA
 TASK: <Path>{roots.state}/coordination/sessions/20261019T120000Z/001-candidate-check/TASK.md</Path>
 REPORT: <Path>{roots.state}/coordination/sessions/20261019T120000Z/001-candidate-check/REPORT.md</Path>
 Source: src/example.mjs
-Source SHA-256: 实际候选文件的 SHA-256
+Source text: 实际候选文件的完整文本
 Unresolved TASK: <Path>{roots.state}/coordination/sessions/20261019T120000Z/002-existing-writer/TASK.md</Path>
 ```
 
@@ -26,7 +26,7 @@ Unresolved TASK: <Path>{roots.state}/coordination/sessions/20261019T120000Z/002-
 node <absolute-command-root>/handoff/examples/consume-handoff.mjs --handoff <absolute-handoff-file>
 ```
 
-成功输出包含读取的实际文件、HEAD、源摘要和只读检查的退出码；`lead_acceptance` 仍为 pending，未闭合 writer 仍由原 owner 处理。HEAD/源码漂移、错误 TASK/REPORT、无效 workspace 或越界路径会使示例退出失败，保留原件。消费者不写 REPORT、不更新 handoff、不改业务工件，也不创建“接续成功”状态。
+成功输出包含读取的实际文件、HEAD、源文本和只读检查的退出码；`lead_acceptance` 仍为 pending，未闭合 writer 仍由原 owner 处理。HEAD/源码漂移、错误 TASK/REPORT、无效 workspace 或越界路径会使示例退出失败，保留原件。消费者不写 REPORT、不更新 handoff、不改业务工件，也不创建“接续成功”状态。
 
 ## 运行回归
 

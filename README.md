@@ -42,7 +42,7 @@ Five domains contain 39 Works. Each guide explains every Work's purpose, use cas
 
 Enter the Work you need; there is no mandatory end-to-end sequence. Complete approved Specs and Ready Tickets can enter implementation directly. Execution method and current/worktree selection remain independent. See the [workflow comparison](docs/workflows/README.md).
 
-Short synchronous read-only delegation can return correlated results inline. Work that needs recovery or audit uses durable Markdown tasks, reports and searchable session references, whether it runs through the host, an external CLI, Herdr or Orca. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
+Short synchronous read-only delegation can return correlated results inline. Work that needs recovery or audit keeps only TASK.md and REPORT.md; a confirmed session log path may appear as an optional Session log line in the report. The host, an external CLI, Herdr and Orca follow the same rule. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
 
 ## Commands by category
 

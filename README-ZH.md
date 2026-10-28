@@ -41,15 +41,15 @@ speculo doctor .
 
 不必每次跑完整条流程。完整获批 Spec 和 Ready Ticket 都可以直接进入实现；执行方式与 current/worktree 独立选择。见[领域路线对照](docs/workflows/README.md)。
 
-短时同步只读委派可即时返回与调用可靠关联的结果；需要恢复或审计的任务保存持久 Markdown 输入、报告和可检索的会话引用，宿主原生、CLI、Herdr、Orca 均按实际需求选择。见[Agent 的任务交接](docs/agent-handoffs.md)。
+短时同步只读委派可即时返回与调用可靠关联的结果；需要恢复或审计的任务只保存 TASK.md 与 REPORT.md，已知的会话日志路径可写在报告的可选 Session log 行。宿主原生、CLI、Herdr、Orca 均按实际需求选择。见[Agent 的任务交接](docs/agent-handoffs.md)。
 
 ## 按 Command 类别找工具
 
-10 个 Command 是交给 AI 的明确请求，不是 `speculo xxx` 终端子命令。
+9 个 Command 是交给 AI 的明确请求，不是 `speculo xxx` 终端子命令。
 
 | 类别 | 教程 |
 |---|---|
-| [导航与交接](docs/commands/README.md#navigation) | [status](docs/commands/status.md)、[handoff](docs/commands/handoff.md) |
+| [导航与交接](docs/commands/README.md#navigation) | [coordination-init](docs/commands/coordination-init.md)、[status](docs/commands/status.md)、[handoff](docs/commands/handoff.md) |
 | [文档与知识维护](docs/commands/README.md#documentation) | [project-maintenance](docs/commands/project-maintenance.md)：文档、知识与归档 |
 | [Git 分析与历史](docs/commands/README.md#git) | [仓库审计](docs/commands/git-repository-audit.md)、[历史压缩](docs/commands/git-history-squash.md)、[上游评估](docs/commands/upstream-assess.md) |
 | [源码交换与反馈](docs/commands/README.md#exchange) | [源码 ZIP](docs/commands/source-code-zip.md)、[Speculo 产品反馈](docs/commands/speculo-feedback.md) |

@@ -1,97 +1,22 @@
-# External ZIP Package
+# 外部网页传输
 
-选择 `delivery_channel=external-web` 时加载。本 reference 规定 outbound 与 return ZIP 的目录、内容、打包和持久化合同。它引用 `<Path>{roots.commands}/source-code-zip/COMMAND.md</Path>` 及其单文件脚本 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>`；不得为打包执行 `npm install`，不得用另一套默认归档规则替换它。
+选择 `delivery_channel=external-web` 时加载。网页通道可以用临时压缩包把最小授权材料交给 provider，并取回文本或文件。压缩包、整理目录和下载只存在于传输过程中；传输一结束就删除，不留在 `sessions/<session>/<task>/` 或其他交接位置。持久记录只有该任务目录里的 TASK.md，回收后再加上 REPORT.md。
 
-## 1. 根目录持久化不变量
+需要打包时使用 `<Path>{roots.commands}/source-code-zip/COMMAND.md</Path>` 及其脚本 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>`。不得为打包执行 `npm install`，不得改用另一套默认归档规则。
 
-所有外部交付 ZIP 必须位于项目根目录 `<Path>temp/</Path>` 下，使用以下可迁移布局：
+## 1. 交接目录
 
-```text
-temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/
-├── outbound/
-│   ├── staging/
-│   │   ├── DISPATCH.md
-│   │   ├── MANIFEST.json
-│   │   ├── context/
-│   │   └── source/
-│   ├── {dispatch-id}.outbound.zip
-│   └── {dispatch-id}.outbound.sha256
-├── SESSION.md
-└── inbound/
-    └── {attempt-id}/
-        ├── raw/
-        ├── staging/
-        ├── extracted/
-        ├── {dispatch-id}.return.{attempt-id}.zip
-        ├── {dispatch-id}.return.{attempt-id}.sha256
-        └── ACCEPTANCE.md
-```
+派遣时任务目录只有 TASK.md，回收后只有 TASK.md 与 REPORT.md。不要在该目录、handoff 报告旁边或任何派遣产物位置留下压缩包、校验文件、清单、日志快照、临时文件、解压目录或其他 Markdown。
 
-`scope-id`、`task-id`、`dispatch-id` 和 `attempt-id` 只使用 `[A-Za-z0-9._-]`，不得包含 `/`、`\`、`..`、盘符、控制字符或用户提供的未清洗路径。
+传输使用任务目录之外的一次性位置。操作系统临时目录、浏览器下载目录和 provider 缓存可以承担传输，但不是交接记录。上传或下载处理完，立即删除本次压缩包和整理树，无论结果是交回、阻塞还是失败。
 
-以下位置不能作为最终 locator：操作系统临时目录、`os.tmpdir()`、`/tmp`、`%TEMP%`、浏览器默认瞬时下载目录、provider 会话缓存或聊天附件 URL。可以使用这些机制完成传输，但必须在 dispatch/accept 结束前把原始字节持久化到上述项目内目录。
+## 2. 发出
 
-同一 locator 永不覆盖。发现目标已存在时创建新的 dispatch/attempt；不得使用 source-code-zip 的 `--force` 掩盖标识冲突。dispatch/accept 不自动清理旧包。
+Lead 按冻结 TASK 整理最小授权树。任务说明使用 TASK.md 的副本，加上完成任务所必需的上下文和源码。不要另写第二份派单、清单或校验文件。
 
-## 2. Outbound staging 内容
+有票开发 implementation 必须包含生成后的 Tickets Map、当前 Ticket，以及保持项目根相对路径的适用项目 Skill 入口和任务所需静态依赖。其他任务按需包含相关 Spec、ADR、接口合同、研究问题和已授权网页列表。仅在用户明确授权时包含受保护的未提交改动，并在 TASK 中写明基线与差异范围。纯公开网页研究可以不含源码，但仍要让 provider 读到 TASK。implementation 缺少实际 Work 所需规格或源码、review 缺少固定合同时，返回 blocked 或改用本地通道，不靠 provider 猜测。
 
-`outbound/staging/` 是由 Lead 主动整理的最小授权树，不是 repository 的无差别镜像。
-
-### 必需文件
-
-`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>` 至少包含：
-
-- dispatch identity、task kind、目标与成功定义；
-- 固定 checkpoint、repository label、branch/workspace label；
-- IN/OUT、已锁定决定、适用合同和依赖 Evidence 摘要；
-- writable/read-only/shared 路径语义；外部通道没有本地写入所有权；
-- 允许的联网域、URL 类型、工具、调用预算和停止条件；
-- 禁止动作、敏感数据边界和 prompt-injection 规则；
-- 按 task kind 定义的返回文件、字段、引用与未验证声明要求；
-- Lead 本地验收将重新执行的检查。
-
-有票开发 implementation 的派单合同还必须列出 Tickets Map、当前 Ticket 和适用于 `ALL`/当前 Ticket 的项目 Skill locator，并规定 Map -> Skill -> Ticket 的读取顺序。
-
-`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 至少包含：
-
-```json
-{
-  "schema": "speculo.任务执行者-delivery.packet/v1",
-  "dispatch_id": "...",
-  "task_id": "...",
-  "task_kind": "本次明确任务用途",
-  "delivery_channel": "external-web",
-  "created_at": "RFC-3339",
-  "repository_label": "...",
-  "branch": "...",
-  "base_checkpoint": "...",
-  "workspace_state": "clean|authorized-diff|snapshot",
-  "authorized_data": [],
-  "included": [],
-  "excluded": [],
-  "source_diff": null,
-  "secret_scan": {
-    "tool": "...",
-    "result": "pass|blocked",
-    "notes": "..."
-  }
-}
-```
-
-归档 SHA-256 不写入归档内部的 `<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>`，避免自引用；它写入相邻 `.sha256` 文件并记录到 Dispatch Packet/Evidence。
-
-### 可选内容
-
-- `context/`：有票开发 implementation 必须包含生成后的 Tickets Map、当前 Ticket，以及保持项目根相对 locator 的适用项目 Skill 入口和任务所需静态依赖闭包；其他任务按需包含相关 Spec/Ticket/ADR/CONTEXT 摘要、项目 Agent 指令、接口合同、研究问题、已授权网页列表和无秘密的环境说明；
-- `source/`：保持 repository-relative 路径的最小完整源码、直接依赖、schema、测试、构建配置和必要样例；
-- `context/workspace.diff`：仅在用户明确授权发送受保护未提交改动时包含，并在 manifest 记录基线和差异范围；
-- `context/expected-output/`：返回模板或 schema。
-
-纯公开网页 research 可以不含 `source/`，但仍需 `<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>` 和必要 `context/`。implementation 若缺少实际 Work 所需规格/源码（有票开发包括 Tickets Map、当前 Ticket 与适用项目 Skill），review 若缺少固定合同，都不得靠 provider 猜测，应返回 blocked 或改用本地工具通道。
-
-## 3. 范围与排除
-
-只包含完成任务所需的最小完整信息。默认排除：
+默认排除：
 
 - 版本控制内部数据与远端凭据；
 - 依赖缓存、虚拟环境、构建产物、覆盖率、日志、数据库、转储和临时文件；
@@ -100,141 +25,22 @@ temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/
 - `.env`、token、API key、cookie、私钥、证书私钥、keystore、验证码、恢复码和密码；
 - 无关源码、无关测试、大型二进制、既有归档和可执行产物。
 
-环境说明只保留无真实值的示例。若 source-code-zip 默认安全规则会排除一个确有必要的 YAML、锁文件、媒体或其他文件，优先创建已脱敏的 Markdown/文本摘录并记录原始路径与遗漏影响；不得默认使用 `--no-default-ignore`。无法在不发送敏感/被排除内容的情况下完成任务时，不选择外部通道。
+环境说明只保留无真实值的示例。若 source-code-zip 的默认排除会去掉确有必要的文件，优先放入已脱敏的文本摘录，并在 TASK 或 REPORT 说明遗漏影响；不得默认关闭默认排除。无法在不发送敏感内容的情况下完成任务时，不选择外部通道。用仓库已有的 secret scanner 和人工核对确认没有秘密或真实用户数据；无法确认时返回 blocked。
 
-使用 repository 已有或可用的 secret scanner 检查 staging；同时人工核对 manifest 与实际文件。无法合理确认没有秘密或真实用户数据时返回 blocked。
+先预览，再用完全相同的选择参数生成临时压缩包。禁止把输出压缩包放进整理树、在生成后手工改包，以及为运行脚本安装依赖。确认 provider 收到的是这一份之后，立即删除压缩包和整理树。页面改名、转码、只上传了部分文件，或无法证明对方收到正确内容时停止，并同样删除本地传输文件。
 
-## 4. 使用 source-code-zip 生成 outbound ZIP
+控制提示只指向压缩包中的 TASK.md，不在聊天里重写目标、权限、停止条件或返回格式。
 
-先确认 Node.js，再从项目根目录运行。以下示例中的变量必须替换为本次不可变标识：
+## 3. 收回
 
-```bash
-node --version
+provider 的文本或下载先放在另一个一次性位置，不要直接进入仓库、工作区或任务目录。在隔离处枚举条目，拒绝绝对路径、盘符、UNC、空名、`..`、符号链接、硬链接、设备文件、重复路径、大小写冲突、异常膨胀、未授权的嵌套归档和可执行内容。安全检查只说明结构可接受，不说明内容正确。
 
-DELIVERY_ROOT="temp/task-delivery/${SCOPE_ID}/${TASK_ID}/${DISPATCH_ID}"
-STAGING="${DELIVERY_ROOT}/outbound/staging"
-ARCHIVE="${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.zip"
-# 已按公共 workspace 合同解析 project root 后，以真实绝对路径替换下方值。
-ZIP_SCRIPT="${PROJECT_ROOT}/.agents/speculo/commands/source-code-zip/scripts/zip_source_code.cjs"
-```
+检查通过后，只把获准候选写入分配的工作区路径，并把结果写入 REPORT.md。Lead 补写的内容标明 `Captured-by: Lead`，不得伪装成 provider 原文，也不得补造对方没有给出的事实。然后立即删除下载、解压结果和临时压缩包。
 
-若当前执行环境仍位于 template 源树而不是安装后的 workspace，从已解析的公共 roots 定位 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>`，不硬编码另一个根。先创建 `outbound/staging/`、`outbound/` 与后续 inbound attempt 目录，并确认目标 ZIP 不存在。
+REPORT 记录实际结论、候选位置、未验证项和阻塞原因。不把传输过程的校验值或文件清单写进 TASK.md 或 REPORT.md。外部命令、测试和截图在 Lead 本地复核前保持未验证。
 
-必须先预览：
+checkpoint、合同、源码范围或发送授权变化时新建 task。固定输入不变但需要再次回答时，也新建 task 并引用旧报告。不覆盖旧 TASK 或 REPORT。
 
-```bash
-node "${ZIP_SCRIPT}" "${STAGING}" \
-  --all-files \
-  --contents-only \
-  --output "${ARCHIVE}" \
-  --dry-run \
-  --verbose
-```
+## 4. 完成
 
-核对预览后，用完全相同的选择参数正式生成：
-
-```bash
-node "${ZIP_SCRIPT}" "${STAGING}" \
-  --all-files \
-  --contents-only \
-  --output "${ARCHIVE}"
-```
-
-这里使用 `--all-files`，因为 staging 已由 Lead 精选，且必须纳入 `<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/DISPATCH.md</Path>`、`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/outbound/staging/MANIFEST.json</Path>`、patch 和普通项目文件；source-code-zip 的默认 IGNORE 仍然生效。使用 `--contents-only` 使 provider 在 ZIP 根目录直接看到权威文件。
-
-禁止：
-
-- `--no-default-ignore`；
-- `--force`；
-- 正式命令与 dry-run 使用不同的 include/ignore 选择；
-- 把输出 ZIP 放进 staging；
-- 为运行脚本执行 npm/pnpm/yarn install；
-- 在生成后手工修改 ZIP 而不生成新 dispatch/hash。
-
-生成后验证 ZIP 可读取、文件数、总字节数和清单，并计算 SHA-256。可以使用当前平台的可信 SHA-256 工具；仅有 Node.js 时可使用：
-
-```bash
-node -e 'const fs=require("fs"),c=require("crypto");const p=process.argv[1],h=c.createHash("sha256"),s=fs.createReadStream(p);s.on("data",d=>h.update(d));s.on("error",e=>{console.error(e.message);process.exit(1)});s.on("end",()=>console.log(h.digest("hex")));' "${ARCHIVE}" \
-  > "${DELIVERY_ROOT}/outbound/${DISPATCH_ID}.outbound.sha256"
-```
-
-在 Packet、`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/SESSION.md</Path>` 和后续 Evidence 中记录 project-relative ZIP locator、size、SHA-256、secret scan、included/excluded 摘要和 workspace diff 摘要。只有完成这些记录后才能上传。
-
-## 5. Provider 返回与 return ZIP
-
-### Provider 直接下载 ZIP
-
-将下载的原始字节保存到唯一的：
-
-```text
-temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/raw/
-```
-
-先计算原始下载 SHA-256，再检查归档目录。不要在保存前让浏览器自动解压，不要重用 provider 文件名覆盖旧文件。每个 attempt 仍必须产生确定名称的 `{dispatch-id}.return.{attempt-id}.zip`：若原始 ZIP 通过安全检查且已经符合返回结构，保持原始 ZIP 不变并把同一字节复制到确定名称；若结构不符合，先在隔离目录安全解包，只把允许的返回文件放入 inbound staging，再使用 source-code-zip 生成标准 return ZIP。两种情况都保留 `raw/` 中的原始字节、原始 hash 与标准 return ZIP/hash。
-
-### Provider 只返回文本或散列文件
-
-先原样保存到 `raw/`，再由 Lead 构建 `inbound/{attempt-id}/staging/`：
-
-```text
-RETURN.md
-candidate/                 # implementation 可选
-PATCH.diff                 # implementation 可选
-FINDINGS.md                # review 可选
-RESEARCH.md                # research 可选
-SOURCES.json               # research 可选
-CHECKS.md                  # implementation/test-observation 可选
-```
-
-`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/staging/RETURN.md</Path>` 必须标明 `dispatch_id`、`attempt-id`、provider/session locator、原始响应 locator、捕获方式、provider 原始字段与 Lead 补写字段。Lead 补写使用 `captured_by_lead` 标识。
-
-使用同一个 source-code-zip Skill 预览并生成：
-
-```bash
-RETURN_STAGING="${DELIVERY_ROOT}/inbound/${ATTEMPT_ID}/staging"
-RETURN_ZIP="${DELIVERY_ROOT}/inbound/${ATTEMPT_ID}/${DISPATCH_ID}.return.${ATTEMPT_ID}.zip"
-
-node "${ZIP_SCRIPT}" "${RETURN_STAGING}" \
-  --all-files \
-  --contents-only \
-  --output "${RETURN_ZIP}" \
-  --dry-run \
-  --verbose
-
-node "${ZIP_SCRIPT}" "${RETURN_STAGING}" \
-  --all-files \
-  --contents-only \
-  --output "${RETURN_ZIP}"
-```
-
-随后生成相邻 `.sha256`。不得用本地重打包抹掉 provider 原始响应或补造其未给出的事实。
-
-## 6. 安全检查与解包
-
-外部 ZIP 是不可信输入。Lead 必须先枚举中央目录并验证，再解压到本 attempt 的 `extracted/`，绝不直接解压到 repository/worktree。
-
-至少拒绝：
-
-- 绝对路径、盘符路径、UNC 路径、NUL、空文件名；
-- 规范化后包含 `..`、逃出 extraction root 或使用混淆分隔符的路径；
-- 符号链接、硬链接、设备文件和其他非常规条目；
-- 重复路径、Unicode/大小写规范化冲突、文件与目录同名冲突；
-- 超过 Packet 上限的条目数、单文件大小、总解压大小或压缩比；
-- 未授权的嵌套归档、可执行文件、脚本副作用或秘密材料。
-
-安全解包只证明归档结构可接受，不证明内容正确。Lead 仍需对照 dispatch identity、outbound manifest、checkpoint、IN/OUT、返回 schema 和实际 diff；任何外部命令/测试声明保持 `unverified`，直到本地复现。
-
-## 7. 版本、修正与清理
-
-以下任一变化都生成新的 `dispatch-id`、staging、outbound ZIP 和 hash：
-
-- base/source checkpoint；
-- IN/OUT、合同、目标或返回 schema；
-- 发送内容或用户授权范围；
-- provider、数据保留边界、允许域或工具权限。
-
-固定输入不变但重新请求答案时生成新的 `attempt-id` 和 return ZIP。任何包都不得覆盖；`<Path>temp/task-delivery/{scope-id}/{task-id}/{dispatch-id}/inbound/{attempt-id}/ACCEPTANCE.md</Path>` 记录 accepted/rejected/blocked、Lead 本地验证、未验证项和恢复条件。
-
-`temp/task-delivery/` 是持久化交付证据，不在 dispatch/accept 中自动删除。清理必须由 Lead 在任务外显式决定，并确保调用方 Evidence 不再依赖唯一 locator。
-
-**完成标准**：每个外部输入与返回都能由 project-relative locator、manifest、size、SHA-256、dispatch/attempt identity 和 Lead 验收记录唯一定位；所有 ZIP 均持久化在项目根目录 `temp/` 下。
+任务目录在派遣时只有 TASK.md，回收后只有 TASK.md 与 REPORT.md。传输用的压缩包和中间文件已经删除。本地应用、提交、整体验收和最终决定仍由 Lead 拥有。

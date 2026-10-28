@@ -92,11 +92,11 @@ Goal schema v8、父 Implementation Plan v3 使用 ticket_execution: auto|serial
 
 <Path>{roots.workflows}/specdev/common/tools/validate-retro.mjs</Path> 只读枚举/校验独立 RETRO、升级方案、批准、实际执行与归档完整性；使用 `--help` 查看 report/upgrade 和各 stage。数据根使用 WorkContext 的领域共同父根。协议见 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path>；工具不写 Skill、不执行验证命令、不认证授权或宿主行为。
 
-## 派遣交接与可选会话定位
+## 派遣交接
 
-按 <Path>{roots.references}/coordination/session-files.md</Path> 的恢复与审计需要选择即时返回或持久交接。<Path>{roots.references}/coordination/scripts/validate-dispatch.mjs</Path> 的 `--inline` 从 stdin 校验短时同步只读的关联返回；需要持久交接时使用共享 TASK v2 与 REPORT，并按 dispatch/return 阶段核验输入、返回及适用的会话 locator。
+按 <Path>{roots.references}/coordination/session-files.md</Path> 的恢复与审计需要选择即时返回或持久交接。<Path>{roots.references}/coordination/scripts/validate-dispatch.mjs</Path> 的 `--inline` 从 stdin 校验短时同步只读的关联返回；需要持久交接时使用共享 TASK v2 与 REPORT。dispatch 阶段任务目录只能有 TASK.md；return 阶段只能再有 REPORT.md。其他文件或目录使校验失败。
 
-没有准确日志地址就不创建定位文件，缺失时正常通过；已有文件仅含非空绝对路径 path，须符合 <Path>{roots.references}/coordination/session-locator.schema.json</Path>。不扫描工具缓存、不读取外部历史，不认证 provider 身份、授权或完成。结构错误退出 1，参数错误退出 2。存量交接按原合同回收，归档用原完整性清单，不强制补新版字段。
+准确的会话日志路径可以写成 REPORT 的可选 `Session log` 行，不知道就省略。不扫描工具缓存、不读取外部历史，不认证 provider 身份、授权或完成。结构错误退出 1，参数错误退出 2。存量交接按原合同回收，归档用原完整性清单，不强制补新版字段。
 
 ## 交付与会话来源
 

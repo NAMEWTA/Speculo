@@ -245,11 +245,11 @@
     },
     {
       "source": ".release-prepare-1.0.24.mjs",
-      "target": ".release-prepare-1.0.24.mjs",
-      "action": "preserved",
+      "target": null,
+      "action": "retired",
       "sha256": "bb0b12401cc7da2de47614c2117cbe5050074da38accf76a872aef88f9b17132",
       "bytes": 4198,
-      "reason": "Repository support, package, licensing and release facts aligned with the current product."
+      "reason": "Retired one-off 1.0.24 release helper; no remaining product reference."
     },
     {
       "source": ".specdev-execution/apply.py",
@@ -8784,7 +8784,6 @@
     "template/references/coordination/report-template.md",
     "template/references/coordination/scripts/validate-dispatch.mjs",
     "template/references/coordination/session-files.md",
-    "template/references/coordination/session-locator.schema.json",
     "template/references/coordination/task-template.md",
     "template/references/handoff/domain-context.md",
     "template/references/handoff/handoff-contract.md",
@@ -8962,11 +8961,11 @@
   ],
   "summary": {
     "baseline_files": 1060,
-    "added": 472,
+    "added": 471,
     "actions": {
       "rewritten": 221,
-      "preserved": 113,
-      "retired": 168,
+      "preserved": 112,
+      "retired": 169,
       "merged": 2,
       "moved": 283,
       "moved-and-rewritten": 273
