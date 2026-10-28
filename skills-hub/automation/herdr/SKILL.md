@@ -220,18 +220,7 @@ herdr pane read <returned-pane-id> --source recent-unwrapped --lines 120
 
 ## Claude 与 Codex 的启动方式
 
-CLI 直接启动与 Herdr 托管启动是两条独立路线，不可混为一谈。选择 CLI 路线时直接调用原生 CLI，不要求 Herdr；选择 Herdr 路线时通过 `herdr agent start` 在已有 shell pane 中启动 Claude Code 或 Codex，Herdr 本身不是模型 CLI。以下保留具体启动方法；用户要求和 approved/required 的模型、工具、工作区与交互方式优先。
-
-### 原生 CLI 直接启动（不经 Herdr）
-
-在已经授权的目标工作目录中，交互式启动对应工具：
-
-```bash
-claude
-codex
-```
-
-这是两个独立示例，按当次选定工具运行一个，不是依次启动两个。非交互式任务应核对该 CLI 当前帮助中的输入/输出接口；不要把 `herdr agent prompt` 当成原生 CLI 子命令。此路线不要求 `HERDR_ENV=1`，也不创建 Herdr pane 或 agent 名字。
+通过 `herdr agent start` 在已有 shell pane 中启动 Claude Code 或 Codex。用户要求和 approved/required 的模型、工具、工作区与交互方式优先。
 
 ### Herdr 中要求 Claude Code 时
 
@@ -247,7 +236,7 @@ herdr agent start <name> --kind claude --pane <returned-pane-id>
 herdr agent start <name> --kind claude --pane <returned-pane-id> -- --dangerously-skip-permissions
 ```
 
-对应的原生命令是 `claude --dangerously-skip-permissions`。`--dangerously-skip-permissions` 必须放在 Herdr 的 `--` 之后，作为 Claude Code 原生参数传入，而不是 Herdr 选项。
+`--dangerously-skip-permissions` 必须放在 Herdr 的 `--` 之后，作为 Claude Code 原生参数传入，而不是 Herdr 选项。
 
 ### Herdr 中要求 Codex 时
 
@@ -263,15 +252,15 @@ herdr agent start <name> --kind codex --pane <returned-pane-id>
 herdr agent start <name> --kind codex --pane <returned-pane-id> -- --no-daemon --dangerously-bypass-approvals-and-sandbox
 ```
 
-对应的原生命令是 `codex --no-daemon --dangerously-bypass-approvals-and-sandbox`。这两个参数都在 Herdr 的 `--` 之后传给 Codex。`--no-daemon` 是用户历史示例中为避免切换账号后复用旧账号后台服务而采用的选项；它不是默认必需参数，不能据此声称当前所有 Codex CLI 都支持它或使用相同后台机制。先核对本机帮助与账号状态，不自动改变后台账户或重启服务；不支持时不猜替代参数，也不盲目重试。
+这两个参数都在 Herdr 的 `--` 之后传给 Codex。`--no-daemon` 是用户历史示例中为避免切换账号后复用旧账号后台服务而采用的选项；它不是默认必需参数，不能据此声称当前所有 Codex CLI 都支持它或使用相同后台机制。先核对本机帮助与账号状态，不自动改变后台账户或重启服务；不支持时不猜替代参数，也不盲目重试。
 
-### 两条路线的权限与 Herdr 后续协调
+### 权限与后续协调
 
 - 当前安装的 Herdr 与所选 CLI 帮助是实际语法权威。只读检查 `herdr agent start --help`、`claude --help` 或 `codex --help`；不运行裸 `herdr` 探测。
-- Herdr 路线启动前，目标 pane 必须停在交互 shell 提示符，原进程不会继续写入；不接管未知或用户前台会话。`agent start` 不创建、拆分或移动 pane。
+- 启动前，目标 pane 必须停在交互 shell 提示符，原进程不会继续写入；不接管未知或用户前台会话。`agent start` 不创建、拆分或移动 pane。
 - Herdr 的 `--kind` 选择对应可执行文件，`--` 后的原生参数原样透传；不是用 `herdr agent` 启动 Herdr 服务。参见 [Herdr 官方 agent automation](https://herdr.dev/docs/agent-automation/)，实际执行仍以本机帮助为准。
-- 两条路线都不自动附加跳过审批、禁用沙箱、信任仓库或改变后台账户的参数。权限由独立授权与宿主环境决定，选择 Herdr 不授予任何额外访问、登录、安装、启动服务或付费。
-- Herdr 启动后用 `herdr agent prompt <name> "..." --wait --timeout 120000` 下发任务，用 `herdr agent read <name> --source recent-unwrapped --lines 120` 读取结果；原生 CLI 路线使用该 CLI 自己的交互接口。
+- 不自动附加跳过审批、禁用沙箱、信任仓库或改变后台账户的参数。权限由独立授权与宿主环境决定，选择 Herdr 不授予任何额外访问、登录、安装、启动服务或付费。
+- Herdr 启动后用 `herdr agent prompt <name> "..." --wait --timeout 120000` 下发任务，用 `herdr agent read <name> --source recent-unwrapped --lines 120` 读取结果。
 - 返回 `agent_not_ready` 或 blocked 时，先用 `herdr agent read <name>` 查看准确界面（例如确认或信任对话框），所需新增授权交用户，不自动确认；从实际结果确认身份与就绪。
 - 按任务恢复需求选择即时返回或持久交接。Task worker 不默认再派 Agent；跨级委派必须由原 owner 明确能力、预算、权限与责任。
 
