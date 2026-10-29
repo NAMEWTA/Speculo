@@ -1,21 +1,15 @@
-# 完整课程教学政策
+# 教学表达政策
 
+<!-- portable:expression:start -->
 ## 深度与表达
 
-`expression_level=eli5|plain` 只控制词汇、句法、脚手架和类比；`coverage_depth=overview|standard|deep` 控制事实、机制、边界、例子和迁移的覆盖。ELI5 不是删减内容，类比必须紧跟失效边界和精确定义。
+`expression_level=eli5|plain` 控制词汇、句法、脚手架和类比；`coverage_depth=overview|standard|deep` 控制事实、机制、边界、例子和迁移的覆盖。ELI5 不删减内容，类比须紧跟精确定义与失效边界。
 
-## 时间与结构
+教学讲解（课程、问答后讲解、作业评审详解与主动探究）采用 ASD-STE100 Issue 9（2025-01-15，Simplified Technical English）写作原则。保留原语言：英文技术讲解按该标准写作，中文借鉴其清晰、简洁、术语一致原则；未经完整规则与受控词典核验，不宣称正式合规。本规则不改变问题、评分、产物数量或教学深度。
+<!-- portable:expression:end -->
 
-标准 Lesson 的 `estimated_minutes` 为 30–40（默认 35），由 orientation、解释、视觉/示例、暂停和总结等 `time_budget` 加总；不以字符数作为时长证据。章节次序可按主题变更，但每个 OBJ 至少有动机/宏观地图、直觉、术语/English term、机制、文本视觉和文字等价物、正例、反例/边界、变式迁移、误区、总结和来源。
+标准来源：[ASD-STE100 官方网站](https://www.asd-ste100.org/)。
 
-## 图文与来源
+## 完整课程
 
-ASCII、Markdown table、公式或可选外链图片可以组合使用；每个视觉必须有 caption、alt 和附近的完整文字等价物，外链失效不能阻塞理解。`sources.md` 和 Lesson source table 记录 URL、标题、定位、访问日期、claim 映射、可信度和不确定性；无法验证的内容明确标为 open/uncertain。
-
-Lesson 可以有非评分 pause/self-check，但不含 Q/A、答案、分数、verdict 或 mastered 字段。
-
-学习者苏格拉底批次只允许出现在 `Q-question` 拥有的 `inquiry/` 内。`G-goal` 的 `audience=mine` probes 写入 `goal/probes/`，不是 Lesson Q/A，且不占用 30–40 分钟 Lesson 预算。每课最多 10 问。`L-lesson` 仍不得写 Q/A。
-
-## 主动发现与现实检验
-
-读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`；生产相关主题按需读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。将重点发现作为讲解案例，解释遗漏原因和影响，推进到可观察证据与验证方法；不制造盲区，不自动转入 Q/H/R。
+完整课程的预算、覆盖、图文与来源按调用方的课程合同核对；不以字符数估算时长。

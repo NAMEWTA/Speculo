@@ -2,7 +2,7 @@
 
 本文件只在外部 `/goal` 执行 Goal-Plan，或 G-goal `plan` / `replan` 需要派只读库存员 / A 子代理时读取。不引入 SpecDev 的 Ticket / worktree / Evidence 协议。并发单位是「一个 Lesson 文件」或「一份 probe 文件」。
 
-抄 SpecDev `P-goal-plan` 的 lead-directed：主会话是唯一 Lead。Learning 不把 Lead 写进 Ticket；Lead 是当前 `/goal`（或 plan）主会话。
+采用 lead-directed：当前 `/goal` 或 plan 主会话是唯一 Lead，不另建 Ticket。
 
 ## 角色与写集
 
@@ -36,17 +36,12 @@ L 返回至少：`lesson_id`、写入路径、是否满足 L 合同章节、声�
 
 ## 无宿主 team 时的顺序回退
 
-宿主没有 任务执行者 / agent team：Lead 按相同派单包顺序执行，合同不变。禁止因为不能并行就退回 `L → mine → L → mine` 交错。阶段 T 结束之前禁止任何 miner 启动。
+宿主没有 agent team 时，Lead 按相同派单包串行执行 teach-then-mine：本单元阶段 T 完成后才启动 miner。
 
 ## 计划会话
 
 G-goal `plan` / `replan` 允许 Lead 派只读库存员，以及在没有 `course.md` 时派 A 子代理。Lead 自己写 `goal/*` 骨架，并按 mine-unit 规则切单元。计划会话仍然禁止写 `lessons/` 与 `goal/probes/`。
 
-## HARD NO
+## 阶段门
 
-- 不在阶段 T 完成前启动 miner
-- 不交错 L 与 mine
-- miner 不得写 `lessons/` 或 matrix
-- miner 不得选择处置
-- 同一 mine unit 不得超过 15 节
-- 宿主没有 team 时，不得借机退回旧交错循环
+有无 team 均遵循 teach-then-mine（T → M → D）；本单元全部 L 写成前不启动 miner。mine unit 上限与超限停止规则见上方已读取的 mine-unit 合同。

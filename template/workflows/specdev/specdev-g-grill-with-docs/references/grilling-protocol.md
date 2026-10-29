@@ -22,7 +22,7 @@
 
 - 设计树当前状态写入 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`，结构遵循 `<Path>{roots.workflows}/specdev/common/schemas/design-tree.schema.json</Path>`。
 - 每个已回答、延后或拒绝的节点追加一条 `<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>` 记录，并把 `LOG-###` 写回节点的 `log_ref`。
-- 每轮开始前原子更新 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
+- 每轮开始前原子递增 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
 - LOG、设计树及已确认的 CONTEXT/ADR 同步只用于恢复和领域建模，不构成实现授权。只有 frontier 为空且用户确认共识后才路由下游 work。
 
 ## 生产风险问题

@@ -101,22 +101,11 @@ Blocked-stop:
 
 算完成：stop-rules 的「完成即停」全部满足。
 
-不算完成：
-
-- 课写完
-- 文件巡览结束
-- 模型表示「已经理解」
-- 主观百分比
-- 只生成了 Goal-Plan 本身
+仅生成计划或讲义、巡览文件、模型自述理解或主观百分比均不算完成。
 
 ### Non-goals
 
-- 不自动激活 `H-homework`、`R-review`、`C-consolidate`、`A-archive`
-- 不写 mastered
-- 不复活 `Q-quiz`
-- 不使用 `Q-question` 的 `inquiry/` Response 协议
-- 不为琐碎 helper、生成代码、测试夹具单独开课
-- 不在本计划里预写探针题目或深化讲义
+仅编译课程计划，不预写探针或深化讲义。执行写集与后续 Work 边界见 §7 / §8；琐碎 helper、生成代码、测试夹具的覆盖归属见 §2。
 
 ### Authoritative Inputs
 
@@ -212,16 +201,7 @@ Extended Abstract 不是完成条件。
 2. **阶段 M**：为每课派一个 miner。跟随 `<Path>{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md</Path>` 且 `audience=mine`，按 `<Path>{roots.workflows}/learning/learning-g-goal/assets/probe-template.md</Path>` 写入 `goal/probes/GP-<lesson>-b01.md`（Q1–Q5）；若仍有真实矩阵缺口且预算未满 10，再开 `b02.md`（Q6–Q10）。审问对象是已写成的 Lesson 与源码，不是学习者。miner 不得写 `lessons/` 或 matrix。
 3. **阶段 D**：仅 Lead 根据各课缺口表与 `split-proposal` 处置：`re-dispatch-L` | `split-lesson` | `defer(reason)`。Lead 提交矩阵 / progress。满 10 问后禁止 `mine-more`。
 
-禁止：
-
-- 跟随 `Q-question` 的 `inquiry/` Response 协议
-- 自动激活 H / R / C / A-archive
-- 把 mine 写成学习者问答课
-- 在计划会话里写 `lessons/` 或 `goal/probes/`
-- 在 Goal-Plan 里预写探针题目或深化讲义
-- 阶段 T 完成前启动 miner
-- `L → mine → L → mine` 交错
-- 同一 `lesson_id` 第 11 问，或 `b03`
+执行前按 §7 核对角色写集，按 §8 核对禁止事项。
 
 ---
 
@@ -237,7 +217,7 @@ Extended Abstract 不是完成条件。
 | G3 | 本单元新课或改写课有对应 probe，且每课 Q 数 ≤10 | `goal/probes/GP-*-b0N.md` |
 | G-final | 范围内格子全部闭合且已验收 | 矩阵无 uncovered；`goal/verify.md` 已写 |
 
-Overall Definition of Done = G-final。课写完不是 DoD。阶段 T 结束之前禁止 miner。阶段 M 结束之前，Lead 不得把「课写完」写成 Goal 完成。
+Overall Definition of Done = G-final；阶段 T 或 M 完成均不能替代最终验收。
 
 ---
 
@@ -269,13 +249,11 @@ Overall Definition of Done = G-final。课写完不是 DoD。阶段 T 结束之�
 - 不把 Extended Abstract 当成完成条件
 - 不把计划会话里的「已批准 / 允许」当成执行授权
 - 不预写探针题目，不在 Goal-Plan 里写深化讲义
-- 不在阶段 T 完成前启动 miner
-- 不交错 L 与 mine
+- 遵循 teach-then-mine；阶段 T 完成前不启动 miner，不交错 L 与 mine
 - 同一 `lesson_id` 第 11 问非法；满 10 问禁止 mine-more
 - miner 不得选择处置，只填表
 - `split-lesson` 不得调用 `C-consolidate` 或 `relocate-learning.mjs`
-- 同一 mine unit 不得超过 15 节；不得把 16+ 节一次扇出
-- 宿主没有 team 时，不得借机退回旧交错循环
+- 同一 mine unit 不得超过 15 节；无 team 仍按相同派单包串行执行 teach-then-mine
 
 ---
 

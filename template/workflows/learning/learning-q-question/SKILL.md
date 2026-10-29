@@ -35,6 +35,8 @@ tutor 保持先作答后讲解，一批默认 5 题，用户指定正整数 n �
 3. 已有 Change 时只取对应 course/OBJ/Lesson/baseline/notes 和 inquiry 索引相关项；问题地图首次使用才创建，不回填旧历史。恢复已关闭记录只读，后续建立新批次或探索。
 4. 按上方规则选模式并只加载对应分支。`mode=tutor` 读取 `<Path>{roots.workflows}/learning/learning-q-question/references/tutor-mode.md</Path>`；`mode=explore` 读取 `<Path>{roots.workflows}/learning/learning-q-question/references/exploration-mode.md</Path>`。不要同时执行两个分支。
 
+生成 Teaching、Inquiry Lesson 或 explore 讲解前，读取 `<Path>{roots.workflows}/learning/common/rules/teaching-policy.md</Path>`，应用教学表达规则；出题与判定协议仍按所选分支。
+
 ## 工件与完成边界
 
 - tutor 使用 inquiry/IQ-*.md：Response: pending → ready → closed，冻结原 Q/A 后追加 Teaching 与 Inquiry Lesson；完整协议及 validate-inquiry 命令在 tutor 分支。

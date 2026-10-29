@@ -4,7 +4,7 @@
 
 `audience=mine` 的 probes 只写入 `G-goal` 拥有的 `goal/probes/`。审问对象是已写 Lesson 与源码，不是学习者；禁止 `inquiry/`、`Response:`、`Submission:`、verdict、mastered。tutor 批次仍只写 `inquiry/`。
 
-先读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`，将提问动作与内容覆盖分开；工程主题按需读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。本文件的作答协议只属于 tutor；explore 不用空 A 或 Response，也不借 teaching_method 改协议。
+先读取 `<Path>{roots.workflows}/learning/common/rules/inquiry-depth-policy.md</Path>`，将提问动作与内容覆盖分开；工程主题按需读取 `<Path>{roots.workflows}/learning/common/rules/production-inquiry.md</Path>`。本文件的作答协议只属于 tutor；explore 不用空 A 或 Response，也不借 teaching_method 改协议。生成教学讲解前读取 `<Path>{roots.workflows}/learning/common/rules/teaching-policy.md</Path>`。
 
 <!-- portable:recipes:start -->
 ## 配方
@@ -44,12 +44,12 @@
 `## Inquiry Lesson` 把本批收成一节短课：地图、机制、边界、稳定误区、下一步激活钩子。
 每一份 Teaching 结尾保留 keep-alive 钩子（新证据产生的下一批种子、缺失目标或可选补课/作业/复习），同时说明本轮停止原因。不得把本批说成知识终点，也不得为了续问反复询问已答内容或在用户要求结束后继续。钩子只是建议，不自动执行后续。
 
-重要的未覆盖知识应说明为什么容易遗漏、忽略的影响和验证方法；教学判断不是作业评分或掌握认证。真新手先用降级探针与中性脚手架；连续三题卡住仍无进展时必须调整教法，但不必等到三题才提供帮助。
+重要的未覆盖知识应说明为什么容易遗漏、忽略的影响和验证方法；教学判断不是作业评分或掌握认证。真新手先用降级探针与中性脚手架；连续三题卡住仍无进展时必须提供脚手架并调整教法，但不必等到三题才提供帮助。
 
 <!-- portable:teaching:end -->
 
 ## 新手逃逸与 Change
 
-baseline 显示真新手或主题元素交互很高时，先降难度探针，或建议激活 `L-lesson` 再建模型。不强制 question-first。卡住连续三题仍无进展时给脚手架，而不是直接灌完整答案进 Q 文本。
+baseline 显示真新手或主题元素交互很高时，先用降级探针、中性脚手架或建议激活 `L-lesson`，不强制 question-first，也不把完整答案灌进 Q 文本；三题调整门见上方讲解规则。
 
 无可用 Change 且用户已激活本 Work 时，允许创建 lightweight inquiry Change；不得因缺少 A 产物而拒绝开问，也不得复活已退役的 `Q-quiz`。

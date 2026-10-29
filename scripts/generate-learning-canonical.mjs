@@ -8,7 +8,7 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const workflow = 'template/workflows/learning';
 const shared = (name, block) => ({ path: `${workflow}/common/rules/${name}.md`, block });
 const runtime = (block) => shared('portable-learning-runtime', block);
-const core = [shared('inquiry-depth-policy', 'depth'), shared('production-inquiry', 'production')];
+const core = [shared('teaching-policy', 'expression'), shared('inquiry-depth-policy', 'depth'), shared('production-inquiry', 'production')];
 export const documents = [
   {
     capability: 'lesson', title: '完整课程与主动盲区发现',

@@ -70,7 +70,7 @@
 
 - 设计树当前状态写入 `specdev/changes/{change}/design-tree.json`，结构遵循 下方 `<design-tree-schema>` 标签。
 - 每个已回答、延后或拒绝的节点追加一条 `specdev/changes/{change}/LOG.md` 记录，并把 `LOG-###` 写回节点的 `log_ref`。
-- 每轮开始前原子更新 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
+- 每轮开始前原子递增 `round`，重读设计树后计算 frontier：`status=open` 且全部 `depends_on` 节点为 `answered` 的节点集合。
 - LOG、设计树及已确认的 CONTEXT/ADR 同步只用于恢复和领域建模，不构成实现授权。只有 frontier 为空且用户确认共识后才路由下游 work。
 
 ## 生产风险问题
@@ -264,6 +264,8 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 来源快照 | `specdev/changes/{change}/source.md` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
 | 分诊 | `specdev/changes/{change}/triage.md` | 请求是否成立、核验结果、实施简报、风险、缺失输入、下一 Work 和打标回执 | 开发进度、实施授权或交付状态 |
 | 交付 | `specdev/changes/{change}/delivery.md` | 来源 Issue 的 external_action 与 publish 账本指针 | 重复发布进度、本地完成判定或实施简报 |
+| PR 交付 | specdev/changes/{change}/pull-requests/PR-###.md | Delivery 拥有的 PR 交付回执 | 复用 external_action、publish_action 或 capture |
+| 独立远程操作 | specdev/delivery-runs/DEL-###.md | Delivery 拥有的独立操作及回执 | 复用 external_action、publish_action 或 capture |
 | 发布账本 | `specdev/changes/{change}/publish.md` | 票级 GitHub 投影的编号、标签、marker、state、publish_action 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
 | 捕获账本 | `specdev/capture.md` | 尚未成 Change 的记事项、GitHub inbox 编号、标签、marker 和 inbox 计数；缺失合法 | Change、Ticket、Evidence 或已完成票的发布投影 |
 | 诊断 | `specdev/changes/{change}/diagnosis.md` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
@@ -280,10 +282,13 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Implementation Orchestration Evidence | `specdev/changes/{change}/evidence/implementation-orchestration.md` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `specdev/changes/{change}/evidence/T-NN.md` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
 | 学习图解 | `specdev/changes/{change}/learning/index.md` 与 `specdev/changes/{change}/learning/{number}_{topic}.md` | L 负责需求参考、项目代码、已有 change 或外部资料的讲解，区分事实、观点与推断；索引按序号持续追加，未指定 change 时新建学习载体 | 产品决定、架构决定、实现授权、用户掌握结论或 Learning workflow 知识 |
+| 独立复盘 | specdev/retro/{retro}/RETRO.md | R-retro 拥有复盘及原文来源；A 拥有移动/封存 | 永久知识或 change 完成证据 |
+| 复盘升级计划 | specdev/retro/{upgrade}/PLAN.md | R-retro 拥有跨报告筛选、具体升级方案与执行依据；A 拥有已批准的 ADR/context 写入及移动/封存 | 永久知识或 change 完成证据 |
 | 代码审查 | `specdev/changes/{change}/reviews/CR-###.md` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | 项目设计基线 | specdev/design/DESIGN.md | 跨 change 的语义 token、组件/交互规范、版本及来源；A 唯一正式写入 | 单次页面设计或未批准提案 |
 | Change 设计合同 | specdev/changes/{change}/DESIGN.md | 本 change 已批准的页面、状态、视觉/交互、基线版本和例外；P 拥有 | 改写永久基线或替代 Spec/ADR |
 | UI 设计包 | `specdev/changes/{change}/prototypes/{design-id}/design-system.md`、`specdev/changes/{change}/prototypes/{design-id}/comparison/` 与 `specdev/changes/{change}/prototypes/{design-id}/final/` | 项目 UI 检测、模板组合、集中批准证据、可运行 HTML/CSS/JS 源码与浏览器证据 | 生产 UI 实现或替用户确认高影响偏好 |
+| 逻辑原型 | specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md | P-prototype 拥有逻辑模型与浏览器证据；specdev/changes/{change}/prototypes/LOGIC-NNN/index.html 是可运行原型，ready 时 hash 与记录一致 | 生产实现或 UI 设计权威 |
 | Stakeholder 问卷 | `specdev/changes/{change}/questionnaires/{slug}.md` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `specdev/changes/{change}/wayfinder-map.md` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `specdev/changes/{change}/investigation/{investigation-id}.md` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
@@ -291,6 +296,8 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 架构审查 | `specdev/changes/{change}/architecture-review.md` | 结构性候选、code-judo 机会、证据、选择和访谈状态 | 未经用户选择的执行契约 |
 
 UI 设计包中的 `{design-id}` 由 P-prototype 分配为当前 change 内最小未占用的 `UI-NNN`；design-system.md 保留文件名但只拥有源码与证据，change DESIGN 是当前设计合同；comparison 与 final 不建立第二套规则。UI 分支按 下方 `<design-contract>` 标签 处理继承、确认、失效与下游硬引用。
+
+复盘的 `retro`/`upgrade` 使用日期主题 ID；保存合同见 下方 `<ref-specdev-r-retro-references-records>` 标签。
 
 Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `specdev/context/` 与 `specdev/adr/`；ADR/context 的正式写入只有 A 在适用证据、价值评估和具体授权通过后执行；独立维护无需虚构 change，research/非标准 store 仍按实际声明及原 owner 判断，不能自动纳管；design 的首次批准意图发布与归档提升均只经 A 设计网关，按 design-contract 执行。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
@@ -311,7 +318,7 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 
 `specdev/changes/{change}/source.md` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。GitHub 上由 publish 投影出的 Issue 不是开发权威；发布计数以 `specdev/changes/{change}/publish.md` 为准。GitHub 上由 capture 记下的 inbox Issue 也不是开发权威；inbox 计数以 `specdev/capture.md` 为准，缺失该文件视为空 inbox。
 
-代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 下方 `<deviation-control>` 标签 退回相应工件修订。
+代码和运行证据可以证明计划尚未实现或已过时，不能静默改写用户目标或已接受契约；按 下方 `<deviation-control>` 标签 退回相应工件修订。ADR 记录采纳与真实备选，未确认解释留在 LOG/设计树，未完成计划不进入当前事实摘要；项目文档职责见 下方 `<ref-common-rules-documentation-standard>` 标签。
 
 ## 3. 来源追踪
 
@@ -325,6 +332,8 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 - `DIAG-###`。
 
 来源追踪解释“为什么这样决定”，不要求为普通描述逐句加标签。
+
+source 冻结后保持不变；T 将后续读取写入 specdev/changes/{change}/sources/SRC-###.md，记录 replaces、固定 SHA/hash、完整性和原 locator，由 triage 正文选择有效快照。新远程事实不自动成为已接受 Spec。
 
 ## 4. 冲突处理
 
@@ -346,18 +355,9 @@ W 的 `specdev/changes/{change}/initiative.json` 只拥有候选 change 的边�
 
 父 `specdev/changes/{change}/tickets-map.md` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 
-## 新增工件 owner
-
-- Delivery：specdev/changes/{change}/pull-requests/PR-###.md 拥有 PR 交付回执；specdev/delivery-runs/DEL-###.md 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
-- R-retro：specdev/retro/{retro}/RETRO.md 拥有独立复盘及原文来源；specdev/retro/{upgrade}/PLAN.md 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 下方 `<ref-specdev-r-retro-references-records>` 标签 保存，不成为永久知识或 change 完成证据。A 拥有已批准的 ADR/context 写入及移动/封存。
-- P：specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
-- 来源更新：specdev/changes/{change}/source.md 冻结后保持不变。T 将后续读取写入 specdev/changes/{change}/sources/SRC-###.md，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
-
 ## 专业分支的证据归属
 
 R.performance 的测量卡、原始样本引用和优化候选仍由 architecture-review 拥有，不直接修改生产代码。I.documentation 修改获批项目文档并在原本票或 Direct Spec Evidence 保存验证；不另造文档状态。D.evidence-triage 在 diagnosis 的现象/事件节记录观察、未知与下一检查；它不是已经接受的根因或修复合同。具体记录见 下方 `<ref-common-rules-engineering-evidence>` 标签。
-
-代码、运行证据可以证明计划尚未实现或已过时，但不能改写用户目标。ADR 记录采纳与真实备选；未确认解释属于 LOG/设计树，未完成计划不能进入当前事实摘要。实际文档职责遵守 下方 `<ref-common-rules-documentation-standard>` 标签。
 
 </artifact-contract>
 
@@ -1987,9 +1987,7 @@ token 引用必须可解析且无循环；页面/规则/来源 ID 唯一。正�
 
 同一输入、同一方法、同一失败且没有新证据时，不通过更换 Agent、清空 attempts 或重复问用户来制造进展。恢复既有 Goal/Ticket 时沿用原失败记录，由 Lead 说明新增证据或方法变化后再派发。远程对账与 marker 去重由 “请求分诊阶段” 路由到原远程协议；进入远程分支后再读取，不在普通错误审查中加载传输实现。
 
-取消只说明发出了取消请求，不保证远端副作用或子进程已经停止。传播 signal 后仍需等待属于本操作的完成信号；清理失败和业务失败分别报告，不能用后者隐藏前者。
-
-取消必须说明停止接收、停止执行和外部工作终止各自的时点；无法确认终止时保留未知状态和后续核实责任。
+取消请求不证明远端副作用或子进程已停止。分别说明停止接收、停止执行与外部工作终止的时点，传播 signal 后等待本操作的完成信号；未确认终止时保留未知状态和后续核实责任；清理失败和业务失败分别报告，不能用后者隐藏前者。
 
 ## 面向用户的结果
 
@@ -2223,42 +2221,6 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 
 </ref-common-rules-execution-policy>
 
-<ref-common-rules-skill-invocation>
-
-# 按需 Skill 与必需方法
-
-用于 T 规划、P 调度与 I 执行。Skill 是知识和方法，不等于一个 Agent。主 Agent 按当前任务读取适用内容；不要求事前枚举、哈希全部 Skill，也不要求为了普通发现创建配置或暂停 Ticket。
-
-## 先区分义务与知识
-
-- 用户、项目安全/权限规则或验收合同指定的方法是**必需方法**。在原 Ticket 的 `skill_bindings` 固定真实 `id`、Path `path`、`sha256`、`phase`、`operation`、`inputs`、`outputs`、`required: true` 和 `on_failure: block-ticket`。相关参考按触发条件固定 `path/sha256/when`。不可把已知义务重新标记可选来通过完成门。
-- 普通可选 Skill 是执行中可发现的知识。无需预绑定；如需要导航，可只写 `id/path/required: false`。可记录条件、摘要和实际使用，但旧摘要或可选源消失不阻塞无关工作。可选项不能自行引入完成硬门。
-- `skill_scan` 只在实际研究有价值时记录，不是每票 Ready 必填。Map 的项目 Skill 矩阵可省略，是导航而非 allowlist；仅 Purpose 以 `required:` 或 `必需：` 开头的条目表达上游必需方法，须在相关 Ready Ticket 保持 required 绑定。Ticket 的已知必需方法不因 Map 省略而失效。
-
-## 发现与使用
-
-先按项目指令和当前 scope、路径、技术域、风险定位相关入口。读取命中 Skill 和当前分支参考；执行中发现新的可选方法可直接使用，并把实际方法与相关产物记录到原 Evidence，不先修改 Map 或重新申请整个计划。
-
-使用前核对路径、真实源和授权：项目相对 Path，不越界软链接、不以 node_modules/插件缓存充当项目维护源，不假装拥有不存在的宿主能力。仓库外技能需已有源域授权；可选提示的结构通过不是源路径或实际调用的认证。
-
-只有新方法改变权限、范围、外部行为、依赖或验收时，按 deviation-control 重新确认受影响部分。必需方法缺失、ID 不符或源/相关参考漂移时，暂停对应 Ticket 和依赖闭包，由 Lead 检查变更并更新原绑定；不暂停独立分支，不自动接受最新文件，不改写历史已完成 Evidence。
-
-## 完成证据
-
-实际使用技能步骤或宿主调用，保留输入定位、操作、输出与可回读工具证据。“读过”、展示 `@skill` 或复制入口不是完成。
-
-存在必需绑定时，在本票 `specdev/changes/{change}/evidence/T-NN.md` 的 `## Skill Execution Records` 后记录 JSON 数组。每个必需项须有唯一 `id/phase/operation/sha256/status: passed/evidence`，其中 evidence 为非空定位数组。可选方法只记录实际有助验收的信息，无需制造未使用条目。校验器检查合同和摘要，Lead 仍负责实际过程与 AC 验证。
-
-绑定示例（需替换为真实项目源）：
-
-```json
-{"id":"project-test","path":".agents/skills/project-test/SKILL.md","sha256":"<真实64位摘要>","phase":"verify","operation":"run-regression","inputs":["当前Ticket与定向diff"],"outputs":["验收Evidence"],"required":true,"on_failure":"block-ticket"}
-```
-
-SpecDev 自带 Work 方法按各自入口读取，不伪装为项目 Skill。数组对象使用单行 JSON。
-
-</ref-common-rules-skill-invocation>
-
 <ref-specdev-r-retro-references-records>
 
 # 独立 RETRO 工件合同
@@ -2313,42 +2275,6 @@ list 返回 reports 和 issues。坏报告导致非零退出并列出具体问�
 
 </ref-specdev-r-retro-references-records>
 
-<ref-common-rules-engineering-evidence>
-
-# 专业分支的工程证据
-
-本规则只约束新运行的 R.performance、I.documentation 和 D.evidence-triage；既有工件与主持久化 schema 不升级。普通 Work 不要求额外记录。记录是某次 checkpoint 的观察，不拥有 Ticket/Goal/change 状态、授权或恢复锁；不能用它代替原 Evidence、诊断和验收。
-
-## 写入原 owner
-
-在原工件正文添加 `Engineering Evidence` 小节及一个标记为 `json specdev-engineering-evidence` 的代码围栏，里面是一个 JSON 对象。performance 位于 specdev/changes/{change}/architecture-review.md；incident 位于 specdev/changes/{change}/diagnosis.md；documentation 位于原本票 specdev/changes/{change}/evidence/T-NN.md 或原 specdev/changes/{change}/evidence/direct-spec.md。禁止写到另一模式的 owner，旧归档与旧完成证据不回填。
-
-公共字段：`version: 1`、`kind`、实际源码/输入的 `checkpoint`、非空 `evidence` 字符串数组。指针使用原 Path/来源定位约定，不写机器绝对路径、密钥或未脱敏数据。记录每次真实观察，恢复时追加新 checkpoint 的证据；不能更改旧事实来制造成功。
-
-## Performance
-
-`operation` 是用户操作，`outcome` 为 baseline、improved、no-gain 或 inconclusive，`uncertainty` 解释测量局限。没有样本时只能 inconclusive。baseline/candidate 各含实际 `checkpoint`、`entrypoint`、`environment`、`clock`、`workload`、64 位 `workload_digest`、`unit`（ms/bytes/ops/s）、`direction`（lower/higher）、`cache`（cold/warm/not-applicable）、`excluded_costs` 字符串数组和有限非负 `samples` 数组。
-
-普通 R 调查只记录 baseline 或 inconclusive；improved/no-gain 需已有可比较的 baseline 与 candidate。比较除源码 checkpoint 外的工作量、入口、环境、时钟、单位、方向、缓存与排除成本必须一致。improved 还需 `behavior_verification: passed`，并且样本算术均值沿目标方向改善。满足这些必要条件仍不证明超过噪声、具备统计显著性、内存可接受或测量真实，Lead 必须回读数据与行为证据。
-
-## Documentation
-
-记录 `owner_paths`（真实源指针数组）、`outcome`（verified/partial/blocked）、`visible_behavior_changed` 布尔值、`behavior_verification`（passed/failed/not-run/not-applicable），以及非空 `claims` 数组。每项 claim 有 subject、method（command/source/manual）、state（verified/unverified）和 evidence。未验证项必须写 reason；verified 的 command 项还必须有 command、`executed: true`、`exit_code: 0` 和非空 output 原始结果摘要数组。
-
-总体 verified 要求所有声明 verified；可见行为改变时必须有 passed 的行为证据。partial/blocked 是诚实的阶段结果，不授予 Ticket done。工具仍不能认证 Agent 自报，Lead 继续核对真实命令、输出和来源。
-
-## Incident
-
-记录非空 facts、unknowns、next_checks 字符串数组；`feedback_loop_ready: false` 与 `root_cause_confirmed: false` 必须明确。这是事件证据截面，不是根因结论。正式 diagnosis 的红灯、假设和状态仍由原诊断规则验证；未来获得红灯后保留原事件观察，转入正常 D 流程，不把旧观察改写成当时已确认。
-
-## 验证入口
-
-新分支分别执行现有校验器的 `--engineering performance`、`--engineering documentation` 或 `--stage diagnosis --engineering incident`，输入当前 change。可与原 `--repo` 和适用 `--stage` 结合。没有标记记录的历史工件继续按原规则验证；显式专业模式缺少记录会失败，已有标记记录在普通 change 校验中也会检查。
-
-代码块语法是 `json specdev-engineering-evidence`，不是新文件类型。校验器只读，无论成功、失败或不完整都不写状态、不创建缺失工件、不执行命令、不获取授权。源记录、结构校验、真实工具执行和宿主观察是不同证据，报告时分别说明。
-
-</ref-common-rules-engineering-evidence>
-
 <ref-common-rules-documentation-standard>
 
 # 开发文档的归属、保真与验证
@@ -2388,6 +2314,78 @@ Work 入口说明如何执行；common 说明跨 Work 判断；项目源码、�
 方法参考：<Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/.agents/skills/dsh-prose-standard/SKILL.md</Url> 与 <Url>https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/AGENTS.md</Url>。
 
 </ref-common-rules-documentation-standard>
+
+<ref-common-rules-skill-invocation>
+
+# 按需 Skill 与必需方法
+
+用于 T 规划、P 调度与 I 执行。Skill 是知识和方法，不等于一个 Agent。主 Agent 按当前任务读取适用内容；不要求事前枚举、哈希全部 Skill，也不要求为了普通发现创建配置或暂停 Ticket。
+
+## 先区分义务与知识
+
+- 用户、项目安全/权限规则或验收合同指定的方法是**必需方法**。在原 Ticket 的 `skill_bindings` 固定真实 `id`、Path `path`、`sha256`、`phase`、`operation`、`inputs`、`outputs`、`required: true` 和 `on_failure: block-ticket`。相关参考按触发条件固定 `path/sha256/when`。不可把已知义务重新标记可选来通过完成门。
+- 普通可选 Skill 是执行中可发现的知识。无需预绑定；如需要导航，可只写 `id/path/required: false`。可记录条件、摘要和实际使用，但旧摘要或可选源消失不阻塞无关工作。可选项不能自行引入完成硬门。
+- `skill_scan` 只在实际研究有价值时记录，不是每票 Ready 必填。Map 的项目 Skill 矩阵可省略，是导航而非 allowlist；仅 Purpose 以 `required:` 或 `必需：` 开头的条目表达上游必需方法，须在相关 Ready Ticket 保持 required 绑定。Ticket 的已知必需方法不因 Map 省略而失效。
+
+## 发现与使用
+
+先按项目指令和当前 scope、路径、技术域、风险定位相关入口。读取命中 Skill 和当前分支参考；执行中发现新的可选方法可直接使用，并把实际方法与相关产物记录到原 Evidence，不先修改 Map 或重新申请整个计划。
+
+使用前核对路径、真实源和授权：项目相对 Path，不越界软链接、不以 node_modules/插件缓存充当项目维护源，不假装拥有不存在的宿主能力。仓库外技能需已有源域授权；可选提示的结构通过不是源路径或实际调用的认证。
+
+只有新方法改变权限、范围、外部行为、依赖或验收时，按 deviation-control 重新确认受影响部分。必需方法缺失、ID 不符或源/相关参考漂移时，暂停对应 Ticket 和依赖闭包，由 Lead 检查变更并更新原绑定；不暂停独立分支，不自动接受最新文件，不改写历史已完成 Evidence。
+
+## 完成证据
+
+实际使用技能步骤或宿主调用，保留输入定位、操作、输出与可回读工具证据。“读过”、展示 `@skill` 或复制入口不是完成。
+
+存在必需绑定时，在本票 `specdev/changes/{change}/evidence/T-NN.md` 的 `## Skill Execution Records` 后记录 JSON 数组。每个必需项须有唯一 `id/phase/operation/sha256/status: passed/evidence`，其中 evidence 为非空定位数组。可选方法只记录实际有助验收的信息，无需制造未使用条目。校验器检查合同和摘要，Lead 仍负责实际过程与 AC 验证。
+
+绑定示例（需替换为真实项目源）：
+
+```json
+{"id":"project-test","path":".agents/skills/project-test/SKILL.md","sha256":"<真实64位摘要>","phase":"verify","operation":"run-regression","inputs":["当前Ticket与定向diff"],"outputs":["验收Evidence"],"required":true,"on_failure":"block-ticket"}
+```
+
+SpecDev 自带 Work 方法按各自入口读取，不伪装为项目 Skill。数组对象使用单行 JSON。
+
+</ref-common-rules-skill-invocation>
+
+<ref-common-rules-engineering-evidence>
+
+# 专业分支的工程证据
+
+本规则只约束新运行的 R.performance、I.documentation 和 D.evidence-triage；既有工件与主持久化 schema 不升级。普通 Work 不要求额外记录。记录是某次 checkpoint 的观察，不拥有 Ticket/Goal/change 状态、授权或恢复锁；不能用它代替原 Evidence、诊断和验收。
+
+## 写入原 owner
+
+在原工件正文添加 `Engineering Evidence` 小节及一个标记为 `json specdev-engineering-evidence` 的代码围栏，里面是一个 JSON 对象。performance 位于 specdev/changes/{change}/architecture-review.md；incident 位于 specdev/changes/{change}/diagnosis.md；documentation 位于原本票 specdev/changes/{change}/evidence/T-NN.md 或原 specdev/changes/{change}/evidence/direct-spec.md。禁止写到另一模式的 owner，旧归档与旧完成证据不回填。
+
+公共字段：`version: 1`、`kind`、实际源码/输入的 `checkpoint`、非空 `evidence` 字符串数组。指针使用原 Path/来源定位约定，不写机器绝对路径、密钥或未脱敏数据。记录每次真实观察，恢复时追加新 checkpoint 的证据；不能更改旧事实来制造成功。
+
+## Performance
+
+`operation` 是用户操作，`outcome` 为 baseline、improved、no-gain 或 inconclusive，`uncertainty` 解释测量局限。没有样本时只能 inconclusive。baseline/candidate 各含实际 `checkpoint`、`entrypoint`、`environment`、`clock`、`workload`、64 位 `workload_digest`、`unit`（ms/bytes/ops/s）、`direction`（lower/higher）、`cache`（cold/warm/not-applicable）、`excluded_costs` 字符串数组和有限非负 `samples` 数组。
+
+普通 R 调查只记录 baseline 或 inconclusive；improved/no-gain 需已有可比较的 baseline 与 candidate。比较除源码 checkpoint 外的工作量、入口、环境、时钟、单位、方向、缓存与排除成本必须一致。improved 还需 `behavior_verification: passed`，并且样本算术均值沿目标方向改善。满足这些必要条件仍不证明超过噪声、具备统计显著性、内存可接受或测量真实，Lead 必须回读数据与行为证据。
+
+## Documentation
+
+记录 `owner_paths`（真实源指针数组）、`outcome`（verified/partial/blocked）、`visible_behavior_changed` 布尔值、`behavior_verification`（passed/failed/not-run/not-applicable），以及非空 `claims` 数组。每项 claim 有 subject、method（command/source/manual）、state（verified/unverified）和 evidence。未验证项必须写 reason；verified 的 command 项还必须有 command、`executed: true`、`exit_code: 0` 和非空 output 原始结果摘要数组。
+
+总体 verified 要求所有声明 verified；可见行为改变时必须有 passed 的行为证据。partial/blocked 是诚实的阶段结果，不授予 Ticket done。工具仍不能认证 Agent 自报，Lead 继续核对真实命令、输出和来源。
+
+## Incident
+
+记录非空 facts、unknowns、next_checks 字符串数组；`feedback_loop_ready: false` 与 `root_cause_confirmed: false` 必须明确。这是事件证据截面，不是根因结论。正式 diagnosis 的红灯、假设和状态仍由原诊断规则验证；未来获得红灯后保留原事件观察，转入正常 D 流程，不把旧观察改写成当时已确认。
+
+## 验证入口
+
+新分支分别执行现有校验器的 `--engineering performance`、`--engineering documentation` 或 `--stage diagnosis --engineering incident`，输入当前 change。可与原 `--repo` 和适用 `--stage` 结合。没有标记记录的历史工件继续按原规则验证；显式专业模式缺少记录会失败，已有标记记录在普通 change 校验中也会检查。
+
+代码块语法是 `json specdev-engineering-evidence`，不是新文件类型。校验器只读，无论成功、失败或不完整都不写状态、不创建缺失工件、不执行命令、不获取授权。源记录、结构校验、真实工具执行和宿主观察是不同证据，报告时分别说明。
+
+</ref-common-rules-engineering-evidence>
 
 <shared-research-and-reuse-research-contract>
 
@@ -3984,43 +3982,17 @@ A 唯一拥有移动与封存；R 提供原升级方案、具体批准和已验�
 
 # Code Commenting Rule
 
-注释只用于记录**代码本身无法清晰表达，但对正确使用或安全修改至关重要的信息**。
+优先用命名、类型、结构、断言和测试表达意图。仅当信息无法由代码清晰表达、缺失可能导致错误使用或修改、且正常重构后仍有效时添加注释。
 
-## Requirements
+## Contract、Why、Invariant 与 Risk
 
-- 优先通过命名、类型、结构、断言和测试表达意图；不要用注释掩盖复杂或含糊的代码。
-- 公共 API 应说明调用契约，包括重要的输入限制、返回语义、错误、副作用、并发、所有权和安全要求。
-- 内部实现仅在必要时解释非显然的：
-  - 设计原因与取舍；
-  - 不变量；
-  - 顺序约束；
-  - 安全或并发风险；
-  - 兼容、迁移或 workaround 的原因与退出条件。
+- **公共 API 记录 Contract**：重要输入限制、返回语义、错误、副作用、并发、所有权和安全要求。
+- **内部实现记录非显然的 Why、Invariant 与 Risk**：真实设计取舍、不变量、顺序、安全/并发风险，以及兼容、迁移或 workaround 的原因和退出条件；未知设计理由不猜测。
 - 单位、时区、精度、哨兵值、生命周期等无法由类型或名称表达时必须说明。
 - TODO 必须包含可追踪标识、具体动作以及完成或删除条件。
 - 修改代码行为时，必须同步检查并更新相关注释。
 
-## Do Not
-
-- 不要为每个函数或方法机械添加注释。
-- 不要逐行复述代码。
-- 不要解释名称和类型已经表达的信息。
-- 不要保留注释掉的旧代码。
-- 不要记录修改历史或临时开发过程。
-- 不要猜测“为了性能”“为了兼容”等设计原因。
-- 不要使用注释数量或覆盖率衡量质量。
-
-## Decision Rule
-
-添加注释前确认：
-
-1. 这条信息是否无法由代码清晰表达？
-2. 缺少它是否可能导致错误使用或错误修改？
-3. 它是否在正常重构后仍然有效？
-
-只有答案均为“是”时才添加注释。
-
-> 公共接口记录 Contract；内部实现记录非显然的 Why、Invariant 和 Risk。
+注释不逐行复述代码，不解释名称和类型已表达的信息，不掩盖复杂或含糊的代码，不保存注释掉的旧代码、修改历史或临时过程；不按函数机械添加，也不以数量或覆盖率衡量质量。
 
 </ref-common-rules-code-commenting-rule>
 

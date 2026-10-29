@@ -42,7 +42,7 @@ Any closed root tree       --(user chooses A)--> archive/YYYY-MM/<change>
 
 ## Change 工件布局
 
-创建、恢复或物理移动 Change 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
+创建、恢复或物理移动 Change 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；其他 Work 不加载该分支。
 
 ## 状态字段
 
@@ -64,7 +64,7 @@ Workflow 自身只读模板；Change 内容只写当前 Change 或其 `children/
 
 ## 课程合同
 
-L 授课、G 编译授课合同或验收 Lesson 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
+L 授课、G 编译授课合同或验收 Lesson 时，必须读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；其他 Work 不加载该分支。
 
 ## 主动探究与问题地图
 
@@ -74,13 +74,13 @@ Q 的 mode=tutor 保留默认五题、用户指定 n、Response: pending/ready/c
 
 ## Homework 合同
 
-H 生成/评审作业或 R 引用作业证据时，必须读取 `<Path>{roots.workflows}/learning/common/rules/homework-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
+H 生成/评审作业或 R 引用作业证据时，必须读取 `<Path>{roots.workflows}/learning/common/rules/homework-contract.md</Path>`；其他 Work 不加载该分支。
 
 H/R 更新掌握投影或 C 引用掌握结论前，读取 `<Path>{roots.workflows}/learning/common/rules/mastery-policy.md</Path>`，区分即时理解与真实延迟保持证据。
 
 ## 主题整合与冷归档
 
-C 整合、A 归档或恢复物理移动时，必须读取 `<Path>{roots.workflows}/learning/common/rules/consolidation-contract.md</Path>`；其他 Work 不加载该分支。该引用保留完整合同，不改变数量、所有权、权限与完成标准。
+C 整合、A 归档或恢复物理移动时，必须读取 `<Path>{roots.workflows}/learning/common/rules/consolidation-contract.md</Path>`；其他 Work 不加载该分支。
 
 C 组织或发布主题视图时读取 `<Path>{roots.workflows}/learning/common/rules/knowledge-organization.md</Path>`，保留 claim provenance、证据状态和原始材料。
 

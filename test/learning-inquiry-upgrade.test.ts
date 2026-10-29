@@ -227,6 +227,21 @@ test('canonical extraction rejects missing/duplicate blocks and unresolved depen
   for (const value of ['', valid + valid, valid.replace('Real content.', '<Path>{roots.state}/x</Path>'), valid.replace('Real content.', '<!-- portable:y:start -->')]) assert.throws(() => extractBlock(value, 'x'));
 });
 
+test('teaching expression rules propagate to both isolated capabilities without source links', async () => temporary(async (root) => {
+  const { compileLearning } = await generator();
+  await sourceFixture(root);
+  const rule = join(root, workflow, 'common/rules/teaching-policy.md');
+  const source = await readFile(rule, 'utf8');
+  assert.match(source, /ASD-STE100/);
+  const marker = '讲解表达依赖传播测试。';
+  await writeFile(rule, source.replace('<!-- portable:expression:end -->', `${marker}\n<!-- portable:expression:end -->`));
+  for (const content of (await compileLearning(root)).values()) {
+    assert.match(content, /ASD-STE100/);
+    assert.ok(content.includes(marker));
+    assert.ok(!content.includes('asd-ste100.org'));
+  }
+}));
+
 test('shared rule edits regenerate both outputs and check mode is read-only', async () => temporary(async (root) => {
   const { generateLearning, compileLearning } = await generator();
   await sourceFixture(root);

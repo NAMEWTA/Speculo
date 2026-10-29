@@ -10,7 +10,7 @@
 
 [打开离线原型](../templates/marketing-conversion.html)。此 HTML/CSS/JS 为 Speculo 原创的虚构任务 fixture。所有交互只改本页内存，刷新重置，不发送请求、不付款、不创建真实记录。
 
-复制页面时同时复制所有被引用的本地 CSS/JS/图片及 attribution，保持相对路径闭合。原样板的共享 styles/scripts/assets 不能丢失；新增模板共享 [样式](assets/prototypes.css) 和 [交互](assets/prototypes.js)。复用照片同时保留 [原资产署名](../research-snapshot/ui-gallery/assets/ATTRIBUTION.md)。
+复制样板时按 [组合协议](../composition.md) 的“离线复制与补齐”保留本地资源闭包、相对路径与 attribution。
 
 ## 视觉组合
 
@@ -22,4 +22,4 @@
 
 ## 验证场景
 
-用相同任务和数据比较候选；检查 390px/1440px、长中文、200% 缩放、键盘/focus、reduced motion，以及适用的空/加载/失败/权限/恢复状态。检查界面可见的业务反馈，不用按钮绑定存在代替成功路径。样板验证不替代生成 change 原型的验证；生产行为仍须另验。
+按 [组合协议](../composition.md) 的“审美与行为审查”比较候选并验证；样板验证不替代生成 change 原型的验证，生产行为仍须另验。

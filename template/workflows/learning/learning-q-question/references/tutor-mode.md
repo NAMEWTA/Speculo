@@ -7,7 +7,7 @@
 1. 读取 `<Path>{roots.workflows}/learning/common/skills/socratic-questioning/SKILL.md</Path>`、`<Path>{roots.workflows}/learning/common/rules/questioning-policy.md</Path>` 与 `<Path>{roots.workflows}/learning/learning-q-question/assets/inquiry-template.md</Path>`。选择用户教法或默认 socratic；用户指定正整数 n 则使用该值，否则 5，不套用 mine 十问上限。
 2. 依共享深挖规则从相关遗漏、前一批回答或新证据选择问题，在题目旁给简短、不泄露目标答案的关注理由。每题关联问题地图 ID；地图只登记新问题，不迁移历史。创建 inquiry/IQ-<NNN>-<slug>-batch-NN.md：question_count=n、Q1…Qn、空 A1…An、精确行 Response: pending。不得把答案写入题目。
 3. 学习者填写 A1…并写入精确行 Response: ready 后再次激活。校验并冻结原始元数据、Q/A。没有 ready 不追加 Teaching / Inquiry Lesson；不以模型自述或推测替代用户提交。
-4. 只在同一文件末尾追加 ## Teaching 和 ## Inquiry Lesson。Teaching 逐题给思路复原、aligned|partial|off|uncertain、中文详解、Explain (English)、纠错路径、先前未覆盖知识及其重要原因、来源锚点和验证思路。Inquiry Lesson 将实际 n 题收成一节短课，留下基于新证据的下一批种子或可选补课/作业/复习入口。Response 更新为 closed。没有证据不能宣布用户掌握。
+4. 按已读取的讲解配方，在同一文件末尾追加 ## Teaching（逐题含 Explain (English)）与 ## Inquiry Lesson，将实际 n 题收成短课，保留基于新证据的 keep-alive 钩子。Response 更新为 closed；没有证据不能宣布用户掌握。
 5. 更新 inquiry/INDEX.md、问题地图、learning-log.md 和 Change .status.json；works_run 追加 learning/question，清空 current_work。不写 mastered、lessons/ 或 homework/，不自动激活其他 Work。重答新建批次并链接旧文件；记录 revisit_reason，不改写旧批次。
 
 ## 当前批次验证

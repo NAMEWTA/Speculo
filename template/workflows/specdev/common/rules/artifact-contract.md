@@ -15,6 +15,8 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 来源快照 | `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` | 原始请求、捕获时间、locator、hash 和关闭能力 | 当前产品合同或实现状态 |
 | 分诊 | `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>` | 请求是否成立、核验结果、实施简报、风险、缺失输入、下一 Work 和打标回执 | 开发进度、实施授权或交付状态 |
 | 交付 | `<Path>{roots.state}/specdev/changes/{change}/delivery.md</Path>` | 来源 Issue 的 external_action 与 publish 账本指针 | 重复发布进度、本地完成判定或实施简报 |
+| PR 交付 | <Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> | Delivery 拥有的 PR 交付回执 | 复用 external_action、publish_action 或 capture |
+| 独立远程操作 | <Path>{roots.state}/specdev/delivery-runs/DEL-###.md</Path> | Delivery 拥有的独立操作及回执 | 复用 external_action、publish_action 或 capture |
 | 发布账本 | `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` | 票级 GitHub 投影的编号、标签、marker、state、publish_action 和发布计数 | Ticket 契约、Evidence 原文或源 Issue 关闭 |
 | 捕获账本 | `<Path>{roots.state}/specdev/capture.md</Path>` | 尚未成 Change 的记事项、GitHub inbox 编号、标签、marker 和 inbox 计数；缺失合法 | Change、Ticket、Evidence 或已完成票的发布投影 |
 | 诊断 | `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>` | 复现、证据、根因、修复不变量和回归契约 | 未经验证的修复实现 |
@@ -31,10 +33,13 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | Implementation Orchestration Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/implementation-orchestration.md</Path>` | 成员完成、组合 Ticket 顺序/锁、repository integration、整体验证、漂移和残余风险 | 新产品/架构决定或单 Ticket Evidence 替代品 |
 | Evidence | `<Path>{roots.state}/specdev/changes/{change}/evidence/{ticket-id}.md</Path>` | 实际修改、命令、结果、验收映射、偏差、风险和提交引用 | 新的产品或架构决策或远程 Issue 正文 |
 | 学习图解 | `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>` | L 负责需求参考、项目代码、已有 change 或外部资料的讲解，区分事实、观点与推断；索引按序号持续追加，未指定 change 时新建学习载体 | 产品决定、架构决定、实现授权、用户掌握结论或 Learning workflow 知识 |
+| 独立复盘 | <Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path> | R-retro 拥有复盘及原文来源；A 拥有移动/封存 | 永久知识或 change 完成证据 |
+| 复盘升级计划 | <Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path> | R-retro 拥有跨报告筛选、具体升级方案与执行依据；A 拥有已批准的 ADR/context 写入及移动/封存 | 永久知识或 change 完成证据 |
 | 代码审查 | `<Path>{roots.state}/specdev/changes/{change}/reviews/CR-###.md</Path>` | 固定点、标准轴和规范轴 finding | 实施修复或合并两轴排名 |
 | 项目设计基线 | <Path>{roots.state}/specdev/design/DESIGN.md</Path> | 跨 change 的语义 token、组件/交互规范、版本及来源；A 唯一正式写入 | 单次页面设计或未批准提案 |
 | Change 设计合同 | <Path>{roots.state}/specdev/changes/{change}/DESIGN.md</Path> | 本 change 已批准的页面、状态、视觉/交互、基线版本和例外；P 拥有 | 改写永久基线或替代 Spec/ADR |
 | UI 设计包 | `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/design-system.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/comparison/</Path>` 与 `<Path>{roots.state}/specdev/changes/{change}/prototypes/{design-id}/final/</Path>` | 项目 UI 检测、模板组合、集中批准证据、可运行 HTML/CSS/JS 源码与浏览器证据 | 生产 UI 实现或替用户确认高影响偏好 |
+| 逻辑原型 | <Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> | P-prototype 拥有逻辑模型与浏览器证据；<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/index.html</Path> 是可运行原型，ready 时 hash 与记录一致 | 生产实现或 UI 设计权威 |
 | Stakeholder 问卷 | `<Path>{roots.state}/specdev/changes/{change}/questionnaires/{slug}.md</Path>` | 第三方原始回答和恢复条件 | 未经转录确认的产品/架构决定 |
 | Wayfinder 地图 | `<Path>{roots.state}/specdev/changes/{change}/wayfinder-map.md</Path>` | 目的地、说明、已关闭决策索引、战争迷雾和范围之外 | 开放 Ticket 正文或答案详情 |
 | Wayfinder Ticket | `<Path>{roots.state}/specdev/changes/{change}/investigation/{investigation-id}.md</Path>` | 一个可精确陈述的问题、类型、阻塞和关闭状态 | 解决方案评论或交付目标 |
@@ -42,6 +47,8 @@ SpecDev 通过分层工件避免同一决策被多个模型反复重做。每个
 | 架构审查 | `<Path>{roots.state}/specdev/changes/{change}/architecture-review.md</Path>` | 结构性候选、code-judo 机会、证据、选择和访谈状态 | 未经用户选择的执行契约 |
 
 UI 设计包中的 `{design-id}` 由 P-prototype 分配为当前 change 内最小未占用的 `UI-NNN`；design-system.md 保留文件名但只拥有源码与证据，change DESIGN 是当前设计合同；comparison 与 final 不建立第二套规则。UI 分支按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 处理继承、确认、失效与下游硬引用。
+
+复盘的 `retro`/`upgrade` 使用日期主题 ID；保存合同见 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path>。
 
 Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不是 workflow 级永久知识。G 和其他设计/执行 Works 只读 `<Path>{roots.state}/specdev/context/</Path>` 与 `<Path>{roots.state}/specdev/adr/</Path>`；ADR/context 的正式写入只有 A 在适用证据、价值评估和具体授权通过后执行；独立维护无需虚构 change，research/非标准 store 仍按实际声明及原 owner 判断，不能自动纳管；design 的首次批准意图发布与归档提升均只经 A 设计网关，按 design-contract 执行。未毕业内容随归档 change 保留，不能从 change 工件消失。
 
@@ -62,7 +69,7 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 
 `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>` 只对“原始输入是什么”具有权威；后续用户决定、ADR 和 Spec 可以显式演进该意图。远程来源在摄入后发生变化不会自动改写本地合同，必须重新 Triage。GitHub 上由 publish 投影出的 Issue 不是开发权威；发布计数以 `<Path>{roots.state}/specdev/changes/{change}/publish.md</Path>` 为准。GitHub 上由 capture 记下的 inbox Issue 也不是开发权威；inbox 计数以 `<Path>{roots.state}/specdev/capture.md</Path>` 为准，缺失该文件视为空 inbox。
 
-代码事实可以证明计划已过时，但不能静默改写用户目标或已接受契约。出现这种情况时，按 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 退回相应工件修订。
+代码和运行证据可以证明计划尚未实现或已过时，不能静默改写用户目标或已接受契约；按 `<Path>{roots.workflows}/specdev/common/rules/deviation-control.md</Path>` 退回相应工件修订。ADR 记录采纳与真实备选，未确认解释留在 LOG/设计树，未完成计划不进入当前事实摘要；项目文档职责见 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>。
 
 ## 3. 来源追踪
 
@@ -76,6 +83,8 @@ Change CONTEXT/ADR/DESIGN 是 active change 内各自领域的执行权威，不
 - `DIAG-###`。
 
 来源追踪解释“为什么这样决定”，不要求为普通描述逐句加标签。
+
+source 冻结后保持不变；T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，由 triage 正文选择有效快照。新远程事实不自动成为已接受 Spec。
 
 ## 4. 冲突处理
 
@@ -97,15 +106,6 @@ W 的 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>` 只�
 
 父 `<Path>{roots.state}/specdev/changes/{change}/tickets-map.md</Path>` 是 goal-tickets-map 无状态入口，只引用现有 Implementation Map/Plan；它不能拥有第二份 status、owner 或任务清单。统一 P 拥有生命周期，旧 O 仅保留入口与恢复键。
 
-## 新增工件 owner
-
-- Delivery：<Path>{roots.state}/specdev/changes/{change}/pull-requests/PR-###.md</Path> 拥有 PR 交付回执；<Path>{roots.state}/specdev/delivery-runs/DEL-###.md</Path> 拥有独立远程操作，绝不复用 external_action/publish_action/capture。
-- R-retro：<Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path> 拥有独立复盘及原文来源；<Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path> 拥有跨报告筛选、具体升级方案与执行依据。`retro`/`upgrade` 是日期主题 ID；按 <Path>{roots.workflows}/specdev/specdev-r-retro/references/records.md</Path> 保存，不成为永久知识或 change 完成证据。A 拥有已批准的 ADR/context 写入及移动/封存。
-- P：<Path>{roots.state}/specdev/changes/{change}/prototypes/LOGIC-NNN/logic.md</Path> 记录逻辑模型与浏览器证据；index.html 是可运行原型，ready 时 hash 与记录一致。
-- 来源更新：<Path>{roots.state}/specdev/changes/{change}/source.md</Path> 冻结后保持不变。T 将后续读取写入 <Path>{roots.state}/specdev/changes/{change}/sources/SRC-###.md</Path>，记录 replaces、固定 SHA/hash、完整性和原 locator，triage 正文选择有效快照；不得把新远程事实自动升级为已接受 Spec。
-
 ## 专业分支的证据归属
 
 R.performance 的测量卡、原始样本引用和优化候选仍由 architecture-review 拥有，不直接修改生产代码。I.documentation 修改获批项目文档并在原本票或 Direct Spec Evidence 保存验证；不另造文档状态。D.evidence-triage 在 diagnosis 的现象/事件节记录观察、未知与下一检查；它不是已经接受的根因或修复合同。具体记录见 <Path>{roots.workflows}/specdev/common/rules/engineering-evidence.md</Path>。
-
-代码、运行证据可以证明计划尚未实现或已过时，但不能改写用户目标。ADR 记录采纳与真实备选；未确认解释属于 LOG/设计树，未完成计划不能进入当前事实摘要。实际文档职责遵守 <Path>{roots.workflows}/specdev/common/rules/documentation-standard.md</Path>。

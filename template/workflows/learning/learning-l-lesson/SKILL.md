@@ -14,7 +14,7 @@ metadata:
 
 ## 读取范围
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；只加载本 Work 需要的领域合同。
+授课前读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>` 与 `<Path>{roots.workflows}/learning/common/rules/teaching-policy.md</Path>`，核对课程合同与教学表达。
 
 读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
 
@@ -26,9 +26,9 @@ metadata:
 
 1. 确认 Change 有 `course.md`、`background/foundation.md`、`baseline.md`、目标 OBJ 和 `sources.md`；缺失时返回 A-assess-and-plan。
 2. 用户指定 Lesson 主题、OBJ、期望效果和深度；读取精确背景和来源，不遍历无关 context。
-3. 生成一个完整的 `lessons/L-<NNN>-<slug>.md`，元数据包含 `lesson_id`、`objective_ids`、`delivered_at`（实际交付时间）、`estimated_minutes` 30–40、`time_budget`（每段为正数且合计等于 estimated_minutes）、`expression_level`、`coverage_depth` 和 `source_ids`。
-4. 每个核心目标至少覆盖动机/宏观地图、通俗直觉、精确定义与英文术语、机制/因果链、ASCII/表格/可选外链图之一及文字等价物、正例、反例或边界、变式迁移、常见误区、总结和引用。允许章节顺序变化，不套用固定 5E 或单一路线。主动解释相关潜在盲区、为何容易遗漏及现实检验；用讲解而非学习者答题呈现，保持本课活动预算。
-5. 可加入非评分 pause/self-check，但不写 Q/A、答案、verdict、分数或 mastered。更新 `lessons/INDEX.md` 与 `learning-log.md`，运行 validator，清空 current_work。
+3. 按课程合同和 Lesson 模板生成一个 `lessons/L-<NNN>-<slug>.md`；`delivered_at` 记录实际交付时间，`estimated_minutes` 为 30–40，`time_budget` 各段为正数且合计等于 estimated_minutes。
+4. 逐个核对核心目标的合同覆盖，按主题安排章节，不套用固定 5E 或单一路线；盲区分析与现实检验用讲解案例呈现，保持活动预算。
+5. 保持教学与作业分离。更新 `lessons/INDEX.md` 与 `learning-log.md`，运行 validator，清空 current_work。
 
 ## 完成标准
 
@@ -40,6 +40,5 @@ metadata:
 ## 子文件
 
 - Lesson 模板：`<Path>{roots.workflows}/learning/learning-l-lesson/assets/lesson-template.md</Path>`
-- 教学规则：`<Path>{roots.workflows}/learning/common/rules/teaching-policy.md</Path>`
 
 仅编译独立网页课程时读取 `<Path>{roots.workflows}/learning/common/rules/portable-learning-runtime.md</Path>`；本地仍保留 A 产物前置条件，不加载网页适配。

@@ -50,11 +50,17 @@
 
 ## 完整课程合同
 
-每份完整 Lesson 必须有 `lesson_id`、`objective_ids`、`estimated_minutes`（默认 35，标准范围 30–40）、可加总的 `time_budget`、`expression_level`、`coverage_depth` 和 `source_ids`。时间按阅读/视觉/示例/停顿/总结等活动估算，不按字符数承诺。章节顺序可以随主题变化，但每个核心目标都必须有动机与宏观图、通俗直觉、精确定义和英文术语、机制/因果链、至少一种视觉表示及其完整文字等价物、正例、反例或边界、迁移说明、误区、总结和来源。类比必须标出失效边界。
+每份完整 Lesson 必须有 `lesson_id`、`objective_ids`、`estimated_minutes`（默认 35，标准范围 30–40）、可加总的 `time_budget`、`expression_level`、`coverage_depth` 和 `source_ids`。时间按阅读/视觉/示例/停顿/总结等活动估算，不按字符数承诺。章节顺序可以随主题变化，但每个核心目标都必须有动机与宏观图、通俗直觉、精确定义和英文术语、机制/因果链、至少一种视觉表示及其完整文字等价物、正例、反例或边界、迁移说明、误区、总结和来源。
 
-`expression_level=eli5|plain` 只控制词汇、句法、脚手架和类比比例；`coverage_depth=overview|standard|deep` 控制覆盖强度。Lesson 可放非评分的 pause/self-check，但不得生成 Q/A、答案、分数、verdict 或 mastered 字段。外部图片只是可选增强，必须有 alt、caption、source、访问日期和文字等价物，课程不能依赖链接可用性。
+Lesson 可放非评分的 pause/self-check，但不得生成 Q/A、答案、分数、verdict 或 mastered 字段。视觉可用 ASCII、Markdown table、公式或可选外链图片，须有 caption、alt 和附近的完整文字等价物；外链图片另记录 source 与访问日期，失效不阻塞理解。`sources.md` 与 Lesson source table 均记录 URL、标题、定位、访问日期、claim 映射、可信度和不确定性；无法核验的内容标为 open/uncertain。
 
 相关核心目标应加入容易遗漏的条件与现实检验：说明潜在盲区、遗漏原因、反例或失败机制、判断/处理原则与验证设计。以讲解案例完成，不插入学习者答题区，不把完整授课改成等待作答。过大分支放入可选后续，不挤掉基础解释或突破活动预算。
+
+## 深度与表达
+
+`expression_level=eli5|plain` 控制词汇、句法、脚手架和类比；`coverage_depth=overview|standard|deep` 控制事实、机制、边界、例子和迁移的覆盖。ELI5 不删减内容，类比须紧跟精确定义与失效边界。
+
+教学讲解（课程、问答后讲解、作业评审详解与主动探究）采用 ASD-STE100 Issue 9（2025-01-15，Simplified Technical English）写作原则。保留原语言：英文技术讲解按该标准写作，中文借鉴其清晰、简洁、术语一致原则；未经完整规则与受控词典核验，不宣称正式合规。本规则不改变问题、评分、产物数量或教学深度。
 
 ## 发现值得问的问题
 

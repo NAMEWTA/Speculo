@@ -12,7 +12,7 @@ metadata:
 
 > 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
 
-G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-Plan 并停止。授课、挖掘与验收由用户在 AI CLI 中 `/goal` 读取该计划执行：按项目规模划出一个不超过 15 节的教学单元 → 先把这个单元的课全部写完 → 再为每一课派 miner。
+G-goal 编译完整 Goal-Plan 后停止；授课、挖掘与验收由用户交给外部 `/goal` 执行，采用 teach-then-mine（每个 mine unit 的 T 写课 → M 挖掘 → D 处置）。
 
 ## 读取范围
 
@@ -57,4 +57,4 @@ G-goal 是计划编译器，不是授课编排器。激活后写出完整 Goal-P
 
 ## 无 slash-command 宿主
 
-`/goal` 是宿主适配示例，不是额外授权源。宿主没有该命令时，用户可在新执行会话明确请求“按此 Goal-Plan 执行”，同时提供计划路径；该会话成为外部执行器并遵守相同最小读取清单、owner、停止和验收合同。计划会话仍只编译并停止，不自动接管执行。无 team 时按原派单包串行执行；缺必需文件或工具只阻塞受影响分支，不伪造子代理调用。30–40 分钟、每单元 ≤15 节与每课最多10问仍是 Learning 领域合同，不传播为全局 Agent 限制。
+没有 `/goal` 时，按 `<Path>{roots.workflows}/learning/learning-g-goal/references/external-goal-runner.md</Path>` 的同名适配分支，由用户在新会话明确交付计划后执行。30–40 分钟、每单元 ≤15 节与每课最多10问仅约束 Learning。

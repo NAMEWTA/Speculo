@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.15] - 2026-10-29
+
+### Changed
+
+- Apply ASD-STE100 Issue 9 expression principles to Learning explanations and SpecDev learning guides, preserving the user's language and the distinction between clarity and verified compliance.
+- Consolidate Learning lesson, questioning and Goal-Plan guidance and SpecDev artifact, review, error-handling and prototype guidance while retaining their ownership, limits and validation requirements.
+- Regenerate the Learning and SpecDev canonical documents from their sources.
+
+### Fixed
+
+- Preserve concrete blind-spot analysis and scaffolding requirements, and load the teaching policy when compiling or assessing lesson contracts.
+- Make design-tree round advancement explicit and retain complete prototype resource and browser verification guidance in the shared composition protocol.
+
 ## [2.1.14] - 2026-10-29
 
 ### Changed

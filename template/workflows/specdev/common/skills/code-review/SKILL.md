@@ -31,9 +31,8 @@ metadata: {"speculo-source-id": "specdev-code-review"}
 3. 发现已有审查并拟复用时，先读取 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/result-reuse.md</Path>`，完整核对输入、当次策略所需独立性与原始证据；能证明相同的轴保留原结果，其余轴按下列步骤运行；未能证明相同就正常重审两轴。
 4. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/fowler-smells.md</Path>` 作为标准轴最低启发式；仓库明确标准优先。
 5. 用户要求全面审查或触及安全、数据迁移、公共契约、并发和恢复时，先加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/risk-review.md</Path>`，覆盖全部适用风险，不限制 finding 数量。
-6. 加载 `<Path>{roots.workflows}/specdev/common/skills/code-review/references/reviewer-contracts.md</Path>`，按风险策略由主 Agent 直接核对或实际派遣未参与实现的 reviewer，分别运行两个轴。
-7. 原顺序返回 `standards` 和 `specification` 两份结果。C 规范来源确实不存在时只跳过规范轴并解释，标准轴继续；I 缺少权威规范则阻塞，不允许跳过后完成。
-
+6. 按已读取的风险策略，由主 Agent 自查或实际派遣未参与实现的 reviewer，分别运行两个轴。
+7. 按 `standards`、`specification` 顺序返回两份结果。C 规范来源确实不存在时只跳过规范轴并解释，标准轴继续；I 缺少权威规范则阻塞，不允许跳过后完成。
 8. 按 <Path>{roots.workflows}/specdev/common/skills/code-review/references/review-evidence.md</Path> 返回固定输入、原始报告、实际审查者身份以及独立策略需要的工具凭据，由 Lead 核验并写入原 owning 工件。
 
 ## 输出
@@ -58,9 +57,8 @@ Finding 必须包含 severity、项目相对 Path/代码块、具体风险、依
 
 - diff 的 fixed point、head、diff、commits 或 source-files 的原字节快照固定且可重复；
 - 仓库标准优先于 Fowler 启发式；
-- 两轴分别判断并返回原始结果；需要独立时 reviewer 未参与本范围实现且真实派遣/返回已核验；
-- 每个发现可定位且说明行为风险；
-- 两轴按固定顺序返回，缺失规范没有掩盖标准审查。
+- 两轴分别判断、按固定顺序返回原始结果，缺失规范未掩盖标准审查；需要独立时 reviewer 未参与本范围实现且真实派遣/返回已核验；
+- 每个发现可定位且说明行为风险。
 
 对适用风险先给出可证伪反例，再追踪消费者、实现、测试及恢复；测试覆盖率、配对哈希或 schema 成功不代替语义审查。错误和可靠性分别引用 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>。
 
