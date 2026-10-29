@@ -2194,7 +2194,7 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 - 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
 - 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、适用双轴审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
 - `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
-- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。一张票可以由 Lead、subagent 或团队完成。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
+- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。Ticket 按可独立验收的行为切片拆分；派遣通道、执行者分配和票据串并行分别决定。指定通道不隐含一票一个 Agent；同一个 Lead 或受派 Agent 可连续执行多票，一张票也可由多人协作。Lead 按上下文连续性、依赖、并行收益和恢复需要选择复用或新派，遵守明确的执行者安排与独立审查要求。复用执行者仍须逐票核对 Ready、授权、依赖并保留各票 Evidence 与验收，不合并票据状态或越过 Gate。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
 - 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
 
 ## 工作区与写入
@@ -2884,7 +2884,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 # 主 Agent 自主协调合同
 
-所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 可以连续完成多个 Work/Ticket；工作切分、执行者人数、工作区数量、工具通道分别决定。
+所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 或同一个受派 Agent 均可连续完成多个 Work/Ticket；工作切分、执行者分配、工作区数量、工具通道分别决定，Ticket 边界不要求新建 Agent 或会话。
 
 ## 何时读取
 

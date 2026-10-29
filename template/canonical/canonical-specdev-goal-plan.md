@@ -44,7 +44,7 @@
 ## 执行底线
 
 - 先冻结 Outcome、权威来源、用户指定的交付数量、范围、Definition of Done 和失败停止条件；按风险确定 DAG/Gate/Wave，不用文档长度替代质量。
-- 固定 `lead-directed`，Lead 拥有状态和验收，不固定实现团队。ticket_execution 默认 auto；max_parallel_tickets 计量票据，显式 concurrent_implementation_limit 计量实现者；策略来源写 Execution Policy Source。派单读取 下方 `<lead-orchestration>` 标签。
+- 固定 `lead-directed`，Lead 拥有状态和验收，不固定实现团队。票据切分、派遣通道与执行者分配分别决定，同一个 Agent 可连续执行多票；复用条件与逐票门遵循 下方 `<ref-common-rules-execution-policy>` 标签。ticket_execution 默认 auto；max_parallel_tickets 计量票据，显式 concurrent_implementation_limit 计量实现者；策略来源写 Execution Policy Source。派单读取 下方 `<lead-orchestration>` 标签。
 - 保留 change 已选工作区，未指定复用 current；明确要求才创建一个 change worktree。串并行、派遣和审查不增建工作区，提交/合并按实际授权执行。
 - `plan` 只形成计划，缺少执行授权是计划中可见的待满足条件，不等于获准执行。运行前逐项核对真实授权；文档中的“已批准”不构成授权。
 - 当前票必须调用必需绑定的真实 Skill；普通可选 Skill 可按需发现并记录实际使用，不能以“读过入口”替代；先读取 下方 `<ref-common-rules-skill-invocation>` 标签。缺失必需 Skill、引用或验收证据时阻塞本票及依赖它的分支。
@@ -195,7 +195,7 @@ Git index 操作和共享环境检查串行协调；停止相关 writer 后冻�
 
 ## 唯一 Lead 与实际执行者
 
-Lead 保留需求解释、DAG/Wave/Gate、路径分配、授权、正式状态、Evidence、整体 E2E 和最终回复。Lead 是职责，不是单 Agent 拓扑；实现可由单 Agent、subagent 或团队完成，按用户/项目/Work 要求安排。独立 reviewer 不参与本范围实现。
+Lead 保留需求解释、DAG/Wave/Gate、路径分配、授权、正式状态、Evidence、整体 E2E 和最终回复。Lead 是职责，不是单 Agent 拓扑；实现可由单 Agent、subagent 或团队完成，按用户/项目/Work 要求安排。按执行策略决定复用或新派，同一个主 Agent 或受派 Agent 可连续执行多个 Ticket，票据边界不自动结束其会话。独立 reviewer 不参与本范围实现。
 
 ## 调度与并发
 
@@ -287,7 +287,7 @@ UI Ticket 或 Direct Spec 必须读取 下方 `<design-contract>` 标签 与当�
 
 1. 核验 Ready、授权、owner、真实源与 map 基线；新增计划型票按 下方 `<ref-common-rules-skill-invocation>` 标签 履行必需安全/权限/验收方法并记录证据；必需合同缺失时返回 owner，不猜测。普通可选 Skill 可执行中发现和使用，不为其补造审批或停票。
 2. 保持 codebase-design、design-it-twice 和 TDD 的适用门禁；进入对应实现步骤再读其 reference。派单时调用 共享编排方法；Lead 是唯一 SpecDev 状态写入者。
-3. Ticket 和 Direct Spec 的全部执行者复用选定 change 工作区；票据调度和 Agent 编排分别决定。E2E 由 Lead 在稳定输入上验收；checkpoint 可为实际 commit 或工作副本快照，提交/合并按明确授权执行。
+3. Ticket 和 Direct Spec 的全部执行者复用选定 change 工作区；票据调度和 Agent 编排分别决定，同一个 Agent 可连续执行多票，按执行策略逐票预检和验收。E2E 由 Lead 在稳定输入上验收；checkpoint 可为实际 commit 或工作副本快照，提交/合并按明确授权执行。
 4. 两轴质量判断与执行者解耦：普通低风险可由主 Agent 自查；高风险/高影响、证据不足或原用户/项目独立要求时采用真正独立 reviewer。安全、并发、公共接口、数据迁移或用户要求全面审查时展开 下方 `<ref-common-skills-code-review-references-risk-review>` 标签；不为省上下文删减必要检查或限制发现数量。
 5. 写 Evidence、运行适用校验并回读后才推进状态；必需 Skill 失败、验收失败、越界或归属冲突暂停本票及依赖它的分支。无关工作仍由总控继续，不接管他人事务。
 
@@ -1080,7 +1080,7 @@ Lead 在原 change workspace 上执行；本过程不创建 candidate worktree�
 
 # 主 Agent 自主协调合同
 
-所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 可以连续完成多个 Work/Ticket；工作切分、执行者人数、工作区数量、工具通道分别决定。
+所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 或同一个受派 Agent 均可连续完成多个 Work/Ticket；工作切分、执行者分配、工作区数量、工具通道分别决定，Ticket 边界不要求新建 Agent 或会话。
 
 ## 何时读取
 
@@ -3226,6 +3226,47 @@ implementation_plan: "specdev/changes/{change}/implementation-plan.md"
 
 </ref-specdev-p-goal-plan-references-goal-tickets-map-template>
 
+<ref-common-rules-execution-policy>
+
+# 票据调度、Agent 编排与 change 工作区
+
+I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项决定分别记录，互不推导。工具选择和任务交接读取 下方 `<subagent-delivery>` 标签。
+
+## 输入和选择
+
+- 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 表示规格就绪，不强制拆票。README 替代独立 Spec 仍限原轻量边界；明确要求的 Spec/Ticket/Goal 必须交付。
+- 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
+- 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、适用双轴审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
+- `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
+- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。Ticket 按可独立验收的行为切片拆分；派遣通道、执行者分配和票据串并行分别决定。指定通道不隐含一票一个 Agent；同一个 Lead 或受派 Agent 可连续执行多票，一张票也可由多人协作。Lead 按上下文连续性、依赖、并行收益和恢复需要选择复用或新派，遵守明确的执行者安排与独立审查要求。复用执行者仍须逐票核对 Ready、授权、依赖并保留各票 Evidence 与验收，不合并票据状态或越过 Gate。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
+- 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
+
+## 工作区与写入
+
+一个 change 使用一个选定工作区，所有 Ticket、Direct Spec、协作者、修复和验证都在这里完成。`workspace_policy: current` 可为 main、普通分支或已在使用的 worktree；`worktree` 表示本 change 明确选择的独立 checkout。需要新建时调用 下方 `<dev-worktree>` 标签，默认 locator 为 `specdev-worktree/<change>`，branch 为 `speculo/<change>`。按实际用户选择复用已有工作区。
+
+串并行、Agent 数量、重试、review 均不新增工作区。额外 worktree 或扩大分支范围必须另有具体授权，不从创建一个 change worktree 的要求继承。
+
+同一工作区可由多个实现者写互不冲突的授权路径。共享路径、API、迁移序列、端口、数据库、生成输出须明确唯一 owner 或串行阶段；worktree 不提供锁或沙箱。Git index、commit、checkout、merge 和改变公共依赖的操作由 Lead 协调串行，任何执行者都不能暂存他人改动。审查和整体测试使用固定输入，冻结前协调相关 writer 停止写入；未知运行状态先查询，不以无报告/超时推断结束。
+
+## 唯一记录与完成
+
+实际执行开始时，Lead 在 change README 的 `Execution Context` 锚点保存一次工作区事实、基线、owner 和无计划时的调度选择。完整计划拥有票据策略，README 只保留该 change 的实际上下文；工作区只有 README 一个事实源。格式和恢复检查见 下方 `<dev-worktree-create>` 标签，current 同样使用该记录而不调用创建操作。纯只读不造执行记录；既有无票 current 证据可按原快照合同读取。
+
+每票原 Evidence 保存自己的 `Workspace Execution Record`，引用 `specdev/changes/{change}/README.md` 的 execution-context 锚点，只记录实际实现者、checkpoint、验证与失败次数；Direct Spec 使用原 evidence/direct-spec.md，不造 Ticket/Map/Goal。使用 下方 `<ref-specdev-i-implement-assets-evidence-template>` 标签。Lead 是正式状态/Evidence owner，implementation_owners 可有多人。
+
+完成以真实改动、AC、风险适配双轴审查和适用验证为准。未授权提交时使用固定工作副本快照；不要求 empty commit、每票 commit、父分支 result 或额外 candidate checkout。明确承诺的提交、合并、发布等仍按原目标与授权执行；完成声明不得冒充这些动作已发生。整体完成仍按 下方 `<change-completion>` 标签。
+
+验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
+
+## 恢复和版本边界
+
+恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
+
+执行工具只接受当前 Execution Context / Workspace Execution Record v1 与 Goal v8、父 Plan v3；未知版本、旧 source/candidate 字段和混合协议直接拒绝。拒绝不改写原 Evidence、不转换或删除工作区。原 owner 仍须核对实际 writer、代码与未决动作，不能把无法读取的旧协议解释成已停止或已完成。
+
+</ref-common-rules-execution-policy>
+
 <ref-common-rules-skill-invocation>
 
 # 按需 Skill 与必需方法
@@ -3293,47 +3334,6 @@ Lead 明确任务所用 Work、阶段和必要前置条件：Ticket implementati
 按 下方 `<shared-coordination-session-files>` 标签 为短时同步只读任务采用关联即时返回，为长时/异步/并行写入/恢复/正式交付采用共享 TASK v2 与 REPORT。不能通过即时返回绕过必要写入与恢复证据；未知协议拒绝，历史交接文件不转换。
 
 </ref-common-rules-coordination>
-
-<ref-common-rules-execution-policy>
-
-# 票据调度、Agent 编排与 change 工作区
-
-I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项决定分别记录，互不推导。工具选择和任务交接读取 下方 `<subagent-delivery>` 标签。
-
-## 输入和选择
-
-- 获批完整 Spec 可直接进入 I；`ready_for_tickets: true` 表示规格就绪，不强制拆票。README 替代独立 Spec 仍限原轻量边界；明确要求的 Spec/Ticket/Goal 必须交付。
-- 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
-- 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、适用双轴审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
-- `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
-- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。一张票可以由 Lead、subagent 或团队完成。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
-- 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
-
-## 工作区与写入
-
-一个 change 使用一个选定工作区，所有 Ticket、Direct Spec、协作者、修复和验证都在这里完成。`workspace_policy: current` 可为 main、普通分支或已在使用的 worktree；`worktree` 表示本 change 明确选择的独立 checkout。需要新建时调用 下方 `<dev-worktree>` 标签，默认 locator 为 `specdev-worktree/<change>`，branch 为 `speculo/<change>`。按实际用户选择复用已有工作区。
-
-串并行、Agent 数量、重试、review 均不新增工作区。额外 worktree 或扩大分支范围必须另有具体授权，不从创建一个 change worktree 的要求继承。
-
-同一工作区可由多个实现者写互不冲突的授权路径。共享路径、API、迁移序列、端口、数据库、生成输出须明确唯一 owner 或串行阶段；worktree 不提供锁或沙箱。Git index、commit、checkout、merge 和改变公共依赖的操作由 Lead 协调串行，任何执行者都不能暂存他人改动。审查和整体测试使用固定输入，冻结前协调相关 writer 停止写入；未知运行状态先查询，不以无报告/超时推断结束。
-
-## 唯一记录与完成
-
-实际执行开始时，Lead 在 change README 的 `Execution Context` 锚点保存一次工作区事实、基线、owner 和无计划时的调度选择。完整计划拥有票据策略，README 只保留该 change 的实际上下文；工作区只有 README 一个事实源。格式和恢复检查见 下方 `<dev-worktree-create>` 标签，current 同样使用该记录而不调用创建操作。纯只读不造执行记录；既有无票 current 证据可按原快照合同读取。
-
-每票原 Evidence 保存自己的 `Workspace Execution Record`，引用 `specdev/changes/{change}/README.md` 的 execution-context 锚点，只记录实际实现者、checkpoint、验证与失败次数；Direct Spec 使用原 evidence/direct-spec.md，不造 Ticket/Map/Goal。使用 下方 `<ref-specdev-i-implement-assets-evidence-template>` 标签。Lead 是正式状态/Evidence owner，implementation_owners 可有多人。
-
-完成以真实改动、AC、风险适配双轴审查和适用验证为准。未授权提交时使用固定工作副本快照；不要求 empty commit、每票 commit、父分支 result 或额外 candidate checkout。明确承诺的提交、合并、发布等仍按原目标与授权执行；完成声明不得冒充这些动作已发生。整体完成仍按 下方 `<change-completion>` 标签。
-
-验证尝试上限来自有效计划、change 上下文或项目约定，缺省 3，已有 config 的更严格上限继续生效。重复同一 blocker 无新证据或达到上限时，Lead 保留历史并形成实质变化后才能重试；仅换 Agent 不构成恢复。
-
-## 恢复和版本边界
-
-恢复重读 README、原计划、Ticket/Evidence、实际 writer、Git branch/base 和工作区；冲突只暂停受影响分支。取消和归档不删除工作区或未决事实，writer 停止仍需真实证据。
-
-执行工具只接受当前 Execution Context / Workspace Execution Record v1 与 Goal v8、父 Plan v3；未知版本、旧 source/candidate 字段和混合协议直接拒绝。拒绝不改写原 Evidence、不转换或删除工作区。原 owner 仍须核对实际 writer、代码与未决动作，不能把无法读取的旧协议解释成已停止或已完成。
-
-</ref-common-rules-execution-policy>
 
 <ref-specdev-p-goal-plan-references-representative-ticket>
 

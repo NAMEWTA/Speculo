@@ -14,7 +14,7 @@ metadata:
 
 每张票都是可在当前或新上下文执行的 Plan：说明背景、来源、目标、非目标、适用的必需方法、真实顺序约束、验证和失败停止点。Tickets Map 是统一启动与恢复入口，不是静态清单；它不复制 Ticket 的状态权威。
 
-按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 区分三个决定：串行/并行只描述票据推进顺序，默认按依赖和条件选择；每票的 Agent、subagent、团队或 CLI 编排遵守用户与 Work/Skill 要求；一个 change 的全部票据复用同一选定工作区，串并行与协作者数量都不触发额外 worktree。
+按 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path> 分别决定行为切片、票据调度、执行者分配、派遣通道和工作区。每票可独立执行与验收，不要求独立派遣；同一个 Agent 可连续执行多票。串行/并行只描述票据推进顺序，遵守依赖和用户与 Work/Skill 要求；一个 change 的全部票据复用同一选定工作区，串并行与协作者数量都不触发额外 worktree。
 
 ## 读取范围
 

@@ -1,6 +1,6 @@
 # 主 Agent 自主协调合同
 
-所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 可以连续完成多个 Work/Ticket；工作切分、执行者人数、工作区数量、工具通道分别决定。
+所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 或同一个受派 Agent 均可连续完成多个 Work/Ticket；工作切分、执行者分配、工作区数量、工具通道分别决定，Ticket 边界不要求新建 Agent 或会话。
 
 ## 何时读取
 

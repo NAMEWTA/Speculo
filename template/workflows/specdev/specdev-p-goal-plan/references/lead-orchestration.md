@@ -4,7 +4,7 @@
 
 ## 唯一 Lead 与实际执行者
 
-Lead 保留需求解释、DAG/Wave/Gate、路径分配、授权、正式状态、Evidence、整体 E2E 和最终回复。Lead 是职责，不是单 Agent 拓扑；实现可由单 Agent、subagent 或团队完成，按用户/项目/Work 要求安排。独立 reviewer 不参与本范围实现。
+Lead 保留需求解释、DAG/Wave/Gate、路径分配、授权、正式状态、Evidence、整体 E2E 和最终回复。Lead 是职责，不是单 Agent 拓扑；实现可由单 Agent、subagent 或团队完成，按用户/项目/Work 要求安排。按执行策略决定复用或新派，同一个主 Agent 或受派 Agent 可连续执行多个 Ticket，票据边界不自动结束其会话。独立 reviewer 不参与本范围实现。
 
 ## 调度与并发
 

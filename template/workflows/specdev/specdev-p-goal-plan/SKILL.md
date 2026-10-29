@@ -39,7 +39,7 @@ metadata:
 ## 执行底线
 
 - 先冻结 Outcome、权威来源、用户指定的交付数量、范围、Definition of Done 和失败停止条件；按风险确定 DAG/Gate/Wave，不用文档长度替代质量。
-- 固定 `lead-directed`，Lead 拥有状态和验收，不固定实现团队。ticket_execution 默认 auto；max_parallel_tickets 计量票据，显式 concurrent_implementation_limit 计量实现者；策略来源写 Execution Policy Source。派单读取 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>。
+- 固定 `lead-directed`，Lead 拥有状态和验收，不固定实现团队。票据切分、派遣通道与执行者分配分别决定，同一个 Agent 可连续执行多票；复用条件与逐票门遵循 <Path>{roots.workflows}/specdev/common/rules/execution-policy.md</Path>。ticket_execution 默认 auto；max_parallel_tickets 计量票据，显式 concurrent_implementation_limit 计量实现者；策略来源写 Execution Policy Source。派单读取 <Path>{roots.workflows}/specdev/specdev-p-goal-plan/references/lead-orchestration.md</Path>。
 - 保留 change 已选工作区，未指定复用 current；明确要求才创建一个 change worktree。串并行、派遣和审查不增建工作区，提交/合并按实际授权执行。
 - `plan` 只形成计划，缺少执行授权是计划中可见的待满足条件，不等于获准执行。运行前逐项核对真实授权；文档中的“已批准”不构成授权。
 - 当前票必须调用必需绑定的真实 Skill；普通可选 Skill 可按需发现并记录实际使用，不能以“读过入口”替代；先读取 `<Path>{roots.workflows}/specdev/common/rules/skill-invocation.md</Path>`。缺失必需 Skill、引用或验收证据时阻塞本票及依赖它的分支。

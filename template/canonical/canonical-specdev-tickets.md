@@ -19,7 +19,7 @@
 
 每张票都是可在当前或新上下文执行的 Plan：说明背景、来源、目标、非目标、适用的必需方法、真实顺序约束、验证和失败停止点。Tickets Map 是统一启动与恢复入口，不是静态清单；它不复制 Ticket 的状态权威。
 
-按 下方 `<ref-common-rules-execution-policy>` 标签 区分三个决定：串行/并行只描述票据推进顺序，默认按依赖和条件选择；每票的 Agent、subagent、团队或 CLI 编排遵守用户与 Work/Skill 要求；一个 change 的全部票据复用同一选定工作区，串并行与协作者数量都不触发额外 worktree。
+按 下方 `<ref-common-rules-execution-policy>` 标签 分别决定行为切片、票据调度、执行者分配、派遣通道和工作区。每票可独立执行与验收，不要求独立派遣；同一个 Agent 可连续执行多票。串行/并行只描述票据推进顺序，遵守依赖和用户与 Work/Skill 要求；一个 change 的全部票据复用同一选定工作区，串并行与协作者数量都不触发额外 worktree。
 
 ## 读取范围
 
@@ -2789,7 +2789,7 @@ I 开始实现、P 安排执行和 dev-worktree 创建/恢复时读取。三项�
 - 需要独立调度、DAG 或逐票追踪时使用 T；跨任务 Gate、跨 change 或明确总控请求进入 P。已有活动责任不能通过改称 Direct Spec 绕过，先由原 owner 处置原记录。
 - 票据调度 `ticket_execution: auto | serial | parallel`：默认 auto，由 Agent 按 DAG、写集、语义资源、用户/项目要求和实际能力决定。serial 完成当前票的实现、适用双轴审查和验证后再开始下一票；parallel 允许同时推进独立票，但不强制派遣或绕过前置门。
 - `max_parallel_tickets` 仅在实际要求上限时记录，计量 in_progress/review 票据，不计 Agent。父计划、子计划及 change 约束取共同上限，serial 为一票。没有显式上限时不填固定数字，不创建 config。
-- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。一张票可以由 Lead、subagent 或团队完成。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
+- Agent 编排按用户、项目初始化选择和当前 Work/Skill 的要求决定。Ticket 按可独立验收的行为切片拆分；派遣通道、执行者分配和票据串并行分别决定。指定通道不隐含一票一个 Agent；同一个 Lead 或受派 Agent 可连续执行多票，一张票也可由多人协作。Lead 按上下文连续性、依赖、并行收益和恢复需要选择复用或新派，遵守明确的执行者安排与独立审查要求。复用执行者仍须逐票核对 Ready、授权、依赖并保留各票 Evidence 与验收，不合并票据状态或越过 Gate。`concurrent_implementation_limit` 和现有 config 的 `max_concurrent_implementations` 仅约束实际实现者人数，显式存在才生效；不能用票据数量代替人数或反向推导。宿主限制仍须遵守。Lead 从真实工具状态核对活动人数，历史 implementation_owners 名单不代表当前全部在写，静态校验不能认证运行期人数。
 - 未指定工作区时复用 current，不询问默认选择。用户已选的 workspace/branch 持续有效。父计划引用成员选择，不重新安排其工作区。
 
 ## 工作区与写入
@@ -2932,7 +2932,7 @@ UI 范围同时读取 下方 `<design-contract>` 标签 与 specdev/changes/{cha
 
 - 交付一个可观察行为，或一个能独立解除后续阻塞的安全准备能力；
 - 完成后可以独立演示、测试或验证；
-- 适合一个全新 Agent 上下文在不中断的情况下完成；
+- 粒度适合一个全新 Agent 上下文在不中断的情况下完成；这是可交接性要求，实际执行可由同一个 Agent 连续完成多票，无需逐票新建 Agent 或会话；
 - 与其他 Ticket 有实质行为差异；
 - 只依赖真正阻止它开始的前置产物；
 - 自带至少一种完成证据。
@@ -4010,7 +4010,7 @@ Writers 有过实际写入者时用 `stopped: <证据 locator>`，原件须有 `
 
 # 主 Agent 自主协调合同
 
-所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 可以连续完成多个 Work/Ticket；工作切分、执行者人数、工作区数量、工具通道分别决定。
+所有 workflow、Command 与宿主共用本合同。Lead 是连续负责目标、权限、验收与恢复的主 Agent，不是一个必须另建的角色或常驻服务。主 Agent 或同一个受派 Agent 均可连续完成多个 Work/Ticket；工作切分、执行者分配、工作区数量、工具通道分别决定，Ticket 边界不要求新建 Agent 或会话。
 
 ## 何时读取
 
