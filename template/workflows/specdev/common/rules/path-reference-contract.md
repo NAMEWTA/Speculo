@@ -50,7 +50,7 @@
 
 目录引用必须以 `/` 结束；文件引用不得以 `/` 结束。
 
-嵌套安装反例：项目根 `.speculo/specdev` 不是状态根。change 必须位于 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 或新归档 `<Path>{roots.state}/specdev/changes/archive/{change}/</Path>`；旧 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>` 只读保留。
+嵌套安装反例：项目根 `.speculo/specdev` 不是状态根。当前 change 必须位于 `<Path>{roots.state}/specdev/changes/{change}/</Path>` 或新归档 `<Path>{roots.state}/specdev/changes/archive/{change}/</Path>`；旧 `<Path>{roots.state}/specdev/archive/YYYY-MM/{change}/</Path>` 和已有 `<Path>{roots.state}/specdev/changes/archive/YYYY-MM/{change}/</Path>` 的历史原件只读保留，不自动转换。
 
 ## 3. 项目代码路径
 

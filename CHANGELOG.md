@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.16] - 2026-10-29
+
+### Fixed
+
+- Preserve month-grouped historical SpecDev archives during refresh without treating the month as a Change identity. Reserve recognizable historical identities for conflict detection and keep legacy records read-only.
+- Protect archive index files as opaque runtime data and report conflicting paths in the existing installation. Regenerate the shared runtime and portable SpecDev documents.
+
 ## [2.1.15] - 2026-10-29
 
 ### Changed

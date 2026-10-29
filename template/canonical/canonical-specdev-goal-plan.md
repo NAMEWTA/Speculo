@@ -1550,7 +1550,7 @@ change 的稳定身份是同一项目、领域内的 `YYYY-MM-DD-topic[-NN]` 目
 - 直接 A 无 change 的必要维护回执：specdev/maintenance/{date}-{topic}[-NN].md，只在跨会话/跨对象恢复需要时创建。
 - 工程 docs：docs/README.md，明确请求基线后按需存在；它是跨领域工程事实，不是 SpecDev 独占知识 store。
 
-归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。archive 不嵌套月份；移动须验证全部 locator 和 DESIGN 摘要，不可变正文不做路径替换。
+归档实际位置和原回执表示封存；不在 README 增加 archived、archive_path 或全局 active/archived 列表。新归档不嵌套月份；移动须验证全部 locator 和 DESIGN 摘要，不可变正文不做路径替换。已有 specdev/changes/archive/YYYY-MM/ 月份目录是只读历史容器：保留原件，不作为当前 Change 或自动转换；其中可识别的 Change 身份参与重名检查。
 
 交接形式与范围根先按 下方 `<shared-coordination-session-files>` 标签 确定；只有本 change 承载的持久任务才将 TASK.md 与 REPORT.md 保存在 specdev/changes/{change}/sessions/，随 change 整体归档并进入原完整性清单。任务目录不得再放其他文件。即时返回不创建此目录；既有历史副本保持原字节，不再创建新的日志副本；归档前仍核对 writer 已停止，不因 REPORT 显示 completed 就移动活动工作区。session 只是交接材料分组，不成为整体 Outcome 或执行状态的第二权威。引用按稳定 change 与对象内路径解析，历史原件不回填或清理。
 

@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, cp, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { pathToFileURL } from "node:url";
 import { initSpeculo } from "../src/index.js";
 import { RefreshBlockedError } from "../src/refresh.js";
 import { pathExists } from "../src/utils.js";
@@ -139,6 +140,67 @@ describe("Speculo init refresh", () => {
     } finally {
       await rm(target, { recursive: true, force: true });
     }
+  });
+
+  it("refreshes with month-grouped historical archives and preserves their original bytes", async () => {
+    const target = await tempProject();
+    try {
+      await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      const root = join(target, ".agents/speculo"), state = join(root, ".speculo/specdev");
+      const history = join(state, "changes/archive/2026-07/2026-07-21-history/.status.json");
+      const second = join(state, "changes/archive/2026-08/2026-08-01-history/LOG.md");
+      const active = join(state, "changes/2026-10-14-active/README.md");
+      const archive = join(state, "changes/archive/2026-10-13-current/README.md");
+      for (const file of [history, second, active, archive]) await mkdir(dirname(file), { recursive: true });
+      await writeFile(history, '{"archive_path":"old location","archived":true}\r\n');
+      await writeFile(second, Buffer.from([0, 255, 10, 42]));
+      await writeFile(active, "Outcome: active\n"); await writeFile(archive, "Outcome: completed\n");
+      if (!isWindows) await chmod(history, 0o640);
+      const before = await Promise.all([history, second].map(hash));
+      const mode = (await lstat(history)).mode & 0o777;
+
+      const result = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      assert.equal(result.refresh.status, "updated");
+      assert.deepEqual(await Promise.all([history, second].map(hash)), before);
+      if (!isWindows) assert.equal((await lstat(history)).mode & 0o777, mode);
+      assert.equal(await readFile(active, "utf8"), "Outcome: active\n");
+      assert.equal(await readFile(archive, "utf8"), "Outcome: completed\n");
+      assert.deepEqual(await residue(target), []);
+      const runtime = await import(pathToFileURL(join(root, "lib/speculo-runtime.mjs")).href);
+      assert.deepEqual(runtime.discoverChangesSync(state, { includeArchived: true }).map((location: { name: string }) => location.name).sort(), ["2026-10-13-current", "2026-10-14-active"]);
+      assert.throws(() => runtime.readChangeFactsSync(state, "2026-07-21-history"), /change not found/);
+
+      const historyIndex = join(state, "changes/archive/2026-07/README.md");
+      await writeFile(historyIndex, "original archive index\r\n");
+      const indexed = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
+      assert.equal(indexed.refresh.preservedFiles, result.refresh.preservedFiles + 1);
+      assert.equal(await readFile(historyIndex, "utf8"), "original archive index\r\n");
+
+      const collision = join(state, "changes/2026-07-21-history"); await mkdir(collision);
+      assert.throws(() => runtime.discoverChangesSync(state), /duplicate identity/);
+      const manifest = join(root, ".speculo/install.json"), manifestBefore = await hash(manifest);
+      await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), error => {
+        assert.ok(expectBlocked(error, "structured-state-conflict"));
+        assert.ok(error instanceof RefreshBlockedError);
+        assert.match(error.blockers[0].message, /duplicate identity/);
+        assert.ok(error.blockers[0].message.includes(collision));
+        assert.ok(error.blockers[0].message.includes(dirname(history))); return true;
+      });
+      assert.equal(await hash(manifest), manifestBefore);
+      assert.deepEqual(await Promise.all([history, second].map(hash)), before);
+      assert.deepEqual(await residue(target), []);
+      await rm(collision, { recursive: true });
+      if (!isWindows) {
+        const link = join(state, "changes/archive/2026-07/linked-history");
+        await symlink(dirname(history), link);
+        await assert.rejects(initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } }), error => expectBlocked(error, "runtime-symlink"));
+        assert.equal(await hash(manifest), manifestBefore);
+        assert.deepEqual(await Promise.all([history, second].map(hash)), before);
+        await rm(link);
+      }
+      assert.equal((await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } })).refresh.status, "updated");
+      assert.deepEqual(await Promise.all([history, second].map(hash)), before);
+    } finally { await rm(target, { recursive: true, force: true }); }
   });
 
   it("three-way merges config additions, removals, defaults, and user overrides", async () => {

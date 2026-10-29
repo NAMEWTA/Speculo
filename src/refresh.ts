@@ -6,6 +6,7 @@ import { collectFiles, toPosix, type ManagedFileRecord } from "./manifest.js";
 import { readSpecdevConfig, validateStructuredRuntime, validateSpecdevConfig } from "./structured.js";
 import { pathExists } from "./utils.js";
 import { containedPath } from "./paths.js";
+import { isHistoricalArchiveMonth } from "./specdev-artifacts.js";
 
 export type RefreshBlocker = {
   code: string;
@@ -264,6 +265,8 @@ function matchesContractPath(runtimePath: string, contractPath: string): boolean
 }
 
 function isStructured(path: string, contracts: WorkflowRuntimeContract[]): boolean {
+  const segments = path.split("/");
+  if (segments[0] === "specdev" && segments[1] === "changes" && segments[2] === "archive" && isHistoricalArchiveMonth(segments[3] ?? "")) return false;
   return contracts.some((contract) =>
     (contract.config !== null && matchesContractPath(path, contract.config.path)) ||
     contract.structured_state.some((pattern) => matchesContractPath(path, pattern))
@@ -586,7 +589,7 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
     try {
       await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
     } catch (error) {
-      const message = String(error);
+      const message = String(error).split(stagedState).join(previousState);
       throw new RefreshBlockedError([{
         code: message.includes("learning-reset-required") ? "learning-reset-required" : "structured-state-conflict",
         path: message.includes("Learning") ? ".speculo/learning" : ".speculo",

@@ -71,12 +71,16 @@ export function resolveWorkContextSync(input: { projectRoot: string; methodRoot?
   return { projectRoot: actualProject, methodRoot: realpathSync(methodRoot), stateRoot, specdevRoot, installation: installed ? "present" : "absent" };
 }
 export async function resolveWorkContext(input: Parameters<typeof resolveWorkContextSync>[0]): Promise<WorkContext> { return resolveWorkContextSync(input); }
-export function assertChangeName(name: string): void {
+function assertChangeNameAt(name: string, path: string): void {
   const m = /^(\d{4})-(\d{2})-(\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*$/.exec(name);
-  if (!m) fail("identity-conflict", name, "expected YYYY-MM-DD-lowercase-topic");
+  if (!m) fail("identity-conflict", path, "expected YYYY-MM-DD-lowercase-topic");
   const year = Number(m[1]), month = Number(m[2]), day = Number(m[3]);
   const days = [31, year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) fail("identity-conflict", name, "date is not a real calendar date");
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) fail("identity-conflict", path, "date is not a real calendar date");
+}
+export function assertChangeName(name: string): void { assertChangeNameAt(name, name); }
+export function isHistoricalArchiveMonth(name: string): boolean {
+  return /^(?!0000)\d{4}-(?:0[1-9]|1[0-2])$/.test(name);
 }
 
 /** Visible top-level Markdown lines; rejects incomplete blocks instead of guessing. */
@@ -127,24 +131,38 @@ export function readUtf8ArtifactSync(path: string): string {
 function specdevRoot(context: WorkContext | string): string { return typeof context === "string" ? resolve(context) : context.specdevRoot; }
 function allLocations(root: string): ChangeLocation[] {
   const locations: ChangeLocation[] = [];
+  const seen = new Map<string, string>();
+  function reserve(name: string, path: string): void {
+    const previous = seen.get(name);
+    if (previous) fail("identity-conflict", path, `duplicate identity also at ${previous}`);
+    seen.set(name, path);
+  }
   function scan(portable: string, kind: ChangeLocation["kind"]) {
     const dir = safeWorkPathSync(root, portable, { type: "directory" }); if (!exists(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (kind === "active" && entry.name === "archive") continue;
       const target = join(dir, entry.name);
       if (!/^\d{4}-/.test(entry.name)) continue;
-      assertChangeName(entry.name);
+      if (kind === "archive" && isHistoricalArchiveMonth(entry.name)) {
+        const month = safeWorkPathSync(root, relative(root, target).split(sep).join("/"), { mustExist: true, type: "directory" });
+        for (const child of readdirSync(month, { withFileTypes: true })) {
+          if (!child.isDirectory() && !child.isSymbolicLink()) continue;
+          try { assertChangeName(child.name); } catch (error) {
+            if (error instanceof ArtifactError && error.code === "identity-conflict") continue;
+            throw error;
+          }
+          const historical = safeWorkPathSync(root, relative(root, join(month, child.name)).split(sep).join("/"), { mustExist: true, type: "directory" });
+          reserve(child.name, historical);
+        }
+        continue;
+      }
+      assertChangeNameAt(entry.name, target);
       safeWorkPathSync(root, relative(root, target).split(sep).join("/"), { mustExist: true, type: "directory" });
+      reserve(entry.name, target);
       locations.push({ name: entry.name, root: target, kind });
     }
   }
   scan("changes", "active"); scan("changes/archive", "archive");
-  const seen = new Map<string, ChangeLocation>();
-  for (const location of locations) {
-    const previous = seen.get(location.name);
-    if (previous) fail("identity-conflict", location.root, `duplicate identity also at ${previous.root}`);
-    seen.set(location.name, location);
-  }
   return locations;
 }
 export function discoverChangesSync(context: WorkContext | string, options: { includeArchived?: boolean } = {}): ChangeLocation[] {

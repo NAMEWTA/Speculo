@@ -66,6 +66,51 @@ test("historical files outside current locations cannot become discovered or rea
   assert.throws(() => readChangeFactsSync(context, oldName), /identity-conflict/);
   assert.equal(readFileSync(join(old, ".status.json"), "utf8"), bytes);
 });
+test("month archives reserve identities without becoming current changes", t => {
+  const { context } = fixture(t), root = context.specdevRoot;
+  const oldName = "2026-07-21-history", currentName = "2026-10-14-current";
+  const history = join(root, "changes/archive/2026-08", oldName);
+  const current = join(root, "changes/archive", currentName);
+  mkdirSync(history, { recursive: true }); mkdirSync(current, { recursive: true });
+  const bytes = '{"archive_path":"original locator"}\r\n';
+  writeFileSync(join(history, ".status.json"), bytes); writeFileSync(join(current, "README.md"), "Outcome: completed\n");
+  assert.deepEqual(discoverChangesSync(context, { includeArchived: true }).map(l => l.name), [currentName]);
+  assert.equal(readChangeFactsSync(context, currentName).location.kind, "archive");
+  assert.throws(() => readChangeFactsSync(context, oldName), /change not found/);
+  assert.equal(readFileSync(join(history, ".status.json"), "utf8"), bytes);
+  writeFileSync(join(current, ".status.json"), "{}");
+  assert.throws(() => readChangeFactsSync(context, currentName), /mixed-protocol/);
+  rmSync(join(current, ".status.json"));
+
+  const duplicate = join(root, "changes", oldName); mkdirSync(duplicate);
+  assert.throws(() => discoverChangesSync(context), error => {
+    assert.match(String(error), /identity-conflict.*duplicate identity/);
+    assert.ok(String(error).includes(history)); assert.ok(String(error).includes(duplicate)); return true;
+  });
+  rmSync(duplicate, { recursive: true });
+  const otherHistory = join(root, "changes/archive/2026-09", oldName); mkdirSync(otherHistory, { recursive: true });
+  assert.throws(() => discoverChangesSync(context), error => {
+    assert.ok(String(error).includes(history)); assert.ok(String(error).includes(otherHistory)); return true;
+  });
+});
+test("month archive exceptions do not hide malformed or linked paths", t => {
+  const { context } = fixture(t), archive = join(context.specdevRoot, "changes/archive"); mkdirSync(archive, { recursive: true });
+  for (const name of ["2026-13", "0000-01", "2026-02-30-invalid"]) {
+    const path = join(archive, name); mkdirSync(path);
+    assert.throws(() => discoverChangesSync(context), error => {
+      assert.match(String(error), /identity-conflict/); assert.ok(String(error).includes(path)); return true;
+    });
+    rmSync(path, { recursive: true });
+  }
+  if (process.platform !== "win32") {
+    symlinkSync("../", join(archive, "2026-07"));
+    assert.throws(() => discoverChangesSync(context), /path-unsafe/);
+    rmSync(join(archive, "2026-07"));
+    mkdirSync(join(archive, "2026-07"));
+    symlinkSync("../../", join(archive, "2026-07/2026-07-21-history"));
+    assert.throws(() => discoverChangesSync(context), /path-unsafe/);
+  }
+});
 test("unsupported authority, pending operations, invalid UTF-8 and active archives cannot appear valid", t => {
   const { context } = fixture(t), name = "2026-10-14-one", active = join(context.specdevRoot, "changes", name);
   mkdirSync(active); writeFileSync(join(active, "README.md"), "Outcome: active\n"); writeFileSync(join(active, ".status.json"), "{}");

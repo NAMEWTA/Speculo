@@ -7814,12 +7814,18 @@ function resolveWorkContextSync(input) {
 async function resolveWorkContext(input) {
   return resolveWorkContextSync(input);
 }
-function assertChangeName(name) {
+function assertChangeNameAt(name, path) {
   const m = /^(\d{4})-(\d{2})-(\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*$/.exec(name);
-  if (!m) fail("identity-conflict", name, "expected YYYY-MM-DD-lowercase-topic");
+  if (!m) fail("identity-conflict", path, "expected YYYY-MM-DD-lowercase-topic");
   const year = Number(m[1]), month = Number(m[2]), day = Number(m[3]);
   const days = [31, year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) fail("identity-conflict", name, "date is not a real calendar date");
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) fail("identity-conflict", path, "date is not a real calendar date");
+}
+function assertChangeName(name) {
+  assertChangeNameAt(name, name);
+}
+function isHistoricalArchiveMonth(name) {
+  return /^(?!0000)\d{4}-(?:0[1-9]|1[0-2])$/.test(name);
 }
 function markdownBodyLines(text, path = "README.md") {
   if (text.includes("\0")) fail("outcome-invalid", path, "invalid text encoding");
@@ -7898,6 +7904,12 @@ function specdevRoot(context) {
 }
 function allLocations(root) {
   const locations = [];
+  const seen = /* @__PURE__ */ new Map();
+  function reserve(name, path) {
+    const previous = seen.get(name);
+    if (previous) fail("identity-conflict", path, `duplicate identity also at ${previous}`);
+    seen.set(name, path);
+  }
   function scan(portable, kind) {
     const dir = safeWorkPathSync(root, portable, { type: "directory" });
     if (!exists2(dir)) return;
@@ -7905,19 +7917,29 @@ function allLocations(root) {
       if (kind === "active" && entry.name === "archive") continue;
       const target = join4(dir, entry.name);
       if (!/^\d{4}-/.test(entry.name)) continue;
-      assertChangeName(entry.name);
+      if (kind === "archive" && isHistoricalArchiveMonth(entry.name)) {
+        const month = safeWorkPathSync(root, relative2(root, target).split(sep2).join("/"), { mustExist: true, type: "directory" });
+        for (const child of readdirSync2(month, { withFileTypes: true })) {
+          if (!child.isDirectory() && !child.isSymbolicLink()) continue;
+          try {
+            assertChangeName(child.name);
+          } catch (error) {
+            if (error instanceof ArtifactError && error.code === "identity-conflict") continue;
+            throw error;
+          }
+          const historical = safeWorkPathSync(root, relative2(root, join4(month, child.name)).split(sep2).join("/"), { mustExist: true, type: "directory" });
+          reserve(child.name, historical);
+        }
+        continue;
+      }
+      assertChangeNameAt(entry.name, target);
       safeWorkPathSync(root, relative2(root, target).split(sep2).join("/"), { mustExist: true, type: "directory" });
+      reserve(entry.name, target);
       locations.push({ name: entry.name, root: target, kind });
     }
   }
   scan("changes", "active");
   scan("changes/archive", "archive");
-  const seen = /* @__PURE__ */ new Map();
-  for (const location of locations) {
-    const previous = seen.get(location.name);
-    if (previous) fail("identity-conflict", location.root, `duplicate identity also at ${previous.root}`);
-    seen.set(location.name, location);
-  }
   return locations;
 }
 function discoverChangesSync(context, options = {}) {
