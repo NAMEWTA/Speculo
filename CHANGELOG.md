@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.14] - 2026-10-29
+
+### Changed
+
+- Make coordination Agent-led: choose direct execution, parallel ordinary tools or delegation by actual task needs, then select an authorized channel. Treat saved coordination choices as preferences within required constraints, and add optional `allowed_modes` project limits.
+- Separate Ticket decomposition, scheduling, Agent assignment, execution channels and workspaces. Allow the same Lead or delegated Agent to complete multiple Tickets while preserving per-Ticket readiness, evidence and acceptance; reuse one selected workspace per change.
+- Apply risk-adapted standards and specification review across implementation, completion and recovery. Allow low-risk self review while retaining independent reviewers for high-risk work or explicit requirements, and invalidate evidence when its actual delivery inputs change.
+- Discover optional Skills progressively without mandatory catalogue scans or replanning; retain pinned inputs and actual execution evidence for required safety, user and acceptance methods.
+- Allow ready parent-plan producers to proceed while future consumers remain draft. Report eligible candidates, conflicts and suggested batches separately; alternative legal batches remain available within dependency, ownership and Gate constraints.
+- Use correlated inline returns for short synchronous read-only delegation, and durable TASK/REPORT handoffs for asynchronous, writing, cross-session, recoverable or formal delivery tasks. Align Herdr and Orca entry points, rebuild portable SpecDev Canonical documents and the shared runtime, and add regression and host-observation evaluation fixtures.
+
+### Fixed
+
+- Restrict durable task directories to `TASK.md` and `REPORT.md`, with an optional verified `Session log:` header in REPORT instead of a separate locator file. Reject unexpected handoff entries and preserve Lead acceptance of actual results.
+- Keep Herdr Claude and Codex launches scoped to managed panes, use default launches without permission-bypass flags, and retain historical flag examples only with explicit authorization and confirmation from the installed CLI help.
+
+### Upgrade Notes
+
+- Durable dispatch validation rejects extra task-directory files, including the former `session-locator.json`. Preserve historical records; use the current two-file format for new dispatches without automatically rewriting old handoffs.
+- Existing user runtime artifacts are not automatically migrated. Deterministic regression fixtures and the new host-observation contracts do not certify actual host execution or model quality; the host-observation cases remain unevaluated until real evidence is supplied.
+
 ## [2.1.13] - 2026-10-27
 
 ### Changed
