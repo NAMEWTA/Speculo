@@ -18,8 +18,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       read-cmd-shim:
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       semver:
         specifier: ^7.8.5
         version: 7.8.5
@@ -290,9 +290,9 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  read-cmd-shim@5.0.0:
-    resolution: {integrity: sha512-SEbJV7tohp3DAAILbEMPXavBjAnMN0tVnh4+9G8ihV4Pq3HYF9h8QNez9zkJ1ILkv9G2BjdzwctznGZXgu/HGw==}
-    engines: {node: ^18.17.0 || >=20.5.0}
+  read-cmd-shim@7.0.1:
+    resolution: {integrity: sha512-GhAsW4iJS0xNqv8P6HocT3gb5HCKHtEBKLIN7fE2oWr27jGIEihu48lXyGGeexkbiLv1XAbwyXvgjYMfT81kZA==}
+    engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -520,7 +520,7 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  read-cmd-shim@5.0.0: {}
+  read-cmd-shim@7.0.1: {}
 
   require-from-string@2.0.2: {}
 
