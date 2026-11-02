@@ -72,3 +72,24 @@ test('owning results must match original axes and committed delivery rejects lat
  writeFileSync(r.path,failed);
  assert.match(f.validate({requirePassed:false,expectedResults:{standards:'pass',specification:'pass'}}).join('\n'),/differs from the owning report/);
 });
+
+test('report-only Review Input is sufficient after a clean clone without frozen JSON or patch files',t=>{
+ const f=fixture(t),r=f.save(),s=r.input.scope;
+ const summary=`## Review Input
+
+- 范围：mode \`working-tree\`，outcome \`changes\`，base \`${s.base_sha}\`，observed_head \`${s.observed_head}\`；scope ${s.scope_paths.length} 个路径，changed ${s.changed_paths.length}，excluded ${s.excluded_paths.length}。
+- input_sha256：\`${s.input_sha256}\`
+`;
+ const start=r.text.indexOf('## Review Input'), next=r.text.indexOf('<a id="standards-output">');
+ assert.ok(start>=0&&next>start);
+ const minimal=r.text.slice(0,start)+summary+'\n'+r.text.slice(next);
+ writeFileSync(r.path,minimal);
+ assert.deepEqual(f.validate(),[]);
+ assert.deepEqual(readFileSync(r.path,'utf8'),minimal);
+ writeFileSync(r.path,minimal.replace(/scope \\d+ 个路径，changed \\d+/, 'scope unknown, changed absent'));
+ assert.match(f.validate().join('\n'),/path-count summary/);
+ writeFileSync(r.path,minimal.replace('Input-SHA256: '+r.digest,'Input-SHA256: '+'a'.repeat(64)));
+ assert.match(f.validate().join('\n'),/original report does not match/);
+ writeFileSync(r.path,minimal.replace('Result: pass','Result: request-changes'));
+ assert.ok(f.validate().length);
+});

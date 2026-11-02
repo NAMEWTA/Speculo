@@ -113,6 +113,15 @@ export async function validate(path, options = {}) {
   const change = await validateChangeDesign(join(dirname(dirname(root)), 'DESIGN.md'), { ...options, requireApproved: !checkPreview });
   if (change.meta.prototype_ref.id !== meta.design_id || change.meta.prototype_ref.digest !== digest || change.meta.selection.candidate_id !== meta.selected_candidate) throw new Error('change DESIGN does not approve this prototype/selection digest');
   if (!meta.browser_evidence) throw new Error('ready prototype requires browser evidence');
+  // New prototypes must prove viewport/state checks with actual browser captures.
+  // Once the approved DESIGN and immutable approval report are verified, a
+  // fresh clone may retain only that report and omit regenerable browser.json/PNGs.
+  const evidencePath = await safePath(root, meta.browser_evidence).catch(error => {
+    if (!checkPreview && checkReady && change.meta.status === 'approved' &&
+        /required path does not exist|ENOENT/.test(error.message)) return null;
+    throw error;
+  });
+  if (evidencePath === null) return meta;
   const evidence = await browserEvidence(root, meta.browser_evidence, digest, meta.candidates);
   for (const page of change.meta.pages) for (const state of page.states) if (!evidence.cases.some(c => c.entry.startsWith('final/') && c.states.includes(`${page.id}:${state}`))) throw new Error(`browser evidence missing final page state ${page.id}:${state}`);
   return meta;

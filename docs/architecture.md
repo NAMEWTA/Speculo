@@ -32,7 +32,7 @@ Speculo 不提供模型派遣服务、编排 runner、沙箱或 Run 状态机。
 
 ## 安装与宿主投影
 
-真实源安装到 `.agents/speculo/`。workspace v2 固定在 `.agents/speculo/.speculo/workspace.json`，含 `layout_version: agents-v2`、安装 UUID、项目根相对 roots。路径解析拒绝遍历、绝对路径、大小写歧义和符号链接逃逸。
+真实源安装到 `.agents/speculo/`。SpecDev 安装/刷新为 `.gitignore` 原样保留用户规则并追加幂等的 `SPECULO-EVIDENCE` 受管块：过程材料默认忽略，只放行审查、验收和批准 Markdown 报告。既有已跟踪的旧大文件不被自动删除或清理历史；需要用 Git 手动取消跟踪并评估历史压缩。workspace v2 固定在 `.agents/speculo/.speculo/workspace.json`，含 `layout_version: agents-v2`、安装 UUID、项目根相对 roots。路径解析拒绝遍历、绝对路径、大小写歧义和符号链接逃逸。
 
 可独立选择 `.agents/skills/` 与 `.claude/skills/` 曝光范围。领域/Work 投影原样复制源 YAML，正文要求先读权威入口。Command 生成独立包装；Claude 使用显式调用字段，Agents 使用 `agents/openai.yaml`。这些格式与政策的静态验证不等同于宿主实际调用认证。
 

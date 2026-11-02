@@ -33,6 +33,34 @@ function readLocator(root, locator) {
 }
 export function reviewInputDigest(input) { return hash(JSON.stringify(input)); }
 
+/** Read-only, report-only receipts omit regenerable review inputs. A scope hash is
+ * not the SHA of the complete review input; the two axis outputs must bind the
+ * same full Input-SHA256 independently of any optional scope digest.
+ */
+export function parseReviewReportSummary(text) {
+  const plain = text.replaceAll('`', '');
+  const field = (name) => {
+    const match = new RegExp('\\b' + name + '\\s*[:：=]?\\s*([a-f0-9]{7,64}|[0-9]+)', 'i').exec(plain);
+    return match?.[1] ?? null;
+  };
+  const mode = /\bmode\s*[:：=]?\s*(working-tree|source-files|baseline|range|commit|pr)\b/i.exec(plain)?.[1] ?? null;
+  const outcome = /\boutcome\s*[:：=]?\s*(changes|source-snapshot|no-diff)\b/i.exec(plain)?.[1] ?? 'changes';
+  const fullInputSha = /\b(?:review_input_sha256|Full-Input-SHA256)\s*[:：=]\s*([a-f0-9]{64})\b/i.exec(plain)?.[1] ?? null;
+  const scopeSha = /\b(?:input_sha256|scope_sha256|Scope-SHA256)\s*[:：=]\s*([a-f0-9]{64})\b/i.exec(plain)?.[1] ?? null;
+  const base = field('base(?:_sha)?'), head = field('head(?:_sha)?'), observed = field('observed_head');
+  const scopeCount = /\b(?:scope(?:_paths_count)?|paths_count)\s*[:：=]?\s*(\d+)\b/i.exec(plain)?.[1];
+  const changedCount = /\b(?:changed(?:_paths_count)?|changed_count)\s*[:：=]?\s*(\d+)\b/i.exec(plain)?.[1];
+  if (!mode || (!scopeSha && !fullInputSha) ||
+      (mode !== 'source-files' && (!base || !(head || observed))) ||
+      (scopeCount === undefined && changedCount === undefined)) {
+    throw new Error('report-only Review Input needs digest, mode, base/head and path-count summary');
+  }
+  if ([base,head,observed].filter(Boolean).some(value=>!/^[a-f0-9]{12,64}$/.test(value))) throw new Error('review summary requires unambiguous commit SHA prefixes');
+  if (outcome === 'no-diff') throw new Error('no-diff is not review approval');
+  return { scope: {mode,outcome,base_sha:base,head_sha:head,observed_head:observed},
+    fullInputSha, scopeSha, scopeCount, changedCount };
+}
+
 /** Check a record's frozen input, declared strategy and original results.
  * Current completion or reuse must also apply the owning scope's requirements
  * through validateCompletionReview; historical integrity alone is not approval.
@@ -62,19 +90,30 @@ export function validateReviewRecord(root, artifact, {independentOnly=false, req
     if (!(strategy === 'self' ? data.Mode === 'self' : ['native','herdr','orca','cli'].includes(data.Mode))) throw new Error('invalid review Mode');
     const inputSource = readLocator(root,data.Input);
     const blocks = [...inputSource.text.matchAll(/```json\s*\n([\s\S]*?)\n```/g)];
-    if (blocks.length !== 1) throw new Error('Input must reference one frozen review JSON object');
-    const input = JSON.parse(blocks[0][1]), scope = input.scope;
-    if (!scope || !Array.isArray(input.sources) || !input.sources.length) throw new Error('Input needs scope and actual standards/specification/instruction sources');
-    if (!repoRoot && checkCurrent) throw new Error('current input checks require explicit project root');
-    const sourceKinds = new Set();
-    for (const source of input.sources) {
-      if (!['standards','specification','instructions'].includes(source.kind) || !real(source.locator) || !/^[a-f0-9]{64}$/.test(source.sha256 ?? '')) throw new Error('invalid review source');
-      sourceKinds.add(source.kind);
-      if (repoRoot && checkCurrent && hash(readLocator(sourceRoot,source.locator).text) !== source.sha256) throw new Error(`source drift: ${source.locator}`);
+    if (blocks.length > 1) throw new Error('ambiguous frozen review input objects');
+    const reportOnly = blocks.length === 0;
+    let scope, digest = null;
+    if (reportOnly) {
+      const summary = parseReviewReportSummary(inputSource.text);
+      scope = summary.scope;
+      digest = summary.fullInputSha;
+      // A summary is not a cryptographic proof of its omitted source bytes.
+      // The owning report/AC checks remain mandatory, and each axis must agree.
+    } else {
+      const input = JSON.parse(blocks[0][1]);
+      scope = input.scope;
+      if (!scope || !Array.isArray(input.sources) || !input.sources.length) throw new Error('Input needs scope and actual standards/specification/instruction sources');
+      if (!repoRoot && checkCurrent) throw new Error('current input checks require explicit project root');
+      const sourceKinds = new Set();
+      for (const source of input.sources) {
+        if (!['standards','specification','instructions'].includes(source.kind) || !real(source.locator) || !/^[a-f0-9]{64}$/.test(source.sha256 ?? '')) throw new Error('invalid review source');
+        sourceKinds.add(source.kind);
+        if (repoRoot && checkCurrent && hash(readLocator(sourceRoot,source.locator).text) !== source.sha256) throw new Error(`source drift: ${source.locator}`);
+      }
+      if (!sourceKinds.has('standards') || requirePassed && !sourceKinds.has('specification')) throw new Error('missing required review sources');
+      if (requiredSpecifications.some(locator=>!input.sources.some(source=>source.kind === 'specification' && source.locator === locator))) throw new Error('review omits the authoritative specification/acceptance source');
+      digest = reviewInputDigest(input);
     }
-    if (!sourceKinds.has('standards') || requirePassed && !sourceKinds.has('specification')) throw new Error('missing required review sources');
-    if (requiredSpecifications.some(locator=>!input.sources.some(source=>source.kind === 'specification' && source.locator === locator))) throw new Error('review omits the authoritative specification/acceptance source');
-    const digest = reviewInputDigest(input);
     const rows = markdownBodyLines(body).filter(({text:line})=>/^\|\s*(standards|specification)\s*\|/.test(line)).map(({text:line})=>line.split('|').slice(1,-1).map(x=>x.trim()));
     if (rows.length !== 2 || new Set(rows.map(row=>row[0])).size !== 2) throw new Error('expected exactly one result per axis');
     for (const [axis,reviewer,result,locator,...extra] of rows) {
@@ -85,6 +124,7 @@ export function validateReviewRecord(root, artifact, {independentOnly=false, req
       if (expectedResults && expectedResults[axis] !== result) throw new Error(`${axis} result differs from the owning report`);
       const report = readLocator(root,locator), reportFields = fields(report.text);
       if (report.path === path && !locator.includes('#')) throw new Error('report must reference original output, not its summary');
+      if (reportOnly && digest === null && /^[a-f0-9]{64}$/.test(reportFields['Input-SHA256'] ?? '')) digest = reportFields['Input-SHA256'];
       if (reportFields.Reviewer !== reviewer || reportFields.Axis !== axis || reportFields.Result !== result || reportFields['Input-SHA256'] !== digest || !real(reportFields.Observed)) throw new Error(`${axis} original report does not match the review record`);
       if (result === 'not-applicable' && !real(reportFields.Reason)) throw new Error(`${axis} not-applicable requires a concrete applicability reason`);
     }
@@ -96,10 +136,11 @@ export function validateReviewRecord(root, artifact, {independentOnly=false, req
     if (scope.mode === 'source-files' && !allowSourceFiles) throw new Error('source-files cannot substitute implementation change review');
     if (!['baseline','range','commit','pr','source-files','working-tree'].includes(scope.mode)) throw new Error('invalid frozen review scope');
     if (scope.outcome === 'no-diff') throw new Error('no-diff is not an independent approval');
-    if (expectedHead && (scope.mode === 'working-tree' ? scope.observed_head : scope.head_sha) !== expectedHead) throw new Error('review does not cover the expected checkpoint');
-    if (expectedBase && scope.base_sha !== expectedBase) throw new Error('review does not cover the implementation baseline');
+    const matchesCommit = (actual, expected) => typeof actual === 'string' && actual.length >= 12 && typeof expected === 'string' && expected.startsWith(actual);
+    if (expectedHead && !(reportOnly ? matchesCommit(scope.mode === 'working-tree' ? scope.observed_head : scope.head_sha, expectedHead) : (scope.mode === 'working-tree' ? scope.observed_head : scope.head_sha) === expectedHead)) throw new Error('review does not cover the expected checkpoint');
+    if (expectedBase && !(reportOnly ? matchesCommit(scope.base_sha, expectedBase) : scope.base_sha === expectedBase)) throw new Error('review does not cover the implementation baseline');
     if (scope.mode === 'working-tree' && scope.excluded_paths?.length && !real(input.exclusions)) throw new Error('excluded changes require an explicit scope/ownership rationale');
-    if (checkCurrent) {
+    if (checkCurrent && !reportOnly) {
       const options = {repo:repoRoot,mode:scope.mode};
       if (scope.mode === 'working-tree') { options.base=scope.base_sha; if(scope.selection === 'explicit-files') options.files=scope.scope_paths; }
       else if (scope.mode === 'source-files') options.files=scope.source_snapshot?.map(file=>file.path);

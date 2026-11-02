@@ -57,6 +57,31 @@ export async function writeDiscoveryAssets(packageRoot: string, stagedRoot: stri
   await cp(join(packageRoot,"template","AGENTS.md"),join(stagedRoot,".speculo","AGENTS.md"));
 }
 
+/** A small, idempotent Git-owned policy. Original user .gitignore bytes are not rewritten. */
+export function updateSpecdevEvidenceIgnore(content: string, enabled: boolean): string {
+  const start = "# SPECULO-EVIDENCE:START", end = "# SPECULO-EVIDENCE:END";
+  const starts = content.split(start).length - 1, ends = content.split(end).length - 1;
+  if (starts !== ends || starts > 1 || (starts && content.indexOf(end) < content.indexOf(start))) {
+    throw new Error("invalid-evidence-ignore-markers: repair the Speculo-owned block explicitly");
+  }
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const rules = [
+    start,
+    "# SpecDev: keep review/acceptance/approval reports; leave regenerable inputs local or in CI artifacts.",
+    "/.agents/speculo/.speculo/specdev/changes/**/evidence/**",
+    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/**/",
+    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/T-[0-9][0-9]*.md",
+    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/report*.md",
+    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/approval-*.md",
+    end,
+  ].join(newline);
+  if (starts) return content.slice(0, content.indexOf(start)) +
+    (enabled ? rules : "") + content.slice(content.indexOf(end) + end.length);
+  if (!enabled) return content;
+  return content + (content && !content.endsWith(newline) ? newline : "") +
+    (content && !content.endsWith(newline + newline) ? newline : "") + rules + newline;
+}
+
 export function planExternalEdits(snapshots: Map<ExternalName, FileImage>, references: KnowledgeReference[], specdevInstalled: boolean): ExternalEdit[] {
   const edits: ExternalEdit[] = [];
   for (const [name, before] of snapshots) {
@@ -70,6 +95,7 @@ export function planExternalEdits(snapshots: Map<ExternalName, FileImage>, refer
       const existing = text.split(/\r?\n/).map((line) => line.trim().replace(/^\//, "").replace(/\/$/, ""));
       const missing = patterns.filter((pattern) => !existing.includes(pattern.replace(/\/$/, "")));
       if (missing.length) text += (text && !text.endsWith("\n") ? newline : "") + missing.join(newline) + newline;
+       text = updateSpecdevEvidenceIgnore(text, specdevInstalled);
     }
     if (before && (before.mode & 0o222) === 0 && !bytes(before).equals(Buffer.from(text))) {
       throw new Error(`read-only-external-file: ${name}; preserve permissions and obtain source-owner approval`);
