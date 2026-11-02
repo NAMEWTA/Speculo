@@ -86,7 +86,7 @@ test('report-only Review Input is sufficient after a clean clone without frozen 
  writeFileSync(r.path,minimal);
  assert.deepEqual(f.validate(),[]);
  assert.deepEqual(readFileSync(r.path,'utf8'),minimal);
- writeFileSync(r.path,minimal.replace(/scope \\d+ 个路径，changed \\d+/, 'scope unknown, changed absent'));
+ writeFileSync(r.path,minimal.replace(/scope \d+ 个路径，changed \d+/, 'scope unknown, changed absent'));
  assert.match(f.validate().join('\n'),/path-count summary/);
  writeFileSync(r.path,minimal.replace('Input-SHA256: '+r.digest,'Input-SHA256: '+'a'.repeat(64)));
  assert.match(f.validate().join('\n'),/original report does not match/);
