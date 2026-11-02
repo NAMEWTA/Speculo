@@ -92,7 +92,7 @@ export function validateReviewRecord(root, artifact, {independentOnly=false, req
     const blocks = [...inputSource.text.matchAll(/```json\s*\n([\s\S]*?)\n```/g)];
     if (blocks.length > 1) throw new Error('ambiguous frozen review input objects');
     const reportOnly = blocks.length === 0;
-    let scope, digest = null;
+    let scope, digest = null, input = null;
     if (reportOnly) {
       const summary = parseReviewReportSummary(inputSource.text);
       scope = summary.scope;
@@ -100,7 +100,7 @@ export function validateReviewRecord(root, artifact, {independentOnly=false, req
       // A summary is not a cryptographic proof of its omitted source bytes.
       // The owning report/AC checks remain mandatory, and each axis must agree.
     } else {
-      const input = JSON.parse(blocks[0][1]);
+      input = JSON.parse(blocks[0][1]);
       scope = input.scope;
       if (!scope || !Array.isArray(input.sources) || !input.sources.length) throw new Error('Input needs scope and actual standards/specification/instruction sources');
       if (!repoRoot && checkCurrent) throw new Error('current input checks require explicit project root');
