@@ -32,6 +32,7 @@ describe('versioned design lifecycle',()=>{
       const validate=await designValidator();
       await rm(join(f.root,'evidence/browser.json'));
       await validate.validate(f.path,{checkReady:true});
+      await validate.validate(f.path);
       await assert.rejects(validate.validate(f.path,{checkPreview:true}),/required path does not exist|ENOENT/);
       await edit(join(f.change,'DESIGN.md'),m=>{m.tokens.text='#999999'});
       await assert.rejects(validate.validate(f.path,{checkReady:true}),/confirmation digest is stale/);

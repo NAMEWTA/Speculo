@@ -117,7 +117,7 @@ export async function validate(path, options = {}) {
   // Once the approved DESIGN and immutable approval report are verified, a
   // fresh clone may retain only that report and omit regenerable browser.json/PNGs.
   const evidencePath = await safePath(root, meta.browser_evidence).catch(error => {
-    if (!checkPreview && checkReady && change.meta.status === 'approved' &&
+    if (!checkPreview && change.meta.status === 'approved' &&
         /required path does not exist|ENOENT/.test(error.message)) return null;
     throw error;
   });
