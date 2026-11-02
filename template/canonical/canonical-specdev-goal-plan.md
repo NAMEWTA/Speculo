@@ -3503,9 +3503,9 @@ C、I、文档和最终集成共用此合同。记录放原 CR、I Evidence、�
 
 ## 固定实际输入
 
-在原文 `review-input` 锚点保存一个 JSON：`scope` 为 review-scope 完整返回值，`sources` 为实际 standards/specification/instructions 的项目根相对 locator 与原文 sha256，必要时写 exclusions。代码 scope 相对选定工作区，来源相对 sourceRoot；不复制规范进 worktree、不使用 .. 越界。轻量 README 只摘要 scope/acceptance 等合同锚点，不能摘要包含审查记录的整份自身。
+先在本地或 CI artifact 冻结完整 review input：`scope` 为 review-scope 实际返回值，`sources` 为 standards/specification/instructions 的项目根相对 locator、原文 SHA-256 与必要 exclusions。代码 scope 相对选定工作区，来源相对 sourceRoot；不复制规范进 worktree、不使用 `..` 越界。**Git 中的 `review-input` 锚点只保存检验结果摘要，不复制大型 JSON、patch、运行日志和哈希清单。** 建议使用 `Full-Input-SHA256: <64-hex>`、`mode: working-tree|range|commit|pr|source-files`、`base_sha: <commit>`、`head_sha` 或 `observed_head`、`scope_paths_count`、`changed_paths_count`、`excluded_paths_count`。既有 Markdown `mode/base/head/scope/changed` 摘要也可读取。摘要只记录输入身份与范围，不复制整份记录自身。
 
-Input-SHA256 是对象 JSON.parse 后 JSON.stringify 的 UTF-8 SHA256。冻结记录支持定位与失效判定，不证明实际审查已经发生。未提交交付按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定实际工作副本，不用 HEAD 冒充脏文件。自查同样核对最终交付，但无需额外 reviewer 或文件目录。
+两轴 `Input-SHA256` 必须指向同一份完整 review input 的 `SHA256(JSON.stringify(input))`，且 Reviewer、Axis、Result、Observed 与汇总结论一致。`scope.input_sha256` 仅是范围快照摘要，**不是**完整 review input 的摘要，严禁混写。生成过程中的原始 JSON 与浏览器材料保留本地/CI；全新克隆只回读报告时，只能核验报告自身与当前权威验收，不能虚称重新验证了已省略原件的每一字节。需要重新认证当前实现时重新生成输入和检查。未提交交付按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定实际工作副本，不用 HEAD 冒充脏文件。自查同样核对最终交付，但无需额外 reviewer 或文件目录。
 
 ## 原工件内的最小策略与结果
 
