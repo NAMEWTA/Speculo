@@ -8507,6 +8507,7 @@
     "docs/concepts.md",
     "docs/contributing.md",
     "docs/getting-started.md",
+    "docs/plans/issue-102-report-only-evidence.md",
     "docs/plans/issue-96-agent-led-coordination.md",
     "docs/troubleshooting.md",
     "docs/workflow-integrity.md",
@@ -8942,6 +8943,7 @@
     "test/specdev-design-library.test.ts",
     "test/specdev-design.test.ts",
     "test/specdev-direct-execution.test.ts",
+    "test/specdev-evidence-ignore.test.ts",
     "test/specdev-independent-review.test.ts",
     "test/specdev-learn.test.ts",
     "test/specdev-markdown-consumers.test.ts",
@@ -8961,7 +8963,7 @@
   ],
   "summary": {
     "baseline_files": 1060,
-    "added": 471,
+    "added": 473,
     "actions": {
       "rewritten": 221,
       "preserved": 112,
