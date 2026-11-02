@@ -3277,11 +3277,11 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 }
 ```
 
-Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、风险适配双轴审查和 E2E 全部通过。checkpoint 指向原 Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、风险适配双轴审查和 E2E 全部通过。checkpoint 指向原 Review 的结果报告摘要（包含 mode、base/head、路径计数和输入摘要），如 `evidence/T-01.md#review-input`；完整 review JSON/patch 仅留本地或 CI artifact，不入 Git，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
 
 ## Acceptance Verification
 
-Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
+Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部本地过程文件时记录其 `sha256`，文件若仍在本地须核验摘要一致；仅入库结果报告的全新克隆不要求保留过程材料。原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
 
 ## 审查策略与实际记录
 
