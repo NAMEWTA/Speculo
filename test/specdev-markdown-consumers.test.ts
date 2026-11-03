@@ -106,6 +106,13 @@ test('direct Spec completion rejects empty, duplicate and failed acceptance evid
     const record={id:'AC-1',result:'passed',method:'fixture execution',source:'current code',observed:'assertion matched',command:'fixture-check',exit:0};
     const save=async(records:unknown[])=>writeFile(path,`## Acceptance Verification\n\n\x60\x60\x60json\n${JSON.stringify(records)}\n\x60\x60\x60\n`);
     await save([record]);assert.deepEqual(plan.validateAcceptanceEvidence(f.root,'evidence/direct-spec.md',['AC-1']),[]);
+    // A durable acceptance report can reference a local-only input digest.
+    const localOnly={...record,evidence:'evidence/raw-run.log',sha256:'a'.repeat(64)};
+    await save([localOnly]);assert.deepEqual(plan.validateAcceptanceEvidence(f.root,'evidence/direct-spec.md',['AC-1']),[]);
+    await writeFile(join(f.root,'evidence/raw-run.log'),'tampered-but-present');
+    assert.match(plan.validateAcceptanceEvidence(f.root,'evidence/direct-spec.md',['AC-1']).join('\\n'),/digest drift/);
+    await rm(join(f.root,'evidence/raw-run.log'));
+
     await save([record,record]);assert.match(plan.validateAcceptanceEvidence(f.root,'evidence/direct-spec.md',['AC-1']).join('\n'),/exactly one/);
     await save([{...record,exit:1}]);assert.match(plan.validateAcceptanceEvidence(f.root,'evidence/direct-spec.md',['AC-1']).join('\n'),/Exit 0/);
   }finally{await rm(f.repo,{recursive:true,force:true});}

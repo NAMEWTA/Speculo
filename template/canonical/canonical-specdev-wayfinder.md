@@ -3480,9 +3480,9 @@ C、I、文档和最终集成共用此合同。记录放原 CR、I Evidence、�
 
 ## 固定实际输入
 
-在原文 `review-input` 锚点保存一个 JSON：`scope` 为 review-scope 完整返回值，`sources` 为实际 standards/specification/instructions 的项目根相对 locator 与原文 sha256，必要时写 exclusions。代码 scope 相对选定工作区，来源相对 sourceRoot；不复制规范进 worktree、不使用 .. 越界。轻量 README 只摘要 scope/acceptance 等合同锚点，不能摘要包含审查记录的整份自身。
+先在本地或 CI artifact 冻结完整 review input：`scope` 为 review-scope 实际返回值，`sources` 为 standards/specification/instructions 的项目根相对 locator、原文 SHA-256 与必要 exclusions。代码 scope 相对选定工作区，来源相对 sourceRoot；不复制规范进 worktree、不使用 `..` 越界。**Git 中的 `review-input` 锚点只保存检验结果摘要，不复制大型 JSON、patch、运行日志和哈希清单。** 建议使用 `Full-Input-SHA256: <64-hex>`、`mode: working-tree|range|commit|pr|source-files`、`base_sha: <commit>`、`head_sha` 或 `observed_head`、`scope_paths_count`、`changed_paths_count`、`excluded_paths_count`。既有 Markdown `mode/base/head/scope/changed` 摘要也可读取。摘要只记录输入身份与范围，不复制整份记录自身。
 
-Input-SHA256 是对象 JSON.parse 后 JSON.stringify 的 UTF-8 SHA256。冻结记录支持定位与失效判定，不证明实际审查已经发生。未提交交付按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定实际工作副本，不用 HEAD 冒充脏文件。自查同样核对最终交付，但无需额外 reviewer 或文件目录。
+两轴 `Input-SHA256` 必须指向同一份完整 review input 的 `SHA256(JSON.stringify(input))`，且 Reviewer、Axis、Result、Observed 与汇总结论一致。`scope.input_sha256` 仅是范围快照摘要，**不是**完整 review input 的摘要，严禁混写。生成过程中的原始 JSON 与浏览器材料保留本地/CI；全新克隆只回读报告时，只能核验报告自身与当前权威验收，不能虚称重新验证了已省略原件的每一字节。需要重新认证当前实现时重新生成输入和检查。未提交交付按 下方 `<ref-common-skills-code-review-references-working-tree-review>` 标签 固定实际工作副本，不用 HEAD 冒充脏文件。自查同样核对最终交付，但无需额外 reviewer 或文件目录。
 
 ## 原工件内的最小策略与结果
 
@@ -3769,11 +3769,11 @@ Lead 在选定 change-workspace 对固定交付执行适用集成/回归和 E2E�
 }
 ```
 
-Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、风险适配双轴审查和 E2E 全部通过。checkpoint 指向原 Review 的完整固定输入，如 `evidence/T-01.md#review-input`，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
+Direct Spec 用 `purpose: direct-spec`、`change: <实际 change>` 替代 ticket_id。status 为 active/review/verified/blocked/cancelled；verified 要求实际检查、风险适配双轴审查和 E2E 全部通过。checkpoint 指向原 Review 的结果报告摘要（包含 mode、base/head、路径计数和输入摘要），如 `evidence/T-01.md#review-input`；完整 review JSON/patch 仅留本地或 CI artifact，不入 Git，verification.evidence 指向真实观察段；不复制快照或工作区字段。记录所有实际实现及修复者，正式 Evidence 只由 Lead 写入。不支持的执行版本直接拒绝，工具不改写历史原文或转换工作区。
 
 ## Acceptance Verification
 
-Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部 `evidence` 文件时须提供真实匹配的 `sha256`；原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
+Ticket 完成时按本票 contract_ids、Direct Spec 完成时按全部 Spec AC 填写本节 JSON array，每个 AC 恰一项。字段为 `id`（AC-N）、`result: passed`、`method`、`source`、`observed`；实际执行命令时增加 `command` 与 `exit: 0`。引用外部本地过程文件时记录其 `sha256`，文件若仍在本地须核验摘要一致；仅入库结果报告的全新克隆不要求保留过程材料。原 Evidence 内联实际观察不另造文件。没有执行的项不伪造 passed。普通 README 轻量模式仍用 README verification 表，二者不重复维护。
 
 ## 审查策略与实际记录
 

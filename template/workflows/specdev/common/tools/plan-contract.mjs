@@ -402,8 +402,13 @@ export function validateAcceptanceEvidence(changeRoot, artifact, contractIds) {
       if (!plainObject(record) || Object.keys(record).some(key=>!allowed.has(key)) || record.result !== 'passed' || ['method','source','observed'].some(key=>placeholder(record[key]))) errors.push(`${artifact}: ${id} requires passed Method/Source/Observed evidence`);
       if (record.command !== undefined && (placeholder(record.command) || record.exit !== 0)) errors.push(`${artifact}: ${id} command must have actual Exit 0`);
       if (record.evidence !== undefined) {
-        const evidence = runtime.safeWorkPathSync(changeRoot, record.evidence, {mustExist:true,type:'file'});
-        if (evidence === path || !DIGEST.test(record.sha256 ?? '') || digest(readFileSync(evidence)) !== record.sha256) errors.push(`${artifact}: ${id} acceptance evidence digest drift or circular evidence`);
+        const evidence = runtime.safeWorkPathSync(changeRoot, record.evidence);
+        if (evidence === path || !DIGEST.test(record.sha256 ?? '') ||
+            (existsSync(evidence) && (lstatSync(evidence).isSymbolicLink() || !lstatSync(evidence).isFile() || digest(readFileSync(evidence)) !== record.sha256))) {
+          errors.push(`${artifact}: ${id} acceptance evidence digest drift or circular evidence`);
+        }
+        // The report is durable; an otherwise valid digest may point to local-only
+        // execution artifacts omitted from Git. Presence is checked only if retained.
       } else if (record.sha256 !== undefined) errors.push(`${artifact}: digest without evidence locator`);
     }
     for (const record of records) if (!contractIds.includes(record?.id)) errors.push(`${artifact}: unknown acceptance contract ${record?.id}`);

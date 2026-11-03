@@ -55,7 +55,7 @@ Spec 定义目标、外部行为、范围和验收；Ticket 把目标拆成可�
 
 标准轴与规范轴分别判断，执行者由实际风险和原用户/项目约束决定。普通低风险任务可由主 Agent 在同一上下文自查；高风险、高影响或明确要求独立时，使用未参与当前范围实现的 reviewer，沿已授权且实际可用的通道执行。只有必要独立能力或身份缺失才阻塞该审查；自查不能冒称独立。具体规则见[审查策略](../../template/workflows/specdev/common/skills/code-review/references/reviewer-contracts.md)。
 
-实际实现者、审查策略、固定输入和原始两轴结果写入原 Evidence；独立审查另保留真实 reviewer 身份和 Lead 对实际派遣/返回的核验。委派按恢复需要选择[即时或持久交接](../agent-handoffs.md)。多单元组合或冲突修正后的实际交付按整体风险验收，整体审查使用原 `final-review.md` 或父整体 Evidence；只重验受影响证据。
+实际实现者、审查策略、输入摘要与两轴真实结果写入原 Evidence；独立审查另保留真实 reviewer 身份和 Lead 对实际派遣/返回的核验。**SpecDev 默认只把结论报告 Markdown 入 Git**（每票 `evidence/T-xx.md`、`report*.md`、原型 `approval-*.md`）；完整 review JSON、patch、截图、browser.json、日志、预算归因等过程材料只保留本地或 CI artifact。全新克隆校验已批准报告结论，不会宣称重新执行已丢失的原始检验。委派按恢复需要选择[即时或持久交接](../agent-handoffs.md)。多单元组合或冲突修正后的实际交付按整体风险验收，整体审查使用原 `final-review.md` 或父整体 Evidence；只重验受影响证据。
 
 未提交的 Direct Spec 可使用只读 `working-tree` 审查范围，包含新增、修改、删除及模式变化；固定的 HEAD 不代表未提交内容。它不提交代码、不暂存、不改 index，完成前重验范围内字节与规范。指定文件阅读的 `source-files` 模式仍保留原用途。
 

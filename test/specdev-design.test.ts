@@ -27,6 +27,18 @@ async function edit(path: string, change: (meta: any) => void) {
 }
 
 describe('versioned design lifecycle',()=>{
+  it('a verified approval report survives a clean clone without browser.json, while new preview inspection still requires it',async()=>{
+    const f=await fixture();try {
+      const validate=await designValidator();
+      await rm(join(f.root,'evidence/browser.json'));
+      await validate.validate(f.path,{checkReady:true});
+      await validate.validate(f.path);
+      await assert.rejects(validate.validate(f.path,{checkPreview:true}),/required path does not exist|ENOENT/);
+      await edit(join(f.change,'DESIGN.md'),m=>{m.tokens.text='#999999'});
+      await assert.rejects(validate.validate(f.path,{checkReady:true}),/confirmation digest is stale/);
+    } finally { await f.cleanup(); }
+  });
+
   it('accepts a complete fixture and binds confirmation to normative values',async()=>{
     const f=await fixture();try{
       await (await designValidator()).validate(f.path);
