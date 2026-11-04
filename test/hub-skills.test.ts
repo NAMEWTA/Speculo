@@ -28,10 +28,11 @@ async function healthy(target: string) {
   assert.equal(report.healthy, true, JSON.stringify(report.checks.filter(c => !c.ok)));
 }
 
-test("Hub catalog has exactly 16 category/name entries and excludes nested example Skills", async () => {
+test("Hub catalog has exactly 17 category/name entries and excludes nested example Skills", async () => {
   const catalog = await discoverHubCatalog(packageRoot);
-  assert.equal(catalog.size, 16); assert.equal(new Set([...catalog.values()].map(s => s.id.split("/")[0])).size, 5);
+  assert.equal(catalog.size, 17); assert.equal(new Set([...catalog.values()].map(s => s.id.split("/")[0])).size, 5);
   assert.ok(catalog.has("writing/eli5"));
+  assert.ok(catalog.has("writing/align-intent"));
   assert.ok(catalog.has("automation/herdr")); assert.ok(![...catalog.keys()].some(id => id.includes("_SKILL")));
   assert.deepEqual(parseHubSkillSpec("automation/orca,automation/herdr"), hub(["automation/herdr", "automation/orca"]));
   assert.throws(() => parseHubSkillSpec("../orca"), /--hub-skills/);
@@ -41,11 +42,11 @@ test("Hub catalog has exactly 16 category/name entries and excludes nested examp
 test("all complete Hub packages install identically in both targets, remain idempotent, and uninstall", () => fixture(async target => {
   const catalog = await discoverHubCatalog(packageRoot);
   const first = await initSpeculo(target, { ...core, hubSkills: { mode: "all" }, skillTargets: ["agents", "claude"] });
-  assert.deepEqual(first.warnings, []); assert.equal(first.hub.created.length, 32);
+  assert.deepEqual(first.warnings, []); assert.equal(first.hub.created.length, 34);
   for (const host of ["agents", "claude"]) for (const skill of catalog.values()) {
     assert.deepEqual(await snapshotSkillTree(join(target, `.${host}/skills`, skill.name)), await snapshotSkillTree(skill.root));
   }
-  assert.equal((await readHubManifest(target))?.packages.length, 32);
+  assert.equal((await readHubManifest(target))?.packages.length, 34);
   await assert.rejects(readdir(join(target, ".agents/speculo/skills-hub")), /ENOENT/);
   await healthy(target);
   const before = await fingerprintTree(join(target, ".agents/skills"));
@@ -53,7 +54,7 @@ test("all complete Hub packages install identically in both targets, remain idem
   assert.deepEqual(refresh.hub.created, []); assert.deepEqual(refresh.hub.updated, []);
   assert.equal(await fingerprintTree(join(target, ".agents/skills")), before);
   const removed = await initSpeculo(target, { ...core, hubSkills: { mode: "none" } });
-  assert.equal(removed.hub.removed.length, 32);
+  assert.equal(removed.hub.removed.length, 34);
   for (const host of ["agents", "claude"]) assert.deepEqual(await readdir(join(target, `.${host}/skills`)), []);
   await healthy(target);
 }));

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.1.17] - 2026-11-04
+
+### Added
+
+- Add the writing/align-intent Skill to restate user intent for review, distinguish explicit requirements from AI inferences, and incorporate corrections before dependent work. Include research sources and clarification examples.
+
+### Changed
+
+- Update Hub inventory and package verification for 17 complete Skill packages.
+
 ## [2.1.16] - 2026-10-29
 
 ### Fixed

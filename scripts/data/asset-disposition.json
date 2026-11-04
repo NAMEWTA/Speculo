@@ -8681,6 +8681,9 @@
     "skills-hub/system/windows-dev-disk-cleanup/agents/openai.yaml",
     "skills-hub/system/windows-dev-disk-cleanup/references/windows-cleanup-workflow.md",
     "skills-hub/writing/.gitkeep",
+    "skills-hub/writing/align-intent/SKILL.md",
+    "skills-hub/writing/align-intent/references/examples.md",
+    "skills-hub/writing/align-intent/references/sources.md",
     "skills-hub/writing/eli5/SKILL.md",
     "skills-hub/writing/eli5/THIRD_PARTY_NOTICES.md",
     "skills-hub/writing/eli5/assets/templates.md",
@@ -8963,7 +8966,7 @@
   ],
   "summary": {
     "baseline_files": 1060,
-    "added": 473,
+    "added": 476,
     "actions": {
       "rewritten": 221,
       "preserved": 112,
