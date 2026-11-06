@@ -31,10 +31,10 @@ export function validateSkill(content: string | Buffer, directory: string): stri
     return errors;
   } catch (e) { return [String(e)]; }
 }
-export type Asset = { id: string; kind: "domain-skill" | "command"; name: string; domain?: string; entry: string; description: string };
+export type Asset = { id: string; kind: "domain-skill" | "work-skill" | "command"; name: string; domain?: string; entry: string; description: string };
 export type AssetCatalog = { schema_version: 2; assets: Asset[] };
 
-/** A workflow is one standard Skill. Its directory is the only registration. */
+/** Domain routers and their immediate Work directories are standard Skills. */
 export async function readAssetCatalog(root: string): Promise<AssetCatalog> {
   const assets: Asset[] = [];
   async function directories(path: string) {
@@ -43,15 +43,25 @@ export async function readAssetCatalog(root: string): Promise<AssetCatalog> {
       throw error;
     })).filter(entry => entry.isDirectory() && !entry.name.startsWith("_")).sort((a, b) => a.name.localeCompare(b.name));
   }
-  for (const folder of await directories(join(root, "workflows"))) {
-    const entry = `workflows/${folder.name}/SKILL.md`;
-    if (!await pathExists(join(root, entry))) continue;
+  async function addSkill(entry: string, id: string, kind: "domain-skill" | "work-skill", domain: string) {
     const content = await readFile(await containedPath(root, entry));
     const errors = validateSkill(content, dirname(entry));
     if (errors.length) throw new Error(`${entry}: ${errors.join("; ")}`);
     const { fields } = parseFrontmatter(content);
-    assets.push({ id: `domain/${folder.name}`, kind: "domain-skill", name: fields.name as string,
-      domain: folder.name, entry, description: fields.description as string });
+    assets.push({ id, kind, name: fields.name as string, domain, entry, description: fields.description as string });
+  }
+  for (const folder of await directories(join(root, "workflows"))) {
+    const prefix = `workflows/${folder.name}`, entry = `${prefix}/SKILL.md`;
+    if (!await pathExists(join(root, entry))) continue;
+    await addSkill(entry, `domain/${folder.name}`, "domain-skill", folder.name);
+    for (const work of await directories(join(root, prefix))) {
+      const workEntry = `${prefix}/${work.name}/SKILL.md`;
+      if (!await pathExists(join(root, workEntry))) continue;
+      // Existing folders use <domain>-<letter>-<task>; keep their public task IDs.
+      // Other standard Skill directory names are also usable without registration.
+      const task = new RegExp(`^${folder.name}-[a-z]-(.+)$`).exec(work.name)?.[1] ?? work.name;
+      await addSkill(workEntry, `${folder.name}/${task}`, "work-skill", folder.name);
+    }
   }
   for (const folder of await directories(join(root, "commands"))) {
     const entry = `commands/${folder.name}/COMMAND.md`;

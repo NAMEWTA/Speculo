@@ -1,10 +1,10 @@
 # Speculo
 
-Concise skills and durable project knowledge for your existing AI assistant.
+A reusable library of AI workflows, task skills and durable project knowledge.
 
-Speculo helps carry software work from requirements to deployment. It gives the agent a small amount of useful context, lets it choose how to work, and keeps the facts needed to continue later.
+Speculo helps an existing AI assistant carry work from a requirement to a verified delivery. Domain entries point to the relevant Work skills; each Work keeps the practical knowledge needed for that task. The model chooses the route, while useful decisions and results remain readable outside the conversation.
 
-[中文](README-ZH.md) · [Quick start](docs/getting-started.md) · [Workflow and persistence](docs/workflow.md) · [CLI](docs/cli.md) · [Upgrading to v3](docs/upgrade-v3.md)
+[中文](README-ZH.md) · [Quick start](docs/getting-started.md) · [Capabilities](docs/capabilities.md) · [Workflow and persistence](docs/workflow.md) · [CLI](docs/cli.md)
 
 ## Start
 
@@ -18,62 +18,59 @@ speculo doctor .
 
 Then ask your AI:
 
-> Use SpecDev to prepare the next release from these issues. Clarify the product decisions, show me a prototype if the interaction needs work, then implement and verify the agreed scope.
+> Use SpecDev to prepare the next release from these issues. Clarify the product decisions, show me a prototype where the interaction is uncertain, then implement and verify the agreed scope.
 
-For this source branch, run `pnpm install --frozen-lockfile`, `pnpm build`, then use `node dist/src/cli.js` in place of `speculo`. The version in this branch does not imply that it is already published.
+Installing a domain includes its Work skills and references. Exposing only its domain entry keeps the host's skill list small; the agent follows the relevant links when needed. You can also expose a particular Work directly:
 
-Use `--skill-targets claude` for a host reading `.claude/skills/`, or `agents,claude` for both. Use `speculo init` interactively to choose methods and utility skills. Installing a skill exposes instructions; your AI host supplies the model and tools.
+```bash
+speculo init . --workflows specdev --skill-targets agents --skills domain/specdev,specdev/prototype,specdev/implement
+```
 
-## Four methods
+Use `--skill-targets claude` for `.claude/skills/`, or `agents,claude` for both. `--skills all` explicitly exposes all installed entries. Interactive `speculo init` offers the available choices. Speculo installs instructions and resources; the host supplies the model, tools and permissions.
 
-| Skill | Purpose |
+For this source branch, run `pnpm install --frozen-lockfile` and `pnpm build`, then replace `speculo` with `node dist/src/cli.js`. The branch's version is not an npm publication announcement.
+
+## Four domains, 39 independently usable Works
+
+| Domain | Work capabilities |
 | --- | --- |
-| [specdev](template/workflows/specdev/SKILL.md) | Requirements, optional UI design, spec, implementation, review, deployment and knowledge |
-| [learning](template/workflows/learning/SKILL.md) | Lessons, questions, exploration, practice and durable learning notes |
-| [media](template/workflows/media/SKILL.md) | Briefs, reference analysis, visual/media production and review of real outputs |
-| [person](template/workflows/person/SKILL.md) | Deliberation, diagnosis, strategy and concrete decisions |
+| [SpecDev](docs/workflows/specdev.md) · 21 | Intake, assessment, investigation, prototypes, specs, planning, tickets, implementation, diagnosis, code and architecture review, delivery, retrospectives, learning and archives; environment setup, connection, inventory, host management and deployment |
+| [Learning](docs/workflows/learning.md) · 9 | Learner context, assessment, goal planning, lessons, inquiry, practice, review, topic consolidation and archives |
+| [Media](docs/workflows/media.md) · 7 | Setup, briefs, reference deconstruction, hand-drawn visual prompts, video production, publication drafts and retrospectives |
+| [Person](docs/workflows/person.md) · 2 | Mao Zedong's investigation/practice/contradiction framework and steelman deliberation, with their distinct methods and source boundaries |
 
-Each method is one `SKILL.md`. There are no mandatory stage manifests, goal-plan loops, ticket graphs, worker roles or handoff schemas. Enter at the point your task needs; a small fix can go straight to implementation.
+A **Work** is a reusable task capability, not a mandatory release gate. Domain `SKILL.md` files are small routers. Work `SKILL.md` files contain task-specific guidance and link to substantial references, examples or tools only when they help. Useful source libraries, design examples and media tools remain available on demand.
 
-## A release, remembered
+There are no workflow manifests, fixed worker roles, dispatch protocols, task DAGs, required handoff forms or business-status schema validators. Planning and decomposition remain useful capabilities; the model selects their depth for the actual task. See the [capability-by-capability refactor map](docs/refactor-map.md).
 
-The usual software flow is requirements → optional prototype → spec → implementation and verification → deployment. A single release note can hold the source links, scope, decisions, a small checklist and actual results. Separate tickets are useful only when they make a large piece of work easier to deliver.
+## Durable knowledge without form filling
+
+The usual software flow is requirements → assessment → optional prototype → spec → optional decomposition → implementation and review → release/deployment → consolidation and archive.
 
 Default project data lives under `.agents/speculo/.speculo/`:
 
 | Location | Useful content |
 | --- | --- |
-| `releases/<name>/README.md` | Current delivery scope, progress, verification and next action |
-| `knowledge/adr/` | Lasting decisions and their reasons |
-| `knowledge/context/` | Current facts that code does not explain |
-| `knowledge/error/` | Proven causes and fixes worth remembering |
-| `knowledge/design/` | Current design, including HTML, components, stories or images |
-| `environments/<target>.md` | Known deployment target, procedure, data effects, health check and recovery |
-| `archive/<name>/` | Historical release records |
+| `releases/<name>/README.md` | Source links, scope, spec, decisions, progress, actual results and next action |
+| `knowledge/adr/` | Important decisions, alternatives and lasting reasons |
+| `knowledge/context/` | Current background that code and configuration do not explain |
+| `knowledge/error/` | Proven causes, repairs and reusable prevention |
+| `knowledge/design/` | Current design, including HTML, components, stories, tokens and images |
+| `environments/<target>.md` | Known target, deployment procedure, data effects, health check and recovery |
+| `archive/<name>/` | Historical delivery records and their adopted versions |
 
-These are lazy conventions, not required directories or document templates. Prefer the project's existing owner for a fact. Link to code, tests and configuration instead of copying them into prose. A PR may be enough persistence for a small change.
+Create these only when there is something worth keeping. Existing project locations take precedence. A single release record usually suffices; a small fix may need only its issue or PR. Large specs or independent slices may use additional linked files. Current design lives outside a release record, which references the version used for that delivery.
 
-Approved UI structures remain implementation requirements. Review the real page in a comparable state; passing tests alone does not establish visual conformance. If the user explicitly requires final acceptance, keep that decision separate from technical verification. No acceptance requirement is invented for ordinary autonomous work.
+## Commands and utility skills
 
-## Explicit commands
+Eight explicit AI commands cover status, handoff, project maintenance, repository audit, history consolidation, upstream assessment, source ZIPs and Speculo feedback. They are requests to the AI, not terminal subcommands. See the [command guide](docs/commands/README.md).
 
-Commands are requests to the AI, not shell subcommands:
+The [Skills Hub](docs/capabilities.md#skills-hub) contains 15 optional complete packages. Their specialized API, system, teaching, writing, image and document-rendering capabilities are retained. Installation does not execute their tools.
 
-| Command | Use |
-| --- | --- |
-| `status` | Read the current work and report what is complete, blocked or next |
-| `handoff` | Leave just enough context to resume in the current record |
-| `project-maintenance` | Update durable knowledge and archive finished work |
-| `git-repository-audit` | Inspect repository structure, history and risks |
-| `git-history-squash` | Consolidate an explicitly selected history range |
-| `upstream-assess` | Assess upstream changes against the local project |
-| `source-code-zip` | Package the requested source with exclusions checked |
-| `speculo-feedback` | Prepare or submit authorized, evidence-backed upstream feedback |
+## Installation and upgrade
 
-## Installation safety
+Methods live in `.agents/speculo/`; host entries optionally live in `.agents/skills/` and `.claude/skills/`. Refresh preserves user records and unowned additions. Installation ownership, path checks, staging, drift detection and recovery remain deterministic code.
 
-Methods live in `.agents/speculo/`; optional host entries live in `.agents/skills/` and `.claude/skills/`. Utility skills are installed as complete packages only when selected.
+v3 combines Ops into SpecDev and simplifies the instruction format. Existing Work capabilities remain; old Ops selections map to their SpecDev successors. Business records are preserved without being parsed against the retired protocols. See [upgrade notes](docs/upgrade-v3.md) and [transaction recovery](docs/transaction-recovery.md).
 
-Refresh replaces managed methods while preserving user runtime files and unowned additions. Installation manifests, path checks, staging, drift detection and explicit recovery remain in the CLI. They protect files; they do not grade an AI's project decisions.
-
-[Architecture](docs/architecture.md) · [Contributing](docs/contributing.md) · [Research behind v3](docs/research.md) · [Changelog](CHANGELOG.md) · [License](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.md)
+[Documentation](docs/README.md) · [Architecture](docs/architecture.md) · [Contributing](docs/contributing.md) · [Research](docs/research.md) · [Changelog](CHANGELOG.md) · [License](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.md)

@@ -1,7 +1,7 @@
 {
   "name": "@namewta/speculo",
   "version": "3.0.0",
-  "description": "Concise agent skills and durable project knowledge, from requirements to deployment.",
+  "description": "Reusable AI workflows, task skills and durable project knowledge, from requirements to deployment.",
   "type": "module",
   "bin": {
     "speculo": "./dist/src/cli.js"

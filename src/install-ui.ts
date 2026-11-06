@@ -122,7 +122,9 @@ export function exposureGroups(catalog: AssetCatalog): ExposureGroup[] {
 
 function groupDescription(group: ExposureGroup): string {
   if (group.id === "commands") return `${group.assets.length} 个 Command`;
-  return `${group.assets.length} 个 Skill`;
+  const domains = group.assets.filter(asset => asset.kind === "domain-skill").length;
+  const works = group.assets.filter(asset => asset.kind === "work-skill").length;
+  return `${domains} 个领域入口 · ${works} 个 Work`;
 }
 
 export async function promptExposureConfiguration(
@@ -174,9 +176,9 @@ export async function promptExposure(
       message: "选择曝光方式",
       initialValue: hasHistory ? "keep" : "none",
       options: [
-        { value: "all", label: `全部曝光（${catalog.assets.length} 个入口）`, hint: "全部已安装 workflow Skill 和 Command" },
+        { value: "all", label: `全部曝光（${catalog.assets.length} 个入口）`, hint: "全部已安装领域入口、Work 和 Command" },
         { value: "groups", label: "按组曝光", hint: "多选整个 workflow 或全部 Commands" },
-        { value: "custom", label: "自定义曝光", hint: "逐项选择Skill 和 Command，可跨组混选" },
+        { value: "custom", label: "自定义曝光", hint: "可只选领域入口，或单独选择 Work 和 Command" },
         { value: "keep", label: `保留已有选择（${existing.length} 个入口）`, hint: hasHistory ? "默认；保留具体清单，不自动加入升级新增的能力" : "暂无已有选择，等同不曝光" },
         { value: "none", label: "全部不曝光", hint: hasHistory ? "移除校验通过的受管入口；完整能力仍保留" : "首次默认；不添加宿主入口" },
       ],
@@ -219,7 +221,7 @@ export async function promptExposure(
       const ids = answer(await ui.multiselect({
         message: `${group.label} · 选择入口\n确定后返回分组页`,
         options: group.assets.map(a => ({
-          value: a.id, label: a.kind === "domain-skill" ? `领域总入口 · ${a.id}` : a.id,
+          value: a.id, label: a.kind === "domain-skill" ? `领域总入口 · ${a.id}` : a.kind === "work-skill" ? `Work · ${a.id}` : a.id,
           hint: a.description,
         })),
         initialValues: group.assets.filter(a => draft.has(a.id)).map(a => a.id), required: false,

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deterministic timeline example</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:system-ui,sans-serif;background:#102027;color:#f4f7f8}main{position:relative;width:100%;height:100%;padding:8vh 7vw;display:flex;flex-direction:column;justify-content:center}small{letter-spacing:.16em;color:#8bd7c7;font-size:3vh}h1{font-size:9vh;line-height:1.08;max-width:80%;margin:3vh 0}p{font-size:4vh;margin:1vh 0;color:#c9d7dd}.track{height:1.3vh;background:#33484f;margin-top:5vh;border-radius:1vh;overflow:hidden}.fill{height:100%;background:#8bd7c7;transform-origin:left;transform:scaleX(0)}#dot{position:absolute;width:8vh;height:8vh;border-radius:50%;background:#e6b36a;right:7vw;top:12vh}#clock{position:absolute;right:7vw;bottom:7vh;font-variant-numeric:tabular-nums}
+</style></head>
+<body><main><small>SPECULO / LOCAL TIMELINE</small><h1 id="heading">One source. Every frame.</h1><p id="caption">A two-second example with no network assets.</p><div class="track"><div class="fill" id="progress"></div></div><div id="dot" aria-hidden="true"></div><small id="clock">0.00 s</small></main>
+<script>
+// render(t) sets every changing property from absolute time; it also works backwards.
+window.render = async function(t) {
+  const progress = Math.max(0, Math.min(1, t / 2));
+  document.getElementById('progress').style.transform = `scaleX(${progress})`;
+  document.getElementById('dot').style.transform = `translateY(${Math.sin(progress * Math.PI) * 45}vh)`;
+  document.getElementById('heading').textContent = t < 1 ? 'One source. Every frame.' : 'Seek. Render. Verify.';
+  document.getElementById('caption').textContent = t < 1 ? 'A two-second example with no network assets.' : 'Absolute time makes the result reproducible.';
+  document.getElementById('clock').textContent = t.toFixed(2) + ' s';
+};
+window.render(0);
+</script></body></html>

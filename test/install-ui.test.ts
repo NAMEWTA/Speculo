@@ -184,9 +184,13 @@ test("target prompt cancellation propagates and never reaches capabilities", asy
 });
 
 test("five modes, shared default selection, and workflow/command groups", async () => {
-  assert.deepEqual(exposureGroups(catalog).map(g => [g.id, g.assets.length]), [
-    ["learning", 1], ["media", 1], ["person", 1], ["specdev", 1], ["commands", 8],
-  ]);
+  const groups = exposureGroups(catalog);
+  assert.deepEqual(groups.map(group => group.id), ["learning", "media", "person", "specdev", "commands"]);
+  for (const group of groups.filter(group => group.id !== "commands")) {
+    assert.equal(group.assets[0].id, `domain/${group.id}`);
+    assert.ok(group.assets.slice(1).some(asset => asset.kind === "work-skill"));
+    assert.ok(group.assets.every(asset => asset.domain === group.id));
+  }
   for (const mode of ["all", "keep", "none"] as const) {
     for (const hasHistory of [false, true]) {
       const s = script([{ kind: "select", value: mode, check: o => {
@@ -201,17 +205,20 @@ test("five modes, shared default selection, and workflow/command groups", async 
 
 test("bulk selection expands whole workflows and commands, but not unselected partial groups", async () => {
   const prior = catalog.assets.filter(a => a.kind === "command").map(a => a.id);
+  const specdev = catalog.assets.filter(asset => asset.domain === "specdev");
   const s = script([
     { kind: "select", value: "groups" },
     { kind: "multiselect", value: ["specdev", "commands"], check: o => {
       assert.deepEqual(o.initialValues, ["commands"]);
       assert.equal(o.required, false);
-      assert.match(o.options.find((x: any) => x.value === "specdev").hint, /0\/1/);
+      assert.ok(o.options.find((x: any) => x.value === "specdev").hint.includes(`0/${specdev.length}`));
+      assert.match(o.options.find((x: any) => x.value === "specdev").hint, /Work/);
     } },
   ]);
   const result = await promptExposure({ ...emptyOptions, existing: prior, hasHistory: true }, s.ui);
   const ids = resolveProjectionIds(result, catalog, prior);
-  assert.equal(ids.length, 9); assert.ok(ids.includes("domain/specdev"));
+  assert.equal(ids.length, prior.length + specdev.length); assert.ok(ids.includes("domain/specdev"));
+  assert.ok(ids.includes("specdev/implement"));
   assert.ok(!ids.includes("domain/learning")); s.done();
 });
 
@@ -237,6 +244,20 @@ test("custom drafts cross groups, return to mode choice, and do not add domain e
   s.done();
 });
 
+test("custom selection exposes one Work while leaving its domain and siblings unselected", async () => {
+  const s = script([
+    { kind: "select", value: "custom" }, { kind: "select", value: "specdev" },
+    { kind: "multiselect", value: ["specdev/prototype"], check: o => {
+      assert.match(o.options.find((x: any) => x.value === "domain/specdev").label, /领域总入口/);
+      assert.match(o.options.find((x: any) => x.value === "specdev/prototype").label, /Work/);
+    } },
+    { kind: "select", value: "done" },
+  ]);
+  const result = await promptExposure(emptyOptions, s.ui);
+  assert.deepEqual(resolveProjectionIds(result, catalog, []), ["specdev/prototype"]);
+  s.done();
+});
+
 test("custom selection supports domain-only, removing all, and explicit stale-ID removal", async () => {
   for (const picked of [["domain/learning"], []]) {
     const s = script([
@@ -256,6 +277,18 @@ test("custom selection supports domain-only, removing all, and explicit stale-ID
   assert.throws(() => resolveProjectionIds({ mode: "set", assetIds: ["learning/retired"] }, catalog, []),
     e => e instanceof RefreshBlockedError && e.blockers[0].code === "unknown-projection-asset");
   assert.throws(() => resolveProjectionIds({ mode: "unknown" } as any, catalog, ["learning/lesson"]), /invalid-projection-selection/);
+});
+
+test("keep maps merged Ops identities only to installed replacements and preserves other Work choices", () => {
+  const existing = ['domain/ops', 'domain/specdev', 'ops/initialize', 'ops/server-connect', 'ops/inventory-view', 'ops/host-manage', 'ops/project-deploy', 'specdev/implement'];
+  assert.deepEqual(resolveProjectionIds({ mode: 'keep' }, catalog, existing), [
+    'domain/specdev', 'specdev/environment-setup', 'specdev/host-manage', 'specdev/implement',
+    'specdev/inventory-view', 'specdev/project-deploy', 'specdev/server-connect',
+  ]);
+  const coreOnly: AssetCatalog = { schema_version: 2, assets: catalog.assets.filter(asset => asset.kind === 'command') };
+  assert.deepEqual(resolveProjectionIds({ mode: 'keep' }, coreOnly, existing), []);
+  assert.throws(() => resolveProjectionIds({ mode: 'set', assetIds: ['ops/initialize'] }, catalog, []),
+    error => error instanceof RefreshBlockedError && error.blockers[0].message.includes('specdev/environment-setup'));
 });
 
 test("core-only and partial catalogs restrict menus, and empty bulk selection is allowed", async () => {
@@ -314,14 +347,14 @@ test("explicit unified requests bypass prompts; fresh and recorded noninteractiv
 }));
 
 test("preview cancellation changes no active files and cleans staging and lock", () => fixture(async target => {
-  await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skills: { mode: "all" } });
+  const initial = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skills: { mode: "all" } });
   const before = await fingerprintTree(target);
   for (const choice of [false, Symbol("cancel")]) {
     const s = script([{ kind: "confirm", value: choice }]);
     await assert.rejects(initSpeculo(target, {
       packageRoot, selection: { workflowIds: [] }, skills: { mode: "none" },
       confirmInstall: preview => {
-        assert.equal(preview.projections.agents.removed.length, 9);
+        assert.equal(preview.projections.agents.removed.length, initial.exposure.assetIds.length);
         assert.deepEqual(preview.retainedWorkflowIds, []);
         assert.deepEqual(preview.removedWorkflowIds, ["learning"]);
         assert.match(formatInstallPreview(preview), /domain\/learning/);
@@ -343,7 +376,7 @@ test("first-install rejection leaves no installation or external files", () => f
 }));
 
 test("preview matches application across hosts including removal of edited owned files", () => fixture(async target => {
-  await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skills: { mode: "all" } });
+  const initial = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skills: { mode: "all" } });
   const edited = join(target, ".agents/skills/learning/SKILL.md");
   await writeFile(edited, "manual edit");
   let seen: InstallPreview | undefined;
@@ -358,13 +391,13 @@ test("preview matches application across hosts including removal of edited owned
   assert.deepEqual(result.projections.agents.conflicts, []);
   assert.equal(result.projections.agents.ready, 1);
   assert.deepEqual(result.projections.agents.retained, ["command/status"]);
-  assert.equal(result.projections.agents.removed.length, 8);
+  assert.equal(result.projections.agents.removed.length, initial.exposure.assetIds.length - 1);
   assert.deepEqual(result.projections.claude.selected, ["command/status"]);
   await assert.rejects(readFile(edited), /ENOENT/);
   const manifest = (await readProjectionManifest(target))!;
   assert.deepEqual(manifest.targets, ["agents", "claude"]);
   assert.deepEqual(manifest.asset_ids, ["command/status"]);
-  assert.equal(result.projections.agents.deleted, 8);
+  assert.equal(result.projections.agents.deleted, initial.exposure.assetIds.length - 1);
   assert.equal(result.projections.claude.created, 1);
   assert.equal(formatInstallPreview(seen!).match(/command\/status/g)?.length, 1);
   await assert.rejects(readFile(join(target, ".agents/skills/learning/SKILL.md")), /ENOENT/);
@@ -387,8 +420,9 @@ test("keep never follows newly installed groups; all recomputes the catalog", ()
   const kept = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
   assert.equal(kept.projections.agents.selected.length, 8);
   const expanded = await initSpeculo(target, { packageRoot, skills: { mode: "all" } });
-  assert.equal(expanded.projections.agents.selected.length, 9);
-  assert.equal(expanded.projections.agents.added.length, 1);
+  const learning = catalog.assets.filter(asset => asset.domain === "learning");
+  assert.equal(expanded.projections.agents.selected.length, kept.projections.agents.selected.length + learning.length);
+  assert.deepEqual(expanded.projections.agents.added, learning.map(asset => asset.id).sort());
   await noTransactionResidue(target);
 }));
 

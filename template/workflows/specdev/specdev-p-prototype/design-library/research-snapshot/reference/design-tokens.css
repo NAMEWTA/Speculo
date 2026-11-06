@@ -1,0 +1,145 @@
+/*
+ * Cross-project baseline synthesized by this research.
+ * These are recommendations, not copied tokens from any single product.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-11: 0.6875rem;
+  --text-12: 0.75rem;
+  --text-13: 0.8125rem;
+  --text-14: 0.875rem;
+  --text-16: 1rem;
+  --text-18: 1.125rem;
+  --text-20: 1.25rem;
+  --text-24: 1.5rem;
+  --leading-tight: 1.25;
+  --leading-ui: 1.43;
+  --leading-body: 1.6;
+
+  /* Spacing: 4px base, with 2px for optical correction */
+  --space-0-5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1-5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Stable UI geometry */
+  --control-xs: 1.5rem;
+  --control-sm: 1.75rem;
+  --control-md: 2rem;
+  --control-lg: 2.5rem;
+  --icon-sm: 0.875rem;
+  --icon-md: 1rem;
+  --icon-lg: 1.25rem;
+  --sidebar-icon-width: 3.25rem;
+  --sidebar-width: 15rem;
+  --inspector-width: 20rem;
+  --topbar-height: 3rem;
+  --content-max: 80rem;
+
+  /* Radius: quiet for work surfaces, larger only for overlays */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-pill: 999px;
+
+  /* Neutral and semantic color roles */
+  --canvas: #f7f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #f1f3f5;
+  --surface-3: #e9ecef;
+  --overlay: #ffffff;
+  --text-primary: #1f2328;
+  --text-secondary: #59636e;
+  --text-tertiary: #7d8590;
+  --text-disabled: #a7afb8;
+  --border-subtle: #e2e6ea;
+  --border-default: #cbd1d7;
+  --border-strong: #9aa3ad;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-subtle: #eff6ff;
+  --accent-contrast: #ffffff;
+  --success: #16803c;
+  --success-subtle: #ecfdf3;
+  --warning: #a15c00;
+  --warning-subtle: #fff8e6;
+  --danger: #c62f3d;
+  --danger-hover: #a92330;
+  --danger-subtle: #fff0f1;
+  --info: #1267a8;
+  --info-subtle: #edf7ff;
+
+  --hover: rgb(31 35 40 / 5%);
+  --selected: rgb(37 99 235 / 10%);
+  --pressed: rgb(31 35 40 / 10%);
+  --scrim: rgb(15 23 42 / 40%);
+  --focus-ring: 0 0 0 3px rgb(37 99 235 / 25%);
+  --shadow-popover: 0 8px 24px rgb(15 23 42 / 12%), 0 2px 6px rgb(15 23 42 / 8%);
+  --shadow-dialog: 0 20px 48px rgb(15 23 42 / 18%), 0 4px 12px rgb(15 23 42 / 10%);
+
+  --duration-fast: 100ms;
+  --duration-ui: 160ms;
+  --duration-panel: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #111315;
+  --surface-1: #181b1f;
+  --surface-2: #202429;
+  --surface-3: #292e34;
+  --overlay: #202429;
+  --text-primary: #f0f3f6;
+  --text-secondary: #b7c0ca;
+  --text-tertiary: #8c97a3;
+  --text-disabled: #626d78;
+  --border-subtle: #2d333b;
+  --border-default: #444c56;
+  --border-strong: #636e7b;
+
+  --accent: #6ea8fe;
+  --accent-hover: #91bdff;
+  --accent-subtle: #172a46;
+  --accent-contrast: #0f172a;
+  --success: #57c779;
+  --success-subtle: #173322;
+  --warning: #e3a438;
+  --warning-subtle: #382a13;
+  --danger: #ff7b86;
+  --danger-hover: #ff9aa3;
+  --danger-subtle: #3d1c21;
+  --info: #62b7ee;
+  --info-subtle: #152e3f;
+
+  --hover: rgb(255 255 255 / 6%);
+  --selected: rgb(110 168 254 / 14%);
+  --pressed: rgb(255 255 255 / 11%);
+  --scrim: rgb(0 0 0 / 60%);
+  --focus-ring: 0 0 0 3px rgb(110 168 254 / 30%);
+  --shadow-popover: 0 10px 30px rgb(0 0 0 / 38%), 0 2px 8px rgb(0 0 0 / 28%);
+  --shadow-dialog: 0 24px 56px rgb(0 0 0 / 48%), 0 4px 16px rgb(0 0 0 / 34%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-ui: 0ms;
+    --duration-panel: 0ms;
+  }
+}

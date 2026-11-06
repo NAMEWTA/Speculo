@@ -1,57 +1,36 @@
-# 归档与删除
+# 归档与删除仓库
 
-官方文档：
-
-- 归档：https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories
-- 删除：https://docs.github.com/en/repositories/creating-and-managing-repositories/deleting-a-repository
-- 恢复已删仓：https://docs.github.com/en/repositories/creating-and-managing-repositories/restoring-a-deleted-repository
+先用完整 `OWNER/REPO` 核对身份、现状和用户范围。操作前查清独特代码、开放协作、发布/Pages、包或部署依赖；fork 或空仓也可能是正在使用的保留名称，不能仅凭类型删除。
 
 ## 归档
 
-效果：仓库变只读。Issues、PR、代码、wiki、release、权限都冻结。他人仍可 fork、star、搜索。协作者不能再被添加或移除。
+归档适合保留历史而停止日常维护。归档会限制仓库写入与协作，具体效果参见 [GitHub 归档文档](https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories)。撤销归档可重新开放维护，但不会自动解决废弃依赖。
 
 ```bash
 gh repo archive OWNER/REPO --yes
-# 等价
-gh api -X PATCH repos/OWNER/REPO -F archived=true --jq '{name,archived}'
+gh api repos/OWNER/REPO --jq '{full_name,archived}'
 ```
 
-取消归档：
+需要取消归档时：
 
 ```bash
-gh api -X PATCH repos/OWNER/REPO -F archived=false --jq '{name,archived}'
+gh api -X PATCH repos/OWNER/REPO -F archived=false --jq '{full_name,archived}'
 ```
 
-网页：`https://github.com/OWNER/REPO/settings` → Danger Zone → Archive。
-
-适合：自己的原创仓、还有 star/历史价值、暂时不维护。不适合：确定要灭迹的实验 fork（走删除）。
+`--yes` 仅跳过工具交互，不代表获得用户授权；已有明确的具名归档请求可以直接完成。
 
 ## 删除
+
+删除应对应用户明确要移除的仓库及已解释的影响。依赖与需要保存的资料先处理完毕，再执行：
 
 ```bash
 gh repo delete OWNER/REPO --yes
 ```
 
-网页：Settings → Danger Zone → Delete this repository，输入仓名确认。
+随后用同一账号读回，并结合删除请求的成功响应确认结果。独立的 404 也可能表示对象不可见，不能单凭它判定删除完成。请求超时先确认实际状态，再决定是否重试。
 
-后果：
+[删除文档](https://docs.github.com/en/repositories/creating-and-managing-repositories/deleting-a-repository) 说明 fork、权限和数据的影响；[恢复文档](https://docs.github.com/en/repositories/creating-and-managing-repositories/restoring-a-deleted-repository) 有适用条件和时限。不能把恢复机制当作可靠备份，也不能承诺删除一定可逆。
 
-- 公有仓的 fork **不会**随删除消失。
-- 私有仓的 fork **会**一起删。
-- 团队权限永久丢掉。
-- 部分仓库可在删除后 90 天内恢复；非空 fork 网络等情况存在限制，GitHub Support 恢复支持还受付费计划条件限制。不能承诺一定可恢复。
-- 同名 `OWNER/REPO` 可能被保留一段时间不能新建；若删前一周 Actions 用量或 clone 很高，名称组合可能被永久退役。
+## 选择依据
 
-复核：先确认本次删除返回成功，再以同一账号读取应为 404；单独的 404 也可能表示不可见，不能作为删除成功的唯一证据。
-
-适合：已被新仓替代的旧 fork、空仓、明确废弃的镜像。有 star 的原创仓默认归档。
-
-## 选择
-
-| 情况 | 动作 |
-|---|---|
-| 原创、有 star 或有文档价值、不再开发 | 归档 |
-| 上游已迁走的 fork / 配套 docs | 删除 |
-| 空仓、错 fork、一次性实验 | 删除 |
-| 还在用 | 不动 |
-| 不确定 | 只列入 hygiene 建议，等用户点名 |
+归档、保留和删除是不同的产品决定。用户只要求盘点或建议时，呈现具名对象、事实和建议；用户已经选定范围时继续执行，不再逐仓重复询问。遇到新发现的独特数据或范围冲突，暂停该项并说明具体问题，其他独立工作可以继续。

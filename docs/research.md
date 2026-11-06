@@ -1,14 +1,14 @@
 # v3：研究依据与设计取舍
 
-核对日期：2026-11-06。仓库改动基于 Speculo main `9199c3bd0cf983c131efbc6340e44ac8b83a583d`。本页记录重构原因，不作为运行技能的必读材料。
+核对日期：2026-11-07。仓库改动基于 Speculo main `9199c3bd0cf983c131efbc6340e44ac8b83a583d`。本页记录重构原因，不作为运行技能的必读材料。
 
 ## 原始参考
 
 | 来源 | 采用的原则 | 没有照搬的部分 |
 | --- | --- | --- |
-| [OpenAI：Rethinking skills and prompts for GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra) | 精确触发、按需读取、删掉过细路线与泛化审批，明确交付终点 | 不因模型更强而宣称不必验证结果；文章的 persistence 指持续完成任务，并非磁盘存储规范 |
+| [OpenAI：Rethinking skills and prompts for GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra) | 精确触发，多流程使用轻路由与按需资料；减少过细路线，明确交付终点 | 不因模型更强而宣称不必验证结果；文章的 persistence 指持续完成任务，并非磁盘存储规范 |
 | [Agent Skills 格式规范](https://agentskills.io/specification) | 一个含 name/description 的 SKILL.md 就可组成技能 | scripts、references、assets 都是可选，不强制辅助文件 |
-| [Matt Pocock：writing-for-agents](https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-for-agents/SKILL.md) | 一处维护事实、把环境视为来源、删除无用指导、拆分需有实际收益 | 不照搬 implement-spec 的任务图、合并者或固定子代理编排 |
+| [Matt Pocock：writing-for-agents](https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-for-agents/SKILL.md) | 一处维护事实，区分常驻上下文与按需资料；拆分和合并都要保护必要信息 | 不照搬 implement-spec 的任务图、合并者或固定子代理编排 |
 | [Matt Pocock：domain-modeling](https://github.com/mattpocock/skills/blob/main/skills/engineering/domain-modeling/SKILL.md) | 有内容才建文件，重大决定才写 ADR | 不要求普通实现细节逐个变成决策文档 |
 | [Matt Pocock：to-spec](https://github.com/mattpocock/skills/blob/main/skills/engineering/to-spec/SKILL.md) | 综合已讨论内容，代码能更准确表达决定时保留代码 | 不搬入长用户故事模板或每阶段审批 |
 | [Cursor：subtract-before-you-add](https://github.com/cursor/plugins/blob/main/pstack/skills/principle-subtract-before-you-add/SKILL.md) | 先删除冗余 validator、模板和没有价值的层次 | pstack 中其他复杂架构/反思技能仍有重编排，不把整包当精简范本 |
@@ -24,7 +24,11 @@
 
 ## 关键决定
 
-**一份技能承担一条连续工作链。** 软件开发与部署共用代码、版本、需求和环境背景，合并为 SpecDev。Learning、Media、Person 有独立用途，保留领域入口，但取消内部阶段工作流。
+**短入口路由到完整的专项能力。** 软件开发与部署共用代码、版本、需求和环境背景，合并为 SpecDev。Learning、Media、Person 保留领域边界。四个入口按需指向 39 项 Work，每个 Work 重写自身方法与必要分支。规划、诊断、教学、媒体和思辨等专业能力继续存在，阶段状态机退出。
+
+**简化读取，而非删除资料。** OpenAI 明确建议多流程技能使用 minimal router；Matt 的信息层级同时提醒不要把必要内容藏得过深。原文库、设计样例、技术参考和确定性工具按实际用途保留。只有当前分支需要时读取，既不默认全加载，也不因根文件要短就删掉来源。
+
+PR #107 首版错误地把精简理解为把所有 Work 压成四份概述。本次按用户纠正，先核对原能力再重写。完整承接位置见 [重构对应表](refactor-map.md)。这项纠正改变了实现，并非只在说明中增加“保留能力”的措辞。
 
 **持久化保存继续工作所需的事实。** 默认一份 release 记录，额外附件、spec、切片只有在改善可读性或并行责任时才拆。当前设计与环境方法在长期位置维护，归档固定当时事实。代码、配置和测试能够回答的问题不重复记录。
 
@@ -36,6 +40,8 @@
 
 ## 删除与保留
 
-删除旧 workflows/common、模板、业务 schema、校验器、自动索引、Canonical 生成物、编排合同及其生成/测试支撑。原始版本可从 Git 历史回读。
+删除重复的流程合同、强制模板、业务 schema、语义状态 validator、Canonical 生成物、编排协议及其专用支撑。common 中有价值的专业内容合并到当前 Work 或按需参考，不因原来位于 common 就全部丢弃。旧实现保存在 Git 历史。
+
+39 项 Work 都有明确承接，Ops 五项迁入 SpecDev。15 个 Hub 保留并重写，两个 Agent 编排适配按用户要求退役。源码 ZIP 工具保留原行为和真实 ZIP 测试；媒体渲染解除对旧表单的耦合后保留实际产物能力。
 
 保留完整专项工具的确定性实现和必要技术参考，保留真实许可证。被删除的协议测试随协议移除；文件安全、安装恢复、宿主暴露及升级数据保留测试继续运行。具体来源和复制代码归属见 [第三方说明](../THIRD-PARTY-NOTICES.md)。

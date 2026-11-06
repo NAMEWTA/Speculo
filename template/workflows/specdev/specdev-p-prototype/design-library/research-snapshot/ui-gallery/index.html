@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>开源 UI 风格样板库</title>
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/pages.css">
+</head>
+<body class="gallery-page">
+  <div class="gallery-shell">
+    <header class="gallery-topbar">
+      <div class="utility-mark"><i data-lucide="panels-top-left"></i></div>
+      <strong>UI 风格样板库</strong>
+      <span>基于 38 个开源项目的视觉与架构研究</span>
+      <a class="btn" href="../report/OPEN_SOURCE_UI_RESEARCH_2026.md" style="margin-left:auto"><i data-lucide="book-open"></i>研究报告</a>
+    </header>
+    <main class="gallery-main">
+      <section class="gallery-summary">
+        <div>
+          <h1>从布局、密度和交互出发比较八种产品风格</h1>
+          <p>每个样板都是独立 HTML，可直接打开、检查变量并作为原型起点。选择与你的任务模型最接近的一类，再调整品牌色，而不是只复制表面装饰。</p>
+        </div>
+        <div class="gallery-metrics" aria-label="样板库统计">
+          <div class="metric"><b>8</b><span>独立风格</span></div>
+          <div class="metric"><b>3</b><span>端类型</span></div>
+          <div class="metric"><b>38</b><span>研究项目</span></div>
+        </div>
+      </section>
+
+      <section class="style-grid" aria-label="风格页面">
+        <a class="style-card" href="01-dense-ide.html">
+          <div class="style-preview preview-ide"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">01 / cdesktop</span><h2>高密度 IDE</h2><p>方正、紧凑、多窗格。文件树、编辑器、diff 与终端同时可见。</p><div class="style-tags"><span>2-4px</span><span>12-13px</span><span>橙色强调</span></div></div>
+        </a>
+        <a class="style-card" href="02-monochrome-console.html">
+          <div class="style-preview preview-console"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">02 / Opcode</span><h2>单色桌面控制台</h2><p>近乎无品牌色，靠表面亮度和边框构建高可靠管理界面。</p><div class="style-tags"><span>4-12px</span><span>Inter</span><span>深色优先</span></div></div>
+        </a>
+        <a class="style-card" href="03-soft-personal-ai.html">
+          <div class="style-preview preview-soft"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">03 / CodePilot</span><h2>柔和个人 AI 桌面</h2><p>暖中性、浮动窗格、柔和阴影，适合个人助手与长期陪伴型工具。</p><div class="style-tags"><span>12-20px</span><span>OKLCH</span><span>平台材质</span></div></div>
+        </a>
+        <a class="style-card" href="04-responsive-web.html">
+          <div class="style-preview preview-web"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">04 / CloudCLI</span><h2>响应式 Web 工作台</h2><p>桌面保留三栏，窄屏重组为 drawer、全屏详情和底部导航。</p><div class="style-tags"><span>6-8px</span><span>PWA</span><span>安全区</span></div></div>
+        </a>
+        <a class="style-card" href="05-mobile-supervisor.html">
+          <div class="style-preview preview-mobile"><div class="mini-app"><i class="mini-top"></i><i class="mini-main"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">05 / Happy</span><h2>移动监督与审批</h2><p>以 Agent 状态、权限批准、通知和短 follow-up 为移动端核心。</p><div class="style-tags"><span>16-24px</span><span>15-17px</span><span>触屏优先</span></div></div>
+        </a>
+        <a class="style-card" href="06-cross-platform-workspace.html">
+          <div class="style-preview preview-paseo"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">06 / Paseo</span><h2>多端 Agent 工作区</h2><p>统一 workspace、Agent、文件与终端对象，再按平台切换表现形态。</p><div class="style-tags"><span>4-8px</span><span>12/14/15px</span><span>状态色分层</span></div></div>
+        </a>
+        <a class="style-card" href="07-local-first-content.html">
+          <div class="style-preview preview-content"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">07 / Notesnook + Joplin</span><h2>Local-first 内容编辑器</h2><p>导航安静、正文优先，突出同步、离线、层级和长时间阅读。</p><div class="style-tags"><span>4-8px</span><span>17px 正文</span><span>暖灰</span></div></div>
+        </a>
+        <a class="style-card" href="08-media-first.html">
+          <div class="style-preview preview-media"><div class="mini-app"><i class="mini-top"></i><i class="mini-rail"></i><i class="mini-side"></i><i class="mini-main"></i><i class="mini-right"></i><i class="mini-status"></i></div></div>
+          <div class="style-card-body"><span class="style-number">08 / Immich</span><h2>媒体优先个人应用</h2><p>内容本身成为第一视觉信号，chrome 退后，状态与操作按需出现。</p><div class="style-tags"><span>沉浸网格</span><span>深色</span><span>渐进操作</span></div></div>
+        </a>
+      </section>
+    </main>
+  </div>
+  <script src="assets/lucide.js"></script>
+  <script src="scripts/gallery.js"></script>
+</body>
+</html>

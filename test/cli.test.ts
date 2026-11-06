@@ -88,7 +88,9 @@ describe("Speculo init refresh", () => {
       assert.equal(managed.schema_version, 2);
       assert.ok(managed.files.some((entry: any) => entry.path === "commands/status/COMMAND.md" && entry.owner === "core/commands"));
       assert.ok(managed.files.some((entry: any) => entry.path === "workflows/specdev/SKILL.md" && entry.owner === "workflow/specdev"));
-      assert.deepEqual(await readdir(join(root, "workflows/specdev")), ["SKILL.md"]);
+      assert.ok(managed.files.some((entry: any) => entry.path === "workflows/specdev/specdev-i-implement/SKILL.md" && entry.owner === "workflow/specdev"));
+      assert.deepEqual(await readFile(join(root, "workflows/specdev/specdev-i-implement/SKILL.md")), await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/SKILL.md")));
+      for (const path of ["manifest.json", "runtime-contract.json", "_state"]) assert.equal(await pathExists(join(root, "workflows/specdev", path)), false, path);
       assert.deepEqual(await readJson(join(root, ".speculo/baselines/config.json")), await readJson(join(packageRoot, "template/config.json")));
       for (const path of ["lib", ".speculo/specdev", ".speculo/knowledge", ".speculo/releases", ".speculo/environments", ".speculo/migration.json"]) assert.equal(await pathExists(join(root, path)), false, path);
       const agents = await readFile(join(target, "AGENTS.md"), "utf8");
@@ -155,17 +157,29 @@ describe("Speculo init refresh", () => {
     } finally { await rm(target, { recursive: true, force: true }); }
   });
 
-  it("refreshes a 2.x selection into the unified method and preserves all old project data", async () => {
+  it("refreshes 2.x Works and maps all Ops selections into SpecDev without changing project data", async () => {
     const target = await tempProject(), oldPackage = await packageFixture("2.1.17");
     try {
       const oldTemplate = join(oldPackage, "template");
+      const ops = [
+        ["ops-d-project-deploy", "specdev-d-project-deploy", "project-deploy"],
+        ["ops-h-host-manage", "specdev-h-host-manage", "host-manage"],
+        ["ops-i-initialize", "specdev-i-environment-setup", "environment-setup"],
+        ["ops-s-server-connect", "specdev-s-server-connect", "server-connect"],
+        ["ops-v-inventory-view", "specdev-v-inventory-view", "inventory-view"],
+      ];
       await mkdir(join(oldTemplate, "workflows/ops"), { recursive: true });
       await writeFile(join(oldTemplate, "workflows/ops/SKILL.md"), "---\nname: ops\ndescription: Historical operations entry\n---\n# OPS\n");
+      for (const [oldName, newName] of ops) {
+        await rm(join(oldTemplate, "workflows/specdev", newName), { recursive: true, force: true });
+        await mkdir(join(oldTemplate, "workflows/ops", oldName), { recursive: true });
+        await writeFile(join(oldTemplate, "workflows/ops", oldName, "SKILL.md"), `---\nname: ${oldName}\ndescription: Historical Ops Work\n---\n# Historical Work\n`);
+      }
       await mkdir(join(oldTemplate, "workflows/specdev/specdev-i-implement"), { recursive: true });
-      await writeFile(join(oldTemplate, "workflows/specdev/specdev-i-implement/SKILL.md"), "Historical Work method\n");
+      await writeFile(join(oldTemplate, "workflows/specdev/specdev-i-implement/SKILL.md"), "---\nname: specdev-i-implement\ndescription: Historical implementation Work\n---\nHistorical Work method\n");
       await mkdir(join(oldTemplate, "commands/coordination-init"), { recursive: true });
       await writeFile(join(oldTemplate, "commands/coordination-init/COMMAND.md"), "---\nid: coordination-init\ndescription: Historical coordination entry\n---\n");
-      await initSpeculo(target, { packageRoot: oldPackage, selection: { workflowIds: ["ops", "specdev"] }, skills: { mode: "all" } });
+      await initSpeculo(target, { packageRoot: oldPackage, selection: { workflowIds: ["ops", "specdev"] }, skills: { mode: "all" }, skillTargets: ["agents", "claude"] });
       const root = join(target, ".agents/speculo"), state = join(root, ".speculo");
       const files = new Map([
         ["ops/deployments/nas.json", "{ old deployment format\r\n"],
@@ -176,25 +190,39 @@ describe("Speculo init refresh", () => {
       ]);
       for (const [name, text] of files) { const path = join(state, name); await mkdir(dirname(path), { recursive: true }); await writeFile(path, text); }
       const legacyPointer = ".agents/skills/specdev-i-implement/SKILL.md";
-      await mkdir(dirname(join(target, legacyPointer)), { recursive: true });
       await writeFile(join(target, legacyPointer), "Historical Work pointer\n");
-      const projections = await readJson(join(state, "projections.json"));
-      projections.asset_ids.push("specdev/implement");
-      projections.files.push({ path: legacyPointer, asset_id: "specdev/implement", sha256: await hash(join(target, legacyPointer)) });
-      await writeJson(join(state, "projections.json"), projections);
+      const userNotes = [".agents/skills/ops-d-project-deploy/user-note.md", ".claude/skills/ops-d-project-deploy/user-note.md"];
+      for (const path of userNotes) await writeFile(join(target, path), "User notes about this deployment\n");
 
       const result = await initSpeculo(target, { packageRoot });
       assert.equal(result.refresh.sourceVersion, "2.1.17");
       assert.ok(result.warnings.some(warning => warning.includes("OPS is now part of SpecDev")));
       assert.deepEqual((await readJson(join(state, "install.json"))).workflows, ["specdev"]);
       assert.ok(result.exposure.assetIds.includes("domain/specdev"));
-      for (const id of ["domain/ops", "specdev/implement", "command/coordination-init"]) assert.ok(!result.exposure.assetIds.includes(id), id);
-      for (const path of [legacyPointer, ".agents/skills/ops/SKILL.md", ".agents/skills/speculo-coordination-init/SKILL.md", ".agents/speculo/workflows/ops/SKILL.md", ".agents/speculo/workflows/specdev/specdev-i-implement/SKILL.md"]) assert.equal(await pathExists(join(target, path)), false, path);
+      assert.ok(result.exposure.assetIds.includes("specdev/implement"));
+      assert.ok(!result.exposure.assetIds.includes("command/coordination-init"));
+      assert.ok(result.exposure.assetIds.every(id => id !== "domain/ops" && !id.startsWith("ops/")));
+      for (const [oldName, newName, task] of ops) {
+        assert.ok(result.exposure.assetIds.includes(`specdev/${task}`), task);
+        for (const host of ["agents", "claude"]) {
+          assert.equal(await pathExists(join(target, `.${host}/skills/${oldName}/SKILL.md`)), false, oldName);
+          assert.match(await readFile(join(target, `.${host}/skills/${newName}/SKILL.md`), "utf8"), /完整说明/);
+        }
+      }
+      for (const host of ["agents", "claude"]) {
+        assert.match(await readFile(join(target, `.${host}/skills/specdev-i-implement/SKILL.md`), "utf8"), /完整说明/);
+        for (const name of ["ops", "speculo-coordination-init"]) assert.equal(await pathExists(join(target, `.${host}/skills/${name}/SKILL.md`)), false, name);
+      }
+      assert.equal(await pathExists(join(root, "workflows/ops/SKILL.md")), false);
+      assert.deepEqual(await readFile(join(root, "workflows/specdev/specdev-i-implement/SKILL.md")), await readFile(join(packageRoot, "template/workflows/specdev/specdev-i-implement/SKILL.md")));
+      for (const path of userNotes) assert.equal(await readFile(join(target, path), "utf8"), "User notes about this deployment\n");
       for (const [name, text] of files) assert.equal(await readFile(join(state, name), "utf8"), text, name);
       assert.equal((await doctorSpeculo(target)).healthy, true);
-      assert.ok(!(await initSpeculo(target, { packageRoot })).warnings.some(warning => warning.includes("OPS is now")));
+      const refreshed = await initSpeculo(target, { packageRoot, skills: { mode: "keep" } });
+      assert.ok(!refreshed.warnings.some(warning => warning.includes("OPS is now")));
+      assert.deepEqual(refreshed.exposure.assetIds, result.exposure.assetIds);
       const current = await hash(join(state, "install.json"));
-      await assert.rejects(initSpeculo(target, { packageRoot, skills: { mode: "set", assetIds: ["specdev/implement"] } }), error => expectBlocked(error, "unknown-projection-asset"));
+      await assert.rejects(initSpeculo(target, { packageRoot, skills: { mode: "set", assetIds: ["command/coordination-init"] } }), error => expectBlocked(error, "unknown-projection-asset"));
       assert.equal(await hash(join(state, "install.json")), current);
     } finally { await rm(target, { recursive: true, force: true }); await rm(oldPackage, { recursive: true, force: true }); }
   });

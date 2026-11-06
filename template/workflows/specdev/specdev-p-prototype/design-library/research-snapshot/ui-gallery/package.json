@@ -1,0 +1,12 @@
+{
+  "name": "open-source-ui-style-gallery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static HTML style gallery derived from open-source UI research",
+  "scripts": {
+    "test": "playwright test tests/gallery.spec.js --workers=4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

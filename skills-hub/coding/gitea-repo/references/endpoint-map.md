@@ -9,10 +9,10 @@
 脚本没有的能力，用：
 
 ```bash
-python3 "$SKILL_DIR/scripts/gitea_api.py" api GET /repos/{owner}/{repo}/issues/1/timeline
+python3 "$SKILL_DIR/scripts/gitea_api.py" api GET '/repos/{owner}/{repo}/issues/1/timeline'
 ```
 
-路径占位 `{owner}` `{repo}` 由脚本按当前仓替换。Forgejo 同源 `/api/v1` 同样适用。
+路径占位 `{owner}` `{repo}` 由脚本按当前仓替换。Forgejo 与 Gitea 的许多 `/api/v1` 接口相近，仍须以目标实例 Swagger 核对版本差异。
 
 ## gh → Gitea
 
@@ -77,4 +77,4 @@ python3 "$SKILL_DIR/scripts/gitea_api.py" api GET /repos/{owner}/{repo}/issues/1
 - `GET /notifications`
 - `GET /settings/api` → `max_response_items`（常见 50）、`default_paging_num`
 
-没有仓库 Projects 看板 API（上游仍在讨论）。不要假装能用 API 管 Gitea Project board。
+Project 看板等未列能力先查目标实例 Swagger。接口未提供时明确说明缺口，不能凭 GitHub 的同名功能编造 Gitea 路由。

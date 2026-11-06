@@ -60,6 +60,52 @@ test('directory discovery accepts a standard single-file Skill without manifests
   await assert.rejects(readAssetCatalog(root), /invalid-command-header/);
 }));
 
+test('Work discovery preserves task IDs without loading manifests, stages or nested reference skills', () => fixture(async root => {
+  const sources = [
+    ['workflows/sample/SKILL.md', 'sample'],
+    ['workflows/sample/sample-i-implement/SKILL.md', 'sample-i-implement'],
+    ['workflows/sample/research/SKILL.md', 'research'],
+    ['workflows/sample/references/private/SKILL.md', 'private'],
+  ];
+  for (const [path, name] of sources) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), `---\nname: ${name}\ndescription: ${name}\n---\n# ${name}\n`);
+  }
+  // Retired protocol files have no bearing on discovery of real Skill entries.
+  await writeFile(join(root, 'workflows/sample/manifest.json'), '{ obsolete manifest');
+  const { assets } = await readAssetCatalog(root);
+  assert.deepEqual(assets.map(asset => [asset.id, asset.kind, asset.domain]), [
+    ['domain/sample', 'domain-skill', 'sample'],
+    ['sample/implement', 'work-skill', 'sample'],
+    ['sample/research', 'work-skill', 'sample'],
+  ]);
+  assert.equal(assets.find(asset => asset.id === 'sample/implement')?.entry, 'workflows/sample/sample-i-implement/SKILL.md');
+  assert.ok(assets.every(asset => !('stages' in asset)));
+}));
+
+test('Work discovery rejects ambiguous public IDs and invalid entries', () => fixture(async root => {
+  for (const name of ['sample', 'sample/sample-i-task', 'sample/task']) {
+    await mkdir(join(root, 'workflows', name), { recursive: true });
+    await writeFile(join(root, 'workflows', name, 'SKILL.md'), `---\nname: ${name.split('/').at(-1)}\ndescription: Example\n---\n`);
+  }
+  await assert.rejects(readAssetCatalog(root), /duplicate-asset-id/);
+  await rm(join(root, 'workflows/sample/task'), { recursive: true });
+  await writeFile(join(root, 'workflows/sample/sample-i-task/SKILL.md'), '---\nname: wrong\ndescription: Wrong folder\n---\n');
+  await assert.rejects(readAssetCatalog(root), /name must match/);
+}));
+
+test('Work discovery rejects a linked entry before reading external content', {skip:process.platform==='win32'}, () => fixture(async root => {
+  await mkdir(join(root, 'workflows/sample/sample-i-task'), { recursive: true });
+  await writeFile(join(root, 'workflows/sample/SKILL.md'), '---\nname: sample\ndescription: Sample\n---\n');
+  const outside = await mkdtemp(join(tmpdir(), 'speculo-linked-work-'));
+  try {
+    const source = join(outside, 'SKILL.md');
+    await writeFile(source, '---\nname: sample-i-task\ndescription: External\n---\n');
+    await symlink(source, join(root, 'workflows/sample/sample-i-task/SKILL.md'), 'file');
+    await assert.rejects(readAssetCatalog(root), /path-symlink/);
+  } finally { await rm(outside, { recursive: true, force: true }); }
+}));
+
 test('directory discovery rejects duplicate public skill names', () => fixture(async root => {
   await mkdir(join(root,'workflows/speculo-status'),{recursive:true});
   await mkdir(join(root,'commands/status'),{recursive:true});

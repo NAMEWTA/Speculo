@@ -40,14 +40,40 @@ try {
   healthy();
   const catalog = await readAssetCatalog(method);
   assert.deepEqual(catalog.assets.filter(asset => asset.kind === 'domain-skill').map(asset => asset.id).sort(), ['domain/learning', 'domain/media', 'domain/person', 'domain/specdev']);
-  assert.equal(catalog.assets.filter(asset => asset.kind === 'work-skill').length, 0);
+  const works = catalog.assets.filter(asset => asset.kind === 'work-skill');
+  assert.equal(works.length, 39, 'every original Work capability must have a packaged entry');
+  assert.deepEqual(Object.fromEntries(['learning', 'media', 'person', 'specdev'].map(domain =>
+    [domain, works.filter(asset => asset.domain === domain).length])),
+    { learning: 9, media: 7, person: 2, specdev: 21 });
+  for (const asset of catalog.assets) {
+    assert.deepEqual(await readFile(join(method, asset.entry)), await readFile(join(root, 'template', asset.entry)), `packaged method differs: ${asset.id}`);
+    for (const host of ['agents', 'claude']) {
+      const pointerFile = join(project, `.${host}/skills`, asset.name, 'SKILL.md');
+      const pointer = await readFile(pointerFile, 'utf8');
+      const link = /\[完整说明\]\(([^)]+)\)/.exec(pointer)?.[1];
+      assert.ok(link, `missing authoritative entry link: ${host}/${asset.id}`);
+      assert.equal(await realpath(resolve(dirname(pointerFile), link)), await realpath(join(method, asset.entry)));
+    }
+  }
   for (const domain of ['learning', 'media', 'person', 'specdev']) {
-    assert.deepEqual(await readdir(join(method, 'workflows', domain)), ['SKILL.md']);
     await assert.rejects(readdir(join(data, domain)), { code: 'ENOENT' });
   }
   for (const deleted of ['template/lib', 'template/canonical', 'template/workflows/ops']) {
     await assert.rejects(readdir(join(installed, deleted)), { code: 'ENOENT' });
   }
+  // Check actual resources as well as the entry names: a router without its
+  // source material or executable helper is not a complete installed capability.
+  for (const resource of [
+    'commands/source-code-zip/scripts/zip_source_code.cjs',
+    'workflows/media/media-v-video/scripts/render_preview.py',
+    'workflows/media/media-v-video/scripts/verify_render.py',
+    'workflows/media/media-v-video/examples/timeline.html',
+    'workflows/person/person-m-mao-zedong-cognitive-os/books/src/目录.md',
+    'workflows/specdev/specdev-p-prototype/design-library/templates/assets/prototypes.css',
+    'workflows/specdev/specdev-p-prototype/design-library/research-snapshot/ui-gallery/01-dense-ide.html',
+    'workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/LICENSE',
+  ]) assert.deepEqual(await readFile(join(method, resource)), await readFile(join(root, 'template', resource)), `missing or changed resource: ${resource}`);
+  assert.match(run([join(method, 'commands/source-code-zip/scripts/zip_source_code.cjs'), '--help']), /--dry-run/);
 
   const hub = await discoverHubCatalog(installed);
   for (const skill of hub.values()) {

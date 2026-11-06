@@ -35,3 +35,31 @@ jobs:
         run: |
           pnpm verify-bin
           pnpm verify-package
+
+  render:
+    name: Media renderer / real PNG and MP4
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Prepare the renderer's optional dependencies
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes ffmpeg
+      - name: Render and independently decode real outputs
+        run: python template/workflows/media/media-v-video/scripts/verify_render.py --output "$RUNNER_TEMP/speculo-render-verification"
+      - name: Preserve inspectable render outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: media-render-verification
+          path: ${{ runner.temp }}/speculo-render-verification
+          if-no-files-found: ignore
+          retention-days: 7

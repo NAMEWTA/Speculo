@@ -27,18 +27,34 @@ export type ProjectionSummary = {
 };
 export type ProjectionSummaries = Record<ProjectionHost, ProjectionSummary>;
 
+const MERGED_OPS_IDS: Record<string, string> = {
+ "domain/ops": "domain/specdev",
+ "ops/initialize": "specdev/environment-setup",
+ "ops/server-connect": "specdev/server-connect",
+ "ops/inventory-view": "specdev/inventory-view",
+ "ops/host-manage": "specdev/host-manage",
+ "ops/project-deploy": "specdev/project-deploy",
+};
+
+function keepProjectionIds(catalog: AssetCatalog, existing: string[]): string[] {
+ const available = new Set(catalog.assets.map(asset => asset.id));
+ return existing.map(id => available.has(id) ? id : MERGED_OPS_IDS[id] ?? id).filter(id => available.has(id));
+}
+
 /** Every UI mode and command-line request resolves against the staged catalog. */
 export function resolveProjectionIds(request: SkillRequest, catalog: AssetCatalog, existing: string[]): string[] {
  let ids: string[];
  switch (request.mode) {
   case "none": ids = []; break;
-  case "keep": ids = existing.filter(id => catalog.assets.some(asset => asset.id === id)); break;
+  case "keep": ids = keepProjectionIds(catalog, existing); break;
   case "all": ids = catalog.assets.map(a => a.id); break;
   case "set": ids = request.assetIds; break;
   default: throw new Error("invalid-projection-selection");
  }
  for (const id of ids) if (!catalog.assets.some(a => a.id === id))
-  throw new RefreshBlockedError([{code:"unknown-projection-asset",path:id,message:"select an installed Skill such as domain/specdev or an available command; stage-specific Work IDs were removed"}]);
+  throw new RefreshBlockedError([{code:"unknown-projection-asset",path:id,message:MERGED_OPS_IDS[id]
+   ? `OPS is part of SpecDev; install specdev and select ${MERGED_OPS_IDS[id]}`
+   : "select an installed domain, Work or command, such as domain/specdev, specdev/implement or command/status"}]);
  return [...new Set(ids)].sort();
 }
 type ManagedProjectionFile = {path:string;asset_id:string;sha256:string;mode?:number};
@@ -101,7 +117,7 @@ export async function resolveExposure(options: {
 }): Promise<ExposureSelection> {
  validateExposureRequest(options.targets, options.request);
  const manifest = await readProjectionManifest(options.target);
- const existing: ExposureSelection = { targets: options.defaultTargets ?? manifest?.targets ?? ['agents'], assetIds: (manifest?.asset_ids ?? []).filter(id => !options.removedAssetIds?.includes(id) && options.catalog.assets.some(asset => asset.id === id)) };
+ const existing: ExposureSelection = { targets: options.defaultTargets ?? manifest?.targets ?? ['agents'], assetIds: [...new Set(keepProjectionIds(options.catalog, manifest?.asset_ids ?? []))].filter(id => !options.removedAssetIds?.includes(id)).sort() };
  if (options.prompt) {
   const { promptExposureConfiguration } = await import('./install-ui.js');
   return promptExposureConfiguration({ catalog: options.catalog, existing, hasHistory: manifest !== null, targets: options.targets, request: options.request, hubSelected: options.hubSelected });
