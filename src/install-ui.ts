@@ -88,8 +88,8 @@ function answer<T>(value: T | symbol): T {
 }
 
 const WORKFLOW_LABELS: Record<string, string> = {
-  learning: "Learning · 学习", media: "Media · 内容创作", ops: "Ops · 运维",
-  person: "Person · 认知与决策", specdev: "SpecDev · 工程开发",
+  learning: "Learning · 学习", media: "Media · 内容创作",
+  person: "Person · 认知与决策", specdev: "SpecDev · 开发与部署",
 };
 const workflowLabel = (id: string) => WORKFLOW_LABELS[id] ?? id;
 
@@ -122,7 +122,7 @@ export function exposureGroups(catalog: AssetCatalog): ExposureGroup[] {
 
 function groupDescription(group: ExposureGroup): string {
   if (group.id === "commands") return `${group.assets.length} 个 Command`;
-  return `${group.assets.filter(a => a.kind === "domain-skill").length} 个总入口 + ${group.assets.filter(a => a.kind === "work-skill").length} 个 Work`;
+  return `${group.assets.length} 个 Skill`;
 }
 
 export async function promptExposureConfiguration(
@@ -174,9 +174,9 @@ export async function promptExposure(
       message: "选择曝光方式",
       initialValue: hasHistory ? "keep" : "none",
       options: [
-        { value: "all", label: `全部曝光（${catalog.assets.length} 个入口）`, hint: "全部已安装 workflow 总入口、Work 和 Command" },
+        { value: "all", label: `全部曝光（${catalog.assets.length} 个入口）`, hint: "全部已安装 workflow Skill 和 Command" },
         { value: "groups", label: "按组曝光", hint: "多选整个 workflow 或全部 Commands" },
-        { value: "custom", label: "自定义曝光", hint: "逐项选择总入口、Work 和 Command，可跨组混选" },
+        { value: "custom", label: "自定义曝光", hint: "逐项选择Skill 和 Command，可跨组混选" },
         { value: "keep", label: `保留已有选择（${existing.length} 个入口）`, hint: hasHistory ? "默认；保留具体清单，不自动加入升级新增的能力" : "暂无已有选择，等同不曝光" },
         { value: "none", label: "全部不曝光", hint: hasHistory ? "移除校验通过的受管入口；完整能力仍保留" : "首次默认；不添加宿主入口" },
       ],
@@ -196,8 +196,7 @@ export async function promptExposure(
       }));
       return { mode: "set", assetIds: groups.filter(g => selected.includes(g.id)).flatMap(g => g.assets.map(a => a.id)).sort() };
     }
-    // Each group edits only its own part of the draft. Unknown historical IDs are
-    // kept visible until the user explicitly removes them, never silently dropped.
+    // Each group edits only its own part of the draft.
     for (;;) {
       const missing = [...draft].filter(id => !available.has(id));
       const groupId = answer(await ui.select({

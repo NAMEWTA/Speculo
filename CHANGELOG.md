@@ -4,6 +4,24 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - Unreleased
+
+### Breaking changes
+
+- Merge SpecDev and Ops into one requirements-to-deployment skill. Replace 39 Work entries with four independent single-file domain skills.
+- Remove workflow manifests, business schemas/validators, goal-plan and dispatch orchestration, generated Canonical documents, fixed handoff templates, and their runtime consumers.
+- Use one optional release record, current knowledge (ADR/context/error/design), reusable environment notes and historical archives. Design may remain code; a change-local DESIGN document is no longer required.
+- Retain approved UI structure and explicitly required user acceptance as real delivery obligations. Technical checks do not certify either decision (#105, #106).
+- Simplify explicit commands and curated utility skills; remove bundled orchestration adapters.
+
+### Installation
+
+- Discover methods directly from files and standard frontmatter. Keep atomic installation, ownership, path safety, projections and recovery.
+- Preserve all user runtime data as opaque bytes, including older workflow data. A normal refresh maps the old Ops selection to SpecDev and removes retired method projections; explicit retired IDs receive an actionable error.
+- Remove generated workflow/runtime bundles and their AJV/esbuild build dependencies. Verify real package installation, refresh, removal and complete Hub resources.
+
+See [upgrade notes](docs/upgrade-v3.md) and [research decisions](docs/research.md). This entry does not announce an npm publication.
+
 ## [Unreleased]
 
 ## [2.1.17] - 2026-11-04

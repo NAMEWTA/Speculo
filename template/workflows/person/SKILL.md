@@ -1,32 +1,36 @@
 ---
 name: person
-description: "用于认知方法咨询和双向钢人论证；按具体问题选择能力，不自动启动其他流程。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/person
-  speculo-domain: person
-  speculo-contract-version: "2"
+description: 用于复杂问题诊断、战略与行动选择、双向钢人论证，以及用户明确要求的认知方法分析。
 ---
 
-# person
+# 判断与行动
 
-## 发现与激活
+先确认真正需要作出的选择、目标和约束。使用用户已提供的背景；无需权衡的事实问题直接回答，不为了套方法制造争论。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+## 形成判断
 
-明确进入本领域后读取 <Path>{roots.workflows}/person/common/rules/activation-and-memory.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+区分已验证事实、用户价值偏好、推断和待证假设。变化中的外部事实查可靠来源；表达自信或强烈倾向不增加事实可信度。
 
-## 能力路由
+对主要方案分别构造最强可信论证，说明适用条件、代价与关键反例。论据薄弱的一方不必为了对称而获得同样分量。
 
-<!-- AUTO-INDEX-START -->
+找出最可能改变结论的变量。可自行核实的先核实；需要用户补充的价值选择或个人约束，集中提出有用的问题，已有答案直接使用。
 
-- **person/mao-zedong-cognitive-os** — 毛泽东 · 认知操作系统：<Path>{roots.workflows}/person/person-m-mao-zedong-cognitive-os/SKILL.md</Path>
-- **person/steelman-deliberation** — 双向钢人论证：<Path>{roots.workflows}/person/person-s-steelman-deliberation/SKILL.md</Path>
+给出明确建议、决定性理由和最强反对意见的回应。信息不足时说明结论依赖的条件，以及哪项证据最值得获取。
 
-<!-- AUTO-INDEX-END -->
+## 方法与行动
 
-## 永久知识
+用户要求特定方法论时，把它作为分析工具，解释其适用范围和局限，避免把人物形象当作事实权威。
 
-本领域不声明独立永久知识 namespace。
+例如采用毛泽东相关认知方法时，可围绕调查研究、主要矛盾、阶段与力量条件、实践反馈分析问题；使用原文须核对篇目，分析性转述不冒充历史引语。
 
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+将建议落到可执行的行动：下一步、必要资源、完成信号和调整条件。复杂目标才分阶段，计划保持能随新事实修订。
+
+指出什么新证据会使建议反转。回顾时核对当时的依据与实际结果，更新判断而不改写过去的回答。
+
+## 保存与接续
+
+一般咨询在会话内完成。用户需要持续跟进或保存决策时，按 [持久化](../../references/memory.md) 复用已有记录；没有时使用 `.agents/speculo/.speculo/person/<topic>.md`。
+
+一份笔记保留问题、关键事实与来源、真实回答、决定及下一步即可。需要长期复用的偏好或经验只记录本次有依据且与任务相关的内容。
+
+恢复时先核对仍有效的目标和事实。分析或行动计划本身不授权替用户发送消息、交易或修改外部系统。

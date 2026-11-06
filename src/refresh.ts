@@ -3,10 +3,9 @@ import { chmod, cp, lstat, mkdir, readFile, readdir, writeFile } from "node:fs/p
 import { dirname, join, relative } from "node:path";
 import { assertJsonObject, reconcileConfig, type ConfigMergeStats, type JsonObject } from "./config.js";
 import { collectFiles, toPosix, type ManagedFileRecord } from "./manifest.js";
-import { readSpecdevConfig, validateStructuredRuntime, validateSpecdevConfig } from "./structured.js";
 import { pathExists } from "./utils.js";
 import { containedPath } from "./paths.js";
-import { isHistoricalArchiveMonth } from "./specdev-artifacts.js";
+import { isSupportedInstallVersion } from "./version.js";
 
 export type RefreshBlocker = {
   code: string;
@@ -44,35 +43,13 @@ export type PrepareRefreshOptions = {
   existed: boolean;
 };
 
-type RefreshContract = {
-  schema_version: number;
-  runtime_root: string;
-  managed_roots: string[];
-  managed_metadata: string[];
-  reserved_runtime: string[];
-  project_config: {
-    path: string;
-    baseline: string;
-    schema_version: number;
-    additional_properties: boolean;
-  };
+// These are installer-owned files, not a schema for the user's notes or work.
+const INSTALL_METADATA = {
+  managed_metadata: [".speculo/workspace.json", ".speculo/AGENTS.md"],
+  reserved_runtime: ["README.md", "workspace.json", "refresh-contract.json", "install.json", "managed.json", "projections.json", "hub-skills.json", "baselines", "back", "AGENTS.md"],
+  project_config: { path: "config.json", baseline: ".speculo/baselines/config.json", schema_version: 1, additional_properties: true },
 };
-
-export type WorkflowRuntimeContract = {
-  schema_version: number;
-  workflow: string;
-  state_seed?: "required" | "optional";
-  config: null | {
-    path: string;
-    template: string;
-    baseline: string;
-    schema_version: number;
-    optional: boolean;
-    additional_properties: Record<string, boolean>;
-  };
-  structured_state: string[];
-  opaque_default: string;
-};
+type RefreshContract = typeof INSTALL_METADATA;
 
 type BackupItem = {
   sourcePath: string;
@@ -116,7 +93,7 @@ async function sourceVersion(previousRoot: string): Promise<string> {
     throw new RefreshBlockedError([{
       code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "Speculo 2 requires a schema v4 install manifest; existing data is preserved",
+      message: "Speculo requires a schema v4 install manifest; existing data is preserved",
     }]);
   }
   const install = await readJson(path, ".speculo/install.json");
@@ -124,90 +101,17 @@ async function sourceVersion(previousRoot: string): Promise<string> {
     throw new RefreshBlockedError([{
       code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "Speculo 2 does not read or migrate earlier installations; existing data is preserved",
+      message: "Speculo does not read or migrate earlier installations; existing data is preserved",
     }]);
   }
-  if (!/^2\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(install.package_version)) {
+  if (!isSupportedInstallVersion(install.package_version)) {
     throw new RefreshBlockedError([{
       code: "unsupported-installation-version",
       path: ".speculo/install.json",
-      message: "refresh requires a Speculo 2.x installation",
+      message: "refresh requires a supported Speculo 2.x or 3.x installation",
     }]);
   }
   return install.package_version;
-}
-
-function validateRelativePath(path: string, label: string): void {
-  if (!path || path.startsWith("/") || path.split("/").includes("..") || path.includes("\\")) {
-    throw new Error(label + " contains an unsafe relative path: " + path);
-  }
-}
-
-async function loadRefreshContract(stagedRoot: string): Promise<RefreshContract> {
-  const contract = await readJson(join(stagedRoot, ".speculo", "refresh-contract.json"), ".speculo/refresh-contract.json");
-  if (
-    contract.schema_version !== 1 || contract.runtime_root !== ".speculo" ||
-    !Array.isArray(contract.managed_roots) || !Array.isArray(contract.managed_metadata) ||
-    !Array.isArray(contract.reserved_runtime) ||
-    ![...contract.managed_roots, ...contract.managed_metadata, ...contract.reserved_runtime].every((item) => typeof item === "string")
-  ) {
-    throw new Error("template refresh contract must use schema v1 and declare managed and runtime paths");
-  }
-  assertJsonObject(contract.project_config, "project_config contract");
-  for (const path of [...contract.managed_roots, ...contract.managed_metadata, ...contract.reserved_runtime]) {
-    validateRelativePath(path, "refresh contract");
-  }
-  for (const root of contract.managed_roots) {
-    if (root === ".speculo" || root.startsWith(".speculo/")) throw new Error("managed roots cannot own the runtime root");
-  }
-  for (const path of contract.managed_metadata) {
-    if (!path.startsWith(".speculo/")) throw new Error("managed metadata must be inside .speculo");
-    if (!contract.reserved_runtime.includes(path.slice(".speculo/".length))) {
-      throw new Error("managed metadata must also be reserved runtime: " + path);
-    }
-  }
-  if (
-    typeof contract.project_config.path !== "string" || typeof contract.project_config.baseline !== "string" ||
-    contract.project_config.schema_version !== 1 || contract.project_config.additional_properties !== true
-  ) throw new Error("project_config contract is incomplete");
-  validateRelativePath(contract.project_config.path, "project_config.path");
-  validateRelativePath(contract.project_config.baseline, "project_config.baseline");
-  return contract as RefreshContract;
-}
-
-export async function loadWorkflowContract(stagedRoot: string, workflowId: string): Promise<WorkflowRuntimeContract> {
-  const path = join(stagedRoot, "workflows", workflowId, "runtime-contract.json");
-  const contract = await readJson(path, `workflows/${workflowId}/runtime-contract.json`);
-  if (
-    contract.schema_version !== 1 || contract.workflow !== workflowId ||
-    !Array.isArray(contract.structured_state) || contract.opaque_default !== "preserve-byte-for-byte"
-  ) {
-    throw new Error("workflow " + workflowId + " has an invalid runtime contract");
-  }
-  if (contract.state_seed !== undefined && contract.state_seed !== "required" && contract.state_seed !== "optional") {
-    throw new Error("workflow " + workflowId + " state_seed must be required or optional");
-  }
-  for (const item of contract.structured_state) {
-    if (typeof item !== "string") throw new Error("workflow " + workflowId + " has a non-string structured state path");
-    validateRelativePath(item.replaceAll("*", "segment"), "structured_state");
-  }
-  if (contract.config !== null) {
-    assertJsonObject(contract.config, "workflow config contract");
-    const config = contract.config;
-    for (const item of [config.path, config.template, config.baseline]) {
-      if (typeof item !== "string") throw new Error("workflow " + workflowId + " config contract is incomplete");
-      validateRelativePath(item, "workflow config contract");
-    }
-    if (!(config.path as string).startsWith(`.speculo/${workflowId}/`) || !(config.baseline as string).startsWith(".speculo/baselines/")) {
-      throw new Error("workflow " + workflowId + " config paths cross their ownership boundary");
-    }
-  }
-  for (const item of contract.structured_state) {
-    if (!item.startsWith(`.speculo/${workflowId}/`)) {
-      throw new Error("workflow " + workflowId + " structured state crosses its ownership boundary");
-    }
-  }
-  return contract as WorkflowRuntimeContract;
 }
 
 async function assertNoSymlinks(root: string, skip: string[] = []): Promise<void> {
@@ -236,41 +140,6 @@ async function assertNoSymlinks(root: string, skip: string[] = []): Promise<void
 function isReserved(path: string, reserved: Set<string>): boolean {
   const first = path.split("/")[0];
   return reserved.has(first);
-}
-
-function matchesContractPath(runtimePath: string, contractPath: string): boolean {
-  const expected = contractPath.startsWith(".speculo/") ? contractPath.slice(".speculo/".length) : contractPath;
-  const actualSegments = runtimePath.split("/");
-  const expectedSegments = expected.split("/");
-  const memo = new Map<string, boolean>();
-  function match(actualIndex: number, expectedIndex: number): boolean {
-    const key = `${actualIndex}:${expectedIndex}`;
-    const cached = memo.get(key);
-    if (cached !== undefined) return cached;
-    if (expectedIndex === expectedSegments.length) return actualIndex === actualSegments.length;
-    const segment = expectedSegments[expectedIndex];
-    let result: boolean;
-    if (segment === "**") {
-      result = match(actualIndex, expectedIndex + 1) ||
-        (actualIndex < actualSegments.length && match(actualIndex + 1, expectedIndex));
-    } else {
-      result = actualIndex < actualSegments.length &&
-        (segment === "*" || segment === actualSegments[actualIndex]) &&
-        match(actualIndex + 1, expectedIndex + 1);
-    }
-    memo.set(key, result);
-    return result;
-  }
-  return match(0, 0);
-}
-
-function isStructured(path: string, contracts: WorkflowRuntimeContract[]): boolean {
-  const segments = path.split("/");
-  if (segments[0] === "specdev" && segments[1] === "changes" && segments[2] === "archive" && isHistoricalArchiveMonth(segments[3] ?? "")) return false;
-  return contracts.some((contract) =>
-    (contract.config !== null && matchesContractPath(path, contract.config.path)) ||
-    contract.structured_state.some((pattern) => matchesContractPath(path, pattern))
-  );
 }
 
 async function preserveRuntimeModes(source: string, target: string): Promise<void> {
@@ -310,10 +179,9 @@ async function copyPreviousRuntime(
 async function opaqueFiles(
   stateRoot: string,
   reserved: Set<string>,
-  contracts: WorkflowRuntimeContract[],
 ): Promise<Map<string, string>> {
   const records = await collectFiles(stateRoot, {
-    include: (path) => !isReserved(path, reserved) && !isStructured(path, contracts),
+    include: (path) => !isReserved(path, reserved),
   });
   return new Map(await Promise.all(records.map(async (record) => [record.path, record.sha256 + ":" + (process.platform === "win32" ? "windows" : (await lstat(join(stateRoot, record.path))).mode & 0o7777)] as [string, string])));
 }
@@ -369,57 +237,6 @@ async function reconcileProjectConfig(
   if (merged.removedPaths.length > 0) backups.push({ sourcePath: contract.path, before, reason: "removed config fields: " + merged.removedPaths.join(", ") });
   await writeFile(incomingPath, JSON.stringify(merged.value, null, 2) + "\n", "utf8");
   await writeFile(nextBaselinePath, JSON.stringify(incoming, null, 2) + "\n", "utf8");
-}
-
-async function reconcileWorkflowConfig(
-  previousRoot: string,
-  stagedRoot: string,
-  contract: WorkflowRuntimeContract,
-  existed: boolean,
-  stats: ConfigMergeStats,
-  backups: BackupItem[],
-): Promise<void> {
-  if (contract.config === null) return;
-  const incoming = await readJson(join(stagedRoot, contract.config.template), contract.config.template);
-  const nextBaselinePath = join(stagedRoot, contract.config.baseline);
-  await mkdir(dirname(nextBaselinePath), { recursive: true });
-  await writeFile(nextBaselinePath, JSON.stringify(incoming, null, 2) + "\n", "utf8");
-  if (!existed) return;
-
-  const localPath = join(previousRoot, contract.config.path);
-  if (!(await pathExists(localPath))) return;
-  const before = await readFile(localPath);
-  const localRaw = await readJson(localPath, contract.config.path);
-  const baselinePath = join(previousRoot, contract.config.baseline);
-  const baselineRaw = await pathExists(baselinePath) ? await readJson(baselinePath, contract.config.baseline) : undefined;
-  let localConfig;
-  let baselineConfig;
-  try {
-    localConfig = readSpecdevConfig(localRaw);
-    baselineConfig = baselineRaw ? readSpecdevConfig(baselineRaw) : undefined;
-  } catch (error) {
-    throw new RefreshBlockedError([{ code: "config-schema", path: contract.config.path, message: String(error) }]);
-  }
-  let merged;
-  try {
-    merged = reconcileConfig({
-      baseline: baselineConfig?.value,
-      local: localConfig.value,
-      incoming,
-      allowsUnknown: (parent) => contract.config?.additional_properties[parent.join(".")] ?? false,
-    });
-    validateSpecdevConfig(merged.value);
-  } catch (error) {
-    throw new RefreshBlockedError([{ code: "config-conflict", path: contract.config.path, message: String(error) }]);
-  }
-  addStats(stats, merged.stats);
-  if (merged.removedPaths.length > 0) {
-    const reasons = [merged.removedPaths.length > 0 ? "removed fields: " + merged.removedPaths.join(", ") : ""].filter(Boolean);
-    backups.push({ sourcePath: contract.config.path, before, reason: reasons.join("; ") });
-  }
-  const stagedPath = join(stagedRoot, contract.config.path);
-  await mkdir(dirname(stagedPath), { recursive: true });
-  await writeFile(stagedPath, JSON.stringify(merged.value, null, 2) + "\n", "utf8");
 }
 
 function backupDestination(sourcePath: string): string {
@@ -488,9 +305,8 @@ async function writeMetadata(
     let owner: string | null = null;
     let kind: ManagedFileRecord["kind"] = "static";
     if (contract.managed_metadata.includes(file.path)) owner = "core";
-    else if (file.path === ".speculo/commands/.gitkeep") owner = "core/runtime-seed";
     else if (file.path.startsWith("commands/")) owner = "core/commands";
-    else if (file.path.startsWith("references/") || file.path.startsWith("lib/") || file.path === "catalog.json") owner = "core/assets";
+    else if (file.path.startsWith("references/") || file.path === "catalog.json") owner = "core/assets";
     else if (file.path.startsWith(".speculo/baselines/")) {
       const match = /^\.speculo\/baselines\/workflows\/([^/]+)\//.exec(file.path);
       owner = match ? "workflow/" + match[1] : "core/config";
@@ -502,7 +318,6 @@ async function writeMetadata(
         (selected.has(workflowId) || priorManaged.has(file.path) || await pathExists(join(packageRoot, "template", file.path)))
       ) owner = "workflow/" + workflowId;
     }
-    if (file.path.endsWith("runtime-contract.json")) kind = "contract";
     if (owner) managed.push({
       ...file,
       mode: process.platform === "win32" ? 0o666 : (await lstat(join(stagedRoot, file.path))).mode & 0o777,
@@ -565,10 +380,9 @@ async function preserveUnmanagedStatic(previousRoot:string, stagedRoot:string, r
 export async function prepareRefresh(options: PrepareRefreshOptions): Promise<RefreshSummary> {
   const targetVersion = await packageVersion(options.packageRoot);
   const source = options.existed ? await sourceVersion(options.previousRoot) : null;
-  const contract = await loadRefreshContract(options.stagedRoot);
+  const contract = INSTALL_METADATA;
   const selected = new Set(options.selectedWorkflowIds);
   const reserved = new Set(contract.reserved_runtime);
-  const workflowContracts = await Promise.all(options.selectedWorkflowIds.map((workflowId) => loadWorkflowContract(options.stagedRoot, workflowId)));
   const stats = { ...EMPTY_STATS };
   const backups: BackupItem[] = [];
   const previousState = join(options.previousRoot, ".speculo");
@@ -577,26 +391,10 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   if (options.existed) {
     await preserveUnmanagedStatic(options.previousRoot,options.stagedRoot,options.retainedWorkflowIds);
     await assertNoSymlinks(previousState);
-    if (await pathExists(join(previousState, "specdev", ".markdown-conversion-pending"))) {
-      throw new RefreshBlockedError([{ code: "markdown-conversion-pending", path: ".speculo/specdev/.markdown-conversion-pending", message: "the original conversion owner must finish recovery before replacing this installation" }]);
-    }
-    const opaqueBefore = await opaqueFiles(previousState, reserved, workflowContracts);
+    const opaqueBefore = await opaqueFiles(previousState, reserved);
     await copyPreviousRuntime(options.previousRoot, options.stagedRoot, reserved);
     await reconcileProjectConfig(options.previousRoot, options.stagedRoot, true, contract.project_config, stats, backups);
-    for (const workflowContract of workflowContracts) {
-      await reconcileWorkflowConfig(options.previousRoot, options.stagedRoot, workflowContract, true, stats, backups);
-    }
-    try {
-      await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
-    } catch (error) {
-      const message = String(error).split(stagedState).join(previousState);
-      throw new RefreshBlockedError([{
-        code: message.includes("learning-reset-required") ? "learning-reset-required" : "structured-state-conflict",
-        path: message.includes("Learning") ? ".speculo/learning" : ".speculo",
-        message,
-      }]);
-    }
-    verifyOpaqueFiles(opaqueBefore, await opaqueFiles(stagedState, reserved, workflowContracts));
+    verifyOpaqueFiles(opaqueBefore, await opaqueFiles(stagedState, reserved));
     const backupPath = await writeTargetedBackup(options.stagedRoot, backups, source ?? "unknown", targetVersion);
     const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, source, selected, options.installedWorkflowIds, options.retainedWorkflowIds);
     await assertNoSymlinks(options.stagedRoot, (options.retainedWorkflowIds ?? []).map(id => `workflows/${id}`));
@@ -612,10 +410,6 @@ export async function prepareRefresh(options: PrepareRefreshOptions): Promise<Re
   }
 
   await reconcileProjectConfig(options.previousRoot, options.stagedRoot, false, contract.project_config, stats, backups);
-  for (const workflowContract of workflowContracts) {
-    await reconcileWorkflowConfig(options.previousRoot, options.stagedRoot, workflowContract, false, stats, backups);
-  }
-  await validateStructuredRuntime(options.stagedRoot, options.selectedWorkflowIds);
   const managed = await writeMetadata(options.packageRoot, options.previousRoot, options.stagedRoot, contract, targetVersion, null, selected, options.installedWorkflowIds, options.retainedWorkflowIds);
   await assertNoSymlinks(options.stagedRoot, (options.retainedWorkflowIds ?? []).map(id => `workflows/${id}`));
   return {

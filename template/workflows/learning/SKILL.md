@@ -1,40 +1,42 @@
 ---
 name: learning
-description: "用于学习目标、课程、练习、复习及知识巩固；不将发现能力视为开始学习流程。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/learning
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 用于通俗而完整的课程、源码学习、主动探究、苏格拉底练习、作业评审和复习，按学习者的目标选择教学方式。
 ---
 
-# learning
+# 学习
 
-## 发现与激活
+从学习者要理解或做到的事情开始，利用已经知道的背景。可以查清的事实先查，只有起点或目标会明显影响讲法时才询问。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+## 选择讲法
 
-明确进入本领域后读取 <Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+- 完整授课：建立知识地图，讲清关键机制、例子、边界和实际用途；用户只要短答时直接回答。
+- 主动探究：找出未被提出但影响理解的问题，直接解释并推演到证据和验证方法。
+- 苏格拉底练习：用户希望先作答时，再用问题引导；保留真实回答，之后针对回答讲解。
+- 源码或项目学习：从运行入口、主路径和关键设计切入，用代码位置与可运行实例连接概念。
+- 作业与复习：围绕已学目标设计练习，评审用户真实作答，再用间隔后的回忆或迁移任务检查保持情况。
 
-## 能力路由
+沿用用户选择的方式，普通讲解不自动变成考试。已有课程从当前问题接续，大主题才拆成可独立理解的单元。
 
-<!-- AUTO-INDEX-START -->
+## 讲清楚
 
-- **learning/archive** — 冷归档：<Path>{roots.workflows}/learning/learning-a-archive/SKILL.md</Path>
-- **learning/assess-and-plan** — 评估背景并设计课程：<Path>{roots.workflows}/learning/learning-a-assess-and-plan/SKILL.md</Path>
-- **learning/consolidate** — 主题整合：<Path>{roots.workflows}/learning/learning-c-consolidate/SKILL.md</Path>
-- **learning/goal** — 目标学习（目标模式）：<Path>{roots.workflows}/learning/learning-g-goal/SKILL.md</Path>
-- **learning/homework** — 课程作业与评审：<Path>{roots.workflows}/learning/learning-h-homework/SKILL.md</Path>
-- **learning/init-setup** — 初始化学习系统：<Path>{roots.workflows}/learning/learning-i-init-setup/SKILL.md</Path>
-- **learning/lesson** — 完整课程讲解：<Path>{roots.workflows}/learning/learning-l-lesson/SKILL.md</Path>
-- **learning/question** — 深度探究与苏格拉底问答课：<Path>{roots.workflows}/learning/learning-q-question/SKILL.md</Path>
-- **learning/review** — 延迟保持与周期复习：<Path>{roots.workflows}/learning/learning-r-review/SKILL.md</Path>
+降低语言门槛，同时保留因果、成立条件和不确定性。先解释概念之间的关系，再引入必要术语；类比要说明对应关系与失效边界。
 
-<!-- AUTO-INDEX-END -->
+用具体例子、反例、图示或小实验帮助理解。涉及外部事实时查相关可靠来源；源码结论给出对应位置和版本，推断与原文分开。
 
-## 永久知识
+已知误区应影响本次讲法，不能仅重复课本定义。学习者说没懂时换一种解释，并定位前置概念，而非增加术语密度。
 
-- <Path>{roots.state}/learning/context/INDEX.md</Path>
-- <Path>{roots.state}/learning/context/REVIEW.md</Path>
+## 练习与反馈
 
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+题量和难度按用户目标决定。要求先作答时保留答案空间；收到回答后，指出具体证据、错误原因、正确思路和下一步练习。
+
+作业可以在一个文件中保存题目、学习者答案与评审。原始答案保持原样，修改答案另记尝试；没有提交就不代填表现或评分。
+
+一次讲完或即时答对不能证明长期掌握。复习记录说明实际观察到的能力、仍有的误区及适合再次检验的时间或条件。
+
+## 留下有用的材料
+
+一次问答可直接在会话结束。用户要讲义、长期学习或恢复进度时，按 [持久化](../../references/memory.md) 复用现有学习目录；没有时使用 `.agents/speculo/.speculo/learning/<topic>/`。
+
+默认一份主题笔记即可，保留目标、核心理解、来源、未解决问题和下一步；课程或练习确实较多时再拆文件。
+
+重复学习后值得保留的概念与经验更新到已有知识位置，不复制全部聊天，也不建立课程状态机或多份进度账本。

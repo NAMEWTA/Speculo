@@ -6,7 +6,6 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { test } from "node:test";
 import { readAssetCatalog } from "../src/assets.js";
-import { readProjectCoordination } from "../src/coordination.js";
 import { initSpeculo } from "../src/index.js";
 import { discoverHubCatalog, parseHubSkillSpec, readHubManifest, resolveHubIds } from "../src/hub-skills.js";
 import { snapshotSkillTree } from "../src/skill-trees.js";
@@ -28,25 +27,27 @@ async function healthy(target: string) {
   assert.equal(report.healthy, true, JSON.stringify(report.checks.filter(c => !c.ok)));
 }
 
-test("Hub catalog has exactly 17 category/name entries and excludes nested example Skills", async () => {
+test("Hub catalog has exactly 15 current category/name entries", async () => {
   const catalog = await discoverHubCatalog(packageRoot);
-  assert.equal(catalog.size, 17); assert.equal(new Set([...catalog.values()].map(s => s.id.split("/")[0])).size, 5);
+  assert.equal(catalog.size, 15); assert.equal(new Set([...catalog.values()].map(s => s.id.split("/")[0])).size, 5);
   assert.ok(catalog.has("writing/eli5"));
   assert.ok(catalog.has("writing/align-intent"));
-  assert.ok(catalog.has("automation/herdr")); assert.ok(![...catalog.keys()].some(id => id.includes("_SKILL")));
-  assert.deepEqual(parseHubSkillSpec("automation/orca,automation/herdr"), hub(["automation/herdr", "automation/orca"]));
+  assert.ok(catalog.has("coding/gitea-repo")); assert.ok(![...catalog.keys()].some(id => id.includes("_SKILL")));
+  assert.deepEqual(parseHubSkillSpec("coding/github-repo-steward,coding/gitea-repo"), hub(["coding/gitea-repo", "coding/github-repo-steward"]));
   assert.throws(() => parseHubSkillSpec("../orca"), /--hub-skills/);
-  assert.throws(() => resolveHubIds(undefined, catalog, ["retired/old"]), /unavailable-hub-skill/);
+  assert.deepEqual(resolveHubIds(undefined, catalog, ["retired/old"]), []);
+  assert.deepEqual(resolveHubIds({ mode: "keep" }, catalog, ["retired/old", "writing/eli5"]), ["writing/eli5"]);
+  assert.throws(() => resolveHubIds(hub(["retired/old"]), catalog, []), /unavailable-hub-skill/);
 });
 
 test("all complete Hub packages install identically in both targets, remain idempotent, and uninstall", () => fixture(async target => {
   const catalog = await discoverHubCatalog(packageRoot);
   const first = await initSpeculo(target, { ...core, hubSkills: { mode: "all" }, skillTargets: ["agents", "claude"] });
-  assert.deepEqual(first.warnings, []); assert.equal(first.hub.created.length, 34);
+  assert.deepEqual(first.warnings, []); assert.equal(first.hub.created.length, 30);
   for (const host of ["agents", "claude"]) for (const skill of catalog.values()) {
     assert.deepEqual(await snapshotSkillTree(join(target, `.${host}/skills`, skill.name)), await snapshotSkillTree(skill.root));
   }
-  assert.equal((await readHubManifest(target))?.packages.length, 34);
+  assert.equal((await readHubManifest(target))?.packages.length, 30);
   await assert.rejects(readdir(join(target, ".agents/speculo/skills-hub")), /ENOENT/);
   await healthy(target);
   const before = await fingerprintTree(join(target, ".agents/skills"));
@@ -54,7 +55,7 @@ test("all complete Hub packages install identically in both targets, remain idem
   assert.deepEqual(refresh.hub.created, []); assert.deepEqual(refresh.hub.updated, []);
   assert.equal(await fingerprintTree(join(target, ".agents/skills")), before);
   const removed = await initSpeculo(target, { ...core, hubSkills: { mode: "none" } });
-  assert.equal(removed.hub.removed.length, 34);
+  assert.equal(removed.hub.removed.length, 30);
   for (const host of ["agents", "claude"]) assert.deepEqual(await readdir(join(target, `.${host}/skills`)), []);
   await healthy(target);
 }));
@@ -62,7 +63,7 @@ test("all complete Hub packages install identically in both targets, remain idem
 test("selected packages only, shared targets move full resources, and reselect after uninstall works", () => fixture(async target => {
   await initSpeculo(target, { ...core, hubSkills: hub(["automation/grok-bot-team-steward"]), skillTargets: ["agents"] });
   assert.deepEqual(await readdir(join(target, ".agents/skills")), ["grok-bot-team-steward"]);
-  await readFile(join(target, ".agents/skills/grok-bot-team-steward/templates/snapshot/skills/_SKILL/SKILL.md"));
+  await readFile(join(target, ".agents/skills/grok-bot-team-steward/scripts/scrub.sh"));
   const moved = await initSpeculo(target, { ...core, skillTargets: ["claude"] });
   assert.equal(moved.hub.created.length, 1); assert.equal(moved.hub.removed.length, 1);
   assert.deepEqual(await readdir(join(target, ".agents/skills")), []);
@@ -71,15 +72,63 @@ test("selected packages only, shared targets move full resources, and reselect a
   assert.deepEqual(again.warnings, []); await healthy(target);
 }));
 
+test("2.x refresh retires unavailable Hub packages, preserves user files and reports unsafe owned nodes", () => fixture(async sandbox => {
+  const source = join(sandbox, "old-package"), target = join(sandbox, "project");
+  await mkdir(source);
+  await cp(join(packageRoot, "template"), join(source, "template"), { recursive: true });
+  await writeFile(join(source, "package.json"), JSON.stringify({ version: "2.1.17" }));
+  for (const name of ["herdr", "orca"]) {
+    const root = join(source, "skills-hub/automation", name);
+    await mkdir(join(root, "scripts"), { recursive: true });
+    await writeFile(join(root, "SKILL.md"), `---\nname: ${name}\ndescription: Historical orchestration package\n---\n[Runner](scripts/run.mjs)\n`);
+    await writeFile(join(root, "scripts/run.mjs"), "// Old packaged resource\n");
+  }
+  await initSpeculo(target, { packageRoot: source, hubSkills: { mode: "all" } });
+  const herdr = join(target, ".agents/skills/herdr"), orca = join(target, ".agents/skills/orca");
+  await mkdir(join(herdr, "user"));
+  const notes = Buffer.from([0, 255, 42, 10]);
+  await writeFile(join(herdr, "user/notes.bin"), notes);
+  await rm(join(orca, "SKILL.md")); await mkdir(join(orca, "SKILL.md"));
+  const unsafeBefore = await fingerprintTree(orca);
+
+  const refreshed = await initSpeculo(target, { packageRoot });
+  assert.equal(refreshed.refresh.sourceVersion, "2.1.17");
+  assert.deepEqual(refreshed.hub.selected, []);
+  assert.deepEqual(refreshed.hub.removed, ["agents:automation/herdr"]);
+  assert.deepEqual(refreshed.hub.conflicts, ["agents:automation/orca"]);
+  assert.ok(refreshed.warnings.some(warning => warning.includes("hub-package-conflict .agents/skills/orca")));
+  assert.deepEqual(await readFile(join(herdr, "user/notes.bin")), notes);
+  await assert.rejects(readFile(join(herdr, "SKILL.md")), /ENOENT/);
+  await assert.rejects(readFile(join(herdr, "scripts/run.mjs")), /ENOENT/);
+  assert.equal(await fingerprintTree(orca), unsafeBefore);
+  assert.deepEqual((await readHubManifest(target))?.packages.map(item => item.id), ["automation/orca"]);
+  assert.equal((await doctorSpeculo(target)).healthy, false);
+
+  const beforeRejectedSelection = await fingerprintTree(target);
+  await assert.rejects(initSpeculo(target, { packageRoot, hubSkills: hub(["automation/herdr"]) }), /unavailable-hub-skill.*explicitly select/);
+  assert.equal(await fingerprintTree(target), beforeRejectedSelection);
+  await rm(join(orca, "SKILL.md"), { recursive: true });
+  await cp(join(source, "skills-hub/automation/orca/SKILL.md"), join(orca, "SKILL.md"));
+  const repaired = await initSpeculo(target, { packageRoot, hubSkills: { mode: "keep" } });
+  assert.deepEqual(repaired.hub.removed, ["agents:automation/orca"]);
+  assert.deepEqual(repaired.warnings, []);
+  assert.deepEqual(await readFile(join(herdr, "user/notes.bin")), notes);
+  await assert.rejects(readdir(orca), /ENOENT/);
+  await healthy(target);
+}));
+
 test("full package updates add/remove nested files and preserve executable modes, with closed source references", () => fixture(async sandbox => {
   const source = join(sandbox, "source"), target = join(sandbox, "project"), skill = join(source, "skills-hub/coding/sample-helper");
   await mkdir(source); await cp(join(packageRoot, "template"), join(source, "template"), { recursive: true });
   await cp(join(packageRoot, "package.json"), join(source, "package.json"));
   await mkdir(join(skill, "scripts"), { recursive: true }); await mkdir(join(skill, "empty"));
+  await mkdir(join(skill, "examples/_SKILL"), { recursive: true });
+  await writeFile(join(skill, "examples/_SKILL/SKILL.md"), "A nested example, not a public entry.\n");
   await writeFile(join(skill, "SKILL.md"), "---\nname: sample-helper\ndescription: Example helper\n---\n[Runner](scripts/run.sh)\n");
   await writeFile(join(skill, "scripts/run.sh"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
   await writeFile(join(skill, "scripts/old.txt"), "old");
   const options = { packageRoot: source, hubSkills: hub(["coding/sample-helper"]) };
+  assert.deepEqual([...(await discoverHubCatalog(source)).keys()], ["coding/sample-helper"]);
   await initSpeculo(target, options);
   const installed = join(target, ".agents/skills/sample-helper");
   assert.deepEqual(await snapshotSkillTree(installed), await snapshotSkillTree(skill));
@@ -105,19 +154,19 @@ test("full package updates add/remove nested files and preserve executable modes
 }));
 
 for (const change of ["content", "extra", "symlink", "mode", "readonly", "type"] as const) test(`Hub uninstall handles ${change} according to ownership`, { skip: process.platform === "win32" && ["symlink", "mode"].includes(change) }, () => fixture(async target => {
-  await initSpeculo(target, { ...core, hubSkills: hub(["automation/herdr", "automation/orca"]) });
-  const root = join(target, ".agents/skills/herdr"), file = join(root, "SKILL.md");
+  await initSpeculo(target, { ...core, hubSkills: hub(["coding/gitea-repo", "coding/github-repo-steward"]) });
+  const root = join(target, ".agents/skills/gitea-repo"), file = join(root, "SKILL.md");
   if (change === "content") await writeFile(file, "user edit");
   if (change === "extra") await writeFile(join(root, "user.txt"), "mine");
   if (change === "mode") await chmod(file, 0o600);
   if (change === "readonly") await chmod(file, 0o444);
   if (change === "type") { await rm(file); await mkdir(file); }
-  if (change === "symlink") { await rm(file); await symlink(join(packageRoot, "skills-hub/automation/herdr/SKILL.md"), file); }
+  if (change === "symlink") { await rm(file); await symlink(join(packageRoot, "skills-hub/coding/gitea-repo/SKILL.md"), file); }
   const before = await fingerprintTree(root);
   const result = await initSpeculo(target, { ...core, hubSkills: { mode: "none" } });
   if (["symlink", "readonly", "type"].includes(change)) {
-    assert.deepEqual(result.hub.conflicts, ["agents:automation/herdr"]);
-    assert.deepEqual(result.hub.removed, ["agents:automation/orca"]);
+    assert.deepEqual(result.hub.conflicts, ["agents:coding/gitea-repo"]);
+    assert.deepEqual(result.hub.removed, ["agents:coding/github-repo-steward"]);
     assert.equal(await fingerprintTree(root), before);
     assert.equal((await readHubManifest(target))?.packages.length, 1);
     assert.equal((await doctorSpeculo(target)).healthy, false);
@@ -132,49 +181,50 @@ for (const change of ["content", "extra", "symlink", "mode", "readonly", "type"]
 }));
 
 test("unmanaged same-name Skill is never adopted, and no target is rejected before installation", () => fixture(async target => {
-  await assert.rejects(initSpeculo(target, { ...core, hubSkills: hub(["automation/herdr"]), skillTargets: [] }), /requires at least one/);
+  await assert.rejects(initSpeculo(target, { ...core, hubSkills: hub(["coding/gitea-repo"]), skillTargets: [] }), /requires at least one/);
   await assert.rejects(readFile(join(target, ".agents/speculo/config.json")), /ENOENT/);
-  await mkdir(join(target, ".agents/skills/herdr"), { recursive: true });
-  await cp(join(packageRoot, "skills-hub/automation/herdr/SKILL.md"), join(target, ".agents/skills/herdr/SKILL.md"));
-  const result = await initSpeculo(target, { ...core, hubSkills: hub(["automation/herdr", "automation/orca"]) });
+  await mkdir(join(target, ".agents/skills/gitea-repo"), { recursive: true });
+  await cp(join(packageRoot, "skills-hub/coding/gitea-repo/SKILL.md"), join(target, ".agents/skills/gitea-repo/SKILL.md"));
+  const result = await initSpeculo(target, { ...core, hubSkills: hub(["coding/gitea-repo", "coding/github-repo-steward"]) });
   assert.equal(result.hub.conflicts.length, 1); assert.equal(result.hub.created.length, 1);
-  assert.deepEqual((await readHubManifest(target))?.packages.map(p => p.id), ["automation/orca"]);
+  assert.deepEqual((await readHubManifest(target))?.packages.map(p => p.id), ["coding/github-repo-steward"]);
 }));
 
 test("cancelled Hub preview leaves installed trees and manifests unchanged", () => fixture(async target => {
-  await initSpeculo(target, { ...core, hubSkills: hub(["automation/herdr"]) });
+  await initSpeculo(target, { ...core, hubSkills: hub(["coding/gitea-repo"]) });
   const before = await fingerprintTree(target);
   await assert.rejects(initSpeculo(target, { ...core, hubSkills: { mode: "none" }, confirmInstall: async preview => {
-    assert.deepEqual(preview.hub?.removed, ["agents:automation/herdr"]); return false;
+    assert.deepEqual(preview.hub?.removed, ["agents:coding/gitea-repo"]); return false;
   } }), InstallCancelled);
   assert.equal(await fingerprintTree(target), before);
 }));
 
-test("workflow deselection removes methods, projections and navigation but retains runtime and dormant rules", () => fixture(async target => {
+test("workflow deselection removes methods, projections and navigation but retains all opaque user data", () => fixture(async target => {
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning", "specdev"] }, skills: { mode: "all" }, skillTargets: ["agents", "claude"] });
   const state = join(target, ".agents/speculo/.speculo");
   await mkdir(join(state, "coordination"), { recursive: true });
   await writeFile(join(state, "coordination/project.json"), JSON.stringify({ schema_version: 2, defaults: { mode: "host" }, rules: [{ work_id: "learning/lesson", choice: { mode: "host" } }] }));
+  await mkdir(join(state, "learning"), { recursive: true });
   await writeFile(join(state, "learning/custom.bin"), Buffer.from([0, 255, 42]));
   const runtime = await fingerprintTree(join(state, "learning"));
   const removed = await initSpeculo(target, { packageRoot, selection: { workflowIds: ["specdev"] } });
   assert.deepEqual(removed.removedWorkflowIds, ["learning"]); assert.deepEqual(removed.warnings, []);
   await assert.rejects(readdir(join(target, ".agents/speculo/workflows/learning")), /ENOENT/);
-  for (const host of ["agents", "claude"]) await assert.rejects(readdir(join(target, `.${host}/skills/learning-l-lesson`)), /ENOENT/);
+  for (const host of ["agents", "claude"]) await assert.rejects(readdir(join(target, `.${host}/skills/learning`)), /ENOENT/);
   assert.ok(!(await readProjectionManifest(target))?.asset_ids.some(id => id.startsWith("learning/") || id === "domain/learning"));
   assert.doesNotMatch(await readFile(join(target, "AGENTS.md"), "utf8"), /learning\/context/);
   assert.equal(await fingerprintTree(join(state, "learning")), runtime); await healthy(target);
-  assert.equal((await readProjectCoordination(state, await readAssetCatalog(join(target, ".agents/speculo"))))?.rules[0].work_id, "learning/lesson");
+  assert.equal(JSON.parse(await readFile(join(state, "coordination/project.json"), "utf8")).rules[0].work_id, "learning/lesson");
   await initSpeculo(target, { ...core }); await healthy(target);
-  await initSpeculo(target, { packageRoot }); await healthy(target); // inactive registry survives a core-only refresh
+  await initSpeculo(target, { packageRoot }); await healthy(target); // legacy user files survive a core-only refresh
   await assert.rejects(initSpeculo(target, { ...core, skills: hub(["learning/lesson"]) }), /refresh is blocked/);
   await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
   assert.equal(await fingerprintTree(join(state, "learning")), runtime); await healthy(target);
-  assert.equal((await readProjectCoordination(state, await readAssetCatalog(join(target, ".agents/speculo"))))?.rules[0].work_id, "learning/lesson");
+  assert.equal(JSON.parse(await readFile(join(state, "coordination/project.json"), "utf8")).rules[0].work_id, "learning/lesson");
   await initSpeculo(target, { ...core });
   const choices = JSON.parse(await readFile(join(state, "coordination/project.json"), "utf8"));
   choices.rules[0].stage = "unknown-stage"; await writeFile(join(state, "coordination/project.json"), JSON.stringify(choices));
-  assert.equal((await doctorSpeculo(target)).healthy, false);
+  assert.equal((await doctorSpeculo(target)).healthy, true); // installation checks do not interpret old coordination preferences
 }));
 
 test("workflow uninstall preserves added files without retaining methods", () => fixture(async target => {
@@ -277,9 +327,9 @@ test('Hub repairs edits and missing files, preserves additions without adopting 
 }));
 
 for(const phase of ['skills-applying','skills-projected','external-finalized'] as const)test(`repair rollback restores actual edited contents, modes and additions at ${phase}`,()=>fixture(async target=>{
- await initSpeculo(target,{...core,hubSkills:hub(['automation/herdr']),skills:hub(['command/handoff'])});
- await writeFile(join(target,'.agents/skills/herdr/SKILL.md'),'hub edit');
- await writeFile(join(target,'.agents/skills/herdr/user.txt'),'user data');
+ await initSpeculo(target,{...core,hubSkills:hub(['coding/gitea-repo']),skills:hub(['command/handoff'])});
+ await writeFile(join(target,'.agents/skills/gitea-repo/SKILL.md'),'hub edit');
+ await writeFile(join(target,'.agents/skills/gitea-repo/user.txt'),'user data');
  const pointer=join(target,'.agents/skills/speculo-handoff/SKILL.md');await writeFile(pointer,'pointer edit');await chmod(pointer,0o664);
  const before=await fingerprintTree(target);
  await assert.rejects(initSpeculo(target,{packageRoot,transactionHook:async p=>{if(p===phase)throw Error('repair fault');}}),/repair fault/);

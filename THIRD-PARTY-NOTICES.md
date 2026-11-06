@@ -1,106 +1,21 @@
-# mattpocock/skills
+# Third-party notices
 
-https://github.com/mattpocock/skills
-Revision: f3fc5632f401156837ee3872f14fe33ccf1024ea
+Speculo retains the licenses and attribution for material actually distributed in this version. The new lightweight workflow instructions are original syntheses; research references and the choices they informed are documented in [docs/research.md](docs/research.md).
 
-MIT License
+## Skills Hub
 
-Copyright (c) 2026 Matt Pocock
+The bundled hub was originally imported from `wta-skills-hub/skills`. Its exact source revision was not recorded in the existing inventory. This version edits the skill instructions and removes obsolete workflow templates; it does not claim byte-for-byte parity with an upstream release.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The retained packages include their existing licenses (Copyright © 2026 Ting'an Wang where stated). Additional attribution is kept with the relevant package:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+- [ste-zh](skills-hub/writing/ste-zh/NOTICE.md): adapted writing guidance from `dualface/ste-zh` and the separately identified conceptual references. Its MIT license includes the original dualface attribution. No ASD-STE100 standard or approved dictionary is bundled.
+- [eli5](skills-hub/writing/eli5/THIRD_PARTY_NOTICES.md): the carried Speculo MIT notice and teaching-reference boundary.
+- [AI CLI configuration parsers](skills-hub/system/optimize-codex-config/scripts/vendor/THIRD-PARTY-NOTICES.txt): full licenses for `toml-eslint-parser`, `eslint-visitor-keys` and `jsonc-parser`. The bundled parser code, build inventory and notices remain together.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Installing a hub skill copies its package and does not run its helper scripts. API clients, configuration tools, rendering helpers and other retained utilities keep their original notices.
 
+## Removed bundles
 
-## PR upstream credits
+Earlier releases included adapted `mattpocock/skills` workflows, `humanlayer/show-me` presentation guidance, `VoltAgent/awesome-design-md` design analyses and standalone YAML/Ajv validation bundles. Those copies and their old workflow contracts are no longer shipped. Their historical provenance remains in Git history; links in the current research notes are references, not redistributed source.
 
-# Credits
-
-The **Summary** section's menu of visuals (pseudocode, call trees, component trees, file trees, Mermaid, diffs) and its placement guidance come from [Dex Horthy](https://github.com/dexhorthy)'s [`show-me`](https://github.com/humanlayer/humanlayer) skill, reproduced almost word for word and aimed at a diff instead of a live conversation. `pr` does not depend on `show-me` as a skill (it isn't part of this repo, and a hard dependency would break standalone installs), so the content is copied in rather than pointed at; this file is the attribution a dependency would otherwise have carried.
-
-
-## yaml (bundled portable validator dependency)
-
-Copyright Eemeli Aro <eemeli@gmail.com>
-
-Permission to use, copy, modify, and/or distribute this software for any purpose
-with or without fee is hereby granted, provided that the above copyright notice
-and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-THIS SOFTWARE.
-
-
-## Ajv and ajv-formats (bundled standalone design validators)
-
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Evgeny Poberezkin
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-MIT License
-
-Copyright (c) 2020 Evgeny Poberezkin
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-## VoltAgent/awesome-design-md
-
-Ten fixed-revision design analyses are distributed under `template/workflows/specdev/specdev-p-prototype/design-library/upstream/awesome-design-md/`. Their original MIT license and per-file provenance are included alongside the documents. This license does not grant rights to third-party brand fonts, photography or trademarks.
-
-## Bundled Skills Hub
-
-`skills-hub/` contains the project-provided copy of `wta-skills-hub/skills`, distributed as complete packages. Original Skill frontmatter, attribution and licenses inside each package are preserved. In particular, `skills-hub/system/optimize-codex-config/scripts/vendor/` retains its bundled license and attribution files. Installation does not execute bundled scripts or fetch a newer upstream revision.
+Runtime npm dependencies retain their own licenses. Repository and package licenses do not grant rights to third-party photographs, fonts, trademarks or user-provided material.

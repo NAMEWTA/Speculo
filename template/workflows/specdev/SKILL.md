@@ -1,52 +1,119 @@
 ---
 name: specdev
-description: "用于需求澄清、规格、任务规划、实现、审查、交付及项目与参考资料学习的工程协作；只读发现不启动 Goal。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/specdev
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 用于从多渠道需求、评估、UI 原型、规格到实现、审查、发布部署和知识提纯的完整软件交付，也可直接处理其中一个阶段。
 ---
 
-# specdev
+# 开发与上线
 
-## 发现与激活
+围绕用户要交付的结果工作，从当前请求对应的阶段开始。已有需求、设计、代码和部署流程直接复用；小修复可以直接实现，只有交付规模需要时才展开计划。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+用户主要参与需求取舍和体验方向。将影响这些选择的问题集中提出；其余工程判断结合项目事实完成，沿用当前会话已经明确的范围和授权。
 
-明确进入本领域后读取 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，明确项目/方法/数据根；已有安装验证 workspace，直接使用接受明确根与 Skill 资源，仅读取当前 README/原负责工件与所需分支。普通 Work 不依赖 CLI、初始化或业务 status 镜像。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+## 一份可接续的记录
 
-## 能力路由
+先找用户指定的记录、现有 issue、项目文档和相关代码。需要跨会话推进一次版本交付时，默认使用项目根下 `.agents/speculo/.speculo/releases/<name>/README.md`，`<name>` 取版本或清晰主题。
 
-<!-- AUTO-INDEX-START -->
+按需要在同一记录中保留：
 
-- **specdev/archive-and-consolidate** — 归档与沉淀：<Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>
-- **specdev/code-review** — 代码审查：<Path>{roots.workflows}/specdev/specdev-c-code-review/SKILL.md</Path>
-- **specdev/delivery** — 开发交付：<Path>{roots.workflows}/specdev/specdev-d-delivery/SKILL.md</Path>
-- **specdev/diagnose-bugs** — 诊断 Bug：<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/SKILL.md</Path>
-- **specdev/grill-with-docs** — Change 决策访谈：<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>
-- **specdev/implement** — 实现与验收：<Path>{roots.workflows}/specdev/specdev-i-implement/SKILL.md</Path>
-- **specdev/init-setup** — 初始化设置：<Path>{roots.workflows}/specdev/specdev-i-init-setup/SKILL.md</Path>
-- **specdev/learn** — 学习与图解：<Path>{roots.workflows}/specdev/specdev-l-learn/SKILL.md</Path>
-- **specdev/goal-plan** — Goal 规划与执行：<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>
-- **specdev/prototype** — 逻辑与 UI 原型：<Path>{roots.workflows}/specdev/specdev-p-prototype/SKILL.md</Path>
-- **specdev/retro** — 整体会话复盘与知识沉淀：<Path>{roots.workflows}/specdev/specdev-r-retro/SKILL.md</Path>
-- **specdev/review-architecture** — 架构审查：<Path>{roots.workflows}/specdev/specdev-r-review-architecture/SKILL.md</Path>
-- **specdev/spec** — 编写 Spec：<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>
-- **specdev/tickets** — 编写计划型 Tickets：<Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>
-- **specdev/triage** — 请求评估与分诊：<Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path>
-- **specdev/wayfinder** — 探索大需求与 Change 边界：<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>
+- 原始需求的来源链接或必要原文，以及已确认的目标和范围。
+- 影响实现的决定、规格和当前设计的引用。
+- 尚未完成的工作，以及实际检查、交付、部署结果。
+- 有阻塞时，具体问题和可继续的下一步。
 
-<!-- AUTO-INDEX-END -->
+简单修复已有 issue、PR 或提交说明足以解释时，直接在那里记录。内容太大才拆文件；链接已有事实，不再生成一套同义文档或状态文件。
 
-## 永久知识
+需要保存或更新这些记录时，按 [持久化](../../references/memory.md) 选择位置与保留内容。文件和目录有实际内容才创建。
 
-- <Path>{roots.state}/specdev/adr/</Path>
-- <Path>{roots.state}/specdev/context/</Path>
-- <Path>{roots.state}/specdev/design/</Path>
+## 需求与评估
 
-UI 工作先按 scope/规则 ID 定位设计基线并读取所需 revision；首次基线和归档提升只经 A 的设计知识网关，见 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path>。
+读取请求涉及的 issue、反馈、对话、参考资料和现有行为，保留可追溯来源。合并重复需求，指出互相冲突的说法，区分用户原意、已验证事实与自己的推断。
 
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+围绕“谁遇到什么问题、怎样算解决”细化需求，考虑主要使用场景、异常、已有数据和受影响功能。只追问会改变范围、体验或重要风险且无法自行查清的问题。
 
-当前工程事实按主题查 <Path>{roots.state}/docs/README.md</Path>（存在时）；它是跨领域 docs 导航，不是本域永久知识 store。
+把本次要做、暂缓和不做的内容写清即可。暂缓项保留原因和入口，不为了收集需求就自动创建远程 issue 或大量票据。
+
+需要比较外部方案时，先检查项目已有实现，再查相关官方资料和可复用项目；记录真正影响选择的来源与取舍。
+
+## 原型与当前设计
+
+当主要不确定性在交互、布局或状态表达时，先做可查看、可操作的原型，再把确认的行为写入规格。纯后端改动或已有清晰设计的工作可以跳过原型。
+
+原型应回答具体问题，例如空状态怎样引导、错误怎样恢复、同一操作怎样在不同设备上完成。优先沿用项目组件、视觉语言和真实关键状态。
+
+需要用户选择时展示有意义的候选和差异；已有明确认可的方向直接接续，不反复索取同一确认。
+
+设计存放在项目已有的长期设计位置；没有时使用 `.agents/speculo/.speculo/knowledge/design/<topic>/`。HTML、组件、样式、设计 tokens、图像和简短说明都可成为设计依据。
+
+候选与当前已确认设计在文件名、入口说明或注释中明确区分。探索草稿不自动变成设计基线；没有获得任务所要求的认可时，记录待确认的具体选择。
+
+版本交付记录链接所采用的设计文件和版本。需要保留验收基线时引用固定提交、不可变版本或小型快照，避免未来设计更新改变这次验收依据。
+
+## 规格与切片
+
+将已经讨论清楚的需求和设计整理为足以实施的规格，通常放在交付记录内。说明可见行为、重要接口或数据变化、约束与可验证的完成条件；原型和代码表达得更清楚的部分直接引用。
+
+规格串联来源和设计，不重复抄写。工程细节可根据实现调整；影响已确认范围或体验的变化应明确提出。
+
+能一次完成就直接实施。规模较大或需要独立交付时，用普通清单拆成可验证的小块，每块只写目标、完成条件和真实依赖。
+
+独立票据仅在内容确实装不下或协作需要时创建，并链接同一规格。计划的粒度由任务决定，不需要固定角色、派单协议或循环计划文件。
+
+## 实现与检查
+
+先核对受影响的入口、调用方、测试和当前知识，再按项目习惯修改。诊断缺陷时先取得复现或其他可靠证据，区分原因与猜测。
+
+实现、必要文档和验证随同一结果推进。优先复用已有模块和检查，测试选择围绕行为变化与失败风险；简单文字修正不必新建测试。
+
+检查整个交付结果是否符合规格，重点看回归、接口与数据影响、权限和遗漏。发现问题就修复；无法验证的部分说明原因，不用清单勾选代替运行证据。
+
+涉及 UI 时，对照设计的同一页面、状态和必要视口检查实际实现。保留能说明差异的截图或观察，记录尚未解决的偏差及其影响。
+
+页面导航、区域组合和信息层级以本次确认的版本为准；保留功能不能自行扩大为保留旧布局的许可。未获接受的结构偏差仍是未完成项，不因样式相近或测试通过而豁免。
+
+技术检查通过只证明这些检查覆盖的内容。任务要求的用户验收仍按真实反馈记录；待验收、明确延期和已经接受分别说明，不能由测试结果代填。
+
+延期或豁免只记录用户对同一交付范围的明确决定及来源。批准原型、允许开发或发版，均不自动替代明确要求的最终验收。
+
+有上下文中断风险时，更新现有交付记录的完成项、阻塞与下一步即可。恢复时核对实际文件、Git 和部署状态，再从未完成的部分继续。
+
+## 发布与部署
+
+只执行当前请求授权的发布或部署范围；要求提 PR 的任务完成到 PR，要求上线的任务继续完成目标环境的实际验证。复用同一目标、动作和范围的已有授权。
+
+### 定位环境
+
+优先读取项目已有发布脚本、基础设施配置和环境文档。需要可复用说明且项目尚无对应记录时，用 `.agents/speculo/.speculo/environments/<name>.md` 记录一个环境。
+
+首次连接或部署时查清环境名称、目标节点、应用与数据位置、发布入口和健康检查。连接方式及凭据只记录引用位置；秘密值留在既有凭据管理处。
+
+说明应足以让下一次“部署到这个环境”定位同一目标。目标不明确时先消歧，已有记录和当前环境不符时先查清差异。
+
+盘点环境或主机时，区分保存的配置和本次实际观测；记录观测时间。主机、共享服务和其他项目的修改按用户要求的范围处理。
+
+### 执行与验证
+
+沿用现有构建、发布与运行方式，固定本次实际版本或产物。部署前确认必要配置、数据兼容性和可用的恢复路径。
+
+涉及数据变更时按风险安排备份、迁移和顺序，确认恢复方法是否适用；不会影响数据的部署无需凭空增加迁移步骤。新增破坏性操作或超出既有授权的范围需要单独明确。
+
+执行后检查目标上的实际版本、服务健康和关键业务路径。发布命令成功、产物上传成功和业务可用是不同的证据，按已观测事实报告。
+
+失败时保留错误和已发生的变化，使用本次授权覆盖的恢复方案；无法安全恢复时停止相关动作，说明当前影响和恢复入口。部分成功不记为全部完成。
+
+将这次目标、版本、时间、迁移情况和验证结果写回交付记录；只把今后部署仍有用的变化更新到环境说明，避免复制执行日志。
+
+## 提纯与归档
+
+交付结束时检查是否出现未来还会使用的决定、项目事实、设计或故障经验，按 [持久化](../../references/memory.md) 更新已有知识。普通修改无需强行产生每一种知识文档。
+
+当前设计和环境说明继续维护在长期位置。交付记录保留当时的范围、采用版本、真实结果和未解决事项；代码是实现事实，历史记录不替代当前文档。
+
+完成或明确终止的交付可移到 `.agents/speculo/.speculo/archive/<name>/`，名称保持可识别。先检查引用和设计版本仍可定位；需要调整活动入口的路径时一并更新。
+
+归档后保留历史原貌，后续变化写入当前知识或新的交付记录。仍需实施的事项保持可发现，不能因移动目录就算完成。
+
+## 交付
+
+报告实际完成的结果、关键取舍、检查证据和产物入口；有 PR、发布或部署时附真实位置和版本。有未完成项时明确影响与下一步。
+
+日常沟通不另造交接包。需要他人或下一会话继续时，现有记录应足以说明当前结果、必要上下文和可执行的下一步。

@@ -1,37 +1,40 @@
 ---
 name: media
-description: "用于创作简报、拆解、手绘、视频、发布草稿及复盘；发布由实际授权控制。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/media
-  speculo-domain: media
-  speculo-contract-version: "2"
+description: 用于内容策划、参考拆解、文案、插画、视频、渠道草稿和效果复盘，交付所请求的真实作品或清楚标注的制作材料。
 ---
 
-# media
+# 内容与媒体
 
-## 发现与激活
+根据用户要交付的作品开始：受众、要传达的内容、渠道和已有素材。仅澄清会影响内容或制作的缺口，已有风格和规格直接复用。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+## 内容与参考
 
-明确进入本领域后读取 <Path>{roots.workflows}/media/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/media/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+先形成清楚的主张和叙事，事实性内容给出可核查来源。需要选题时提供有区别的切入点，不为每篇内容固定生成同样数量的方案。
 
-## 能力路由
+拆解参考材料时区分实际观察、机制推断和复用建议。视频引用带时间码，无法看到的片段明确缺失；复用结构与方法，重新创作表达。
 
-<!-- AUTO-INDEX-START -->
+内容母稿承载主要事实，渠道版本只处理受众、长度和表现差异。用户要求修订时更新真实作品，不只解释修改建议。
 
-- **media/brief** — 选题与母内容简报：<Path>{roots.workflows}/media/media-b-brief/SKILL.md</Path>
-- **media/deconstruct** — 对标结构拆解：<Path>{roots.workflows}/media/media-d-deconstruct/SKILL.md</Path>
-- **media/hand-drawn** — 固定画风提示词：<Path>{roots.workflows}/media/media-h-hand-drawn/SKILL.md</Path>
-- **media/init-setup** — 创作者初始化：<Path>{roots.workflows}/media/media-i-init-setup/SKILL.md</Path>
-- **media/publish-draft** — 多渠道本地草稿：<Path>{roots.workflows}/media/media-p-publish-draft/SKILL.md</Path>
-- **media/retro** — 数据复盘与模板沉淀：<Path>{roots.workflows}/media/media-r-retro/SKILL.md</Path>
-- **media/video** — 可验证代码视频：<Path>{roots.workflows}/media/media-v-video/SKILL.md</Path>
+## 制作作品
 
-<!-- AUTO-INDEX-END -->
+按已请求的交付物使用可用制作能力。图片或插画任务产出图像；仅请求提示词时交付可用提示词。用户指定配方或品牌材料时保留其要求并核对来源。
 
-## 永久知识
+视频先确定实际需要的画幅、时长、节奏、字幕和音频，再制作关键画面或预览验证方向。项目代码、脚本和素材应能定位到成片的生成方式。
 
-- <Path>{roots.state}/media/context/INDEX.md</Path>
+查看实际渲染结果，检查文字、画面裁切、转场、字幕时序与音画关系。发现问题就修正，测试或渲染命令成功不能代替对作品的观察。
 
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+交付可打开的成品和必要源文件。制作能力不足时交出已完成的材料，明确哪些是提示词、工程、预览或未渲染部分，不称为完成成片。
+
+## 渠道与复盘
+
+按指定渠道整理正文、封面和媒体包，保留作品所需的来源及许可信息。本地草稿与线上发布分别记录；发布、上传或发送仅在用户授权的目标范围执行。
+
+发布后以真实链接或回执确认结果；调用失败或状态不明时先核对，避免重复发布。
+
+复盘使用真实数据，说明时间窗口和缺失项，区分相关性与原因。提出能检验的改动，只有重复证据支持的方法才提升为可复用经验。
+
+## 持久化
+
+需要保存制作项目或品牌知识时，按 [持久化](../../references/memory.md) 使用用户现有位置；没有时使用 `.agents/speculo/.speculo/media/<topic>/`。
+
+保留成品、可再编辑的必要源材料及简短说明。常用品牌设计复用长期设计目录，制作结果与下一步放在同一项目记录，不生成额外状态清单。

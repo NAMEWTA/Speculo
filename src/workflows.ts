@@ -1,28 +1,18 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseFrontmatter, validateSkill } from "./assets.js";
-import { pathExists } from "./utils.js";
-import { validateWorkflowManifest } from "./contracts.js";
+import { readAssetCatalog } from "./assets.js";
 import { RefreshBlockedError } from "./refresh.js";
 export type WorkflowPackage = { id:string; name:string; displayName:string; description:string };
 export type WorkflowCatalog = Map<string,WorkflowPackage>;
 export type WorkflowSelection = {workflowIds:string[]};
-async function discover(root:string):Promise<WorkflowCatalog>{
- const catalog:WorkflowCatalog=new Map();
- const entries=await readdir(join(root,'workflows'),{withFileTypes:true}).catch((e:NodeJS.ErrnoException)=>{if(e.code==='ENOENT')return [];throw e;});
- for(const entry of entries){
-  if(!entry.isDirectory()||entry.name.startsWith('_'))continue;
-  const folder=join(root,'workflows',entry.name);
-  if(!await pathExists(join(folder,'SKILL.md'))&&!await pathExists(join(folder,'manifest.json')))continue;
-  const content=await readFile(join(folder,'SKILL.md'));
-  const errors=validateSkill(content,entry.name);if(errors.length)throw new Error(`${folder}: ${errors.join('; ')}`);
-  const {fields}=parseFrontmatter(content), metadata=fields.metadata as Record<string,string>;
-  const manifest=JSON.parse(await readFile(join(folder,'manifest.json'),'utf8'));
-  validateWorkflowManifest(manifest, entry.name);
-  if(metadata?.['speculo-id']!==`domain/${entry.name}`)throw new Error(`invalid-domain-manifest: ${entry.name}`);
-  catalog.set(entry.name,{id:entry.name,name:entry.name,displayName:entry.name,description:fields.description as string});
- }
- return catalog;
+async function discover(root: string): Promise<WorkflowCatalog> {
+  const catalog: WorkflowCatalog = new Map();
+  for (const asset of (await readAssetCatalog(root)).assets) {
+    if (asset.kind !== "domain-skill") continue;
+    const id = asset.domain!;
+    catalog.set(id, { id, name: asset.name, displayName: asset.name, description: asset.description });
+  }
+  return catalog;
 }
 export async function discoverWorkflowCatalog(packageRoot:string):Promise<WorkflowCatalog>{return discover(join(packageRoot,'template'));}
 export async function scanInstalledWorkflows(installRoot:string):Promise<string[]>{return [...(await discover(installRoot)).keys()].sort();}
@@ -32,7 +22,7 @@ export async function readInstalledWorkflowIds(installRoot: string): Promise<str
  try { content = await readFile(join(installRoot, ".speculo/install.json"), "utf8"); }
  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
  const manifest = JSON.parse(content);
- if (!manifest || manifest.schema_version !== 4) throw new RefreshBlockedError([{code:"unsupported-installation-version",path:".speculo/install.json",message:"Speculo 2 requires a schema v4 install manifest; existing data is preserved"}]);
+ if (!manifest || manifest.schema_version !== 4) throw new RefreshBlockedError([{code:"unsupported-installation-version",path:".speculo/install.json",message:"Speculo requires a schema v4 install manifest; existing data is preserved"}]);
  if (!Array.isArray(manifest.workflows) ||
      manifest.workflows.some((id: unknown) => typeof id !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) ||
      new Set(manifest.workflows).size !== manifest.workflows.length) throw new RefreshBlockedError([{code:"invalid-install-manifest",path:".speculo/install.json",message:"cannot establish installed workflow identities"}]);

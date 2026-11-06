@@ -3,7 +3,6 @@ import { basename, dirname, join } from "node:path";
 import { parseDocument } from "yaml";
 import { safeRelativePath, containedPath } from "./paths.js";
 import { pathExists } from "./utils.js";
-import { validateWorkflowManifest } from "./contracts.js";
 
 export type Frontmatter = { raw: string; fields: Record<string, unknown>; body: string };
 export function parseFrontmatter(content: string | Buffer): Frontmatter {
@@ -32,44 +31,37 @@ export function validateSkill(content: string | Buffer, directory: string): stri
     return errors;
   } catch (e) { return [String(e)]; }
 }
-export type Asset = { id: string; kind: "domain-skill" | "work-skill" | "command"; name: string; domain?: string; entry: string; description: string; stages: string[] };
+export type Asset = { id: string; kind: "domain-skill" | "command"; name: string; domain?: string; entry: string; description: string };
 export type AssetCatalog = { schema_version: 2; assets: Asset[] };
+
+/** A workflow is one standard Skill. Its directory is the only registration. */
 export async function readAssetCatalog(root: string): Promise<AssetCatalog> {
   const assets: Asset[] = [];
-  async function addSkill(entry: string, kind: Asset["kind"], domain: string, stages: string[] = []) {
+  async function directories(path: string) {
+    return (await readdir(path, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return [];
+      throw error;
+    })).filter(entry => entry.isDirectory() && !entry.name.startsWith("_")).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  for (const folder of await directories(join(root, "workflows"))) {
+    const entry = `workflows/${folder.name}/SKILL.md`;
+    if (!await pathExists(join(root, entry))) continue;
     const content = await readFile(await containedPath(root, entry));
-    const errors = validateSkill(content, dirname(entry)); if (errors.length) throw new Error(`${entry}: ${errors.join("; ")}`);
-    const {fields} = parseFrontmatter(content), meta = fields.metadata as Record<string,string>;
-    if (!meta || meta["speculo-kind"] !== kind || meta["speculo-domain"] !== domain || !meta["speculo-id"] || meta["speculo-contract-version"] !== "2") throw new Error(`invalid-asset-metadata: ${entry}`);
-    if (kind === "domain-skill" ? meta["speculo-id"] !== `domain/${domain}` : !meta["speculo-id"].startsWith(domain + "/")) throw new Error(`invalid-business-id: ${entry}`);
-    assets.push({id:meta["speculo-id"],kind,name:fields.name as string,domain,entry,description:fields.description as string,stages});
+    const errors = validateSkill(content, dirname(entry));
+    if (errors.length) throw new Error(`${entry}: ${errors.join("; ")}`);
+    const { fields } = parseFrontmatter(content);
+    assets.push({ id: `domain/${folder.name}`, kind: "domain-skill", name: fields.name as string,
+      domain: folder.name, entry, description: fields.description as string });
   }
-  const folders = await readdir(join(root,"workflows"),{withFileTypes:true}).catch((e:NodeJS.ErrnoException)=>{if(e.code==='ENOENT')return [];throw e;});
-  for(const folder of folders.sort((a,b)=>a.name.localeCompare(b.name))) {
-    if(!folder.isDirectory()||folder.name.startsWith('_'))continue;
-    const domain=folder.name, prefix=`workflows/${domain}`;
-    if(!await pathExists(join(root,prefix,'SKILL.md'))&&!await pathExists(join(root,prefix,'manifest.json')))continue;
-    const manifest=JSON.parse(await readFile(await containedPath(root,`${prefix}/manifest.json`),'utf8'));
-    validateWorkflowManifest(manifest, domain);
-    await addSkill(`${prefix}/SKILL.md`,"domain-skill",domain);
-    for(const entry of manifest.works) {
-      if(!safeRelativePath(entry)||!new RegExp(`^${domain}-[a-z]-[a-z0-9-]+/SKILL\\.md$`).test(entry))throw new Error(`invalid-work-entry: ${entry}`);
-      const phases=manifest.work_stages[entry];
-      if(!Array.isArray(phases)||new Set(phases).size!==phases.length||phases.some((p:unknown)=>typeof p!=='string'||!/^[a-z][a-z0-9-]*$/.test(p)))throw new Error(`invalid-work-stages: ${entry}`);
-      await addSkill(`${prefix}/${entry}`,"work-skill",domain,phases);
-    }
-    for(const entry of await readdir(join(root,prefix),{withFileTypes:true}))if(entry.isDirectory()&&entry.name.startsWith(domain+'-')&&!manifest.works.includes(`${entry.name}/SKILL.md`))throw new Error(`unregistered-work: ${prefix}/${entry.name}`);
+  for (const folder of await directories(join(root, "commands"))) {
+    const entry = `commands/${folder.name}/COMMAND.md`;
+    if (!await pathExists(join(root, entry))) continue;
+    if (!safeRelativePath(folder.name) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(folder.name)) throw new Error(`invalid-command-entry: ${entry}`);
+    const { fields } = parseFrontmatter(await readFile(await containedPath(root, entry)));
+    if (fields.id !== folder.name || typeof fields.description !== "string" || !fields.description.trim()) throw new Error(`invalid-command-header: ${entry}`);
+    assets.push({ id: `command/${folder.name}`, kind: "command", name: `speculo-${folder.name}`,
+      entry, description: fields.description });
   }
-  const manifest=JSON.parse(await readFile(await containedPath(root,'commands/manifest.json'),'utf8'));
-  if(!manifest||manifest.schema_version!==1||!Array.isArray(manifest.commands)||new Set(manifest.commands).size!==manifest.commands.length)throw new Error('invalid-command-manifest');
-  for(const entry of manifest.commands) {
-    if(!safeRelativePath(entry)||!/^([a-z0-9]+(?:-[a-z0-9]+)*)\/COMMAND\.md$/.test(entry))throw new Error(`invalid-command-entry: ${entry}`);
-    const {fields}=parseFrontmatter(await readFile(await containedPath(root,`commands/${entry}`)));
-    const id=entry.split('/')[0];
-    if(fields.id!==id||typeof fields.description!=='string'||!fields.description.trim())throw new Error(`invalid-command-header: ${entry}`);
-    assets.push({id:`command/${id}`,kind:'command',name:`speculo-${id}`,entry:`commands/${entry}`,description:fields.description,stages:[]});
-  }
-  for(const entry of await readdir(join(root,'commands'),{withFileTypes:true}))if(entry.isDirectory()&&await pathExists(join(root,'commands',entry.name,'COMMAND.md'))&&!manifest.commands.includes(`${entry.name}/COMMAND.md`))throw new Error(`unregistered-command: ${entry.name}`);
-  for(const key of ['id','name'] as const)if(new Set(assets.map(a=>a[key])).size!==assets.length)throw new Error(`duplicate-asset-${key}`);
-  return {schema_version:2,assets:assets.sort((a,b)=>a.id.localeCompare(b.id))};
+  for (const key of ["id", "name"] as const) if (new Set(assets.map(asset => asset[key])).size !== assets.length) throw new Error(`duplicate-asset-${key}`);
+  return { schema_version: 2, assets: assets.sort((a, b) => a.id.localeCompare(b.id)) };
 }

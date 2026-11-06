@@ -3,7 +3,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
-import { planExternalEdits, readPersistentKnowledge, writeDiscoveryAssets } from "./agent-files.js";
+import { planExternalEdits, writeDiscoveryAssets } from "./agent-files.js";
 import { planSkillProjection, resolveExposure, validateExposureRequest, type SkillRequest, type ProjectionHost, type ExposureSummary, type ProjectionSummaries } from "./agent-skills.js";
 import { discoverHubCatalog, readHubManifest, resolveHubIds, planHubSkills, type HubSummary } from "./hub-skills.js";
 import { planWorkflowRemoval, writeRemovalMetadata, type WorkflowRemoval } from "./workflow-install.js";
@@ -12,7 +12,7 @@ import { InstallCancelled } from "./interaction.js";
 import { assertImage, snapshotExternalFiles, writeDurableJson } from "./external-files.js";
 import { assertInstallDirectory, cleanEmptyTransactionsDirectory, commitInstall, hasTransaction, LOCK_NAME, TRANSACTIONS_ROOT, type TransactionHook } from "./transaction.js";
 import { fingerprintTree } from "./manifest.js";
-import { prepareRefresh, loadWorkflowContract, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
+import { prepareRefresh, RefreshBlockedError, type RefreshSummary } from "./refresh.js";
 import { pathExists } from "./utils.js";
 import {
   discoverWorkflowCatalog,
@@ -63,10 +63,9 @@ export type SpeculoOptions = {
   transactionHook?: TransactionHook;
 };
 
-const CORE_ASSETS = [".speculo", "commands", "references", "lib", "config.json"] as const;
+const CORE_ASSETS = [".speculo", "commands", "references", "config.json"] as const;
 const INSTALL_SUBDIR = INSTALL_ROOT;
 const WORKFLOW_ENTRY = "SKILL.md";
-const STATE_TEMPLATE_DIR = "_state";
 function assetRoot(packageRoot: string): string {
   return join(packageRoot, "template");
 }
@@ -98,19 +97,7 @@ async function copyCoreAssets(packageRoot: string, stagedRoot: string): Promise<
 async function copySelectedWorkflow(packageRoot: string, stagedRoot: string, workflowId: string): Promise<void> {
   const source = join(assetRoot(packageRoot), "workflows", workflowId);
   if (!(await pathExists(join(source, WORKFLOW_ENTRY)))) throw new Error("Unknown workflow package: " + workflowId);
-  await cp(source, join(stagedRoot, "workflows", workflowId), {
-    recursive: true,
-    force: true,
-    filter: (path) => basename(path) !== STATE_TEMPLATE_DIR,
-  });
-  const contract = await loadWorkflowContract(stagedRoot, workflowId);
-  const stateSource = join(source, STATE_TEMPLATE_DIR);
-  if (!(await pathExists(stateSource))) {
-    if (contract.state_seed === "optional") return;
-    throw new Error("Workflow " + workflowId + " is missing required _state/");
-  }
-  const stagedState = join(stagedRoot, ".speculo", workflowId);
-  await cp(stateSource, stagedState, { recursive: true, force: true });
+  await cp(source, join(stagedRoot, "workflows", workflowId), { recursive: true, force: true });
 }
 
 async function buildStagedInstall(
@@ -187,8 +174,11 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const catalog = await discoverWorkflowCatalog(packageRoot);
     const hubCatalog = await discoverHubCatalog(packageRoot), hubManifest = await readHubManifest(target);
     const installedBefore = await readInstalledWorkflowIds(root);
-    let workflowIds = [...new Set(options.selection?.workflowIds ?? installedBefore)].sort();
-    for (const id of workflowIds) if (!catalog.has(id)) throw new Error("Unavailable workflow: " + id + "; explicitly select a new list or none");
+    const installWarnings: string[] = [];
+    const previousSelection = options.selection?.workflowIds ?? installedBefore.map(id => id === "ops" ? "specdev" : id);
+    if (!options.selection && installedBefore.includes("ops")) installWarnings.push("OPS is now part of SpecDev; refreshed the method selection to specdev. Existing OPS notes and deployment records remain unchanged.");
+    let workflowIds = [...new Set(previousSelection)].sort();
+    for (const id of workflowIds) if (!catalog.has(id)) throw new Error("Unavailable workflow: " + id + (id === "ops" ? "; deployment is included in specdev" : "; explicitly select a current workflow or none"));
     const priorHubIds = [...new Set(hubManifest?.packages.map(p => p.id) ?? [])];
     let hubIds = resolveHubIds(options.hubSkills, hubCatalog, priorHubIds);
     if (isInteractive() && options.promptExposure && (!options.selection || !options.hubSkills)) {
@@ -211,11 +201,10 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
         message: "the active installation changed while refresh staging was in progress",
       }]);
     }
-    const assets = [".speculo", "config.json", "commands", "references", "lib"];
+    const assets = [".speculo", "config.json", "commands", "references"];
     assets.push(...selection.workflowIds.map((workflowId) => "workflows/" + workflowId));
     const installed = await scanInstalledWorkflows(stagedRoot);
-    const references = await readPersistentKnowledge(stagedRoot, installed);
-    const edits = planExternalEdits(externalSnapshot, references, installed.includes("specdev"));
+    const edits = planExternalEdits(externalSnapshot);
     for (const edit of edits) await assertImage(join(target, edit.name), edit.before);
     const assetCatalog = await readAssetCatalog(stagedRoot);
     const exposure = await resolveExposure({
@@ -227,7 +216,7 @@ export async function initSpeculo(targetArg = ".", options: SpeculoOptions = {})
     const removalDrift = projection.warnings.filter(w => removal.removedAssetIds.some(id => w.path.endsWith(":" + id)));
     if (removalDrift.length) throw new RefreshBlockedError(removalDrift);
     const hub = await planHubSkills({ target, stagedRoot, packageVersion: refresh.targetVersion, catalog: hubCatalog, ids: hubIds, targets: exposure.targets });
-    const warnings = [...removal.warnings, ...projection.warnings.map(w => `${w.code} ${w.path}: ${w.message}`), ...hub.warnings];
+    const warnings = [...installWarnings, ...removal.warnings, ...projection.warnings.map(w => `${w.code} ${w.path}: ${w.message}`), ...hub.warnings];
     if (options.confirmInstall && !await options.confirmInstall({
       target, mode: existed ? "refresh" : "init", workflowIds: selection.workflowIds,
       retainedWorkflowIds: installed.filter(id => !selection.workflowIds.includes(id)),

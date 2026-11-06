@@ -32,13 +32,13 @@ export function resolveProjectionIds(request: SkillRequest, catalog: AssetCatalo
  let ids: string[];
  switch (request.mode) {
   case "none": ids = []; break;
-  case "keep": ids = existing; break;
+  case "keep": ids = existing.filter(id => catalog.assets.some(asset => asset.id === id)); break;
   case "all": ids = catalog.assets.map(a => a.id); break;
   case "set": ids = request.assetIds; break;
   default: throw new Error("invalid-projection-selection");
  }
  for (const id of ids) if (!catalog.assets.some(a => a.id === id))
-  throw new RefreshBlockedError([{code:"unknown-projection-asset",path:id,message:"select an installed public asset business id"}]);
+  throw new RefreshBlockedError([{code:"unknown-projection-asset",path:id,message:"select an installed Skill such as domain/specdev or an available command; stage-specific Work IDs were removed"}]);
  return [...new Set(ids)].sort();
 }
 type ManagedProjectionFile = {path:string;asset_id:string;sha256:string;mode?:number};
@@ -91,7 +91,7 @@ export function renderSkillPointer(asset:Asset,source:Buffer,host:ProjectionHost
  const link=posix.relative(destination,sourcePath), {raw}=parseFrontmatter(source);
  const eol=raw.includes('\r\n')?'\r\n':'\n';
  const header=asset.kind==='command'?`---\nname: ${asset.name}\ndescription: ${JSON.stringify(asset.description)}${host==='claude'?'\ndisable-model-invocation: true':''}\n---`:raw;
- const body=[header,'',`# ${asset.name}`,'',`执行任何步骤或扩读之前，必须先读取[权威入口](${link})。该入口是本能力的唯一事实源。`,'','随后仅按入口读取当前分支所需的参考。相对链接以权威入口所在目录为基准。读取或选择本投影不构成执行、提交、发布或其他副作用授权。入口不可读时停止，不根据描述猜测流程。',''].join(eol);
+ const body=[header,'',`# ${asset.name}`,'',`读取[完整说明](${link})。相对路径以该文件所在目录为基准。说明不可读时报告缺失，不从描述猜测。`,''].join(eol);
  const files:Record<string,string>={[`${destination}/SKILL.md`]:body};
  if(asset.kind==='command'&&host==='agents')files[`${destination}/agents/openai.yaml`]='policy:\n  allow_implicit_invocation: false\n';
  return files;
@@ -101,7 +101,7 @@ export async function resolveExposure(options: {
 }): Promise<ExposureSelection> {
  validateExposureRequest(options.targets, options.request);
  const manifest = await readProjectionManifest(options.target);
- const existing: ExposureSelection = { targets: options.defaultTargets ?? manifest?.targets ?? ['agents'], assetIds: (manifest?.asset_ids ?? []).filter(id => !options.removedAssetIds?.includes(id)) };
+ const existing: ExposureSelection = { targets: options.defaultTargets ?? manifest?.targets ?? ['agents'], assetIds: (manifest?.asset_ids ?? []).filter(id => !options.removedAssetIds?.includes(id) && options.catalog.assets.some(asset => asset.id === id)) };
  if (options.prompt) {
   const { promptExposureConfiguration } = await import('./install-ui.js');
   return promptExposureConfiguration({ catalog: options.catalog, existing, hasHistory: manifest !== null, targets: options.targets, request: options.request, hubSelected: options.hubSelected });
