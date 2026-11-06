@@ -1,67 +1,50 @@
-# 维护者指南
+# 贡献指南
 
-[手册首页](README.md) · [架构](architecture.md) · [项目规则](../AGENTS.md)
+## 开发与验证
 
-本页面向修改 Speculo 本身的维护者。普通用户安装 npm 包即可，不需要运行仓库生成器。
-
-## 本地准备
-
-Node.js `>=22.22.3 <25`，包管理器版本以 `package.json` 的 `packageManager` 为准，当前为 `pnpm@11.1.3`。
+使用 `package.json` 声明的 Node.js 和 pnpm：
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm build
+pnpm check
+pnpm verify-bin
+pnpm verify-package
 ```
 
-CLI 构建入口是 `dist/src/cli.js`。根项目规则和适用目录规则优先；修改文档结构、行为或所有权前，读取作者协议与文档保真合同。
+`pnpm check` 编译、运行隔离测试并检查分发入口与相对链接。`verify-package` 创建真实 tarball，在独立项目安装领域、Work 和全部 Hub，验证两个宿主、刷新、移除与用户数据保留。依赖来自配置的 registry 或缓存。
 
-## 先找到真正的源
+修改视频渲染器时，按 [制作与验证说明](../template/workflows/media/media-v-video/references/production.md) 准备可选依赖，运行 `python template/workflows/media/media-v-video/scripts/verify_render.py`。CI 在独立 Ubuntu 任务中实际生成 PNG 和有声、无声 MP4，并独立解码检查；通常的 CLI 使用不需要这些媒体依赖。`--inputs-only` 只验证输入，不代表渲染通过。
 
-| 要修改什么 | 维护位置 |
-|---|---|
-| CLI、安装、投影、恢复与路径校验 | `src/` |
-| 一次调用的 Command 规则 | `template/commands/<id>/COMMAND.md` 及包内参考 |
-| 领域与 Work 的行为 | `template/workflows/<domain>/` 中入口、rules、references、assets |
-| 跨领域方法 | `template/references/` |
-| 作者维护能力 | `.agents/skills/` |
-| 面向用户的教程 | `docs/`、`README.md`、`README-ZH.md` |
-| 生成与隔离验证 | `scripts/`、`test/` |
+本地试用使用可丢弃项目：
 
-`template/lib/`、领域 AUTO-INDEX 和 `template/canonical/` 是生成物。调整真实源后再重建，不手工维护第二份生成内容；保留第三方许可与来源。
+```bash
+pnpm build
+node dist/src/cli.js init /path/to/disposable-project --workflows specdev --skill-targets agents --skills domain/specdev,specdev/prototype
+node dist/src/cli.js doctor /path/to/disposable-project
+```
 
-## 按改动选择验证
+## 修改 Workflow、Work、Skill 与 Command
 
-| 命令 | 作用 |
-|---|---|
-| `pnpm build` | 构建 TypeScript |
-| `pnpm test` | 构建并运行仓库测试 |
-| `pnpm validate-assets` | 验证分发资产、引用、生成闭包及领域合同 |
-| `pnpm validate-skills` | 检查 Skill 格式与相关结构 |
-| `pnpm validate-source-parity` | 检查真实源与分发关系 |
-| `pnpm generate-assets` | 重建运行库、索引、验证器和 canonical |
-| `pnpm verify-generated` | 两次生成并确认无内容变化 |
-| `pnpm verify-bin` | 检查 CLI 入口行为 |
-| `pnpm verify-package` | 检查打包后隔离使用 |
-| `pnpm eval:run-artifacts` | 在一次性项目中调用真实安装 CLI 与领域工具，保存实际工件、退出码和未运行观察场景 |
-| `pnpm validate-disposition` | 检查当前文件的保留、重写、移动、新增与退役记录；历史原摘要保持不变 |
-| `pnpm check` | 运行测试与资产验证 |
+先读取 [作者入口](../.agents/skills/speculo-author/SKILL.md) 中与任务相关的指南。领域入口负责路由；Work 保留具体任务方法；Hub 可以带真实工具；命令表达一次明确请求。
 
-只改文字，核对事实、链接和格式；入口或权限变化增加相关正常/失败场景；状态和事务变化使用一次性夹具验证冲突、恢复与零副作用分支。分发资产变化运行 validate-assets，生成物变化检查二次生成无差异。
+重构前识别原内容提供的能力、专业判断、真实资料和执行工具。每项要么在新位置承接，要么说明明确的退役理由。不要用“文件更少”或“模型更强”代替这一步。重要参考资料按需读取，不需要为了缩短根文件把资料本身删除。
 
-结构校验不认证真实宿主、模型判断、浏览器画面或外部平台操作。报告实际运行命令和结果，并把未验证项单独说明。
+直接编辑当前权威文件；不再修改 manifest、业务 schema 或生成 Canonical。用标准 name/description 说明准确触发条件。正文按照任务组织必要方法、分支和完成结果；一份文件足够就不拆，独立或较大的资料通过明确用途的链接访问。
 
-运行与证据层级详见 [Workflow 合同、证据与恢复](workflow-integrity.md)。`eval:run-artifacts` 接到 CI 的安装产物检查；真正的 observed 评估仍需要操作者信任的独立观察记录。产物通过、观察门资格和发布授权是不同事实。
+专业原文、历史研究快照和来源素材保持其身份。改写的是如何使用它们的说明；不要把历史结论伪装成今天的事实。复制或改编来源保留许可，更新 [第三方说明](../THIRD-PARTY-NOTICES.md)。
 
-## 文档怎样持续保持当前
+## 持久化和代码边界
 
-1. 从真实 CLI、manifest 和入口确认行为，不从旧发布报告推断现状。
-2. 一个 Work 的作用、输入、输出、关键数量、权限或失败语义变化时，同步对应领域指南。
-3. Command 变化时同步其单页和分类目录；公开能力增减时同步能力目录及项目首页。
-4. 安装参数或默认值变化时同步入门、CLI、排障和 README 示例。
-5. 检查相对路径和锚点，保证 GitHub 可以直接进入领域或 Command 类别。
+使用者的记录属于项目，不能写回包管理的方法目录。优先更新已有事实来源，当前知识与历史归档分开。普通文字记录不需要机器状态文件。
 
-`docs/` 不新增一次性开发计划、实施报告或发布验收流水。可复现示例保留真实证据与限制；许可和来源说明持续保留。历史版本变化查 CHANGELOG/Git。资产迁移审计数据位于 `scripts/data/asset-disposition.json`，它是维护数据，不是用户操作手册，也不是运行时路由。
+CLI 的路径、文件归属、事务和恢复仍由确定性代码保护。重构这些机制要覆盖真实失败与恢复行为。Work 工具若发生逻辑变化，也需要运行实际输出检查；仅测试文本中有某段话不能证明其能力。
 
-## 发布边界
+## 怎样审查方法改动
 
-版本由 `package.json` 和 `CHANGELOG.md` 驱动，`v*` tag 触发 CI release。提交、推送、tag、npm 发布、GitHub Release 和部署需要明确授权。完成本地检查不自动执行这些动作。
+用具体任务检验关键差异。例如让原型 Work 保留批准页面结构，让交付 Work 区分技术检查与用户验收，让问答 Work 根据用户请求直接授课或探究。记录实际产物、观察与缺口；不把一次成功试用宣传为所有模型和场景都已通过。
+
+[重构对应表](refactor-map.md) 是这次大改的人工审阅材料，不是每个未来小修改都必须填写的模板。普通修正只做与风险相关的验证。
+
+## 提交与发布
+
+PR 说明原问题、行为变化、能力承接、实际检查和剩余限制。公共 ID 或工具接口变化更新 [升级说明](upgrade-v3.md)。`v*` tag 触发已有暂存 npm 发布流程，维护者在 npm 完成对应确认后才公开；普通 PR 不创建 tag 或发布。

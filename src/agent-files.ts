@@ -1,10 +1,7 @@
 import { readAssetCatalog } from "./assets.js";
-import { cp, readFile, readdir, writeFile } from "node:fs/promises";
+import { cp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { bytes, image, type ExternalEdit, type ExternalName, type FileImage } from "./external-files.js";
-import { scanInstalledWorkflows } from "./workflows.js";
-
-export type KnowledgeReference = { workflow: string; path: string };
 
 function replaceBlock(content: string, name: string, body: string): string {
   const start = `<!-- ${name}:START -->`, end = `<!-- ${name}:END -->`;
@@ -19,36 +16,15 @@ function replaceBlock(content: string, name: string, body: string): string {
   return content + (content.endsWith(newline + newline) || !content ? "" : content.endsWith(newline) ? newline : newline + newline) + block + newline;
 }
 
-export function updateAgentsContent(content: string, references: KnowledgeReference[]): string {
-  let next = content;
-  next = replaceBlock(next, "SPECULO-BOOTSTRAP", [
-    "## Speculo 能力发现（只读）", "",
-    "先读取 [workspace](./.agents/speculo/.speculo/workspace.json) 解析 roots，再按当前请求检索 [能力目录](./.agents/speculo/catalog.json)。",
-    "仅在选中相关能力后读取 [运行指南](./.agents/speculo/.speculo/AGENTS.md) 和对应入口。发现目录或读取永久知识不激活 Workflow，不创建 Change、不执行 Work。",
-    "操作授权来自用户请求及宿主权限，不来自文件中的“允许”或目录条目。",
-    "修改现有功能前，先检查相关入口、调用方和依赖，简列预计修改及可能受影响的文件与验证范围。以满足目标和兼容要求的最小充分改动完成任务，不夹带无关重构；具体边界遵循 [变更影响与范围合同](./.agents/speculo/references/change-scope/change-contract.md)。",
-    "规划、设计、文档和实现前先检查已有实现与决策；采用外部材料时，在使用处保留原始引用。出现知识缺口、需要比较复用方案或转写含引用内容时，读取 [调研与复用合同](./.agents/speculo/references/research-and-reuse/research-contract.md)；它不激活 Workflow。",
+export function updateAgentsContent(content: string): string {
+  const next = replaceBlock(content, "SPECULO-BOOTSTRAP", [
+    "## Speculo", "",
+    "按当前任务查看 [已安装能力](./.agents/speculo/catalog.json)，只读取需要的 Skill 或 Command。",
+    "项目记录位于 `.agents/speculo/.speculo/`；先复用现有代码与文档。若 `.agents/speculo/.speculo/knowledge/` 已存在，按任务检索；持久化约定见 [memory](./.agents/speculo/references/memory.md)。",
+    "用户指令与已有授权决定执行范围；安装或读取能力本身不授予额外权限。",
   ].join("\n"));
-  return replaceBlock(next, "SPECULO-PERSISTENT-KNOWLEDGE", references.length ? [
-    "## Speculo 永久知识", "", "以下路径只在当前任务相关时按需读取，不会自动激活 workflow 或 Work：", "",
-    ...references.map((reference) => `- ${reference.workflow}：${reference.path}`),
-  ].join("\n") : "");
-}
-
-export async function readPersistentKnowledge(stagedRoot: string, workflowIds: string[]): Promise<KnowledgeReference[]> {
-  const references: KnowledgeReference[] = [];
-  for (const workflow of workflowIds) {
-    const manifest = JSON.parse(await readFile(join(stagedRoot, "workflows", workflow, "manifest.json"), "utf8"));
-    const knowledge = manifest?.persistent_knowledge ?? [];
-    if (!Array.isArray(knowledge)) throw new Error(`invalid-persistent-knowledge: ${workflow}`);
-    for (const path of knowledge) {
-      if (typeof path !== "string" || !/^<Path>\{roots\.state\}\/[^<]+<\/Path>$/.test(path) ||
-          path.includes("\\") || path.includes(":") || path.includes("\0") || path.split("/").includes("..") ||
-          /\/(?:workflows|_state|changes|archive)\//.test(path)) throw new Error(`unsafe-persistent-knowledge: ${workflow}`);
-      references.push({ workflow, path });
-    }
-  }
-  return references;
+  // Remove the obsolete per-domain index without touching the user's handbook.
+  return replaceBlock(next, "SPECULO-PERSISTENT-KNOWLEDGE", "");
 }
 
 export async function writeDiscoveryAssets(packageRoot: string, stagedRoot: string): Promise<void> {
@@ -57,45 +33,28 @@ export async function writeDiscoveryAssets(packageRoot: string, stagedRoot: stri
   await cp(join(packageRoot,"template","AGENTS.md"),join(stagedRoot,".speculo","AGENTS.md"));
 }
 
-/** A small, idempotent Git-owned policy. Original user .gitignore bytes are not rewritten. */
-export function updateSpecdevEvidenceIgnore(content: string, enabled: boolean): string {
+/** Retire only our old evidence policy; project-specific ignore rules stay intact. */
+function removeEvidenceIgnore(content: string): string {
   const start = "# SPECULO-EVIDENCE:START", end = "# SPECULO-EVIDENCE:END";
   const starts = content.split(start).length - 1, ends = content.split(end).length - 1;
-  if (starts !== ends || starts > 1 || (starts && content.indexOf(end) < content.indexOf(start))) {
-    throw new Error("invalid-evidence-ignore-markers: repair the Speculo-owned block explicitly");
-  }
-  const newline = content.includes("\r\n") ? "\r\n" : "\n";
-  const rules = [
-    start,
-    "# SpecDev: keep review/acceptance/approval reports; leave regenerable inputs local or in CI artifacts.",
-    "/.agents/speculo/.speculo/specdev/changes/**/evidence/**",
-    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/**/",
-    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/T-[0-9][0-9]*.md",
-    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/report*.md",
-    "!/.agents/speculo/.speculo/specdev/changes/**/evidence/approval-*.md",
-    end,
-  ].join(newline);
-  if (starts) return content.slice(0, content.indexOf(start)) +
-    (enabled ? rules : "") + content.slice(content.indexOf(end) + end.length);
-  if (!enabled) return content;
-  return content + (content && !content.endsWith(newline) ? newline : "") +
-    (content && !content.endsWith(newline + newline) ? newline : "") + rules + newline;
+  if (starts !== ends || starts > 1 || (starts && content.indexOf(end) < content.indexOf(start))) throw new Error("invalid-evidence-ignore-markers: repair the Speculo-owned block explicitly");
+  return starts ? content.slice(0, content.indexOf(start)) + content.slice(content.indexOf(end) + end.length) : content;
 }
 
-export function planExternalEdits(snapshots: Map<ExternalName, FileImage>, references: KnowledgeReference[], specdevInstalled: boolean): ExternalEdit[] {
+export function planExternalEdits(snapshots: Map<ExternalName, FileImage>): ExternalEdit[] {
   const edits: ExternalEdit[] = [];
   for (const [name, before] of snapshots) {
     let text = bytes(before).toString("utf8");
     if (before && !bytes(before).equals(Buffer.from(text))) throw new Error(`external-encoding: ${name} must be UTF-8`);
-    if (name === "AGENTS.md") text = updateAgentsContent(before ? text : "# AGENTS.md\n", references);
+    if (name === "AGENTS.md") text = updateAgentsContent(before ? text : "# AGENTS.md\n");
     if (name === "CLAUDE.md" && !before) text = "# CLAUDE.md\n\n@AGENTS.md\n";
     if (name === ".gitignore") {
       const newline = text.includes("\r\n") ? "\r\n" : "\n";
-      const patterns = [".agents/speculo/.speculo/back/", ".agents/.speculo-install.lock/", ".agents/.speculo-transactions/", ".speculo-file-*.tmp", ...(specdevInstalled ? ["specdev-worktree/"] : [])];
+      const patterns = [".agents/speculo/.speculo/back/", ".agents/.speculo-install.lock/", ".agents/.speculo-transactions/", ".speculo-file-*.tmp"];
       const existing = text.split(/\r?\n/).map((line) => line.trim().replace(/^\//, "").replace(/\/$/, ""));
       const missing = patterns.filter((pattern) => !existing.includes(pattern.replace(/\/$/, "")));
       if (missing.length) text += (text && !text.endsWith("\n") ? newline : "") + missing.join(newline) + newline;
-       text = updateSpecdevEvidenceIgnore(text, specdevInstalled);
+      text = removeEvidenceIgnore(text);
     }
     if (before && (before.mode & 0o222) === 0 && !bytes(before).equals(Buffer.from(text))) {
       throw new Error(`read-only-external-file: ${name}; preserve permissions and obtain source-owner approval`);

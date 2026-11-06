@@ -1,31 +1,28 @@
 ---
 name: specdev-l-learn
-description: "围绕需求参考、本项目代码、已有 change 或外部项目与文章开展学习，讲清功能、实现思路和运行机制，并用面向零专业背景读者的 Markdown 与 ASCII 图解记录理解。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/learn
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 围绕本项目源码、外部项目或技术文章解释功能、架构与运行机制，形成可追溯的学习笔记和图解。
 ---
 
-# 学习与图解
+# 项目学习与图解
 
-激活后读取 `<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>` 与 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`。从用户想理解的对象和问题开始；学习可以发生在需求实现前、开发中或实现后。
+从用户想理解的问题开始：这个项目解决什么问题、有哪些能力、如何运行，以及哪些思路可以用于当前项目。根据用户已有背景调整表达，术语先解释再使用；通俗表达保留机制与边界。
 
-## 执行
+## 读取真实依据
 
-1. **确定学习问题**：使用 `$ARGUMENTS` 或用户最新请求，明确想学的对象、本轮问题及已有背景；缺少对象或问题时只补问缺失项。默认读者是刚入大学、零专业背景的新生。带着需求来时，先讲参考对象解决什么问题、具有什么功能、为什么这样实现。
-2. **定位依据**：按问题读取本项目代码、测试、文档，或外部项目源码、官方说明、文章与论文；关联 change 时才读取相关 Source、Spec、Ticket、Evidence 和 review。需求明确但未指定参考时，围绕问题检索可靠的一手资料。记录来源文件/章节/URL 及适用版本；资料无法访问或关键事实缺失时说明缺口，停止依赖它的结论，继续有依据的部分。
-3. **确定保存位置**：问题与必要资料明确后，读取 `<Path>{roots.workflows}/specdev/specdev-l-learn/references/learning-change.md</Path>`。用户指定未归档 change 就使用其 learning 目录；同轮续学复用已选对象；未指定则新建承载本轮学习的轻量 change，不自动选择其他现有 change。指定对象不存在或身份冲突时先消歧，不静默另建。
-4. **讲解与保存**：读取 `<Path>{roots.workflows}/specdev/specdev-l-learn/references/lesson-format.md</Path>`，按其讲解规范写作。先画 ASCII 全图，再按实际关系画短小结构、数据、调用或状态图；短句解释箭头，术语先日常解释再给专业名字。覆盖“它是什么、为什么需要、怎样流动或被调用”，按追问继续拆解；有当前需求时说明可借鉴之处和适用条件，不把参考思路写成已批准的实现方案。
-5. **追加与交付**：按格式合同原子创建 `<Path>{roots.state}/specdev/changes/{change}/learning/{number}_{topic}.md</Path>`，再更新 `<Path>{roots.state}/specdev/changes/{change}/learning/index.md</Path>` 并回读。重讲同主题仍新增编号，保留旧文件、原顺序和全部历史行；部分失败先恢复已有结果。产物仅为纯 Markdown/ASCII，不写 `<Path>{roots.state}/learning/</Path>`、生产代码、永久知识或远程系统。
+按问题沿执行入口、调用方、数据模型、存储、工具、扩展口和测试阅读相关代码。外部项目固定所读版本或提交，文章与当前实现不一致时分别说明。资料不全时标出未知，避免只读 README 就声称完成源码分析。
 
-## 验收与恢复
+讲运行机制时追踪一个正常场景和与问题相关的失败场景：输入从哪里来，谁处理，状态写在哪里，结果怎样反馈，出错由谁恢复。架构与设计意图区分，实际调用不能仅从文件名推断。
 
-```bash
-node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> --stage learn <Path>{roots.state}/specdev/changes/{change}</Path>
-```
+## 讲清楚而非堆术语
 
-图解覆盖约定问题、引用可追溯，符合四节、至少一个 ASCII 图和连续编号；索引指向真实文件且主题/简介一致，箭头方向与依据相符。验证通过后按保存位置合同完成本轮学习专用 change，或仅追加已有 change 的导航；学习交付不证明用户已经掌握，也不改变已有开发 change 的完成状态。
+先给整体关系，再展开关键路径。拓扑、事件顺序或状态变化值得画图时使用 Mermaid 或合适图形；精确对应关系用表格。图示的箭头应对应实际调用、数据或依赖，不为每个段落强制配图。
 
-返回新图解、索引和 README 完整路径、验证结果及未解问题；失败保留恢复位置与原因。默认返回用户继续提问。用户另行提出开发需求时，需求澄清交 `<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/SKILL.md</Path>`，多 change 探索交 `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/SKILL.md</Path>`，外部行为明确时交 `<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>`，由下一 Work 核对范围与授权；不自动启动实现。系统课程、作业和周期复习由 Learning workflow 负责，本 Work 不改其状态。
+用具体例子解释机制、为什么采用当前设计、代价与替代方案。类比随后补充精确定义和失效边界。用户提出二次开发时，明确可复用部分、需要替换的边界、风险与需要进一步验证的假设，不把学习建议冒充已批准方案。
+
+## 保存与交付
+
+用户要求文档或需要持续学习时，更新指定位置或当前 release 的学习笔记。已有主题直接接续；新主题内容确实独立才另建文件。引用源码路径、提交、官方文档或文章章节，保留未解问题。
+
+只要求解释时直接在会话给出完整答案，不强制创建 change、索引或编号文件。完成学习笔记不表示用户已经掌握；需要系统课程、练习与延迟复习时使用 Learning 领域。
+
+返回直接回答、关键关系、证据和可继续的学习入口。用户已要求随后实施时接续相应工作，不因学习入口自身结束而提前中止完整任务。

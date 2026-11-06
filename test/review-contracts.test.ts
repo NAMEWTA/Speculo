@@ -1,68 +1,12 @@
 import assert from "node:assert/strict";
-import { chmod, link, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, link, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { initSpeculo } from "../src/index.js";
 import { fingerprintTree } from "../src/manifest.js";
 
 const root = process.cwd();
-const read = (path: string) => readFile(join(root, path), "utf8");
-
-test("Learning conditional contracts remain directly reachable without unrelated full sections", async () => {
-  const readme = await read("template/workflows/learning/common/rules/domain-runtime.md");
-  for (const [work, rule, required] of [
-    ["learning-l-lesson", "lesson-contract", "estimated_minutes"],
-    ["learning-h-homework", "homework-contract", "Submission: ready"],
-    ["learning-c-consolidate", "consolidation-contract", "evidence-integrity.md"],
-    ["learning-a-archive", "consolidation-contract", "archive/YYYY-MM"],
-    ["learning-a-assess-and-plan", "artifact-layouts", "background/foundation.md"],
-  ]) {
-    assert.ok(readme.includes(`/common/rules/${rule}.md`));
-    assert.ok((await read(`template/workflows/learning/${work}/SKILL.md`)).includes(`/common/rules/${rule}.md`));
-    assert.ok((await read(`template/workflows/learning/common/rules/${rule}.md`)).includes(required));
-  }
-  const consolidation = await read("template/workflows/learning/common/rules/consolidation-contract.md");
-  assert.match(consolidation, /--apply --expect-digest/);
-  assert.match(consolidation, /--resume <manifest-path>/);
-  assert.match(consolidation, /dry-run 本身不写任何文件/);
-  assert.match(consolidation, /迁移确认不代替发布确认/);
-  assert.match(consolidation, /不检查作业或掌握，不做综合/);
-  assert.ok(!readme.includes("Submission: pending"));
-  assert.match(await read("template/workflows/learning/learning-g-goal/references/external-goal-runner.md"), /无 slash-command 宿主/);
-});
-
-test("Project Maintenance keeps effect modes, global coverage and conditional Git contracts", async () => {
-  const operation = await read("template/commands/project-maintenance/references/operation-contract.md");
-  const command = await read("template/commands/project-maintenance/COMMAND.md");
-  const git = await read("template/commands/project-maintenance/references/git-state-contract.md");
-  const modes = operation.split("\n").filter(line => /^\| (audit|update|commit) \|/.test(line));
-  assert.equal(modes.length, 3);
-  assert.ok(modes.find(line => line.startsWith("| commit |"))?.includes("git-state-contract.md"));
-  assert.ok(modes.filter(line => !line.startsWith("| commit |")).every(line => !line.includes("git-state-contract.md")));
-  assert.match(operation, /全局清单/);
-  assert.match(operation, /未提交 overlay/);
-  assert.match(command, /audit.*默认/);
-  assert.match(git, /state v4/);
-  assert.match(git, /没有上述变化时直接返回 no-op/);
-  assert.match(git, /state-file-commit/);
-  assert.match(git, /commit --only/);
-});
-
-test("source inventory distinguishes missing historical sources from verified hashes", async () => {
-  const project = await mkdtemp(join(tmpdir(), "speculo-inventory-"));
-  try {
-    await mkdir(join(project,"scripts"));
-    await writeFile(join(project,"scripts/check-specdev-source-parity.mjs"), await read("scripts/check-specdev-source-parity.mjs"));
-    await writeFile(join(project,"scripts/specdev-source-map.json"), JSON.stringify({schema_version:1,entries:[{source:"temp/skills/example/SKILL.md",source_sha256:"a".repeat(64),classification:"excluded",rationale:"explicit test fixture",targets:[]}]}));
-    const script = join(project,"scripts/check-specdev-source-parity.mjs");
-    const run = spawnSync(process.execPath, [script], { encoding: "utf8" });
-    assert.equal(run.status, 0, run.stderr); assert.match(run.stdout, /NOT VERIFIED/);
-    const strict = spawnSync(process.execPath, [script, "--require-sources"], { encoding: "utf8" });
-    assert.notEqual(strict.status, 0);
-  } finally { await rm(project,{recursive:true,force:true}); }
-});
 
 test("external hardlinks and read-only handbooks are preserved", { skip: process.platform === "win32" }, async () => {
   const project = await mkdtemp(join(tmpdir(), "speculo-external-contract-"));

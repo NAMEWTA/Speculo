@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "workflow": "ops",
-  "config": null,
-  "structured_state": [
-    ".speculo/ops/status.json"
-  ],
-  "opaque_default": "preserve-byte-for-byte"
-}

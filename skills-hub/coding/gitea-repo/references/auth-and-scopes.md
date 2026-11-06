@@ -6,12 +6,12 @@
 
 | 方式 | 用法 | 本技能 |
 |------|------|--------|
-| AuthorizationHeaderToken | `Authorization: token <PAT>` | **默认，必须用这个** |
-| Bearer（OAuth2 access token） | `Authorization: bearer <JWT>` | 仅当凭据是 JWT 时 |
-| HTTP Basic | `username:password` 或 `username:PAT` | 只用于 `/users/:name/tokens` 管理令牌 |
-| `?token=` / `?access_token=` | 查询串 | **禁止**。官方在 1.23 移除 |
+| AuthorizationHeaderToken | `Authorization: token <PAT>` | 自带脚本使用的 PAT 方式 |
+| Bearer（OAuth2 access token） | `Authorization: bearer <access-token>` | 按凭据类型和实例文档选择，不凭外观推断 |
+| HTTP Basic | 实例支持的用户名与凭据 | 管理 token 等接口需核对实例要求，不能假定所有接口通用 |
+| `?token=` / `?access_token=` | 查询串 | 不使用；URL 会进入日志和历史，即使实例仍支持也应采用认证头 |
 | `X-GITEA-OTP` | 与 Basic + 2FA 一起 | PAT 流程不需要 |
-| `Sudo` 头或 `sudo=` | 管理员冒充其他用户 | 仅管理员，默认不用 |
+| `Sudo` 头或 `sudo=` | 管理员代其他用户操作 | 需该管理操作的明确授权，不用来绕过拒绝 |
 
 创建/列出 PAT 本身：`POST/GET /api/v1/users/{username}/tokens`，必须 Basic + 登录密码（不能用 PAT 自己管自己）。`sha1` 明文只在创建响应里出现一次。
 
@@ -23,7 +23,7 @@
 
 ## Scope
 
-无 scope 的令牌**不能**访问 API（含公开仓）。`write:*` 包含对应 `read:*`。
+scope 与路由映射以实例版本为准；令牌自身范围不能越过账号或仓库权限。常用 scope 如下，`write:*` 包含对应 `read:*`。
 
 | Scope | 覆盖的路由 | 典型能力 |
 |-------|------------|----------|
@@ -42,7 +42,7 @@
 - 列 issue 要 `read:issue` 或 `write:issue`
 - 建 PR / 合 PR 要 `write:repository`
 - `GET /user` 要 `read:user`。缺它时 **403**，body 类似：`token does not have at least one of required scope(s), required=[read:user]`
-- `whoami` 遇到这次 403 时改为探测 `GET /repos/{owner}/{repo}`，不要判断令牌整体无效
+- `whoami` 缺 `read:user` 不说明所有任务都失败；已授权的仓库读取可以按其接口权限判断，不必为运行无关身份查询扩大 token
 
 ## 状态码
 
@@ -55,4 +55,4 @@
 | 412 | 前置条件失败（如已合并 PR 改 state） | 停下来报告 |
 | 422 | 校验失败 | 读 `message` / `errors` |
 
-管理员 sudo：请求头 `Sudo: <username>` 或查询参数 `sudo=`。
+确认缺少权限时暂停受影响的写入并说明所需 scope 或仓库角色；不自动换账号、管理员身份或其他接口规避拒绝。

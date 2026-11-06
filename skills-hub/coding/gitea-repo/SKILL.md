@@ -1,50 +1,46 @@
 ---
 name: gitea-repo
-description: 管理已确认 Gitea/Forgejo 实例的 issue、PR、标签、里程碑和 Release。用于该平台的仓库查询、具名变更和 API 排错；不处理 GitHub/GitLab 或普通 Git 提交。
+description: 查询或管理已确认 Gitea/Forgejo 实例的 issue、PR、标签、里程碑和 Release，并排查 API 请求。
 license: MIT
-compatibility: Requires Python 3.10+, confirmed Gitea/Forgejo host and scoped credentials; API operations need network access.
-metadata:
-  author: NAMEWTA
-  wta-format-reviewed: '2026-10-06'
 ---
+
 # Gitea / Forgejo 仓库 API
 
-## 输入与输出契约
+从请求、已有上下文和 remote 确定实例、owner/repo、对象与动作。非 GitHub remote 不足以证明它是 Gitea；SSH 端口也不是 API 端口。先确认目标主机，再为它选择凭据。
 
-定位 host、owner/repo、操作、具名对象与授权范围；可从已确认的上下文复用，不重复索取。只有 remote、还未确认平台时先做只读辨认；没有目标 host 就不读取令牌。
+## 按任务使用
 
-查询返回对象编号、筛选条件、页数/覆盖和失败页；写操作另给请求动作、返回 ID 与独立读回状态。未取得响应与明确失败分开，输出中不含令牌。
+| 任务 | 需要核对的内容 |
+| --- | --- |
+| 查询 issue、PR、标签、里程碑、Release | [端点与命令](references/endpoint-map.md)，筛选条件、分页与覆盖 |
+| 创建或修改仓库对象 | 对象身份、请求体、授权范围和写入后读回 |
+| 合并 PR | 当前 head/base、合并条件、方式与源分支处理，不能把“关闭”当成合并 |
+| 认证或 scope 失败 | [认证](references/auth-and-scopes.md)，区分凭据、端点权限和对象可见性 |
+| 全量列表或异常响应 | [分页与错误](references/pagination-and-errors.md)，区分部分结果和完整覆盖 |
 
-示例：“列出这台 Forgejo 的 owner/repo 所有关闭 issue，不做修改。”应进入本技能；“给 GitHub 项目提交一个修复 PR。”不应由本技能接管。
-
-需要 Python 3.10+、目标实例网络和相应权限。技能目录以本文件位置为准；Windows 检查 python / py -3，macOS/Linux 检查 python3，路径参数始终作为独立参数传入，不用 shell 字符串拼接。
+现有连接器合适时直接使用；也可用本包 Python 3.10+ 工具。`SKILL_DIR` 是本文件目录，先用本机实际解释器查看帮助：
 
 ```bash
-python3 "$SKILL_DIR/scripts/gitea_api.py" --host https://gitea.example.com --repo owner/repo issue list
+python3 "$SKILL_DIR/scripts/gitea_api.py" --help
+python3 "$SKILL_DIR/scripts/gitea_api.py" --host https://gitea.example.com --repo owner/repo --json issue list --state closed --all
 ```
 
-## 定位与信任
+`--json` 位于子命令之前。创建正文优先用 `--body-file`，避免 shell 改变换行或执行文本里的特殊字符。Windows 使用实际 Python/py launcher，并按当前 shell 传递独立参数。
 
-实例按显式 --host、GITEA_HOST、已确认 remote 定位；仓库按 --repo、GITEA_REPO、remote 定位。非 GitHub remote 不证明它是 Gitea；SSH 端口也不等于 API 端口。凭据必须绑定确认的 host，不能从一个实例转发到另一个实例或重定向目标。
+## 平台知识
 
-令牌优先 GITEA_TOKEN 或凭据工具，不在命令行、日志、快照或回复打印。--token 兼容接口不是推荐用法。认证失败不关闭 TLS；--insecure 只有对具体实例的明确证书例外授权才可使用。缺权限不绕过服务端限制。
+同仓 issue 与 PR 共用编号；普通 issue 列表使用 `type=issues`。标签引用的是 ID，先完成标签列表分页再按名称解析。合并请求中的 `Do` 大小写和支持方式，以实例 API 为准。
 
-## 按需参考
+实例自己的 Swagger 是当前字段依据，Forgejo 的差异也要按其版本确认。脚本的专用命令不覆盖所有 API；没有对应命令时可使用已核对的通用 `api` 入口，不编造 flag 或假定功能不存在。
 
-| 任务 | 入口 |
-|---|---|
-| issue/PR/标签/里程碑/Release | [端点与命令](references/endpoint-map.md) |
-| 401/403、令牌来源 | [认证与 scopes](references/auth-and-scopes.md) |
-| 全量列表、分页和状态码 | [分页与错误](references/pagination-and-errors.md) |
+全量查询继续分页到服务端给出的结束条件，标明失败页和不完整范围。实例可能限制实际页长，不能仅因返回少于请求数量就认定取完。
 
-先读脚本 --help；--json 是全局参数，放在子命令前。实例当前 swagger 才是该版本字段依据；脚本不支持的字段不能编造成已执行。原生 PowerShell 编码和管道按本机版本验证，传 JSON 文件优于多层 shell 转义。
+## 认证与可靠写入
 
-## 操作与停止条件
+优先使用已绑定该 host 的凭据来源或 `GITEA_TOKEN`，不把 token 放在参数、URL、日志或回复里。不要向重定向主机转发凭据；TLS 与权限失败应查清原因。
 
-读取不扩大成写入。issue/PR 共用编号，普通 issue 列表使用 type=issues；标签 ID 按全量分页解析。合并字段 Do 区分大小写。列表失败、重复页或权限不足时标记部分覆盖，不假定不足一页即全部。
+缺少 `read:user` 时，`/user` 失败不表示令牌对指定仓库无效；做相应只读查询即可，不用创建资源测试写权限。
 
-缺 read:user 不代表令牌整体失效；对已指定仓库做只读查询，不能推断写权限。创建、评论、合并发生超时或不确定响应时先查状态，不盲重试；不能为了诊断创建资源。删除/合并须有具体对象和动作授权，“关闭”不是“删除”。
+在已有授权范围内执行准确的对象与动作。创建、评论或合并响应不确定时，先查询是否已生效再决定重试；删除、关闭和归档的含义不能互换。
 
-## 交付
-
-报告实例、仓库、对象编号/链接、分页覆盖、实际动作、读回结果和失败原因。保留未完成项；不以请求发送成功代替资源状态验收。
+交付对象链接、实际结果、覆盖范围和未完成项。写入后独立读回目标状态；请求发出或 HTTP 局部成功不替代资源结果。

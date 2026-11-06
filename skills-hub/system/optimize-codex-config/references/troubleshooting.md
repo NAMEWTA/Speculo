@@ -1,10 +1,10 @@
 # AI CLI Configuration and Provider Troubleshooting
 
-当 Codex 出现 HTTP 状态码、SSE、超时或 compaction 故障时完整应用本手册。官方事实分别来自 [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)、[Authentication](https://learn.chatgpt.com/docs/auth) 和 [Compaction](https://developers.openai.com/api/docs/guides/compaction)。
+Codex 出现 HTTP 状态码、SSE、超时或 compaction 故障时，按症状读取相关部分。官方事实分别来自 [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)、[Authentication](https://learn.chatgpt.com/docs/auth) 和 [Compaction](https://developers.openai.com/api/docs/guides/compaction)。
 
 ## 1. 证据梯度
 
-按以下顺序收集并停止在能够唯一归因的位置：
+按现有证据选择能缩小问题范围的检查，不要求每次完整收集：
 
 1. 已安装 CLI 版本、实际配置来源、active provider、用户已提供的认证模式和配置加载证据；
 2. 错误状态、响应 content type、代理签名和最终 path 的脱敏形态；
@@ -32,7 +32,7 @@ Standalone compaction 会发送完整上下文窗口；长会话因此可能产�
 
 自动审计只有在 413 响应带有 Nginx、Envoy、HAProxy、Cloudflare、Varnish 等明确代理签名时，才把主要归属标为 `external_proxy_body_limit`。供应商 JSON 413 或没有代理签名的响应保持 `request_body_limit_unattributed`，不得直接交接给代理管理员。
 
-满足以下证据时，才把代理限制标记为已确认并完成服务器交接：
+以下证据组合有助于确认代理限制；缺少关键证据时保留为假设：
 
 - Codex 报告 remote compact 或 `/responses` 请求返回 413；
 - 响应是 Nginx 等代理生成的 HTML，而不是模型服务 JSON；
@@ -48,11 +48,11 @@ Nginx 的 `client_max_body_size` 默认是 `1m`。只有实测边界或 `nginx -
 
 不得把 `model_context_window` 改成 API 模型网页的最大值来解决 413；更晚触发压缩通常会制造更大的 body。
 
-服务器交接建议包含：在实际命中的 `server` 或 `/responses` location 设置足够的 `client_max_body_size`（当前约 272k Codex 上下文可从 `32m` 起步）、用 `nginx -T` 确认继承、`nginx -t` 校验并平滑 reload。SSE 仍异常时再单独检查 buffering 与 timeout。Skill 只交接，不执行这些服务器动作。
+服务器侧应核对实际命中的 `server` 或 `/responses` location、有效 `client_max_body_size` 与失败请求的字节规模。容量依据实际负载及服务限制选择，不从 token 数直接换算固定 body 上限。管理员可用 `nginx -T` 核对继承、`nginx -t` 验证，再按其部署方式应用；SSE 仍异常时分别查 buffering 与 timeout。本技能的离线配置工具不执行服务器动作。
 
 ## 4. Compaction 判定
 
-- 以已核验安装版本的本地模型目录为事实；`codex debug models --bundled` 仅在确认该命令存在、无外部副作用且另获授权时使用。不从 API 产品页反推客户端阈值。
+- 以已核验安装版本的本地模型目录为事实；`codex debug models --bundled` 仅在确认该命令存在、无外部副作用且在现有授权范围内时使用。不从 API 产品页反推客户端阈值。
 - `total_token_usage` 是会话累计量；诊断某次失败应使用此前最近一次 `last_token_usage`。
 - `model_auto_compact_token_limit` 未设置时使用模型默认；`total` 与 `body_after_prefix` 的计数语义不同，变更时必须记录原值。
 - 远程压缩失败但普通请求成功，优先比较 body 大小、compact 能力和代理路径，不重新认证全部配置。
@@ -65,18 +65,7 @@ Nginx 的 `client_max_body_size` 默认是 `1m`。只有实测边界或 `nginx -
 
 ## 6. 交付格式
 
-每个故障报告固定包含：
-
-```text
-classification: <local_config|authentication|provider_contract|external_proxy|upstream_service>
-evidence: <status, content type/proxy signature, token metadata, reproducible boundary>
-local_action: <none or confirmed mitigation>
-tradeoff: <quality/cost/frequency/security impact>
-external_handoff: <owner, exact check, success condition>
-verification: <command, exit code, redacted result>
-```
-
-只有证据支持的层级可以标记为已解决；其余保持 blocker 或 unknown。
+简明说明观察到的错误、证据支持的归因、已做改变与代价，以及实际验证结果。需要外部管理员处理时给出目标层、具体检查和可判断的成功条件；无需另外生成固定交接表。只有证据支持的部分可以标记为已解决，其余明确说明仍未知或未验证。
 
 
 ## 7. Claude 与跨客户端故障

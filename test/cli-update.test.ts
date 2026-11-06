@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { test } from 'node:test';
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { main } from '../src/cli-app.js';
 import { getLocalVersion } from '../src/version.js';
 import { InstallCancelled } from '../src/interaction.js';
-import { prompts } from '../src/install-ui.js';
-import { offerUpdate } from '../src/update-flow.js';
 
 test('excluded and invalid CLI invocations never run the automatic update boundary', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'speculo-update-cli-'));
@@ -42,30 +43,12 @@ test('updates run before init transactions and doctor; completion and cancellati
 });
 
 test('choosing update later continues into the original installation interaction', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'speculo-update-later-'));
-  const original = { select: prompts.select, multiselect: prompts.multiselect, confirm: prompts.confirm };
-  const events: string[] = [];
-  const cancelWizard = async () => { events.push('installation interaction'); throw new InstallCancelled(); };
-  Object.assign(prompts, { select: cancelWizard, multiselect: cancelWizard, confirm: cancelWizard });
-  try {
-    const code = await main(['init', dir], { interactive: true, env: {}, checkUpdate: () => offerUpdate({
-      name: '@namewta/speculo', local: '1.0.0', prefix: 'SPECULO', language: 'zh-CN', env: {},
-      fetch: async () => ({ version: '2.0.0' }),
-      inspect: async () => { throw new Error('Update later must not inspect installers'); },
-      ui: {
-        choose: async (message, choices) => {
-          events.push('update choice');
-          assert.match(message, /当前版本号：v1\.0\.0\n最新版本号：v2\.0\.0/);
-          assert.deepEqual(choices.map(choice => choice.label), ['立即更新', '下次更新']);
-          return 'skip';
-        },
-        message() {},
-      },
-    }) });
-    assert.equal(code, 130);
-    assert.deepEqual(events, ['update choice', 'installation interaction']);
-  } finally {
-    Object.assign(prompts, original);
-    await rm(dir, { recursive: true, force: true });
-  }
+  // Real Clack output must not share the test runner's serialized stdout pipe.
+  // Node 22 can misparse non-ASCII bytes: https://github.com/nodejs/node/issues/65934.
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    fileURLToPath(new URL('./fixtures/cli-update-later.js', import.meta.url)),
+  ], { env, timeout: 30000, encoding: 'utf8' });
+  assert.match(stdout, /已取消，未应用安装变更。/);
 });

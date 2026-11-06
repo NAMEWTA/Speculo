@@ -1,58 +1,24 @@
-# Command 工具箱
+# 显式命令
 
-[手册首页](../README.md) · [Workflow 指南](../workflows/README.md) · [终端 CLI](../cli.md)
+这些命令由 AI 读取执行，不是终端 `speculo` 子命令。宿主曝光 ID 使用 `command/<名称>`；同一任务的既有范围与授权继续有效。
 
-Command 是你明确交给 AI 的一次任务。它的入口是 `COMMAND.md`，不是终端里的 `speculo <command>` 子命令。每个 Command 页面都有使用场景、输入、操作示例、产物与完成边界。
+| 命令 | 用途 |
+| --- | --- |
+| [status](status.md) | 看当前成果、阻塞和下一步，不自动执行后续工作。 |
+| [handoff](handoff.md) | 把接手者真正需要的上下文更新到现有记录。 |
+| [project-maintenance](project-maintenance.md) | 核对当前文档、提纯知识并整理已结束记录。 |
+| [git-repository-audit](git-repository-audit.md) | 从固定提交和实际 diff 理解历史变化、热点和风险。 |
+| [git-history-squash](git-history-squash.md) | 将明确提交范围整理成可恢复、内容核验过的完成节点。 |
+| [upstream-assess](upstream-assess.md) | 比较 fork 与一个明确上游版本，保护本项目定制。 |
+| [source-code-zip](source-code-zip.md) | 按阅读或复建用途生成范围明确的 ZIP。 |
+| [speculo-feedback](speculo-feedback.md) | 把真实失败提炼为可复现、可验收的提案。 |
 
-## 如何调用
+## 安装与调用
 
-```text
-明确调用 command/status，汇总这个项目的当前情况。
+```bash
+speculo init . --skill-targets agents --skills command/status,command/handoff
 ```
 
-如果宿主没有找到入口：
+命令不要求额外安装某个领域才能被发现；具体工作需要领域方法时，读取已安装的对应 Work，缺少时明确说明。只想查看安装状态使用 `speculo doctor`，不是 `command/status`。
 
-```text
-请读取 .agents/speculo/commands/status/COMMAND.md，并按它汇总当前项目情况。
-```
-
-希望在宿主技能列表直接看到 Command，可使用 `--skills all`，或只曝光 `command/status` 等业务 ID。实际快捷调用语法由宿主决定，不要求所有 App 支持 `/status`。
-
-<a id="navigation"></a>
-## 项目导航与会话协作
-
-| Command | 什么时候用 | 产物与边界 |
-|---|---|---|
-| [coordination-init](coordination-init.md) | 设置全项目默认编排方式 | 配置一次，实际任务可覆盖 |
-| [status](status.md) | 不知道当前进度、异常或下一步 | 会话概览，可明确要求保存；不修复 |
-| [handoff](handoff.md) | 切换会话或执行者 | 更新 change/handoff.md；跨对象另存会话摘要 |
-
-<a id="documentation"></a>
-## 文档、规范与知识整理
-
-| Command | 什么时候用 | 产物与边界 |
-|---|---|---|
-| [project-maintenance](project-maintenance.md) | 文档维护、知识沉淀与归档 | 一份计划，由原领域 owner 执行，默认 audit |
-
-<a id="git"></a>
-## Git 分析与历史管理
-
-| Command | 什么时候用 | 产物与边界 |
-|---|---|---|
-| [git-repository-audit](git-repository-audit.md) | 分析明确范围的本地历史 | 一个 Markdown 报告，不 fetch 或改 Git |
-| [git-history-squash](git-history-squash.md) | 明确要求压缩一段历史 | plan、本地 apply、远端 publish 分别核验 |
-| [upstream-assess](upstream-assess.md) | 评估 fork 与上游差异 | 冻结检查点与定制风险，不自动集成 |
-
-<a id="exchange"></a>
-## 源码交换与产品反馈
-
-| Command | 什么时候用 | 产物与边界 |
-|---|---|---|
-| [source-code-zip](source-code-zip.md) | 需要可审查的源码 ZIP | 先预览，再本地打包，不自动上传 |
-| [speculo-feedback](speculo-feedback.md) | 向 Speculo 反馈实际产品摩擦 | 本地提案；确认后才向固定仓库提 Issue |
-
-## 报告存在哪里
-
-命令定义在 `.agents/speculo/commands/`；需要持久化的命令报告通常在解析后的 `roots.state/commands/<id>/`。默认安装对应 `.agents/speculo/.speculo/commands/`。有些 audit/dry-run 只在会话返回，有些命令有自己的运行目录，以各页说明为准。
-
-报告不会覆盖历史，同日同主题冲突时用递增编号。命令读取或报告中的“已批准”不产生新权限；已有有效授权复用，新增范围和明确的高影响动作按原入口核对。
+八个命令保留独立用途。`coordination-init` 已随编排协议退出；目标规划与切片通过 SpecDev Work 使用，当前宿主负责实际协作。

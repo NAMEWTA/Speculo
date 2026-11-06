@@ -1,32 +1,19 @@
 ---
 name: person
-description: "用于认知方法咨询和双向钢人论证；按具体问题选择能力，不自动启动其他流程。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/person
-  speculo-domain: person
-  speculo-contract-version: "2"
+description: 使用明确的方法论分析复杂问题与行动选择，包括毛泽东认知方法和双向钢人论证。
 ---
 
-# person
+# 思考方法与决策咨询
 
-## 发现与激活
+根据用户指定的方法或当前决策需要，选择一个入口。保留各方法的专业内容，不把不同方法混成泛化的“分析利弊”。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+| 任务 | Work |
+|---|---|
+| 以调查、矛盾分析、战略与组织方法理解处境并制定行动 | [毛泽东认知方法](person-m-mao-zedong-cognitive-os/SKILL.md) |
+| 对真实候选做最强支持与反对论证，找出决定性变量并作出判断 | [双向钢人论证](person-s-steelman-deliberation/SKILL.md) |
 
-明确进入本领域后读取 <Path>{roots.workflows}/person/common/rules/activation-and-memory.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+用户指定的方法优先；没有方法偏好时，清楚的事实问题直接回答，需要权衡的决策可使用钢人论证。方法提供分析视角，结论仍由当前事实、用户目标和适用条件支撑。
 
-## 能力路由
+短咨询直接在会话完成。需要跨会话接续时，默认用项目根 `.agents/speculo/.speculo/person/<topic>/README.md` 保存真实问题、证据、关键回答、判断和下一步；不强制拆成阶段文件或状态 JSON。
 
-<!-- AUTO-INDEX-START -->
-
-- **person/mao-zedong-cognitive-os** — 毛泽东 · 认知操作系统：<Path>{roots.workflows}/person/person-m-mao-zedong-cognitive-os/SKILL.md</Path>
-- **person/steelman-deliberation** — 双向钢人论证：<Path>{roots.workflows}/person/person-s-steelman-deliberation/SKILL.md</Path>
-
-<!-- AUTO-INDEX-END -->
-
-## 永久知识
-
-本领域不声明独立永久知识 namespace。
-
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+保留用户原始回答和已确认约束。新事实改变判断时说明变化及原因，不倒改先前分析来制造一贯正确的印象。按 [持久化](../../references/memory.md) 处理记录；个人咨询不自动成为项目长期规范。

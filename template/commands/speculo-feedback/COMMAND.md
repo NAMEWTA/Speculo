@@ -1,72 +1,22 @@
 ---
 id: speculo-feedback
-description: Analyze confirmed Speculo usage friction and propose or create GitHub issues through the shared SpecDev GitHub operation protocol.
+description: 从真实使用经历形成 Speculo 的可复现缺陷或改进提案，并按用户请求提交到 NAMEWTA/Speculo。
 ---
 
-# Speculo Feedback
+# Speculo 反馈
 
-**外部写操作 + 目标仓库写死。** 本命令最后一步会通过 `gh` 向 `NAMEWTA/Speculo` 创建 issue——不论在哪个项目仓库中激活，目标仓库一律不可覆盖。确认前可执行只读检索和 dry-run，远程写入为零。
+读取用户指定的任务、失败或产物，辨认是实现缺陷、方法缺口、文档错误还是改进建议。保留预期与实际、最小复现、版本/环境和影响，区分证据与推测。
 
-## 归档路径模式
+## 提炼提案
 
-报告文件：`<Path>{roots.state}/commands/speculo-feedback/{date}-{scope}-{topic}[-NN].md</Path>`
+说明用户原目标、现有入口怎样导致问题，以及怎样验证修复。涉及技能时写清丢失的能力或实际错误行为，不只建议增加标题、字段或更严的提示词。
 
-- `<YYYY-MM-DD>` 使用当前日期。
-- `<topic>` 从复盘范围或用户主题提取，使用小写 kebab-case；无法判断时使用 `speculo`。
-- 禁止把命令报告写入 `temp/`、系统临时目录或工作区内其他非规范位置。
+合并重复发现，去除凭据和无关私人信息。标题表达具体问题，正文保持可执行；已有 PR、文件或日志可以链接，不复制整个对话。
 
-## 调用的能力
+## 提交与读回
 
-- `<Path>{roots.references}/retrospective/retrospective-contract.md</Path>` — 复盘 Speculo 使用痛点、深度分析并产出去重/分级/根因化的 issue-ready 提案时读取。
-- `<Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path>` — 以 `issue-search` 去重、以 `issue-create` dry-run/confirmed 创建 Issue；该能力不成为任何 workflow 的 tracker。
+目标为 `NAMEWTA/Speculo`。先查已有 issues；语义重复时给出已有记录与本次新增证据。分析或草稿请求到草稿结束，用户要求提 issue 时复用该目标与内容范围的授权完成提交。
 
-若当前安装没有 SpecDev 公共 GitHub 协议，报告缺失依赖，继续本地复盘与提案；远程步骤待用户安装该 workflow 后恢复，不静默初始化。
+响应不确定时先检查远端是否已经创建，再决定重试。提交后核对真实链接与内容；不能访问时保存可提交正文并明确未创建。不自动评论、关闭或修改范围外的 issue。
 
-## 执行步骤
-
-1. 从调用方 workspace 或项目入口定位 `<Path>.agents/speculo/.speculo/workspace.json</Path>` 并解析 roots；缺失或冲突时只做当前会话分析，不猜测持久化目录。读取 `<Path>{roots.references}/retrospective/retrospective-contract.md</Path>`，按明确 scope 定位相关报告、change 与知识条目，不扩大为全量历史采集。
-2. 用该 skill 产出规范化复盘结论：去重、分级、根因化的 issue-ready 提案清单，附丢弃/合并说明与每条处置建议。
-3. 创建 command 专属目录 `<Path>{roots.state}/commands/speculo-feedback/</Path>`，把复盘结论写入带 scope 的 Markdown 报告。
-4. **去重**：调用 `SpecDev 公共 GitHub 操作协议` 的 `operation=issue-search`，对每条 `disposition: file-issue` 检索；命中语义重复的默认跳过并记录 `dup_of`，仅当用户明确要求才补提。
-5. 本命令把分析类型映射为 bug→bug、friction/ergonomics→enhancement、missing-capability→feature-request、doc-gap→documentation；优先级映射 priority:<level>，可选 area:<area>。先只读确认远程标签，缺失时列为待处理，不擅自创建。展示精确标题、标签、正文、目标 `NAMEWTA/Speculo` 与去重结果，取得或沿用覆盖这些内容的明确授权；否则只保留报告。
-6. 按优先级调用 issue-create --apply，每项保存稳定 marker=speculo-feedback:<报告文件名>:<序号>、正文摘要与授权。正文包含该 HTML marker 和 AI 协助说明；请求超时先查原 marker，不制造第二条。任一失败停止后续创建，在本报告记录已建/未建与恢复条件。此操作不激活 T、不创建 change、不改变原任务归属。
-7. 把每条提案的最终 issue 编号/URL 回写进本次报告的「提交结果」小节；返回报告路径、3-5 条复盘摘要和已创建 issue 链接清单。
-
-## 产物模板
-
-> **服务命令：** `speculo-feedback.md`
-> **产物文件名：** `<YYYY-MM-DD>-<scope>-<topic>[-NN].md`
-
-```markdown
----
-command: speculo-feedback
-mode: issue-retro
-scope: [TODO: workspace | multi-workflow | <workflow> | <workflow>-<change>]
-workflows: [TODO: workflow ids]
-changes: [TODO: full change names]
-generated_at: [TODO: ISO-8601]
----
-
-# Speculo Retro Report
-
-## 复盘范围
-[TODO: 本次复盘覆盖的 command / workflow 与时间/会话范围。]
-
-## 信号来源
-[TODO: 列出采集到的证据出处：对话节点、`<Path>{roots.state}/...</Path>` 产物路径、SpecDev README 与当前 owning 工件、其他领域仍有效的状态字段、LESSONS。]
-
-## 改进提案
-[TODO: 按优先级倒序列出每条提案：标题 / 类型 / 优先级 / 根因 / remediation_axis / 建议改动 / 正反回归样本 / 验收标准 / 受影响资产 / 去重结论。]
-
-## 丢弃与降级项
-[TODO: 列出被合并、丢弃或降级为「仅记教训」的项及原因。]
-
-## 目标仓库
-`NAMEWTA/Speculo`
-
-## 用户确认记录
-[TODO: 记录用户对 issue 清单的确认原文摘要。]
-
-## 提交结果
-[TODO: 列出每条提案对应的 issue 编号/URL，或未提交原因（重复/失败/用户撤回）。]
-```
+真实 issue 已承载完整内容时只保留链接。需要跨会话草稿时按 [持久化](../../references/memory.md) 更新已有反馈记录，无需单独状态 schema。

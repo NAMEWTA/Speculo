@@ -31,12 +31,12 @@
 - `shalomb/agent-skills` → `skills/github-cli`：通用 gh，强调 **不要猜 flag**，复杂操先读 reference。偏 issue/PR/Actions/GraphQL。
 - `odyssey4me/agent-skills` → `skills/github`：`gh` + 只读 Python 包装；写操作直接 `gh`。偏 issue/PR/workflow。
 - Agent Skills 规范：https://agentskills.io/specification
-- `gh skill` 跨 Copilot / Claude Code / Cursor / Codex 安装：GitHub CLI v2.90+
+- 工具版本与支持选项以当前安装的 `gh help` 和官方文档为准。
 
 ## 方法要点（从官方 + 实操）
 
-- 规划与执行分开（破坏性清单必须用户点名）。
+- 先核对目标与影响，按已有授权执行；仅建议的请求不包含删除授权。
 - Fine-grained：归档/删除 = Repository **Administration=write**；star = Account **Starring=write**。二者独立。
-- 403 以 `X-Accepted-Github-Permissions` 为准，不以 GET repo 的 `permissions.admin` 为准。
+- 403 结合响应、权限头与组织策略诊断；GET repo 的 `permissions.admin` 不代表 token 具有相同能力。
 - 改同一条 PAT 的权限后无需重新 `gh auth login`；新建 PAT 必须换 token。
-- 删除公有仓不删别人的 fork；约 90 天可申请恢复。
+- 删除影响及恢复条件查对应官方文档，不承诺可恢复；恢复功能不能替代备份。

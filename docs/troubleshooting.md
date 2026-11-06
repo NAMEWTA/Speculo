@@ -1,85 +1,57 @@
 # 常见问题与排障
 
-[手册首页](README.md) · [CLI 参考](cli.md) · [事务恢复](transaction-recovery.md)
+## 安装了领域，为什么宿主只显示一个技能
 
-## 安装后为什么只有核心功能
-
-非交互首次 `speculo init .` 默认只安装核心 Command 与共享方法。明确选择领域：
+这是按需暴露。领域完整方法和 Work 已在 `.agents/speculo/workflows/<domain>/`，宿主入口按任务读取它们。需要直接显示特定 Work 时：
 
 ```bash
-speculo init . --workflows specdev,learning --skill-targets agents --skills domain/specdev,domain/learning
+speculo init . --workflows specdev --skill-targets agents --skills domain/specdev,specdev/implement,command/status
 ```
 
-安装与宿主曝光独立。安装了 SpecDev 但没曝光，不表示入口不存在；也可以让 AI 直接读权威 `SKILL.md`。
+需要 Claude 目录时使用 `--skill-targets claude`。静态文件存在后，还应按宿主自己的机制刷新技能发现。
 
-## --workflows all 提示 Unknown workflow package
+## 首次运行为什么没有 SpecDev
 
-先核对实际运行的 CLI 版本与路径，避免旧全局包或旧 `dist` 被误用。也可以显式列出当前五个领域：
+非交互首次 `init` 没有预选领域。显式选择 `--workflows specdev`；`--skills` 只控制宿主曝光，不能安装一个未选择的领域。两种选择的区别见 [概念](concepts.md)。
 
-```bash
-speculo init . --workflows specdev,learning,ops,person,media --skill-targets agents --skills domain/specdev,domain/learning,domain/ops,domain/person,domain/media
-```
+## Work 是否只能按固定顺序调用
 
-`--skills all` 是曝光选择，与 `--workflows` 的领域选择不同。更新包后仍要在使用项目中运行 init 才刷新方法资产。
+可以独立调用。已有规格直接实现，只需查错直接诊断，已有版本直接部署。`goal-plan` 是目标规划，`tickets` 是按需拆分，都不再建立派单图或自动循环。
 
-## 为什么宿主列表里没有某个 Work 或 Command
+## 为什么没有自动生成 spec、票据或状态文件
 
-`domains` 只展示领域入口；`all` 才曝光全部已安装公开入口。也可以按业务 ID 选择。先检查实际目录和安装 warning，再看宿主自己的重新加载机制。
+当 issue、原型和当前交付记录足以指导实现时，不再复制成多份同义文档。复杂规格和独立责任可以拆文件，用户明确要求的产物仍要交付。持久化按真实需要创建，不提前生成空表单。
 
-```bash
-speculo init . --workflows specdev --skills specdev/implement,command/status
-```
+## 旧的 Work 和 Ops 去哪里了
 
-如果目标宿主读取 `.claude/skills/`，使用 `--skill-targets claude`；需要两个位置时使用 `--skill-targets agents,claude`，统一配置 `--skills`。静态投影存在不等于宿主已经加载或认证实际调用。
+原 39 项 Work 能力都保留并重写。34 项短 ID 保持；Ops 五项迁到 SpecDev。已有安装默认/keep 自动映射，显式旧 ID 给出新 ID 提示。完整对应见 [升级说明](upgrade-v3.md) 和 [能力表](capabilities.md)。
 
-## 能否在终端输入 speculo implement 或 speculo project-maintenance
+## 为什么 AI 仍在等待确认
 
-不能。终端 CLI 只提供安装、版本、检查、路径解析和恢复。对 AI 明确请求 `specdev/implement` 或 `command/project-maintenance`，或提供安装后的入口文件路径。见[概念说明](concepts.md)。
+先区分缺少产品决定、缺少实际访问能力、尚未授权的动作，以及明确要求的用户验收。已授权且独立可完成的部分应继续。允许实现或发版并不自动替代另行要求的最终验收；没有这项要求时不应凭空增加一轮审批。
 
-## 我用 App，会不会被强制切换到 CLI
+## 原型已确认，为什么界面仍不一致
 
-不会。未指定时按当前宿主正常执行。明确指定 CLI 交互或 Herdr 等方式才使用对应分支。App 本身的文件、终端或协作能力不足时应说明缺口，不能伪装实际执行。
+直接比较本次采用版本的同一页面、状态和必要视口。导航、区域组合和信息层级属于设计结果；单测通过和标题/摘要匹配不能证明落实。保留实际差异，修复后重新观察。见 [设计与验收](workflow.md#设计是长期资料)。
 
-## 为什么没有 Ticket 或 Goal
+## 学习流程是否要输入 ready 或创建 IQ 文件
 
-完整获批 Spec 可以直接进入实现，已有 Ready Ticket 也可以直接实现。只有需要独立调度、依赖或逐票追踪才拆票；需要整体总控才加 Goal。你明确要求这些产物时，入口仍需按要求交付。
+不需要。Learning 保留完整授课、探索、互动练习和复习方法，用户可以直接回答和继续。真实回答有保存价值时更新已有主题笔记；取消固定提交口令、轮次和 JSON 状态协议。
 
-## 为什么没有全局 SpecDev status.json
+## Media 说完成了，为什么没有图片或视频
 
-当前 SpecDev 从 change 目录和 README 唯一 Outcome 发现整体状态，细节由原计划、Ticket/Evidence 负责。空项目没有业务对象是合法情况，不需要手动创建旧状态骨架。其他领域仍使用各自状态模型。
+先确认当前 Work 的交付：手绘默认是可复用提示词；视频只有实际渲染成功才有可播放产物；发布草稿默认是本地材料。需要生成图像、浏览器、ffmpeg 或平台 API 时，必须有实际工具。未运行和工具缺失应明确说明，不能把工程文件称为已渲染视频。见 [Media](workflows/media.md)。
 
-## 为什么 AI 停在计划或等待确认
+## 为什么 Person 不再只是通用建议
 
-先核对请求是否仅要求计划、所选模式是否是 plan，以及后续动作是否涉及尚未授权的提交、部署、发布或知识写入。已有具体授权应该复用；缺少会改变结果的用户决定时需要回答。要求 AI 给出具体阻塞、当前产物和下一步，不要用笼统“继续”覆盖未知外部副作用。
+Person 保留两套不同方法：毛泽东认知框架的调查、实践和矛盾分析，以及 steelman 的多方强论证。相关原文和专门参考按需读取；不冒充历史人物发言，也不将一种框架当作所有问题的标准答案。见 [Person](workflows/person.md)。
 
-## 学习问答为什么没有讲解或评审
+## 安装报告同名、只读、链接或漂移
 
-Question tutor 要在 IQ 文件中保留真实答案并标记 `Response: ready`；Homework 要标记 `Submission: ready`。然后再次调用对应入口。二者不能混用。explore 直接展开分析，不使用这些答题标记。
+先查看具体路径与归属。受管方法可由 `init` 刷新；第三方同名目录、危险链接和只读保护不能强行覆盖。用户附加文件保留；不要删除整个 `.agents/skills/` 或修改安装哈希绕过检查。
 
-## 工具说完成了，为什么还标未验证
+若存在安装锁或中断日志，按 [事务恢复](transaction-recovery.md) 先读回现场。普通业务文件格式不合法与安装事务不是同一问题。
 
-退出码、候选文件和 AI 自述只说明部分事实。浏览器画面、独立审查、真实部署健康、双边回执或延迟学习证据可能尚未完成。请查看该 Work 的具体完成门，缺哪项就补哪项，不把未运行改成 passed。
+## 如何报告可复现问题
 
-## 安装警告说 Skill 同名或被修改
-
-受管 Workflow、Command、Work、曝光入口与 Hub 文件以本次运行的安装包为准，重新安装会覆盖本地修改并补齐缺失文件；ADR、change、知识、历史及用户附加文件保留。doctor 会区分入口内容、权限和缺失漂移，提示运行 init 刷新。旧版本可能将 `0644` 与 `0664` 的差异误报为内容冲突；即使内容哈希一致也会跳过入口，应使用包含此修复的 CLI 刷新。第三方同名目录、链接、只读保护和节点类型冲突仍须按具体路径解决，不删除整个 skills 根，不修改归属哈希绕过检查。
-
-## doctor 不健康、存在 lock 或安装中断
-
-保留完整输出，沿[安装事务恢复](transaction-recovery.md)处理。锁不一定是垃圾；不能直接删锁重试。`speculo recover` 只处理匹配安装事务，不恢复 workflow 的业务状态。
-
-## Media 没有视频、图片或发布结果
-
-Hand Drawn 默认只交提示词。Video 缺少真实渲染工具时交工程与未渲染报告。Publish Draft 只导出本地包，没有线上发布接口。查[Media 指南](workflows/media.md)确认当前 Work 的真实产物，不根据名称推断额外能力。
-
-## OPS 状态是 docs_pending 或 unknown
-
-业务动作可能已落地，但文档回执未闭合或结果未知。沿原 task/Run/Release 查询并恢复，不创建新任务重复操作，也不以更新看板代替目标检查。见 [OPS](workflows/ops.md)。
-
-## 当前 docs 为什么不记录每次开发计划
-
-Speculo 仓库的 docs 是当前产品手册。版本变化保留在 CHANGELOG/Git；使用项目里的实施历史保存在原 change/Evidence，命令报告保存在对应命令 namespace。工程文档持续描述现状，不充当所有开发活动的流水账。
-
-## 如何报告问题
-
-提供版本、操作系统/Node、完整命令、返回码、具体路径和脱敏错误输出，说明预期与实际。涉及本地业务结果时给当前工件和恢复位置；不要上传秘密。Speculo 产品问题可用 [retro](commands/speculo-feedback.md)先形成提案，确认后才创建远端 Issue。
+提供 Speculo、Node、操作系统版本，完整命令、返回码、预期与实际行为，以及必要的脱敏路径和错误输出。方法问题附任务目标、调用的 Work 和实际产物差异。通过 `command/speculo-feedback` 可整理提案；远端提交按用户请求执行。

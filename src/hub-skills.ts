@@ -17,7 +17,7 @@ export function parseHubSkillSpec(spec: string): SkillRequest {
   try { return parseSkillSpec(spec); } catch { throw new Error("--hub-skills must be none|keep|all or comma-separated category/name ids"); }
 }
 export function resolveHubIds(request: SkillRequest | undefined, catalog: HubCatalog, existing: string[]): string[] {
-  const ids = !request || request.mode === "keep" ? existing : request.mode === "none" ? [] : request.mode === "all" ? [...catalog.keys()] : request.mode === "set" ? request.assetIds : [];
+  const ids = !request || request.mode === "keep" ? existing.filter(id => catalog.has(id)) : request.mode === "none" ? [] : request.mode === "all" ? [...catalog.keys()] : request.mode === "set" ? request.assetIds : [];
   for (const id of ids) if (!catalog.has(id)) throw new Error("unavailable-hub-skill: " + id + "; explicitly select a new list or none");
   return [...new Set(ids)].sort();
 }

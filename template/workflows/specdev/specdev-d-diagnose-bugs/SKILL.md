@@ -1,84 +1,30 @@
 ---
 name: specdev-d-diagnose-bugs
-description: "调查故障并建立精确症状的红灯回路，以单变量实验确认根因；无法安全复现时仅收集事件证据，不将解释冒充根因，也不实施生产修复。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/diagnose-bugs
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 复现并调查软件故障、一次性事件或 CI 波动，用可区分的证据判断原因与修复方向。
 ---
 
-# 诊断 Bug
+# 故障诊断
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>`，再执行本入口。
+先明确用户实际观察到的症状、预期行为、触发输入、版本与环境。保存可解释问题的最少日志、截图或运行输出，敏感值脱敏。
 
-D 的主导词是**红灯**：没有一条已执行且能在此 bug 上变红的紧凑命令，就没有可进入的假设阶段。D 默认只读项目代码，可以创建 change 诊断工件和经授权的临时可撤销探针；生产修复由 Implement 拥有。
+## 建立反馈
 
-激活时读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`，按当前步骤定位输入和证据。
+选择最贴近症状的实际入口：测试、API/CLI、浏览器、事件回放或受控夹具。运行它，确认捕获的是原问题，再缩小输入、配置、步骤和时间窗口。需要更细方法时阅读 [复现与实验](references/reproduction.md)。
 
-## 输入与所有权
+无法安全重现时，可以继续阅读代码和收集事件时间线、版本差异、日志、崩溃信息及部署变化。明确区分事实、候选解释与已确认机制，不因缺少“红灯命令”就停止所有有用调查，也不把推测写成根因。
 
-按存在情况读取：
+## 区分候选原因
 
-- `<Path>{roots.state}/specdev/changes/{change}/source.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/triage.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>`
-- 相关代码、测试、配置、日志和运行环境事实。
+对重要候选写出可被证伪的预测，选择能区分它们的最小实验。尽可能一次改变一个变量；性能问题用实际工作量与分析器测量，异步问题检查时钟、资源释放和真实并发拓扑。
 
-D 拥有：
+追踪失败产生、传播与被观察的全过程，检查调用双方、数据状态及恢复窗口。重复一次没失败不证明 flake 已解决；宽超时、全局串行或重试本身也不能证明原因。
 
-- `<Path>{roots.state}/specdev/changes/{change}/diagnosis.md</Path>`
-- `<Path>{roots.state}/specdev/changes/{change}/diagnostics/</Path>`，仅在需要脚本、捕获物或临时探针结果时延迟创建。
+## 提出可验证修复
 
-## 流程
+说明触发条件、失败机制、影响范围、漏检原因，以及修复应改变和必须保持的行为。给出最合适的修复位置、回归入口与恢复风险；架构缺口可以成为 [架构审查](../specdev-r-review-architecture/SKILL.md) 的输入。
 
-### 1. 建立并执行红灯反馈回路
+用户只要求诊断时返回证据与建议；已要求修复时接续 [实施](../specdev-i-implement/SKILL.md)。不要为切换入口再索取相同授权。
 
-加载 `<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/feedback-loop.md</Path>`。按其顺序尝试测试、HTTP/CLI、浏览器、追踪回放、夹具、模糊循环、bisect、差分和最终 HITL。保存命令、至少一次真实输出、精确症状断言、运行时间、确定性或复现率，以及 Agent 可运行性。
+撤销临时探针与测试变异，核对工作区并复跑受影响基线。需要保留的捕获物说明用途与敏感性。当前诊断写进原记录，经过验证且值得防止重演的经验再提纯到 `knowledge/error/`。
 
-无法建立回路时使用诊断模板写 `status: blocked`、`feedback_loop_ready: false`、已尝试方式和所需输入；假设表保持为空，在原诊断材料保留接续点。不得继续阅读代码来构造根因理论并据此宣称已确认；可以进入下述事件证据分支收集观察与下一安全检查，但不能直接进入正式假设实验或 Ready 修复。
-
-**完成标准**：一条已运行命令快速、可重复、由 Agent 执行，并能在用户精确症状上变红。
-
-### 2. 复现并最小化
-
-运行回路确认捕获的是用户报告的故障。逐个删除输入、调用者、配置、数据和步骤，每次删除后重跑；只保留对红灯有负载作用的元素。非确定性 bug 通过并行、压力、固定时间/随机或缩小窗口提高到可调试复现率。
-
-**完成标准**：剩余每个元素被移除都会使回路变绿，最小复现和最后红灯证据已持久化。
-
-### 3. 假设与单变量探针
-
-只有前两步完成后才加载 `<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/hypothesis-and-instrumentation.md</Path>`。生成 3–5 个带预测的可证伪假设，先展示排名；用户 AFK 时保存 checkpoint 后继续。每个探针只检验一个预测，优先 debugger/REPL，其次定向日志；性能问题使用测量和分析器。
-
-**完成标准**：根因由区分性实验确认，其他高排名候选有反证，所有临时探针有唯一清理标记。
-
-### 4. 写入修复契约
-
-使用 `<Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/assets/diagnosis-template.md</Path>` 写入 diagnosis：触发条件、失败机制、影响范围、漏检原因、必须改变、必须保持、正确 seam、回归测试、非目标、风险和回滚。
-
-存在正确 seam 时，把最小复现定义为 I 必须先观察红灯的回归测试合同；不存在正确 seam 时明确记录架构缺口并路由 R。D 不编写生产修复。
-
-### 5. 清理、验证与路由
-
-重跑原始未最小化回路，确认当前诊断结论可解释症状；搜索唯一 `[DEBUG-...]` 前缀并删除临时插桩，无法删除项登记 owner 与删除条件。运行：
-
-```bash
-node <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path> \
-  --stage diagnosis \
-  <Path>{roots.state}/specdev/changes/{change}</Path>
-```
-
-根因确认且证据通过后回读诊断结论，返回 diagnosis 和下一 Work：局部修复进入 Tickets/I，公共行为或高风险进入 S/Tickets，缺 seam 进入 R，仍无根因则保持 blocked 或进入 W。
-
-## 一次性事件与 CI flake
-
-故障不可再次触发或缺安全复现条件时，读取 <Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/references/incident-evidence.md</Path> 进入 evidence-triage。保持原 D ID、diagnosis/diagnostics 和合法状态；事实收集不等于根因确认，未知解释不写入已确认字段。
-
-涉及并发、时钟、子进程或 CI 易抖动测试时，再读 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>；核对实际 worker/job 拓扑与资源释放，以显式同步制造竞态，不用无证据的 sleep、宽 timeout、全套串行或重试当根因修复。
-
-## 脱敏与强制变异证据
-
-在日志、报告和重现材料中移除 token、Cookie、认证头、秘密配置、个人数据及机器绝对路径；保留项目相对定位和必要错误形态。原始敏感数据不进入长期工件。
-
-如果使用强制变异检验测试敏感性，先记录未变异文件的 hash/diff，实际修改目标后读取 git diff 与运行路径，证明变异已落到执行文件。只有测试因预期行为断言失败才算有效 red；编译错误、未选中测试、变异未落地均为无效证据。恢复原内容，复跑基线并核对 diff。D 输出诊断及修复不变量，正式修复仍交 I。
+交付应明确已确认什么、哪些解释仍未排除、实际运行过什么以及下一项最有价值的检查。

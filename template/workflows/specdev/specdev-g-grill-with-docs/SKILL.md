@@ -1,34 +1,30 @@
 ---
 name: specdev-g-grill-with-docs
-description: "一个已界定 change 仍有产品、领域或架构决定待确认时进行可恢复访谈；跨 change 边界未清晰时先用 W。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/grill-with-docs
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 针对已界定需求中的产品、领域、架构和验收取舍开展聚焦访谈，并记录真实决定与理由。
 ---
 
-# Change 决策访谈
+# 需求细化与决策访谈
 
-> 激活后读取 `<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>`。
+读取当前需求、相关设计、代码和已有决定，先列出真正会改变实现的缺口。代码、配置和资料能回答的事实先查，不把工程调查转成对用户的长问卷。
 
-## 读取范围
+## 找出高价值问题
 
-读取 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；定位当前 change 的 `<Path>{roots.state}/specdev/changes/{change}/design-tree.json</Path>`、`<Path>{roots.state}/specdev/changes/{change}/LOG.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/CONTEXT.md</Path>`、`<Path>{roots.state}/specdev/changes/{change}/ADR.md</Path>` 和相关 initiative 决策。先找到相关条目再回读必要原文，不默认整读永久 ADR 或索引。
+围绕核心使用场景、成功标准、范围、领域概念、异常行为、权限与数据演变，寻找互相冲突或尚未确定的决定。技术选择只在影响公共行为、成本、兼容性或重要风险时进入访谈；局部可逆实现细节由工程判断完成。
 
-## 按风险选择问题
+每个问题交代情境、可行选择、推荐及其代价。相关问题可以集中呈现，用户需要一步步讨论时再逐个推进；不固定轮数、题数或问完所有分类。
 
-涉及失败、重试、取消或恢复时读取 <Path>{roots.workflows}/specdev/common/rules/error-handling.md</Path>：谁拥有状态，何时算成功，超时后副作用是否未知，谁核实结果，什么可以重复，哪些依赖应停止？涉及工具/prompt/context 时再读取 <Path>{roots.workflows}/specdev/common/rules/agent-experience.md</Path>。问题由当前 change 风险触发，不固定全问；仓库能查明的事实先查，高影响取舍才询问用户。
+涉及故障与异步行为时，查清何时算成功、结果未知如何核对、哪些操作能重试、取消后哪些效果可能已发生。涉及工具与 Agent 时，区分模型判断、宿主权限、工具执行和真实系统结果。
 
-局部 ADR 保留真实问题、采纳决定、考虑过的替代方案、代价、适用范围和验证义务。未确认方案留 LOG/设计树，不编造备选，也不把已采纳但未实现的决定写成已交付。
+## 保存共识
 
-## 当前 change 的访谈与共识
+在现有 release 记录中写清采用的决定、原因、实际考虑过的替代、适用范围和待验证假设。保留用户回答的必要原文或来源，不将模型推荐写成用户批准。
 
-进入访谈必须读取 `<Path>{roots.workflows}/specdev/specdev-g-grill-with-docs/references/interview-procedure.md</Path>`，由该过程在出现设计取舍、术语变化、日志写入或外部 stakeholder 缺口时分别读取 grilling、领域建模、日志格式或 questionnaire；不默认加载所有参考。保留完整 frontier、推荐答案和逐轮共识检查，但不替用户回答高影响取舍。
+领域术语尽量与代码和用户语言一致。同名不同义或不同名同义会影响接口和数据时，先明确概念边界；需要系统建模时阅读 [研究与领域建模](../references/research-and-modeling.md)。
 
-- 先查仓库可发现事实，只询问会改变行为、架构、风险、范围、迁移或验收的决定。
-- W 的每个 materialized change 在自己的目录拥有设计树和文档；共享答案以来源指针引用，不能共用一棵可写设计树。
-- 当前 change 的 LOG/CONTEXT/ADR 可按 Work 授权写入；永久 namespace 对 G 只读，正式知识只能经 A 的原有写入网关提升。
-- 没有未决的高影响决定且证据可定位才标记共识；无法回答时只暂停相关分支，返回明确问题和恢复入口。
+新回答改变早先决定时说明变更及受影响内容；不靠追加多个互相矛盾的“最终版”维持表面完整。重大、跨交付仍有效的决定可按持久化规则写入 ADR，其余保留在当前记录。
 
-完成后使用 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage grill`，回读实际形成的决定与证据工件；无实际内容不为四份数量预建空文件，再交给 `<Path>{roots.workflows}/specdev/specdev-s-spec/SKILL.md</Path>`；若属于 W 调查票，只关闭本票并返回探索地图。
+## 结束与继续
+
+足以实施的范围已明确即可结束。无法回答的高影响问题写清它阻塞什么、如何取得证据；其他独立部分继续推进。
+
+体验方向尚待验证时先做 [原型](../specdev-p-prototype/SKILL.md)，已讨论清楚则整理 [Spec](../specdev-s-spec/SKILL.md)。不为共识生成设计树 JSON、固定日志表或额外交接包。

@@ -1,35 +1,28 @@
 ---
 name: specdev-r-retro
-description: "整体复盘开发会话的目标、决定、实现、验证、协作与经验，保存可回读会话来源的 RETRO；明确要求时汇总并经各 owner 沉淀 ADR、项目知识、Skill 或检查任务。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/retro
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 从真实开发会话、变更与检查证据复盘问题和有效做法，提出或实施可验证的改进。
 ---
 
-# 整体会话复盘与知识沉淀
+# 开发复盘
 
-先读 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path> 和 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>，再读 <Path>{roots.references}/writing-for-agents/writing-contract.md</Path>。本 Work 回顾开发过程及其结果，并改善后续开发 Agent 的环境；默认只复盘，明确要求迭代才进入方案分支。代码讲解使用 L-learn，Speculo 产品反馈使用 speculo-feedback Command。
+明确要复盘的项目、交付或会话范围，读取相关需求、决定、代码、检查与用户反馈。没有足够证据就保留未知，不根据结果倒推整个过程。
 
-## 流程
+## 识别值得改进的地方
 
-1. 识别用户要日常复盘，还是梳理/执行升级方案。日常复盘未指定会话时使用当前会话；批量梳理默认使用当前项目尚未归档的 RETRO。只有用户指定才扩大来源范围。
-2. 日常复盘按 [开发复盘方法](references/development-retrospective.md) 定位一手记录、梳理整个会话的工作脉络，再按实际信号检查目标、决策、实现、验证、协作和七类环境问题，并给每个发现保留原文、来源 change 或会话、根因或假设、影响、频率、owner 和正反验收。按严重程度呈现候选，允许没有发现。
-3. 按 [报告模板](assets/retro-template.md) 和 [独立工件合同](references/records.md) 保存 <Path>{roots.state}/specdev/retro/{retro}/RETRO.md</Path>。`retro` 为首次创建时未占用的日期主题 ID；证据快照只保留相关原文。原子写后回读并运行独立校验；不创建 change，不修改来源 change 的 Outcome。
-4. 明确要求集中迭代时读取 [升级流程](references/skill-upgrade.md)，固定未归档报告清单、去重并复核当前项目事实，形成 <Path>{roots.state}/specdev/retro/{upgrade}/PLAN.md</Path>。先交付完整具体方案；确认前仅保存方案及候选，不更新项目 Skill、ADR/context 或归档。
-5. 用户确认方案后，按目标 owner 执行：项目 Skill 使用 <Path>{roots.references}/writing-for-agents/references/project-skill-maintenance.md</Path>；ADR/context 交 A 的 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/retro-knowledge.md</Path> 窄网关，逐项验证并保存原方案的执行回执。只有全部计划内目标通过，才调用 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/references/retro-archive.md</Path> 归档方案指定且全部发现已处置的报告；仍有待处理项的报告留在现役目录。
+围绕目标是否被正确理解、决定是否有依据、实现与验证是否匹配、信息如何丢失、工具与环境是否妨碍推进，寻找有具体事例的重复摩擦。成功做法同样记录适用条件，不把偶然成功写成规则。
 
-## 改进必须能被证伪
+区分规则缺失、已有指导未触发、指导本身错误、信息不可发现、工具能力不足与检查没有覆盖。每个发现连接原始证据、实际影响与可改变的位置；不要将所有问题归因于模型不够认真。
 
-逐项判断是规则缺失、规则未接入、规则判断错、测试不能失败或环境事实变化。建议说明真正修改位置、owner、正反验收、恢复影响和新增维护成本。机械问题进入检查工具，判断性规则进入 reviewer 的标准；Skill 承载可复用过程，不把每次失误都变成一条指令。成功经验也须有适用条件及重复使用价值。
+## 形成具体改进
 
-## 结果与路由
+优先改善真实环境、工具、测试和事实记录。技能只承载仍需明确说明的判断或项目特有知识，避免把每次失误追加成永久指令。
 
-报告 outcome 为 findings、no-findings、insufficient-evidence；报告完成不表示建议已实施。方案逐项 adopt / reject / defer，合并项通过共同目标与理由保留全部来源。事实不足时保持 defer，不用多数历史记录覆盖当前相反证据。
+建议说明预期行为、为何会改善、用什么正反场景验证，以及新增维护负担。能删除冗余指导就删除；涉及能力替换时给出承接，不能靠少写几段声称问题已解决。
 
-代码问题交 <Path>{roots.workflows}/specdev/specdev-d-diagnose-bugs/SKILL.md</Path>，代码/CI 检查实施交 <Path>{roots.workflows}/specdev/specdev-t-tickets/SKILL.md</Path>，远程反馈交 <Path>{roots.workflows}/specdev/specdev-t-triage/SKILL.md</Path>；ADR/context 的实际写入交 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path> 的原网关。方案必须逐项声明目标与 owner；Skill 更新批准不隐式覆盖代码、远程操作或永久知识写入。
+用户只请求复盘时返回发现与建议。用户已要求修复或迭代时按现有授权落实可执行改进，更新相关真实来源并检查结果；重要范围变化再明确。
 
-## 完成标准
+## 保存经验
 
-日常复盘的范围、原文来源、全部候选与未知可追溯，报告已保存并通过校验。升级方案确认前返回具体候选及未决项；确认后返回实际更新/新增/保留的 Skill、ADR/context、命令及退出码、未验证项、归档结果和恢复入口。未通过验证或存在漂移的分支保持阻塞，已落地结果据实保留；语法验证不认证宿主触发、用户授权或未来效果。
+通常更新原交付记录；跨会话或多次复盘汇总较大时单独保存短报告，链接全部有效来源。结果标清已处理、暂缓或缺证据，不要求固定 RETRO/PLAN 配套文件。
+
+值得长期使用的决定、项目背景和已确认故障经验按 [持久化](../../../references/memory.md) 更新原知识；其余留作历史。没有尚需处理事项才按实际结束范围归档，不用移动文档制造闭环。

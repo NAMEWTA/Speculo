@@ -29,6 +29,8 @@ test('pnpm runners execute JavaScript, absolute native and PATH native entries w
       assert.deepEqual(JSON.parse(output), args);
     }
   } finally {
-    await rm(root, { recursive: true, force: true });
+    // Windows may briefly keep a just-exited executable locked. Retry cleanup,
+    // while still surfacing persistent failures and preserving all assertions.
+    await rm(root, { recursive: true, force: true, maxRetries: process.platform === 'win32' ? 10 : 0, retryDelay: 100 });
   }
 });

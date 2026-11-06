@@ -20,7 +20,7 @@ TOML 使用固定版本完整语法解析器与 AST range edits；JSON 使用严
 
 原注释与无关内容保留；从表形式迁移 exporter 时只移除该子树的值和表头，保留无关表及注释。原文件最多 1 MiB；超过限制应单独检查，而不是截断后修复。原文件存在时先确认读取与所有权，私有备份中保存完整原字节；报告和计划不保存完整配置。
 
-模型、reasoning effort、model_context_window、compaction 阈值、Agent 并发、权限、MCP、hooks、历史、provider 和 auth **不在自动写入 allowlist 内**。对应优化依照 [方法](optimization-method.md) 形成单独的明确确认方案，不能向计划 JSON 塞任意 key。
+模型、reasoning effort、model_context_window、compaction 阈值、Agent 并发、权限、MCP、hooks、历史、provider 和 auth **不在自动写入 allowlist 内**。对应优化依照 [方法](optimization-method.md) 明确具体改动、代价与当前授权范围，不能向计划 JSON 塞任意 key。
 
 ## 认证与供应商
 

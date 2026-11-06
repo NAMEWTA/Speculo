@@ -1,40 +1,32 @@
 ---
 name: learning
-description: "用于学习目标、课程、练习、复习及知识巩固；不将发现能力视为开始学习流程。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/learning
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 设计课程、完整讲解、目标式源码学习、苏格拉底练习、主动探究、作业评审、延迟复习与知识综合。
 ---
 
-# learning
+# 学习与知识整理
 
-## 发现与激活
+先识别用户要听讲、练习、深挖、复习还是整理材料。直接回答清楚的问题；需要较长学习过程时才建立课程记录。表达通俗与内容深入是两个维度，不因使用 ELI5 就删去机制、边界和证据。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+## 按学习意图进入
 
-明确进入本领域后读取 <Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+| 意图 | Work |
+|---|---|
+| 设置学习偏好、接续已有学习资料 | [初始化](learning-i-init-setup/SKILL.md) |
+| 评估背景并安排课程 | [评估与课程规划](learning-a-assess-and-plan/SKILL.md) |
+| 围绕一个项目、源码或可观察能力设计目标路线 | [目标学习](learning-g-goal/SKILL.md) |
+| 完整讲一课、讲清一个主题 | [课程讲解](learning-l-lesson/SKILL.md) |
+| 让我先回答，或主动替我找盲区并深挖 | [问答与探究](learning-q-question/SKILL.md) |
+| 出作业、收答案并逐题反馈 | [作业评审](learning-h-homework/SKILL.md) |
+| 检查一段时间后还能否回忆与迁移 | [延迟复习](learning-r-review/SKILL.md) |
+| 综合多个主题、来源与练习证据 | [主题整合](learning-c-consolidate/SKILL.md) |
+| 结束一轮学习并保留历史材料 | [归档](learning-a-archive/SKILL.md) |
 
-## 能力路由
+这些能力可以独立使用，不要求先初始化、建完整课程或按顺序调用。用户要讲解时直接讲；只有明确的练习意图才把作答作为下一步。
 
-<!-- AUTO-INDEX-START -->
+## 记录与学习证据
 
-- **learning/archive** — 冷归档：<Path>{roots.workflows}/learning/learning-a-archive/SKILL.md</Path>
-- **learning/assess-and-plan** — 评估背景并设计课程：<Path>{roots.workflows}/learning/learning-a-assess-and-plan/SKILL.md</Path>
-- **learning/consolidate** — 主题整合：<Path>{roots.workflows}/learning/learning-c-consolidate/SKILL.md</Path>
-- **learning/goal** — 目标学习（目标模式）：<Path>{roots.workflows}/learning/learning-g-goal/SKILL.md</Path>
-- **learning/homework** — 课程作业与评审：<Path>{roots.workflows}/learning/learning-h-homework/SKILL.md</Path>
-- **learning/init-setup** — 初始化学习系统：<Path>{roots.workflows}/learning/learning-i-init-setup/SKILL.md</Path>
-- **learning/lesson** — 完整课程讲解：<Path>{roots.workflows}/learning/learning-l-lesson/SKILL.md</Path>
-- **learning/question** — 深度探究与苏格拉底问答课：<Path>{roots.workflows}/learning/learning-q-question/SKILL.md</Path>
-- **learning/review** — 延迟保持与周期复习：<Path>{roots.workflows}/learning/learning-r-review/SKILL.md</Path>
+优先使用已有笔记。持续学习默认在项目根 `.agents/speculo/.speculo/learning/<topic>/README.md` 保留目标、来源、已覆盖内容、实际回答和下一步；讲义、作业或图像需要独立阅读时再拆文件。
 
-<!-- AUTO-INDEX-END -->
+用户原始回答与 AI 解释分开，修订保留先前尝试。讲义已经生成、用户说听懂、当场做对和隔段时间仍能应用是不同证据，不凭模型自评写成“已掌握”。归档也不表示掌握。
 
-## 永久知识
-
-- <Path>{roots.state}/learning/context/INDEX.md</Path>
-- <Path>{roots.state}/learning/context/REVIEW.md</Path>
-
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+讲解表达参考 [教学方法](references/teaching.md)，需要主动挖掘边界时参考 [深度探究](references/inquiry.md)。保存长期主题知识和归档时使用 [持久化](../../references/memory.md)，不生成状态 JSON 或重复索引。

@@ -137,6 +137,7 @@ export function formatHelp(): string {
     heading("交互说明"),
     "  Hub 分类与 Workflow 同层展示；进入分类后多选 Skill。",
     "  所有安装位置共用能力曝光清单：全部、按组、自定义、保留或不曝光。",
+    "  可只曝光领域总入口，或单独曝光 Work；引用资料随 Workflow 安装并按需读取。",
     "  受管能力按当前安装包刷新，覆盖本地修改；取消勾选移除受管文件，保留运行时数据和用户附加文件。",
     "  交互启动检查 CLI 更新；SPECULO_NO_UPDATE_CHECK=1 可关闭。",
     "  非交互首次安装默认仅核心；刷新沿用已有受支持 Workflow。",
@@ -144,6 +145,7 @@ export function formatHelp(): string {
     heading("示例"),
     "  speculo init",
     "  speculo init ./project --workflows learning,specdev",
+    "  speculo init ./project --workflows specdev --skills specdev/prototype",
     "  speculo doctor ./project",
   ];
   return wrapTerminalText(lines.join("\n"), process.stdout.columns || 80);

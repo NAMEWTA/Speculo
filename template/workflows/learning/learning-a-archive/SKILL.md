@@ -1,32 +1,18 @@
 ---
 name: learning-a-archive
-description: "用户明确关闭后移动整个 Change 树到日期目录；不做知识综合或掌握判断。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/archive
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 结束一轮学习并整理历史材料，保留原始答案、来源与可继续的未完成事项。
 ---
 
-# 冷归档
+# 学习归档
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+先确认用户要结束或整理的主题范围，核对实际讲义、作业、回答、反馈和未解问题。归档表示这轮学习结束或暂时收起，不代表已经掌握，也不要求所有作业做完。
 
-## 读取范围
+有仍需复用的主题解释或结论时，可按用户任务范围使用 [主题整合](../learning-c-consolidate/SKILL.md)；没有提纯需要就直接保留原材料。不要为了归档而生成不存在的复习结果。
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/consolidation-contract.md</Path>`、`<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；只加载本 Work 需要的领域合同。
+沿用项目已有归档方式，没有时可将整个主题放到 `.agents/speculo/.speculo/archive/learning-<topic>/`。保留可识别名称、实际结束时间、来源和仍待处理内容；不要从不可靠文件时间推导学习时间。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+移动前检查目的地、正在编辑的文件和引用，保留原始问答与证据。移动后读回资料与链接，活动入口指向新位置。遇到冲突保留原件，不覆盖另一主题。
 
-## 流程
+历史内容保持可回读。继续学习时建立新的活动记录并引用历史，不因为旧记录已归档而删除、重写或伪造新的“通过”。
 
-1. 用户明确指定 root Change 并写入 close/confirm；没有确认只输出待归档清单。
-2. 检查 root 没有 active Work 或活动子树；未完成 Homework、未做 R 或未掌握不构成阻塞，证据随树保留。
-3. 以整棵树所有节点 `updated_at` 的最大值作为 `YYYY-MM`，在锁内 stage 并移动 `changes/<root>` 到 `archive/YYYY-MM/<root>`，更新 locations/status projection。
-4. 验证旧路径不存在、新路径存在、哈希和索引完整；失败回滚。归档树只读，后续纠正通过新 Change；A 不写 context。
-
-## 完成标准
-
-- 没有静默删除或改写原始课程、作业、答案、Review 或 synthesis；
-- archive 是用户关闭的历史容器，不等同于 mastered；
-- 归档日期以最新源更新时间为准，原始时间和 relocation history 仍可追溯。
+返回实际归档位置、保留的材料、未完成事项的入口和是否有长期知识更新。无需位置登记 JSON、锁协议或归档摘要账本。

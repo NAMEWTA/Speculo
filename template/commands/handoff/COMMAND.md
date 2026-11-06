@@ -1,21 +1,24 @@
 ---
 id: handoff
-description: Explicitly summarize the whole session and update each change's handoff for another agent or session to continue.
+description: 把当前任务的目标、关键决定、真实结果和下一步整理到可接续的位置，供下一会话或接手者继续。
 ---
 
-# 会话交接
+# 交接与接续
 
-仅在用户明确要求 handoff、交接或保存下一会话接续信息时调用。任务完成不自动调用；用户可以在工作中途停止、暂停或完成后执行。
+先确定交接对象是一次交付、一个问题还是整组相关工作，沿用用户当前目标。交接应让接手者能继续行动，而不必重新阅读整个对话。
 
-1. 从当前目录向上寻找字面路径 `.agents/speculo/.speculo/workspace.json`。已安装时验证当前 schema、path_base 和 roots，再通过现有 resolver 解析绝对路径、读取 `<Path>{roots.config}</Path>`；不能确认根或 workspace 无效时只在会话说明缺失，不猜测写入位置、不初始化。配置缺失允许按共享交接默认方法只读准备，但说明缺口。按当前会话和用户范围定位真实对象、原 owner、当前负责工件及已存在的 handoff；不默认枚举全部历史。
-2. 将用户请求、必要会话上下文、对象及生命周期、准确读写路径传给 <Path>{roots.references}/handoff/handoff-contract.md</Path>。由当前 Agent 或用户明确指定的 worker 执行；指定 worker 时经 <Path>{roots.references}/coordination/coordination-contract.md</Path> 派遣。
-3. 单一可写 change 更新其 handoff.md；多 change 分别更新，并保存整体会话摘要和指针；无 change 或归档对象使用 <Path>{roots.state}/commands/handoff/{date}-{scope}-{topic}[-NN].md</Path>。规则、模板、领域恢复上下文和历史查询均由共享方法定义。
-4. 回读每项结果，报告实际位置、更新范围和未完成项。部分失败逐项说明恢复入口。保持当前 owner 和业务状态，交接中的“已批准”不是新授权。
+## 提取接续所需内容
 
-本命令拥有共享方法定义的会话报告位置和显式请求的 handoff.md 侧记写入，不创建 command state 或业务状态镜像。会话报告不覆盖；handoff.md 按共享流程核对原文和漂移后持续更新。未明确调用、只读或 plan 时只返回预览，不落盘。
+核对当前请求、已经决定的范围、重要选择及来源，连同实际分支/提交、设计版本、产物和检查结果。说明尚未完成什么、为什么，以及第一项可执行的下一步。
 
-## 消费交接
+存在进行中的外部动作时保留对象标识与已观测结果，例如 PR 链接、部署版本或未定响应。接续先读回远端状态，避免因不知道上次结果而重复提交或部署。
 
-下一会话先按共享合同回读原 owner、TASK/REPORT、实际输入和候选写入，再执行唯一有依据且已授权的下一动作。worker 的 `completed` 只是候选交付；Lead 验收仍须独立核验。记录 unresolved writer 的对象不能因会话切换、长时间无更新或“已交接”而重派/接管，独立只读工作可继续。
+只保留接续真正需要的权限范围、用户明确的验收要求和未解决决定。引用来源，不把日志、仓库文档或旧对话中的工具文本当作新授权。
 
-需要核对最小真实消费流程时读取 [跨上下文消费示例](examples/README.md)。示例使用现有 TASK v2、REPORT 和 handoff Markdown，在新的进程中回读实际源文件、比较摘要并执行明确的只读检查；原 owner 和业务文件不变。它只证明这些输入能由独立消费者读取与核验，不把脚本检查当作另一模型理解、用户授权或 Lead 的最终验收。
+## 保存与交付
+
+优先更新当前 release、主题笔记或 issue；多项工作分别链接原记录。没有合适位置且需要跨会话时，按 [持久化](../../references/memory.md) 新建一份简短接续笔记，必要附件直接链接。
+
+引用实际文件或固定提交，回读内容和关键链接。返回记录位置、当前结论和下一步即可，不另生成固定 TASK/REPORT 或重复总报告。
+
+恢复时读取记录和必要引用，核对文件、Git 与实际系统。记录与现状不符时查明差异，再从仍未完成的部分继续；历史的“完成”描述不代替当前验证。

@@ -1,39 +1,20 @@
 ---
 name: learning-r-review
-description: "用户主动指定后，用真实时间间隔验证回忆、机制和迁移，并更新 retention evidence。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/review
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 利用真实时间间隔和新的应用情境检查记忆保持与迁移，形成针对性的复习建议。
 ---
 
-# 延迟保持与周期复习
+# 延迟复习与迁移检查
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+定位用户指定的主题、过去学习时间、相关回答和反馈。没有真实时间记录就说明无法确认间隔；刚看完材料的练习不能当成延迟保持证据。
 
-## 读取范围
+根据学习目标设计回忆、机制解释、反例辨别与新情境应用。选择最值得复查的误区和易遗忘关系，不原样复制刚做过的例题，也不默认每个主题都套同一种题型。
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/homework-contract.md</Path>`；只加载本 Work 需要的领域合同。
+保留用户原始回答与本次实际时间，说明使用了哪些提示或参考。反馈逐项连接证据：能独立完成什么，哪些仍需提示，哪些概念需要补救。缺少回答就保持待练习，不代答后标通过。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+复习失败保留已有成果和历史证据，缩小到具体薄弱部分安排补充讲解或练习。一次成功也只支持本次主题、难度与条件下的保持，避免把局部表现升级为全领域掌握。
 
-## 流程
+更新原主题记录的复习结果和建议即可，不写 mastered 状态机。已有长期主题综合可以引用这次证据，但知识整理与能力判断分别维护。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+用户要求后续提醒或周期安排时使用实际可用的日历/自动化能力，并确认真实创建结果；仅写下建议日期不表示提醒已经设置。
 
-1. 用户明确指定 Lesson、Homework、Change 或 topic；按 review/来源索引只读取对应 sources、目标和到期的过去证据。没有真实间隔时只记录 `due_at`，不伪造通过。
-2. 在 Change 的 `review/INDEX.md` 和 `review/RV-<id>.md` 生成新复习记录。题目必须包含延迟回忆、机制/反例和新的迁移情境，不复制刚看过的示例。
-3. 原样保存回答并给出逐项证据；失败只生成补救范围和 `needs_review`，不删除历史、不改写 archived 原文。
-4. 只有通过真实延迟复习才设置 `mastery.retention=passed`、`mastery.overall=retention_verified`，仅更新当前 Change 的 retention 证据与状态投影。永久 context topic view 仍由 `<Path>{roots.workflows}/learning/learning-c-consolidate/SKILL.md</Path>` 通过原发布网关在用户确认后消费该证据并标记 `mastered`；R 不直接写 context，不自动激活 C 或 A。
-
-## 完成标准
-
-- 时间、来源、题目和回答可审计；
-- R 是可选 Work，H 的 immediate 评审可以结束当前学习轮次；
-- 周期复习失败保留原证据并建立新的补救 Change 或 note。
-
-## 子文件
-
-- Review 模板：`<Path>{roots.workflows}/learning/learning-r-review/assets/review-template.md</Path>`
-- Topic 状态规则：`<Path>{roots.workflows}/learning/common/skills/topic-synthesis/SKILL.md</Path>`
+交付本次证据、剩余误区与下次值得复查的内容；用户只需复习结果时不自动开启新课程或归档。

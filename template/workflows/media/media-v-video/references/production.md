@@ -1,17 +1,83 @@
-# 视频执行与验收
+# 视频源、时间线与本地渲染
 
-简单讲解用Canvas/HTML+CSS+SVG；字幕复用可选Remotion/HyperFrames；数学演示选Manim；复杂三维可选WebGL/Three.js；生成艺术可选p5.js并固定随机源。不整包安装工具合集，不为使用工具而增加复杂度。
+## 选择制作方式
 
-render_preview.py只处理已审查的本地HTML、完整brief与shot-plan。需要已有Node、Python Playwright、Chromium、FFmpeg/ffprobe，以及fc-match或shot-plan.font_files中明确的已审查字体文件；不会安装、下载、转录或调用模型。HTML只用离线内联资源，window.render(t)须确定且支持非顺序时间；浏览器拦截请求不等于任意代码沙箱。font_files只声明文件身份，HTML须已内联对应字体；系统字体记录请求family实际匹配文件，逐字形替代仍须观察。
+先复用项目已有剪辑或动画工程。HTML/CSS/SVG 适合文本、卡片、图表和界面式讲解；Canvas 或其他图形工具适合程序化画面；Remotion、Manim 或现有编辑器可以继续使用。制作方式由内容、可编辑性和实际可用工具决定，不强制所有视频转换为同一框架。
 
-实际CLI：python3 render_preview.py --brief BRIEF --plan PLAN --html HTML --output NEW_DIR --chromium CHROMIUM --mode preview --reviewed-html。路径先解析为明确本地路径。可先加 --check-inputs 只验当前CLI输入与输出位置；它不启动浏览器、不写产物，不代表已渲染。源码和安装目录均使用同一入口，不能以函数导入替代入口smoke。
+有旁白时用实际音频和已核对的文字组织镜头。字幕时间、停顿、音乐与转场需要在真实时间线上观察，不能由脚本文字长度推断同步已正确。需要前后段留白或补静音时明确说明，避免把没有旁白的时段包装成完整配音。
 
-先运行preview：每镜三张静帧、确定性检查、15–30秒预览。根据真实观测填写review-template v2，包含当前input_digest、execution_digest、实际preview/stills字节摘要、逐项检查和至少8/10自评。render-report v2记录渲染器和共享工具代码摘要、Python/Node/Playwright/Chromium/FFmpeg/ffprobe身份、平台与字体文件身份。final模式重新计算两类摘要并核对真实媒体才渲染；输出目录须不存在，不覆盖旧产物，失败保留report。旧报告保留历史含义，不能补写新版通过。
+## HTML 时间线
 
-final报告另记录实际review文件摘要及其预览摘要，并在编码结束重读review防漂移。artifacts.json中final依赖渲染report，report依赖当前review、brief、plan和HTML/素材；review作为原V-owned报告保存。交付检查能追到实际审核文件，不把报告中的一句“已审核”当成文件存在证明。
+本目录提供 [独立渲染器](../scripts/render_preview.py) 与 [可运行两秒样例](../examples/timeline.html)。HTML 应定义 `window.render(t)`，其中 `t` 为从零开始的秒数；函数可以返回 Promise，渲染器会等待它。
 
-输入变化重验依赖这些输入的产物；执行器、字体或工具链变化要求在新环境重做预览和相关技术/视觉审核。该环境变化本身不撤销仍绑定同一内容/账号/媒体字节的用户内容批准；新渲染媒体字节变化后，P按现有规则重新取得对应批准。技术review不能代替人工批准，也不能用自动8分绕过新环境审核。
+每次调用按绝对时间设置全部变化属性，让任意顺序的时间跳转得到相同画面。使用 `t` 推导动画，不依赖连续调用次数、真实时钟、未固定的随机数或持续运行的 CSS 动画。需要 CSS/Web Animations 时暂停动画并从 `t` 设置进度。涉及视频素材时，在 `render(t)` 中等待相应帧真正就绪。
 
-维护者的真实入口回归位于 `<Path>{roots.workflows}/media/common/tests/test_media_render.mjs</Path>`：临时离线夹具、实际Python CLI、编码和读回报告，不自动生成质量review。MEDIA_RENDER_REQUIRED=1使缺依赖成为失败；MEDIA_RENDER_PYTHON和MEDIA_RENDER_CHROMIUM指定已有工具，MEDIA_WORKFLOW_ROOT可指向安装后的media目录。默认缺浏览器明确skip实际渲染，不能计为渲染通过。
+字体、图片、脚本和样式使用本地相对资源或内嵌内容；渲染期间不加载远程资源。先查看要执行的源，这个工具用于可信本地工程，不是运行陌生 HTML 的安全沙箱。它不会使用已登录的浏览器资料。
 
-技术报告仅证明截帧/编码/探测，不能自动给视觉8分。spoken音画同步需要实际听看；silent的明确选择不能被描述为通过了语音同步测试。交付工程、分镜、静帧、自检、preview与最终媒体；无工具就标未渲染。
+## 依赖
+
+需要 Python 3.10+、Python Playwright、Chromium，以及提供 H.264/AAC 编码的 FFmpeg 与 ffprobe。使用的 Playwright 基础 API 可在 1.40+ 使用；仓库的真实产物验证固定安装 1.55.0。渲染脚本本身不安装软件或下载浏览器，依赖准备由所处环境完成。
+
+在合适的 Python 环境中可以安装：
+
+```bash
+python -m pip install playwright==1.55.0
+python -m playwright install chromium
+```
+
+Linux 缺系统依赖时，按环境权限使用 Playwright 官方的 `install --with-deps chromium`，并通过系统包管理器准备 FFmpeg。已有 Chromium 可用 `--chromium /path/to/chromium` 指定。安装位置与依赖隔离沿用当前项目约定。
+
+API 依据：[Playwright Page](https://playwright.dev/python/docs/api/class-page)、[BrowserContext](https://playwright.dev/python/docs/api/class-browsercontext)；固定依赖：[Playwright 1.55.0](https://pypi.org/project/playwright/1.55.0/)。
+
+## 调用
+
+从本 Work 目录执行，`--output` 必须是尚不存在的位置：
+
+```bash
+python scripts/render_preview.py \
+  --html examples/timeline.html \
+  --output /tmp/speculo-video-example \
+  --duration 2 --width 640 --height 360 --fps 24
+```
+
+为实际项目指定自己的源、尺寸、时长和音频：
+
+```bash
+python scripts/render_preview.py \
+  --html /path/to/project/video.html \
+  --output /path/to/project/renders/revision-2 \
+  --duration 48 --width 1080 --height 1920 --fps 30 \
+  --audio /path/to/project/narration.wav \
+  --sample-times 0,8,16,24,32,40,47.9
+```
+
+| 参数或产物 | 行为 |
+| --- | --- |
+| `--duration`、`--fps` | 以整帧覆盖所需时长；实际时长为向上取整的帧数除以帧率，报告同时记录请求与实际值 |
+| `--width`、`--height` | 输出画面尺寸；H.264 `yuv420p` 要求正偶数 |
+| `--audio` | 使用实际音频流；短音频尾部补静音，长音频截到画面时长；未提供时输出无声视频 |
+| `--sample-times` | 自选关键静帧及回放检验时间；默认开头、中间、最后一帧，不要求固定每镜三张 |
+| `--keep-frames` | 另外保留全部逐帧 PNG；默认只保留所选静帧与 MP4，清理编码用临时帧 |
+| `--check-inputs` | 检查普通参数、路径、真实音频与依赖；不启动浏览器、不写产物、不声称已渲染 |
+| `preview.mp4`、`stills/*.png` | 实际编码的视频与采样图；文件名不代表质量验收或发布批准 |
+| `render-report.json` | 本次技术事实：源和已观察本地资源的哈希、参数、采样回放结果、工具版本和 ffprobe 结果；不是业务状态文件 |
+
+只要短预览就给较短时长；要完整成片就给完整时长与源。无需额外的 `brief.json`、`video-plan.json`、`--mode final`、评分或审批摘要。内容要求与分镜可以留在已有创作记录中，不作为这个工具的强制输入。
+
+## 工具验证与人工观察
+
+渲染器等待字体和图像，检查采样时间的 A→B→A 回放，拒绝页面错误和失败资源，验证实际编码尺寸、时长与音频存在性，并检查观察到的本地输入是否改变。这些检查不证明所有时间都确定，也不判断讲解、字幕、字体回退或审美质量。
+
+实际打开静帧与视频，检查镜头边界、长文字、遮挡、黑屏、素材、节奏和声音；对照实际旁白确认音画同步。源或素材改变后，旧结果不能证明新输出已通过。失败可能留下本次新建目录里的部分产物；它们不具有成功报告，不作为完整成片交付。
+
+## 真实产物验证入口
+
+从本 Work 目录运行：
+
+```bash
+python scripts/verify_render.py --output /tmp/speculo-render-verification
+```
+
+它经真实 CLI 渲染两段两秒视频（一段无声、一段带音频），独立检查 PNG 尺寸、帧变化、24 帧视频、时长、可完整解码的音视频和非静音样本；还验证本地 CSS、任意时间回放、缺失时间线、远程资源失败及不覆盖原目录。保留的产物可用于实际查看。
+
+只有 Python 与 ffprobe 时可以运行 `python scripts/verify_render.py --inputs-only`。这个模式检查真实音频探测、输入错误与不覆盖行为，明确不包含 PNG/MP4 渲染验证；不能把它报告为完整渲染通过。

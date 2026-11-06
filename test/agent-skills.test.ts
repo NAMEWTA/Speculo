@@ -10,11 +10,13 @@ import { doctorSpeculo } from '../src/doctor.js';
 import { fingerprintTree } from '../src/manifest.js';
 const packageRoot=process.cwd();
 async function fixture(fn:(target:string)=>Promise<void>){const target=await mkdtemp(join(tmpdir(),'speculo-projections-'));try{await fn(target);}finally{await rm(target,{recursive:true,force:true});}}
-test('catalog: exactly five domains, 39 works and nine commands with unique identities',async()=>{
+test('catalog: domain routers, independent Works and commands have unique usable identities',async()=>{
  const {assets}=await readAssetCatalog(join(packageRoot,'template'));
- assert.equal(assets.filter(a=>a.kind==='domain-skill').length,5);
- assert.equal(assets.filter(a=>a.kind==='work-skill').length,39);
- assert.equal(assets.filter(a=>a.kind==='command').length,9);
+ assert.equal(assets.filter(a=>a.kind==='domain-skill').length,4);
+ assert.equal(assets.filter(a=>a.kind==='command').length,8);
+ for(const id of ['specdev/implement','specdev/prototype','specdev/project-deploy','specdev/environment-setup','learning/lesson','media/video','person/steelman-deliberation']) {
+  assert.equal(assets.find(asset=>asset.id===id)?.kind,'work-skill',id);
+ }
  for(const asset of assets.filter(a=>a.kind!=='command')){
   const source=await readFile(join(packageRoot,'template',asset.entry));
   for(const host of ['agents','claude'] as const){
@@ -23,14 +25,14 @@ test('catalog: exactly five domains, 39 works and nine commands with unique iden
    assert.deepEqual(validateSkill(body,asset.name),[]);
    const link=/\]\(([^)]+)\)/.exec(body)![1];
    assert.equal(resolve(dirname(join(packageRoot,p)),link),join(packageRoot,'.agents','speculo',asset.entry));
-   assert.match(body,/必须先读取/);
+   assert.match(body,/完整说明/);
   }
  }
 });
 test('YAML: multiline, Unicode, quotes and CRLF are preserved verbatim',()=>{
  const source='---\r\nname: sample\r\ndescription: >-\r\n  多行 "引用"\r\n  下一行\r\nmetadata:\r\n  key: "值"\r\n---\r\n\r\n# Source\r\n';
  assert.deepEqual(validateSkill(source,'sample'),[]);
- const asset={id:'domain/sample',kind:'domain-skill' as const,name:'sample',entry:'workflows/sample/SKILL.md',description:'unused',stages:[]};
+ const asset={id:'domain/sample',kind:'domain-skill' as const,name:'sample',entry:'workflows/sample/SKILL.md',description:'unused'};
  const output=renderSkillPointer(asset,Buffer.from(source),'agents')['.agents/skills/sample/SKILL.md'];
  assert.equal(parseFrontmatter(output).raw,parseFrontmatter(source).raw);
  for(const invalid of [source.replace('name: sample','name: Sample'),source.replace('metadata:','workflow: private\r\nmetadata:'),source.replace('key: "值"','key: 5'),source.replace('metadata:','name: sample\r\nmetadata:')])assert.ok(validateSkill(invalid,'sample').length);
@@ -148,15 +150,41 @@ test('unknown capabilities stop before commit and clean staging without changing
  for(const name of ['.speculo-transactions','.speculo-install.lock'])await assert.rejects(readdir(join(target,'.agents',name)),/ENOENT/);
 }));
 test('default installation does not create a Skill discovery directory',()=>fixture(async target=>{
- await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']}});
  assert.ok(!(await readdir(join(target,'.agents'))).includes('skills'));
  const doctor=await doctorSpeculo(target);assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
  assert.ok(doctor.notChecked.includes('host-skill-invocation'));
 }));
-test('all projections cover both hosts and exceed the old 64-record limit',()=>fixture(async target=>{
- const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning','media','ops','person','specdev']},skills:{mode:'all'},skillTargets:['agents','claude']});
- assert.equal(result.exposure.projected,106);assert.deepEqual(result.warnings,[]);
- const manifest=await readProjectionManifest(target);assert.equal(manifest?.files.length,115);
+test('individual Works can be exposed on either host without exposing their domain router',()=>fixture(async target=>{
+ const ids=['specdev/implement','specdev/project-deploy'];
+ const catalog=await readAssetCatalog(join(packageRoot,'template'));
+ const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:ids},skillTargets:['agents','claude']});
+ assert.deepEqual(result.exposure.assetIds,ids);
+ for(const host of ['agents','claude']) {
+  assert.deepEqual((await readdir(join(target,`.${host}/skills`))).sort(),['specdev-d-project-deploy','specdev-i-implement']);
+  for(const id of ids) {
+   const asset=catalog.assets.find(asset=>asset.id===id)!;
+   const pointer=join(target,`.${host}/skills/${asset.name}/SKILL.md`);
+   const link=/\]\(([^)]+)\)/.exec(await readFile(pointer,'utf8'))![1];
+   const source=resolve(dirname(pointer),link);
+   assert.equal(source,join(target,'.agents/speculo',asset.entry));
+   assert.deepEqual(await readFile(source),await readFile(join(packageRoot,'template',asset.entry)));
+  }
+ }
+ await initSpeculo(target,{packageRoot,skills:{mode:'keep'}});
+ assert.deepEqual((await readProjectionManifest(target))?.asset_ids,ids);
+ const domain=await initSpeculo(target,{packageRoot,skills:{mode:'set',assetIds:['domain/specdev']}});
+ assert.deepEqual(domain.exposure.assetIds,['domain/specdev']);
+ for(const host of ['agents','claude'])assert.deepEqual(await readdir(join(target,`.${host}/skills`)),['specdev']);
+ // On-demand Work sources remain available behind the router after their pointers are removed.
+ assert.deepEqual(await readFile(join(target,'.agents/speculo/workflows/specdev/specdev-i-implement/SKILL.md')),await readFile(join(packageRoot,'template/workflows/specdev/specdev-i-implement/SKILL.md')));
+ assert.equal((await doctorSpeculo(target)).healthy,true);
+}));
+test('all domain, Work and command projections cover both hosts',()=>fixture(async target=>{
+ const {assets}=await readAssetCatalog(join(packageRoot,'template'));
+ const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning','media','person','specdev']},skills:{mode:'all'},skillTargets:['agents','claude']});
+ assert.equal(result.exposure.projected,assets.length*2);assert.deepEqual(result.warnings,[]);
+ const manifest=await readProjectionManifest(target);assert.equal(manifest?.files.length,assets.length*2+assets.filter(asset=>asset.kind==='command').length);
  const standard=await readFile(join(target,'.agents/skills/speculo-project-maintenance/SKILL.md'),'utf8');assert.doesNotMatch(standard,/disable-model-invocation/);
  assert.match(await readFile(join(target,'.agents/skills/speculo-project-maintenance/agents/openai.yaml'),'utf8'),/allow_implicit_invocation: false/);
  assert.match(await readFile(join(target,'.claude/skills/speculo-project-maintenance/SKILL.md'),'utf8'),/disable-model-invocation: true/);
@@ -166,20 +194,20 @@ test('all projections cover both hosts and exceed the old 64-record limit',()=>f
  assert.equal(await fingerprintTree(join(target,'.agents/skills')),before);
 }));
 test('unmanaged collision only blocks that projection, preserving source installation and siblings',()=>fixture(async target=>{
- const file=join(target,'.agents/skills/specdev-i-implement/SKILL.md');await mkdir(dirname(file),{recursive:true});await writeFile(file,'user owned');
- const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:['specdev/implement','specdev/code-review']}});
+ const file=join(target,'.agents/skills/specdev/SKILL.md');await mkdir(dirname(file),{recursive:true});await writeFile(file,'user owned');
+ const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:['domain/specdev','command/status']}});
  assert.equal(result.warnings.length,1);assert.equal(result.exposure.projected,1);
- assert.equal(await readFile(file,'utf8'),'user owned');await readFile(join(target,'.agents/speculo/workflows/specdev/specdev-i-implement/SKILL.md'));
+ assert.equal(await readFile(file,'utf8'),'user owned');await readFile(join(target,'.agents/speculo/workflows/specdev/SKILL.md'));
  assert.equal((await doctorSpeculo(target)).healthy,false);
 }));
 test('edited projection refreshes, explicit disable removes only owned files',()=>fixture(async target=>{
- await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning']},skills:{mode:'set',assetIds:['learning/lesson','learning/goal']}});
- const edited=join(target,'.agents/skills/learning-l-lesson/SKILL.md');await writeFile(edited,'edited');
- const kept=await initSpeculo(target,{packageRoot});assert.equal(kept.warnings.length,0);assert.match(await readFile(edited,'utf8'),/权威入口/);
- const sibling=join(target,'.agents/skills/learning-g-goal/user.txt');await writeFile(sibling,'keep');
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['learning']},skills:{mode:'set',assetIds:['domain/learning','command/handoff']}});
+ const edited=join(target,'.agents/skills/learning/SKILL.md');await writeFile(edited,'edited');
+ const kept=await initSpeculo(target,{packageRoot});assert.equal(kept.warnings.length,0);assert.match(await readFile(edited,'utf8'),/完整说明/);
+ const sibling=join(target,'.agents/skills/speculo-handoff/user.txt');await writeFile(sibling,'keep');
  const removed=await initSpeculo(target,{packageRoot,skills:{mode:'none'}});assert.equal(removed.warnings.length,0);
  assert.equal(await readFile(sibling,'utf8'),'keep');await assert.rejects(readFile(edited),/ENOENT/);
- await assert.rejects(readFile(join(target,'.agents/skills/learning-g-goal/SKILL.md')),/ENOENT/);
+ await assert.rejects(readFile(join(target,'.agents/skills/speculo-handoff/SKILL.md')),/ENOENT/);
 }));
 for(const phase of ['skills-applying','skills-projected','external-finalized'] as const)test(`projection rollback at ${phase}`,()=>fixture(async target=>{
  await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
@@ -189,10 +217,12 @@ for(const phase of ['skills-applying','skills-projected','external-finalized'] a
  const doctor=await doctorSpeculo(target);assert.equal(doctor.healthy,true,JSON.stringify(doctor.checks.filter(c=>!c.ok)));
 }));
 
-test('rollback restores both hosts after all 115 projection files were applied',()=>fixture(async target=>{
+test('rollback restores both hosts after every projection file was applied',()=>fixture(async target=>{
+ const {assets}=await readAssetCatalog(join(packageRoot,'template'));
+ const expectedFiles=assets.length*2+assets.filter(asset=>asset.kind==='command').length;
  await initSpeculo(target,{packageRoot,selection:{workflowIds:[]}});
  const before=await fingerprintTree(join(target,'.agents/speculo'));
- await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:['learning','media','ops','person','specdev']},skills:{mode:'all'},skillTargets:['agents','claude'],transactionHook:async phase=>{if(phase==='skills-projected'){assert.equal((await readProjectionManifest(target))?.files.length,115);throw Error('full-projection-fault');}}}),/full-projection-fault/);
+ await assert.rejects(initSpeculo(target,{packageRoot,selection:{workflowIds:['learning','media','person','specdev']},skills:{mode:'all'},skillTargets:['agents','claude'],transactionHook:async phase=>{if(phase==='skills-projected'){assert.equal((await readProjectionManifest(target))?.files.length,expectedFiles);throw Error('full-projection-fault');}}}),/full-projection-fault/);
  assert.equal(await fingerprintTree(join(target,'.agents/speculo')),before);
  for(const host of ['agents','claude'])assert.deepEqual(await readdir(join(target,`.${host}/skills`)),[]);
  assert.equal((await doctorSpeculo(target)).healthy,true);
@@ -232,19 +262,15 @@ test('refresh rejects string schemas and malformed version suffixes without repl
  }
 }));
 
-test('renaming an owned Work never adopts an existing unowned destination directory',()=>fixture(async target=>{
- const staged=join(target,'stage'),entry='sample-a-next/SKILL.md',oldPath='.agents/skills/sample-a-first/SKILL.md';
- for(const p of ['stage/workflows/sample/sample-a-next','stage/commands','stage/.speculo','.agents/speculo/.speculo','.agents/skills/sample-a-first','.agents/skills/sample-a-next'])await mkdir(join(target,p),{recursive:true});
- const header=(name:string,kind:string,id:string)=>`---\nname: ${name}\ndescription: Sample\nmetadata:\n  speculo-kind: ${kind}\n  speculo-id: ${id}\n  speculo-domain: sample\n  speculo-contract-version: "2"\n---\n`;
- await writeFile(join(staged,'commands/manifest.json'),JSON.stringify({schema_version:1,commands:[]}));
- await writeFile(join(staged,'workflows/sample/manifest.json'),JSON.stringify({schema_version:2,id:'sample',version:'1.0.0',entry:'SKILL.md',persistent_knowledge:[],stages:[{id:'run',after:[],inputs:['request'],outputs:['report'],risk:'read-only',context_budget:1000}],works:[entry],work_stages:{[entry]:[]}}));
- await writeFile(join(staged,'workflows/sample/SKILL.md'),header('sample','domain-skill','domain/sample'));
- await writeFile(join(staged,'workflows/sample',entry),header('sample-a-next','work-skill','sample/run'));
- await writeFile(join(target,oldPath),'owned');await writeFile(join(target,'.agents/skills/sample-a-next/user.txt'),'preserve');
- await writeFile(join(target,'.agents/speculo/.speculo/projections.json'),JSON.stringify({schema_version:3,package_version:'2.0.0',targets:['agents'],asset_ids:['sample/run'],files:[{path:oldPath,asset_id:'sample/run',sha256:sha256Buffer('owned')}]}));
- const plan=await planSkillProjection({target,stagedRoot:staged,packageVersion:'2.0.0',exposure:{targets:['agents'],assetIds:['sample/run']}});
+test('a changed projection location never adopts an unowned destination directory',()=>fixture(async target=>{
+ const staged=join(target,'stage'),oldPath='.agents/skills/old-sample/SKILL.md';
+ for(const p of ['stage/workflows/sample','stage/commands','stage/.speculo','.agents/speculo/.speculo','.agents/skills/old-sample','.agents/skills/sample'])await mkdir(join(target,p),{recursive:true});
+ await writeFile(join(staged,'workflows/sample/SKILL.md'),'---\nname: sample\ndescription: Sample\n---\n');
+ await writeFile(join(target,oldPath),'owned');await writeFile(join(target,'.agents/skills/sample/user.txt'),'preserve');
+ await writeFile(join(target,'.agents/speculo/.speculo/projections.json'),JSON.stringify({schema_version:3,package_version:'2.0.0',targets:['agents'],asset_ids:['domain/sample'],files:[{path:oldPath,asset_id:'domain/sample',sha256:sha256Buffer('owned')}]}));
+ const plan=await planSkillProjection({target,stagedRoot:staged,packageVersion:'3.0.0',exposure:{targets:['agents'],assetIds:['domain/sample']}});
  assert.equal(plan.warnings.length,1);assert.equal(plan.records,null);
- assert.equal(await readFile(join(target,oldPath),'utf8'),'owned');assert.equal(await readFile(join(target,'.agents/skills/sample-a-next/user.txt'),'utf8'),'preserve');
+ assert.equal(await readFile(join(target,oldPath),'utf8'),'owned');assert.equal(await readFile(join(target,'.agents/skills/sample/user.txt'),'utf8'),'preserve');
 }));
 
 for(const conflict of ['hardlink','readonly','junction'] as const)test(`owned projection ${conflict} conflict preserves unrelated files`,()=>fixture(async target=>{
@@ -258,7 +284,7 @@ for(const conflict of ['hardlink','readonly','junction'] as const)test(`owned pr
   const result=await initSpeculo(target,{packageRoot,selection:{workflowIds:[]},skills:request});
   assert.equal(result.warnings.length,1);assert.deepEqual(await readFile(file),original);
   if(conflict==='hardlink')assert.deepEqual(await readFile(external),original);
-  assert.ok((await readFile(join(target,'.agents/skills/speculo-status/SKILL.md'),'utf8')).includes('权威入口'));
+  assert.ok((await readFile(join(target,'.agents/skills/speculo-status/SKILL.md'),'utf8')).includes('完整说明'));
  }finally{if(conflict==='readonly')await chmod(file,0o644);}
 }));
 
@@ -275,28 +301,28 @@ test('current command identities have no aliases and refresh preserves retired r
  await assert.rejects(initSpeculo(target,{packageRoot,skills:{mode:'set',assetIds:['command/docs-sync']}}),/unknown|unavailable|not installed|未知|不存在|blocked/i);
 }));
 
-test('twelve selected entries repair thirteen mode-only drifts and remain idempotent', {skip:process.platform==='win32'},()=>fixture(async target=>{
- const assetIds=['command/handoff',...['archive-and-consolidate','code-review','diagnose-bugs','grill-with-docs','implement','learn','prototype','retro','spec','tickets','triage'].map(id=>`specdev/${id}`)];
+test('selected entries repair mode-only drift and remain idempotent', {skip:process.platform==='win32'},()=>fixture(async target=>{
+ const assetIds=['command/handoff','domain/specdev'];
  await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds}});
  const manifest=(await readProjectionManifest(target))!;
- assert.equal(manifest.files.length,13);
+ assert.equal(manifest.files.length,3);
  for(const file of manifest.files)await chmod(join(target,file.path),0o664);
- assert.equal((await doctorSpeculo(target)).checks.filter(c=>!c.ok&&c.id.startsWith('projection-file:')).length,13);
+ assert.equal((await doctorSpeculo(target)).checks.filter(c=>!c.ok&&c.id.startsWith('projection-file:')).length,3);
  const refreshed=await initSpeculo(target,{packageRoot});
- assert.deepEqual(refreshed.warnings,[]);assert.equal(refreshed.projections.agents.ready,12);assert.equal(refreshed.projections.agents.updated,12);
+ assert.deepEqual(refreshed.warnings,[]);assert.equal(refreshed.projections.agents.ready,2);assert.equal(refreshed.projections.agents.updated,2);
  assert.equal((await doctorSpeculo(target)).healthy,true);
  const again=await initSpeculo(target,{packageRoot});assert.equal(again.projections.agents.updated,0);
 }));
 
 test('missing pointers and corrupted workflow discovery files repair without changing runtime bytes',()=>fixture(async target=>{
- await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:['command/handoff','specdev/implement']}});
+ await initSpeculo(target,{packageRoot,selection:{workflowIds:['specdev']},skills:{mode:'set',assetIds:['command/handoff','domain/specdev']}});
  const root=join(target,'.agents/speculo'),state=join(root,'.speculo/specdev');
  for(const name of ['adr/local.md','changes/local/evidence.bin','context/local.md','history/local.md']){
   const path=join(state,name);await mkdir(dirname(path),{recursive:true});await writeFile(path,Buffer.from([0,255,42,10]));await chmod(path,0o600);
  }
  const before=await fingerprintTree(state);
- for(const name of ['workflows/specdev/SKILL.md','workflows/specdev/manifest.json','commands/handoff/COMMAND.md'])await writeFile(join(root,name),'broken local method');
- await rm(join(root,'workflows/specdev/specdev-i-implement/SKILL.md'));
+ for(const name of ['workflows/specdev/SKILL.md','commands/handoff/COMMAND.md'])await writeFile(join(root,name),'broken local method');
+ await rm(join(root,'workflows/specdev/SKILL.md'));
  for(const file of (await readProjectionManifest(target))!.files)await rm(join(target,file.path));
  const result=await initSpeculo(target,{packageRoot});
  assert.deepEqual(result.warnings,[]);assert.equal(result.projections.agents.ready,2);
