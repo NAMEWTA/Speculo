@@ -19,7 +19,7 @@ importers:
         version: 7.0.1
       semver:
         specifier: ^7.8.5
-        version: 7.8.5
+        version: 7.8.6
       string-width:
         specifier: 8.3.0
         version: 8.3.0
@@ -107,9 +107,9 @@ packages:
       integrity: sha512-GhAsW4iJS0xNqv8P6HocT3gb5HCKHtEBKLIN7fE2oWr27jGIEihu48lXyGGeexkbiLv1XAbwyXvgjYMfT81kZA==
     engines:
       node: ^22.22.2 || ^24.15.0 || >=26.0.0
-  semver@7.8.5:
+  semver@7.8.6:
     resolution:
-      integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==
+      integrity: sha512-9lpSSU4Mly3mrtruwLs1eLK6+gzbzqeBFwRNjIjE+9LuDpWdYctrQlQ3ej1Ilgi7gknpsTRnPoLP8DpCHqHIJw==
     engines:
       node: ">=10"
     hasBin: true
@@ -199,7 +199,7 @@ snapshots:
   path-key@3.1.1: {}
   picocolors@1.1.1: {}
   read-cmd-shim@7.0.1: {}
-  semver@7.8.5: {}
+  semver@7.8.6: {}
   shebang-command@2.0.0:
     dependencies:
       shebang-regex: 3.0.0
