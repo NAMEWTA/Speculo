@@ -1,70 +1,76 @@
 # Speculo
 
-Reusable methods for software development, learning, operations, decisions and content creation, used by your current AI app or CLI. Speculo provides readable Skills, explicit Commands and recoverable project artifacts. The current Agent chooses direct work, ordinary parallel tools or useful delegation within actual capabilities and authorization. Explicit user instructions and approved execution choices take precedence.
+A reusable library of AI workflows, task skills and durable project knowledge.
 
-[中文说明](README-ZH.md) · **[User manual (中文)](docs/README.md)** · [Getting started (中文)](docs/getting-started.md) · [All capabilities](docs/capabilities.md) · [Troubleshooting](docs/troubleshooting.md)
+Speculo helps an existing AI assistant carry work from a requirement to a verified delivery. Domain entries point to the relevant Work skills; each Work keeps the practical knowledge needed for that task. The model chooses the route, while useful decisions and results remain readable outside the conversation.
 
-## Get started
+[中文](README-ZH.md) · [Quick start](docs/getting-started.md) · [Capabilities](docs/capabilities.md) · [Workflow and persistence](docs/workflow.md) · [CLI](docs/cli.md)
 
-Requires Node.js `>=22.22.3 <25`. Run in the project where you want to use Speculo:
+## Start
+
+Requires Node.js `>=22.22.3 <25`.
 
 ```bash
 npm install -g @namewta/speculo
-speculo init . --workflows specdev,learning --skill-targets agents --skills domain/specdev,domain/learning
+speculo init . --workflows specdev --skill-targets agents --skills domain/specdev
 speculo doctor .
 ```
 
 Then ask your AI:
 
-```text
-Read this project's AGENTS.md and use specdev/init-setup to inspect the project
-entry points and test commands. Keep this task read-only.
+> Use SpecDev to prepare the next release from these issues. Clarify the product decisions, show me a prototype where the interaction is uncertain, then implement and verify the agreed scope.
+
+Installing a domain includes its Work skills and references. Exposing only its domain entry keeps the host's skill list small; the agent follows the relevant links when needed. You can also expose a particular Work directly:
+
+```bash
+speculo init . --workflows specdev --skill-targets agents --skills domain/specdev,specdev/prototype,specdev/implement
 ```
 
-For all domains and public entries, use `--workflows all --skills all`. Use `--skill-targets claude` for hosts reading `.claude/skills/`, or `--skill-targets agents,claude` to expose the same selection in both locations. Installation, host exposure and execution are separate steps. See the [walkthrough](docs/getting-started.md) and [CLI reference](docs/cli.md).
+Use `--skill-targets claude` for `.claude/skills/`, or `agents,claude` for both. `--skills all` explicitly exposes all installed entries. Interactive `speculo init` offers the available choices. Speculo installs instructions and resources; the host supplies the model, tools and permissions.
 
-The installer shows **Skills Hub categories** and **Workflows** at the same level. Open a category to select its Skills, or toggle a Workflow directly; selections are kept when returning to the overview. Select full bundled packages with `--hub-skills automation/herdr,automation/orca`; both kinds share `--skill-targets`. Managed capabilities are refreshed from the running package, replacing local content and ordinary mode changes. Unchecking removes owned files; runtime data and user additions are preserved. Unowned collisions and unsafe filesystem nodes remain protected. The project receives only selected Hub packages.
+For this source branch, run `pnpm install --frozen-lockfile` and `pnpm build`, then replace `speculo` with `node dist/src/cli.js`. The branch's version is not an npm publication announcement.
 
+## Four domains, 39 independently usable Works
 
-Interactive starts check for CLI updates with a two-second network deadline. The prompt labels the current and latest versions and offers **Update now** or **Update later**. Updating a verified npm global or Volta installation resumes the original command with the new version; updating later continues immediately and reminds you next time. Scripts and machine-readable commands stay prompt-free. See [CLI updates](docs/cli.md#刷新与升级).
+| Domain | Work capabilities |
+| --- | --- |
+| [SpecDev](docs/workflows/specdev.md) · 21 | Intake, assessment, investigation, prototypes, specs, planning, tickets, implementation, diagnosis, code and architecture review, delivery, retrospectives, learning and archives; environment setup, connection, inventory, host management and deployment |
+| [Learning](docs/workflows/learning.md) · 9 | Learner context, assessment, goal planning, lessons, inquiry, practice, review, topic consolidation and archives |
+| [Media](docs/workflows/media.md) · 7 | Setup, briefs, reference deconstruction, hand-drawn visual prompts, video production, publication drafts and retrospectives |
+| [Person](docs/workflows/person.md) · 2 | Mao Zedong's investigation/practice/contradiction framework and steelman deliberation, with their distinct methods and source boundaries |
 
-## Workflow guides
+A **Work** is a reusable task capability, not a mandatory release gate. Domain `SKILL.md` files are small routers. Work `SKILL.md` files contain task-specific guidance and link to substantial references, examples or tools only when they help. Useful source libraries, design examples and media tools remain available on demand.
 
-Five domains contain 39 Works. Each guide explains every Work's purpose, use cases, inputs, outputs, example requests and next steps. The detailed manual is currently in Chinese.
+There are no workflow manifests, fixed worker roles, dispatch protocols, task DAGs, required handoff forms or business-status schema validators. Planning and decomposition remain useful capabilities; the model selects their depth for the actual task. See the [capability-by-capability refactor map](docs/refactor-map.md).
 
-| Domain | Works | What it covers |
-|---|---:|---|
-| [SpecDev — software development](docs/workflows/specdev.md) | 16 | Discovery, specifications, prototypes, tickets, goals, implementation, reviews, diagnosis and delivery |
-| [Learning](docs/workflows/learning.md) | 9 | Course planning, complete lessons, tutor questions, exploration, homework, review and consolidation |
-| [OPS — operations and deployment](docs/workflows/ops.md) | 5 | Controller setup, trusted server access, host environments, project deployment and offline inventory |
-| [Person — analysis and decisions](docs/workflows/person.md) | 2 | Two-sided steelman deliberation and a dedicated diagnostic, strategic and action-planning method |
-| [Media — content creation](docs/workflows/media.md) | 7 | Briefs, reference analysis, visual prompts, video, local drafts and evidence-based retrospectives |
+## Durable knowledge without form filling
 
-Enter the Work you need; there is no mandatory end-to-end sequence. Complete approved Specs and Ready Tickets can enter implementation directly. Execution method and current/worktree selection remain independent. See the [workflow comparison](docs/workflows/README.md).
+The usual software flow is requirements → assessment → optional prototype → spec → optional decomposition → implementation and review → release/deployment → consolidation and archive.
 
-Short synchronous read-only delegation can return correlated results inline. Work that needs recovery or audit keeps only TASK.md and REPORT.md; a confirmed session log path may appear as an optional Session log line in the report. The host, an external CLI, Herdr and Orca follow the same rule. See [agent handoffs](docs/agent-handoffs.md) (Chinese).
+Default project data lives under `.agents/speculo/.speculo/`:
 
-## Commands by category
+| Location | Useful content |
+| --- | --- |
+| `releases/<name>/README.md` | Source links, scope, spec, decisions, progress, actual results and next action |
+| `knowledge/adr/` | Important decisions, alternatives and lasting reasons |
+| `knowledge/context/` | Current background that code and configuration do not explain |
+| `knowledge/error/` | Proven causes, repairs and reusable prevention |
+| `knowledge/design/` | Current design, including HTML, components, stories, tokens and images |
+| `environments/<target>.md` | Known target, deployment procedure, data effects, health check and recovery |
+| `archive/<name>/` | Historical delivery records and their adopted versions |
 
-The nine Commands are explicit requests to an AI, not `speculo <command>` terminal subcommands.
+Create these only when there is something worth keeping. Existing project locations take precedence. A single release record usually suffices; a small fix may need only its issue or PR. Large specs or independent slices may use additional linked files. Current design lives outside a release record, which references the version used for that delivery.
 
-| Category | Guides |
-|---|---|
-| [Navigation and handoff](docs/commands/README.md#navigation) | [coordination-init](docs/commands/coordination-init.md), [status](docs/commands/status.md), [handoff](docs/commands/handoff.md) |
-| [Documentation and knowledge](docs/commands/README.md#documentation) | [project-maintenance](docs/commands/project-maintenance.md): docs, knowledge and archive |
-| [Git analysis and history](docs/commands/README.md#git) | [git-repository-audit](docs/commands/git-repository-audit.md), [git-history-squash](docs/commands/git-history-squash.md), [upstream-assess](docs/commands/upstream-assess.md) |
-| [Source exchange and feedback](docs/commands/README.md#exchange) | [source-code-zip](docs/commands/source-code-zip.md), [speculo-feedback](docs/commands/speculo-feedback.md) |
+## Commands and utility skills
 
-## Data, permissions and portable use
+Eight explicit AI commands cover status, handoff, project maintenance, repository audit, history consolidation, upstream assessment, source ZIPs and Speculo feedback. They are requests to the AI, not terminal subcommands. See the [command guide](docs/commands/README.md).
 
-Authoritative methods install into `.agents/speculo/`; runtime data lives in `.agents/speculo/.speculo/`. Optional host projections live in `.agents/skills/` and `.claude/skills/`. Existing user instructions, third-party Skills and edited files retain their ownership. See [concepts and invocation](docs/concepts.md).
+The [Skills Hub](docs/capabilities.md#skills-hub) contains 15 optional complete packages. Their specialized API, system, teaching, writing, image and document-rendering capabilities are retained. Installation does not execute their tools.
 
-Discovery and installation do not authorize commits, pushes, publishing, deployment or archival moves. Existing scoped authorization is reused; additional effects follow their owning entry. Speculo does not provide a model runner, sandbox or persistent orchestration service.
+## Installation and upgrade
 
-Ordinary SpecDev Works also support [direct use with explicit project, method and data roots](docs/workflows/specdev.md#不安装-cli-时如何使用). Browser-only AI environments can use [12 standalone Canonical documents](docs/canonical.md). For refresh and failures, see [CLI usage](docs/cli.md) and [transaction recovery](docs/transaction-recovery.md).
+Methods live in `.agents/speculo/`; host entries optionally live in `.agents/skills/` and `.claude/skills/`. Refresh preserves user records and unowned additions. Installation ownership, path checks, staging, drift detection and recovery remain deterministic code.
 
-## Project and maintenance
+v3 combines Ops into SpecDev and simplifies the instruction format. Existing Work capabilities remain; old Ops selections map to their SpecDev successors. Business records are preserved without being parsed against the retired protocols. See [upgrade notes](docs/upgrade-v3.md) and [transaction recovery](docs/transaction-recovery.md).
 
-[Architecture](docs/architecture.md) · [Contributor guide](docs/contributing.md) · [Changelog](CHANGELOG.md) · [License](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.md)
-
-Repository package manager: `pnpm@11.1.3`. The current version is defined in [package.json](package.json). Documentation describes the current product and its use; one-off implementation reports belong outside the user manual.
+[Documentation](docs/README.md) · [Architecture](docs/architecture.md) · [Contributing](docs/contributing.md) · [Research](docs/research.md) · [Changelog](CHANGELOG.md) · [License](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.md)

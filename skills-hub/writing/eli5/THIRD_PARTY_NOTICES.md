@@ -1,8 +1,6 @@
-# 第三方来源
+# 来源与许可
 
-本包依据用户粘贴的Speculo学习协议及本对话可见内容重组，不是Speculo、Anthropic或其他研究机构的官方产品。格式和教学原则出处见references/methodology.md。
-
-Speculo来源：`https://github.com/NAMEWTA/Speculo`。上一轮可见的LICENSE内容标为MIT，copyright 2026 wta；本轮未重新取得仓库LICENSE，以下按对话中的授权文本保留。其他研究网页仅作概念性参考，未复制完整文章或其脚本。
+本技能从 Speculo 既有教学技能精简改写；保留其 MIT 许可。教学研究仅作概念参考，见 [教学参考](references/methodology.md)，没有复制研究文章或提供官方认证。
 
 ## Speculo — MIT License
 

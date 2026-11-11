@@ -1,6 +1,5 @@
 import { readAssetCatalog } from "./assets.js";
-import { readProjectCoordination } from "./coordination.js";
-import { locateProject, DEFAULT_ROOTS, INSTALL_ROOT } from "./paths.js";
+import { locateProject, INSTALL_ROOT } from "./paths.js";
 import { pathExists } from "./utils.js";
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -8,9 +7,8 @@ import { sha256File } from "./manifest.js";
 import { containedPath, safeRelativePath, validateWorkspace } from "./paths.js";
 import { readTransaction, LOCK_NAME } from "./transaction.js";
 import { inspectHubSkills } from "./hub-skills.js";
-import { retainedAssets, validateRetainedWorkflows } from "./workflow-install.js";
 import { inspectProjectedSkills } from "./agent-skills.js";
-import { validateCapabilityProfile } from "./contracts.js";
+import { isSupportedInstallVersion } from "./version.js";
 
 export type DoctorResult = {
   target: string; healthy: boolean; scope: "installation-integrity";
@@ -22,7 +20,7 @@ function record(value: unknown): value is Record<string, unknown> {
 }
 function nonempty(value: unknown): value is string { return typeof value === "string" && !!value.trim(); }
 function strings(value: unknown): value is string[] { return Array.isArray(value) && value.every(nonempty); }
-function version(value: unknown): value is string { return typeof value === "string" && /^2\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(value); }
+const version = isSupportedInstallVersion;
 
 export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
   let target = resolve(targetArg);
@@ -53,21 +51,13 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
       add("workspace-contract", true, "roots are complete, contained and match the installed layout");
     } catch (error) { add("workspace-contract", false, String(error)); }
   }
-  const capabilities = await json(".speculo/capabilities.json");
-  if (capabilities) {
-    try {
-      validateCapabilityProfile(capabilities);
-      add("capability-contract", true, "declared capability profile structurally valid (not a live probe)");
-    } catch (error) { add("capability-contract", false, String(error)); }
-  }
-
   const install = await json(".speculo/install.json");
   let workflows: string[] = [];
   if (install) {
     const ok = install.schema_version === 4 && version(install.package_version) && strings(install.workflows) &&
       install.workflows.every((id) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) && new Set(install.workflows).size === install.workflows.length &&
       install.managed_manifest === ".speculo/managed.json" && install.config_baseline_schema === 1;
-    add("install-contract", ok, ok ? "Speculo 2.x installation manifest valid" : "invalid installation manifest");
+    add("install-contract", ok, ok ? "Speculo installation manifest valid" : "invalid installation manifest");
     if (ok) workflows = install.workflows as string[];
   }
   const managed = await json(".speculo/managed.json");
@@ -93,22 +83,14 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
       add("managed-integrity", !checks.some((c) => !c.ok && /^(managed-entry|managed-file:|managed-required:)/.test(c.id)), `verified ${seen.size} declared files; runtime evidence is not overwritten`);
     }
   }
-  for (const workflow of workflows) {
-    const manifest = await json(`workflows/${workflow}/manifest.json`), contract = await json(`workflows/${workflow}/runtime-contract.json`);
-    try {
-      await readFile(await containedPath(target, `${INSTALL_ROOT}/workflows/${workflow}/SKILL.md`));
-      const ok = manifest?.schema_version === 2 && manifest.id === workflow && Array.isArray(manifest.stages) && contract?.schema_version === 1 && contract.workflow === workflow;
-      add("workflow:" + workflow, ok, ok ? "entry, manifest and runtime contract present" : "workflow contract mismatch");
-    } catch (error) { add("workflow:" + workflow, false, String(error)); }
-  }
   try {
-    const catalog=await readAssetCatalog(join(target, INSTALL_ROOT));
-    add("catalog", true, "registered sources are valid");
-    const inactive = retainedAssets(validateRetainedWorkflows(install?.retained_workflows, workflows));
-    await readProjectCoordination(join(target, INSTALL_ROOT, '.speculo'),catalog,inactive);
-    if (inactive.length) add('retained-workflows',true,`${inactive.length} inactive Work registrations preserve runtime rules; no installed capability`);
-    add("coordination",true,"optional project choices validated; no tools probed");
-  } catch(error) { add("catalog-and-coordination", false, String(error)); }
+    const catalog = await readAssetCatalog(join(target, INSTALL_ROOT));
+    for (const workflow of workflows) {
+      const present = catalog.assets.some(asset => asset.kind === "domain-skill" && asset.domain === workflow);
+      add("workflow:" + workflow, present, present ? "standard Skill entry present" : "missing workflow Skill");
+    }
+    add("catalog", true, "Skill and Command entries are valid");
+  } catch (error) { add("catalog", false, String(error)); }
   for (const check of await inspectHubSkills(target)) add(check.id, check.ok, check.message);
   for (const check of await inspectProjectedSkills(target, workflows)) add(check.id, check.ok, check.message);
   try {
@@ -125,5 +107,5 @@ export async function doctorSpeculo(targetArg = "."): Promise<DoctorResult> {
         add("refresh-residue:" + directory + "/" + name, false, "preserve residue; inspect transaction evidence before cleanup");
     }
   } catch (error) { add("project-directory", false, String(error)); }
-  return { target, healthy: checks.every((c) => c.ok), scope: "installation-integrity", notChecked: ["domain-state-transitions", "live-service-health", "agent-behavior", "host-skill-invocation"], checks };
+  return { target, healthy: checks.every((c) => c.ok), scope: "installation-integrity", notChecked: ["project-notes-and-release-status", "live-service-health", "agent-behavior", "host-skill-invocation"], checks };
 }

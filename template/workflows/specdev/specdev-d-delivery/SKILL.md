@@ -1,41 +1,32 @@
 ---
 name: specdev-d-delivery
-description: "交付已完成开发结果：来源 Issue 完成回写、Ticket 投影、PR、CI/安全处理、发布预检、版本发布与恢复；保留逐目标回执，不代替 Triage 分析或本地实现完成判定。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/delivery
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 完成推送、PR、CI、来源 Issue 回写、票据发布、版本发布及失败恢复，报告每个目标的真实结果。
 ---
 
-# 开发交付
+# 开发交付与版本发布
 
-激活后读取 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path> 与 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>。只展开选中分支；publish 专指 Ticket→Issue，release 专指包/GitHub Release。
+先确认用户要求交付到哪里：代码推送、可审阅 PR、合并、Issue 更新、包发布或部署。复用当前范围的已有授权，按实际项目流程完成对应结果。
 
-## 分支与 owner
+## 代码与协作交付
 
-| 模式 | 协议 | 权威产物 |
-|---|---|---|
-| reconcile | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/reconcile-protocol.md</Path> | <Path>{roots.state}/specdev/changes/{change}/delivery.md</Path> 的 external_action |
-| publish | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/publish-protocol.md</Path> | <Path>{roots.state}/specdev/changes/{change}/publish.md</Path>，<Path>{roots.state}/specdev/changes/{change}/delivery.md</Path> 只指向账本 |
-| pr-delivery | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/pr-delivery-protocol.md</Path> | pull-requests/ 下的 PR 记录 |
-| ci-security | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/ci-security-protocol.md</Path> | 独立 DEL 操作记录 |
-| release-preflight | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/release-preflight.md</Path> | 预检与逐目标判定 |
-| release | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/release-protocol.md</Path> | 已授权发布及逐目标回执 |
-| recover | <Path>{roots.workflows}/specdev/specdev-d-delivery/references/release-recovery.md</Path> | 指定原记录，不另建恢复账本 |
+核对实际改动、分支、提交和相关检查，保留无关修改。PR 说明具体问题、行为变化、验证和重要限制，引用来源 issue；真实 diff 仍是审阅依据。
 
-远程原语复用 <Path>{roots.workflows}/specdev/common/rules/github-operations.md</Path>。分支输入缺失、来源漂移或事务冲突仅阻塞受影响操作。
+推送后读取远程分支或 PR 的实际 head。查看与当前提交对应的 CI，修复本次引入的失败并重跑必要检查；queued、skipped 与环境失败不能写成通过。审查反馈逐项核实，避免盲目照单修改。
 
-## 状态与执行
+用户要求把本地切片发布为远程 issue 时，先查重并保留共同规格链接。关闭来源 issue 之前核对本次解决的范围与实际交付；原需求只完成一部分时说明剩余项。没有要求远程通知就不额外发送消息。
 
-1. reconcile/publish 选择满足 <Path>{roots.workflows}/specdev/common/rules/change-completion.md</Path> 的现有 change；PR 交付沿原 PR 合同。不得为本地结果发布补造 intake、source 或 triage。来源 Issue 的关闭仅在 reconcile 需要实际 source。
-2. 首次请求 reconcile/publish 时按 <Path>{roots.workflows}/specdev/specdev-d-delivery/assets/delivery-template.md</Path> 原子创建 <Path>{roots.state}/specdev/changes/{change}/delivery.md</Path> 并重读；D 是唯一 writer。publish_action 的唯一权威是 <Path>{roots.state}/specdev/changes/{change}/publish.md</Path>，<Path>{roots.state}/specdev/changes/{change}/delivery.md</Path> 只保存 publish 路径，不复制状态。未请求交付不创建空记录。
-3. CI/发布独立记录使用 <Path>{roots.state}/specdev/delivery-runs/DEL-###.md</Path>，首次具体操作选最小未用 ID，按 <Path>{roots.workflows}/specdev/specdev-d-delivery/assets/delivery-run-template.md</Path> 保存，不占用 change 状态。
-4. 固定真实 base/head、目标、操作和已有授权。push、PR created/ready/merged、Issue closed、npm 与 GitHub Release 分别重读；queued/pending/skipped/环境失败不能写 passed。按需读取 <Path>{roots.workflows}/specdev/common/rules/test-reliability.md</Path>，只重跑失效或失败的检查。
-5. 超时先沿原 marker/目标对账，部分成功恢复原账本，不重建。远程失败不重开已完成 Outcome。删除分支、merge、发布等副作用只执行已授权范围；有依赖时先核对，不假设宿主有 stack 扩展。
+## 发布与恢复
 
-## 验证与返回
+发布前定位项目的版本规则、构建物、变更记录、CI 发布配置、凭据方式和目标 registry。核对本次实际版本、许可证和安装结果，先检查目标上是否已有同版本或暂存发布。
 
-使用 <Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>：reconcile/publish 为 --stage delivery，PR 为 --stage pr-delivery，独立操作为 --delivery-run。校验后回读本地工件及真实远程回执，返回实际结果、未完成项、命令/退出码和原恢复位置。
+沿项目已有发布方式执行，包括 staged release、人工 2FA 或其他真实平台步骤。上传、暂存、公开可下载与 GitHub Release 分开报告，不能用一个成功结果代表全部目标。
 
-external_action 的 pending-close/close-failed、<Path>{roots.state}/specdev/changes/{change}/publish.md</Path> 中 pending/publish-failed、已请求未闭合 PR 都阻塞归档；未请求交付不挡门。独立 DEL 不自动阻塞 change 归档。完成后归档交 <Path>{roots.workflows}/specdev/specdev-a-archive-and-consolidate/SKILL.md</Path>。仅接受新协议；旧 triage 交付字段与旧操作记录不读取、不转换。
+超时或部分成功先查询远端现状，再决定恢复或补做；不要重复上传不可变版本。CI 安全问题从真实告警、权限、依赖与可利用路径判断，保留必要门禁，不为通过检查删除覆盖或扩大 token 权限。
+
+具体分支参考 [交付与发布方法](../references/delivery.md)。项目部署接续 [项目部署](../specdev-d-project-deploy/SKILL.md)，不再生成 SpecDev→Ops 交接包。
+
+## 记录结果
+
+在现有 release 记录里保存实际提交、PR/Issue/发布地址、检查结果、版本、未完成动作及恢复入口。远程结果变更后按需更新，避免本地另维护重复账本。
+
+完成条件取决于原请求。要求 PR 就交付可审阅 PR；要求上线就继续验证目标环境。用户明确要求的最终验收仍按真实反馈记录，不能由 CI 或发布成功代填。

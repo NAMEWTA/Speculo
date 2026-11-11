@@ -1,43 +1,28 @@
 ---
 name: learning-a-assess-and-plan
-description: "以目标和证据为起点建立课程、背景、基线、来源和可变 Lesson 地图。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/assess-and-plan
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 围绕学习目标、已有背景和可用时间设计有来源、有先修关系的课程路线。
 ---
 
-# 评估背景并设计课程
+# 背景评估与课程规划
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+从用户想完成的事情出发定义学习结果，例如能解释某个机制、读懂一条代码路径、实现一个功能或辨别常见错误。避免把“了解某技术”当作唯一完成标准。
 
-## 读取范围
+## 了解起点
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/artifact-layouts.md</Path>`；只加载本 Work 需要的领域合同。
+优先使用用户已给的背景与实际材料；只有确实能改进课程时才进行少量自评或诊断。听说过、能跟着做与能独立解释和迁移要分别看待，原始回答保留原文。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+梳理主题全貌、核心概念和先修关系，确定哪些是必需基础、哪些是当前目标才需要的细节。选择可靠的一手资料，记录版本与用途；冲突或无法验证的内容明确保留。
 
-## 流程
+## 设计可调整路线
 
-读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+按概念依赖或真实任务组织课程，让每个单元有可观察的学习目标和适合的例子。时长、课数与练习量结合用户时间和主题复杂度，不套统一分钟数或题数。
 
-1. 确认 I 已完成，收集学习目标、期望效果、受众、范围、时间、表达基线和深度。缺少会改变课程设计的选择时，一次只问一个问题。
-2. 创建或恢复 `YYYY-MM-DD-<kebab-topic>[-NN]` Change，生成 `.status.json`，设置 `current_work=learning/assess-and-plan`。
-3. 写 `course.md`：可观察 OBJ、先决条件、课程地图、每节 Lesson 的 30–40 分钟预算、可选路径、Homework 映射和成功证据。章节顺序是参考方案，不是强制教学模型。
-4. 写 `background/foundation.md`：主题宏观背景、概念关系、术语、历史/上下文和学习前置知识；另写 `baseline.md` 保存学习者原始基线，不将“听说过”当作能力。
-5. 写 `sources.md`：搜索范围、权威来源、source id、URL/定位、访问日期、支持的 claim、未决冲突和不确定性。项目事实、外部证据、类比和未知分开。
-6. 创建 `INDEX.md`、`lessons/INDEX.md`、`homework/INDEX.md` 和 `learning-log.md`，运行 validator；完成后清空 `current_work`，不自动激活 L/H。
+说明核心路线、可选深入与可跳过部分。工程课程连接真实输入、调用、状态、持久化、失败与恢复；理论课程用证明、反例和迁移情境检验理解，不强行套生产故障清单。
 
-## 完成标准
+可以用一份课程记录承载背景、路线、来源、进度和未解问题。长讲义、作业和参考材料需要独立阅读时再拆分，避免提前生成空目录和模板。
 
-- 每个 OBJ 有可观察证据、前置关系、Lesson 估时和来源计划；
-- background 与 baseline 分离，所有原始回答保持不改写；
-- 后续新问题写入 `notes/`，实质范围变化创建新 Lesson 或新 Change，并保留 revision。
+## 交付与调整
 
-## 子文件
+给出课程如何服务目标、推荐顺序与成功证据。新问题改变范围时调整受影响单元并说明原因，保留已有学习成果。
 
-- Change seed：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/change-status-template.json</Path>`
-- Course 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/course-template.md</Path>`
-- Sources 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/sources-template.md</Path>`
-- Background 模板：`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/assets/background-template.md</Path>`
+用户要求“规划并开始教”时继续 [课程讲解](../learning-l-lesson/SKILL.md)；只请求计划时交付路线即可。计划完成不表示知识已经掌握，也不触发自动作业、复习或归档。

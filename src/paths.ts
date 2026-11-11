@@ -1,5 +1,4 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
-import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export const INSTALL_ROOT = ".agents/speculo";
@@ -63,25 +62,6 @@ export async function readWorkspace(projectRoot: string): Promise<Workspace> {
   await assertSupportedProject(projectRoot);
   const value: unknown = JSON.parse(await readFile(await containedPath(projectRoot, WORKSPACE_PATH), "utf8"));
   validateWorkspace(value); return value;
-}
-/** Synchronous entry for portable validators; the same schema and layout apply. */
-export function workspaceForPathSync(start: string): { projectRoot: string; workspace: Workspace } {
-  const exists = (p: string) => { try { lstatSync(p); return true; } catch(e) { if ((e as NodeJS.ErrnoException).code === "ENOENT") return false; throw e; } };
-  let cursor = resolve(start);
-  for (;;) {
-    if (basename(cursor) !== ".agents" && exists(join(cursor,"speculo/.speculo"))) throw new Error("unsupported-installation-version");
-    if (exists(join(cursor,WORKSPACE_PATH))) {
-      const names = readdirSync(cursor);
-      if (names.some(n => n.toLowerCase() === ".agents" && n !== ".agents")) throw new Error("ambiguous-workspace");
-      let node = cursor;
-      for (const part of WORKSPACE_PATH.split("/")) { node = join(node,part); if (lstatSync(node).isSymbolicLink()) throw new Error("path-symlink"); }
-      if(readdirSync(join(cursor,'.agents')).some(n=>['speculo','skills'].includes(n.toLowerCase())&&n!==n.toLowerCase())) throw new Error('ambiguous-workspace');
-      if(exists(join(cursor,'.speculo-init.lock'))||exists(join(cursor,INSTALL_ROOT,'.speculo/migration.json'))) throw new Error('unsupported-installation-version');
-      const workspace: unknown = JSON.parse(readFileSync(node,"utf8")); validateWorkspace(workspace);
-      return { projectRoot: cursor, workspace };
-    }
-    const parent=dirname(cursor); if(parent===cursor) throw new Error("missing-workspace: initialize an agents-v2 project first"); cursor=parent;
-  }
 }
 /** Resolve one explicit reference without invoking a shell or granting authority. */
 export async function resolvePathReference(start: string, reference: string): Promise<string> {

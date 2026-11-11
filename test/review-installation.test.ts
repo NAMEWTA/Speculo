@@ -15,7 +15,6 @@ import { readTransaction, recoverInstall } from "../src/transaction.js";
 
 const packageRoot = process.cwd();
 const opts = { packageRoot, selection: { workflowIds: [] as string[] } };
-const refs = [{ workflow: "specdev", path: "<Path>{roots.state}/specdev/adr/</Path>" }];
 async function fixture(fn: (target: string) => Promise<void>): Promise<void> {
   const target = await mkdtemp(join(tmpdir(), "speculo-review-"));
   try { await fn(target); } finally { await rm(target, { recursive: true, force: true }); }
@@ -25,20 +24,20 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
   it("is byte-idempotent with LF/CRLF and preserves non-owned bytes", () => {
     for (const nl of ["\n", "\r\n"]) {
       const before = `# Custom${nl}${nl}Keep trailing whitespace.  ${nl}`;
-      const first = updateAgentsContent(before, refs);
+      const first = updateAgentsContent(before);
       assert.ok(first.startsWith(before));
-      assert.equal(updateAgentsContent(first, refs), first);
-      assert.equal(updateAgentsContent(updateAgentsContent(first, []), []), updateAgentsContent(first, []));
+      assert.equal(updateAgentsContent(first), first);
+      assert.equal(updateAgentsContent(updateAgentsContent(first)), updateAgentsContent(first));
       const withSuffix = first + `UNOWNED SUFFIX  ${nl}`;
-      assert.ok(updateAgentsContent(withSuffix, []).endsWith(`UNOWNED SUFFIX  ${nl}`));
+      assert.ok(updateAgentsContent(withSuffix).endsWith(`UNOWNED SUFFIX  ${nl}`));
     }
   });
   it("rejects malformed/duplicate owned markers instead of guessing a destructive repair", () => {
-    for (const content of ["<!-- SPECULO-BOOTSTRAP:START -->", "<!-- SPECULO-BOOTSTRAP:END -->", updateAgentsContent("", refs).repeat(2)]) {
-      assert.throws(() => updateAgentsContent(content, refs), /invalid-agent-markers/);
+    for (const content of ["<!-- SPECULO-BOOTSTRAP:START -->", "<!-- SPECULO-BOOTSTRAP:END -->", updateAgentsContent("").repeat(2)]) {
+      assert.throws(() => updateAgentsContent(content), /invalid-agent-markers/);
     }
   });
-  for (const existingHandbook of [false, true]) it(`installs shared change-scope and research policies without a workflow (${existingHandbook ? "legacy handbook" : "fresh handbook"})`, async () => fixture(async (target) => {
+  for (const existingHandbook of [false, true]) it(`installs concise knowledge guidance without a workflow (${existingHandbook ? "legacy handbook" : "fresh handbook"})`, async () => fixture(async (target) => {
     const prefix = "# Project rules\r\n\r\nKeep this policy and whitespace.  \r\n";
     const suffix = "\r\nUser appendix.  \r\n";
     const legacy = `${prefix}<!-- SPECULO-BOOTSTRAP:START -->\r\nPrevious discovery instructions.\r\n<!-- SPECULO-BOOTSTRAP:END -->${suffix}`;
@@ -50,18 +49,11 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
       assert.ok(handbook.endsWith(suffix));
       assert.doesNotMatch(handbook, /(?<!\r)\n/);
     } else assert.ok(handbook.startsWith("# AGENTS.md\n"));
-    const contracts = ["references/research-and-reuse/research-contract.md", "references/change-scope/change-contract.md"];
+    const memory = "references/memory.md";
     const links = [...handbook.matchAll(/\]\((\.\/\.agents\/speculo\/references\/[^)]+)\)/g)].map(match => match[1]);
-    const guide = await readFile(join(target, ".agents/speculo/.speculo/AGENTS.md"), "utf8");
-    const guideReferences = [...guide.matchAll(/<Path>\{roots\.references\}\/[^<]+<\/Path>/g)].map(match => match[0]);
-    for (const link of links) assert.ok((await readFile(join(target, link), "utf8")).length > 0);
-    for (const contract of contracts) {
-      assert.equal(links.filter(link => link === `./.agents/speculo/${contract}`).length, 1);
-      const reference = `<Path>{roots.references}/${contract.slice("references/".length)}</Path>`;
-      assert.equal(guideReferences.filter(value => value === reference).length, 1);
-      assert.equal(await resolvePathReference(target, reference), join(target, ".agents/speculo", contract));
-      assert.equal(await readFile(join(target, ".agents/speculo", contract), "utf8"), await readFile(join(packageRoot, "template", contract), "utf8"));
-    }
+    assert.deepEqual(links, [`./.agents/speculo/${memory}`]);
+    assert.equal(await readFile(join(target, ".agents/speculo", memory), "utf8"), await readFile(join(packageRoot, "template", memory), "utf8"));
+    assert.equal(await resolvePathReference(target, "{roots.references}/memory.md"), join(target, ".agents/speculo", memory));
     const install = JSON.parse(await readFile(join(target, ".agents/speculo/.speculo/install.json"), "utf8"));
     assert.deepEqual(install.workflows, []);
     await initSpeculo(target, opts);
@@ -99,7 +91,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
   it("non-interactive fresh init is core-only; refresh retains installed supported workflows", async () => fixture(async (target) => {
     await initSpeculo(target, { packageRoot });
     assert.deepEqual(JSON.parse(await readFile(join(target, ".agents/speculo/.speculo/install.json"), "utf8")).workflows, []);
-    assert.match(await readFile(join(target, "AGENTS.md"), "utf8"), /workspace\.json/);
+    assert.match(await readFile(join(target, "AGENTS.md"), "utf8"), /catalog\.json/);
     assert.match(await readFile(join(target, ".agents/speculo/catalog.json"), "utf8"), /project-maintenance/);
     await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] } });
     await initSpeculo(target, { packageRoot });
@@ -110,7 +102,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
   }));
   it("resolves explicit pointers without shell execution and rejects traversal/placeholders", async () => fixture(async (target) => {
     await initSpeculo(target, opts);
-    assert.equal(await resolvePathReference(target, "<Path>{roots.commands}/project-maintenance/references/operation-contract.md</Path>"), join(target, ".agents/speculo/commands/project-maintenance/references/operation-contract.md"));
+    assert.equal(await resolvePathReference(target, "<Path>{roots.commands}/project-maintenance/COMMAND.md</Path>"), join(target, ".agents/speculo/commands/project-maintenance/COMMAND.md"));
     for (const value of ["../outside", "<Path>{roots.state}/../outside</Path>", "<Path>{roots.state}/changes/{change}</Path>", "<Path>{roots.unknown}/x</Path>", "C:\\escape", "<Path>bad"]) await assert.rejects(resolvePathReference(target, value));
   }));
   it("preserves optional coordination preferences and third-party Herdr/Orca skills in both project targets across refresh and retry", async () => fixture(async (target) => {
@@ -122,7 +114,7 @@ describe("review: safe handbooks, discovery and deterministic installation", () 
       await writeFile(join(directory, "resource.txt"), `User-owned ${host}/${mode}\n`);
       skills.set(directory, await fingerprintTree(directory));
     }
-    const setup = { packageRoot, selection: { workflowIds: ["specdev"] }, skillTargets: ["agents", "claude"] as const, skills: { mode: "set" as const, assetIds: ["specdev/init-setup"] } };
+    const setup = { packageRoot, selection: { workflowIds: ["specdev"] }, skillTargets: ["agents", "claude"] as const, skills: { mode: "set" as const, assetIds: ["domain/specdev"] } };
     await initSpeculo(target, { ...setup, skillTargets: [...setup.skillTargets] });
     const stateRoot = join(target, ".agents/speculo/.speculo");
     await mkdir(join(stateRoot, "coordination"));
@@ -147,7 +139,7 @@ describe("review: trustworthy read-only doctor", () => {
   for (const [label, mutate] of [
     ["invalid config", async (root: string) => writeFile(join(root, "config.json"), "not json")],
     ["empty roots", async (root: string) => writeFile(join(root, ".speculo/workspace.json"), JSON.stringify({ schema_version: 1, path_base: "project-root", roots: {} }))],
-    ["missing managed asset", async (root: string) => rm(join(root, "commands/project-maintenance/references/operation-contract.md"))],
+    ["missing managed asset", async (root: string) => rm(join(root, "commands/project-maintenance/COMMAND.md"))],
     ["missing installed workflow", async (root: string) => { const p = join(root, ".speculo/install.json"), data = JSON.parse(await readFile(p, "utf8")); data.workflows = ["missing"]; await writeFile(p, JSON.stringify(data)); }],
     ["empty managed manifest", async (root: string) => { const p = join(root, ".speculo/managed.json"), data = JSON.parse(await readFile(p, "utf8")); data.files = []; await writeFile(p, JSON.stringify(data)); }],
   ] as const) {
@@ -192,16 +184,16 @@ describe("review: process-interruption recovery", () => {
     }));
   }
   it("recovers unified selection and both targets after interrupted removal, preserving unmanaged skills", { skip: process.platform === "win32", timeout: 60000 }, async () => fixture(async (target) => {
-    await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skillTargets: ["agents", "claude"], skills: { mode: "set", assetIds: ["learning/archive","learning/assess-and-plan","learning/consolidate","learning/goal","learning/homework","learning/init-setup","learning/lesson","learning/question","learning/review"] } });
+    await initSpeculo(target, { packageRoot, selection: { workflowIds: ["learning"] }, skillTargets: ["agents", "claude"], skills: { mode: "set", assetIds: ["domain/learning"] } });
     await mkdir(join(target, ".agents", "skills", "custom-skill"), { recursive: true });
     await writeFile(join(target, ".agents", "skills", "custom-skill", "SKILL.md"), "user owned\n");
     const claudeBefore = await fingerprintTree(join(target, ".claude/skills"));
-    const skillPath = join(target, ".agents", "skills", "learning-l-lesson", "SKILL.md");
+    const skillPath = join(target, ".agents", "skills", "learning", "SKILL.md");
     const manifestPath = join(target, ".agents", "speculo", ".speculo", "projections.json");
-    const edited = (await readFile(skillPath, "utf8")).replace("事实源", "事实来源");
+    const edited = (await readFile(skillPath, "utf8")).replace("完整说明", "完整来源说明");
     await writeFile(skillPath, edited);
     const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as { files: Array<{ path: string; sha256: string }> };
-    const work = manifest.files.find((item) => item.path === ".agents/skills/learning-l-lesson/SKILL.md");
+    const work = manifest.files.find((item) => item.path === ".agents/skills/learning/SKILL.md");
     assert.ok(work);
     work.sha256 = sha256Buffer(edited);
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
@@ -213,7 +205,7 @@ describe("review: process-interruption recovery", () => {
     const j = await readTransaction(target);
     assert.equal(j.phase, "skills-projected");
     assert.equal(j.schema_version, 4);
-    await assert.rejects(readFile(join(target, ".claude/skills/learning-l-lesson/SKILL.md")), /ENOENT/);
+    await assert.rejects(readFile(join(target, ".claude/skills/learning/SKILL.md")), /ENOENT/);
     const outcome = await recoverInstall(target, j.id);
     await assert.rejects(readdir(join(target, ".agents/.speculo-transactions")), /ENOENT/);
     assert.equal(outcome.outcome, "rolled-back");

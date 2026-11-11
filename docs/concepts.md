@@ -1,88 +1,37 @@
-# 基本概念、调用方式与数据
+# 主要概念
 
-[手册首页](README.md) · [快速入门](getting-started.md)
+## Workflow：一个领域的工作方法
 
-## 六个名词就够开始
+`specdev`、`learning`、`media`、`person` 是四个领域。每个领域的 `SKILL.md` 说明适用任务、如何定位已有材料，以及在哪种情况下读哪个 Work。软件开发和运维共用一个交付背景，所以合并在 SpecDev 中。
 
-| 名词 | 通俗解释 | 例子 |
-|---|---|---|
-| workflow / 领域 | 一组围绕同类工作的方法与产物约定 | SpecDev 管开发，Learning 管学习 |
-| Work | 领域内一个可以启动、停止、恢复的步骤 | 写规格、代码审查、生成一节课 |
-| Skill | AI 可以按需读取的能力说明文件 | 领域与 Work 都有 `SKILL.md` |
-| Command | 用户明确发起的一次工具性请求 | status、handoff、project-maintenance |
-| change | 一次具体工作的材料容器 | “增加筛选功能”或“学习缓存” |
-| Evidence / 证据 | 支持完成结论的真实记录 | 测试命令、输出、截图、文件与批准来源 |
+领域入口是一个小型导航，不会要求先加载全部资料。需要从头完成发版时可以连续使用多个 Work；只修一个缺陷时可以直接诊断和实施。
 
-不是所有领域都使用同一种 change：OPS 主要管理 Host、Project、Deployment、Run 等资源。也不是每次只读请求都必须建 change；SpecDev 的明确范围审查可以只返回会话报告。
+## Work：一项可独立使用的能力
 
-## CLI 命令与 AI Command 是两回事
+Work 以标准 `SKILL.md` 保存。例如 `specdev/prototype`、`specdev/implement`、`learning/lesson`。它描述该任务特有的方法、值得考虑的分支、真实交付物和必要参考。
 
-终端中的 `speculo` 提供 `init`、`version`、`doctor`、`resolve`、`recover`。它们负责安装、检查和恢复。
+Work 不是状态机中的节点。调用它不自动创建一组文件，不预设执行角色，也不要求前一个 Work 盖章。已有清楚的设计可以直接写 spec；已有明确规格可以直接实施；学习者问概念可以直接讲解。
 
-[9 个 Command](commands/README.md) 是 AI 读取的 `COMMAND.md`，例如 project-maintenance。应对 AI 说“调用 command/project-maintenance”，或给入口文件路径；不要把它写成不存在的 `speculo project-maintenance`。斜杠命令、`$skill`、技能选择器等快捷方式属于宿主，可用时按宿主方式选择。
+`goal-plan` 保留目标规划能力，`tickets` 保留有用的工作拆分。需要记录时用普通文字或清单；它们不再建立模型派单、执行模式或调度协议。
 
-## 三种调用粒度
+## Skill：宿主能够发现的方法包
 
-1. **只知道目标**：告诉 AI “使用 SpecDev，帮我判断这个需求下一步做什么”，由领域入口路由。
-2. **知道当前步骤**：给业务 ID，例如 `specdev/spec`，避免重新从头走流程。
-3. **需要最明确的入口**：提供 `.agents/speculo/workflows/specdev/specdev-s-spec/SKILL.md`，要求先读取再执行。
+Skill 是载体。领域入口和 Work 都可以作为宿主技能暴露；Skills Hub 则提供独立的完整技能包。一个 Skill 可以只有 `SKILL.md`，也可以带必要的参考、示例和脚本。
 
-Command 对应 `.agents/speculo/commands/<id>/COMMAND.md`。项目没有安装时，可使用[普通 SpecDev 直接模式](workflows/specdev.md#不安装-cli-时如何使用)，或[单文件 Canonical](canonical.md)。不能把 SpecDev 的无安装支持推断到所有领域。
+脚本用于重复且明确的操作，例如读取 API、生成文档或渲染媒体。它不负责通过业务字段推断用户是否批准、模型是否理解了需求或 UI 是否符合设计。
 
-## 名字里的字母不是执行顺序
+## Command：一次明确请求
 
-`specdev-p-prototype` 和 `specdev-p-goal-plan` 都有 P，但分别是原型和目标总控；Learning 的 A 也同时存在课程规划和归档。调用时用完整业务 ID 或完整入口，避免只说“运行 P”。
+Command 用于查看进度、做交接、整理项目或分析 Git 等明确操作，入口是 `COMMAND.md`。它们由 AI 读取执行，不是终端 CLI 的子命令。终端 `speculo` 只处理安装、版本、检查、路径解析和恢复。
 
-业务 ID、Skill 名和文件路径用于不同位置：
+## 安装与暴露分别选择
 
-| 用途 | SpecDev 实现示例 |
-|---|---|
-| 文档与曝光选择的业务 ID | `specdev/implement` |
-| 标准 Skill name / 投影目录名 | `specdev-i-implement` |
-| 安装后权威入口 | `.agents/speculo/workflows/specdev/specdev-i-implement/SKILL.md` |
+`--workflows specdev` 安装整个领域的方法和资源。`--skills domain/specdev` 只向宿主暴露领域入口；其中指向的 Work 仍在安装目录，AI 可以按需读取。
 
-## 默认怎么执行
+`--skills specdev/implement` 可以直接暴露某个 Work。`--skills all` 暴露已安装的全部入口。宿主列表规模由选择控制，不需要为了缩短列表删除专项知识。
 
-主 Agent 先判断目标能否直接完成或通过普通工具并行完成；独立上下文、真实并行收益、不同工具能力或独立验证确有价值时才委派。subagent、agent team 是宿主能力，是否可用和如何授权由实际宿主决定，Ticket 数量不决定 Agent 数量。
+## 方法与项目记录分别维护
 
-需要委派时，可在用户授权和真实能力内选择宿主原生、直接 CLI、Herdr 或 Orca，只在需要时读取所选工具指南并核对接口。当前宿主恰好是 CLI，不代表要再启动另一个 CLI。执行通道、实现者数量和工作区分别决定；不相交写集可并行，共享路径、资源和 Git 全局写操作由 Lead 协调。
+方法来自 Speculo 包，刷新时更新。项目记录属于使用者，持续保留。默认方法根是 `.agents/speculo/`，项目资料在其中 `.speculo/` 下；项目已有的代码、设计和文档位置优先。
 
-项目可以在明确要求后保存编排偏好，但新手不必先填写配置。当前请求优先于已保存偏好；已有有效计划中的约束也要核对。工具不可用时，AI 应说明受影响分支，按已经允许的回退处理，不能假装调用成功。
-
-短时同步只读委派可复用与实际调用关联的结构化返回。长时、异步、写入、跨会话或正式交付按恢复需要保存 `TASK.md`、`REPORT.md` 和必要 checkpoint；原 Evidence 保存 Lead 验收。主 Agent 自行执行和普通工具并行不创建空 session，详见[Agent 的任务交接](agent-handoffs.md)。
-
-## 从哪里找成果
-
-在默认安装布局中，业务数据根是 `.agents/speculo/.speculo/`：
-
-| 位置 | 通常存放什么 |
-|---|---|
-| `specdev/changes/<change>/` | README、规格、按需创建的票据、实现与审查证据 |
-| `learning/` | 课程、问答、作业、复习、主题知识和位置登记 |
-| `ops/` | 控制端、服务器、项目、部署及运行记录 |
-| `person/changes/<change>/` | 咨询分析、决策与行动方案 |
-| `media/changes/<change>/` | 简报、母稿、制作资料、本地草稿及复盘 |
-| `commands/<command>/` | 需要保存的命令报告或该命令自己的运行记录 |
-| `docs/` | 使用项目的当前工程事实或指向已有文档的导航 |
-
-以上说明默认布局；实际执行由 `workspace.json` 的 roots 解析，普通 SpecDev 直接模式也可以有明确的独立数据根。模板中出现的 `<Path>{roots.state}/...</Path>` 是路径引用，不是需要原样创建的文件夹名。
-
-本仓库的 `docs/` 是 Speculo 产品手册。安装到其他项目后，那个项目的工程文档、change 历史和命令报告各有自己的位置，不应回写进 Speculo 分发模板。
-
-## 什么时候需要确认
-
-“写一个计划”通常只授权产出计划；“按此规格实施”才明确进入实施。读取或安装入口不等于授权提交、推送、发布、部署、归档移动或永久知识改写。
-
-已有同一目标、动作和范围的授权应复用，不逐层重复询问。新增范围、精确计划发生漂移，或某个动作要求绑定具体批准内容时，才补充对应确认。例如 Git 历史压缩对本地计划和远端发布分别确认，Media 草稿需要绑定当前内容和账号的真实人工确认。
-
-授权不足只阻塞受影响操作。你可以要求先形成可审查的计划、文件或报告，再决定具体操作。
-
-## 如何理解完成、阻塞与恢复
-
-- 文件已经生成，不代表业务行为已经验收。
-- 测试通过，不自动代表部署、发布或归档完成。
-- 当前工具退出，不代表任务成功；应核对实际产物与证据。
-- “blocked”需要准确原因、保留位置和下一步；未知结果应先查询，不能直接重试可能已成功的外部动作。
-- 交接时携带真实路径、检查点、权限范围和未闭合动作；由新会话回读验证后恢复。
-
-有关 Spec、Ticket、Goal、Outcome 的具体关系见 [SpecDev](workflows/specdev.md)；学习里的“讲过、答对、延迟掌握”见 [Learning](workflows/learning.md)。
+持久化保存来源、关键决定、实际结果和可继续的位置。普通用户记录不需要符合 Speculo 的 JSON schema；安装器自己的身份和恢复元数据仍由程序维护。见 [流程与持久化](workflow.md)。

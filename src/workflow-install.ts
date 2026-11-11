@@ -4,17 +4,13 @@ import type { AssetCatalog } from "./assets.js";
 import { readProjectionManifest, sha256Buffer } from "./agent-skills.js";
 import { snapshotSkillTree, reconcileOwnedTree, absent, type SkillRecord } from "./skill-trees.js";
 import { containedPath } from "./paths.js";
-import { validateRetainedWorkflows, type RetainedWorkflow } from "./retained-workflows.js";
-export { validateRetainedWorkflows, retainedAssets } from "./retained-workflows.js";
 import type { ManagedFileRecord } from "./manifest.js";
 
-export type WorkflowRemoval = { removed: string[]; retained: string[]; warnings: string[]; registry: RetainedWorkflow[]; removedAssetIds: string[]; priorFiles: ManagedFileRecord[]; projectionRecords: SkillRecord[] };
+export type WorkflowRemoval = { removed: string[]; retained: string[]; warnings: string[]; removedAssetIds: string[]; priorFiles: ManagedFileRecord[]; projectionRecords: SkillRecord[] };
 export async function planWorkflowRemoval(target: string, root: string, installed: string[], selected: string[]): Promise<WorkflowRemoval> {
-  const result: WorkflowRemoval = { removed: [], retained: [], warnings: [], registry: [], removedAssetIds: [], priorFiles: [], projectionRecords: [] };
-  let metadata;
-  try { metadata = JSON.parse(await readFile(join(root, ".speculo/install.json"), "utf8")); }
+  const result: WorkflowRemoval = { removed: [], retained: [], warnings: [], removedAssetIds: [], priorFiles: [], projectionRecords: [] };
+  try { JSON.parse(await readFile(join(root, ".speculo/install.json"), "utf8")); }
   catch (e) { if ((e as NodeJS.ErrnoException).code === "ENOENT") return result; throw e; }
-  result.registry = validateRetainedWorkflows(metadata.retained_workflows, installed).filter(w => !selected.includes(w.id));
   const managed = JSON.parse(await readFile(join(root, ".speculo/managed.json"), "utf8"));
   if (managed.schema_version !== 2 || !Array.isArray(managed.files)) throw new Error("invalid-managed-manifest");
   result.priorFiles = managed.files;
@@ -52,7 +48,6 @@ export async function planWorkflowRemoval(target: string, root: string, installe
       }
       result.removed.push(id); result.removedAssetIds.push(...assetIds);
       result.projectionRecords.push(...projectionRecords.values());
-      result.registry.push({ id, works: catalog.assets.filter(a => a.domain === id && a.kind === "work-skill").map(a => ({ id: a.id, stages: a.stages })) });
     } catch (e) {
       result.retained.push(id); result.warnings.push(`workflow-removal-conflict ${id}: ${String(e)}; whole workflow retained`);
     }
@@ -60,9 +55,6 @@ export async function planWorkflowRemoval(target: string, root: string, installe
   return result;
 }
 export async function writeRemovalMetadata(stagedRoot: string, removal: WorkflowRemoval): Promise<void> {
-  const path = join(stagedRoot, ".speculo/install.json"), metadata = JSON.parse(await readFile(path, "utf8"));
-  if (removal.registry.length) metadata.retained_workflows = removal.registry;
-  await writeFile(path, JSON.stringify(metadata, null, 2) + "\n");
   if (removal.retained.length) {
     const path = join(stagedRoot, ".speculo/managed.json"), managed = JSON.parse(await readFile(path, "utf8"));
     const retained = (f: ManagedFileRecord) => removal.retained.some(id => f.path.startsWith(`workflows/${id}/`));

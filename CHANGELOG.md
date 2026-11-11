@@ -4,6 +4,24 @@ All notable changes to Speculo are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - Unreleased
+
+### Breaking changes
+
+- Merge SpecDev and Ops into one requirements-to-deployment domain. Rewrite all 39 Work capabilities behind four concise domain routers, with independently selectable standard Skill entries.
+- Remove workflow manifests, business schemas/validators, dispatch orchestration, generated Canonical documents and fixed handoff forms. Retain goal planning, decomposition and all other task methods without mandatory execution protocols.
+- Use one optional release record, current knowledge (ADR/context/error/design), reusable environment notes and historical archives. Design may remain code; a change-local DESIGN document is no longer required.
+- Retain approved UI structure and explicitly required user acceptance as real delivery obligations. Technical checks do not certify either decision (#105, #106).
+- Rewrite eight explicit commands, all 15 retained utility skills and maintainer guidance. Preserve specialized references, original source corpora, design examples and useful tools; remove bundled orchestration adapters.
+
+### Installation
+
+- Discover domains and Work methods directly from files and standard frontmatter; preserve original short Work IDs. Keep atomic installation, ownership, path safety, projections and recovery.
+- Preserve all user runtime data as opaque bytes, including older workflow data. A normal refresh maps the old Ops domain and all five Work selections to their SpecDev successors, preserves other Work selections and removes retired orchestration projections; explicit old Ops IDs receive replacement guidance.
+- Remove generated workflow/runtime bundles and their AJV/esbuild build dependencies. Verify real package installation, refresh, removal and complete Hub resources.
+
+See [upgrade notes](docs/upgrade-v3.md) and [research decisions](docs/research.md). This entry does not announce an npm publication.
+
 ## [Unreleased]
 
 ## [2.1.17] - 2026-11-04

@@ -1,72 +1,31 @@
 ---
 id: source-code-zip
-description: Create a requested source ZIP using the bundled Node script and its ignore rules; do not install dependencies.
+description: 按用户需要生成源码阅读 ZIP 或完整工程归档，使用真实文件清单核对范围；附带无需依赖的源码打包工具。
 ---
 
-# Source Code ZIP
+# 源码与工程 ZIP
 
-先确认 node 可用，只有 node 不存在时才回退 nodejs。使用本包 `scripts/zip_source_code.cjs`；无第三方依赖，不安装 npm/Python/zip 工具。`.cjs` 在普通目录和 `type: module` 工程中都明确使用 CommonJS。
+确定用户需要的是源码阅读包还是可复建工程包，以及源目录/提交和输出位置。已有明确范围直接使用；未说明复建用途时可采用内置工具的源码阅读包行为，并如实说明内容。
 
-## 入口与路径
+## 源码阅读包
 
-从当前目录向上寻找字面路径 `.agents/speculo/.speculo/workspace.json`。已安装时验证 `path_base`、schema 和 roots 后，再读取 `<Path>{roots.config}</Path>`，通过现有 resolver 把 `<Path>{roots.commands}/source-code-zip/scripts/zip_source_code.cjs</Path>` 解析为绝对文件路径 `ZIP_SCRIPT`。配置缺失时可使用本脚本固定默认值，但在回执说明；无效 workspace 不猜测根。
-
-没有安装时允许独立打包：使用宿主已提供或用户明确指定的脚本绝对路径，不创建 workspace/config，不把 cwd 下的 `scripts/` 当成本包。无法定位脚本就报告缺失；独立模式在会话交付，不创建依赖 roots 的调用报告。源目录、输出位置与脚本位置分别核对，源/输出的相对输入以本次调用目录解析后固定为绝对路径。
-
-已安装项目可运行：
+使用本命令的 [独立 Node 工具](scripts/zip_source_code.cjs)，不需要安装依赖。定位已安装命令目录中的脚本，源目录和输出路径分别解析，避免依赖当前 cwd。
 
 ```bash
-ZIP_SCRIPT="$(speculo resolve --path '{roots.commands}/source-code-zip/scripts/zip_source_code.cjs')"
+node /absolute/path/zip_source_code.cjs /absolute/source --dry-run --verbose
+node /absolute/path/zip_source_code.cjs /absolute/source --output /absolute/output/source.zip
 ```
 
-以下示例中的 `ZIP_SCRIPT` 均是已核对的绝对路径；从子目录或其他 cwd 执行也不改变脚本定位。
+工具保持既有默认过滤：源码白名单、跳过依赖/构建产物/秘密文件/链接，并排除 YAML、锁文件、普通 JSON、文档和媒体。它适合阅读源码，不承诺完整复建。需要额外未被忽略的文件可以 `--include`；更多参数见 [工具参考](references/cli-reference.md)。
 
-## 标准工作流
+## 完整工程或指定 Git 版本
 
-1. 确认用户提供的是目录路径，不是单个文件；路径含空格时必须加引号。
-2. 先确认 `node --version` 能正常执行。
-3. 默认先运行一次 `--dry-run`；目录较大、规则刚修改或可能包含敏感信息时，同时添加 `--verbose`。
-4. 检查预览结果，确认 `.env`、YAML、依赖目录、构建产物、归档文件和密钥没有被纳入。
-5. 正式创建 ZIP。
-6. 报告 ZIP 的绝对路径、纳入文件数、输入总大小和生成结果。
-7. 除非用户明确理解风险并提出要求，不得使用 `--no-default-ignore`。
+需要完整工程时，先列出源码、配置样例、锁文件、构建脚本、文档及必要资源。使用适合该范围的 Git 或现有归档工具，保留明确需要的文件。不要把内置源码过滤结果误称为完整工程；不为加入 YAML 或锁文件就无检查地关闭所有秘密排除。
 
-推荐预览：
+指定提交使用固定 SHA。工作区打包另外核对未追踪文件、子模块和符号链接；不跟随链接把范围外目录带入。输出放在候选文件集合之外，保留已有同名文件，只有用户要求覆盖时覆盖。
 
-```bash
-node "$ZIP_SCRIPT" "/path/to/project" --dry-run
-```
+## 核对与交付
 
-查看每个项目被排除的原因：
+生成前核对实际候选清单，尤其是真实凭据与项目必需文件。生成后读取 ZIP 清单、抽查关键内容，确认可以打开、目录结构正确、内容对应本次约定版本。
 
-```bash
-node "$ZIP_SCRIPT" "/path/to/project" \
-  --dry-run \
-  --verbose
-```
-
-正式创建：
-
-```bash
-node "$ZIP_SCRIPT" "/path/to/project"
-```
-
-默认输出在源目录旁边：
-
-```text
-<目录名>.code.zip
-```
-
-例如：
-
-```text
-源目录：/work/my-app
-输出：  /work/my-app.code.zip
-```
-
-
-需要自定义过滤、额外文件、输出位置、覆盖、压缩或排障时读取 [参数与行为参考](references/cli-reference.md)。执行前核对目标目录和忽略策略，交付 ZIP 路径、清单/统计及未打包项。默认过滤包括锁文件、YAML 和大部分非源码资产，因此默认 ZIP 不承诺是完整可复建工程；用户需要这些材料时按原参数合同明确调整，不静默改默认过滤。
-
-## 调用报告
-
-需要持久化本次报告时使用 <Path>{roots.state}/commands/source-code-zip/{date}-{scope}-{topic}[-NN].md</Path>。复用当前授权和产物合同，不为只读调用自动创建状态；不覆盖历史报告。
+交付真实路径、采用的版本/工作区、文件数量与主要排除项。说明复建限制和未打包材料；预览结果不称为 ZIP。需要跨会话保存时按 [持久化](../../references/memory.md) 放入既有交付位置，不另建命令状态协议。

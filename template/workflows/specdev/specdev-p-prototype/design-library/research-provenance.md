@@ -1,60 +1,30 @@
-# 研究来源、快照与复用边界
+# 来源、版本与使用边界
 
-## 新增 DESIGN 文本参考
+## 保留的资料
 
-另有 10 份 VoltAgent/awesome-design-md 原文固定在 `c7c1bada4eda972236d124e06ee58df129a9266b`，保存于 [上游目录](upstream/awesome-design-md/README.md)。[provenance](upstream/awesome-design-md/provenance.json) 记录每份原文的来源、hash、大小和 [MIT 许可](upstream/awesome-design-md/LICENSE)。原字节不作修正，适配写入 catalog 指向的 visual guide。
+| 资料 | 来源与固定依据 | 本次处理 |
+| --- | --- | --- |
+| UI 研究快照 | 项目原有研究，固定修订 `49b565913c52f4867456e609696625157f19b930`；采集背景见快照内日期与方法 | 保留原有 38 个跟踪文件，包括研究、数据、tokens、8 个 HTML 样例及本地素材 |
+| Awesome DESIGN.md | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)，固定修订 `c7c1bada4eda972236d124e06ee58df129a9266b`，原记录采集日期 2026-10-14 | 保留 10 份原始分析、[来源校验信息](upstream/awesome-design-md/provenance.json) 与 [MIT 许可](upstream/awesome-design-md/LICENSE) |
+| Speculo HTML 样例 | 原项目的企业数据、营销转化、品牌编辑、商业服务四页及共享资源 | 保留可运行实现，重写导航与使用指导 |
+| 当前设计指导 | 基于上述资料和原工作流重写的选型、组合、交互与平台说明 | 按任务阅读，不再依赖 catalog schema、设计选择状态或生成清单 |
 
-此来源是独立网站分析，多数是营销表面，Known Gaps 中的缺失交互必须补齐。此固定 Git tree 不含 HTML；在线 preview 不是本次分发资源，也不是运行时依赖。字体、照片与商标不因 Markdown 的 MIT 许可而获得一并分发的授权。该新增文本层不替换下面原研究快照，两个 revision 分别追踪。
+快照中的星标、版本、产品状态与研究判断是当时材料，不代表今天最新事实。需要当前信息时检查项目官方来源，并区分新发现与历史记录。
 
-## 固定快照
+## 不同证据回答不同问题
 
-| 字段 | 值 |
-|---|---|
-| 上游仓库 | `open-source-ui-research`（authoring 来源；安装后的运行时不依赖上游工作树） |
-| snapshot commit | `49b565913c52f4867456e609696625157f19b930`（短 SHA `49b5659`） |
-| commit subject | `feat: add visual UI style gallery` |
-| 研究基准日 | `2026-08-30` |
-| 快照目录 | `<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/</Path>` |
-| tracked file count | 38 |
+源码可支持实现结构，官方文档可支持公开契约，实际界面可支持观察到的行为，网站分析可提供视觉推断。不要把来源类型混在一起，也不要由截图推断未观察到的交互。
 
-`research-snapshot` 来自该 commit 的 Git archive，保留全部 tracked 相对结构和字节内容。它包含 Markdown 研究、两个 JSON 数据集、综合 CSS token、八个 HTML 页面、共享 HTML/CSS/JS、Playwright 测试、package lock、本地 Lucide、三张 JPEG、截图和 attribution；不包含 `.git/`、`node_modules/` 或未跟踪的 `test-results/`。
+Awesome DESIGN.md 是独立分析，不是各品牌授权的设计规范。原始文字保留不表示本工作流采纳每项数值、命名或事实；应用时核对任务与项目条件。发现问题可在指导或项目设计中说明，不悄悄修改历史原文。
 
-快照内 `.gitignore` 文件是 tracked 内容，必须保留。不要因目录名以点开头而把它们误判为上游 Git 元数据。
+## 许可与素材
 
-## 内容清单
+复制第三方文本或素材时保留相应许可和署名。Markdown 的 MIT 许可不自动扩展到品牌标识、商业字体、截图或照片。UI 快照中的图标和照片信息见 [素材署名](research-snapshot/ui-gallery/assets/ATTRIBUTION.md)。
 
-| 分区 | 数量 | 权威内容 |
-|---|---:|---|
-| 根文件 | 3 | `.gitignore`、README、研究方法 |
-| data 分区 | 2 | 19 个基础项目 + 8 个 Claude Code 客户端 + 11 个多端项目，共 38 个记录 |
-| reference 分区 | 2 | 综合 token 与使用约束 |
-| report 分区 | 1 | 总报告、六种布局、跨项目结论和验收清单 |
-| research 分区 | 7 | 项目模板、研究索引和五份分类研究 |
-| ui-gallery 分区 | 23 | 8 个风格页、总览、样式、脚本、测试、依赖锁、Lucide、图片、截图与 attribution |
-| 合计 | 38 | 与 pinned Git tree 一致 |
+本地 HTML 样例使用本地资源，不依赖在线预览服务。它们可能使用示意数据或只实现部分交互，需实际打开检查。研究快照的历史测试和包配置只是该来源的内容，不是运行所有 Speculo Work 的先决条件。
 
-## 证据等级
+## 更新资料
 
-| 等级 | 证据 | 可以支持 |
-|---|---|---|
-| A | 仓库 design token、主题、组件源码、官方设计系统 | 精确颜色、字号、圆角、间距、组件状态和实现 |
-| B | 官方架构/产品文档、Storybook、官方截图 | 技术栈、信息架构、主要布局和交互流程 |
-| C | 可访问产品界面与发布说明 | 带“约”的界面观察与响应行为 |
-| D | 第三方资料、搜索摘要、研究者推断 | 线索或明确标注的推断，不支持精确数值 |
+只有确需更新研究时才选定新的明确版本，比较变化和许可，修正受影响的指导与链接。普通原型任务读取合适参考并产出项目设计即可，无需自动刷新整库。
 
-精确值必须回到 A 级证据。GitHub stars 是 2026-08-30 附近的近似快照，只说明关注度，不代表 UI 质量。许可字段是研究提示，不构成法律意见；代码公开也不自动等于 OSI 开源或允许直接复用。
-
-## 资产与 attribution
-
-三张本地示例图来自 Unsplash，具体 photo ID 与署名记录在 `<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/ui-gallery/assets/ATTRIBUTION.md</Path>`。Lucide 是本地 vendored UMD 1.37.0，ISC license。复制包含图片或 Lucide 的样板时同时携带 attribution，并在进入生产前由项目 owner 重新核对依赖与许可。
-
-逐项目源码许可差异很大，包括 Apache/MIT/MPL、AGPL、BSL、混合目录许可和 source-available restrictions。设计库用于研究结构、任务和交互；没有明确许可与项目需要时，不复制项目源码或品牌表达。
-
-## 快照不变性
-
-- 原型运行只读 snapshot；复用资产只写入当前 change 的设计包。
-- snapshot 的相对链接、资源路径和 package lock 保持原样。
-- 更新研究库必须显式选择新的完整 commit，重新从 Git tracked tree 建立整个 snapshot，重新核对 38 项映射、链接、文件清单、二进制 hash、测试和 attribution；不得混入上游工作树的未提交文件。
-- 更新后在本文件替换 commit、基准日和 inventory，并将差异作为研究升级审查，不做静默刷新。
-
-原始方法与局限见 `<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/METHODOLOGY.md</Path>`；总报告见 `<Path>{roots.workflows}/specdev/specdev-p-prototype/design-library/research-snapshot/report/OPEN_SOURCE_UI_RESEARCH_2026.md</Path>`。
+来源校验信息中的 JSON 是历史来源数据，不是给 AI 施加的工作状态协议。设计结果可直接由 HTML、组件、tokens、图片与少量解释构成。

@@ -1,60 +1,30 @@
 ---
 name: learning-g-goal
-description: "为选定编程项目编译一份可被外部 /goal 执行的完整 Goal-Plan；计划会话可跟随 A 写出课程地图并按库存切 ≤15 的 mine unit，但不写 Lesson、不进行教学探针提问、不自动串联 H/R/C。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/goal
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 围绕可观察能力或指定项目源码制定学习计划，并按用户要求接续讲解、探索与覆盖核对。
 ---
 
-# 目标学习（目标模式）
+# 目标式学习
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+用于“把这个项目彻底读懂”“学会实现某项能力”一类目标。把目标连接到真实对象与可以展示的理解，避免只按目录生成一串课程标题。
 
-G-goal 编译完整 Goal-Plan 后停止；授课、挖掘与验收由用户交给外部 `/goal` 执行，采用 teach-then-mine（每个 mine unit 的 T 写课 → M 挖掘 → D 处置）。
+## 建立目标地图
 
-## 读取范围
+确认范围、排除项、已有背景和希望达到的深度。项目学习先识别产品定位、外部参与者、主要组件、公开入口、关键存储，以及一条正常路径和重要失败路径。
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/lesson-contract.md</Path>`；只加载本 Work 需要的领域合同。
+按范围梳理模块、公共 API 和关键函数；生成文件、琐碎 helper 或测试夹具可由所属模块解释，不为每个文件强制开课。未覆盖内容说明原因，不能把“已列目录”写成“已读懂”。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+## 形成学习路线
 
-## 模式
+结合 [课程规划](../learning-a-assess-and-plan/SKILL.md)，将需要掌握的概念、机制与代码路径安排为有联系的单元。每个单元说明要回答的问题、对应源码/资料及能检验理解的情境。
 
-| 用户意图 | 模式 | 谁执行 | 必须按需读取 |
-| --- | --- | --- | --- |
-| 选定项目并生成完整计划（默认） | `plan` | 本 Work | `<Path>{roots.workflows}/learning/learning-g-goal/references/planning-modes.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/assets/goal-plan-template.md</Path>`、`<Path>{roots.workflows}/learning/learning-a-assess-and-plan/SKILL.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/references/mine-unit.md</Path>` |
-| 源码或范围变化，重编译计划 | `replan` | 本 Work | 同上，加 `<Path>{roots.workflows}/learning/learning-g-goal/references/orchestration-protocol.md</Path>`；旧 `goal-plan.md` 只读归档到 `goal/revisions/` |
-| 按计划写课与挖掘 | `run` / `resume` | 外部 `/goal` | 计划正文 §5 / §8；本 Work 不在激活会话内执行 |
-| 对照矩阵验收 | `verify` | 外部 `/goal`，或以后再激活本 Work 只读验收 | 计划正文 §6 与 `<Path>{roots.workflows}/learning/learning-g-goal/references/stop-rules.md</Path>` |
+先讲清主路径，再挖掘隐藏假设、失败处理、代价和替代设计。发现需要更多基础时补足相关知识；发现重复内容时合并，不用固定单元上限、题数或并行波次控制深度。
 
-`plan` 写出的文档不构成执行授权。`ready_for_execution: false`，直到用户把计划交给 `/goal`。
+默认一份目标清单足够，逐项保留已讲、已核实、未覆盖与待调查内容。没有必要同时维护 chain、coverage-matrix、progress 和外部执行器启动块。
 
-## 流程
+## 按请求继续
 
-1. 解析 roots 与 Learning v2 状态。roots 必须来自已打开的 `<Path>{roots.state}/workspace.json</Path>`。若尚无 `status.json` / `locations.json`，先按 `<Path>{roots.workflows}/learning/learning-i-init-setup/SKILL.md</Path>` 写入空状态骨架，不创建知识条目。
-2. 仅澄清计划范围，不生成教学问题或要求学习者作答课程探针。范围访谈一次只问一个缺口：项目路径、in-scope 模块/公开 API、out-of-scope、`expression_level`、`coverage_depth`。用户已答过不重复问。
-3. 创建或恢复 `YYYY-MM-DD-<kebab-topic>[-NN]` Change，生成 `.status.json`，设置 `phase=planning`、`current_work=learning/goal`。
-4. 读取目标仓库，做编程库存：C4 Context + Container、公开入口、主数据存储、一条主路径与一条失败路径、按模块归组的范围内函数。琐碎 helper、生成代码、测试夹具标 `covered-by-parent` 或 `deferred`，不为它们开课。Lead 可派只读库存员。
-5. 若本 Change 尚无可用 `course.md`，跟随 `<Path>{roots.workflows}/learning/learning-a-assess-and-plan/SKILL.md</Path>` 写出 `course.md`、`background/foundation.md`、`baseline.md`、`sources.md` 和 Change `INDEX.md`。这些文件仍归 A 所有；本 Work 只在编译计划时走 A 合同。已有课程地图则核对，不默默重写。
-6. 按模式表的 Goal-Plan 模板及 `<Path>{roots.workflows}/learning/learning-g-goal/assets/chain-template.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/assets/coverage-matrix-template.md</Path>`、`<Path>{roots.workflows}/learning/learning-g-goal/assets/progress-template.md</Path>` 写出完整计划，禁止留下「待调研」章节，禁止预写探针题目或深化讲义；按库存把课装进 mine unit（每个 ≤15 节，写入 `chain.md` Units 表）：
-   - 当前 Change locator 下的 `goal/goal-plan.md`、`goal/chain.md`、`goal/coverage-matrix.md` 与 `goal/progress.md`（检查点骨架）。恢复已有 Change 时先按 locations 解析，禁止把已嵌入子树的 Change 重新写到顶层 `changes/`。
-7. 计划必须内嵌可粘贴的 `/goal` 启动块，并列出最小读取清单。覆盖规则读 `<Path>{roots.workflows}/learning/learning-g-goal/references/coverage-bar.md</Path>`；停止规则读 `<Path>{roots.workflows}/learning/learning-g-goal/references/stop-rules.md</Path>`；执行器合同读 `<Path>{roots.workflows}/learning/learning-g-goal/references/external-goal-runner.md</Path>`。
-8. 设置 `ready_for_execution: false`。更新 `learning-log.md` 与 Change `.status.json`：`works_run` 追加 `learning/goal`，清空 `current_work`。向用户打印 Goal-Plan 路径和 `/goal` 粘贴块。
-9. 停止。不写 `lessons/`，不写 `goal/probes/`，不创建 `inquiry/` 批次，不自动激活 L/H/R/C/A-archive，不写 mastered。
+只要求计划时交付可执行路线。用户已要求完整学习、写课或继续时，使用 [讲解](../learning-l-lesson/SKILL.md) 和 [探究](../learning-q-question/SKILL.md) 连续完成本次范围，不要求转交另一个 `/goal` 会话。
 
-## 完成标准
+需要用户练习时按明确学习意图保留作答空间；主动源码研究不伪造学习者答案。模型完成研究和用户能独立应用分别说明。
 
-- `goal/goal-plan.md` 按模板填实 Outcome、范围、四轴合同、Chain、Wave、mine unit、派单菜谱、授权矩阵、DoD、HARD NO、Resume 和最小读取清单；
-- `course.md` 有可观察 OBJ；`chain.md` 与矩阵使用库存得到的真实模块名，不是占位符；
-- `chain.md` 有 mine unit 列表，每个 unit ≤15（`mine_unit_cap`）；小项目允许远小于 15；不得为凑满 15 而灌水开课；
-- 计划不得预写探针题目或深化讲义；
-- 计划会话结束时 `lessons/` 仍无讲义正文（只允许空 INDEX）；
-- 粘贴块含 Outcome、verification surface、constraints、boundaries、iteration policy（teach-then-mine、10 问上限、`split-lesson`、Lead 扇出、unit ≤15）、blocked-stop；
-- 文档中的「允许」不构成 `/goal` 之外的额外授权；
-- 不复活 `Q-quiz`，不把 mine 写成学习者问答课。
-
-## 无 slash-command 宿主
-
-没有 `/goal` 时，按 `<Path>{roots.workflows}/learning/learning-g-goal/references/external-goal-runner.md</Path>` 的同名适配分支，由用户在新会话明确交付计划后执行。30–40 分钟、每单元 ≤15 节与每课最多10问仅约束 Learning。
+恢复先核对原目标、已覆盖内容及源码版本；变化只重审受影响部分。结束时对照目标报告实际覆盖、关键机制、仍待证据的问题与可继续入口，不宣称穷尽整个项目。

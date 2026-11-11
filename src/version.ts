@@ -1,3 +1,4 @@
+import { valid } from "semver";
 import { readFile } from "node:fs/promises";
 import { fetchRelease, isNewerRelease } from "./update-check.js";
 import { join } from "node:path";
@@ -9,6 +10,11 @@ export type VersionInfo = {
 };
 
 export const isLocalOutdated = isNewerRelease;
+
+/** Installer metadata is shared by releases 2 and 3; workflow documents are opaque. */
+export function isSupportedInstallVersion(value: unknown): value is string {
+  return typeof value === "string" && valid(value) !== null && /^[23]\./.test(value) && value.trim() === value;
+}
 
 export async function getLocalVersion(packageRoot: string): Promise<string> {
   const packagePath = join(packageRoot, "package.json");

@@ -1,32 +1,26 @@
 ---
 name: specdev-i-init-setup
-description: "发现工程事实并处理实际需要的开发配置；仅在明确请求时建立当前工程 docs 基线。项目编排初始化使用公共 Command。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/init-setup
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 了解项目的工程结构、开发与验证入口，处理本次需要的环境配置或工程文档。
 ---
 
-# 初始化设置
+# 工程初始化与接续
 
-读取 <Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>，按 <Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path> 定位相关条目，明确项目、方法和数据根；直接使用无需 workspace 或 CLI。已有安装验证真实 roots，冲突只阻塞有关写入。普通 Work 不必先经过本入口。
+从当前目录、项目指令和用户指定范围识别工程。已有项目直接接续，普通开发不要求先运行本 Work。
 
-## 流程
+## 建立可用的工程事实
 
-1. 只读探测包管理、workspace、构建/测试/类型/lint/CI、默认父分支、实际 worktree 与项目指令；定位真实入口和共享高冲突资源。未知验证命令保持未知，不凭框架名称编造。
-2. 区分可用、未安装、未配置、未授权、不适用并注明依据。复用用户语言、工具、产物数量及已有配置；只问无法从仓库得到且实际影响当前任务的偏好。探测不自动安装依赖、发布或创建虚假 change。
-3. 用户另行明确要求初始化项目编排时，路由到公共 command/coordination-init；普通工程初始化不启动编排问答、不写项目协作偏好。已有选择由实际任务的共享编排方法按需读取。
-4. 实际需要开发工具配置时读取 <Path>{roots.workflows}/specdev/specdev-i-init-setup/references/first-setup.md</Path>。已有真实 GitHub/验证配置继续使用其 schema，不删除未知独有字段。无需求不创建 config、tracking、domain-layout、空知识目录、全局 status 或 change status。
-5. 仅明确要求工程文档基线/全面理解代码时，直接使用 <Path>{roots.references}/writing-for-agents/references/current-facts-docs.md</Path> 的六步与覆盖表。最小 docs README/architecture 或已有负责正文导航，说明 HEAD/未提交或非 Git 范围、覆盖/未知/排除与实际验证；不改永久知识、不推进 project-maintenance 基线。
-6. 回读本次实际写入，报告已确认事实、必要偏好来源、验证命令/退出码和未知。只读调用无文件；有 change 的结果写回原 README/Evidence，不登记 Work 调用镜像。
+读取实际依赖清单、锁文件、工作区配置、启动入口、构建/测试命令和 CI；确认默认分支、当前工作区、未提交修改及真实源目录。文档与代码不一致时记录差异，命令未运行就只称“已发现”。
 
-## 停止与保全
+梳理当前任务需要的开发条件：运行时版本、包管理器、配置来源、数据或外部服务、测试夹具、构建产物和可用权限。区分已经可用、缺失、不适用与尚未验证，复用现有工具及用户偏好。
 
-未知 schema、旧活动或混合协议直接拒绝受影响初始化并保留原件；本 Work 不提供旧协议转换。CLI 安装元数据与 back 不归本 Work。已有知识、用户配置和历史不覆盖；只读发现不证明方法已安装或业务已验收。
+需要配置时按项目既有方式补齐。保留用户已有配置和未知独有字段；秘密从既有凭据管理取用，示例只写引用或占位。依赖安装、生成文件、迁移和启动服务分别按本次请求范围执行，避免把只读了解扩展为环境改造。
 
-只有确实创建 worktree 时核对 `specdev-worktree/` 的忽略项与 owner：已安装的 CLI-managed 忽略项交 CLI 修复；直接模式按项目 owner 的真实授权维护，不能因没有 CLI 阻塞其他初始化事实发现。
+## 工程文档
 
-## 完成标准
+用户要求全面理解或建立文档时，从真实执行入口跟踪模块、数据和外部边界，说明组件职责、调用关系、持久化位置、扩展点和运行方式。引用实际代码与配置，不根据目录名或框架名称猜架构。
 
-项目事实与未知有依据；实际配置写入已回读，验证命令、退出码及未完成项据实报告。公共编排初始化独立完成，工具缺失不妨碍工程事实发现；业务执行仍遵守原 Work 的授权和完成门。
+更新已有 README、architecture 或开发指南；仅在新的内容确有独立读者时拆文档。把当前事实与设计意图分开，说明版本、覆盖范围和关键未知。临时环境错误无需变成项目永久约束。
+
+## 交付
+
+返回可直接使用的启动/检查入口、实际配置变化、验证结果与缺口。持续开发所需事实写入现有交付记录；小型只读请求直接回答。部署控制端的准备使用 [部署环境初始化](../specdev-i-environment-setup/SKILL.md)。

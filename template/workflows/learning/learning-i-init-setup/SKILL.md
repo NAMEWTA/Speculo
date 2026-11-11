@@ -1,34 +1,18 @@
 ---
 name: learning-i-init-setup
-description: "初始化 Learning v2 的教学偏好、空索引、位置登记和可验证状态。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/init-setup
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 确认学习目标、表达偏好与已有资料，建立能接续学习的最小记录。
 ---
 
-# 初始化学习系统
+# 学习设置与资料接续
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+先找当前主题的已有笔记、用户明确的目标和偏好。没有相关资料时，也可以直接讲解或练习，初始化不构成必经门。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+了解本次需要的背景、语言、表达方式、深度、可用时间与希望达到的能力。只问会改变当前教学的缺口；用户已经表达的偏好直接沿用，不反复问卷。
 
-## 流程
+“讲得简单”表示降低术语门槛，“学得深入”表示覆盖机制与边界，两者可以同时成立。阅读偏好、实际回答与模型推断分开，不因职业或自评给用户贴固定能力标签。
 
-1. 读取 `<Path>{roots.state}/learning/status.json</Path>`。不存在时从 `_state/status.json` 原子创建；存在 v1 或未知 schema 时停止并返回 `learning-reset-required`，不修复旧文件。
-2. 读取 `<Path>{roots.workflows}/learning/learning-i-init-setup/assets/learner-profile-template.md</Path>`。只询问无法从环境发现的语言、表达基线、深度、图像/图解偏好、默认 Lesson 时长、Homework 题数和 R 偏好；保留已有字段。
-3. 首次初始化才创建缺失的 `changes/`、`archive/`、`context/domains/`、`locations.json`、`context/INDEX.md`、`context/REVIEW.md`。已有文件先验证并保留，不能重置 active、位置、课程、原答、掌握证据或知识内容；必要文件缺失且存在既有 Change 时报告不一致，不用空索引掩盖。
-4. 运行 `<Path>{roots.workflows}/learning/common/tools/validate-learning.mjs</Path>` 的 state 校验并重读新文件。
+用户希望长期使用同一学习设置时，更新已有 profile 或学习记录的偏好段。没有长期记录需求就保持在本次会话，不为初始化创建空课程、索引树和掌握状态。
 
-## 完成标准
+接续旧资料时，查看主题、来源、已讲内容、未解问题与实际练习；保留原始回答和历史结果。旧目录与当前建议不同也能阅读，不要求重置或转成新 JSON。
 
-- 状态、位置登记和 profile 是合法 v2；
-- 首次空初始化没有虚构 active Change 或 mastered 条目；复核既有系统时原有记录与用户偏好保持不变；
-- 本次没有外部副作用；新建空索引或既有索引均可导航，后续 Work 可恢复。
-
-## 子文件
-
-- Profile：`<Path>{roots.workflows}/learning/learning-i-init-setup/assets/learner-profile-template.md</Path>`
-- 总目录：`<Path>{roots.workflows}/learning/learning-i-init-setup/assets/context-index-template.md</Path>`
-- 复习目录：`<Path>{roots.workflows}/learning/learning-i-init-setup/assets/review-index-template.md</Path>`
+交付适用的学习方式、资料位置和下一步。规划课程使用 [评估与规划](../learning-a-assess-and-plan/SKILL.md)，直接听课使用 [课程讲解](../learning-l-lesson/SKILL.md)，练习或主动深挖使用 [问答与探究](../learning-q-question/SKILL.md)。

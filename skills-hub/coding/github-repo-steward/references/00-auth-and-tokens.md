@@ -1,6 +1,6 @@
 # 鉴权与 PAT
 
-权威：`gh` 当前登录态。不要假设 MCP GitHub 与 `gh` 是同一 token。
+以本次选定工具的实际账号、主机和权限为准。连接器与 `gh` 可能不是同一身份；使用 CLI 时先查看当前登录态。
 
 ## 先看什么
 
@@ -16,7 +16,7 @@ gh api -i user | rg -i 'x-oauth|x-accepted-github-permissions|github-authenticat
 | `gho_` | OAuth app |
 | `ghu_` / `ghs_` | GitHub App |
 
-Fine-grained 没有 `X-OAuth-Scopes`。缺权限时看 **403 响应头** `X-Accepted-Github-Permissions`。
+Fine-grained 没有 `X-OAuth-Scopes`。缺权限时检查 403 的 message、组织策略与 `X-Accepted-Github-Permissions`（若有）；响应头不覆盖所有拒绝原因。
 
 ## 按动作选择最小权限（不是全部必选）
 
@@ -41,9 +41,9 @@ Classic PAT（https://github.com/settings/tokens ）：
 
 ## 改现有 token vs 新建
 
-- **改现有 Fine-grained 权限**：token 字符串不变，`gh` 不用重新 login。用户保存后直接重试。
+- **改现有 Fine-grained 权限**：token 字符串不变，`gh` 不用重新 login。仍须留意组织审批、授权范围和缓存，权限生效后重试受影响动作。
 - **新建 token**：通过交互式 `gh auth login` 或受保护的 stdin/凭据管理器提供，不把 token 字面值拼进命令；然后，再 `gh auth status`。旧 token 不会自动换。
-- 用过期日 + 前缀辨认「当前环境到底在用哪一条」。`Github-Authentication-Token-Expiration` 响应头是可靠标识。
+- 登录账号、token 类型和过期响应头可帮助排查，不能唯一证明两处使用的是同一条 token；不要为辨认而打印秘密值。
 
 辨认当前 token：过期时间、`github_pat_` 前缀、login。用户若改了另一条 token，这边会继续 403。
 
@@ -69,5 +69,5 @@ message: Resource not accessible by personal access token
 
 - 不要把 token 写入 skill、仓库、issue、gist。
 - 不要用 `gh auth refresh` 去「升级」fine-grained PAT（交互式、且对 PAT 无效）。
-- 不要在 403 时改删网页上的别的仓。
+- 403 后不要改用另一账号或目标绕过拒绝。缺少权限时说明具体动作与拒绝原因，由有权者修正授权。
 - GitHub 会自动吊销：推到公开仓/gist 的 token、一年未使用的 token。

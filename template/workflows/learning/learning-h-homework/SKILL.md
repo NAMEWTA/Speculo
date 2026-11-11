@@ -1,40 +1,26 @@
 ---
 name: learning-h-homework
-description: "以单一 Markdown 文件生成题目、接收显式提交并追加逐题评审；不与 Lesson 混写。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: learning/homework
-  speculo-domain: learning
-  speculo-contract-version: "2"
+description: 围绕课程目标出题、接收用户答案并提供逐题证据与改进建议，保留真实作答记录。
 ---
 
-# 课程作业与评审
+# 作业与反馈
 
-> 激活本 Work 后，先读取 `<Path>{roots.workflows}/learning/common/rules/domain-runtime.md</Path>`。
+定位用户指定的主题、课程目标和相关材料。按用户要求选择题数、难度与形式；未指定时根据目标安排适量题目，不把出题数量当作覆盖质量。
 
-## 读取范围
+题目应能检验解释、应用、排错或迁移，而非只复述术语。保留足够上下文和明确成功条件；需要用户练习时不把答案提前放进题面。
 
-当前步骤开始前，读取 `<Path>{roots.workflows}/learning/common/rules/homework-contract.md</Path>`；只加载本 Work 需要的领域合同。
+## 接收答案
 
-读取 `<Path>{roots.workflows}/learning/common/rules/activation-and-memory.md</Path>`，按当前 Change、OBJ、主题与证据 ID 定位本轮输入；仅当前恢复或安全门要求时扩读。
+用户提交答案或明确请求批改时即可评审，不要求精确的 `Submission: ready` 标记。原始回答保持可回读，AI 的修正与解释另写；答案不完整时说明能判断的部分与缺口。
 
-## 流程
+逐题连接回答、目标和证据，指出正确点、误解、遗漏和原因。提供与难度匹配的讲解、必要例子与下一次练习建议；编码作业只有实际运行才称测试通过。
 
-读取 `<Path>{roots.workflows}/learning/common/rules/evidence-integrity.md</Path>`，校验当前 Work 的声明、引用及证据时间；不改变原方法或获取其他 Work 的写权限。
+当场做对只代表本次表现，不能据此宣称长期掌握。参考资料、提示和协助程度会影响证据含义，应在必要时说明。
 
-1. 用户指定一个或多个 Lesson/OBJ 和题数（默认 5）。按 Lesson/OBJ 索引只读取对应课程正文、目标、来源和背景；不得把题目答案提前写入作业。
-2. 创建 `homework/HW-<NNN>-<slug>-attempt-01.md`，写元数据、Q1…、空白 A1… 和 `Submission: pending`，更新 `homework/INDEX.md`。
-3. 用户填写 A1…并将原提交标记替换成唯一精确行 `Submission: ready` 后再次激活 H。H 校验回答原文和提交标记，冻结问题/答案内容。
-4. 生成教学详解前读取 `<Path>{roots.workflows}/learning/common/rules/teaching-policy.md</Path>`；只应用表达规则，不改变 verdict 或评审依据。按证据合同先计算已提交原文指纹，再只在同一文件末尾追加 Review 骨架：记录指纹、实际时间、`Immediate result` 及目标判断依据；每个 `### Review Q<n>` 给出唯一 `verdict:`、证据覆盖、中文详细讲解、`Explain (English)`、误区和下一步，并记录引用的 Lesson/source anchor。
-5. 按实际评审结论更新 homework/immediate 投影；完成评审不自动等于通过，保留阻塞误区时不能标记 immediate passed。不写 mastered、不自动启动 R/C/A。重新作答必须创建新的 attempt 文件并链接旧 attempt，旧文件不可改写。
+## 保存与重试
 
-## 完成标准
+需要文件时，一份 Markdown 可以包含题目、原始答案和后续反馈；大代码或图像作为附件链接。新的作答可另建尝试或追加明确分隔的记录，不覆盖之前的回答与评审。
 
-- 一个作业文件包含问题、学习者答案、提交标记和 AI 评审；
-- 评审不会改写学习者答案，答案不完整时按 evidence/uncertain 处理；
-- H 的分类结论可结束当前学习轮次，R 才是延迟掌握证据。
+不强制双语段落、固定 verdict 枚举、题号格式或作业状态 JSON。依照 [教学方法](../references/teaching.md) 给出清楚反馈。
 
-## 子文件
-
-- 作业模板：`<Path>{roots.workflows}/learning/learning-h-homework/assets/homework-template.md</Path>`
-- 评审规则：`<Path>{roots.workflows}/learning/common/rules/assessment-policy.md</Path>`
+返回本次表现、具体补救范围与可选择的下一步；用户要检验过段时间还能否应用时使用 [延迟复习](../learning-r-review/SKILL.md)。

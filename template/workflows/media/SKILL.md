@@ -1,37 +1,32 @@
 ---
 name: media
-description: "用于创作简报、拆解、手绘、视频、发布草稿及复盘；发布由实际授权控制。"
-metadata:
-  speculo-kind: domain-skill
-  speculo-id: domain/media
-  speculo-domain: media
-  speculo-contract-version: "2"
+description: 内容选题与母稿、对标拆解、手绘视觉提示词、可编辑视频制作、多渠道草稿和数据复盘。
 ---
 
-# media
+# 内容与媒体制作
 
-## 发现与激活
+围绕用户需要交付的内容工作，沿用已有受众、素材、品牌和表达方式。文章、图卡、插画与视频共享事实来源，制作方式按媒介选择。
 
-只读发现不创建状态、不执行 Work、不取得写入授权。先按 ID/关键词定位相关能力和永久知识条目，再少量回读原文与 provenance。用户指定具体 Work 时直接进入该入口；不需要再次激活本领域。
+## 按当前工作进入
 
-明确进入本领域后读取 <Path>{roots.workflows}/media/common/rules/activation-and-memory.md</Path> 与 <Path>{roots.workflows}/media/common/rules/domain-runtime.md</Path>，解析 workspace，仅读取当前任务需要的状态、入口与分支参考。缺少输入、权限、有效 schema 或 owner 冲突时停止受影响分支并保留恢复证据。
+| 任务 | Work |
+|---|---|
+| 建立创作者偏好并查清可用制作工具 | [创作者初始化](media-i-init-setup/SKILL.md) |
+| 选题、研究、Hook 与母内容 | [内容简报](media-b-brief/SKILL.md) |
+| 从真实材料分析叙事、视觉与节奏 | [对标拆解](media-d-deconstruct/SKILL.md) |
+| 选择手绘风格、准备提示词或生成视觉 | [手绘与视觉](media-h-hand-drawn/SKILL.md) |
+| 从脚本、音频与分镜制作实际视频 | [视频制作](media-v-video/SKILL.md) |
+| 适配平台并交付可使用的本地草稿包 | [多渠道草稿](media-p-publish-draft/SKILL.md) |
+| 根据实际反馈改进下一轮内容 | [数据复盘](media-r-retro/SKILL.md) |
 
-## 能力路由
+入口按需选择，不要求每项内容都经过全部 Work。请求已经给足制作条件时直接制作；只有会改变受众、内容方向、重要规格或发布范围的缺口才询问。
 
-<!-- AUTO-INDEX-START -->
+## 资料与成果
 
-- **media/brief** — 选题与母内容简报：<Path>{roots.workflows}/media/media-b-brief/SKILL.md</Path>
-- **media/deconstruct** — 对标结构拆解：<Path>{roots.workflows}/media/media-d-deconstruct/SKILL.md</Path>
-- **media/hand-drawn** — 固定画风提示词：<Path>{roots.workflows}/media/media-h-hand-drawn/SKILL.md</Path>
-- **media/init-setup** — 创作者初始化：<Path>{roots.workflows}/media/media-i-init-setup/SKILL.md</Path>
-- **media/publish-draft** — 多渠道本地草稿：<Path>{roots.workflows}/media/media-p-publish-draft/SKILL.md</Path>
-- **media/retro** — 数据复盘与模板沉淀：<Path>{roots.workflows}/media/media-r-retro/SKILL.md</Path>
-- **media/video** — 可验证代码视频：<Path>{roots.workflows}/media/media-v-video/SKILL.md</Path>
+使用项目已有位置；需要持续记录时，默认 `.agents/speculo/.speculo/media/<topic>/README.md` 保存简报、来源、素材与成品入口、实际检查和下一步。正文、可编辑源、媒体文件按实际需要保存，不用 brief/shot/review 状态协议控制推进。
 
-<!-- AUTO-INDEX-END -->
+研究结论、用户提供的数据、推断和创作设定分别说明。真实内容核验与画面/编码检查分别完成；无法访问的视频不能写观看报告，未渲染的工程不能称为成片。
 
-## 永久知识
+长效创作者偏好和经验证的制作方法优先更新已有资料；历史交付引用当时版本。按 [持久化](../../references/memory.md) 保留可继续制作的源文件、来源和有效经验。
 
-- <Path>{roots.state}/media/context/INDEX.md</Path>
-
-正式写入前检查原 owner/gateway、未闭合事务及恢复证据。读取索引不自动激活能力，未知网关只阻塞对应写入。
+本地草稿与线上发布是不同结果。需要实际发布时按用户明确的目标账号、内容和授权使用现有发布能力，读回真实结果；不把导出成功写成线上发布。

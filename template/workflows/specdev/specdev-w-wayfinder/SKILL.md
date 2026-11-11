@@ -1,49 +1,32 @@
 ---
 name: specdev-w-wayfinder
-description: "大需求的 change 边界或实施路线尚不可见时建立探索地图，并分别澄清各 change；已有清晰 Spec 时不触发。"
-metadata:
-  speculo-kind: work-skill
-  speculo-id: specdev/wayfinder
-  speculo-domain: specdev
-  speculo-contract-version: "2"
+description: 当大型需求的边界、可行路线或子问题尚不清楚时进行目标导向探索，形成可实施范围与关键证据。
 ---
 
-# 探索大需求与 Change 边界
+# 大需求探索
 
-> 激活后读取 `<Path>{roots.workflows}/specdev/common/rules/domain-runtime.md</Path>`。
+用于目的地清楚、路线仍模糊的工作，例如跨模块改造、新产品或迁移。已有清晰规格时直接实施或拆分，不再追加探索流程。
 
-W 位于 change 形成之前：Initiative → 候选 change → 各自 Grill → Spec → Tickets → 一个或多个 change 的 Goal。探索载体继续使用普通 change 目录，不增加另一套全局状态根；它不等于最终产品 change。
+先写清希望改变的用户结果、已知边界、重要约束和当前未知。读取现有系统、相关设计与用户材料，区分可以查明的事实和需要用户作出的取舍。
 
-## 读取范围
+## 用决策组织调查
 
-先读 `<Path>{roots.workflows}/specdev/common/rules/activation-and-memory.md</Path>`；先从共享地图定位当前调查 ID，再读当前问题、直接依赖及其 solution comment 原文；共享答案只引用 provenance。低分辨率地图不缓存所有开放票正文。
+按业务能力、用户旅程、数据流或系统边界画一张低分辨率地图，标出相互依赖与尚未证实的假设。地图可以是普通清单、表格或图示，不需要调查票状态机。
 
-## 按当前调查选择参考
+每项有价值的调查都应能回答：它影响哪个决定；什么证据可以改变判断；最小可行调查是什么；什么时候足以停止。选择源码阅读、官方资料、用户访谈、逻辑试验或可操作原型，不把所有问题都交给外部搜索。
 
-| 当前需要 | 按需读取 |
-|---|---|
-| 初次绘制问题空间，或划分多个 change | `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/initiative-discovery.md</Path>` |
-| 领取并解决一个调查问题，或恢复既有地图 | `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/map-traversal.md</Path>` 和 `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/local-tracker-contract.md</Path>` |
-| 生成地图、问题与答案 | `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/assets/wayfinder-map-template.md</Path>`、`<Path>{roots.workflows}/specdev/specdev-w-wayfinder/assets/investigation-ticket-template.md</Path>`、`<Path>{roots.workflows}/specdev/specdev-w-wayfinder/assets/solution-comment-template.md</Path>` |
-| 选定清晰 change 交给 Goal | `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/initiative-discovery.md</Path>` 的交接门禁 |
+优先处理会改变总体方向、数据可行性、关键体验或部署限制的未知。可以独立推进的部分继续研究；不要求先消除整个问题空间的不确定性，也不固定每会话只能解决一项。
 
-## 调查的决策价值
+## 形成交付边界
 
-每张调查说明它影响的决定、已知事实、缺失证据、最小调查、结束条件和下一 owner。只对目的地相关的兼容、迁移、权限、故障、成本和部署约束展开，不把“全面研究”变成无限搜索。答案需有可回读来源；没有依据的候选继续未知，不能以调查完成代替产品完成。
+把可独立验证的用户结果分成候选交付，说明共享约束、真实依赖、需要先做的试验及可暂缓部分。边界由实际系统与用户目标决定，不按目录或技术层机械分割。
 
-## 必留纪律
+跨主题共享的答案维护在一个位置，其他交付引用。确认的产品决定、尚未确定的假设和探索性代码分别说明；可运行原型证明的是被实际试验的路径。
 
-- 目的地约束所有调查；能精确陈述的问题成为调查票，尚不能陈述的留在战争迷雾，目标外内容不自动升级。
-- 默认每个会话最多解决一个调查 Ticket；绘图会话不关闭调查票。这个限制约束 W，不限制 P 的长期 Goal 调度；不静默减少用户明确要求的交付数量。
-- 四类保持 `wayfinder:research`、`wayfinder:prototype`、`wayfinder:grilling`、`wayfinder:task`。HITL 必须真人参与，Agent 不代答；Task 仅解除调查阻塞，不偷做目的地实现。
-- 调查认领保存在各 investigation Ticket 的实际 Assignment；不建中央镜像。先领取后执行；他人已领取的问题跳过，不接管；只暂停有归属冲突的部分。
-- 每个 materialized change 拥有自己的 design-tree、LOG、CONTEXT、ADR、Spec 与 tickets-map；涉及 UI 时也拥有经批准的 DESIGN。共享探索答案通过 solution comment 引用，不复制成多个可写事实源。
-- 缺失关键决定或必需证据时保持该 change 未就绪；其他独立清晰 change 可以交接，不要求整个大需求一次揭完迷雾。
+需要用户选择时，展示候选的收益、代价和推荐，让用户决定真正影响范围的取舍。已有明确授权的可逆调查直接完成，不反复请求“继续研究”。
 
-UI 调查调用 P 时按 <Path>{roots.workflows}/specdev/common/rules/design-contract.md</Path> 继承永久基线并在 HTML 后集中确认。solution comment 只保存设计合同/版本、指定原型与实际证据；探索包复用到 child change 必须核对新范围，不复制出多个永久写入 owner，也不把父探索批准自动视作 child 批准。
+## 产物
 
-## 校验与交接
+更新一份现有探索或 release 记录：目标地图、结论与来源、选定范围、未决项及下一步。只有内容或独立协作需要才拆文件。
 
-存在多个候选 change 时，由 W 写 `<Path>{roots.state}/specdev/changes/{change}/initiative.json</Path>`；使用 `<Path>{roots.workflows}/specdev/specdev-w-wayfinder/references/initiative-template.json</Path>` 和 `<Path>{roots.workflows}/specdev/common/schemas/initiative.schema.json</Path>`。目标 change 只在用户接受边界后创建，不能挪用已属于其他任务的状态。
-
-运行 `<Path>{roots.workflows}/specdev/common/tools/validate-specdev.mjs</Path>` 的 `--stage wayfinder` 校验地图、claim、评论和 initiative；选定成员必须分别满足 Grill 共识、Ready Spec 和 Ready Tickets，再转交 `<Path>{roots.workflows}/specdev/specdev-p-goal-plan/SKILL.md</Path>`。W 不把“地图完成”宣称为产品已经交付。
+边界清晰的部分进入 [访谈](../specdev-g-grill-with-docs/SKILL.md)、[原型](../specdev-p-prototype/SKILL.md) 或 [Spec](../specdev-s-spec/SKILL.md)。探索完成只表示路线与证据已足以作决定，不表示产品已经交付。
