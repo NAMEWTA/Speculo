@@ -52,7 +52,7 @@ SpecDev 是一个领域入口，按当前任务引导到具体 Work；每项 Wor
 
 目标：点击任务后在当前页面侧边查看和编辑，保留列表位置。
 来源：issue #12；11 月 6 日用户反馈。
-设计：项目相对路径 ui/task-detail.stories.tsx，批准的提交 abc123。
+设计：已确认原型的固定提交 <完整 commit SHA>；项目相对路径 ui/task-detail.stories.tsx 的 OpenDetail 场景；样式 ui/task-detail.css 的 .task-detail；交互 ui/task-detail.ts 的 openDetail/closeDetail。
 范围：打开、编辑、关闭；不改任务存储。
 
 - [x] 列表接入详情面板；单测和实际点击检查通过。
@@ -70,6 +70,10 @@ SpecDev 是一个领域入口，按当前任务引导到具体 Work；每项 Wor
 设计可以是 HTML/CSS、React/Vue 组件、Storybook stories、设计 tokens、图片及必要说明。项目已有设计或组件目录优先。不要为了流程把它们再翻译成一份 change 内的 DESIGN。
 
 当前设计会继续演进，因此每次发版记录都要引用本次采用的具体提交、不可变版本或清楚标识的快照。历史 release 中“批准过什么”不能被后来改动的当前文件悄悄替换。
+
+已有或需要编写 DESIGN 时，每个涉及 UI 的章节都必须就近引用对应原型证据：固定版本、页面/状态、HTML 或组件锚点，以及适用的 CSS 选择器/token/媒体查询、JS 事件与状态转换。文档首页只放一个原型链接无法说明各节依据。文字负责解释目的、约束与取舍，已确认的原型 UI、CSS 和 JS 负责表达具体效果；没有证据的部分写明缺口或待验证决定。格式与真实源码示例见 [原型证据引用](../template/workflows/specdev/specdev-p-prototype/references/design-evidence.md)。
+
+Spec 和 Ticket 继续携带这些定位，实施者先打开对应源码，再按目标技术栈复用或适配。工程结构可以调整，已确认的布局、视觉值和交互结果必须保持；说明与原型冲突时先查清来源，不能选择一句更宽泛的描述来放宽实现。
 
 验收实际涉及的页面、状态和主要区域：导航是否存在、详情出现在哪里、信息层级是否保留。可接受的数据差异、平台字体差异与业务适配要说明依据；不能因为功能仍在，就自行把已批准布局解释成示意。未批准的结构差异仍是未完成项。
 
