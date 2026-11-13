@@ -59,7 +59,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@clack/prompts": "1.8.1",
+    "@clack/prompts": "1.9.0",
     "cross-spawn": "^7.0.6",
     "picocolors": "1.1.1",
     "read-cmd-shim": "^7.0.1",
